@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import type { Item, DepositStockMap } from "@/lib/types"
 import { TEMPLATES } from "@/lib/constants"
+import { INITIAL_ITEMS } from "@/lib/data/initial-items"
 
 export function useItems() {
   const [items, setItems] = useState<Item[]>([])
@@ -17,10 +18,12 @@ export function useItems() {
           const data = await response.json()
           setItems(data)
         } else {
-          console.error("[v0] Failed to fetch items from database")
+          console.log("[v0] Database not initialized, using initial items")
+          setItems(INITIAL_ITEMS)
         }
       } catch (error) {
-        console.error("[v0] Error fetching items:", error)
+        console.log("[v0] Database not available, using initial items")
+        setItems(INITIAL_ITEMS)
       } finally {
         setIsLoading(false)
       }

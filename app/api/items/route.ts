@@ -3,6 +3,17 @@ import { sql } from "@/lib/db"
 
 export async function GET() {
   try {
+    const tablesExist = await sql`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_name = 'items'
+      )
+    `
+
+    if (!tablesExist[0].exists) {
+      return NextResponse.json({ error: "Database not initialized" }, { status: 503 })
+    }
+
     // Fetch all items
     const items = await sql`
       SELECT * FROM items ORDER BY created_at DESC
