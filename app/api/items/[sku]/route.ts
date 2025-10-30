@@ -69,11 +69,17 @@ export async function DELETE(request: Request, { params }: { params: { sku: stri
   try {
     const { sku } = params
 
+    await sql`DELETE FROM atributos_principales WHERE sku = ${sku}`
+    await sql`DELETE FROM atributos_informativos WHERE sku = ${sku}`
+    await sql`DELETE FROM container_atributos_principales WHERE sku = ${sku}`
+    await sql`DELETE FROM variant_atributos_principales WHERE variant_sku = ${sku}`
+    await sql`DELETE FROM stock WHERE sku = ${sku}`
+    await sql`DELETE FROM item_variants WHERE parent_sku = ${sku} OR sku = ${sku}`
+
     await sql`DELETE FROM items WHERE sku = ${sku}`
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("[v0] Error deleting item:", error)
     return NextResponse.json({ error: "Failed to delete item" }, { status: 500 })
   }
 }

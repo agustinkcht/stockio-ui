@@ -1,10 +1,8 @@
 "use client"
 
-import type React from "react"
-
 import { Sidebar } from "@/components/layout/sidebar"
 import { TopNav } from "@/components/layout/top-nav"
-import { Breadcrumb } from "@/components/layout/breadcrumb"
+import { DynamicBar } from "@/components/layout/dynamic-bar"
 import { Toolbar } from "@/components/layout/toolbar"
 import { ItemsGrid } from "@/components/items/items-grid"
 import { ItemDetailPanel } from "@/components/items/item-detail-panel"
@@ -17,9 +15,9 @@ import { useNavigation } from "@/hooks/use-navigation"
 import { useModals } from "@/hooks/use-modals"
 import { useSidebar } from "@/hooks/use-sidebar"
 import { useItemDetail } from "@/hooks/use-item-detail"
+import { useChangeTracker } from "@/hooks/use-change-tracker"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 import type { Item } from "@/lib/types"
-import { useState } from "react"
 
 export default function Page() {
   // Initialize all hooks
@@ -30,7 +28,13 @@ export default function Page() {
     handleCreateNuevoItem,
     handleCreateNuevoItemConVariantes,
     updateItem,
+    deleteItem,
+    undoDelete,
+    saveDelete,
+    hasUnsavedDeletes,
+    deletedItems,
   } = useItems()
+
   const { itemSelected, selectAllActive, hasSelectedItems, handleItemButtonClick, handleSelectAllClick } =
     useItemSelection(items.length)
   const { currentView, historyIndex, navigationHistory, navigateBack, navigateForward, navigateToItem } =
@@ -91,7 +95,49 @@ export default function Page() {
     setSelectedDetailTab,
   } = useItemDetail()
 
-  const [breadcrumbDynamicContent, setBreadcrumbDynamicContent] = useState<React.ReactNode>(null)
+  const changeTracker = useChangeTracker()
+
+  const breadcrumbs = selectedItem ? ["Artículos", "Detalle del item"] : ["Artículos", "Todos los items"]
+
+  const handleUndo = () => {
+    const change = changeTracker.undo()
+    if (change?.type === "delete") {
+      undoDelete()
+    }
+    // TODO: Handle other change types (edit, add)
+  }
+
+  const handleRedo = () => {
+    const change = changeTracker.redo()
+    if (change?.type === "delete") {
+      // Re-apply the delete
+      deleteItem(change.data)
+    }
+    // TODO: Handle other change types (edit, add)
+  }
+
+  const handleDeshacer = () => {
+    changeTracker.undoAll()
+    if (hasUnsavedDeletes) {
+      undoDelete()
+    }
+    // TODO: Undo all other changes
+  }
+
+  const handleGuardar = async () => {
+    const changes = changeTracker.saveAll()
+
+    if (hasUnsavedDeletes) {
+      await saveDelete()
+    }
+
+    // TODO: Save other changes to database
+  }
+
+  const handleDeleteWithTracking = (item: Item) => {
+    changeTracker.trackChange("delete", item)
+    deleteItem(item)
+  }
 
   const handleNavigateBack = () => {
     const previousView = navigateBack()
@@ -116,8 +162,6 @@ export default function Page() {
   }
 
   const handleItemClickWithNavigation = (item: Item, tab = "info", isContainer?: boolean) => {
-    console.log("[v0] Item clicked with tab:", tab, "isContainer:", isContainer)
-    console.log("[v0] Setting selectedItem to:", item.titulo)
     setSelectedItem(item)
     setSelectedDetailTab(tab as any)
     navigateToItem(item)
@@ -163,10 +207,16 @@ export default function Page() {
           onCloseTab={handleCloseTabFromNavbar}
         />
 
-        {/* Breadcrumb component between TopNav and Toolbar */}
-        <Breadcrumb
-          breadcrumbText={selectedItem ? "Detalle del item" : "Todos los items"}
-          dynamicContent={selectedItem ? breadcrumbDynamicContent : null}
+        {/* DynamicBar */}
+        <DynamicBar
+          breadcrumbs={breadcrumbs}
+          hasUnsavedChanges={changeTracker.hasUnsavedChanges || hasUnsavedDeletes}
+          canUndo={changeTracker.canUndo}
+          canRedo={changeTracker.canRedo}
+          onUndo={handleUndo}
+          onRedo={handleRedo}
+          onDeshacer={handleDeshacer}
+          onGuardar={handleGuardar}
         />
 
         {/* Toolbar (only show when no item is selected) */}
@@ -204,7 +254,6 @@ export default function Page() {
               updateDepositStock={updateDepositStock}
               updateItem={updateItem}
               allItems={items}
-              onDynamicContentChange={setBreadcrumbDynamicContent}
             />
           ) : (
             <ItemsGrid
@@ -217,6 +266,8 @@ export default function Page() {
               toggleVariantExpansion={toggleVariantExpansion}
               updateDepositStock={updateDepositStock}
               depositStock={depositStock}
+              // Pass deleteItem handler to ItemsGrid
+              onDeleteItem={handleDeleteWithTracking}
             />
           )}
         </main>

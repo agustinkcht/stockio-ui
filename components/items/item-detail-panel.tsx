@@ -1,15 +1,14 @@
 "use client"
 
-import type React from "react"
-
 import { useState, useEffect, useRef } from "react"
+import type React from "react"
 import type { Item } from "@/lib/types"
 import { ChevronDown, ChevronRight, Plus, Copy, ChevronsUpDown, X, Undo2, Redo2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { SAVED_ATRIBUTOS, TEMPLATES, DEPOSITS } from "@/lib/constants"
-import { Breadcrumb } from "@/components/layout/breadcrumb"
+// import { Breadcrumb } from "@/components/layout/breadcrumb"
 
 interface ItemDetailPanelProps {
   selectedItem: Item
@@ -17,7 +16,7 @@ interface ItemDetailPanelProps {
   setSelectedDetailTab: (tab: string) => void
   expandedItems: Set<string>
   toggleVariantExpansion: (sku: string) => void
-  depositStock: Record<string, number>
+  depositStock: Record<string, number> // Changed from Record<string, DepositStock> to Record<string, number>
   updateDepositStock: (sku: string, quantity: number) => void
   updateItem: (sku: string, updates: Partial<Item>) => void
   allItems: Item[]
@@ -490,7 +489,7 @@ export function ItemDetailPanel({
 
   return (
     <>
-      <Breadcrumb dynamicContent={null} />
+      {/* <Breadcrumb dynamicContent={null} /> */}
 
       <div className="px-8 pt-6" style={{ marginTop: "2.5rem" }}>
         <div className="grid grid-cols-10 gap-0 h-[calc(100vh-5rem)]">
@@ -1152,6 +1151,15 @@ export function ItemDetailPanel({
                                         {!isValueLocked && (
                                           <PopoverContent className="w-[200px] p-0" align="start">
                                             <Command>
+                                              <CommandInput
+                                                placeholder="Buscar o escribir..."
+                                                value={attr.value}
+                                                onValueChange={(value) => {
+                                                  const updated = [...atributosInformativos]
+                                                  updated[index].value = value
+                                                  setAtributosInformativos(updated)
+                                                }}
+                                              />
                                               <CommandList>
                                                 <CommandGroup>
                                                   {SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS]

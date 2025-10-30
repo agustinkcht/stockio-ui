@@ -14,42 +14,34 @@ export async function GET() {
       return NextResponse.json({ error: "Database not initialized" }, { status: 503 })
     }
 
-    // Fetch all items
     const items = await sql`
       SELECT * FROM items ORDER BY created_at DESC
     `
 
-    // Fetch all variants
     const variants = await sql`
       SELECT * FROM item_variants
     `
 
-    // Fetch all stock
     const stock = await sql`
       SELECT * FROM stock WHERE deposito = 'principal'
     `
 
-    // Fetch all atributos principales
     const atributosPrincipales = await sql`
       SELECT * FROM atributos_principales
     `
 
-    // Fetch all atributos informativos
     const atributosInformativos = await sql`
       SELECT * FROM atributos_informativos
     `
 
-    // Fetch container atributos principales
     const containerAtributosPrincipales = await sql`
       SELECT * FROM container_atributos_principales
     `
 
-    // Fetch variant atributos principales
     const variantAtributosPrincipales = await sql`
       SELECT * FROM variant_atributos_principales
     `
 
-    // Transform data to match frontend structure
     const transformedItems = items.map((item: any) => {
       const itemStock = stock.find((s: any) => s.sku === item.sku)
       const itemAtributosPrincipales = atributosPrincipales.filter((a: any) => a.sku === item.sku)
@@ -127,8 +119,13 @@ export async function GET() {
 
     return NextResponse.json(transformedItems)
   } catch (error) {
-    console.error("[v0] Error fetching items:", error)
-    return NextResponse.json({ error: "Failed to fetch items" }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: "Failed to fetch items",
+        details: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 },
+    )
   }
 }
 

@@ -13,6 +13,7 @@ interface ItemsGridProps {
   toggleVariantExpansion: (index: number) => void
   updateDepositStock?: (itemSku: string, depositId: string, quantity: number) => void
   depositStock?: DepositStock[]
+  onDeleteItem?: (item: Item) => void
 }
 
 export function ItemsGrid({
@@ -25,6 +26,7 @@ export function ItemsGrid({
   toggleVariantExpansion,
   updateDepositStock,
   depositStock,
+  onDeleteItem,
 }: ItemsGridProps) {
   return (
     <div className={`px-8 flex flex-col pb-8 mt-1 ${gridSize === "lg" ? "gap-2" : "gap-0"}`}>
@@ -40,6 +42,7 @@ export function ItemsGrid({
             onSelectClick={handleItemButtonClick}
             onItemClick={handleItemClick}
             onToggleExpansion={toggleVariantExpansion}
+            onDelete={onDeleteItem}
           />
         ))}
       </div>

@@ -14,6 +14,7 @@ interface ItemCardProps {
   onSelectClick: (index: number) => void
   onItemClick: (item: Item, tab: string, isContainer?: boolean) => void
   onToggleExpansion: (index: number) => void
+  onDelete?: (item: Item) => void
 }
 
 export function ItemCard({
@@ -25,6 +26,7 @@ export function ItemCard({
   onSelectClick,
   onItemClick,
   onToggleExpansion,
+  onDelete,
 }: ItemCardProps) {
   const [isHovered, setIsHovered] = useState(false)
 
@@ -65,7 +67,6 @@ export function ItemCard({
             }`}
             onClick={(e) => {
               e.stopPropagation()
-              console.log("[v0] Título segment clicked, navigating to info tab")
               if (item.hasVariants || item.isAgrupador) {
                 onItemClick(item, "info", true)
               } else {
@@ -131,7 +132,6 @@ export function ItemCard({
                 className="h-full flex items-center gap-3 border-r border-gray-700 px-4 cursor-pointer hover:bg-gray-800/50 transition-colors"
                 onClick={(e) => {
                   e.stopPropagation()
-                  console.log("[v0] Atributos segment clicked, navigating to atributos tab")
                   onItemClick(item, "atributos")
                 }}
               >
@@ -177,7 +177,6 @@ export function ItemCard({
                 className="h-full flex items-center gap-3 border-r border-gray-700 px-4 cursor-pointer hover:bg-gray-800/50 transition-colors"
                 onClick={(e) => {
                   e.stopPropagation()
-                  console.log("[v0] Stock segment clicked, navigating to stock tab")
                   onItemClick(item, "stock")
                 }}
               >
@@ -214,7 +213,6 @@ export function ItemCard({
               <button
                 onClick={(e) => {
                   e.stopPropagation()
-                  console.log("[v0] Edit button clicked")
                 }}
                 className="text-gray-400 hover:text-white transition-colors"
               >
@@ -223,7 +221,9 @@ export function ItemCard({
               <button
                 onClick={(e) => {
                   e.stopPropagation()
-                  console.log("[v0] Delete button clicked")
+                  if (onDelete) {
+                    onDelete(item)
+                  }
                 }}
                 className="text-gray-400 hover:text-red-400 transition-colors"
               >
@@ -242,7 +242,6 @@ export function ItemCard({
                   <DropdownMenuItem
                     onClick={(e) => {
                       e.stopPropagation()
-                      console.log("[v0] Duplicar clicked for item:", item.name)
                     }}
                   >
                     Duplicar
@@ -250,7 +249,6 @@ export function ItemCard({
                   <DropdownMenuItem
                     onClick={(e) => {
                       e.stopPropagation()
-                      console.log("[v0] Mover clicked for item:", item.name)
                     }}
                   >
                     Mover
@@ -275,6 +273,7 @@ export function ItemCard({
               onSelectClick={() => {}}
               onItemClick={onItemClick}
               onToggleExpansion={() => {}}
+              onDelete={onDelete}
             />
           ))}
         </div>
@@ -293,6 +292,7 @@ export function ItemCard({
               onSelectClick={() => {}}
               onItemClick={onItemClick}
               onToggleExpansion={() => {}}
+              onDelete={onDelete}
             />
           ))}
         </div>

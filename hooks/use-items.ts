@@ -9,20 +9,21 @@ export function useItems() {
   const [items, setItems] = useState<Item[]>([])
   const [depositStock, setDepositStock] = useState<DepositStockMap>({})
   const [isLoading, setIsLoading] = useState(true)
+  const [deletedItems, setDeletedItems] = useState<Item[]>([])
+  const [hasUnsavedDeletes, setHasUnsavedDeletes] = useState(false)
 
   useEffect(() => {
     const fetchItems = async () => {
       try {
         const response = await fetch("/api/items")
+
         if (response.ok) {
           const data = await response.json()
           setItems(data)
         } else {
-          console.log("[v0] Database not initialized, using initial items")
           setItems(INITIAL_ITEMS)
         }
       } catch (error) {
-        console.log("[v0] Database not available, using initial items")
         setItems(INITIAL_ITEMS)
       } finally {
         setIsLoading(false)
@@ -285,6 +286,38 @@ export function useItems() {
     }
   }
 
+  const deleteItem = (itemToDelete: Item) => {
+    setDeletedItems((prev) => [...prev, itemToDelete])
+    setItems((prevItems) => prevItems.filter((item) => item.sku !== itemToDelete.sku))
+    setHasUnsavedDeletes(true)
+  }
+
+  const undoDelete = () => {
+    setItems((prevItems) => [...prevItems, ...deletedItems])
+    setDeletedItems([])
+    setHasUnsavedDeletes(false)
+  }
+
+  const saveDelete = async () => {
+    try {
+      for (const item of deletedItems) {
+        const response = await fetch(`/api/items/${item.sku}`, {
+          method: "DELETE",
+        })
+
+        if (!response.ok) {
+          alert(`Error al eliminar el item ${item.name}`)
+          return
+        }
+      }
+
+      setDeletedItems([])
+      setHasUnsavedDeletes(false)
+    } catch (error) {
+      alert("Error al eliminar los items")
+    }
+  }
+
   return {
     items,
     setItems,
@@ -294,6 +327,11 @@ export function useItems() {
     handleCreateNuevoItem,
     handleCreateNuevoItemConVariantes,
     updateItem,
-    isLoading, // Export loading state
+    isLoading,
+    deleteItem,
+    undoDelete,
+    saveDelete,
+    hasUnsavedDeletes,
+    deletedItems,
   }
 }
