@@ -1,6 +1,6 @@
 import { neon, neonConfig } from "@neondatabase/serverless"
 
-neonConfig.fetchConnectionCache = true
+neonConfig.disableWarningInBrowsers = true
 
 if (!process.env.NEON_NEON_DATABASE_URL) {
   throw new Error("NEON_DATABASE_URL environment variable is required")

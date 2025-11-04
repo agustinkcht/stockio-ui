@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { Sidebar } from "@/components/layout/sidebar"
 import { TopNav } from "@/components/layout/top-nav"
 import { DynamicBar } from "@/components/layout/dynamic-bar"
@@ -20,7 +21,9 @@ import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 import type { Item } from "@/lib/types"
 
 export default function Page() {
-  // Initialize all hooks
+  const [isSaving, setIsSaving] = useState(false)
+  const [itemCreated, setItemCreated] = useState(false)
+
   const {
     items,
     depositStock,
@@ -33,6 +36,7 @@ export default function Page() {
     saveDelete,
     hasUnsavedDeletes,
     deletedItems,
+    isCreatingItem,
   } = useItems()
 
   const { itemSelected, selectAllActive, hasSelectedItems, handleItemButtonClick, handleSelectAllClick } =
@@ -125,17 +129,26 @@ export default function Page() {
   }
 
   const handleGuardar = async () => {
-    const changes = changeTracker.saveAll()
+    setIsSaving(true)
 
-    if (hasUnsavedDeletes) {
-      await saveDelete()
+    try {
+      const changes = changeTracker.saveAll()
+
+      if (hasUnsavedDeletes) {
+        await saveDelete()
+      }
+
+      // TODO: Save other changes to database
+
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+    } finally {
+      setIsSaving(false)
     }
-
-    // TODO: Save other changes to database
   }
 
   const handleDeleteWithTracking = (item: Item) => {
-    changeTracker.trackChange("delete", item)
+    const originalIndex = items.findIndex((i) => i.sku === item.sku)
+    changeTracker.trackChange("delete", item, { originalIndex })
     deleteItem(item)
   }
 
@@ -173,6 +186,22 @@ export default function Page() {
     } else if (tabId === "nuevo-item-variantes") {
       handleRestoreNuevoItemConVariantes()
     }
+  }
+
+  const handleCreateItemWithSuccess = async (itemTitulo: string, itemTemplate: string, handleClose: () => void) => {
+    await handleCreateNuevoItem(itemTitulo, itemTemplate, handleClose)
+    setItemCreated(true)
+    setTimeout(() => setItemCreated(false), 100)
+  }
+
+  const handleCreateItemConVariantesWithSuccess = async (
+    itemTitulo: string,
+    itemTemplate: string,
+    handleClose: () => void,
+  ) => {
+    await handleCreateNuevoItemConVariantes(itemTitulo, itemTemplate, handleClose)
+    setItemCreated(true)
+    setTimeout(() => setItemCreated(false), 100)
   }
 
   return (
@@ -217,6 +246,8 @@ export default function Page() {
           onRedo={handleRedo}
           onDeshacer={handleDeshacer}
           onGuardar={handleGuardar}
+          isSaving={isSaving}
+          itemCreated={itemCreated}
         />
 
         {/* Toolbar (only show when no item is selected) */}
@@ -266,7 +297,6 @@ export default function Page() {
               toggleVariantExpansion={toggleVariantExpansion}
               updateDepositStock={updateDepositStock}
               depositStock={depositStock}
-              // Pass deleteItem handler to ItemsGrid
               onDeleteItem={handleDeleteWithTracking}
             />
           )}
@@ -287,7 +317,8 @@ export default function Page() {
         setItemTemplate={setItemTemplate}
         itemUbicacion={itemUbicacion}
         setItemUbicacion={setItemUbicacion}
-        handleCreateNuevoItem={handleCreateNuevoItem}
+        handleCreateNuevoItem={handleCreateItemWithSuccess}
+        isCreatingItem={isCreatingItem}
       />
 
       <NuevoItemConVariantesModal
@@ -304,7 +335,8 @@ export default function Page() {
         setItemTemplate={setItemTemplate}
         itemUbicacion={itemUbicacion}
         setItemUbicacion={setItemUbicacion}
-        handleCreateNuevoItemConVariantes={handleCreateNuevoItemConVariantes}
+        handleCreateNuevoItemConVariantes={handleCreateItemConVariantesWithSuccess}
+        isCreatingItem={isCreatingItem}
       />
     </div>
   )

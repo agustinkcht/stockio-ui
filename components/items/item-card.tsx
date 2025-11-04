@@ -214,7 +214,7 @@ export function ItemCard({
                 onClick={(e) => {
                   e.stopPropagation()
                 }}
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-gray-400 hover:text-white transition-colors cursor-pointer"
               >
                 <Pencil className="w-4 h-4" />
               </button>
@@ -225,7 +225,7 @@ export function ItemCard({
                     onDelete(item)
                   }
                 }}
-                className="text-gray-400 hover:text-red-400 transition-colors"
+                className="text-gray-400 hover:text-red-400 transition-colors cursor-pointer"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -233,7 +233,7 @@ export function ItemCard({
                 <DropdownMenuTrigger asChild>
                   <button
                     onClick={(e) => e.stopPropagation()}
-                    className="text-gray-400 hover:text-white transition-colors"
+                    className="text-gray-400 hover:text-white transition-colors cursor-pointer"
                   >
                     <MoreHorizontal className="w-4 h-4" />
                   </button>

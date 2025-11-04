@@ -2,6 +2,7 @@
 
 import { Plus, Edit, Upload, ArrowLeftRight, Pencil, Trash2, Grid3x3, Layers, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useRef } from "react"
 
 interface ToolbarProps {
   showNuevoDropdown: boolean
@@ -34,13 +35,44 @@ export function Toolbar({
   setGridSizeDropdownOpen,
   setGridSize,
 }: ToolbarProps) {
+  const nuevoTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const accionesTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  const handleNuevoMouseLeave = () => {
+    nuevoTimeoutRef.current = setTimeout(() => {
+      setShowNuevoDropdown(false)
+    }, 150)
+  }
+
+  const handleNuevoMouseEnter = () => {
+    if (nuevoTimeoutRef.current) {
+      clearTimeout(nuevoTimeoutRef.current)
+      nuevoTimeoutRef.current = null
+    }
+    setShowNuevoDropdown(true)
+  }
+
+  const handleAccionesMouseLeave = () => {
+    accionesTimeoutRef.current = setTimeout(() => {
+      setShowAccionesDropdown(false)
+    }, 150)
+  }
+
+  const handleAccionesMouseEnter = () => {
+    if (accionesTimeoutRef.current) {
+      clearTimeout(accionesTimeoutRef.current)
+      accionesTimeoutRef.current = null
+    }
+    setShowAccionesDropdown(true)
+  }
+
   return (
     <div className="fixed top-22 right-0 left-0 bg-gray-950 z-20" style={{ marginLeft: "4rem" }}>
       {/* Action Toolbar */}
-      <div className="border-b border-gray-800 flex items-center justify-between py-0 h-11">
+      <div className="border-b border-gray-800 flex items-center justify-between py-0 h-12">
         <div className="flex items-center gap-2 pl-8">
           <div className="relative">
-            <div onMouseEnter={() => setShowNuevoDropdown(true)} onMouseLeave={() => setShowNuevoDropdown(false)}>
+            <div onMouseEnter={handleNuevoMouseEnter} onMouseLeave={handleNuevoMouseLeave}>
               <Button
                 variant="outline"
                 size="sm"
@@ -78,7 +110,7 @@ export function Toolbar({
           </div>
 
           <div className="relative">
-            <div onMouseEnter={() => setShowAccionesDropdown(true)} onMouseLeave={() => setShowAccionesDropdown(false)}>
+            <div onMouseEnter={handleAccionesMouseEnter} onMouseLeave={handleAccionesMouseLeave}>
               <Button
                 variant="outline"
                 size="sm"

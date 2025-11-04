@@ -5,12 +5,23 @@ import type { Item, DepositStockMap } from "@/lib/types"
 import { TEMPLATES } from "@/lib/constants"
 import { INITIAL_ITEMS } from "@/lib/data/initial-items"
 
+interface DeletedItemWithPosition {
+  item: Item
+  originalIndex: number
+}
+
 export function useItems() {
   const [items, setItems] = useState<Item[]>([])
   const [depositStock, setDepositStock] = useState<DepositStockMap>({})
   const [isLoading, setIsLoading] = useState(true)
-  const [deletedItems, setDeletedItems] = useState<Item[]>([])
+  const [deletedItems, setDeletedItems] = useState<DeletedItemWithPosition[]>([])
   const [hasUnsavedDeletes, setHasUnsavedDeletes] = useState(false)
+  const [isCreatingItem, setIsCreatingItem] = useState(false)
+
+  useEffect(() => {
+    console.log("[v0] useItems - hasUnsavedDeletes changed to:", hasUnsavedDeletes)
+    console.log("[v0] useItems - deletedItems count:", deletedItems.length)
+  }, [hasUnsavedDeletes, deletedItems])
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -129,6 +140,8 @@ export function useItems() {
       return
     }
 
+    setIsCreatingItem(true)
+
     const generateSku = () => {
       const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
       let sku = ""
@@ -181,7 +194,7 @@ export function useItems() {
       })
 
       if (response.ok) {
-        setItems([...items, newItem])
+        setItems([newItem, ...items])
         handleClose()
       } else {
         console.error("[v0] Failed to create item")
@@ -190,6 +203,8 @@ export function useItems() {
     } catch (error) {
       console.error("[v0] Error creating item:", error)
       alert("Error al crear el item")
+    } finally {
+      setIsCreatingItem(false)
     }
   }
 
@@ -202,6 +217,8 @@ export function useItems() {
       alert("El título es obligatorio")
       return
     }
+
+    setIsCreatingItem(true)
 
     const generateSku = () => {
       const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -254,7 +271,7 @@ export function useItems() {
       })
 
       if (response.ok) {
-        setItems([...items, newItem])
+        setItems([newItem, ...items])
         handleClose()
       } else {
         console.error("[v0] Failed to create item with variants")
@@ -263,6 +280,8 @@ export function useItems() {
     } catch (error) {
       console.error("[v0] Error creating item with variants:", error)
       alert("Error al crear el item con variantes")
+    } finally {
+      setIsCreatingItem(false)
     }
   }
 
@@ -287,33 +306,60 @@ export function useItems() {
   }
 
   const deleteItem = (itemToDelete: Item) => {
-    setDeletedItems((prev) => [...prev, itemToDelete])
+    console.log("[v0] useItems - deleteItem called for:", itemToDelete.name)
+    const originalIndex = items.findIndex((item) => item.sku === itemToDelete.sku)
+    console.log("[v0] useItems - originalIndex:", originalIndex)
+    setDeletedItems((prev) => {
+      const newDeleted = [...prev, { item: itemToDelete, originalIndex }]
+      console.log("[v0] useItems - setDeletedItems, new count:", newDeleted.length)
+      return newDeleted
+    })
     setItems((prevItems) => prevItems.filter((item) => item.sku !== itemToDelete.sku))
+    console.log("[v0] useItems - setting hasUnsavedDeletes to true")
     setHasUnsavedDeletes(true)
   }
 
   const undoDelete = () => {
-    setItems((prevItems) => [...prevItems, ...deletedItems])
+    if (deletedItems.length === 0) return
+
+    console.log("[v0] useItems - undoDelete called")
+    setItems((prevItems) => {
+      const newItems = [...prevItems]
+      const sortedDeleted = [...deletedItems].sort((a, b) => a.originalIndex - b.originalIndex)
+
+      sortedDeleted.forEach(({ item, originalIndex }) => {
+        newItems.splice(originalIndex, 0, item)
+      })
+
+      return newItems
+    })
+
     setDeletedItems([])
     setHasUnsavedDeletes(false)
   }
 
   const saveDelete = async () => {
-    try {
-      for (const item of deletedItems) {
-        const response = await fetch(`/api/items/${item.sku}`, {
-          method: "DELETE",
-        })
+    if (deletedItems.length === 0) return
 
-        if (!response.ok) {
-          alert(`Error al eliminar el item ${item.name}`)
-          return
-        }
+    console.log("[v0] useItems - saveDelete called")
+    try {
+      const skus = deletedItems.map(({ item }) => item.sku)
+
+      const response = await fetch("/api/items/batch-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ skus }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to delete items")
       }
 
       setDeletedItems([])
       setHasUnsavedDeletes(false)
     } catch (error) {
+      console.error("Error deleting items:", error)
+      undoDelete()
       alert("Error al eliminar los items")
     }
   }
@@ -333,5 +379,6 @@ export function useItems() {
     saveDelete,
     hasUnsavedDeletes,
     deletedItems,
+    isCreatingItem,
   }
 }

@@ -35,10 +35,10 @@ export function Sidebar({
   return (
     <div className="w-16 bg-gray-900 border-r border-gray-800 px-2 h-screen transition-all duration-300 flex flex-col fixed left-0 top-0 z-40">
       <div className="flex items-center justify-center py-4">
-        <img src="/images/stockio-icon.png" alt="Stockio" className="w-10 mt-0.5" />
+        <img src="/images/stockio-icon.png" alt="Stockio" className="w-8 mt-[7px] mb-[7px]" />
       </div>
 
-      <div className="w-full h-px bg-gray-700 mb-1 mt-1" />
+      <div className="w-full h-px bg-gray-700 opacity-30 mt-0 mb-1" />
 
       {/* Search icon */}
       <div className="relative mb-2" onMouseEnter={handleSearchMouseEnter} onMouseLeave={handleSearchMouseLeave}>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 
 export type ChangeType = "delete" | "edit" | "add"
 
@@ -18,6 +18,11 @@ export function useChangeTracker() {
   const [historyIndex, setHistoryIndex] = useState(-1)
 
   const hasUnsavedChanges = changes.length > 0
+
+  useEffect(() => {
+    console.log("[v0] useChangeTracker - changes count:", changes.length)
+    console.log("[v0] useChangeTracker - hasUnsavedChanges:", hasUnsavedChanges)
+  }, [changes, hasUnsavedChanges])
 
   const trackChange = useCallback(
     (type: ChangeType, data: any, previousData?: any) => {
