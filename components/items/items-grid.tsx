@@ -75,25 +75,25 @@ export function ItemsGrid({
   return (
     <>
       <div
-        className="fixed top-[84px] h-24 bg-slate-50 z-20 transition-all duration-300"
+        className="fixed top-[84px] h-[206px] bg-slate-50 z-[5] transition-all duration-300"
         style={{
           left: isExpanded ? "288px" : "96px",
-          width: isExpanded ? "calc(100% - 352px)" : "calc(100% - 160px)",
+          width: isExpanded ? "calc(100% - 324px)" : "calc(100% - 132px)",
         }}
       />
 
-      {/* Tab Section - Made sticky with z-10 */}
+      {/* Tab Buttons Section - Card with white background and rounded borders */}
       <div
-        className="fixed top-[180px] px-4 pb-2 bg-gradient-to-b from-white via-white to-[#f8f9fa] border-l border-r border-t border-gray-200 rounded-t-lg z-10 transition-all duration-300 shadow-none"
+        className="fixed top-[180px] px-4 bg-white border rounded-lg z-[15] transition-all duration-300 pb-0 shadow-sm border-[rgba(228,230,235,0.5)]"
         style={{
           left: isExpanded ? "288px" : "96px",
-          width: isExpanded ? "calc(100% - 352px)" : "calc(100% - 160px)",
+          width: isExpanded ? "calc(100% - 324px)" : "calc(100% - 132px)",
         }}
       >
         <div className="px-4 pt-3">
-          <div className="flex items-center justify-between border-b border-gray-200 pb-2.5">
+          <div className="flex items-center justify-between border-b border-gray-200 pb-2.5 pr-5 pl-2 border-none">
             {/* Left: Massive Actions */}
-            <div className="flex items-center gap-2 border-0 border-none">
+            <div className="flex items-center gap-2 border-0 border-none ml-1.5 mr-0">
               <Button
                 variant="ghost"
                 size="sm"
@@ -117,16 +117,6 @@ export function ItemsGrid({
                   {/* Vertical divider line */}
                   <div className="h-6 w-px bg-gray-300 mx-2" />
 
-                  {/* Eliminar button - only visible when items selected */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer bg-[rgba(194,-16,-16,0.7)] text-slate-200"
-                  >
-                    <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-                    Eliminar
-                  </Button>
-
                   {/* Agregar a colección button - only visible when items selected */}
                   <Button
                     variant="ghost"
@@ -136,6 +126,15 @@ export function ItemsGrid({
                     <Layers className="w-3.5 h-3.5 mr-1.5" />
                     Agregar a colección
                   </Button>
+                  {/* Eliminar button - only visible when items selected */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer bg-[rgba(194,-16,-16,0.7)] text-slate-200"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                    Eliminar
+                  </Button>
                 </>
               )}
             </div>
@@ -143,7 +142,7 @@ export function ItemsGrid({
             {/* Right: View Controls - Always active */}
             <div className="flex items-center gap-2">
               {/* Ordenar */}
-              <div className="relative" ref={orderRef}>
+              <div className="relative mr-3" ref={orderRef}>
                 <button
                   onClick={() => setShowOrderDropdown(!showOrderDropdown)}
                   className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 transition-colors group cursor-pointer border border-gray-200/40 shadow-sm rounded-full"
@@ -273,9 +272,17 @@ export function ItemsGrid({
             </div>
           </div>
         </div>
+      </div>
 
+      <div
+        className="fixed top-[236px] px-4 bg-[#f8f9fa] border-gray-200 z-[15] transition-all duration-300 border-l-0 border-r-0 pb-2 pt-2 mt-0.5 bg-slate-50"
+        style={{
+          left: isExpanded ? "288px" : "96px",
+          width: isExpanded ? "calc(100% - 324px)" : "calc(100% - 132px)",
+        }}
+      >
         {/* Tab Header Labels */}
-        <div className="px-0 pb-2 pt-2.5">
+        <div className="px-0">
           <div className="flex items-center gap-2">
             {/* All selector with same left offset as item checkboxes */}
             <button
@@ -293,10 +300,10 @@ export function ItemsGrid({
                 <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Título</span>
               </div>
               <div className="col-span-2 flex items-center justify-center px-4 py-2 border-solid border-r border-slate-300">
-                <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Categoría</span>
+                <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Marca</span>
               </div>
               <div className="col-span-2 flex items-center justify-center px-4 py-2 border-solid border border-b-0 border-t-0 border-l-0 border-slate-300">
-                <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Marca</span>
+                <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Categoría</span>
               </div>
               <div className="col-span-3 flex items-center justify-center px-4 py-2 border-solid border-r border-slate-300">
                 <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Atributos</span>
@@ -307,19 +314,17 @@ export function ItemsGrid({
             </div>
 
             {/* Spacer matching item card more options menu width */}
-            <div className="flex items-center gap-2 px-3">
+            <div className="flex items-center gap-2 pl-3">
               <div className="w-4"></div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="h-[192px]" />
-
-      <div className="h-[2px]" />
+      <div className="h-[180px]" />
 
       {/* Items Grid - scrollable area */}
-      <div className="pb-4 pl-[18px] pr-12">
+      <div className="pb-4 pl-[18px] pr-2">
         <div className={gridSize === "lg" ? "space-y-2" : "space-y-0"}>
           {items.map((item, index) => (
             <ItemCard

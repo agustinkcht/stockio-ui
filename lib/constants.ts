@@ -112,13 +112,13 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     icon: Store,
     label: "Mi Negocio",
     hasDropdown: true,
-    dropdownItems: ["Punto de Venta", "Cajas", "Facturación", "Presupuestos", "Clientes"],
+    dropdownItems: ["Punto de Venta", "Facturación", "Cajas", "Presupuestos"],
   },
   {
     icon: ShoppingBag,
-    label: "Canales de Venta",
+    label: "Ventas",
     hasDropdown: true,
-    dropdownItems: ["Ventas", "Facturación", "Compradores"],
+    dropdownItems: ["Ventas", "Clientes"],
   },
   {
     icon: Slack,
@@ -127,17 +127,17 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     dropdownItems: ["Envíos", "Cambios y Devoluciones", "Cancelaciones"],
   },
   {
+    icon: Box,
+    label: "Inventario",
+    hasDropdown: true,
+    dropdownItems: ["Artículos", "Colecciones", "Atributos", "Categorías", "Marcas", "Depósitos"],
+    active: true,
+  },
+  {
     icon: Tag,
     label: "Precios",
     hasDropdown: true,
     dropdownItems: ["Listas de Precios", "Gestión de Ofertas"],
-  },
-  {
-    icon: Box,
-    label: "Inventario",
-    hasDropdown: true,
-    dropdownItems: ["Artículos", "Colecciones", "Categorías", "Marcas", "Atributos", "Depósitos"],
-    active: true,
   },
   {
     icon: PackagePlus,

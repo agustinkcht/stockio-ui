@@ -117,21 +117,6 @@ export function ItemCard({
             )}
           </div>
 
-          {/* Categoría Column */}
-          <div
-            className={`col-span-2 h-full flex items-center justify-center border-r bg-white ${
-              item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
-            } px-4`}
-          >
-            <span
-              className={`${gridSize === "sm" ? "text-sm" : "text-sm"} ${
-                item.hasVariants || item.isAgrupador ? "text-container-item-foreground" : "text-foreground"
-              }`}
-            >
-              {item.categoria || "-"}
-            </span>
-          </div>
-
           {/* Marca Column */}
           <div
             className={`col-span-2 h-full flex items-center justify-center border-r bg-white ${
@@ -144,6 +129,21 @@ export function ItemCard({
               }`}
             >
               {item.marca || "-"}
+            </span>
+          </div>
+
+          {/* Categoría Column */}
+          <div
+            className={`col-span-2 h-full flex items-center justify-center border-r bg-white ${
+              item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
+            } px-4`}
+          >
+            <span
+              className={`${gridSize === "sm" ? "text-sm" : "text-sm"} ${
+                item.hasVariants || item.isAgrupador ? "text-container-item-foreground" : "text-foreground"
+              }`}
+            >
+              {item.categoria || "-"}
             </span>
           </div>
 

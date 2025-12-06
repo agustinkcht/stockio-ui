@@ -118,7 +118,7 @@ export function Sidebar({
           <div
             key={index}
             className={`relative transition-all duration-300 ${
-              hoveredDropdown !== null && hoveredDropdown !== index && !hoveredSearch ? "blur-[1.5px] opacity-25" : ""
+              hoveredDropdown !== null && hoveredDropdown !== index && !hoveredSearch ? "blur-[1px] opacity-25" : ""
             }`}
             onMouseEnter={() => item.hasDropdown && !isExpanded && handleDropdownMouseEnter(index)}
             onMouseLeave={() => item.hasDropdown && !isExpanded && handleDropdownMouseLeave()}
@@ -127,7 +127,7 @@ export function Sidebar({
               <button
                 onClick={() => item.hasDropdown && handleDropdownMouseEnter(index)}
                 className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-md transition-colors bg-transparent cursor-pointer ${
-                  item.active
+                  item.active || hoveredDropdown === index
                     ? "bg-gray-100 text-sidebar-foreground"
                     : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-gray-100"
                 }`}
@@ -191,7 +191,7 @@ export function Sidebar({
             )}
 
             {isExpanded && item.hasDropdown && hoveredDropdown === index && (
-              <div className="ml-8 space-y-0.5 animate-in fade-in-0 slide-in-from-top-1 duration-200">
+              <div className="absolute left-0 right-0 top-full mt-1 space-y-0.5 animate-in fade-in-0 slide-in-from-top-1 duration-200 z-[100] rounded-md border border-border shadow-sm py-1 bg-slate-100">
                 {(searchQuery ? getFilteredDropdownItems(item.dropdownItems) : item.dropdownItems).map(
                   (dropdownItem, dropdownIndex) => (
                     <button

@@ -66,29 +66,37 @@ export function Toolbar({
     >
       <div className="px-8 pt-6 pb-2 flex justify-start bg-transparent">
         <div className="h-12 bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50 shadow-sm px-4 flex items-center gap-3 transition-all duration-300 mb-0">
-          {hasSelectedItems && (
-            <div className="flex items-center gap-2 pr-3 border-r border-gray-200 animate-in fade-in-0 slide-in-from-left-5 duration-300">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 text-xs hover:bg-gray-100 transition-colors cursor-pointer"
-              >
-                <Pencil className="w-3.5 h-3.5 mr-1.5" />
-                Editar
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 text-xs hover:bg-gray-100 transition-colors cursor-pointer"
-              >
-                <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-                Eliminar
-              </Button>
+          <div className="flex items-center gap-2 pl-5 pr-1">
+            <div className="relative w-80 mr-2">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black opacity-100 w-3.5 h-3.5 z-10" />
+              <input
+                type="text"
+                placeholder="Buscar artículos..."
+                className="w-full h-8 pl-9 pr-3 border shadow-sm rounded-md text-xs placeholder:text-gray-600 text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 bg-white backdrop-blur-sm transition-all border-[rgba(202,213,227,0.842391304347826)]"
+              />
             </div>
-          )}
 
-          <div className="flex items-center gap-2">
+            {hasSelectedItems && (
+              <div className="flex items-center gap-2 pr-3 border-r border-gray-200 animate-in fade-in-0 slide-in-from-left-5 duration-300">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-xs hover:bg-gray-100 transition-colors cursor-pointer"
+                >
+                  <Pencil className="w-3.5 h-3.5 mr-1.5" />
+                  Editar
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2 hover:bg-gray-100 transition-colors cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            )}
+
             <div className="relative" ref={nuevoRef}>
               <Button
                 variant="ghost"
@@ -124,15 +132,6 @@ export function Toolbar({
                   </div>
                 </div>
               )}
-            </div>
-
-            <div className="relative w-80 mx-2">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black opacity-100 w-3.5 h-3.5 z-10" />
-              <input
-                type="text"
-                placeholder="Buscar artículos..."
-                className="w-full h-8 pl-9 pr-3 border shadow-sm rounded-md text-xs placeholder:text-gray-600 text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 bg-white backdrop-blur-sm transition-all border-[rgba(202,213,227,0.842391304347826)]"
-              />
             </div>
 
             <div className="relative" ref={moreOptionsRef}>
