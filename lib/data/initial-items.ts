@@ -2,7 +2,8 @@ import type { Item } from "../types"
 
 export const INITIAL_ITEMS: Item[] = [
   {
-    name: "Item Sin Atributos 1",
+    name: "Champagne Domiciano",
+    categoria: "Espumantes",
     stock: {
       total: "45",
       reservado: "8",
@@ -10,19 +11,180 @@ export const INITIAL_ITEMS: Item[] = [
     },
     hasVariants: false,
     isAgrupador: false,
-    sku: "aB12cD34e56",
+    sku: "CHAM-DOMI-CHAR-2019",
     codigoUniversal: "7501234567890",
-    marca: "",
+    marca: "Domiciano",
     proveedor: "",
     codigoProveedor: "",
-    atributosPrincipales: [],
+    atributosPrincipales: [
+      { key: "Varietal", value: ["Chardonnay"] },
+      { key: "Año", value: ["2019"] },
+    ],
     atributosInformativos: [],
   },
   {
-    name: "Vino Trapiche Gran Medalla",
+    name: "Vino Proemio",
+    categoria: "Vinos",
     hasVariants: true,
     isAgrupador: true,
-    sku: "VINO-TRAPI",
+    sku: "VINO-PROE",
+    marca: "Proemio",
+    proveedor: "Bodega Norton",
+    codigoProveedor: "",
+    formatoVenta: "unidad",
+    volumenActive: true,
+    volumenCantidad: 750,
+    volumenUnidad: "ml",
+    containerAtributosPrincipales: [
+      { key: "Varietal", variantes: ["Malbec", "Cabernet Sauvignon", "Cabernet Franc", "Syrah"] },
+      { key: "Año", variantes: ["2019", "2014"] },
+    ],
+    atributosInformativos: [
+      { key: "Tipo de Vino", value: "Tinto" },
+      { key: "Bodega", value: "Norton" },
+      { key: "Origen", value: "Luján de Cuyo, Mendoza" },
+      { key: "Tiempo en Barrica", value: "12 meses" },
+      { key: "Potencial de Guarda", value: "8 años" },
+      { key: "Enólogo", value: "David Bonomi" },
+    ],
+    variantCount: 6,
+    variants: [
+      {
+        name: "Vino Proemio",
+        sku: "VINO-PROE-MALB-2019",
+        codigoUniversal: "",
+        categoria: "Vinos",
+        marca: "Proemio",
+        atributosPrincipales: [
+          { key: "Varietal", value: "Malbec" },
+          { key: "Año", value: "2019" },
+        ],
+        stock: {
+          total: "60",
+          reservado: "15",
+          disponible: "45",
+        },
+      },
+      {
+        name: "Vino Proemio",
+        sku: "VINO-PROE-MALB-2014",
+        codigoUniversal: "",
+        categoria: "Vinos",
+        marca: "Proemio",
+        atributosPrincipales: [
+          { key: "Varietal", value: "Malbec" },
+          { key: "Año", value: "2014" },
+        ],
+        stock: {
+          total: "28",
+          reservado: "5",
+          disponible: "23",
+        },
+      },
+      {
+        name: "Vino Proemio",
+        sku: "VINO-PROE-CABE-SAUV-2019",
+        codigoUniversal: "",
+        categoria: "Vinos",
+        marca: "Proemio",
+        atributosPrincipales: [
+          { key: "Varietal", value: "Cabernet Sauvignon" },
+          { key: "Año", value: "2019" },
+        ],
+        stock: {
+          total: "42",
+          reservado: "10",
+          disponible: "32",
+        },
+      },
+      {
+        name: "Vino Proemio",
+        sku: "VINO-PROE-CABE-SAUV-14",
+        codigoUniversal: "",
+        categoria: "Vinos",
+        marca: "Proemio",
+        atributosPrincipales: [
+          { key: "Varietal", value: "Cabernet Sauvignon" },
+          { key: "Año", value: "2014" },
+        ],
+        stock: {
+          total: "19",
+          reservado: "3",
+          disponible: "16",
+        },
+      },
+      {
+        name: "Vino Proemio",
+        sku: "VINO-PROE-CABE-FRAN-2019",
+        codigoUniversal: "",
+        categoria: "Vinos",
+        marca: "Proemio",
+        atributosPrincipales: [
+          { key: "Varietal", value: "Cabernet Franc" },
+          { key: "Año", value: "2019" },
+        ],
+        stock: {
+          total: "35",
+          reservado: "8",
+          disponible: "27",
+        },
+      },
+      {
+        name: "Vino Proemio",
+        sku: "VINO-PROE-CABE-FRAN-2014",
+        codigoUniversal: "",
+        categoria: "Vinos",
+        marca: "Proemio",
+        atributosPrincipales: [
+          { key: "Varietal", value: "Cabernet Franc" },
+          { key: "Año", value: "2014" },
+        ],
+        stock: {
+          total: "24",
+          reservado: "6",
+          disponible: "18",
+        },
+      },
+      {
+        name: "Vino Proemio",
+        sku: "VINO-PROE-SYRA-2014",
+        codigoUniversal: "",
+        categoria: "Vinos",
+        marca: "Proemio",
+        atributosPrincipales: [
+          { key: "Varietal", value: "Syrah" },
+          { key: "Año", value: "2014" },
+        ],
+        stock: {
+          total: "24",
+          reservado: "6",
+          disponible: "18",
+        },
+      },
+      {
+        name: "Vino Proemio",
+        sku: "VINO-PROE-SYRA-2019",
+        codigoUniversal: "",
+        categoria: "Vinos",
+        marca: "Proemio",
+        atributosPrincipales: [
+          { key: "Varietal", value: "Syrah" },
+          { key: "Año", value: "2019" },
+        ],
+        stock: {
+          total: "24",
+          reservado: "6",
+          disponible: "18",
+        },
+      },
+    ],
+  },
+  {
+    name: "Vino Trapiche Gran Medalla",
+    categoria: "Vinos",
+    hasVariants: true,
+    isAgrupador: true,
+    sku: "VINO-TRAP-GRAN-MEDA",
     marca: "Trapiche",
     proveedor: "Grupo Peñaflor",
     codigoProveedor: "",
@@ -45,9 +207,11 @@ export const INITIAL_ITEMS: Item[] = [
     variantCount: 10,
     variants: [
       {
-        name: "Vino Trapiche Gran Medalla Malbec 2014",
-        sku: "VINO-TRAPI-malbec-2014",
+        name: "Vino Trapiche Gran Medalla",
+        sku: "VINO-TRAP-GRAN-MEDA-MALB-2014",
         codigoUniversal: "",
+        categoria: "Vinos",
+        marca: "Trapiche",
         atributosPrincipales: [
           { key: "Varietal", value: "Malbec" },
           { key: "Año", value: "2014" },
@@ -59,9 +223,11 @@ export const INITIAL_ITEMS: Item[] = [
         },
       },
       {
-        name: "Vino Trapiche Gran Medalla Malbec 2020",
-        sku: "VINO-TRAPI-malbec-2020",
+        name: "Vino Trapiche Gran Medalla",
+        sku: "VINO-TRAP-GRAN-MEDA-MALB-2020",
         codigoUniversal: "",
+        categoria: "Vinos",
+        marca: "Trapiche",
         atributosPrincipales: [
           { key: "Varietal", value: "Malbec" },
           { key: "Año", value: "2020" },
@@ -73,9 +239,11 @@ export const INITIAL_ITEMS: Item[] = [
         },
       },
       {
-        name: "Vino Trapiche Gran Medalla Cabernet Sauvignon 2014",
-        sku: "VINO-TRAPI-cabernet-sauvignon-2014",
+        name: "Vino Trapiche Gran Medalla",
+        sku: "VINO-TRAP-GRAN-MEDA-CABE-SAUV-2014",
         codigoUniversal: "",
+        categoria: "Vinos",
+        marca: "Trapiche",
         atributosPrincipales: [
           { key: "Varietal", value: "Cabernet Sauvignon" },
           { key: "Año", value: "2014" },
@@ -87,9 +255,11 @@ export const INITIAL_ITEMS: Item[] = [
         },
       },
       {
-        name: "Vino Trapiche Gran Medalla Cabernet Sauvignon 2020",
-        sku: "VINO-TRAPI-cabernet-sauvignon-2020",
+        name: "Vino Trapiche Gran Medalla",
+        sku: "VINO-TRAP-GRAN-MEDA-CABE-SAUV-2020",
         codigoUniversal: "",
+        categoria: "Vinos",
+        marca: "Trapiche",
         atributosPrincipales: [
           { key: "Varietal", value: "Cabernet Sauvignon" },
           { key: "Año", value: "2020" },
@@ -98,90 +268,6 @@ export const INITIAL_ITEMS: Item[] = [
           total: "29",
           reservado: "6",
           disponible: "23",
-        },
-      },
-      {
-        name: "Vino Trapiche Gran Medalla Cabernet Franc 2014",
-        sku: "VINO-TRAPI-cabernet-franc-2014",
-        codigoUniversal: "",
-        atributosPrincipales: [
-          { key: "Varietal", value: "Cabernet Franc" },
-          { key: "Año", value: "2014" },
-        ],
-        stock: {
-          total: "31",
-          reservado: "7",
-          disponible: "24",
-        },
-      },
-      {
-        name: "Vino Trapiche Gran Medalla Cabernet Franc 2020",
-        sku: "VINO-TRAPI-cabernet-franc-2020",
-        codigoUniversal: "",
-        atributosPrincipales: [
-          { key: "Varietal", value: "Cabernet Franc" },
-          { key: "Año", value: "2020" },
-        ],
-        stock: {
-          total: "22",
-          reservado: "4",
-          disponible: "18",
-        },
-      },
-      {
-        name: "Vino Trapiche Gran Medalla Pinot Noir 2014",
-        sku: "VINO-TRAPI-pinot-noir-2014",
-        codigoUniversal: "",
-        atributosPrincipales: [
-          { key: "Varietal", value: "Pinot Noir" },
-          { key: "Año", value: "2014" },
-        ],
-        stock: {
-          total: "18",
-          reservado: "3",
-          disponible: "15",
-        },
-      },
-      {
-        name: "Vino Trapiche Gran Medalla Pinot Noir 2020",
-        sku: "VINO-TRAPI-pinot-noir-2020",
-        codigoUniversal: "",
-        atributosPrincipales: [
-          { key: "Varietal", value: "Pinot Noir" },
-          { key: "Año", value: "2020" },
-        ],
-        stock: {
-          total: "25",
-          reservado: "5",
-          disponible: "20",
-        },
-      },
-      {
-        name: "Vino Trapiche Gran Medalla Chardonnay 2014",
-        sku: "VINO-TRAPI-chardonnay-2014",
-        codigoUniversal: "",
-        atributosPrincipales: [
-          { key: "Varietal", value: "Chardonnay" },
-          { key: "Año", value: "2014" },
-        ],
-        stock: {
-          total: "35",
-          reservado: "9",
-          disponible: "26",
-        },
-      },
-      {
-        name: "Vino Trapiche Gran Medalla Chardonnay 2020",
-        sku: "VINO-TRAPI-chardonnay-2020",
-        codigoUniversal: "",
-        atributosPrincipales: [
-          { key: "Varietal", value: "Chardonnay" },
-          { key: "Año", value: "2020" },
-        ],
-        stock: {
-          total: "41",
-          reservado: "11",
-          disponible: "30",
         },
       },
     ],

@@ -2,6 +2,9 @@
 
 import type { Item, DepositStock } from "@/lib/types"
 import { ItemCard } from "./item-card"
+import { Pencil, Trash2, ArrowUpDown, Filter, Layers, ClipboardCheckIcon } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { useRef, useState, useEffect } from "react"
 
 interface ItemsGridProps {
   items: Item[]
@@ -14,6 +17,12 @@ interface ItemsGridProps {
   updateDepositStock?: (itemSku: string, depositId: string, quantity: number) => void
   depositStock?: DepositStock[]
   onDeleteItem?: (item: Item) => void
+  selectAllActive: boolean
+  handleSelectAllClick: () => void
+  gridSizeDropdownOpen: boolean
+  setGridSizeDropdownOpen: (value: boolean) => void
+  setGridSize: (size: string) => void
+  isExpanded?: boolean
 }
 
 export function ItemsGrid({
@@ -27,25 +36,307 @@ export function ItemsGrid({
   updateDepositStock,
   depositStock,
   onDeleteItem,
+  selectAllActive,
+  handleSelectAllClick,
+  gridSizeDropdownOpen,
+  setGridSizeDropdownOpen,
+  setGridSize,
+  isExpanded = true,
 }: ItemsGridProps) {
+  const massiveActionsRef = useRef<HTMLDivElement>(null)
+  const orderRef = useRef<HTMLDivElement>(null)
+  const filterRef = useRef<HTMLDivElement>(null)
+
+  const [showMassiveActionsDropdown, setShowMassiveActionsDropdown] = useState(false)
+  const [showOrderDropdown, setShowOrderDropdown] = useState(false)
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false)
+
+  const hasSelectedItems = itemSelected.some((selected) => selected)
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (massiveActionsRef.current && !massiveActionsRef.current.contains(event.target as Node)) {
+        setShowMassiveActionsDropdown(false)
+      }
+      if (orderRef.current && !orderRef.current.contains(event.target as Node)) {
+        setShowOrderDropdown(false)
+      }
+      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
+        setShowFilterDropdown(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [])
+
   return (
-    <div className={`px-8 flex flex-col pb-8 mt-1 ${gridSize === "lg" ? "gap-2" : "gap-0"}`}>
-      <div className={gridSize === "lg" ? "space-y-2" : "space-y-0"}>
-        {items.map((item, index) => (
-          <ItemCard
-            key={index}
-            item={item}
-            index={index}
-            gridSize={gridSize}
-            isSelected={itemSelected[index]}
-            isExpanded={expandedItems[index]}
-            onSelectClick={handleItemButtonClick}
-            onItemClick={handleItemClick}
-            onToggleExpansion={toggleVariantExpansion}
-            onDelete={onDeleteItem}
-          />
-        ))}
+    <>
+      <div
+        className="fixed top-[84px] h-24 bg-slate-50 z-20 transition-all duration-300"
+        style={{
+          left: isExpanded ? "288px" : "96px",
+          width: isExpanded ? "calc(100% - 352px)" : "calc(100% - 160px)",
+        }}
+      />
+
+      {/* Tab Section - Made sticky with z-10 */}
+      <div
+        className="fixed top-[180px] px-4 pb-2 bg-gradient-to-b from-white via-white to-[#f8f9fa] border-l border-r border-t border-gray-200 rounded-t-lg z-10 transition-all duration-300 shadow-none"
+        style={{
+          left: isExpanded ? "288px" : "96px",
+          width: isExpanded ? "calc(100% - 352px)" : "calc(100% - 160px)",
+        }}
+      >
+        <div className="px-4 pt-3">
+          <div className="flex items-center justify-between border-b border-gray-200 pb-2.5">
+            {/* Left: Massive Actions */}
+            <div className="flex items-center gap-2 border-0 border-none">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer"
+              >
+                <Pencil className="w-3.5 h-3.5 mr-1.5" />
+                Editor Masivo
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer whitespace-nowrap"
+              >
+                <ClipboardCheckIcon className="w-4 h-4 mr-1.5" />
+                Auditoría de Stock
+              </Button>
+
+              {hasSelectedItems && (
+                <>
+                  {/* Vertical divider line */}
+                  <div className="h-6 w-px bg-gray-300 mx-2" />
+
+                  {/* Eliminar button - only visible when items selected */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer bg-[rgba(194,-16,-16,0.7)] text-slate-200"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                    Eliminar
+                  </Button>
+
+                  {/* Agregar a colección button - only visible when items selected */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer text-slate-200 bg-[rgba(15,23,43,1)]"
+                  >
+                    <Layers className="w-3.5 h-3.5 mr-1.5" />
+                    Agregar a colección
+                  </Button>
+                </>
+              )}
+            </div>
+
+            {/* Right: View Controls - Always active */}
+            <div className="flex items-center gap-2">
+              {/* Ordenar */}
+              <div className="relative" ref={orderRef}>
+                <button
+                  onClick={() => setShowOrderDropdown(!showOrderDropdown)}
+                  className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 transition-colors group cursor-pointer border border-gray-200/40 shadow-sm rounded-full"
+                  title="Ordenar"
+                >
+                  <ArrowUpDown className="w-4 h-4 text-gray-600 group-hover:text-gray-900" />
+                </button>
+                {showOrderDropdown && (
+                  <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-in fade-in-0 slide-in-from-top-2 duration-200">
+                    <div className="py-1">
+                      <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">
+                        A-Z (Alfabético)
+                      </button>
+                      <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">
+                        Z-A (Alfabético inverso)
+                      </button>
+                      <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">
+                        Mayor cantidad de stock
+                      </button>
+                      <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">
+                        Menor cantidad de stock
+                      </button>
+                      <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">
+                        Recientes primero
+                      </button>
+                      <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">
+                        Antiguos primero
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Filtros */}
+              <div className="relative" ref={filterRef}>
+                <button
+                  onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+                  className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 transition-colors group cursor-pointer border border-gray-200/40 shadow-sm rounded-full"
+                  title="Filtros"
+                >
+                  <Filter className="w-4 h-4 text-gray-600 group-hover:text-gray-900" />
+                </button>
+                {showFilterDropdown && (
+                  <div className="absolute right-0 top-full mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-in fade-in-0 slide-in-from-top-2 duration-200">
+                    <div className="p-4 space-y-3">
+                      <div>
+                        <label className="text-xs text-gray-500 uppercase tracking-wide mb-1 block">Tipo</label>
+                        <select className="w-full bg-gray-50 border border-gray-200 rounded text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                          <option value="">Todos</option>
+                          <option value="individual">Items Individuales</option>
+                          <option value="variantes">Items con Variantes</option>
+                          <option value="grupos">Grupos</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500 uppercase tracking-wide mb-1 block">Stock</label>
+                        <select className="w-full bg-gray-50 border border-gray-200 rounded text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                          <option value="">Todos</option>
+                          <option value="disponible">Con Stock Disponible</option>
+                          <option value="sin-stock">Sin Stock</option>
+                          <option value="bajo">Stock Bajo</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500 uppercase tracking-wide mb-1 block">Depósito</label>
+                        <select className="w-full bg-gray-50 border border-gray-200 rounded text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                          <option value="">Todos</option>
+                          <option value="principal">Principal</option>
+                          <option value="secundario">Secundario</option>
+                        </select>
+                      </div>
+                      <div className="pt-2 flex gap-2">
+                        <button className="flex-1 px-3 py-1.5 text-xs bg-gray-900 hover:bg-gray-800 text-white rounded transition-colors cursor-pointer">
+                          Aplicar
+                        </button>
+                        <button className="px-3 py-1.5 text-xs text-gray-600 hover:text-gray-900 transition-colors cursor-pointer">
+                          Limpiar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Grilla */}
+              <div className="relative">
+                <button
+                  onClick={() => setGridSizeDropdownOpen(!gridSizeDropdownOpen)}
+                  className="h-8 px-2.5 flex flex-col items-center justify-center rounded hover:bg-gray-100 transition-colors min-w-[48px] cursor-pointer border shadow-sm border-[rgba(228,230,235,0.6)] rounded-sm"
+                  title="Tamaño de grilla"
+                >
+                  <span className="text-[9px] text-gray-500 uppercase tracking-wider leading-none">Grilla</span>
+                  <span className="text-xs text-gray-900 font-medium uppercase leading-none mt-0.5">{gridSize}</span>
+                </button>
+                {gridSizeDropdownOpen && (
+                  <div className="absolute right-0 top-full mt-1 w-16 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                    <button
+                      onClick={() => {
+                        setGridSize("lg")
+                        setGridSizeDropdownOpen(false)
+                      }}
+                      className="w-full px-3 py-2 text-center text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+                    >
+                      LG
+                    </button>
+                    <button
+                      onClick={() => {
+                        setGridSize("md")
+                        setGridSizeDropdownOpen(false)
+                      }}
+                      className="w-full px-3 py-2 text-center text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+                    >
+                      MD
+                    </button>
+                    <button
+                      onClick={() => {
+                        setGridSize("sm")
+                        setGridSizeDropdownOpen(false)
+                      }}
+                      className="w-full px-3 py-2 text-center text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+                    >
+                      SM
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Tab Header Labels */}
+        <div className="px-0 pb-2 pt-2.5">
+          <div className="flex items-center gap-2">
+            {/* All selector with same left offset as item checkboxes */}
+            <button
+              onClick={handleSelectAllClick}
+              className={`relative left-[-8px] h-4.5 w-4.5 transition-colors cursor-pointer flex items-center justify-center border-2 rounded-sm ${
+                selectAllActive
+                  ? "bg-primary border-primary hover:bg-primary/90 hover:border-primary/90"
+                  : "bg-transparent border-border hover:border-muted-foreground"
+              }`}
+            ></button>
+
+            {/* Tab header matching exact item card structure */}
+            <div className="flex-1 grid grid-cols-14 h-9 bg-slate-100 border border-gray-300 rounded-xs border-none">
+              <div className="col-span-4 flex items-center px-4 py-2 justify-center border-solid border-r border-slate-300">
+                <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Título</span>
+              </div>
+              <div className="col-span-2 flex items-center justify-center px-4 py-2 border-solid border-r border-slate-300">
+                <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Categoría</span>
+              </div>
+              <div className="col-span-2 flex items-center justify-center px-4 py-2 border-solid border border-b-0 border-t-0 border-l-0 border-slate-300">
+                <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Marca</span>
+              </div>
+              <div className="col-span-3 flex items-center justify-center px-4 py-2 border-solid border-r border-slate-300">
+                <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Atributos</span>
+              </div>
+              <div className="col-span-3 flex items-center justify-center px-4 py-2">
+                <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Stock</span>
+              </div>
+            </div>
+
+            {/* Spacer matching item card more options menu width */}
+            <div className="flex items-center gap-2 px-3">
+              <div className="w-4"></div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+
+      <div className="h-[192px]" />
+
+      <div className="h-[2px]" />
+
+      {/* Items Grid - scrollable area */}
+      <div className="pb-4 pl-[18px] pr-12">
+        <div className={gridSize === "lg" ? "space-y-2" : "space-y-0"}>
+          {items.map((item, index) => (
+            <ItemCard
+              key={index}
+              item={item}
+              index={index}
+              gridSize={gridSize}
+              isSelected={itemSelected[index]}
+              isExpanded={expandedItems[index]}
+              onSelectClick={handleItemButtonClick}
+              onItemClick={handleItemClick}
+              onToggleExpansion={toggleVariantExpansion}
+              onDelete={onDeleteItem}
+            />
+          ))}
+        </div>
+      </div>
+    </>
   )
 }

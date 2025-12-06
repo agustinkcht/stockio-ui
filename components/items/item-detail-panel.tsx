@@ -3,10 +3,9 @@
 import { useState, useEffect, useRef } from "react"
 import type React from "react"
 import type { Item } from "@/lib/types"
-import { ChevronDown, ChevronRight, Plus, Copy, ChevronsUpDown, X, Undo2, Redo2 } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
+import { ChevronDown, ChevronRight, Plus, Copy, X, Undo2, Redo2 } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
 import { SAVED_ATRIBUTOS, TEMPLATES, DEPOSITS } from "@/lib/constants"
 // import { Breadcrumb } from "@/components/layout/breadcrumb"
 
@@ -21,6 +20,14 @@ interface ItemDetailPanelProps {
   updateItem: (sku: string, updates: Partial<Item>) => void
   allItems: Item[]
   onDynamicContentChange?: (content: React.ReactNode) => void
+  item: any
+  onClose: () => void
+  onFieldChange: (itemId: string, field: string, value: any) => void
+  isSaving?: boolean
+  onDuplicate?: (item: any) => void
+  onDelete?: (item: any) => void
+  variantChangeHandlers: any
+  isExpanded?: boolean
 }
 
 export function ItemDetailPanel({
@@ -34,16 +41,24 @@ export function ItemDetailPanel({
   updateItem,
   allItems,
   onDynamicContentChange,
+  item,
+  onClose,
+  onFieldChange,
+  isSaving,
+  onDuplicate,
+  onDelete,
+  variantChangeHandlers,
+  isExpanded = true,
 }: ItemDetailPanelProps) {
   const isViewingContainer = selectedItem?.isAgrupador || selectedItem?.hasVariants || false
 
-  const isChildItem =
-    selectedItem?.atributosPrincipales && selectedItem.atributosPrincipales.length > 0 && !isViewingContainer
-  const fatherItem = isChildItem
+  const fatherItem = !isViewingContainer
     ? allItems.find(
         (item) => (item.hasVariants || item.isAgrupador) && item.variants?.some((v: any) => v.sku === selectedItem.sku),
       )
     : null
+
+  const isChildItem = fatherItem !== null && fatherItem !== undefined
 
   const shouldInheritField = (fieldValue: any) => {
     return isChildItem && fatherItem && fieldValue !== undefined && fieldValue !== null && fieldValue !== ""
@@ -54,6 +69,9 @@ export function ItemDetailPanel({
   const isTitleLocked = isChildItem && fatherItem
 
   const [itemTitulo, setItemTitulo] = useState(selectedItem?.name || "")
+  const [categoria, setCategoria] = useState(
+    shouldInheritField(fatherItem?.categoria) ? fatherItem!.categoria : selectedItem?.categoria || "",
+  )
   const [marca, setMarca] = useState(
     shouldInheritField(fatherItem?.marca) ? fatherItem!.marca : selectedItem?.marca || "",
   )
@@ -87,24 +105,17 @@ export function ItemDetailPanel({
   )
   const [codigoProveedor, setCodigoProveedor] = useState(selectedItem?.codigoProveedor || "")
 
-  const [atributosPrincipales, setAtributosPrincipales] = useState<Array<{ key: string; value: string }>>(
-    selectedItem?.atributosPrincipales || [],
-  )
-  const [atributosInformativos, setAtributosInformativos] = useState<Array<{ key: string; value: string }>>(
-    isChildItem && fatherItem?.atributosInformativos
-      ? fatherItem.atributosInformativos.map((fatherAttr) => {
-          // Check if child has this attribute
-          const childAttr = selectedItem?.atributosInformativos?.find((a) => a.key === fatherAttr.key)
-          // If father has a value, use it (locked). If not, use child's value (editable)
-          return {
-            key: fatherAttr.key,
-            value: fatherAttr.value || childAttr?.value || "",
-          }
-        })
-      : selectedItem?.atributosInformativos || [],
-  )
+  const [editingSku, setEditingSku] = useState(false)
+  const [editingCodigoUniversal, setEditingCodigoUniversal] = useState(false)
+  const [skuValue, setSkuValue] = useState(selectedItem.sku || "")
+  const [codigoUniversalValue, setCodigoUniversalValue] = useState(selectedItem.codigoUniversal || "")
+  const [imageView, setImageView] = useState<"imagen" | "descripcion">("imagen")
+
+  const [editingDescripcion, setEditingDescripcion] = useState(false)
+  const [descripcionValue, setDescripcionValue] = useState(selectedItem.descripcion || "")
+
   const [containerAtributosPrincipales, setContainerAtributosPrincipales] = useState<
-    Array<{ key: string; variantes: string[] }>
+    Array<{ key: string; variantes: string[]; keyOpen?: boolean; variantesOpen?: boolean }>
   >(selectedItem?.containerAtributosPrincipales || [])
   const [varianteInput, setVarianteInput] = useState<{ [key: number]: string }>({})
 
@@ -116,6 +127,26 @@ export function ItemDetailPanel({
     isViewingContainer &&
       ((selectedItem?.containerAtributosPrincipales && selectedItem?.containerAtributosPrincipales.length > 0) ||
         (selectedItem?.atributosInformativos && selectedItem?.atributosInformativos.length > 0)),
+  )
+
+  const [atributosPrincipales, setAtributosPrincipales] = useState<
+    Array<{ key: string; value: string; isOpen?: boolean; keyOpen?: boolean }>
+  >(selectedItem?.atributosPrincipales || [])
+
+  const [atributosInformativos, setAtributosInformativos] = useState<
+    Array<{ key: string; value: string; isOpen?: boolean; keyOpen?: boolean }>
+  >(
+    isChildItem && fatherItem?.atributosInformativos
+      ? fatherItem.atributosInformativos.map((fatherAttr) => {
+          // Check if child has this attribute
+          const childAttr = selectedItem?.atributosInformativos?.find((a) => a.key === fatherAttr.key)
+          // If father has a value, use it (locked). If not, use child's value (editable)
+          return {
+            key: fatherAttr.key,
+            value: fatherAttr.value || childAttr?.value || "",
+          }
+        })
+      : selectedItem?.atributosInformativos || [],
   )
 
   const [skuCopied, setSkuCopied] = useState(false)
@@ -174,6 +205,10 @@ export function ItemDetailPanel({
     setCodigoProveedor(state.codigoProveedor)
     setAtributosPrincipales(state.atributosPrincipales)
     setAtributosInformativos(state.atributosInformativos)
+    setSkuValue(state.skuValue)
+    setCodigoUniversalValue(state.codigoUniversalValue)
+    setDescripcionValue(state.descripcionValue) // Added for description
+    setCategoria(state.categoria) // Added for categoria
   }
 
   const saveToHistory = () => {
@@ -191,6 +226,10 @@ export function ItemDetailPanel({
       codigoProveedor,
       atributosPrincipales,
       atributosInformativos,
+      skuValue,
+      codigoUniversalValue,
+      descripcionValue, // Added for description
+      categoria, // Added for categoria
     }
 
     // Remove any future history if we're not at the end
@@ -203,6 +242,7 @@ export function ItemDetailPanel({
 
   const handleSave = () => {
     // Save changes logic here
+    // Assuming updateItem is called elsewhere with the final values from state
     setHasUnsavedChanges(false)
   }
 
@@ -240,6 +280,10 @@ export function ItemDetailPanel({
     codigoProveedor,
     atributosPrincipales,
     atributosInformativos,
+    skuValue,
+    codigoUniversalValue,
+    descripcionValue, // Added for description
+    categoria, // Added for categoria
   ])
 
   // Pass dynamic content to parent
@@ -346,28 +390,21 @@ export function ItemDetailPanel({
         // Check if this variant already exists in selectedItem.variants
         const existingVariant = selectedItem.variants?.find((v: any) => v.sku === combo.sku)
 
-        const titleParts = [selectedItem.name]
-        if (combo.variant1) titleParts.push(combo.variant1)
-        if (combo.variant2) titleParts.push(combo.variant2)
-        const generatedTitle = titleParts.join(" ")
-
         if (existingVariant) {
-          // Keep existing variant data but update atributosPrincipales and name
+          // Keep existing variant data but update		        atributosPrincipales and name
           return {
             ...existingVariant,
             name: selectedItem.name, // Store base title only (father's name)
-            displayTitle: generatedTitle, // Add display title with atributos
             atributosPrincipales: [
               combo.variant1 ? { key: containerAtributosPrincipales[0]?.key || "", value: combo.variant1 } : null,
               combo.variant2 ? { key: containerAtributosPrincipales[1]?.key || "", value: combo.variant2 } : null,
             ].filter(Boolean),
           }
         } else {
-          // Create new variant with default stock and generated title
+          // Create new variant with default stock
           return {
             sku: combo.sku,
             name: selectedItem.name, // Store base title only (father's name)
-            displayTitle: generatedTitle, // Add display title with atributos
             codigoUniversal: combo.codigoUniversal || "",
             descripcion: combo.descripcion || "",
             foto: combo.foto || "",
@@ -433,8 +470,9 @@ export function ItemDetailPanel({
   }
 
   const handleCopySku = async () => {
-    if (selectedItem?.sku) {
-      await navigator.clipboard.writeText(selectedItem.sku)
+    const skuToCopy = editingSku ? skuValue : selectedItem?.sku
+    if (skuToCopy) {
+      await navigator.clipboard.writeText(skuToCopy)
       setSkuCopied(true)
       setTimeout(() => setSkuCopied(false), 2000)
     } else if (isViewingContainer && selectedItem?.name) {
@@ -452,8 +490,9 @@ export function ItemDetailPanel({
   }
 
   const handleCopyCodigoUniversal = async () => {
-    if (selectedItem?.codigoUniversal) {
-      await navigator.clipboard.writeText(selectedItem.codigoUniversal)
+    const codigoUniversalToCopy = editingCodigoUniversal ? codigoUniversalValue : selectedItem?.codigoUniversal
+    if (codigoUniversalToCopy) {
+      await navigator.clipboard.writeText(codigoUniversalToCopy)
       setCodigoUniversalCopied(true)
       setTimeout(() => setCodigoUniversalCopied(false), 2000)
     }
@@ -487,98 +526,216 @@ export function ItemDetailPanel({
     // or directly update the `selectedItem` if it's intended to reflect immediately.
   }
 
+  const handleSkuBlur = () => {
+    if (selectedItem?.sku && editingSku) {
+      updateItem(selectedItem.sku, { sku: skuValue })
+      setEditingSku(false)
+      setHasUnsavedChanges(true)
+    }
+  }
+
+  const handleCodigoUniversalBlur = () => {
+    if (selectedItem?.sku && editingCodigoUniversal) {
+      updateItem(selectedItem.sku, { codigoUniversal: codigoUniversalValue })
+      setEditingCodigoUniversal(false)
+      setHasUnsavedChanges(true)
+    }
+  }
+
+  const handleDescripcionBlur = () => {
+    if (selectedItem?.sku && editingDescripcion) {
+      updateItem(selectedItem.sku, { descripcion: descripcionValue })
+      setEditingDescripcion(false)
+      setHasUnsavedChanges(true)
+    }
+  }
+
   return (
     <>
       {/* <Breadcrumb dynamicContent={null} /> */}
 
-      <div className="px-8 pt-6" style={{ marginTop: "2.5rem" }}>
-        <div className="grid grid-cols-10 gap-0 h-[calc(100vh-5rem)]">
-          {/* Left Column - Item Info */}
-          <div className="col-span-3 flex flex-col gap-4 pr-6 border-r border-gray-700 h-full overflow-y-auto">
-            <div>
-              <h2 className="font-semibold text-white text-lg">
-                {(selectedItem as any).displayTitle || selectedItem.name}
-              </h2>
-              <div className="flex items-center gap-2 mt-2">
-                <p className="text-sm text-gray-400">
-                  {isViewingContainer ? "SKU Padre:" : "SKU:"}{" "}
-                  {isViewingContainer
-                    ? selectedItem.name
-                        .toUpperCase()
-                        .replace(/[^A-Z0-9\s]/g, "")
-                        .split(" ")
-                        .map((word) => word.substring(0, 3))
-                        .join("-")
-                        .substring(0, 15)
-                    : selectedItem.sku}
-                </p>
-                <button
-                  onClick={handleCopySku}
-                  className="text-gray-400 hover:text-white transition-colors"
-                  title="Copiar SKU"
-                >
-                  {skuCopied ? <span className="text-green-500 text-xs">✓</span> : <Copy className="w-3 h-3" />}
-                </button>
-              </div>
-              {!isViewingContainer && selectedItem.codigoUniversal && (
-                <div className="flex items-center gap-2 mt-1">
-                  <p className="text-sm text-gray-400">Código Universal: {selectedItem.codigoUniversal}</p>
-                  <button
-                    onClick={handleCopyCodigoUniversal}
-                    className="text-gray-400 hover:text-white transition-colors"
-                    title="Copiar Código Universal"
-                  >
-                    {codigoUniversalCopied ? (
-                      <span className="text-green-500 text-xs">✓</span>
-                    ) : (
-                      <Copy className="w-3 h-3" />
+      <div className="px-8 pt-6 pb-6 bg-slate-50 min-h-screen">
+        <div className="grid grid-cols-10 gap-24">
+          {/* Left Column - Item Info (suspended card) - Made fixed to stay in place while scrolling */}
+          <div className="col-span-3">
+            <div
+              className="fixed bg-card rounded-xl h-[550px] shadow-lg border border-border overflow-hidden flex flex-col transition-all duration-300"
+              style={{
+                width: isExpanded ? "calc((100vw - 16.5rem) * 0.3 - 1.5rem)" : "calc((100vw - 4rem) * 0.3 - 1.5rem)",
+              }}
+            >
+              <div className="p-6 overflow-y-auto">
+                <div>
+                  <h2 className="font-semibold text-foreground text-lg">{selectedItem.name}</h2>
+                  <div className="flex items-center gap-2 mt-2">
+                    <p className="text-sm text-muted-foreground">
+                      {isViewingContainer ? "SKU Padre:" : "SKU:"}{" "}
+                      {editingSku ? (
+                        <input
+                          type="text"
+                          value={skuValue}
+                          onChange={(e) => setSkuValue(e.target.value)}
+                          onBlur={handleSkuBlur}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleSkuBlur()
+                          }}
+                          className="inline-block w-48 bg-secondary border border-border text-foreground px-2 py-0.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                          autoFocus
+                        />
+                      ) : (
+                        <span
+                          onClick={() => setEditingSku(true)}
+                          className="font-mono text-foreground cursor-pointer hover:underline"
+                        >
+                          {selectedItem?.sku ||
+                            selectedItem?.name
+                              .toUpperCase()
+                              .replace(/[^A-Z0-9\s]/g, "")
+                              .split(" ")
+                              .map((word: string) => word.substring(0, 3))
+                              .join("-")
+                              .substring(0, 15)}
+                        </span>
+                      )}
+                    </p>
+                    {!editingSku && (
+                      <button
+                        onClick={handleCopySku}
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                        title="Copiar SKU"
+                      >
+                        {skuCopied ? <span className="text-success text-xs">✓</span> : <Copy className="h-3.5 w-3.5" />}
+                      </button>
                     )}
-                  </button>
+                  </div>
+
+                  {!isViewingContainer && (
+                    <div className="flex items-center gap-2 mt-1">
+                      <p className="text-sm text-muted-foreground">Código Universal:</p>
+                      {editingCodigoUniversal ? (
+                        <input
+                          type="text"
+                          value={codigoUniversalValue}
+                          onChange={(e) => setCodigoUniversalValue(e.target.value)}
+                          onBlur={handleCodigoUniversalBlur}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleCodigoUniversalBlur()
+                          }}
+                          className="inline-block w-48 bg-secondary border border-border text-foreground px-2 py-0.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                          autoFocus
+                        />
+                      ) : (
+                        <span
+                          onClick={() => setEditingCodigoUniversal(true)}
+                          className="font-mono text-foreground cursor-pointer hover:underline"
+                        >
+                          {selectedItem.codigoUniversal || "N/A"}
+                        </span>
+                      )}
+                      {!editingCodigoUniversal && (
+                        <button
+                          onClick={handleCopyCodigoUniversal}
+                          className="text-muted-foreground hover:text-foreground transition-colors"
+                          title="Copiar Código Universal"
+                          disabled={!selectedItem?.codigoUniversal}
+                        >
+                          {codigoUniversalCopied ? (
+                            <span className="text-success text-xs">✓</span>
+                          ) : (
+                            <Copy className="h-3.5 w-3.5" />
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            <div className="border-t border-gray-800 my-0"></div>
+                <div className="mt-6">
+                  <div className="flex items-center justify-between mb-2 mt-2">
+                    <h3 className="text-sm font-medium text-foreground">Imagen del Producto</h3>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => setImageView("imagen")}
+                        className={`px-2 py-1 text-xs rounded transition-colors ${
+                          imageView === "imagen"
+                            ? "bg-accent text-primary"
+                            : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                        }`}
+                      >
+                        Imagen
+                      </button>
+                      <button
+                        onClick={() => setImageView("descripcion")}
+                        className={`px-2 py-1 text-xs rounded transition-colors ${
+                          imageView === "descripcion"
+                            ? "bg-accent text-primary"
+                            : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                        }`}
+                      >
+                        Descripción
+                      </button>
+                    </div>
+                  </div>
 
-            {/* Image */}
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">Imagen</label>
-              <div className="w-full aspect-square bg-gray-800 rounded-md border border-gray-700 flex items-center justify-center">
-                {selectedItem.image ? (
-                  <img
-                    src={selectedItem.image || "/placeholder.svg"}
-                    alt={selectedItem.name}
-                    className="w-full h-full object-cover rounded-md"
-                  />
-                ) : (
-                  <span className="text-gray-500 text-sm">Sin imagen</span>
-                )}
+                  {imageView === "imagen" ? (
+                    <div className="w-full h-48 bg-accent rounded-lg flex items-center justify-center border-2 border-dashed border-border mt-8">
+                      <span className="text-sm text-muted-foreground">Sin Imagen</span>
+                    </div>
+                  ) : (
+                    <div className="w-full">
+                      {editingDescripcion ? (
+                        <textarea
+                          value={descripcionValue}
+                          onChange={(e) => setDescripcionValue(e.target.value)}
+                          onBlur={handleDescripcionBlur}
+                          className="w-full h-48 bg-secondary border border-border rounded-lg p-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                          placeholder="Agregar descripción del producto..."
+                          autoFocus
+                        />
+                      ) : (
+                        <div
+                          onClick={() => setEditingDescripcion(true)}
+                          className="w-full h-48 bg-secondary border border-border rounded-lg p-3 text-sm text-foreground cursor-text hover:border-muted-foreground overflow-y-auto"
+                        >
+                          {descripcionValue || (
+                            <span className="text-muted-foreground">Click para agregar descripción...</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Rest of the content with updated light mode styling */}
               </div>
-            </div>
-
-            {/* Descripción (moved below Proveedor info for individual items, kept here for containers) */}
-            <div className="flex flex-col gap-2">
-              <label className="text-sm text-gray-400">Descripción</label>
-              <textarea
-                defaultValue={selectedItem.descripcion || ""}
-                className="px-3 py-2 border border-gray-700 rounded-md text-white resize-none bg-gray-900 text-sm h-24"
-                placeholder="Descripción del producto"
-              />
             </div>
           </div>
 
-          {/* Right Column - Tabs */}
-          <div className="col-span-7 flex flex-col pl-6 h-full overflow-hidden">
-            {/* Tab Buttons */}
-            <div className="flex items-center gap-0 h-10 mb-4">
+          {/* Right Column - Tabs and Content */}
+          <div className="col-span-7 flex flex-col w-full ml-0 overflow-hidden">
+            {/* CHANGE: Added background layer to cover gap and hide scrolling content */}
+            <div
+              className="fixed top-[84px] h-6 bg-slate-50 z-20"
+              style={{
+                width: isExpanded ? "calc((100vw - 16.5rem) * 0.7 - 1.5rem)" : "calc((100vw - 4rem) * 0.7 - 1.5rem)",
+              }}
+            />
+
+            {/* Tab Buttons - Made fixed to stay in place while scrolling */}
+            <div
+              className="fixed flex items-center gap-0 h-10 mb-4 bg-slate-50 z-10 transition-all duration-300"
+              style={{
+                width: isExpanded ? "calc((100vw - 16.5rem) * 0.7 - 1.5rem)" : "calc((100vw - 4rem) * 0.7 - 1.5rem)",
+              }}
+            >
               {isViewingContainer ? (
                 <>
                   <button
                     onClick={() => setSelectedDetailTab("info")}
                     className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer ${
                       selectedDetailTab === "info"
-                        ? "border-blue-500 bg-gray-900/30 text-white"
-                        : "border-gray-800 text-gray-400 hover:text-gray-300 hover:bg-gray-900/20"
+                        ? "border-primary bg-accent text-foreground"
+                        : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
                     }`}
                   >
                     <span className="text-sm font-medium uppercase tracking-wider">Info</span>
@@ -587,8 +744,8 @@ export function ItemDetailPanel({
                     onClick={() => setSelectedDetailTab("atributos")}
                     className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer ${
                       selectedDetailTab === "atributos"
-                        ? "border-blue-500 bg-gray-900/30 text-white"
-                        : "border-gray-800 text-gray-400 hover:text-gray-300 hover:bg-gray-900/20"
+                        ? "border-primary bg-accent text-foreground"
+                        : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
                     }`}
                   >
                     <span className="text-sm font-medium uppercase tracking-wider">Atributos</span>
@@ -597,8 +754,8 @@ export function ItemDetailPanel({
                     onClick={() => setSelectedDetailTab("variantes")}
                     className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer ${
                       selectedDetailTab === "variantes"
-                        ? "border-blue-500 bg-gray-900/30 text-white"
-                        : "border-gray-800 text-gray-400 hover:text-gray-300 hover:bg-gray-900/20"
+                        ? "border-primary bg-accent text-foreground"
+                        : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
                     }`}
                   >
                     <span className="text-sm font-medium uppercase tracking-wider">Variantes</span>
@@ -607,8 +764,8 @@ export function ItemDetailPanel({
                     onClick={() => setSelectedDetailTab("stock-variantes")}
                     className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer ${
                       selectedDetailTab === "stock-variantes"
-                        ? "border-blue-500 bg-gray-900/30 text-white"
-                        : "border-gray-800 text-gray-400 hover:text-gray-300 hover:bg-gray-900/20"
+                        ? "border-primary bg-accent text-foreground"
+                        : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
                     }`}
                   >
                     <span className="text-sm font-medium uppercase tracking-wider">Stock</span>
@@ -620,8 +777,8 @@ export function ItemDetailPanel({
                     onClick={() => setSelectedDetailTab("info")}
                     className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer ${
                       selectedDetailTab === "info"
-                        ? "border-blue-500 bg-gray-900/30 text-white"
-                        : "border-gray-800 text-gray-400 hover:text-gray-300 hover:bg-gray-900/20"
+                        ? "border-primary bg-accent text-foreground"
+                        : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
                     }`}
                   >
                     <span className="text-sm font-medium uppercase tracking-wider">Info</span>
@@ -630,8 +787,8 @@ export function ItemDetailPanel({
                     onClick={() => setSelectedDetailTab("atributos")}
                     className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer ${
                       selectedDetailTab === "atributos"
-                        ? "border-blue-500 bg-gray-900/30 text-white"
-                        : "border-gray-800 text-gray-400 hover:text-gray-300 hover:bg-gray-900/20"
+                        ? "border-primary bg-accent text-foreground"
+                        : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
                     }`}
                   >
                     <span className="text-sm font-medium uppercase tracking-wider">Atributos</span>
@@ -640,8 +797,8 @@ export function ItemDetailPanel({
                     onClick={() => setSelectedDetailTab("stock")}
                     className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer ${
                       selectedDetailTab === "stock"
-                        ? "border-blue-500 bg-gray-900/30 text-white"
-                        : "border-gray-800 text-gray-400 hover:text-gray-300 hover:bg-gray-900/20"
+                        ? "border-primary bg-accent text-foreground"
+                        : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
                     }`}
                   >
                     <span className="text-sm font-medium uppercase tracking-wider">Stock</span>
@@ -650,69 +807,64 @@ export function ItemDetailPanel({
               )}
             </div>
 
-            {/* Tab Content */}
-            <div className="flex-1 overflow-y-auto">
+            {/* Tab Content - Added top margin to account for fixed segment buttons */}
+            <div className="flex-1 mt-14">
               {isViewingContainer ? (
                 // Container item tab content
                 <>
                   {selectedDetailTab === "info" && (
                     <div className="h-full flex flex-col py-2">
-                      <h3 className="text-sm font-medium text-gray-300 uppercase tracking-wider mb-3">
+                      <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
                         Información del Producto
                       </h3>
 
                       <div className="space-y-3">
                         <div className="grid grid-cols-2 gap-4">
                           <div className="flex flex-col gap-2">
-                            <label className="text-sm text-gray-400">Título</label>
+                            <label className="text-sm font-medium text-gray-700">Categoría</label>
                             <input
                               type="text"
-                              value={itemTitulo}
-                              onChange={(e) => setItemTitulo(e.target.value)}
-                              disabled={isTitleLocked}
-                              className={`px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                isTitleLocked
-                                  ? "bg-gray-900 border-gray-800 text-gray-400 cursor-not-allowed"
-                                  : "bg-gray-800 border-gray-700 text-white"
-                              }`}
-                              placeholder="Ej: Cierre Metálico"
+                              value={categoria}
+                              onChange={(e) => setCategoria(e.target.value)}
+                              className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900"
+                              placeholder="Ej: Vinos"
                             />
                           </div>
 
                           <div className="flex flex-col gap-2">
-                            <label className="text-sm text-gray-400">Marca</label>
+                            <label className="text-sm font-medium text-gray-700">Marca</label>
                             <input
                               type="text"
                               value={marca}
                               onChange={(e) => setMarca(e.target.value)}
                               disabled={shouldInheritField(fatherItem?.marca)}
-                              className={`px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                              className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                                 shouldInheritField(fatherItem?.marca)
-                                  ? "bg-gray-900 border-gray-800 text-gray-400 cursor-not-allowed"
-                                  : "bg-gray-800 border-gray-700 text-white"
+                                  ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
+                                  : "bg-white border-gray-300 text-gray-900"
                               }`}
                               placeholder="Ej: YKK"
                             />
                           </div>
                         </div>
 
-                        <div className="border-t border-gray-800 my-4"></div>
+                        <div className="border-t border-gray-200 my-4"></div>
 
-                        <h3 className="text-sm font-medium text-gray-300 uppercase tracking-wider mb-3">
+                        <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
                           Presentación
                         </h3>
 
                         <div className="grid grid-cols-2 gap-4">
                           <div className="flex flex-col gap-2">
-                            <label className="text-sm text-gray-400">Formato de venta</label>
+                            <label className="text-sm font-medium text-gray-700">Formato de venta</label>
                             <select
                               value={formatoVenta}
                               onChange={(e) => setFormatoVenta(e.target.value)}
                               disabled={shouldInheritField(fatherItem?.formatoVenta)}
-                              className={`px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none ${
+                              className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none ${
                                 shouldInheritField(fatherItem?.formatoVenta)
-                                  ? "bg-gray-900 border-gray-800 text-gray-400 cursor-not-allowed"
-                                  : "bg-gray-800 border-gray-700 text-white cursor-pointer"
+                                  ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
+                                  : "bg-white border-gray-300 text-gray-900 cursor-pointer"
                               }`}
                             >
                               <option value="unidad">Unidad</option>
@@ -722,12 +874,12 @@ export function ItemDetailPanel({
 
                           <div className="flex flex-col gap-2">
                             <div className="flex items-center gap-2">
-                              <label className="text-sm text-gray-400">Unidades por pack</label>
+                              <label className="text-sm font-medium text-gray-700">Unidades por pack</label>
                               <button
                                 onClick={() => setUnidadesPorPackActive(!unidadesPorPackActive)}
                                 disabled={isUnidadesPorPackLocked}
                                 className={`w-10 h-5 rounded-full transition-colors relative ${
-                                  unidadesPorPackActive ? "bg-blue-500" : "bg-gray-700"
+                                  unidadesPorPackActive ? "bg-blue-500" : "bg-gray-300"
                                 } ${isUnidadesPorPackLocked ? "opacity-50 cursor-not-allowed" : ""}`}
                               >
                                 <div
@@ -746,10 +898,10 @@ export function ItemDetailPanel({
                               }}
                               disabled={!unidadesPorPackActive || isUnidadesPorPackLocked}
                               min="1"
-                              className={`px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                              className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                                 !unidadesPorPackActive || isUnidadesPorPackLocked
-                                  ? "bg-gray-900 border-gray-800 text-gray-600 cursor-not-allowed"
-                                  : "bg-gray-800 border-gray-700 text-white"
+                                  ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
+                                  : "bg-white border-gray-300 text-gray-900"
                               }`}
                               placeholder="1"
                             />
@@ -758,12 +910,12 @@ export function ItemDetailPanel({
 
                         <div className="flex flex-col gap-2">
                           <div className="flex items-center gap-2">
-                            <label className="text-sm text-gray-400">Volumen de la unidad</label>
+                            <label className="text-sm font-medium text-gray-700">Volumen de la unidad</label>
                             <button
                               onClick={() => setVolumenActive(!volumenActive)}
                               disabled={shouldInheritField(fatherItem?.volumenActive)}
                               className={`w-10 h-5 rounded-full transition-colors relative ${
-                                volumenActive ? "bg-blue-500" : "bg-gray-700"
+                                volumenActive ? "bg-blue-500" : "bg-gray-300"
                               } ${shouldInheritField(fatherItem?.volumenActive) ? "opacity-50 cursor-not-allowed" : ""}`}
                             >
                               <div
@@ -777,31 +929,31 @@ export function ItemDetailPanel({
                           {volumenActive && (
                             <div className="grid grid-cols-2 gap-4 mt-2">
                               <div className="flex flex-col gap-2">
-                                <label className="text-sm text-gray-400">Cantidad</label>
+                                <label className="text-sm font-medium text-gray-700">Cantidad</label>
                                 <input
                                   type="number"
                                   value={volumenCantidad}
                                   onChange={(e) => setVolumenCantidad(e.target.value)}
                                   disabled={shouldInheritField(fatherItem?.volumenCantidad)}
-                                  className={`px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                  className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                                     shouldInheritField(fatherItem?.volumenCantidad)
-                                      ? "bg-gray-900 border-gray-800 text-gray-400 cursor-not-allowed"
-                                      : "bg-gray-800 border-gray-700 text-white"
+                                      ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
+                                      : "bg-white border-gray-300 text-gray-900"
                                   }`}
                                   placeholder="0"
                                 />
                               </div>
 
                               <div className="flex flex-col gap-2">
-                                <label className="text-sm text-gray-400">Unidad de medida</label>
+                                <label className="text-sm font-medium text-gray-700">Unidad de medida</label>
                                 <select
                                   value={volumenUnidad}
                                   onChange={(e) => setVolumenUnidad(e.target.value)}
                                   disabled={shouldInheritField(fatherItem?.volumenUnidad)}
-                                  className={`px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none ${
+                                  className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none ${
                                     shouldInheritField(fatherItem?.volumenUnidad)
-                                      ? "bg-gray-900 border-gray-800 text-gray-400 cursor-not-allowed"
-                                      : "bg-gray-800 border-gray-700 text-white cursor-pointer"
+                                      ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
+                                      : "bg-white border-gray-300 text-gray-900 cursor-pointer"
                                   }`}
                                 >
                                   <option value="ml">ml</option>
@@ -817,24 +969,24 @@ export function ItemDetailPanel({
                         </div>
                       </div>
 
-                      <div className="border-t border-gray-800 my-4"></div>
+                      <div className="border-t border-gray-200 my-4"></div>
 
-                      <h3 className="text-sm font-medium text-gray-300 uppercase tracking-wider mb-3">
+                      <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
                         Información del Proveedor
                       </h3>
 
                       <div className="grid grid-cols-2 gap-4">
                         <div className="flex flex-col gap-2">
-                          <label className="text-sm text-gray-400">Proveedor</label>
+                          <label className="text-sm font-medium text-gray-700">Proveedor</label>
                           <input
                             type="text"
                             value={proveedor}
                             onChange={(e) => setProveedor(e.target.value)}
                             disabled={shouldInheritField(fatherItem?.proveedor)}
-                            className={`px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${
+                            className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${
                               shouldInheritField(fatherItem?.proveedor)
-                                ? "bg-gray-900 border-gray-800 text-gray-400 cursor-not-allowed"
-                                : "bg-gray-800 border-gray-700 text-white"
+                                ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
+                                : "bg-white border-gray-300 text-gray-900"
                             }`}
                             placeholder="Nombre del proveedor"
                           />
@@ -842,19 +994,17 @@ export function ItemDetailPanel({
 
                         {!isViewingContainer && (
                           <div className="flex flex-col gap-2">
-                            <label className="text-sm text-gray-400">Código Proveedor</label>
+                            <label className="text-sm font-medium text-gray-700">Código Proveedor</label>
                             <input
                               type="text"
                               value={codigoProveedor}
                               onChange={(e) => setCodigoProveedor(e.target.value)}
-                              className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                              className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                               placeholder="Código del proveedor"
                             />
                           </div>
                         )}
                       </div>
-
-                      {/* Descripción field for container items */}
                     </div>
                   )}
 
@@ -862,22 +1012,30 @@ export function ItemDetailPanel({
                     <div className="h-full flex flex-col py-2">
                       {!showAtributosView ? (
                         <div className="flex flex-col items-center justify-center h-full gap-4">
-                          <p className="text-gray-400 text-sm">No hay atributos configurados</p>
-                          <button
-                            onClick={() => {
-                              setIsSelectingTemplateForContainer(true)
-                              setShowTemplateModal(true)
-                            }}
-                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
-                          >
-                            Usar Template
-                          </button>
+                          <p className="text-gray-500 text-sm">No hay atributos configurados</p>
+                          <div className="flex gap-3">
+                            <button
+                              onClick={() => setShowAtributosView(true)}
+                              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg transition-colors cursor-pointer"
+                            >
+                              Agregar atributos
+                            </button>
+                            <button
+                              onClick={() => {
+                                setIsSelectingTemplateForContainer(true)
+                                setShowTemplateModal(true)
+                              }}
+                              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors cursor-pointer"
+                            >
+                              Usar Template
+                            </button>
+                          </div>
                         </div>
                       ) : (
                         <div className="flex flex-col gap-6">
                           <div className="flex flex-col gap-3">
                             <div>
-                              <h3 className="text-sm font-medium text-gray-300 uppercase tracking-wider mb-3">
+                              <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
                                 Atributos Principales
                               </h3>
                               <p className="text-xs text-gray-500 italic mt-1">
@@ -888,45 +1046,63 @@ export function ItemDetailPanel({
                             {containerAtributosPrincipales.map((attr, index) => (
                               <div key={index} className="flex items-start gap-3">
                                 <div className="flex-1">
-                                  <label className="text-sm text-gray-400 mb-2 block">Atributo</label>
-                                  <Popover>
-                                    <PopoverTrigger asChild>
-                                      <button className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white text-left focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-between">
-                                        <span className={attr.key ? "" : "text-gray-500"}>
-                                          {attr.key || "Ej: Color"}
-                                        </span>
-                                        <ChevronsUpDown className="w-4 h-4 text-gray-500" />
-                                      </button>
-                                    </PopoverTrigger>
+                                  <label className="text-sm font-medium text-gray-700 mb-2 block">Atributo</label>
+                                  <Popover
+                                    open={attr.keyOpen || false}
+                                    onOpenChange={(open) => {
+                                      const updated = [...containerAtributosPrincipales]
+                                      updated[index].keyOpen = open
+                                      setContainerAtributosPrincipales(updated)
+                                    }}
+                                  >
+                                    <div className="relative">
+                                      <input
+                                        type="text"
+                                        value={attr.key}
+                                        onChange={(e) => {
+                                          const updated = [...containerAtributosPrincipales]
+                                          updated[index].key = e.target.value
+                                          setContainerAtributosPrincipales(updated)
+                                        }}
+                                        className="w-full px-3 py-2 pr-9 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Ej: Color"
+                                      />
+                                      {Object.keys(SAVED_ATRIBUTOS).length > 0 && (
+                                        <PopoverTrigger asChild>
+                                          <button
+                                            type="button"
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded cursor-pointer"
+                                            onClick={(e) => {
+                                              e.stopPropagation()
+                                              const updated = [...containerAtributosPrincipales]
+                                              updated[index].keyOpen = !updated[index].keyOpen
+                                              setContainerAtributosPrincipales(updated)
+                                            }}
+                                          >
+                                            <ChevronDown className="w-4 h-4 text-gray-500" />
+                                          </button>
+                                        </PopoverTrigger>
+                                      )}
+                                    </div>
                                     <PopoverContent className="w-[200px] p-0" align="start">
                                       <Command>
-                                        <CommandInput
-                                          placeholder="Buscar o escribir..."
-                                          value={attr.key}
-                                          onValueChange={(value) => {
-                                            const updated = [...containerAtributosPrincipales]
-                                            updated[index].key = value
-                                            setContainerAtributosPrincipales(updated)
-                                          }}
-                                        />
                                         <CommandList>
-                                          <CommandEmpty>Presiona Enter para usar "{attr.key}"</CommandEmpty>
+                                          <CommandEmpty>No hay opciones guardadas</CommandEmpty>
                                           <CommandGroup>
-                                            {Object.keys(SAVED_ATRIBUTOS)
-                                              .filter((key) => key.toLowerCase().includes(attr.key.toLowerCase()))
-                                              .map((key) => (
-                                                <CommandItem
-                                                  key={key}
-                                                  value={key}
-                                                  onSelect={() => {
-                                                    const updated = [...containerAtributosPrincipales]
-                                                    updated[index].key = key
-                                                    setContainerAtributosPrincipales(updated)
-                                                  }}
-                                                >
-                                                  {key}
-                                                </CommandItem>
-                                              ))}
+                                            {Object.keys(SAVED_ATRIBUTOS).map((key) => (
+                                              <CommandItem
+                                                key={key}
+                                                value={key}
+                                                onSelect={() => {
+                                                  const updated = [...containerAtributosPrincipales]
+                                                  updated[index].key = key
+                                                  updated[index].keyOpen = false
+                                                  setContainerAtributosPrincipales(updated)
+                                                }}
+                                              >
+                                                {key}
+                                              </CommandItem>
+                                            ))}
                                           </CommandGroup>
                                         </CommandList>
                                       </Command>
@@ -935,96 +1111,104 @@ export function ItemDetailPanel({
                                 </div>
 
                                 <div className="flex-1">
-                                  <label className="text-sm text-gray-400 mb-2 block">Variantes</label>
+                                  <label className="text-sm font-medium text-gray-700 mb-2 block">Variantes</label>
                                   <div className="space-y-2">
-                                    <Popover>
-                                      <PopoverTrigger asChild>
-                                        <div className="relative">
-                                          <input
-                                            type="text"
-                                            placeholder="Agregar variante..."
-                                            value={varianteInput[index] || ""}
-                                            onChange={(e) => {
-                                              setVarianteInput({ ...varianteInput, [index]: e.target.value })
-                                            }}
-                                            onKeyDown={(e) => {
-                                              if (e.key === "Enter" && varianteInput[index]?.trim()) {
-                                                e.preventDefault()
-                                                const updated = [...containerAtributosPrincipales]
-                                                if (!updated[index].variantes.includes(varianteInput[index].trim())) {
-                                                  updated[index].variantes.push(varianteInput[index].trim())
-                                                  setContainerAtributosPrincipales(updated)
-                                                }
-                                                setVarianteInput({ ...varianteInput, [index]: "" })
-                                              }
-                                            }}
-                                            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                          />
-                                        </div>
-                                      </PopoverTrigger>
-                                      {attr.key &&
-                                        SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS] &&
-                                        varianteInput[index] && (
-                                          <PopoverContent className="w-[200px] p-0" align="start">
-                                            <Command>
-                                              <CommandList>
-                                                <CommandGroup>
-                                                  {SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS]
-                                                    .filter(
-                                                      (val) =>
-                                                        val
-                                                          .toLowerCase()
-                                                          .includes((varianteInput[index] || "").toLowerCase()) &&
-                                                        !attr.variantes.includes(val),
-                                                    )
-                                                    .map((val) => (
-                                                      <CommandItem
-                                                        key={val}
-                                                        value={val}
-                                                        onSelect={() => {
-                                                          const updated = [...containerAtributosPrincipales]
-                                                          if (!updated[index].variantes.includes(val)) {
-                                                            updated[index].variantes.push(val)
-                                                            setContainerAtributosPrincipales(updated)
-                                                          }
-                                                          setVarianteInput({ ...varianteInput, [index]: "" })
-                                                        }}
-                                                      >
-                                                        {val}
-                                                      </CommandItem>
-                                                    ))}
-                                                </CommandGroup>
-                                              </CommandList>
-                                            </Command>
-                                          </PopoverContent>
-                                        )}
-                                    </Popover>
-
-                                    {attr.variantes.length > 0 && (
-                                      <div className="flex flex-wrap gap-2">
-                                        {attr.variantes.map((variante, vIndex) => (
-                                          <Badge
-                                            key={vIndex}
-                                            variant="secondary"
-                                            className="bg-gray-800 text-white border border-gray-700 px-2 py-1 flex items-center gap-1"
-                                          >
-                                            {variante}
+                                    <Popover
+                                      open={attr.variantesOpen || false}
+                                      onOpenChange={(open) => {
+                                        const updated = [...containerAtributosPrincipales]
+                                        updated[index].variantesOpen = open
+                                        setContainerAtributosPrincipales(updated)
+                                      }}
+                                    >
+                                      <div className="relative">
+                                        <input
+                                          type="text"
+                                          value={varianteInput[index] || ""}
+                                          onChange={(e) =>
+                                            setVarianteInput({ ...varianteInput, [index]: e.target.value })
+                                          }
+                                          onKeyDown={(e) => {
+                                            if (e.key === "Enter" && varianteInput[index]?.trim()) {
+                                              const updated = [...containerAtributosPrincipales]
+                                              updated[index].variantes.push(varianteInput[index].trim())
+                                              setContainerAtributosPrincipales(updated)
+                                              setVarianteInput({ ...varianteInput, [index]: "" })
+                                            }
+                                          }}
+                                          placeholder="Ej: Rojo"
+                                          className="w-full px-3 py-2 pr-9 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        />
+                                        {attr.key && SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS] && (
+                                          <PopoverTrigger asChild>
                                             <button
-                                              onClick={() => {
+                                              type="button"
+                                              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded cursor-pointer"
+                                              onClick={(e) => {
+                                                e.stopPropagation()
                                                 const updated = [...containerAtributosPrincipales]
-                                                updated[index].variantes = updated[index].variantes.filter(
-                                                  (_, i) => i !== vIndex,
-                                                )
+                                                updated[index].variantesOpen = !updated[index].variantesOpen
                                                 setContainerAtributosPrincipales(updated)
                                               }}
-                                              className="text-gray-400 hover:text-red-400"
                                             >
-                                              <X className="w-3 h-3" />
+                                              <ChevronDown className="w-4 h-4 text-gray-500" />
                                             </button>
-                                          </Badge>
-                                        ))}
+                                          </PopoverTrigger>
+                                        )}
                                       </div>
-                                    )}
+                                      {attr.key && SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS] && (
+                                        <PopoverContent className="w-[200px] p-0" align="start">
+                                          <Command>
+                                            <CommandList>
+                                              <CommandEmpty>No hay opciones guardadas</CommandEmpty>
+                                              <CommandGroup>
+                                                {SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS].map(
+                                                  (val) => (
+                                                    <CommandItem
+                                                      key={val}
+                                                      value={val}
+                                                      onSelect={() => {
+                                                        const updated = [...containerAtributosPrincipales]
+                                                        if (!updated[index].variantes.includes(val)) {
+                                                          updated[index].variantes.push(val)
+                                                        }
+                                                        updated[index].variantesOpen = false
+                                                        setContainerAtributosPrincipales(updated)
+                                                      }}
+                                                    >
+                                                      {val}
+                                                    </CommandItem>
+                                                  ),
+                                                )}
+                                              </CommandGroup>
+                                            </CommandList>
+                                          </Command>
+                                        </PopoverContent>
+                                      )}
+                                    </Popover>
+
+                                    <div className="flex flex-wrap gap-2">
+                                      {attr.variantes.map((variante, vIndex) => (
+                                        <span
+                                          key={vIndex}
+                                          className="px-3 py-1.5 bg-white border border-gray-300 rounded-md text-gray-900 text-sm flex items-center gap-2"
+                                        >
+                                          {variante}
+                                          <button
+                                            onClick={() => {
+                                              const updated = [...containerAtributosPrincipales]
+                                              updated[index].variantes = updated[index].variantes.filter(
+                                                (_, i) => i !== vIndex,
+                                              )
+                                              setContainerAtributosPrincipales(updated)
+                                            }}
+                                            className="text-gray-400 hover:text-gray-600 cursor-pointer"
+                                          >
+                                            <X className="w-3 h-3" />
+                                          </button>
+                                        </span>
+                                      ))}
+                                    </div>
                                   </div>
                                 </div>
 
@@ -1032,8 +1216,11 @@ export function ItemDetailPanel({
                                   onClick={() => {
                                     const updated = containerAtributosPrincipales.filter((_, i) => i !== index)
                                     setContainerAtributosPrincipales(updated)
+                                    if (updated.length === 0 && atributosInformativos.length === 0) {
+                                      setShowAtributosView(false)
+                                    }
                                   }}
-                                  className="mt-7 text-gray-500 hover:text-red-400 cursor-pointer"
+                                  className="mt-8 text-gray-400 hover:text-red-400 transition-colors cursor-pointer"
                                 >
                                   <X className="w-4 h-4" />
                                 </button>
@@ -1048,7 +1235,7 @@ export function ItemDetailPanel({
                                     { key: "", variantes: [] },
                                   ])
                                 }}
-                                className="w-full px-3 py-2 border border-dashed border-gray-700 rounded-md text-gray-400 hover:text-gray-300 hover:border-gray-600 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                                className="w-full px-3 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 transition-colors flex items-center justify-center gap-2 cursor-pointer"
                               >
                                 <Plus className="w-4 h-4" />
                                 <span className="text-sm">Agregar atributo</span>
@@ -1056,13 +1243,13 @@ export function ItemDetailPanel({
                             )}
                           </div>
 
-                          <div className="flex flex-col gap-3 pt-3 border-t border-gray-800">
+                          <div className="flex flex-col gap-3">
                             <div>
-                              <h3 className="text-sm font-medium text-gray-300 uppercase tracking-wider mb-3">
+                              <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
                                 Atributos Informativos
                               </h3>
                               <p className="text-xs text-gray-500 italic mt-1">
-                                Atributos que describen características generales del producto
+                                Atributos que describen propiedades generales del producto
                               </p>
                             </div>
 
@@ -1074,53 +1261,71 @@ export function ItemDetailPanel({
                               return (
                                 <div key={index} className="flex items-start gap-3">
                                   <div className="flex-1">
-                                    <label className="text-sm text-gray-400 mb-2 block">Atributo</label>
-                                    <Popover>
-                                      <PopoverTrigger asChild>
-                                        <button
+                                    <label className="text-sm font-medium text-gray-700 mb-2 block">Atributo</label>
+                                    <Popover
+                                      open={!isAttributeLocked && (attr.keyOpen || false)}
+                                      onOpenChange={(open) => {
+                                        if (!isAttributeLocked) {
+                                          const updated = [...atributosInformativos]
+                                          updated[index].keyOpen = open
+                                          setAtributosInformativos(updated)
+                                        }
+                                      }}
+                                    >
+                                      <div className="relative">
+                                        <input
+                                          type="text"
+                                          value={attr.key}
+                                          onChange={(e) => {
+                                            if (!isAttributeLocked) {
+                                              const updated = [...atributosInformativos]
+                                              updated[index].key = e.target.value
+                                              setAtributosInformativos(updated)
+                                            }
+                                          }}
                                           disabled={isAttributeLocked}
-                                          className={`w-full px-3 py-2 border rounded-md text-left focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-between ${
-                                            isAttributeLocked
-                                              ? "bg-gray-900 border-gray-800 text-gray-400 cursor-not-allowed"
-                                              : "bg-gray-800 border-gray-700 text-white"
+                                          className={`w-full px-3 py-2 pr-9 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                            isAttributeLocked ? "opacity-50 cursor-not-allowed" : ""
                                           }`}
-                                        >
-                                          <span className={attr.key ? "" : "text-gray-500"}>
-                                            {attr.key || "Ej: Color"}
-                                          </span>
-                                          {!isAttributeLocked && <ChevronsUpDown className="w-4 h-4 text-gray-500" />}
-                                        </button>
-                                      </PopoverTrigger>
+                                          placeholder="Ej: Material"
+                                        />
+                                        {!isAttributeLocked && Object.keys(SAVED_ATRIBUTOS).length > 0 && (
+                                          <PopoverTrigger asChild>
+                                            <button
+                                              type="button"
+                                              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded cursor-pointer"
+                                              onClick={(e) => {
+                                                e.stopPropagation()
+                                                const updated = [...atributosInformativos]
+                                                updated[index].keyOpen = !updated[index].keyOpen
+                                                setAtributosInformativos(updated)
+                                              }}
+                                            >
+                                              <ChevronDown className="w-4 h-4 text-gray-500" />
+                                            </button>
+                                          </PopoverTrigger>
+                                        )}
+                                      </div>
                                       {!isAttributeLocked && (
                                         <PopoverContent className="w-[200px] p-0" align="start">
                                           <Command>
-                                            <CommandInput
-                                              placeholder="Buscar o escribir..."
-                                              value={attr.key}
-                                              onValueChange={(value) => {
-                                                const updated = [...atributosInformativos]
-                                                updated[index].key = value
-                                                setAtributosInformativos(updated)
-                                              }}
-                                            />
                                             <CommandList>
-                                              <CommandEmpty>Presiona Enter para usar "{attr.key}"</CommandEmpty>
+                                              <CommandEmpty>No hay opciones guardadas</CommandEmpty>
                                               <CommandGroup>
-                                                {Object.keys(SAVED_ATRIBUTOS)
-                                                  .filter((key) => key.toLowerCase().includes(attr.key.toLowerCase()))
-                                                  .map((key) => (
-                                                    <CommandItem
-                                                      key={key}
-                                                      value={key}
-                                                      onSelect={() => {
-                                                        const updated = [...atributosInformativos]
-                                                        updated[index].key = key
-                                                        setAtributosInformativos(updated)
-                                                      }}
-                                                    >
-                                                      {key}
-                                                    </CommandItem>
-                                                  ))}
+                                                {Object.keys(SAVED_ATRIBUTOS).map((key) => (
+                                                  <CommandItem
+                                                    key={key}
+                                                    value={key}
+                                                    onSelect={() => {
+                                                      const updated = [...atributosInformativos]
+                                                      updated[index].key = key
+                                                      updated[index].keyOpen = false
+                                                      setAtributosInformativos(updated)
+                                                    }}
+                                                  >
+                                                    {key}
+                                                  </CommandItem>
+                                                ))}
                                               </CommandGroup>
                                             </CommandList>
                                           </Command>
@@ -1130,79 +1335,83 @@ export function ItemDetailPanel({
                                   </div>
 
                                   <div className="flex-1">
-                                    <label className="text-sm text-gray-400 mb-2 block">Dato</label>
-                                    {SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS] ? (
-                                      <Popover>
-                                        <PopoverTrigger asChild>
-                                          <button
-                                            disabled={isValueLocked}
-                                            className={`w-full px-3 py-2 border rounded-md text-left focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-between ${
-                                              isValueLocked
-                                                ? "bg-gray-900 border-gray-800 text-gray-400 cursor-not-allowed"
-                                                : "bg-gray-800 border-gray-700 text-white"
-                                            }`}
-                                          >
-                                            <span className={attr.value ? "" : "text-gray-500"}>
-                                              {attr.value || "Ej: Negro"}
-                                            </span>
-                                            {!isValueLocked && <ChevronsUpDown className="w-4 h-4 text-gray-500" />}
-                                          </button>
-                                        </PopoverTrigger>
-                                        {!isValueLocked && (
-                                          <PopoverContent className="w-[200px] p-0" align="start">
-                                            <Command>
-                                              <CommandInput
-                                                placeholder="Buscar o escribir..."
-                                                value={attr.value}
-                                                onValueChange={(value) => {
+                                    <label className="text-sm font-medium text-gray-700 mb-2 block">Valor</label>
+                                    <Popover
+                                      open={!isValueLocked && (attr.isOpen || false)}
+                                      onOpenChange={(open) => {
+                                        if (!isValueLocked) {
+                                          const updated = [...atributosInformativos]
+                                          updated[index].isOpen = open
+                                          setAtributosInformativos(updated)
+                                        }
+                                      }}
+                                    >
+                                      <div className="relative">
+                                        <input
+                                          type="text"
+                                          value={attr.value}
+                                          onChange={(e) => {
+                                            if (!isValueLocked) {
+                                              const updated = [...atributosInformativos]
+                                              updated[index].value = e.target.value
+                                              setAtributosInformativos(updated)
+                                            }
+                                          }}
+                                          disabled={isValueLocked}
+                                          className={`w-full px-3 py-2 pr-9 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                            isValueLocked ? "opacity-50 cursor-not-allowed" : ""
+                                          }`}
+                                          placeholder="Ej: Algodón"
+                                        />
+                                        {!isValueLocked &&
+                                          attr.key &&
+                                          SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS] && (
+                                            <PopoverTrigger asChild>
+                                              <button
+                                                type="button"
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded cursor-pointer"
+                                                onClick={(e) => {
+                                                  e.stopPropagation()
                                                   const updated = [...atributosInformativos]
-                                                  updated[index].value = value
+                                                  updated[index].isOpen = !updated[index].isOpen
                                                   setAtributosInformativos(updated)
                                                 }}
-                                              />
+                                              >
+                                                <ChevronDown className="w-4 h-4 text-gray-500" />
+                                              </button>
+                                            </PopoverTrigger>
+                                          )}
+                                      </div>
+                                      {!isValueLocked &&
+                                        attr.key &&
+                                        SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS] && (
+                                          <PopoverContent className="w-[200px] p-0" align="start">
+                                            <Command>
                                               <CommandList>
+                                                <CommandEmpty>No hay opciones guardadas</CommandEmpty>
                                                 <CommandGroup>
-                                                  {SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS]
-                                                    .filter((val) =>
-                                                      val.toLowerCase().includes(attr.value.toLowerCase()),
-                                                    )
-                                                    .map((val) => (
+                                                  {SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS].map(
+                                                    (val) => (
                                                       <CommandItem
                                                         key={val}
                                                         value={val}
                                                         onSelect={() => {
                                                           const updated = [...atributosInformativos]
                                                           updated[index].value = val
+                                                          updated[index].isOpen = false
                                                           setAtributosInformativos(updated)
                                                         }}
                                                       >
                                                         {val}
                                                       </CommandItem>
-                                                    ))}
+                                                    ),
+                                                  )}
                                                 </CommandGroup>
                                               </CommandList>
                                             </Command>
                                           </PopoverContent>
                                         )}
-                                      </Popover>
-                                    ) : (
-                                      <input
-                                        type="text"
-                                        value={attr.value}
-                                        onChange={(e) => {
-                                          const updated = [...atributosInformativos]
-                                          updated[index].value = e.target.value
-                                          setAtributosInformativos(updated)
-                                        }}
-                                        disabled={isValueLocked}
-                                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                          isValueLocked
-                                            ? "bg-gray-900 border-gray-800 text-gray-400 cursor-not-allowed"
-                                            : "bg-gray-800 border-gray-700 text-white"
-                                        }`}
-                                        placeholder="Ej: Negro"
-                                      />
-                                    )}
+                                    </Popover>
                                   </div>
 
                                   {!isAttributeLocked && (
@@ -1210,13 +1419,16 @@ export function ItemDetailPanel({
                                       onClick={() => {
                                         const updated = atributosInformativos.filter((_, i) => i !== index)
                                         setAtributosInformativos(updated)
+                                        if (fatherItem?.atributosInformativos?.length === 0 && updated.length === 0) {
+                                          setShowAtributosView(false)
+                                        }
                                       }}
-                                      className="mt-7 text-gray-500 hover:text-red-400 cursor-pointer"
+                                      className="mt-8 text-gray-400 hover:text-red-400 transition-colors cursor-pointer"
                                     >
                                       <X className="w-4 h-4" />
                                     </button>
                                   )}
-                                  {isAttributeLocked && <div className="mt-7 w-4"></div>}
+                                  {isAttributeLocked && <div className="mt-8 w-4"></div>}
                                 </div>
                               )
                             })}
@@ -1225,7 +1437,7 @@ export function ItemDetailPanel({
                               onClick={() => {
                                 setAtributosInformativos([...atributosInformativos, { key: "", value: "" }])
                               }}
-                              className="w-full px-3 py-2 border border-dashed border-gray-700 rounded-md text-gray-400 hover:text-gray-300 hover:border-gray-600 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                              className="w-full px-3 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 transition-colors flex items-center justify-center gap-2 cursor-pointer"
                             >
                               <Plus className="w-4 h-4" />
                               <span className="text-sm">Agregar atributo</span>
@@ -1238,25 +1450,20 @@ export function ItemDetailPanel({
 
                   {selectedDetailTab === "variantes" && (
                     <div className="h-full flex flex-col py-2">
-                      <h3 className="text-sm font-medium text-gray-300 uppercase tracking-wider mb-3">Variantes</h3>
-                      <p className="text-xs text-gray-500 mb-4">
-                        Items generados por la combinación de variantes de atributos principales.
-                      </p>
-
                       {variantItems.length > 0 ? (
                         <div className="flex-1 overflow-y-auto">
-                          <div className="border border-gray-800 rounded-lg overflow-hidden">
-                            <div className="grid grid-cols-4 bg-gray-900/50 border-b border-gray-800 sticky top-0">
-                              <div className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider">
+                          <div className="border border-gray-300 rounded-lg overflow-hidden">
+                            <div className="grid grid-cols-4 bg-gray-100 border-b border-gray-300 sticky top-0">
+                              <div className="px-4 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
                                 SKU
                               </div>
-                              <div className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider">
+                              <div className="px-4 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
                                 Código Universal
                               </div>
-                              <div className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider">
+                              <div className="px-4 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
                                 Descripción
                               </div>
-                              <div className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider">
+                              <div className="px-4 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
                                 Foto
                               </div>
                             </div>
@@ -1264,16 +1471,16 @@ export function ItemDetailPanel({
                             {variantItems.map((variant) => (
                               <div
                                 key={variant.sku}
-                                className="grid grid-cols-4 border-b border-gray-800 last:border-b-0 hover:bg-gray-900/30"
+                                className="grid grid-cols-4 border-b border-gray-300 last:border-b-0 hover:bg-gray-50"
                               >
-                                <div className="px-4 py-3 text-sm text-gray-300 font-mono">{variant.sku}</div>
+                                <div className="px-4 py-3 text-sm text-gray-900 font-mono">{variant.sku}</div>
                                 <div className="px-4 py-3">
                                   <input
                                     type="text"
                                     value={variant.codigoUniversal}
                                     onChange={(e) => updateVariantField(variant.sku, "codigoUniversal", e.target.value)}
                                     placeholder="Código..."
-                                    className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full bg-gray-50 border border-gray-300 rounded px-2 py-1 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                   />
                                 </div>
                                 <div className="px-4 py-3">
@@ -1282,7 +1489,7 @@ export function ItemDetailPanel({
                                     value={variant.descripcion}
                                     onChange={(e) => updateVariantField(variant.sku, "descripcion", e.target.value)}
                                     placeholder="Descripción..."
-                                    className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full bg-gray-50 border border-gray-300 rounded px-2 py-1 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                   />
                                 </div>
                                 <div className="px-4 py-3">
@@ -1291,7 +1498,7 @@ export function ItemDetailPanel({
                                     value={variant.foto}
                                     onChange={(e) => updateVariantField(variant.sku, "foto", e.target.value)}
                                     placeholder="URL de foto..."
-                                    className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full bg-gray-50 border border-gray-300 rounded px-2 py-1 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                   />
                                 </div>
                               </div>
@@ -1310,10 +1517,6 @@ export function ItemDetailPanel({
 
                   {selectedDetailTab === "stock-variantes" && (
                     <div className="h-full flex flex-col py-2">
-                      <h3 className="text-sm font-medium text-gray-300 uppercase tracking-wider mb-3">
-                        Stock por Variante
-                      </h3>
-
                       {variantItems.length > 0 ? (
                         <div className="space-y-2">
                           {variantItems.map((variant) => {
@@ -1336,20 +1539,20 @@ export function ItemDetailPanel({
                             const totalDisponible = totalStock - totalReservado
 
                             return (
-                              <div key={variant.sku} className="border border-gray-800 rounded-lg overflow-hidden">
+                              <div key={variant.sku} className="border border-gray-300 rounded-lg overflow-hidden">
                                 <button
                                   onClick={() => toggleVariantStockExpansion(variant.sku)}
-                                  className="w-full px-4 py-3 bg-gray-900/30 hover:bg-gray-900/50 transition-colors flex items-center justify-between"
+                                  className="w-full px-4 py-3 bg-gray-100 hover:bg-gray-200 transition-colors flex items-center justify-between"
                                 >
                                   <div className="flex items-center gap-3">
                                     {expandedVariantStock[variant.sku] ? (
-                                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                                      <ChevronDown className="w-4 h-4 text-gray-600" />
                                     ) : (
-                                      <ChevronRight className="w-4 h-4 text-gray-400" />
+                                      <ChevronRight className="w-4 h-4 text-gray-600" />
                                     )}
-                                    <span className="text-sm text-white font-mono">{variant.sku}</span>
+                                    <span className="text-sm text-gray-900 font-mono">{variant.sku}</span>
                                   </div>
-                                  <div className="flex items-center gap-4 text-sm text-gray-400">
+                                  <div className="flex items-center gap-4 text-sm text-gray-600">
                                     <span>Total: {totalStock}</span>
                                     <span>Reservado: {totalReservado}</span>
                                     <span> Disponible: {totalDisponible}</span>
@@ -1357,18 +1560,18 @@ export function ItemDetailPanel({
                                 </button>
 
                                 {expandedVariantStock[variant.sku] && (
-                                  <div className="border-t border-gray-800">
-                                    <div className="grid grid-cols-4 bg-gray-900/50 border-b border-gray-800">
-                                      <div className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                  <div className="border-t border-gray-300">
+                                    <div className="grid grid-cols-4 bg-gray-100 border-b border-gray-300">
+                                      <div className="px-4 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
                                         Depósito
                                       </div>
-                                      <div className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">
+                                      <div className="px-4 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider text-right">
                                         Total
                                       </div>
-                                      <div className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">
+                                      <div className="px-4 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider text-right">
                                         Reservado
                                       </div>
-                                      <div className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">
+                                      <div className="px-4 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider text-right">
                                         Disponible
                                       </div>
                                     </div>
@@ -1380,41 +1583,41 @@ export function ItemDetailPanel({
                                       return (
                                         <div
                                           key={deposit}
-                                          className="grid grid-cols-4 border-b border-gray-800 last:border-b-0"
+                                          className="grid grid-cols-4 border-b border-gray-300 last:border-b-0 bg-white"
                                         >
-                                          <div className="px-4 py-3 text-sm text-white">{deposit}</div>
-                                          <div className="px-4 py-3 text-sm text-gray-300 text-right">
+                                          <div className="px-4 py-3 text-sm text-gray-900">{deposit}</div>
+                                          <div className="px-4 py-3 text-sm text-gray-800 text-right">
                                             <input
                                               type="number"
                                               value={stock.total}
                                               onChange={(e) =>
                                                 updateDepositStock(variant.sku, Number.parseInt(e.target.value) || 0)
                                               }
-                                              className="w-full bg-transparent text-right focus:outline-none focus:bg-gray-900/50 px-2 py-1 rounded border border-transparent hover:border-gray-700 focus:border-blue-500"
+                                              className="w-full bg-transparent text-right focus:outline-none focus:bg-gray-100 px-2 py-1 rounded border border-transparent hover:border-gray-300 focus:border-blue-500"
                                             />
                                           </div>
-                                          <div className="px-4 py-3 text-sm text-gray-300 text-right">
+                                          <div className="px-4 py-3 text-sm text-gray-800 text-right">
                                             <input
                                               type="number"
                                               value={stock.reservado}
                                               onChange={(e) =>
                                                 updateDepositStock(variant.sku, Number.parseInt(e.target.value) || 0)
                                               }
-                                              className="w-full bg-transparent text-right focus:outline-none focus:bg-gray-900/50 px-2 py-1 rounded border border-transparent hover:border-gray-700 focus:border-blue-500"
+                                              className="w-full bg-transparent text-right focus:outline-none focus:bg-gray-100 px-2 py-1 rounded border border-transparent hover:border-gray-300 focus:border-blue-500"
                                             />
                                           </div>
-                                          <div className="px-4 py-3 text-sm text-white font-medium text-right">
+                                          <div className="px-4 py-3 text-sm text-gray-900 font-medium text-right">
                                             {disponible}
                                           </div>
                                         </div>
                                       )
                                     })}
 
-                                    <div className="grid grid-cols-4 bg-gray-900/70 font-medium">
-                                      <div className="px-4 py-3 text-sm text-gray-200">Global</div>
-                                      <div className="px-4 py-3 text-sm text-gray-200 text-right">{totalStock}</div>
-                                      <div className="px-4 py-3 text-sm text-gray-200 text-right">{totalReservado}</div>
-                                      <div className="px-4 py-3 text-sm text-gray-200 text-right">
+                                    <div className="grid grid-cols-4 bg-gray-200 font-medium">
+                                      <div className="px-4 py-3 text-sm text-gray-800">Global</div>
+                                      <div className="px-4 py-3 text-sm text-gray-800 text-right">{totalStock}</div>
+                                      <div className="px-4 py-3 text-sm text-gray-800 text-right">{totalReservado}</div>
+                                      <div className="px-4 py-3 text-sm text-gray-800 text-right">
                                         {totalDisponible}
                                       </div>
                                     </div>
@@ -1437,62 +1640,62 @@ export function ItemDetailPanel({
                 <>
                   {selectedDetailTab === "info" && (
                     <div className="h-full flex flex-col py-2">
-                      <h3 className="text-sm font-medium text-gray-300 uppercase tracking-wider mb-3">
+                      <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
                         Información del Producto
                       </h3>
 
                       <div className="space-y-3">
                         <div className="grid grid-cols-2 gap-4">
                           <div className="flex flex-col gap-2">
-                            <label className="text-sm text-gray-400">Título</label>
+                            <label className="text-sm font-medium text-gray-700">Categoría</label>
                             <input
                               type="text"
-                              value={itemTitulo}
-                              onChange={(e) => setItemTitulo(e.target.value)}
-                              disabled={isTitleLocked}
-                              className={`px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                isTitleLocked
-                                  ? "bg-gray-900 border-gray-800 text-gray-400 cursor-not-allowed"
-                                  : "bg-gray-800 border-gray-700 text-white"
+                              value={categoria}
+                              onChange={(e) => setCategoria(e.target.value)}
+                              disabled={shouldInheritField(fatherItem?.categoria)}
+                              className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                shouldInheritField(fatherItem?.categoria)
+                                  ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
+                                  : "bg-white border-gray-300 text-gray-900"
                               }`}
-                              placeholder="Ej: Cierre Metálico"
+                              placeholder="Ej: Vinos"
                             />
                           </div>
 
                           <div className="flex flex-col gap-2">
-                            <label className="text-sm text-gray-400">Marca</label>
+                            <label className="text-sm font-medium text-gray-700">Marca</label>
                             <input
                               type="text"
                               value={marca}
                               onChange={(e) => setMarca(e.target.value)}
                               disabled={shouldInheritField(fatherItem?.marca)}
-                              className={`px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                              className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                                 shouldInheritField(fatherItem?.marca)
-                                  ? "bg-gray-900 border-gray-800 text-gray-400 cursor-not-allowed"
-                                  : "bg-gray-800 border-gray-700 text-white"
+                                  ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
+                                  : "bg-white border-gray-300 text-gray-900"
                               }`}
                               placeholder="Ej: YKK"
                             />
                           </div>
                         </div>
 
-                        <div className="border-t border-gray-800 my-4"></div>
+                        <div className="border-t border-gray-200 my-4"></div>
 
-                        <h3 className="text-sm font-medium text-gray-300 uppercase tracking-wider mb-3">
+                        <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
                           Presentación
                         </h3>
 
                         <div className="grid grid-cols-2 gap-4">
                           <div className="flex flex-col gap-2">
-                            <label className="text-sm text-gray-400">Formato de venta</label>
+                            <label className="text-sm font-medium text-gray-700">Formato de venta</label>
                             <select
                               value={formatoVenta}
                               onChange={(e) => setFormatoVenta(e.target.value)}
                               disabled={shouldInheritField(fatherItem?.formatoVenta)}
-                              className={`px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none ${
+                              className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none ${
                                 shouldInheritField(fatherItem?.formatoVenta)
-                                  ? "bg-gray-900 border-gray-800 text-gray-400 cursor-not-allowed"
-                                  : "bg-gray-800 border-gray-700 text-white cursor-pointer"
+                                  ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
+                                  : "bg-white border-gray-300 text-gray-900 cursor-pointer"
                               }`}
                             >
                               <option value="unidad">Unidad</option>
@@ -1502,12 +1705,12 @@ export function ItemDetailPanel({
 
                           <div className="flex flex-col gap-2">
                             <div className="flex items-center gap-2">
-                              <label className="text-sm text-gray-400">Unidades por pack</label>
+                              <label className="text-sm font-medium text-gray-700">Unidades por pack</label>
                               <button
                                 onClick={() => setUnidadesPorPackActive(!unidadesPorPackActive)}
                                 disabled={isUnidadesPorPackLocked}
                                 className={`w-10 h-5 rounded-full transition-colors relative ${
-                                  unidadesPorPackActive ? "bg-blue-500" : "bg-gray-700"
+                                  unidadesPorPackActive ? "bg-blue-500" : "bg-gray-300"
                                 } ${isUnidadesPorPackLocked ? "opacity-50 cursor-not-allowed" : ""}`}
                               >
                                 <div
@@ -1526,10 +1729,10 @@ export function ItemDetailPanel({
                               }}
                               disabled={!unidadesPorPackActive || isUnidadesPorPackLocked}
                               min="1"
-                              className={`px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                              className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                                 !unidadesPorPackActive || isUnidadesPorPackLocked
-                                  ? "bg-gray-900 border-gray-800 text-gray-600 cursor-not-allowed"
-                                  : "bg-gray-800 border-gray-700 text-white"
+                                  ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
+                                  : "bg-white border-gray-300 text-gray-900"
                               }`}
                               placeholder="1"
                             />
@@ -1538,12 +1741,12 @@ export function ItemDetailPanel({
 
                         <div className="flex flex-col gap-2">
                           <div className="flex items-center gap-2">
-                            <label className="text-sm text-gray-400">Volumen de la unidad</label>
+                            <label className="text-sm font-medium text-gray-700">Volumen de la unidad</label>
                             <button
                               onClick={() => setVolumenActive(!volumenActive)}
                               disabled={shouldInheritField(fatherItem?.volumenActive)}
                               className={`w-10 h-5 rounded-full transition-colors relative ${
-                                volumenActive ? "bg-blue-500" : "bg-gray-700"
+                                volumenActive ? "bg-blue-500" : "bg-gray-300"
                               } ${shouldInheritField(fatherItem?.volumenActive) ? "opacity-50 cursor-not-allowed" : ""}`}
                             >
                               <div
@@ -1557,31 +1760,31 @@ export function ItemDetailPanel({
                           {volumenActive && (
                             <div className="grid grid-cols-2 gap-4 mt-2">
                               <div className="flex flex-col gap-2">
-                                <label className="text-sm text-gray-400">Cantidad</label>
+                                <label className="text-sm font-medium text-gray-700">Cantidad</label>
                                 <input
                                   type="number"
                                   value={volumenCantidad}
                                   onChange={(e) => setVolumenCantidad(e.target.value)}
                                   disabled={shouldInheritField(fatherItem?.volumenCantidad)}
-                                  className={`px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                  className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                                     shouldInheritField(fatherItem?.volumenCantidad)
-                                      ? "bg-gray-900 border-gray-800 text-gray-400 cursor-not-allowed"
-                                      : "bg-gray-800 border-gray-700 text-white"
+                                      ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
+                                      : "bg-white border-gray-300 text-gray-900"
                                   }`}
                                   placeholder="0"
                                 />
                               </div>
 
                               <div className="flex flex-col gap-2">
-                                <label className="text-sm text-gray-400">Unidad de medida</label>
+                                <label className="text-sm font-medium text-gray-700">Unidad de medida</label>
                                 <select
                                   value={volumenUnidad}
                                   onChange={(e) => setVolumenUnidad(e.target.value)}
                                   disabled={shouldInheritField(fatherItem?.volumenUnidad)}
-                                  className={`px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none ${
+                                  className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none ${
                                     shouldInheritField(fatherItem?.volumenUnidad)
-                                      ? "bg-gray-900 border-gray-800 text-gray-400 cursor-not-allowed"
-                                      : "bg-gray-800 border-gray-700 text-white cursor-pointer"
+                                      ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
+                                      : "bg-white border-gray-300 text-gray-900 cursor-pointer"
                                   }`}
                                 >
                                   <option value="ml">ml</option>
@@ -1597,24 +1800,24 @@ export function ItemDetailPanel({
                         </div>
                       </div>
 
-                      <div className="border-t border-gray-800 my-4"></div>
+                      <div className="border-t border-gray-200 my-4"></div>
 
-                      <h3 className="text-sm font-medium text-gray-300 uppercase tracking-wider mb-3">
+                      <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
                         Información del Proveedor
                       </h3>
 
                       <div className="grid grid-cols-2 gap-4">
                         <div className="flex flex-col gap-2">
-                          <label className="text-sm text-gray-400">Proveedor</label>
+                          <label className="text-sm font-medium text-gray-700">Proveedor</label>
                           <input
                             type="text"
                             value={proveedor}
                             onChange={(e) => setProveedor(e.target.value)}
                             disabled={shouldInheritField(fatherItem?.proveedor)}
-                            className={`px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${
+                            className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${
                               shouldInheritField(fatherItem?.proveedor)
-                                ? "bg-gray-900 border-gray-800 text-gray-400 cursor-not-allowed"
-                                : "bg-gray-800 border-gray-700 text-white"
+                                ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
+                                : "bg-white border-gray-300 text-gray-900"
                             }`}
                             placeholder="Nombre del proveedor"
                           />
@@ -1622,19 +1825,17 @@ export function ItemDetailPanel({
 
                         {!isViewingContainer && (
                           <div className="flex flex-col gap-2">
-                            <label className="text-sm text-gray-400">Código Proveedor</label>
+                            <label className="text-sm font-medium text-gray-700">Código Proveedor</label>
                             <input
                               type="text"
                               value={codigoProveedor}
                               onChange={(e) => setCodigoProveedor(e.target.value)}
-                              className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                              className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                               placeholder="Código del proveedor"
                             />
                           </div>
                         )}
                       </div>
-
-                      {/* Descripción field for individual items */}
                     </div>
                   )}
 
@@ -1642,22 +1843,30 @@ export function ItemDetailPanel({
                     <div className="h-full flex flex-col py-2">
                       {!showIndividualAtributosView ? (
                         <div className="flex flex-col items-center justify-center h-full gap-4">
-                          <p className="text-gray-400 text-sm">No hay atributos configurados</p>
-                          <button
-                            onClick={() => {
-                              setIsSelectingTemplateForContainer(false)
-                              setShowTemplateModal(true)
-                            }}
-                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
-                          >
-                            Usar Template
-                          </button>
+                          <p className="text-gray-500 text-sm">No hay atributos configurados</p>
+                          <div className="flex gap-3">
+                            <button
+                              onClick={() => setShowIndividualAtributosView(true)}
+                              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg transition-colors cursor-pointer"
+                            >
+                              Agregar atributos
+                            </button>
+                            <button
+                              onClick={() => {
+                                setIsSelectingTemplateForContainer(false)
+                                setShowTemplateModal(true)
+                              }}
+                              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors cursor-pointer"
+                            >
+                              Usar Template
+                            </button>
+                          </div>
                         </div>
                       ) : (
                         <div className="flex flex-col gap-6">
                           <div className="flex flex-col gap-3">
                             <div>
-                              <h3 className="text-sm font-medium text-gray-300 uppercase tracking-wider mb-3">
+                              <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
                                 Atributos Principales
                               </h3>
                               <p className="text-xs text-gray-500 italic mt-1">
@@ -1665,145 +1874,190 @@ export function ItemDetailPanel({
                               </p>
                             </div>
 
-                            {atributosPrincipales.map((attr, index) => {
-                              const isAttributeLocked = isChildItem
-
-                              return (
-                                <div key={index} className="flex items-start gap-3">
-                                  <div className="flex-1">
-                                    <label className="text-sm text-gray-400 mb-2 block">Atributo</label>
-                                    <Popover>
-                                      <PopoverTrigger asChild>
-                                        <button
-                                          disabled={isAttributeLocked}
-                                          className={`w-full px-3 py-2 border rounded-md text-left focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-between ${
-                                            isAttributeLocked
-                                              ? "bg-gray-900 border-gray-800 text-gray-400 cursor-not-allowed"
-                                              : "bg-gray-800 border-gray-700 text-white"
-                                          }`}
-                                        >
-                                          <span className={attr.key ? "" : "text-gray-500"}>
-                                            {attr.key || "Ej: Color"}
-                                          </span>
-                                          {!isAttributeLocked && <ChevronsUpDown className="w-4 h-4 text-gray-500" />}
-                                        </button>
-                                      </PopoverTrigger>
-                                      {!isAttributeLocked && (
-                                        <PopoverContent className="w-[200px] p-0" align="start">
-                                          <Command>
-                                            <CommandInput
-                                              placeholder="Buscar o escribir..."
-                                              value={attr.key}
-                                              onValueChange={(value) => {
-                                                const updated = [...atributosPrincipales]
-                                                updated[index].key = value
-                                                setAtributosPrincipales(updated)
-                                                updateProductTitle()
-                                              }}
-                                            />
-                                            <CommandList>
-                                              <CommandEmpty>Presiona Enter para usar "{attr.key}"</CommandEmpty>
-                                              <CommandGroup>
-                                                {Object.keys(SAVED_ATRIBUTOS)
-                                                  .filter((key) => key.toLowerCase().includes(attr.key.toLowerCase()))
-                                                  .map((key) => (
-                                                    <CommandItem
-                                                      key={key}
-                                                      value={key}
-                                                      onSelect={() => {
-                                                        const updated = [...atributosPrincipales]
-                                                        updated[index].key = key
-                                                        setAtributosPrincipales(updated)
-                                                        updateProductTitle()
-                                                      }}
-                                                    >
-                                                      {key}
-                                                    </CommandItem>
-                                                  ))}
-                                              </CommandGroup>
-                                            </CommandList>
-                                          </Command>
-                                        </PopoverContent>
-                                      )}
-                                    </Popover>
-                                  </div>
-
-                                  <div className="flex-1">
-                                    <label className="text-sm text-gray-400 mb-2 block">Dato</label>
-                                    {SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS] ? (
-                                      <Popover>
+                            {atributosPrincipales.map((attr, index) => (
+                              <div key={index} className="flex items-start gap-3">
+                                <div className="flex-1">
+                                  <label className="text-sm font-medium text-gray-700 mb-2 block">Atributo</label>
+                                  <Popover
+                                    open={!isChildItem && (attr.keyOpen || false)}
+                                    onOpenChange={(open) => {
+                                      if (!isChildItem) {
+                                        const updated = [...atributosPrincipales]
+                                        updated[index].keyOpen = open
+                                        setAtributosPrincipales(updated)
+                                      }
+                                    }}
+                                  >
+                                    <div className="relative">
+                                      <input
+                                        type="text"
+                                        value={attr.key}
+                                        onChange={(e) => {
+                                          if (!isChildItem) {
+                                            const updated = [...atributosPrincipales]
+                                            updated[index].key = e.target.value
+                                            setAtributosPrincipales(updated)
+                                          }
+                                        }}
+                                        disabled={isChildItem}
+                                        className={`w-full px-3 py-2 pr-9 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                          isChildItem ? "opacity-50 cursor-not-allowed" : ""
+                                        }`}
+                                        placeholder="Ej: Color"
+                                      />
+                                      {!isChildItem && Object.keys(SAVED_ATRIBUTOS).length > 0 && (
                                         <PopoverTrigger asChild>
-                                          <button className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white text-left focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-between">
-                                            <span className={attr.value ? "" : "text-gray-500"}>
-                                              {attr.value || "Ej: Negro"}
-                                            </span>
-                                            <ChevronsUpDown className="w-4 h-4 text-gray-500" />
+                                          <button
+                                            type="button"
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded cursor-pointer"
+                                            onClick={(e) => {
+                                              e.stopPropagation()
+                                              const updated = [...atributosPrincipales]
+                                              updated[index].keyOpen = !updated[index].keyOpen
+                                              setAtributosPrincipales(updated)
+                                            }}
+                                          >
+                                            <ChevronDown className="w-4 h-4 text-gray-500" />
                                           </button>
                                         </PopoverTrigger>
+                                      )}
+                                    </div>
+                                    {!isChildItem && (
+                                      <PopoverContent className="w-[200px] p-0" align="start">
+                                        <Command>
+                                          <CommandList>
+                                            <CommandEmpty>No hay opciones guardadas</CommandEmpty>
+                                            <CommandGroup>
+                                              {Object.keys(SAVED_ATRIBUTOS).map((attrKey) => (
+                                                <CommandItem
+                                                  key={attrKey}
+                                                  value={attrKey}
+                                                  onSelect={() => {
+                                                    const updated = [...atributosPrincipales]
+                                                    updated[index].key = attrKey
+                                                    updated[index].keyOpen = false
+                                                    setAtributosPrincipales(updated)
+                                                  }}
+                                                >
+                                                  {attrKey}
+                                                </CommandItem>
+                                              ))}
+                                            </CommandGroup>
+                                          </CommandList>
+                                        </Command>
+                                      </PopoverContent>
+                                    )}
+                                  </Popover>
+                                </div>
+
+                                <div className="flex-1">
+                                  <label className="text-sm font-medium text-gray-700 mb-2 block">Dato</label>
+                                  <Popover
+                                    open={!isChildItem && (attr.isOpen || false)}
+                                    onOpenChange={(open) => {
+                                      if (!isChildItem) {
+                                        const updated = [...atributosPrincipales]
+                                        updated[index].isOpen = open
+                                        setAtributosPrincipales(updated)
+                                        updateProductTitle()
+                                      }
+                                    }}
+                                  >
+                                    <div className="relative">
+                                      <input
+                                        type="text"
+                                        value={attr.value}
+                                        onChange={(e) => {
+                                          if (!isChildItem) {
+                                            const updated = [...atributosPrincipales]
+                                            updated[index].value = e.target.value
+                                            setAtributosPrincipales(updated)
+                                            updateProductTitle()
+                                          }
+                                        }}
+                                        disabled={isChildItem}
+                                        className={`w-full px-3 py-2 pr-9 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                          isChildItem ? "opacity-50 cursor-not-allowed" : ""
+                                        }`}
+                                        placeholder="Ej: Negro"
+                                      />
+                                      {!isChildItem &&
+                                        attr.key &&
+                                        SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS] && (
+                                          <PopoverTrigger asChild>
+                                            <button
+                                              type="button"
+                                              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded cursor-pointer"
+                                              onClick={(e) => {
+                                                e.stopPropagation()
+                                                const updated = [...atributosPrincipales]
+                                                updated[index].isOpen = !updated[index].isOpen
+                                                setAtributosPrincipales(updated)
+                                              }}
+                                            >
+                                              <ChevronDown className="w-4 h-4 text-gray-500" />
+                                            </button>
+                                          </PopoverTrigger>
+                                        )}
+                                    </div>
+                                    {!isChildItem &&
+                                      attr.key &&
+                                      SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS] && (
                                         <PopoverContent className="w-[200px] p-0" align="start">
                                           <Command>
                                             <CommandList>
+                                              <CommandEmpty>No hay opciones guardadas</CommandEmpty>
                                               <CommandGroup>
-                                                {SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS]
-                                                  .filter((val) => val.toLowerCase().includes(attr.value.toLowerCase()))
-                                                  .map((val) => (
+                                                {SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS].map(
+                                                  (val) => (
                                                     <CommandItem
                                                       key={val}
                                                       value={val}
                                                       onSelect={() => {
                                                         const updated = [...atributosPrincipales]
                                                         updated[index].value = val
+                                                        updated[index].isOpen = false
                                                         setAtributosPrincipales(updated)
                                                         updateProductTitle()
                                                       }}
                                                     >
                                                       {val}
                                                     </CommandItem>
-                                                  ))}
+                                                  ),
+                                                )}
                                               </CommandGroup>
                                             </CommandList>
                                           </Command>
                                         </PopoverContent>
-                                      </Popover>
-                                    ) : (
-                                      <input
-                                        type="text"
-                                        value={attr.value}
-                                        onChange={(e) => {
-                                          const updated = [...atributosPrincipales]
-                                          updated[index].value = e.target.value
-                                          setAtributosPrincipales(updated)
-                                          updateProductTitle()
-                                        }}
-                                        className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        placeholder="Ej: Negro"
-                                      />
-                                    )}
-                                  </div>
-
-                                  {!isAttributeLocked && (
-                                    <button
-                                      onClick={() => {
-                                        const updated = atributosPrincipales.filter((_, i) => i !== index)
-                                        setAtributosPrincipales(updated)
-                                        updateProductTitle()
-                                      }}
-                                      className="mt-7 text-gray-500 hover:text-red-400 cursor-pointer"
-                                    >
-                                      <X className="w-4 h-4" />
-                                    </button>
-                                  )}
-                                  {isAttributeLocked && <div className="mt-7 w-4"></div>}
+                                      )}
+                                  </Popover>
                                 </div>
-                              )
-                            })}
 
-                            {atributosPrincipales.length < 2 && (
+                                {!isChildItem && (
+                                  <button
+                                    onClick={() => {
+                                      const updated = atributosPrincipales.filter((_, i) => i !== index)
+                                      setAtributosPrincipales(updated)
+                                      updateProductTitle()
+                                      if (updated.length === 0 && atributosInformativos.length === 0) {
+                                        setShowIndividualAtributosView(false)
+                                      }
+                                    }}
+                                    className="mt-8 text-gray-400 hover:text-red-400 transition-colors cursor-pointer"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                )}
+                                {isChildItem && <div className="mt-8 w-4"></div>}
+                              </div>
+                            ))}
+
+                            {!isChildItem && atributosPrincipales.length < 2 && (
                               <button
                                 onClick={() => {
                                   setAtributosPrincipales([...atributosPrincipales, { key: "", value: "" }])
                                 }}
-                                className="w-full px-3 py-2 border border-dashed border-gray-700 rounded-md text-gray-400 hover:text-gray-300 hover:border-gray-600 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                                className="w-full px-3 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 transition-colors flex items-center justify-center gap-2 cursor-pointer"
                               >
                                 <Plus className="w-4 h-4" />
                                 <span className="text-sm">Agregar atributo</span>
@@ -1811,71 +2065,91 @@ export function ItemDetailPanel({
                             )}
                           </div>
 
-                          <div className="flex flex-col gap-3 pt-3 border-t border-gray-800">
+                          <div className="flex flex-col gap-3">
                             <div>
-                              <h3 className="text-sm font-medium text-gray-300 uppercase tracking-wider mb-3">
+                              <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
                                 Atributos Informativos
                               </h3>
                               <p className="text-xs text-gray-500 italic mt-1">
-                                Atributos que describen características generales del producto
+                                Atributos que describen propiedades adicionales del producto
                               </p>
                             </div>
 
                             {atributosInformativos.map((attr, index) => {
-                              const fatherAttr = fatherItem?.atributosInformativos?.find((a) => a.key === attr.key)
+                              const fatherAttr = isChildItem
+                                ? fatherItem?.atributosInformativos?.find((a) => a.key === attr.key)
+                                : undefined
                               const isAttributeLocked = isChildItem && fatherAttr !== undefined
                               const isValueLocked = isChildItem && fatherAttr && fatherAttr.value
 
                               return (
                                 <div key={index} className="flex items-start gap-3">
                                   <div className="flex-1">
-                                    <label className="text-sm text-gray-400 mb-2 block">Atributo</label>
-                                    <Popover>
-                                      <PopoverTrigger asChild>
-                                        <button
+                                    <label className="text-sm font-medium text-gray-700 mb-2 block">Atributo</label>
+                                    <Popover
+                                      open={!isAttributeLocked && (attr.keyOpen || false)}
+                                      onOpenChange={(open) => {
+                                        if (!isAttributeLocked) {
+                                          const updated = [...atributosInformativos]
+                                          updated[index].keyOpen = open
+                                          setAtributosInformativos(updated)
+                                        }
+                                      }}
+                                    >
+                                      <div className="relative">
+                                        <input
+                                          type="text"
+                                          value={attr.key}
+                                          onChange={(e) => {
+                                            if (!isAttributeLocked) {
+                                              const updated = [...atributosInformativos]
+                                              updated[index].key = e.target.value
+                                              setAtributosInformativos(updated)
+                                            }
+                                          }}
                                           disabled={isAttributeLocked}
-                                          className={`w-full px-3 py-2 border rounded-md text-left focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-between ${
-                                            isAttributeLocked
-                                              ? "bg-gray-900 border-gray-800 text-gray-400 cursor-not-allowed"
-                                              : "bg-gray-800 border-gray-700 text-white"
+                                          className={`w-full px-3 py-2 pr-9 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                                            isAttributeLocked ? "opacity-50 cursor-not-allowed" : ""
                                           }`}
-                                        >
-                                          <span className={attr.key ? "" : "text-gray-500"}>
-                                            {attr.key || "Ej: Color"}
-                                          </span>
-                                          {!isAttributeLocked && <ChevronsUpDown className="w-4 h-4 text-gray-500" />}
-                                        </button>
-                                      </PopoverTrigger>
+                                          placeholder="Ej: Material"
+                                        />
+                                        {!isAttributeLocked && Object.keys(SAVED_ATRIBUTOS).length > 0 && (
+                                          <PopoverTrigger asChild>
+                                            <button
+                                              type="button"
+                                              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded cursor-pointer"
+                                              onClick={(e) => {
+                                                e.stopPropagation()
+                                                const updated = [...atributosInformativos]
+                                                updated[index].keyOpen = !updated[index].keyOpen
+                                                setAtributosInformativos(updated)
+                                              }}
+                                            >
+                                              <ChevronDown className="w-4 h-4 text-gray-500" />
+                                            </button>
+                                          </PopoverTrigger>
+                                        )}
+                                      </div>
                                       {!isAttributeLocked && (
                                         <PopoverContent className="w-[200px] p-0" align="start">
                                           <Command>
-                                            <CommandInput
-                                              placeholder="Buscar o escribir..."
-                                              value={attr.key}
-                                              onValueChange={(value) => {
-                                                const updated = [...atributosInformativos]
-                                                updated[index].key = value
-                                                setAtributosInformativos(updated)
-                                              }}
-                                            />
                                             <CommandList>
-                                              <CommandEmpty>Presiona Enter para usar "{attr.key}"</CommandEmpty>
+                                              <CommandEmpty>No hay opciones guardadas</CommandEmpty>
                                               <CommandGroup>
-                                                {Object.keys(SAVED_ATRIBUTOS)
-                                                  .filter((key) => key.toLowerCase().includes(attr.key.toLowerCase()))
-                                                  .map((key) => (
-                                                    <CommandItem
-                                                      key={key}
-                                                      value={key}
-                                                      onSelect={() => {
-                                                        const updated = [...atributosInformativos]
-                                                        updated[index].key = key
-                                                        setAtributosInformativos(updated)
-                                                      }}
-                                                    >
-                                                      {key}
-                                                    </CommandItem>
-                                                  ))}
+                                                {Object.keys(SAVED_ATRIBUTOS).map((key) => (
+                                                  <CommandItem
+                                                    key={key}
+                                                    value={key}
+                                                    onSelect={() => {
+                                                      const updated = [...atributosInformativos]
+                                                      updated[index].key = key
+                                                      updated[index].keyOpen = false
+                                                      setAtributosInformativos(updated)
+                                                    }}
+                                                  >
+                                                    {key}
+                                                  </CommandItem>
+                                                ))}
                                               </CommandGroup>
                                             </CommandList>
                                           </Command>
@@ -1885,80 +2159,83 @@ export function ItemDetailPanel({
                                   </div>
 
                                   <div className="flex-1">
-                                    <label className="text-sm text-gray-400 mb-2 block">Dato</label>
-                                    {SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS] ? (
-                                      <Popover>
-                                        <PopoverTrigger asChild>
-                                          <button
-                                            disabled={isValueLocked}
-                                            className={`w-full px-3 py-2 border rounded-md text-left focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-between ${
-                                              isValueLocked
-                                                ? "bg-gray-900 border-gray-800 text-gray-400 cursor-not-allowed"
-                                                : "bg-gray-800 border-gray-700 text-white"
-                                            }`}
-                                          >
-                                            <span className={attr.value ? "" : "text-gray-500"}>
-                                              {attr.value || "Ej: Negro"}
-                                            </span>
-                                            {!isValueLocked && <ChevronsUpDown className="w-4 h-4 text-gray-500" />}
-                                          </button>
-                                        </PopoverTrigger>
-                                        {!isValueLocked && (
-                                          <PopoverContent className="w-[200px] p-0" align="start">
-                                            <Command>
-                                              <CommandInput
-                                                placeholder="Buscar o escribir..."
-                                                value={attr.value}
-                                                onValueChange={(value) => {
+                                    <label className="text-sm font-medium text-gray-700 mb-2 block">Valor</label>
+                                    <Popover
+                                      open={!isValueLocked && (attr.isOpen || false)}
+                                      onOpenChange={(open) => {
+                                        if (!isValueLocked) {
+                                          const updated = [...atributosInformativos]
+                                          updated[index].isOpen = open
+                                          setAtributosInformativos(updated)
+                                        }
+                                      }}
+                                    >
+                                      <div className="relative">
+                                        <input
+                                          type="text"
+                                          value={attr.value}
+                                          onChange={(e) => {
+                                            if (!isValueLocked) {
+                                              const updated = [...atributosInformativos]
+                                              updated[index].value = e.target.value
+                                              setAtributosInformativos(updated)
+                                            }
+                                          }}
+                                          disabled={isValueLocked}
+                                          className={`w-full px-3 py-2 pr-9 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
+                                            isValueLocked ? "opacity-50 cursor-not-allowed" : ""
+                                          }`}
+                                          placeholder="Ej: Algodón"
+                                        />
+                                        {!isValueLocked &&
+                                          attr.key &&
+                                          SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS] && (
+                                            <PopoverTrigger asChild>
+                                              <button
+                                                type="button"
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded cursor-pointer"
+                                                onClick={(e) => {
+                                                  e.stopPropagation()
                                                   const updated = [...atributosInformativos]
-                                                  updated[index].value = value
+                                                  updated[index].isOpen = !updated[index].isOpen
                                                   setAtributosInformativos(updated)
                                                 }}
-                                              />
+                                              >
+                                                <ChevronDown className="w-4 h-4 text-gray-500" />
+                                              </button>
+                                            </PopoverTrigger>
+                                          )}
+                                      </div>
+                                      {!isValueLocked &&
+                                        attr.key &&
+                                        SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS] && (
+                                          <PopoverContent className="w-[200px] p-0" align="start">
+                                            <Command>
                                               <CommandList>
-                                                <CommandEmpty>Presiona Enter para usar "{attr.value}"</CommandEmpty>
+                                                <CommandEmpty>No hay opciones guardadas</CommandEmpty>
                                                 <CommandGroup>
-                                                  {SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS]
-                                                    .filter((val) =>
-                                                      val.toLowerCase().includes(attr.value.toLowerCase()),
-                                                    )
-                                                    .map((val) => (
+                                                  {SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS].map(
+                                                    (val) => (
                                                       <CommandItem
                                                         key={val}
                                                         value={val}
                                                         onSelect={() => {
                                                           const updated = [...atributosInformativos]
                                                           updated[index].value = val
+                                                          updated[index].isOpen = false
                                                           setAtributosInformativos(updated)
                                                         }}
                                                       >
                                                         {val}
                                                       </CommandItem>
-                                                    ))}
+                                                    ),
+                                                  )}
                                                 </CommandGroup>
                                               </CommandList>
                                             </Command>
                                           </PopoverContent>
                                         )}
-                                      </Popover>
-                                    ) : (
-                                      <input
-                                        type="text"
-                                        value={attr.value}
-                                        onChange={(e) => {
-                                          const updated = [...atributosInformativos]
-                                          updated[index].value = e.target.value
-                                          setAtributosInformativos(updated)
-                                        }}
-                                        disabled={isValueLocked}
-                                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                          isValueLocked
-                                            ? "bg-gray-900 border-gray-800 text-gray-400 cursor-not-allowed"
-                                            : "bg-gray-800 border-gray-700 text-white"
-                                        }`}
-                                        placeholder="Ej: Negro"
-                                      />
-                                    )}
+                                    </Popover>
                                   </div>
 
                                   {!isAttributeLocked && (
@@ -1966,13 +2243,16 @@ export function ItemDetailPanel({
                                       onClick={() => {
                                         const updated = atributosInformativos.filter((_, i) => i !== index)
                                         setAtributosInformativos(updated)
+                                        if (atributosPrincipales.length === 0 && updated.length === 0) {
+                                          setShowIndividualAtributosView(false)
+                                        }
                                       }}
-                                      className="mt-7 text-gray-500 hover:text-red-400 cursor-pointer"
+                                      className="mt-8 text-gray-400 hover:text-red-400 transition-colors cursor-pointer"
                                     >
                                       <X className="w-4 h-4" />
                                     </button>
                                   )}
-                                  {isAttributeLocked && <div className="mt-7 w-4"></div>}
+                                  {isAttributeLocked && <div className="mt-8 w-4"></div>}
                                 </div>
                               )
                             })}
@@ -1981,7 +2261,7 @@ export function ItemDetailPanel({
                               onClick={() => {
                                 setAtributosInformativos([...atributosInformativos, { key: "", value: "" }])
                               }}
-                              className="w-full px-3 py-2 border border-dashed border-gray-700 rounded-md text-gray-400 hover:text-gray-300 hover:border-gray-600 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                              className="w-full px-3 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 transition-colors flex items-center justify-center gap-2 cursor-pointer"
                             >
                               <Plus className="w-4 h-4" />
                               <span className="text-sm">Agregar atributo</span>
@@ -1994,21 +2274,25 @@ export function ItemDetailPanel({
 
                   {selectedDetailTab === "stock" && (
                     <div className="space-y-4">
-                      <h3 className="text-sm font-medium text-gray-300 uppercase tracking-wider">Stock por depósito</h3>
+                      {isViewingContainer && (
+                        <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">
+                          Stock por depósito
+                        </h3>
+                      )}
 
                       {selectedItem?.sku && depositStock[selectedItem.sku] && (
-                        <div className="border border-gray-800 rounded-lg overflow-hidden">
-                          <div className="grid grid-cols-4 bg-gray-900/50 border-b border-gray-800">
-                            <div className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider">
+                        <div className="border border-gray-300 rounded-lg overflow-hidden">
+                          <div className="grid grid-cols-4 bg-gray-100 border-b border-gray-300">
+                            <div className="px-4 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
                               Depósito
                             </div>
-                            <div className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">
+                            <div className="px-4 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider text-right">
                               Total
                             </div>
-                            <div className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">
+                            <div className="px-4 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider text-right">
                               Reservado
                             </div>
-                            <div className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">
+                            <div className="px-4 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider text-right">
                               Disponible
                             </div>
                           </div>
@@ -2017,9 +2301,12 @@ export function ItemDetailPanel({
                             const disponible = stock.total - stock.reservado
 
                             return (
-                              <div key={deposit} className="grid grid-cols-4 border-b border-gray-800 last:border-b-0">
-                                <div className="px-4 py-3 text-sm text-white">{deposit}</div>
-                                <div className="px-4 py-3 text-sm text-gray-300 text-right">
+                              <div
+                                key={deposit}
+                                className="grid grid-cols-4 border-b border-gray-300 last:border-b-0 bg-slate-50"
+                              >
+                                <div className="px-4 py-3 text-sm text-gray-900">{deposit}</div>
+                                <div className="px-4 py-3 text-sm text-gray-800 text-right">
                                   <input
                                     type="number"
                                     value={stock.total}
@@ -2031,10 +2318,10 @@ export function ItemDetailPanel({
                                         Number.parseInt(e.target.value) || 0,
                                       )
                                     }
-                                    className="w-full bg-transparent text-right focus:outline-none focus:bg-gray-900/50 px-2 py-1 rounded border border-transparent hover:border-gray-700 focus:border-blue-500"
+                                    className="w-full bg-transparent text-right focus:outline-none focus:bg-gray-100 px-2 py-1 rounded border border-transparent hover:border-gray-300 focus:border-blue-500"
                                   />
                                 </div>
-                                <div className="px-4 py-3 text-sm text-gray-300 text-right">
+                                <div className="px-4 py-3 text-sm text-gray-800 text-right">
                                   <input
                                     type="number"
                                     value={stock.reservado}
@@ -2046,26 +2333,28 @@ export function ItemDetailPanel({
                                         Number.parseInt(e.target.value) || 0,
                                       )
                                     }
-                                    className="w-full bg-transparent text-right focus:outline-none focus:bg-gray-900/50 px-2 py-1 rounded border border-transparent hover:border-gray-700 focus:border-blue-500"
+                                    className="w-full bg-transparent text-right focus:outline-none focus:bg-gray-100 px-2 py-1 rounded border border-transparent hover:border-gray-300 focus:border-blue-500"
                                   />
                                 </div>
-                                <div className="px-4 py-3 text-sm text-white font-medium text-right">{disponible}</div>
+                                <div className="px-4 py-3 text-sm text-gray-900 font-medium text-right">
+                                  {disponible}
+                                </div>
                               </div>
                             )
                           })}
 
-                          <div className="grid grid-cols-4 bg-gray-900/70 font-medium">
-                            <div className="px-4 py-3 text-sm text-gray-200">Global</div>
-                            <div className="px-4 py-3 text-sm text-gray-200 text-right">
+                          <div className="grid grid-cols-4 bg-gray-200 font-medium">
+                            <div className="px-4 py-3 text-sm text-gray-800">Global</div>
+                            <div className="px-4 py-3 text-sm text-gray-800 text-right">
                               {Object.values(depositStock[selectedItem.sku]).reduce((sum, d: any) => sum + d.total, 0)}
                             </div>
-                            <div className="px-4 py-3 text-sm text-gray-200 text-right">
+                            <div className="px-4 py-3 text-sm text-gray-800 text-right">
                               {Object.values(depositStock[selectedItem.sku]).reduce(
                                 (sum, d: any) => sum + d.reservado,
                                 0,
                               )}
                             </div>
-                            <div className="px-4 py-3 text-sm text-gray-200 text-right">
+                            <div className="px-4 py-3 text-sm text-gray-800 text-right">
                               {Object.values(depositStock[selectedItem.sku]).reduce(
                                 (sum, d: any) => sum + (d.total - d.reservado),
                                 0,
@@ -2081,36 +2370,36 @@ export function ItemDetailPanel({
             </div>
           </div>
         </div>
-
-        {showTemplateModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 w-96">
-              <h2 className="text-lg font-semibold text-white mb-4">Seleccionar Template</h2>
-              <div className="space-y-3">
-                {TEMPLATES.map((template) => (
-                  <button
-                    key={template.name}
-                    onClick={() => applyTemplate(template.name, isSelectingTemplateForContainer)}
-                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-md text-white hover:bg-gray-750 hover:border-gray-600 transition-colors text-left"
-                  >
-                    <div className="font-medium">{template.name}</div>
-                    <div className="text-xs text-gray-400 mt-1">
-                      {template.atributosPrincipales.length} principales, {template.atributosInformativos.length}{" "}
-                      informativos
-                    </div>
-                  </button>
-                ))}
-              </div>
-              <button
-                onClick={() => setShowTemplateModal(false)}
-                className="w-full mt-4 px-4 py-2 bg-gray-800 border border-gray-700 rounded-md text-gray-400 hover:text-white transition-colors"
-              >
-                Cancelar
-              </button>
-            </div>
-          </div>
-        )}
       </div>
+
+      {showTemplateModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white border border-gray-300 rounded-lg p-6 w-96 shadow-xl">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Seleccionar Template</h2>
+            <div className="space-y-3">
+              {TEMPLATES.map((template) => (
+                <button
+                  key={template.name}
+                  onClick={() => applyTemplate(template.name, isSelectingTemplateForContainer)}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 hover:bg-gray-100 hover:border-gray-400 transition-colors text-left"
+                >
+                  <div className="font-medium">{template.name}</div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {template.atributosPrincipales.length} principales, {template.atributosInformativos.length}
+                    informativos
+                  </div>
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setShowTemplateModal(false)}
+              className="w-full mt-4 px-4 py-2 bg-gray-200 border border-gray-300 rounded-lg text-gray-700 hover:text-gray-900 transition-colors"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
     </>
   )
 }

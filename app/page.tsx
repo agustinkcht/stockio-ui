@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Sidebar } from "@/components/layout/sidebar"
 import { TopNav } from "@/components/layout/top-nav"
-import { DynamicBar } from "@/components/layout/dynamic-bar"
+import { UtilityBar } from "@/components/layout/utility-bar"
 import { Toolbar } from "@/components/layout/toolbar"
 import { ItemsGrid } from "@/components/items/items-grid"
 import { ItemDetailPanel } from "@/components/items/item-detail-panel"
@@ -23,6 +23,7 @@ import type { Item } from "@/lib/types"
 export default function Page() {
   const [isSaving, setIsSaving] = useState(false)
   const [itemCreated, setItemCreated] = useState(false)
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true)
 
   const {
     items,
@@ -89,6 +90,7 @@ export default function Page() {
     handleDropdownMouseLeave,
     getFilteredDropdownItems,
     hasMatchingItems,
+    handleCloseDropdowns,
   } = useSidebar()
   const {
     selectedItem,
@@ -101,23 +103,22 @@ export default function Page() {
 
   const changeTracker = useChangeTracker()
 
-  const breadcrumbs = selectedItem ? ["Artículos", "Detalle del item"] : ["Artículos", "Todos los items"]
+  const breadcrumbs = selectedItem
+    ? [{ label: "Inventario" }, { label: "Artículos", href: "/" }, { label: "Detalle del item" }]
+    : [{ label: "Inventario" }, { label: "Artículos", href: "/" }]
 
   const handleUndo = () => {
     const change = changeTracker.undo()
     if (change?.type === "delete") {
       undoDelete()
     }
-    // TODO: Handle other change types (edit, add)
   }
 
   const handleRedo = () => {
     const change = changeTracker.redo()
     if (change?.type === "delete") {
-      // Re-apply the delete
       deleteItem(change.data)
     }
-    // TODO: Handle other change types (edit, add)
   }
 
   const handleDeshacer = () => {
@@ -125,7 +126,6 @@ export default function Page() {
     if (hasUnsavedDeletes) {
       undoDelete()
     }
-    // TODO: Undo all other changes
   }
 
   const handleGuardar = async () => {
@@ -137,8 +137,6 @@ export default function Page() {
       if (hasUnsavedDeletes) {
         await saveDelete()
       }
-
-      // TODO: Save other changes to database
 
       await new Promise((resolve) => setTimeout(resolve, 1000))
     } finally {
@@ -205,25 +203,31 @@ export default function Page() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex">
+    <div className="min-h-screen bg-background text-foreground flex" onClick={handleCloseDropdowns}>
       {/* Sidebar */}
-      <Sidebar
-        sidebarItems={SIDEBAR_ITEMS}
-        bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        hoveredSearch={hoveredSearch}
-        hoveredDropdown={hoveredDropdown}
-        handleSearchMouseEnter={handleSearchMouseEnter}
-        handleSearchMouseLeave={handleSearchMouseLeave}
-        handleDropdownMouseEnter={handleDropdownMouseEnter}
-        handleDropdownMouseLeave={handleDropdownMouseLeave}
-        getFilteredDropdownItems={getFilteredDropdownItems}
-        hasMatchingItems={hasMatchingItems}
-      />
+      <div onClick={(e) => e.stopPropagation()}>
+        <Sidebar
+          sidebarItems={SIDEBAR_ITEMS}
+          bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          hoveredSearch={hoveredSearch}
+          hoveredDropdown={hoveredDropdown}
+          handleSearchMouseEnter={handleSearchMouseEnter}
+          handleSearchMouseLeave={handleSearchMouseLeave}
+          handleDropdownMouseEnter={handleDropdownMouseEnter}
+          handleDropdownMouseLeave={handleDropdownMouseLeave}
+          getFilteredDropdownItems={getFilteredDropdownItems}
+          hasMatchingItems={hasMatchingItems}
+          isExpanded={isSidebarExpanded}
+          setIsExpanded={setIsSidebarExpanded}
+        />
+      </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col ml-16 transition-all duration-300">
+      <div
+        className={`flex-1 flex flex-col transition-all duration-300 bg-slate-50 ${isSidebarExpanded ? "ml-64" : "ml-16"}`}
+      >
         <TopNav
           currentView={currentView}
           navigationHistory={navigationHistory}
@@ -234,10 +238,11 @@ export default function Page() {
           onNavigateForward={handleNavigateForward}
           onRestoreTab={handleRestoreTab}
           onCloseTab={handleCloseTabFromNavbar}
+          isExpanded={isSidebarExpanded}
         />
 
-        {/* DynamicBar */}
-        <DynamicBar
+        {/* UtilityBar */}
+        <UtilityBar
           breadcrumbs={breadcrumbs}
           hasUnsavedChanges={changeTracker.hasUnsavedChanges || hasUnsavedDeletes}
           canUndo={changeTracker.canUndo}
@@ -248,31 +253,21 @@ export default function Page() {
           onGuardar={handleGuardar}
           isSaving={isSaving}
           itemCreated={itemCreated}
+          isExpanded={isSidebarExpanded}
         />
 
-        {/* Toolbar (only show when no item is selected) */}
         {!selectedItem && (
           <Toolbar
             showNuevoDropdown={showNuevoDropdown}
             setShowNuevoDropdown={setShowNuevoDropdown}
             handleOpenNuevoItem={handleOpenNuevoItem}
             handleOpenNuevoItemConVariantes={handleOpenNuevoItemConVariantes}
-            showAccionesDropdown={showAccionesDropdown}
-            setShowAccionesDropdown={setShowAccionesDropdown}
-            hasSelectedItems={hasSelectedItems}
-            selectAllActive={selectAllActive}
-            handleSelectAllClick={handleSelectAllClick}
-            gridSize={gridSize}
-            gridSizeDropdownOpen={gridSizeDropdownOpen}
-            setGridSizeDropdownOpen={setGridSizeDropdownOpen}
-            setGridSize={setGridSize}
+            isExpanded={isSidebarExpanded}
           />
         )}
 
-        {/* Main Content */}
         <main
-          className={`flex-1 overflow-y-auto transition-all duration-200 ${showNuevoItemModal && !isNuevoItemMinimized ? "blur-sm" : ""} ${showNuevoItemConVariantesModal && !isNuevoItemConVariantesMinimized ? "blur-sm" : ""}`}
-          style={{ marginTop: !selectedItem ? "12.5rem" : "3rem" }}
+          className={`flex-1 overflow-y-auto transition-all duration-200 bg-[rgba(250,251,253,1)] ${showNuevoItemModal && !isNuevoItemMinimized ? "blur-sm" : ""} ${showNuevoItemConVariantesModal && !isNuevoItemConVariantesMinimized ? "blur-sm" : ""} ${!selectedItem ? "mt-[5.25rem]" : "mt-[5.25rem]"}`}
         >
           {selectedItem ? (
             <ItemDetailPanel
@@ -285,20 +280,38 @@ export default function Page() {
               updateDepositStock={updateDepositStock}
               updateItem={updateItem}
               allItems={items}
+              item={selectedItem}
+              onClose={() => setSelectedItem(null)}
+              onFieldChange={(itemId, field, value) => updateItem(itemId, { [field]: value })}
+              isSaving={isSaving}
+              onDuplicate={(item) => console.log("Duplicate", item)}
+              onDelete={handleDeleteWithTracking}
+              variantChangeHandlers={{}}
+              isExpanded={isSidebarExpanded}
             />
           ) : (
-            <ItemsGrid
-              items={items}
-              gridSize={gridSize}
-              itemSelected={itemSelected}
-              expandedItems={expandedItems}
-              handleItemButtonClick={handleItemButtonClick}
-              handleItemClick={handleItemClickWithNavigation}
-              toggleVariantExpansion={toggleVariantExpansion}
-              updateDepositStock={updateDepositStock}
-              depositStock={depositStock}
-              onDeleteItem={handleDeleteWithTracking}
-            />
+            <div className="px-8 pb-8 overflow-hidden">
+              <div className="rounded-xl border mt-7 border-[rgba(228,230,235,0.5)] bg-transparent shadow-none border-none">
+                <ItemsGrid
+                  items={items}
+                  gridSize={gridSize}
+                  itemSelected={itemSelected}
+                  expandedItems={expandedItems}
+                  handleItemButtonClick={handleItemButtonClick}
+                  handleItemClick={handleItemClickWithNavigation}
+                  toggleVariantExpansion={toggleVariantExpansion}
+                  updateDepositStock={updateDepositStock}
+                  depositStock={depositStock}
+                  onDeleteItem={handleDeleteWithTracking}
+                  selectAllActive={selectAllActive}
+                  handleSelectAllClick={handleSelectAllClick}
+                  gridSizeDropdownOpen={gridSizeDropdownOpen}
+                  setGridSizeDropdownOpen={setGridSizeDropdownOpen}
+                  setGridSize={setGridSize}
+                  isExpanded={isSidebarExpanded}
+                />
+              </div>
+            </div>
           )}
         </main>
       </div>

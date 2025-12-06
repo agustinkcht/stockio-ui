@@ -1,6 +1,6 @@
 "use client"
 
-import { Search } from "lucide-react"
+import { Search, PanelLeftClose, PanelLeftOpen } from "lucide-react"
 import type { SidebarItem } from "@/lib/types"
 
 interface SidebarProps {
@@ -16,6 +16,8 @@ interface SidebarProps {
   handleDropdownMouseLeave: () => void
   getFilteredDropdownItems: (items: string[]) => string[]
   hasMatchingItems: (items: string[]) => boolean
+  isExpanded: boolean
+  setIsExpanded: (expanded: boolean) => void
 }
 
 export function Sidebar({
@@ -31,127 +33,167 @@ export function Sidebar({
   handleDropdownMouseLeave,
   getFilteredDropdownItems,
   hasMatchingItems,
+  isExpanded,
+  setIsExpanded,
 }: SidebarProps) {
   return (
-    <div className="w-16 bg-gray-900 border-r border-gray-800 px-2 h-screen transition-all duration-300 flex flex-col fixed left-0 top-0 z-40">
-      <div className="flex items-center justify-center py-4">
-        <img src="/images/stockio-icon.png" alt="Stockio" className="w-8 mt-[7px] mb-[7px]" />
-      </div>
-
-      <div className="w-full h-px bg-gray-700 opacity-30 mt-0 mb-1" />
-
-      {/* Search icon */}
-      <div className="relative mb-2" onMouseEnter={handleSearchMouseEnter} onMouseLeave={handleSearchMouseLeave}>
+    <div
+      className={`${isExpanded ? "w-64" : "w-16"} blur-glass border-r px-2 h-screen transition-all duration-300 flex flex-col fixed left-0 top-0 z-50 border-sidebar bg-[rgba(253,254,254,1)]`}
+    >
+      <div className="flex items-center justify-between py-4 px-2 pb-2.5 pt-[9px] pl-[7px]">
+        <div className="flex items-center gap-4">
+          {isExpanded && <span className="text-sidebar-foreground font-semibold text-lg">Stockio</span>}
+        </div>
         <button
-          className={`w-12 h-12 flex items-center justify-center mx-auto rounded-md transition-all ${
-            hoveredSearch || searchQuery ? "bg-gray-800 text-white" : "text-gray-400 hover:text-white hover:bg-gray-800"
-          } ${hoveredDropdown !== null && !hoveredSearch ? "blur-[1.5px] opacity-25" : ""}`}
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-8 h-8 flex items-center justify-center rounded-md text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors cursor-pointer"
+          title={isExpanded ? "Colapsar sidebar" : "Expandir sidebar"}
         >
-          <Search className="w-5 h-5 flex-shrink-0" />
+          {isExpanded ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
         </button>
-
-        {hoveredSearch && (
-          <div
-            className="absolute left-full top-0 w-2 h-12 z-[100]"
-            onMouseEnter={handleSearchMouseEnter}
-            onMouseLeave={handleSearchMouseLeave}
-          />
-        )}
-
-        {hoveredSearch && (
-          <div
-            className="absolute left-full top-0 ml-2 w-64 bg-gray-900 border border-gray-700 rounded-md shadow-lg z-[100] p-3"
-            onMouseEnter={handleSearchMouseEnter}
-            onMouseLeave={handleSearchMouseLeave}
-          >
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Buscar módulos..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                autoFocus
-              />
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Main navigation icons */}
-      <nav className="space-y-0 flex-1">
+      {isExpanded ? (
+        <div className="relative px-2 mb-2.5">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black opacity-100 w-4 h-4 z-10" />
+            <input
+              type="text"
+              placeholder="Buscar módulos..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border shadow-sm rounded-md text-gray-600 placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 bg-white backdrop-blur-sm transition-all border-[rgba(202,213,227,0.842391304347826)] h-8 text-xs"
+            />
+          </div>
+        </div>
+      ) : (
+        <div
+          className="relative px-2 mb-2.5"
+          onMouseEnter={handleSearchMouseEnter}
+          onMouseLeave={handleSearchMouseLeave}
+        >
+          <div className="flex justify-center">
+            <button
+              className={`w-12 h-8 flex items-center justify-center rounded-md transition-all cursor-pointer ${
+                hoveredSearch || searchQuery
+                  ? "bg-sidebar-accent text-sidebar-foreground"
+                  : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+              } ${hoveredDropdown !== null && !hoveredSearch ? "blur-[1.5px] opacity-25" : ""}`}
+            >
+              <Search className="w-5 h-5 flex-shrink-0" />
+            </button>
+          </div>
+
+          {hoveredSearch && (
+            <>
+              <div
+                className="absolute left-full top-0 w-2 h-8 z-[200]"
+                onMouseEnter={handleSearchMouseEnter}
+                onMouseLeave={handleSearchMouseLeave}
+              />
+              <div
+                className="absolute left-full top-0 ml-2 w-64 bg-popover border border-border rounded-md shadow-lg z-[200] p-3"
+                onMouseEnter={handleSearchMouseEnter}
+                onMouseLeave={handleSearchMouseLeave}
+              >
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black opacity-100 w-4 h-4 z-10" />
+                  <input
+                    type="text"
+                    placeholder="Buscar módulos..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border shadow-sm rounded-md text-gray-600 placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 bg-white backdrop-blur-sm transition-all border-[rgba(202,213,227,0.842391304347826)]"
+                    autoFocus
+                  />
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      <nav className={`flex-1 ${isExpanded ? "space-y-1" : "space-y-2"}`}>
         {sidebarItems.map((item, index) => (
           <div
             key={index}
             className={`relative transition-all duration-300 ${
               hoveredDropdown !== null && hoveredDropdown !== index && !hoveredSearch ? "blur-[1.5px] opacity-25" : ""
             }`}
-            onMouseEnter={() => item.hasDropdown && handleDropdownMouseEnter(index)}
-            onMouseLeave={() => item.hasDropdown && handleDropdownMouseLeave()}
+            onMouseEnter={() => item.hasDropdown && !isExpanded && handleDropdownMouseEnter(index)}
+            onMouseLeave={() => item.hasDropdown && !isExpanded && handleDropdownMouseLeave()}
           >
-            <button
-              className={`flex items-center justify-center w-12 h-12 mx-auto rounded-md transition-colors ${
-                item.active ? "bg-gray-800 text-white" : "text-gray-400 hover:text-white hover:bg-gray-800"
-              }`}
-            >
-              <item.icon className="w-5 h-5 flex-shrink-0" />
-            </button>
-
-            {item.hasDropdown && hoveredDropdown === index && (
-              <div
-                className="absolute left-full top-0 w-2 h-12 z-[100]"
-                onMouseEnter={() => handleDropdownMouseEnter(index)}
-                onMouseLeave={handleDropdownMouseLeave}
-              />
+            {isExpanded ? (
+              <button
+                onClick={() => item.hasDropdown && handleDropdownMouseEnter(index)}
+                className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-md transition-colors bg-transparent cursor-pointer ${
+                  item.active
+                    ? "bg-gray-100 text-sidebar-foreground"
+                    : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-gray-100"
+                }`}
+              >
+                <item.icon className="w-5 h-5 flex-shrink-0" />
+                <span className="text-sm font-medium">{item.label}</span>
+              </button>
+            ) : (
+              <button
+                className={`flex items-center justify-center w-12 h-[42px] mx-auto rounded-md transition-colors cursor-pointer ${
+                  item.active
+                    ? "bg-gray-100 text-sidebar-foreground"
+                    : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-gray-100"
+                }`}
+              >
+                <item.icon className="w-5 h-5 flex-shrink-0" />
+              </button>
             )}
 
-            {item.hasDropdown && hoveredDropdown === index && (
-              <div
-                className="absolute left-full top-0 ml-2 w-56 bg-gray-900 border border-gray-700 rounded-md shadow-lg z-[100] animate-in fade-in-0 slide-in-from-left-2 duration-200"
-                onMouseEnter={() => handleDropdownMouseEnter(index)}
-                onMouseLeave={handleDropdownMouseLeave}
-                style={{ minHeight: "fit-content" }}
-              >
-                <div className="px-4 py-3 border-b border-gray-700">
-                  <h3 className="text-sm font-semibold text-white uppercase tracking-wider">{item.label}</h3>
+            {!isExpanded && item.hasDropdown && hoveredDropdown === index && (
+              <>
+                <div
+                  className="absolute left-full top-0 w-2 h-[42px] z-[200]"
+                  onMouseEnter={() => handleDropdownMouseEnter(index)}
+                  onMouseLeave={handleDropdownMouseLeave}
+                />
+                <div
+                  className="absolute left-full top-0 ml-2 w-56 bg-popover border border-border rounded-md shadow-lg z-[200] animate-in fade-in-0 slide-in-from-left-2 duration-200"
+                  onMouseEnter={() => handleDropdownMouseEnter(index)}
+                  onMouseLeave={handleDropdownMouseLeave}
+                  style={{ minHeight: "fit-content" }}
+                >
+                  <div className="px-4 py-3 border-b border-border">
+                    <h3 className="text-sm font-semibold text-popover-foreground uppercase tracking-wider">
+                      {item.label}
+                    </h3>
+                  </div>
+                  <div className="py-2">
+                    {(searchQuery ? getFilteredDropdownItems(item.dropdownItems) : item.dropdownItems).map(
+                      (dropdownItem, dropdownIndex) => (
+                        <button
+                          key={dropdownIndex}
+                          onClick={() => {
+                            if (dropdownItem === "Depósitos") {
+                              window.location.href = "/depositos"
+                            }
+                          }}
+                          className={`w-full text-left px-4 py-2 text-sm cursor-pointer ${
+                            searchQuery && dropdownItem.toLowerCase().includes(searchQuery.toLowerCase())
+                              ? "text-popover-foreground bg-gray-100 hover:bg-gray-100/80"
+                              : "text-muted-foreground hover:text-popover-foreground hover:bg-gray-100/50"
+                          }`}
+                        >
+                          {dropdownItem}
+                        </button>
+                      ),
+                    )}
+                  </div>
                 </div>
-
-                <div className="py-2">
-                  {(searchQuery ? getFilteredDropdownItems(item.dropdownItems) : item.dropdownItems).map(
-                    (dropdownItem, dropdownIndex) => (
-                      <button
-                        key={dropdownIndex}
-                        onClick={() => {
-                          if (dropdownItem === "Depósitos") {
-                            window.location.href = "/depositos"
-                          }
-                        }}
-                        className={`w-full text-left px-4 py-2 text-sm ${
-                          searchQuery && dropdownItem.toLowerCase().includes(searchQuery.toLowerCase())
-                            ? "text-white bg-blue-500/20 hover:bg-blue-500/30"
-                            : "text-gray-300 hover:text-white hover:bg-gray-700"
-                        }`}
-                      >
-                        {dropdownItem}
-                      </button>
-                    ),
-                  )}
-                </div>
-              </div>
+              </>
             )}
 
-            {searchQuery && !hoveredDropdown && item.dropdownItems && hasMatchingItems(item.dropdownItems) && (
-              <div
-                className="absolute left-full top-0 ml-2 w-56 bg-gray-900 border border-gray-700 rounded-md shadow-lg z-[100]"
-                style={{ minHeight: "fit-content" }}
-              >
-                <div className="px-4 py-3 border-b border-gray-700">
-                  <h3 className="text-sm font-semibold text-white uppercase tracking-wider">{item.label}</h3>
-                </div>
-
-                <div className="py-2">
-                  {getFilteredDropdownItems(item.dropdownItems).map((dropdownItem, dropdownIndex) => (
+            {isExpanded && item.hasDropdown && hoveredDropdown === index && (
+              <div className="ml-8 space-y-0.5 animate-in fade-in-0 slide-in-from-top-1 duration-200">
+                {(searchQuery ? getFilteredDropdownItems(item.dropdownItems) : item.dropdownItems).map(
+                  (dropdownItem, dropdownIndex) => (
                     <button
                       key={dropdownIndex}
                       onClick={() => {
@@ -159,29 +201,43 @@ export function Sidebar({
                           window.location.href = "/depositos"
                         }
                       }}
-                      className="w-full text-left px-4 py-2 text-sm text-white bg-blue-500/20 hover:bg-blue-500/30"
+                      className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors cursor-pointer ${
+                        searchQuery && dropdownItem.toLowerCase().includes(searchQuery.toLowerCase())
+                          ? "text-sidebar-foreground bg-gray-100/70 hover:bg-gray-100"
+                          : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-gray-100/50"
+                      }`}
                     >
                       {dropdownItem}
                     </button>
-                  ))}
-                </div>
+                  ),
+                )}
               </div>
             )}
           </div>
         ))}
       </nav>
 
-      {/* Bottom navigation icons */}
-      <nav className="space-y-2 mt-auto mb-4">
+      <nav className={`mt-auto mb-4 ${isExpanded ? "space-y-1" : "space-y-2"}`}>
         {bottomSidebarItems.map((item, index) => (
-          <div key={index} className="flex items-center justify-between">
-            <button
-              className={`flex items-center justify-center w-12 h-12 mx-auto rounded-md transition-colors text-gray-400 hover:text-white hover:bg-gray-800 ${
-                hoveredDropdown !== null && !hoveredSearch ? "blur-[1.5px] opacity-25" : ""
-              }`}
-            >
-              <item.icon className="w-5 h-5 flex-shrink-0" />
-            </button>
+          <div key={index}>
+            {isExpanded ? (
+              <button
+                className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-md transition-colors cursor-pointer text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-gray-100 ${
+                  hoveredDropdown !== null && !hoveredSearch ? "blur-[1.5px] opacity-25" : ""
+                }`}
+              >
+                <item.icon className="w-5 h-5 flex-shrink-0" />
+                <span className="text-sm font-medium">{item.label}</span>
+              </button>
+            ) : (
+              <button
+                className={`flex items-center justify-center w-12 h-[42px] mx-auto rounded-md transition-colors cursor-pointer text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-gray-100 ${
+                  hoveredDropdown !== null && !hoveredSearch ? "blur-[1.5px] opacity-25" : ""
+                }`}
+              >
+                <item.icon className="w-5 h-5 flex-shrink-0" />
+              </button>
+            )}
           </div>
         ))}
       </nav>

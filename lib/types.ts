@@ -39,6 +39,7 @@ export interface Item {
   sku?: string
   codigoUniversal?: string
   marca?: string
+  categoria?: string
   modelo?: string
   formatoVenta?: string
   proveedor?: string

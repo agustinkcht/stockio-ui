@@ -9,10 +9,7 @@ import {
   TrendingUp,
   Settings,
   HelpCircle,
-  ChevronDown,
   Network,
-  MessageCircle,
-  Bell,
   Plus,
   Upload,
   Edit,
@@ -24,9 +21,11 @@ import {
   MoreHorizontal,
   Building,
   Warehouse,
-  ArrowLeftRight,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { UtilityBar } from "@/components/layout/utility-bar"
+import { Sidebar } from "@/components/layout/sidebar"
+import { TopNav } from "@/components/layout/top-nav"
 
 const sidebarItems = [
   {
@@ -77,6 +76,8 @@ const bottomSidebarItems = [
   { icon: Settings, label: "Ajustes" },
 ]
 
+const breadcrumbs = [{ label: "Inventario" }, { label: "Depósitos", href: "/depositos" }]
+
 export default function DepositosPage() {
   const [selectedChannel, setSelectedChannel] = useState("general")
   const [hoveredDropdown, setHoveredDropdown] = useState<number | null>(null)
@@ -86,6 +87,10 @@ export default function DepositosPage() {
   const [showNuevoDropdown, setShowNuevoDropdown] = useState(false)
   const [showAccionesDropdown, setShowAccionesDropdown] = useState(false)
   const [itemSelected, setItemSelected] = useState([false, false, false])
+  const [changeTracker, setChangeTracker] = useState({ hasUnsavedChanges: false, canUndo: false, canRedo: false })
+  const [isSaving, setIsSaving] = useState(false)
+  const [itemCreated, setItemCreated] = useState(false)
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false)
 
   const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -197,215 +202,82 @@ export default function DepositosPage() {
     return items.some((item) => item.toLowerCase().includes(searchQuery.toLowerCase()))
   }
 
+  const handleUndo = () => {
+    // Implement undo functionality
+  }
+
+  const handleRedo = () => {
+    // Implement redo functionality
+  }
+
+  const handleDeshacer = () => {
+    // Implement deshacer functionality
+  }
+
+  const handleGuardar = () => {
+    // Implement guardar functionality
+  }
+
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex">
-      <div className="w-16 bg-gray-900 border-r border-gray-800 px-2 h-screen transition-all duration-300 flex flex-col fixed left-0 top-0 z-40">
-        <div className="flex items-center justify-center py-4">
-          <img src="/images/logo.png" alt="Logo" className="w-10 h-10" />
-        </div>
-
-        <div className="w-full h-px bg-gray-700 mb-2" />
-
-        <div className="relative mb-2 mt-4" onMouseEnter={handleSearchMouseEnter} onMouseLeave={handleSearchMouseLeave}>
-          <button
-            className={`w-12 h-12 flex items-center justify-center mx-auto rounded-md transition-all ${
-              hoveredSearch || searchQuery
-                ? "bg-gray-800 text-white"
-                : "text-gray-400 hover:text-white hover:bg-gray-800"
-            } ${hoveredDropdown !== null && !hoveredSearch ? "blur-[1.5px] opacity-25" : ""}`}
-          >
-            <Search className="w-5 h-5 flex-shrink-0" />
-          </button>
-
-          {hoveredSearch && (
-            <div
-              className="absolute left-full top-0 w-2 h-12 z-[100]"
-              onMouseEnter={handleSearchMouseEnter}
-              onMouseLeave={handleSearchMouseLeave}
-            />
-          )}
-
-          {hoveredSearch && (
-            <div
-              className="absolute left-full top-0 ml-2 w-64 bg-gray-900 border border-gray-700 rounded-md shadow-lg z-[100] p-3"
-              onMouseEnter={handleSearchMouseEnter}
-              onMouseLeave={handleSearchMouseLeave}
-            >
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder="Buscar módulos..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  autoFocus
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-        <nav className="space-y-0 flex-1">
-          {sidebarItems.map((item, index) => (
-            <div
-              key={index}
-              className={`relative transition-all duration-300 ${
-                hoveredDropdown !== null && hoveredDropdown !== index && !hoveredSearch ? "blur-[1.5px] opacity-25" : ""
-              }`}
-              onMouseEnter={() => item.hasDropdown && handleDropdownMouseEnter(index)}
-              onMouseLeave={() => item.hasDropdown && handleDropdownMouseLeave()}
-            >
-              <button
-                className={`flex items-center justify-center w-12 h-12 mx-auto rounded-md transition-colors ${
-                  item.active ? "bg-gray-800 text-white" : "text-gray-400 hover:text-white hover:bg-gray-800"
-                }`}
-              >
-                <item.icon className="w-5 h-5 flex-shrink-0" />
-              </button>
-
-              {item.hasDropdown && hoveredDropdown === index && (
-                <div
-                  className="absolute left-full top-0 w-2 h-12 z-[100]"
-                  onMouseEnter={() => handleDropdownMouseEnter(index)}
-                  onMouseLeave={handleDropdownMouseLeave}
-                />
-              )}
-
-              {item.hasDropdown && hoveredDropdown === index && (
-                <div
-                  className="absolute left-full top-0 ml-2 w-56 bg-gray-900 border border-gray-700 rounded-md shadow-lg z-[100] animate-in fade-in-0 slide-in-from-left-2 duration-200"
-                  onMouseEnter={() => handleDropdownMouseEnter(index)}
-                  onMouseLeave={handleDropdownMouseLeave}
-                  style={{ minHeight: "fit-content" }}
-                >
-                  <div className="px-4 py-3 border-b border-gray-700">
-                    <h3 className="text-sm font-semibold text-white uppercase tracking-wider">{item.label}</h3>
-                  </div>
-
-                  <div className="py-2">
-                    {(searchQuery ? getFilteredDropdownItems(item.dropdownItems) : item.dropdownItems).map(
-                      (dropdownItem, dropdownIndex) => (
-                        <button
-                          key={dropdownIndex}
-                          onClick={() => {
-                            if (dropdownItem === "Artículos") {
-                              window.location.href = "/"
-                            } else if (dropdownItem === "Depósitos") {
-                              window.location.href = "/depositos"
-                            }
-                          }}
-                          className={`w-full text-left px-4 py-2 text-sm transition-colors ${
-                            searchQuery && dropdownItem.toLowerCase().includes(searchQuery.toLowerCase())
-                              ? "text-white bg-blue-500/20 hover:bg-blue-500/30"
-                              : "text-gray-300 hover:text-white hover:bg-gray-700"
-                          }`}
-                        >
-                          {dropdownItem}
-                        </button>
-                      ),
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {searchQuery && !hoveredDropdown && item.dropdownItems && hasMatchingItems(item.dropdownItems) && (
-                <div
-                  className="absolute left-full top-0 ml-2 w-56 bg-gray-900 border border-gray-700 rounded-md shadow-lg z-[100]"
-                  style={{ minHeight: "fit-content" }}
-                >
-                  <div className="px-4 py-3 border-b border-gray-700">
-                    <h3 className="text-sm font-semibold text-white uppercase tracking-wider">{item.label}</h3>
-                  </div>
-
-                  <div className="py-2">
-                    {getFilteredDropdownItems(item.dropdownItems).map((dropdownItem, dropdownIndex) => (
-                      <button
-                        key={dropdownIndex}
-                        onClick={() => {
-                          if (dropdownItem === "Artículos") {
-                            window.location.href = "/"
-                          } else if (dropdownItem === "Depósitos") {
-                            window.location.href = "/depositos"
-                          }
-                        }}
-                        className="w-full text-left px-4 py-2 text-sm text-white bg-blue-500/20 hover:bg-blue-500/30"
-                      >
-                        {dropdownItem}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </nav>
-
-        <nav className="space-y-2 mt-auto mb-4">
-          {bottomSidebarItems.map((item, index) => (
-            <div key={index} className="flex items-center justify-between">
-              <button
-                className={`flex items-center justify-center w-12 h-12 mx-auto rounded-md transition-colors text-gray-400 hover:text-white hover:bg-gray-800 ${
-                  hoveredDropdown !== null && !hoveredSearch ? "blur-[1.5px] opacity-25" : ""
-                }`}
-              >
-                <item.icon className="w-5 h-5 flex-shrink-0" />
-              </button>
-            </div>
-          ))}
-        </nav>
+    <div className="min-h-screen bg-slate-50 text-foreground flex">
+      <div>
+        <Sidebar
+          sidebarItems={sidebarItems}
+          bottomSidebarItems={bottomSidebarItems}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          hoveredSearch={hoveredSearch}
+          hoveredDropdown={hoveredDropdown}
+          handleSearchMouseEnter={handleSearchMouseEnter}
+          handleSearchMouseLeave={handleSearchMouseLeave}
+          handleDropdownMouseEnter={handleDropdownMouseEnter}
+          handleDropdownMouseLeave={handleDropdownMouseLeave}
+          getFilteredDropdownItems={getFilteredDropdownItems}
+          hasMatchingItems={hasMatchingItems}
+          isExpanded={isSidebarExpanded}
+          setIsExpanded={setIsSidebarExpanded}
+        />
       </div>
 
-      <div className="flex-1 flex flex-col ml-16 transition-all duration-300">
-        <div
-          className="h-24 border-b border-gray-800 px-8 flex items-center justify-between fixed top-0 right-0 left-0 bg-gray-950 z-30"
-          style={{ marginLeft: "4rem" }}
-        >
-          <div>
-            <h1 className="text-3xl font-bold text-white">NOIRE</h1>
-            <p className="text-gray-400">Admin</p>
-          </div>
+      <div
+        className={`flex-1 flex flex-col transition-all duration-300 bg-slate-50 ${isSidebarExpanded ? "ml-64" : "ml-16"}`}
+      >
+        <TopNav
+          currentView="depositos"
+          navigationHistory={[]}
+          historyIndex={0}
+          minimizedTabs={[]}
+          activeNavTab="depositos"
+          onNavigateBack={() => {}}
+          onNavigateForward={() => {}}
+          onRestoreTab={() => {}}
+          onCloseTab={() => {}}
+          isExpanded={isSidebarExpanded}
+        />
 
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <select
-                value={selectedChannel}
-                onChange={(e) => setSelectedChannel(e.target.value)}
-                className="appearance-none bg-gray-900 border border-gray-700 rounded-md px-4 py-2 pr-8 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="general">General</option>
-                <option value="mercadolibre">MercadoLibre</option>
-                <option value="ecommerce">E-Commerce</option>
-                <option value="pdv">PDV</option>
-              </select>
-              <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-            </div>
-            <button className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-md transition-colors">
-              <MessageCircle className="w-5 h-5" />
-            </button>
-            <button className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-md transition-colors">
-              <Bell className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
+        {/* UtilityBar */}
+        <UtilityBar
+          breadcrumbs={breadcrumbs}
+          hasUnsavedChanges={changeTracker.hasUnsavedChanges || hasSelectedItems}
+          canUndo={changeTracker.canUndo}
+          canRedo={changeTracker.canRedo}
+          onUndo={handleUndo}
+          onRedo={handleRedo}
+          onDeshacer={handleDeshacer}
+          onGuardar={handleGuardar}
+          isSaving={isSaving}
+          itemCreated={itemCreated}
+          isExpanded={isSidebarExpanded}
+        />
 
         <div
-          className="h-9 border-b border-gray-800 flex items-center px-8 fixed right-0 left-0 z-30 bg-gray-950"
-          style={{ top: "6rem", marginLeft: "4rem" }}
-        >
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-white font-medium cursor-pointer transition-colors">Depósitos</span>
-          </div>
-        </div>
-
-        <div
-          className="h-18 border-b border-gray-800 flex items-center fixed right-0 left-0 z-30 bg-gray-950"
-          style={{ top: "8.25rem", marginLeft: "4rem" }}
+          className="h-18 border-b border-border flex items-center fixed right-0 left-0 z-20 bg-white"
+          style={{ top: "8.25rem", marginLeft: isSidebarExpanded ? "16rem" : "4rem" }}
         >
           <div className="flex items-center gap-2 pl-8">
             <button
               onClick={handleSelectAllClick}
-              className={`w-4 h-4 ${selectAllActive ? "bg-gray-400" : "bg-gray-800"} border border-gray-700 rounded-md hover:cursor-pointer transition-colors flex items-center justify-center flex-shrink-0`}
+              className={`w-4 h-4 ${selectAllActive ? "bg-gray-400" : "bg-white"} border border-border rounded-md hover:cursor-pointer transition-colors flex items-center justify-center flex-shrink-0`}
             ></button>
 
             <div
@@ -413,23 +285,19 @@ export default function DepositosPage() {
               onMouseEnter={() => setShowNuevoDropdown(true)}
               onMouseLeave={() => setShowNuevoDropdown(false)}
             >
-              <Button
-                variant="outline"
-                size="sm"
-                className="bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-white"
-              >
+              <Button variant="outline" size="sm" className="bg-white border-border text-foreground hover:bg-gray-100">
                 <Plus className="w-4 h-4 mr-2" />
                 Nuevo
               </Button>
 
               {showNuevoDropdown && (
-                <div className="absolute left-0 top-full mt-1 w-48 bg-gray-900 border border-gray-700 rounded-md shadow-lg z-10 animate-in fade-in-0 slide-in-from-top-2 duration-200">
+                <div className="absolute left-0 top-full mt-1 w-48 bg-white border border-border rounded-md shadow-lg z-10 animate-in fade-in-0 slide-in-from-top-2 duration-200">
                   <div className="py-1">
-                    <button className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700 cursor-pointer transition-colors flex items-center gap-2">
+                    <button className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-gray-100 cursor-pointer transition-colors flex items-center gap-2">
                       <Plus className="w-4 h-4" />
                       Nuevo Depósito
                     </button>
-                    <button className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700 cursor-pointer transition-colors flex items-center gap-2">
+                    <button className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-gray-100 cursor-pointer transition-colors flex items-center gap-2">
                       <Layers className="w-4 h-4" />
                       Nuevo Grupo
                     </button>
@@ -443,23 +311,19 @@ export default function DepositosPage() {
               onMouseEnter={() => setShowAccionesDropdown(true)}
               onMouseLeave={() => setShowAccionesDropdown(false)}
             >
-              <Button
-                variant="outline"
-                size="sm"
-                className="bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-white"
-              >
+              <Button variant="outline" size="sm" className="bg-white border-border text-foreground hover:bg-gray-100">
                 <Edit className="w-4 h-4 mr-2" />
                 Acciones Masivas
               </Button>
 
               {showAccionesDropdown && (
-                <div className="absolute left-0 top-full mt-1 w-48 bg-gray-900 border border-gray-700 rounded-md shadow-lg z-10 animate-in fade-in-0 slide-in-from-top-2 duration-200">
+                <div className="absolute left-0 top-full mt-1 w-48 bg-white border border-border rounded-md shadow-lg z-10 animate-in fade-in-0 slide-in-from-top-2 duration-200">
                   <div className="py-1">
-                    <button className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700 cursor-pointer transition-colors flex items-center gap-2">
+                    <button className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-gray-100 cursor-pointer transition-colors flex items-center gap-2">
                       <Upload className="w-4 h-4" />
                       Importación Masiva
                     </button>
-                    <button className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700 cursor-pointer transition-colors flex items-center gap-2">
+                    <button className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-gray-100 cursor-pointer transition-colors flex items-center gap-2">
                       <Edit className="w-4 h-4" />
                       Edición Masiva
                     </button>
@@ -471,11 +335,11 @@ export default function DepositosPage() {
 
           <div className="flex-1 flex justify-center px-8">
             <div className="relative w-full max-w-2xl">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black opacity-100 z-10 w-3.5 h-3.5" />
               <input
                 type="text"
                 placeholder="Buscar depósitos..."
-                className="w-full pl-10 pr-4 py-1.5 bg-gray-800 border border-gray-700 rounded-md text-white text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-1.5 bg-white backdrop-blur-sm border border-border rounded-md text-gray-600 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
@@ -485,45 +349,18 @@ export default function DepositosPage() {
               variant="outline"
               size="sm"
               disabled={!hasSelectedItems}
-              className={`bg-gray-800 border-gray-700 ${
+              className={`bg-white border-border ${
                 hasSelectedItems
-                  ? "text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer"
-                  : "text-gray-600 cursor-default opacity-50"
+                  ? "text-foreground hover:bg-gray-100 cursor-pointer"
+                  : "text-gray-400 cursor-not-allowed"
               }`}
             >
-              <ArrowLeftRight className="w-4 h-4 mr-2" />
-              Mover
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!hasSelectedItems}
-              className={`bg-gray-800 border-gray-700 ${
-                hasSelectedItems
-                  ? "text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer"
-                  : "text-gray-600 cursor-default opacity-50"
-              }`}
-            >
-              <Pencil className="w-4 h-4 mr-2" />
-              Editar
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!hasSelectedItems}
-              className={`bg-gray-800 border-gray-700 ${
-                hasSelectedItems
-                  ? "text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer"
-                  : "text-gray-600 cursor-default opacity-50"
-              }`}
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Eliminar
+              <MoreHorizontal className="w-4 h-4" />
             </Button>
           </div>
         </div>
 
-        <div className="flex-1 bg-gray-950 overflow-y-auto" style={{ marginTop: "12.75rem" }}>
+        <main className="flex-1 overflow-y-auto transition-all duration-200 bg-slate-50 mt-[12.75rem] px-8 pb-8">
           <div className="px-8 pt-1.5">
             <div className="flex items-center gap-2 h-10 mb-2 mt-0">
               <div className="w-4 flex-shrink-0"></div>
@@ -615,7 +452,7 @@ export default function DepositosPage() {
               ))}
             </div>
           </div>
-        </div>
+        </main>
       </div>
     </div>
   )

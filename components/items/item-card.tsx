@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronDown, ChevronRight, Copy, Pencil, Trash2, MoreHorizontal } from "lucide-react"
+import { ChevronDown, ChevronRight, Copy, MoreVertical } from "lucide-react"
 import type { Item } from "@/lib/types"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
@@ -33,17 +33,27 @@ export function ItemCard({
   return (
     <div>
       <div
-        className="flex items-center"
+        className="flex items-center gap-2 bg-transparent"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
+        <div>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onSelectClick(index)
+            }}
+            className={`relative left-[-8px] h-4.5 w-4.5 transition-colors cursor-pointer flex items-center justify-center border-2 rounded-sm text-sidebar-accent bg-slate-900 ${
+              isSelected ? "bg-primary border-primary hover:opacity-90" : "bg-transparent border-border"
+            }`}
+          ></button>
+        </div>
+
         <div
-          className={`flex-1 ${gridSize === "lg" ? "h-18" : gridSize === "md" ? "h-12" : "h-6"} ${gridSize !== "lg" ? "rounded-xs" : "rounded-md"} grid grid-cols-[auto_5fr_3fr_3fr_auto] ${
+          className={`flex-1 ${gridSize === "lg" ? "h-22" : gridSize === "md" ? "h-14" : "h-9"} ${gridSize !== "lg" ? "rounded-xs" : "rounded-md"} grid grid-cols-14 ${
             item.isAgrupador || item.hasVariants
-              ? `bg-cyan-9 border border-gray-800 hover:bg-slate-900/30 transition-colors cursor-pointer ${
-                  item.hasVariants ? "border-l-4 border-l-green-500/50" : "border-l-4 border-l-blue-500/50"
-                }`
-              : "bg-slate-900 border border-gray-800"
+              ? `bg-white border border-border hover:bg-gray-50 transition-colors cursor-pointer`
+              : "bg-white border border-border"
           }`}
           onClick={(e) => {
             if (item.hasVariants || item.isAgrupador) {
@@ -51,19 +61,12 @@ export function ItemCard({
             }
           }}
         >
-          <div className="flex items-center justify-center px-3 border-r border-gray-700">
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                onSelectClick(index)
-              }}
-              className={`w-4 h-4 ${isSelected ? "bg-gray-400" : "bg-gray-800"} border border-gray-700 rounded-md hover:cursor-pointer transition-colors flex items-center justify-center flex-shrink-0`}
-            ></button>
-          </div>
-
+          {/* Título Column */}
           <div
-            className={`flex flex-col justify-center h-full border-r border-gray-700 ${gridSize === "sm" ? "gap-0" : "gap-0.5"} px-4 cursor-pointer transition-colors ${
-              item.hasVariants || item.isAgrupador ? "hover:bg-gray-800/50" : "hover:bg-gray-800/50"
+            className={`col-span-4 flex flex-col justify-center h-full border-r bg-white ${
+              item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
+            } px-4 cursor-pointer transition-colors ${
+              item.hasVariants || item.isAgrupador ? "hover:bg-gray-50" : "hover:bg-gray-50"
             }`}
             onClick={(e) => {
               e.stopPropagation()
@@ -81,13 +84,23 @@ export function ItemCard({
                     e.stopPropagation()
                     onToggleExpansion(index)
                   }}
-                  className="text-gray-400 hover:text-white transition-colors cursor-pointer"
+                  className={`transition-colors cursor-pointer ${
+                    item.hasVariants || item.isAgrupador
+                      ? "text-container-item-foreground hover:text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
                 >
                   {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                 </button>
               )}
-              <span className={`${gridSize === "sm" ? "text-xs" : "text-sm"} text-gray-300`}>
-                {(item as any).displayTitle || item.name}
+              <span
+                className={`${gridSize === "sm" ? "text-sm" : "text-sm"} ${
+                  item.hasVariants || item.isAgrupador
+                    ? "text-container-item-foreground font-medium"
+                    : "text-foreground"
+                }`}
+              >
+                {item.name}
               </span>
             </div>
             {gridSize !== "sm" && !item.hasVariants && !item.isAgrupador && item.sku && (
@@ -96,7 +109,7 @@ export function ItemCard({
                   e.stopPropagation()
                   navigator.clipboard.writeText(item.sku)
                 }}
-                className="inline-flex items-center gap-1.5 text-xs text-gray-500 font-mono hover:text-gray-400 transition-colors group w-fit"
+                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground font-mono hover:text-foreground transition-colors group w-fit"
               >
                 <span>SKU: {item.sku}</span>
                 <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -104,159 +117,242 @@ export function ItemCard({
             )}
           </div>
 
+          {/* Categoría Column */}
+          <div
+            className={`col-span-2 h-full flex items-center justify-center border-r bg-white ${
+              item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
+            } px-4`}
+          >
+            <span
+              className={`${gridSize === "sm" ? "text-sm" : "text-sm"} ${
+                item.hasVariants || item.isAgrupador ? "text-container-item-foreground" : "text-foreground"
+              }`}
+            >
+              {item.categoria || "-"}
+            </span>
+          </div>
+
+          {/* Marca Column */}
+          <div
+            className={`col-span-2 h-full flex items-center justify-center border-r bg-white ${
+              item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
+            } px-4`}
+          >
+            <span
+              className={`${gridSize === "sm" ? "text-sm" : "text-sm"} ${
+                item.hasVariants || item.isAgrupador ? "text-container-item-foreground" : "text-foreground"
+              }`}
+            >
+              {item.marca || "-"}
+            </span>
+          </div>
+
+          {/* Atributos Column */}
           {item.hasVariants ? (
-            <>
-              <div className="h-full flex items-center justify-center border-r border-gray-700 px-4">
-                <span className={`${gridSize === "sm" ? "text-xs" : "text-sm"} text-gray-300`}>Item con variantes</span>
-              </div>
-              <div className="h-full flex items-center justify-center border-r border-gray-700 px-4">
-                <span className={`${gridSize === "sm" ? "text-xs" : "text-sm"} text-gray-400`}>
-                  {item.variantCount} variantes
-                </span>
-              </div>
-            </>
-          ) : item.isAgrupador ? (
-            <>
-              <div className="h-full flex items-center justify-center border-r border-gray-700 px-4">
-                <span className={`${gridSize === "sm" ? "text-xs" : "text-sm"} text-gray-300`}>Grupo</span>
-              </div>
-              <div className="h-full flex items-center justify-center border-r border-gray-700 px-4">
-                <span className={`${gridSize === "sm" ? "text-xs" : "text-sm"} text-gray-400`}>
-                  {item.itemCount} items
-                </span>
-              </div>
-            </>
-          ) : (
-            <>
-              <div
-                className="h-full flex items-center gap-3 border-r border-gray-700 px-4 cursor-pointer hover:bg-gray-800/50 transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onItemClick(item, "atributos")
-                }}
+            <div
+              className={`col-span-3 h-full flex items-center justify-center border-r bg-white ${
+                item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
+              } px-4`}
+            >
+              <span
+                className={`${gridSize === "sm" ? "text-sm" : "text-sm"} ${
+                  item.hasVariants || item.isAgrupador ? "text-container-item-foreground" : "text-foreground"
+                }`}
               >
-                {item.atributosPrincipales && item.atributosPrincipales.length > 0 ? (
-                  <>
-                    {item.atributosPrincipales.map((attr, idx) => (
-                      <div key={idx} className="flex flex-col items-center gap-0.5 flex-1 min-w-0">
-                        {gridSize !== "sm" && (
-                          <span className="text-[10px] text-gray-500 uppercase tracking-wide truncate w-full text-center">
+                Item con variantes
+              </span>
+            </div>
+          ) : item.isAgrupador ? (
+            <div
+              className={`col-span-3 h-full flex items-center justify-center border-r bg-white ${
+                item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
+              } px-4`}
+            >
+              <span
+                className={`${gridSize === "sm" ? "text-sm" : "text-sm"} ${
+                  item.hasVariants || item.isAgrupador ? "text-container-item-foreground" : "text-foreground"
+                }`}
+              >
+                Grupo
+              </span>
+            </div>
+          ) : (
+            <div
+              className="col-span-3 h-full flex items-center border-r border-border bg-white px-4 cursor-pointer hover:bg-gray-50 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation()
+                onItemClick(item, "atributos")
+              }}
+            >
+              {item.atributosPrincipales && item.atributosPrincipales.length > 0 ? (
+                <>
+                  {gridSize === "sm" ? (
+                    <div className="grid grid-cols-2 gap-x-4 w-full">
+                      {item.atributosPrincipales.slice(0, 2).map((attr, idx) => (
+                        <div key={idx} className="flex items-center gap-1.5 min-w-0">
+                          <span className="text-sm text-muted-foreground shrink-0">{attr.key}:</span>
+                          <span className="text-sm text-foreground truncate" title={attr.value || "-"}>
+                            {attr.value || "-"}
+                          </span>
+                        </div>
+                      ))}
+                      {item.atributosPrincipales.length === 1 && (
+                        <div className="flex items-center">
+                          <span className="text-sm text-muted-foreground">-</span>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <>
+                      {item.atributosPrincipales.map((attr, idx) => (
+                        <div key={idx} className="flex flex-col items-center gap-0.5 flex-1 min-w-0">
+                          <span className="text-[10px] text-muted-foreground uppercase tracking-wide truncate w-full text-center">
                             {attr.key}
                           </span>
-                        )}
-                        <span
-                          className={`${gridSize === "sm" ? "text-xs" : "text-sm"} ${attr.value ? "text-gray-300" : "text-gray-500"} truncate w-full text-center`}
-                          title={attr.value || "-"}
-                        >
-                          {attr.value || "-"}
-                        </span>
+                          <span
+                            className="text-sm text-foreground truncate w-full text-center"
+                            title={attr.value || "-"}
+                          >
+                            {attr.value || "-"}
+                          </span>
+                        </div>
+                      ))}
+                      {item.atributosPrincipales.length === 1 && (
+                        <div className="flex flex-col items-center gap-0.5 flex-1 min-w-0">
+                          <span className="text-sm text-muted-foreground">-</span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </>
+              ) : (
+                <>
+                  {gridSize === "sm" ? (
+                    <div className="grid grid-cols-2 gap-x-4 w-full">
+                      <div className="flex items-center">
+                        <span className="text-sm text-muted-foreground">-</span>
                       </div>
-                    ))}
-                    {item.atributosPrincipales.length === 1 && (
-                      <div className="flex flex-col items-center gap-0.5 flex-1 min-w-0">
-                        {gridSize !== "sm" && (
-                          <span className="text-[10px] text-gray-500 uppercase tracking-wide"></span>
-                        )}
-                        <span className={`${gridSize === "sm" ? "text-xs" : "text-sm"} text-gray-500`}>-</span>
+                      <div className="flex items-center">
+                        <span className="text-sm text-muted-foreground">-</span>
                       </div>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <div className="flex flex-col items-center gap-0.5 flex-1">
-                      <span className={`${gridSize === "sm" ? "text-xs" : "text-sm"} text-gray-500`}>-</span>
                     </div>
-                    <div className="flex flex-col items-center gap-0.5 flex-1">
-                      <span className={`${gridSize === "sm" ? "text-xs" : "text-sm"} text-gray-500`}>-</span>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              <div
-                className="h-full flex items-center gap-3 border-r border-gray-700 px-4 cursor-pointer hover:bg-gray-800/50 transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onItemClick(item, "stock")
-                }}
-              >
-                <div className="flex flex-col items-center gap-0.5 flex-1">
-                  {gridSize !== "sm" && (
-                    <span className="text-[10px] text-gray-500 uppercase tracking-wide">Total</span>
+                  ) : (
+                    <>
+                      <div className="flex flex-col items-center gap-0.5 flex-1">
+                        <span className="text-sm text-muted-foreground">-</span>
+                      </div>
+                      <div className="flex flex-col items-center gap-0.5 flex-1">
+                        <span className="text-sm text-muted-foreground">-</span>
+                      </div>
+                    </>
                   )}
-                  <span className={`${gridSize === "sm" ? "text-xs" : "text-sm"} text-gray-300`}>
-                    {item.stock?.total || 0}
-                  </span>
-                </div>
-                <div className="flex flex-col items-center gap-0.5 flex-1">
-                  {gridSize !== "sm" && (
-                    <span className="text-[10px] text-gray-500 uppercase tracking-wide">Reservado</span>
-                  )}
-                  <span className={`${gridSize === "sm" ? "text-xs" : "text-sm"} text-gray-300`}>
-                    {item.stock?.reservado || 0}
-                  </span>
-                </div>
-                <div className="flex flex-col items-center gap-0.5 flex-1">
-                  {gridSize !== "sm" && (
-                    <span className="text-[10px] text-gray-500 uppercase tracking-wide">Disponible</span>
-                  )}
-                  <span className={`${gridSize === "sm" ? "text-xs" : "text-sm"} text-gray-300`}>
-                    {item.stock?.disponible || 0}
-                  </span>
-                </div>
-              </div>
-            </>
+                </>
+              )}
+            </div>
           )}
 
-          <div className="flex items-center gap-3 px-4">
-            <div className={`flex items-center gap-3 transition-opacity ${isHovered ? "opacity-100" : "opacity-0"}`}>
+          {/* Stock Column */}
+          {item.hasVariants ? (
+            <div className="col-span-3 h-full flex items-center justify-center bg-white px-4">
+              <span
+                className={`${gridSize === "sm" ? "text-sm" : "text-sm"} ${
+                  item.hasVariants || item.isAgrupador ? "text-container-item-foreground/80" : "text-muted-foreground"
+                }`}
+              >
+                {item.variantCount} variantes
+              </span>
+            </div>
+          ) : item.isAgrupador ? (
+            <div className="col-span-3 h-full flex items-center justify-center bg-white px-4">
+              <span
+                className={`${gridSize === "sm" ? "text-sm" : "text-sm"} ${
+                  item.hasVariants || item.isAgrupador ? "text-container-item-foreground/80" : "text-muted-foreground"
+                }`}
+              >
+                {item.itemCount} items
+              </span>
+            </div>
+          ) : (
+            <div
+              className="col-span-3 h-full flex items-center bg-white px-4 cursor-pointer hover:bg-gray-50 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation()
+                onItemClick(item, "stock")
+              }}
+            >
+              {gridSize === "sm" ? (
+                <div className="grid grid-cols-3 gap-x-3 w-full">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm text-muted-foreground shrink-0">T:</span>
+                    <span className="text-sm text-foreground">{item.stock?.total || 0}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm text-muted-foreground shrink-0">R:</span>
+                    <span className="text-sm text-foreground">{item.stock?.reservado || 0}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm text-muted-foreground shrink-0">D:</span>
+                    <span className="text-sm text-foreground">{item.stock?.disponible || 0}</span>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex flex-col items-center gap-0.5 flex-1">
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Total</span>
+                    <span className="text-sm text-foreground">{item.stock?.total || 0}</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-0.5 flex-1">
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Reservado</span>
+                    <span className="text-sm text-foreground">{item.stock?.reservado || 0}</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-0.5 flex-1">
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Disponible</span>
+                    <span className="text-sm text-foreground">{item.stock?.disponible || 0}</span>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 px-3">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <button
+                onClick={(e) => e.stopPropagation()}
+                className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              >
+                <MoreVertical className="w-4 h-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem
                 onClick={(e) => {
                   e.stopPropagation()
                 }}
-                className="text-gray-400 hover:text-white transition-colors cursor-pointer"
               >
-                <Pencil className="w-4 h-4" />
-              </button>
-              <button
+                Duplicar
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation()
+                }}
+              >
+                Mover
+              </DropdownMenuItem>
+              <DropdownMenuItem
                 onClick={(e) => {
                   e.stopPropagation()
                   if (onDelete) {
                     onDelete(item)
                   }
                 }}
-                className="text-gray-400 hover:text-red-400 transition-colors cursor-pointer"
+                className="text-destructive hover:text-destructive/90"
               >
-                <Trash2 className="w-4 h-4" />
-              </button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    onClick={(e) => e.stopPropagation()}
-                    className="text-gray-400 hover:text-white transition-colors cursor-pointer"
-                  >
-                    <MoreHorizontal className="w-4 h-4" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-40">
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation()
-                    }}
-                  >
-                    Duplicar
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation()
-                    }}
-                  >
-                    Mover
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
+                Eliminar
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

@@ -13,7 +13,7 @@ import {
 import type { SidebarItem, Template } from "./types"
 
 export const SAVED_ATRIBUTOS: Record<string, string[]> = {
-  Color: ["Blanco", "Negro", "Marino", "Rojo", "Azul", "Azul Marino", "Transparente", "Multicolor"],
+  Color: ["Blanco", "Negro", "Marino", "Rojo", "Azul", "Azul Marino"],
   Varietal: ["Malbec", "Cabernet Sauvignon", "Cabernet Franc", "Merlot", "Syrah"],
   Año: [],
   "Tipo de Vino": ["Tinto", "Blanco", "Rosado", "Espumante"],
@@ -112,38 +112,19 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     icon: Store,
     label: "Mi Negocio",
     hasDropdown: true,
-    dropdownItems: ["Punto de Venta", "Cajas"],
-  },
-  {
-    icon: Network,
-    label: "Canales Online",
-    hasDropdown: true,
-    dropdownItems: ["Publicaciones", "Marketing"],
+    dropdownItems: ["Punto de Venta", "Cajas", "Facturación", "Presupuestos", "Clientes"],
   },
   {
     icon: ShoppingBag,
-    label: "Ventas",
+    label: "Canales de Venta",
     hasDropdown: true,
-    dropdownItems: ["Ventas", "Facturación", "Presupuestos", "Catálogo", "Clientes"],
+    dropdownItems: ["Ventas", "Facturación", "Compradores"],
   },
   {
     icon: Slack,
     label: "Postventa",
     hasDropdown: true,
-    dropdownItems: ["Envíos", "Cambios, Devoluciones y Cancelaciones"],
-  },
-  {
-    icon: PackagePlus,
-    label: "Compras",
-    hasDropdown: true,
-    dropdownItems: ["Compras", "Proveedores"],
-  },
-  {
-    icon: Box,
-    label: "Stock",
-    hasDropdown: true,
-    dropdownItems: ["Artículos", "Templates y Atributos", "Depósitos"],
-    active: true,
+    dropdownItems: ["Envíos", "Cambios y Devoluciones", "Cancelaciones"],
   },
   {
     icon: Tag,
@@ -152,11 +133,19 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     dropdownItems: ["Listas de Precios", "Gestión de Ofertas"],
   },
   {
-    icon: TrendingUp,
-    label: "BI",
+    icon: Box,
+    label: "Inventario",
     hasDropdown: true,
-    dropdownItems: ["Cashflow", "Análisis de Rotación", "Performance Online", "Sugerencias de Optimización"],
+    dropdownItems: ["Artículos", "Colecciones", "Categorías", "Marcas", "Atributos", "Depósitos"],
+    active: true,
   },
+  {
+    icon: PackagePlus,
+    label: "Compras",
+    hasDropdown: true,
+    dropdownItems: ["Compras", "Proveedores"],
+  },
+
 ]
 
 export const BOTTOM_SIDEBAR_ITEMS: SidebarItem[] = [

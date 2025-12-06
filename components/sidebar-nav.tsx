@@ -1,43 +1,8 @@
 "use client"
 
 import { useState, useRef } from "react"
-import {
-  Search,
-  ShoppingBag,
-  Store,
-  Box,
-  TrendingUp,
-  Settings,
-  HelpCircle,
-  Network,
-  Slack,
-  PackagePlus,
-  Tag,
-} from "lucide-react"
-
-const SIDEBAR_ITEMS = [
-  { icon: Store, label: "Mi Negocio", dropdownItems: ["Punto de Venta", "Cajas"] },
-  { icon: Network, label: "Canales Online", dropdownItems: ["Publicaciones", "Marketing"] },
-  {
-    icon: ShoppingBag,
-    label: "Ventas",
-    dropdownItems: ["Ventas", "Facturación", "Presupuestos", "Catálogo", "Clientes"],
-  },
-  { icon: Slack, label: "Postventa", dropdownItems: ["Envíos", "Cambios, Devoluciones y Cancelaciones"] },
-  { icon: PackagePlus, label: "Compras", dropdownItems: ["Compras", "Proveedores"] },
-  { icon: Box, label: "Stock", dropdownItems: ["Artículos", "Templates y Atributos", "Depósitos"] },
-  { icon: Tag, label: "Precios", dropdownItems: ["Listas de Precios", "Gestión de Ofertas"] },
-  {
-    icon: TrendingUp,
-    label: "BI",
-    dropdownItems: ["Cashflow", "Análisis de Rotación", "Performance Online", "Sugerencias de Optimización"],
-  },
-]
-
-const BOTTOM_ITEMS = [
-  { icon: HelpCircle, label: "Soporte" },
-  { icon: Settings, label: "Ajustes" },
-]
+import { Search } from "lucide-react"
+import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 
 export function SidebarNav() {
   const [hoveredDropdown, setHoveredDropdown] = useState<number | null>(null)
@@ -190,7 +155,7 @@ export function SidebarNav() {
 
       {/* Bottom Nav */}
       <nav className="space-y-2 mt-auto mb-4">
-        {BOTTOM_ITEMS.map((item, index) => (
+        {BOTTOM_SIDEBAR_ITEMS.map((item, index) => (
           <button
             key={index}
             className={`flex items-center justify-center w-12 h-12 mx-auto rounded-md transition-colors text-gray-400 hover:text-white hover:bg-gray-800 ${

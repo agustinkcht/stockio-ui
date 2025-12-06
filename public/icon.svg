@@ -1,0 +1,24 @@
+<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    @media (prefers-color-scheme: light) {
+      .background { fill: black; }
+      .foreground { fill: white; }
+    }
+    @media (prefers-color-scheme: dark) {
+      .background { fill: white; }
+      .foreground { fill: black; }
+    }
+  </style>
+  <g clip-path="url(#clip0_7960_43945)">
+    <circle class="background" cx="90" cy="90" r="90" fill="#E8E9EB"/>
+    <g transform="translate(55, 40)">
+      <!-- Tree trunk and branches -->
+      <path class="foreground" d="M35 15 L35 35 M35 25 L22 37 M35 25 L48 37 M35 35 L35 50 M35 42 L20 55 M35 42 L50 55 M35 50 L32 70" stroke="#000" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </g>
+  </g>
+  <defs>
+    <clipPath id="clip0_7960_43945">
+      <rect width="180" height="180" fill="white" />
+    </clipPath>
+  </defs>
+</svg>

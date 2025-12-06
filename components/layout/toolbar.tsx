@@ -1,17 +1,16 @@
 "use client"
 
-import { Plus, Edit, Upload, ArrowLeftRight, Pencil, Trash2, Grid3x3, Layers, Search } from "lucide-react"
+import { Plus, Grid3x3, Layers, MoreVertical, Upload, Download, BookOpen, Pencil, Trash2, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useRef } from "react"
+import { useRef, useState, useEffect } from "react"
 
 interface ToolbarProps {
   showNuevoDropdown: boolean
   setShowNuevoDropdown: (value: boolean) => void
   handleOpenNuevoItem: () => void
   handleOpenNuevoItemConVariantes: () => void
-  showAccionesDropdown: boolean
-  setShowAccionesDropdown: (value: boolean) => void
   hasSelectedItems: boolean
+  isExpanded?: boolean
   selectAllActive: boolean
   handleSelectAllClick: () => void
   gridSize: string
@@ -25,9 +24,8 @@ export function Toolbar({
   setShowNuevoDropdown,
   handleOpenNuevoItem,
   handleOpenNuevoItemConVariantes,
-  showAccionesDropdown,
-  setShowAccionesDropdown,
   hasSelectedItems,
+  isExpanded = true,
   selectAllActive,
   handleSelectAllClick,
   gridSize,
@@ -35,226 +33,141 @@ export function Toolbar({
   setGridSizeDropdownOpen,
   setGridSize,
 }: ToolbarProps) {
-  const nuevoTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const accionesTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const nuevoRef = useRef<HTMLDivElement>(null)
+  const moreOptionsRef = useRef<HTMLDivElement>(null)
+  const massiveActionsRef = useRef<HTMLDivElement>(null)
 
-  const handleNuevoMouseLeave = () => {
-    nuevoTimeoutRef.current = setTimeout(() => {
-      setShowNuevoDropdown(false)
-    }, 150)
-  }
+  const [showMoreOptionsDropdown, setShowMoreOptionsDropdown] = useState(false)
+  const [showMassiveActionsDropdown, setShowMassiveActionsDropdown] = useState(false)
 
-  const handleNuevoMouseEnter = () => {
-    if (nuevoTimeoutRef.current) {
-      clearTimeout(nuevoTimeoutRef.current)
-      nuevoTimeoutRef.current = null
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (nuevoRef.current && !nuevoRef.current.contains(event.target as Node)) {
+        setShowNuevoDropdown(false)
+      }
+      if (moreOptionsRef.current && !moreOptionsRef.current.contains(event.target as Node)) {
+        setShowMoreOptionsDropdown(false)
+      }
+      if (massiveActionsRef.current && !massiveActionsRef.current.contains(event.target as Node)) {
+        setShowMassiveActionsDropdown(false)
+      }
     }
-    setShowNuevoDropdown(true)
-  }
 
-  const handleAccionesMouseLeave = () => {
-    accionesTimeoutRef.current = setTimeout(() => {
-      setShowAccionesDropdown(false)
-    }, 150)
-  }
-
-  const handleAccionesMouseEnter = () => {
-    if (accionesTimeoutRef.current) {
-      clearTimeout(accionesTimeoutRef.current)
-      accionesTimeoutRef.current = null
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
     }
-    setShowAccionesDropdown(true)
-  }
+  }, [setShowNuevoDropdown])
 
   return (
-    <div className="fixed top-22 right-0 left-0 bg-gray-950 z-20" style={{ marginLeft: "4rem" }}>
-      {/* Action Toolbar */}
-      <div className="border-b border-gray-800 flex items-center justify-between py-0 h-12">
-        <div className="flex items-center gap-2 pl-8">
-          <div className="relative">
-            <div onMouseEnter={handleNuevoMouseEnter} onMouseLeave={handleNuevoMouseLeave}>
+    <div
+      className="fixed top-[84px] bg-transparent z-30 transition-all duration-300"
+      style={{ left: isExpanded ? "256px" : "64px" }}
+    >
+      <div className="px-8 pt-6 pb-2 flex justify-start bg-transparent">
+        <div className="h-12 bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50 shadow-sm px-4 flex items-center gap-3 transition-all duration-300 mb-0">
+          {hasSelectedItems && (
+            <div className="flex items-center gap-2 pr-3 border-r border-gray-200 animate-in fade-in-0 slide-in-from-left-5 duration-300">
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
-                className="bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-white"
+                className="h-8 text-xs hover:bg-gray-100 transition-colors cursor-pointer"
               >
-                <Plus className="w-4 h-4 mr-2" />
+                <Pencil className="w-3.5 h-3.5 mr-1.5" />
+                Editar
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 text-xs hover:bg-gray-100 transition-colors cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                Eliminar
+              </Button>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2">
+            <div className="relative" ref={nuevoRef}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowNuevoDropdown(!showNuevoDropdown)}
+                className="h-8 text-xs hover:bg-gray-100 transition-colors cursor-pointer border shadow-sm border-[rgba(228,230,235,0.6)]"
+              >
+                <Plus className="w-4 h-4 mr-1.5" />
                 Nuevo
               </Button>
 
               {showNuevoDropdown && (
-                <div className="absolute left-0 top-full mt-1 w-56 bg-gray-900 border border-gray-700 rounded-md shadow-lg z-10 animate-in fade-in-0 slide-in-from-top-2 duration-200">
+                <div className="absolute left-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-in fade-in-0 slide-in-from-top-2 duration-200">
                   <div className="py-1">
                     <button
                       onClick={handleOpenNuevoItem}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700 cursor-pointer transition-colors flex items-center gap-2"
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer"
                     >
-                      <Plus className="w-4 h-4" />
-                      Nuevo Item
+                      <Plus className="w-4 h-4 text-gray-400" />
+                      Item
                     </button>
                     <button
                       onClick={handleOpenNuevoItemConVariantes}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700 cursor-pointer transition-colors flex items-center gap-2"
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer"
                     >
-                      <Grid3x3 className="w-4 h-4" />
-                      Nuevo Item con Variantes
+                      <Grid3x3 className="w-4 h-4 text-gray-400" />
+                      Item con Variantes
                     </button>
-                    <button className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700 cursor-pointer transition-colors flex items-center gap-2">
-                      <Layers className="w-4 h-4" />
-                      Nuevo Grupo
+                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer">
+                      <Layers className="w-4 h-4 text-gray-400" />
+                      Combo
                     </button>
                   </div>
                 </div>
               )}
             </div>
-          </div>
 
-          <div className="relative">
-            <div onMouseEnter={handleAccionesMouseEnter} onMouseLeave={handleAccionesMouseLeave}>
+            <div className="relative w-80 mx-2">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black opacity-100 w-3.5 h-3.5 z-10" />
+              <input
+                type="text"
+                placeholder="Buscar artículos..."
+                className="w-full h-8 pl-9 pr-3 border shadow-sm rounded-md text-xs placeholder:text-gray-600 text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 bg-white backdrop-blur-sm transition-all border-[rgba(202,213,227,0.842391304347826)]"
+              />
+            </div>
+
+            <div className="relative" ref={moreOptionsRef}>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
-                className="bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-white"
+                onClick={() => setShowMoreOptionsDropdown(!showMoreOptionsDropdown)}
+                className="h-8 px-2 hover:bg-gray-100 transition-colors cursor-pointer"
               >
-                <Edit className="w-4 h-4 mr-2" />
-                Acciones Masivas
+                <MoreVertical className="w-3.5 h-3.5" />
               </Button>
 
-              {showAccionesDropdown && (
-                <div className="absolute left-0 top-full mt-1 w-48 bg-gray-900 border border-gray-700 rounded-md shadow-lg z-10 animate-in fade-in-0 slide-in-from-top-2 duration-200">
+              {showMoreOptionsDropdown && (
+                <div className="absolute left-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-in fade-in-0 slide-in-from-top-2 duration-200">
                   <div className="py-1">
-                    <button className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700 cursor-pointer transition-colors flex items-center gap-2">
-                      <Upload className="w-4 h-4" />
-                      Importación Masiva
+                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer">
+                      <Grid3x3 className="w-4 h-4 text-gray-400" />
+                      Creación Masiva
                     </button>
-                    <button className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700 cursor-pointer transition-colors flex items-center gap-2">
-                      <Edit className="w-4 h-4" />
-                      Edición Masiva
+                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer">
+                      <Upload className="w-4 h-4 text-gray-400" />
+                      Importar CSV
+                    </button>
+                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer">
+                      <Download className="w-4 h-4 text-gray-400" />
+                      Exportar CSV
+                    </button>
+                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer">
+                      <BookOpen className="w-4 h-4 text-gray-400" />
+                      Exportar Catálogo
                     </button>
                   </div>
                 </div>
               )}
             </div>
-          </div>
-        </div>
-
-        <div className="flex-1 flex justify-center px-8 max-w-2xl">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Buscar artículos..."
-              className="w-full pl-10 pr-4 py-1.5 bg-gray-800 border border-gray-700 rounded-md text-white text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 pr-8">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!hasSelectedItems}
-            className={`bg-gray-800 border-gray-700 ${
-              hasSelectedItems
-                ? "text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer"
-                : "text-gray-600 cursor-default opacity-50"
-            }`}
-          >
-            <ArrowLeftRight className="w-4 h-4 mr-2" />
-            Mover
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!hasSelectedItems}
-            className={`bg-gray-800 border-gray-700 ${
-              hasSelectedItems
-                ? "text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer"
-                : "text-gray-600 cursor-default opacity-50"
-            }`}
-          >
-            <Pencil className="w-4 h-4 mr-2" />
-            Editar
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!hasSelectedItems}
-            className={`bg-gray-800 border-gray-700 ${
-              hasSelectedItems
-                ? "text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer"
-                : "text-gray-600 cursor-default opacity-50"
-            }`}
-          >
-            <Trash2 className="w-4 h-4 mr-2" />
-            Eliminar
-          </Button>
-        </div>
-      </div>
-
-      {/* Grid Header */}
-      <div className="px-8 pt-2 pb-2">
-        <div className="flex gap-2 h-9">
-          <div className="w-4 flex items-center justify-center">
-            <button
-              onClick={handleSelectAllClick}
-              className={`w-4 h-4 ${selectAllActive ? "bg-gray-400" : "bg-gray-800"} border border-gray-700 rounded-md hover:cursor-pointer transition-colors flex items-center justify-center flex-shrink-0`}
-            ></button>
-          </div>
-          <div
-            className={`flex-1 border-b-0 border-t-0 border-r-0 border-l-0 ${gridSize !== "lg" ? "rounded-xs" : "rounded-md"} bg-gray-900/30 border border-gray-800 overflow-hidden`}
-          >
-            <div className="grid grid-cols-11 h-full">
-              <div className="col-span-5 flex items-center px-4 border-r border-gray-800">
-                <span className="text-xs uppercase tracking-wider text-gray-400">Título</span>
-              </div>
-              <div className="col-span-3 flex items-center px-4 border-r border-gray-800">
-                <span className="text-xs uppercase tracking-wider text-gray-400">Atributos</span>
-              </div>
-              <div className="col-span-3 flex items-center px-4">
-                <span className="text-xs uppercase tracking-wider text-gray-400">Stock</span>
-              </div>
-            </div>
-          </div>
-          <div className="w-[108px] relative">
-            <button
-              onClick={() => setGridSizeDropdownOpen(!gridSizeDropdownOpen)}
-              className="w-full h-full bg-gray-900/30 border border-gray-800 rounded-md flex items-center justify-between px-3 hover:bg-gray-800/50 transition-colors cursor-pointer"
-            >
-              <span className="text-xs text-gray-400">Grilla</span>
-              <span className="text-xs text-white font-medium uppercase">{gridSize}</span>
-            </button>
-            {gridSizeDropdownOpen && (
-              <div className="absolute top-full mt-1 right-0 w-full bg-gray-900 border border-gray-700 rounded-md shadow-lg z-50">
-                <button
-                  onClick={() => {
-                    setGridSize("lg")
-                    setGridSizeDropdownOpen(false)
-                  }}
-                  className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-gray-800 transition-colors"
-                >
-                  LG
-                </button>
-                <button
-                  onClick={() => {
-                    setGridSize("md")
-                    setGridSizeDropdownOpen(false)
-                  }}
-                  className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-gray-800 transition-colors"
-                >
-                  MD
-                </button>
-                <button
-                  onClick={() => {
-                    setGridSize("sm")
-                    setGridSizeDropdownOpen(false)
-                  }}
-                  className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-gray-800 transition-colors"
-                >
-                  SM
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </div>

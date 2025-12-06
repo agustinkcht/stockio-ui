@@ -23,8 +23,15 @@ export function useItems() {
     console.log("[v0] useItems - deletedItems count:", deletedItems.length)
   }, [hasUnsavedDeletes, deletedItems])
 
+  const USE_MOCK_DATA = true
+
   useEffect(() => {
     const fetchItems = async () => {
+        if (USE_MOCK_DATA) {
+            setItems(INITIAL_ITEMS)
+            setIsLoading(false)
+        return
+  }
       try {
         const response = await fetch("/api/items")
 

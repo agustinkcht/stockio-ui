@@ -22,7 +22,15 @@ export function useSidebar() {
       clearTimeout(dropdownTimeoutRef.current)
       dropdownTimeoutRef.current = null
     }
-    setHoveredDropdown(index)
+    if (hoveredDropdown !== null && hoveredDropdown !== index) {
+      setHoveredDropdown(null)
+      return
+    }
+    if (hoveredDropdown === index) {
+      setHoveredDropdown(null)
+    } else {
+      setHoveredDropdown(index)
+    }
   }
 
   const handleDropdownMouseLeave = () => {
@@ -59,6 +67,12 @@ export function useSidebar() {
     return getFilteredDropdownItems(index).length > 0
   }
 
+  const handleCloseDropdowns = () => {
+    setHoveredDropdown(null)
+    setHoveredSearch(false)
+    setSearchQuery("")
+  }
+
   return {
     sidebarCollapsed,
     setSidebarCollapsed,
@@ -82,5 +96,6 @@ export function useSidebar() {
     handleSearchMouseLeave,
     getFilteredDropdownItems,
     hasMatchingItems,
+    handleCloseDropdowns,
   }
 }
