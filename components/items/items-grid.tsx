@@ -295,7 +295,7 @@ export function ItemsGrid({
             ></button>
 
             {/* Tab header matching exact item card structure */}
-            <div className="flex-1 grid grid-cols-14 h-9 bg-slate-100 border border-gray-300 rounded-xs border-none">
+            <div className="flex-1 grid grid-cols-14 h-9 bg-slate-200 border border-gray-300 rounded-xs border-none">
               <div className="col-span-4 flex items-center px-4 py-2 justify-center border-solid border-r border-slate-300">
                 <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Título</span>
               </div>

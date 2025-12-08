@@ -43,7 +43,7 @@ export function ItemCard({
               e.stopPropagation()
               onSelectClick(index)
             }}
-            className={`relative left-[-8px] h-4.5 w-4.5 transition-colors cursor-pointer flex items-center justify-center border-2 rounded-sm text-sidebar-accent bg-slate-900 ${
+            className={`relative left-[-8px] h-4.5 w-4.5 transition-colors cursor-pointer flex items-center justify-center border-2 text-sidebar-accent bg-slate-900 rounded-full ${
               isSelected ? "bg-primary border-primary hover:opacity-90" : "bg-transparent border-border"
             }`}
           ></button>
@@ -331,14 +331,7 @@ export function ItemCard({
                   e.stopPropagation()
                 }}
               >
-                Duplicar
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation()
-                }}
-              >
-                Mover
+                Editar
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={(e) => {

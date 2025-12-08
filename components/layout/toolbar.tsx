@@ -159,10 +159,6 @@ export function Toolbar({
                       <Download className="w-4 h-4 text-gray-400" />
                       Exportar CSV
                     </button>
-                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer">
-                      <BookOpen className="w-4 h-4 text-gray-400" />
-                      Exportar Catálogo
-                    </button>
                   </div>
                 </div>
               )}
