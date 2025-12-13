@@ -60,6 +60,10 @@ export function ItemDetailPanel({
 
   const isChildItem = fatherItem !== null && fatherItem !== undefined
 
+  const shouldStrictlyInherit = (fieldValue: any) => {
+    return isChildItem && fatherItem && fieldValue !== undefined && fieldValue !== null
+  }
+
   const shouldInheritField = (fieldValue: any) => {
     return isChildItem && fatherItem && fieldValue !== undefined && fieldValue !== null && fieldValue !== ""
   }
@@ -70,35 +74,38 @@ export function ItemDetailPanel({
 
   const [itemTitulo, setItemTitulo] = useState(selectedItem?.name || "")
   const [categoria, setCategoria] = useState(
-    shouldInheritField(fatherItem?.categoria) ? fatherItem!.categoria : selectedItem?.categoria || "",
+    shouldStrictlyInherit(fatherItem?.categoria) ? fatherItem!.categoria : selectedItem?.categoria || "",
   )
   const [marca, setMarca] = useState(
-    shouldInheritField(fatherItem?.marca) ? fatherItem!.marca : selectedItem?.marca || "",
+    shouldStrictlyInherit(fatherItem?.marca) ? fatherItem!.marca : selectedItem?.marca || "",
   )
   const [modelo, setModelo] = useState(selectedItem?.modelo || "")
   const [formatoVenta, setFormatoVenta] = useState(
-    shouldInheritField(fatherItem?.formatoVenta) ? fatherItem!.formatoVenta : selectedItem?.formatoVenta || "unidad",
+    shouldStrictlyInherit(fatherItem?.formatoVenta) ? fatherItem!.formatoVenta : selectedItem?.formatoVenta || "unidad",
   )
-  const [unidadesPorPack, setUnidadesPorPack] = useState(
-    shouldInheritField(fatherItem?.unidadesPorPack)
+  const [unidadesPorPack, setUnidadesPorPack] = useState(() => {
+    const inherited = shouldStrictlyInherit(fatherItem?.unidadesPorPack)
       ? fatherItem!.unidadesPorPack?.toString()
-      : selectedItem?.unidadesPorPack?.toString() || "",
-  )
+      : selectedItem?.unidadesPorPack?.toString()
+
+    if (!inherited || inherited === "N.E.") return "1"
+    return inherited
+  })
   const [unidadesPorPackActive, setUnidadesPorPackActive] = useState(
-    shouldInheritField(fatherItem?.unidadesPorPackActive)
+    shouldStrictlyInherit(fatherItem?.unidadesPorPackActive)
       ? fatherItem!.unidadesPorPackActive
       : selectedItem?.unidadesPorPack !== undefined && selectedItem?.unidadesPorPack !== null,
   )
   const [volumenActive, setVolumenActive] = useState(
-    shouldInheritField(fatherItem?.volumenActive) ? fatherItem!.volumenActive : selectedItem?.volumenActive || false,
+    shouldStrictlyInherit(fatherItem?.volumenActive) ? fatherItem!.volumenActive : selectedItem?.volumenActive || false,
   )
   const [volumenCantidad, setVolumenCantidad] = useState(
-    shouldInheritField(fatherItem?.volumenCantidad)
+    shouldStrictlyInherit(fatherItem?.volumenCantidad)
       ? fatherItem!.volumenCantidad?.toString()
       : selectedItem?.volumenCantidad?.toString() || "",
   )
   const [volumenUnidad, setVolumenUnidad] = useState(
-    shouldInheritField(fatherItem?.volumenUnidad) ? fatherItem!.volumenUnidad : selectedItem?.volumenUnidad || "",
+    shouldStrictlyInherit(fatherItem?.volumenUnidad) ? fatherItem!.volumenUnidad : selectedItem?.volumenUnidad || "",
   )
   const [proveedor, setProveedor] = useState(
     shouldInheritField(fatherItem?.proveedor) ? fatherItem!.proveedor : selectedItem?.proveedor || "",
@@ -117,42 +124,89 @@ export function ItemDetailPanel({
   const [containerAtributosPrincipales, setContainerAtributosPrincipales] = useState<
     Array<{ key: string; variantes: string[]; keyOpen?: boolean; variantesOpen?: boolean }>
   >(selectedItem?.containerAtributosPrincipales || [])
-  const [varianteInput, setVarianteInput] = useState<{ [key: number]: string }>({})
-
-  const [showIndividualAtributosView, setShowIndividualAtributosView] = useState(
-    !isViewingContainer &&
-      (selectedItem?.atributosPrincipales?.length > 0 || selectedItem?.atributosInformativos?.length > 0),
-  )
-  const [showAtributosView, setShowAtributosView] = useState(
-    isViewingContainer &&
-      ((selectedItem?.containerAtributosPrincipales && selectedItem?.containerAtributosPrincipales.length > 0) ||
-        (selectedItem?.atributosInformativos && selectedItem?.atributosInformativos.length > 0)),
-  )
 
   const [atributosPrincipales, setAtributosPrincipales] = useState<
     Array<{ key: string; value: string; isOpen?: boolean; keyOpen?: boolean }>
-  >(selectedItem?.atributosPrincipales || [])
+  >(() => {
+    if (isChildItem && fatherItem?.containerAtributosPrincipales) {
+      // For child items, enforce strict inheritance from parent's containerAtributosPrincipales
+      // Filter out invalid attributes (those with empty variantes arrays)
+      const validParentAttributes = fatherItem.containerAtributosPrincipales.filter(
+        (attr) => attr.variantes && attr.variantes.length > 0,
+      )
+
+      // Map to child format, preserving existing values or defaulting to first variante
+      return validParentAttributes.map((parentAttr) => {
+        const existingChildAttr = selectedItem?.atributosPrincipales?.find((a) => a.key === parentAttr.key)
+        return {
+          key: parentAttr.key,
+          value: existingChildAttr?.value || parentAttr.variantes[0] || "",
+        }
+      })
+    }
+
+    // For standalone items or containers, use their own attributes
+    return selectedItem?.atributosPrincipales || []
+  })
 
   const [atributosInformativos, setAtributosInformativos] = useState<
     Array<{ key: string; value: string; isOpen?: boolean; keyOpen?: boolean }>
-  >(
-    isChildItem && fatherItem?.atributosInformativos
-      ? fatherItem.atributosInformativos.map((fatherAttr) => {
-          // Check if child has this attribute
-          const childAttr = selectedItem?.atributosInformativos?.find((a) => a.key === fatherAttr.key)
-          // If father has a value, use it (locked). If not, use child's value (editable)
-          return {
-            key: fatherAttr.key,
-            value: fatherAttr.value || childAttr?.value || "",
+  >(() => {
+    if (isChildItem && fatherItem?.atributosInformativos) {
+      // Start with father's attributes (Case 1 & 2)
+      const mergedAttributes = fatherItem.atributosInformativos.map((fatherAttr) => {
+        // Check if child has this attribute
+        const childAttr = selectedItem?.atributosInformativos?.find((a) => a.key === fatherAttr.key)
+        // If father has a value, use it (locked). If not, use child's value (editable)
+        return {
+          key: fatherAttr.key,
+          value: fatherAttr.value || childAttr?.value || "",
+        }
+      })
+
+      // Add variant-exclusive attributes (Case 3)
+      if (selectedItem?.atributosInformativos) {
+        selectedItem.atributosInformativos.forEach((childAttr) => {
+          // Only add if this attribute doesn't exist in father
+          const existsInFather = fatherItem.atributosInformativos.some((f) => f.key === childAttr.key)
+          if (!existsInFather) {
+            mergedAttributes.push({
+              key: childAttr.key,
+              value: childAttr.value,
+            })
           }
         })
-      : selectedItem?.atributosInformativos || [],
-  )
+      }
+
+      return mergedAttributes
+    }
+
+    // For standalone items or containers, return their own attributes
+    return selectedItem?.atributosInformativos || []
+  })
 
   const [skuCopied, setSkuCopied] = useState(false)
   const [codigoUniversalCopied, setCodigoUniversalCopied] = useState(false)
   const [showTemplateModal, setShowTemplateModal] = useState(false)
   const [isSelectingTemplateForContainer, setIsSelectingTemplateForContainer] = useState(false)
+
+  const [showAtributosView, setShowAtributosView] = useState(false)
+  const [showIndividualAtributosView, setShowIndividualAtributosView] = useState(false)
+
+  // Compute whether item has existing attributes
+  const hasExistingAttributes =
+    (selectedItem?.atributosPrincipales && selectedItem.atributosPrincipales.length > 0) ||
+    (selectedItem?.atributosInformativos && selectedItem.atributosInformativos.length > 0) ||
+    (selectedItem?.containerAtributosPrincipales && selectedItem.containerAtributosPrincipales.length > 0)
+
+  // Update visibility states when item changes
+  useEffect(() => {
+    if (isViewingContainer) {
+      setShowAtributosView(hasExistingAttributes)
+    } else {
+      setShowIndividualAtributosView(hasExistingAttributes)
+    }
+  }, [selectedItem, hasExistingAttributes, isViewingContainer])
 
   const [variantItems, setVariantItems] = useState<
     Array<{
@@ -197,7 +251,6 @@ export function ItemDetailPanel({
     setModelo(state.modelo)
     setFormatoVenta(state.formatoVenta)
     setUnidadesPorPack(state.unidadesPorPack)
-    setUnidadesPorPackActive(state.unidadesPorPackActive)
     setVolumenActive(state.volumenActive)
     setVolumenCantidad(state.volumenCantidad)
     setVolumenUnidad(state.volumenUnidad)
@@ -218,7 +271,7 @@ export function ItemDetailPanel({
       modelo,
       formatoVenta,
       unidadesPorPack,
-      unidadesPorPackActive,
+
       volumenActive,
       volumenCantidad,
       volumenUnidad,
@@ -257,6 +310,34 @@ export function ItemDetailPanel({
 
   const isInitialMount = useRef(true)
 
+  // State for attribute views
+  // const [showAtributosView, setShowAtributosView] = useState(false) // <-- REMOVED DUPLICATE STATE
+  // const hasExistingAttributes = Boolean( // <-- REMOVED DUPLICATE LOGIC
+  //   (selectedItem?.atributosPrincipales && selectedItem.atributosPrincipales.length > 0) ||
+  //     (selectedItem?.atributosInformativos && selectedItem.atributosInformativos.length > 0) ||
+  //     (selectedItem?.containerAtributosPrincipales && selectedItem.containerAtributosPrincipales.length > 0),
+  // )
+
+  // const [showIndividualAtributosView, setShowIndividualAtributosView] = useState(false) // <-- REMOVED DUPLICATE STATE
+
+  useEffect(() => {
+    //setShowIndividualAtributosView(hasExistingAttributes) // <-- REMOVED DUPLICATE LOGIC
+  }, [selectedItem?.sku, hasExistingAttributes])
+
+  // State for variant input
+  const [varianteInput, setVarianteInput] = useState<Record<number, string>>({})
+
+  useEffect(() => {
+    const hasAttributes =
+      (selectedItem?.atributosPrincipales && selectedItem.atributosPrincipales.length > 0) ||
+      (selectedItem?.atributosInformativos && selectedItem.atributosInformativos.length > 0) ||
+      (selectedItem?.containerAtributosPrincipales && selectedItem.containerAtributosPrincipales.length > 0)
+
+    console.log("[v0] useEffect running - hasAttributes:", hasAttributes)
+    console.log("[v0] useEffect - setting showIndividualAtributosView to:", hasAttributes)
+    setShowIndividualAtributosView(hasAttributes)
+  }, [selectedItem])
+
   useEffect(() => {
     // Skip the initial mount
     if (isInitialMount.current) {
@@ -272,7 +353,6 @@ export function ItemDetailPanel({
     modelo,
     formatoVenta,
     unidadesPorPack,
-    unidadesPorPackActive,
     volumenActive,
     volumenCantidad,
     volumenUnidad,
@@ -334,6 +414,12 @@ export function ItemDetailPanel({
       onDynamicContentChange(content)
     }
   }, [hasUnsavedChanges, canUndo, canRedo, onDynamicContentChange])
+
+  useEffect(() => {
+    if (formatoVenta === "unidad") {
+      setUnidadesPorPack("1")
+    }
+  }, [formatoVenta])
 
   const generateVariantCombinations = () => {
     if (!selectedItem || !selectedItem.hasVariants) return []
@@ -441,8 +527,7 @@ export function ItemDetailPanel({
             updateDepositStock(variant.sku, total)
             updateDepositStock(variant.sku, reservado)
 
-            // Assuming these are initializations, so setting other deposits to 0
-            const otherDeposits = DEPOSITS.filter((d) => d !== "Ibiza")
+            const otherDeposits = DEPOSITS.filter((d) => d !== DEPOSITS[0])
             otherDeposits.forEach((deposit) => {
               updateDepositStock(variant.sku, 0) // Set total to 0
               updateDepositStock(variant.sku, 0) // Set reserved to 0
@@ -826,7 +911,12 @@ export function ItemDetailPanel({
                               type="text"
                               value={categoria}
                               onChange={(e) => setCategoria(e.target.value)}
-                              className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900"
+                              disabled={shouldStrictlyInherit(fatherItem?.categoria)}
+                              className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                shouldStrictlyInherit(fatherItem?.categoria)
+                                  ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
+                                  : "bg-white border-gray-300 text-gray-900"
+                              }`}
                               placeholder="Ej: Vinos"
                             />
                           </div>
@@ -837,9 +927,9 @@ export function ItemDetailPanel({
                               type="text"
                               value={marca}
                               onChange={(e) => setMarca(e.target.value)}
-                              disabled={shouldInheritField(fatherItem?.marca)}
+                              disabled={shouldStrictlyInherit(fatherItem?.marca)}
                               className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                shouldInheritField(fatherItem?.marca)
+                                shouldStrictlyInherit(fatherItem?.marca)
                                   ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
                                   : "bg-white border-gray-300 text-gray-900"
                               }`}
@@ -860,9 +950,9 @@ export function ItemDetailPanel({
                             <select
                               value={formatoVenta}
                               onChange={(e) => setFormatoVenta(e.target.value)}
-                              disabled={shouldInheritField(fatherItem?.formatoVenta)}
+                              disabled={shouldStrictlyInherit(fatherItem?.formatoVenta)}
                               className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none ${
-                                shouldInheritField(fatherItem?.formatoVenta)
+                                shouldStrictlyInherit(fatherItem?.formatoVenta)
                                   ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
                                   : "bg-white border-gray-300 text-gray-900 cursor-pointer"
                               }`}
@@ -873,37 +963,31 @@ export function ItemDetailPanel({
                           </div>
 
                           <div className="flex flex-col gap-2">
-                            <div className="flex items-center gap-2">
-                              <label className="text-sm font-medium text-gray-700">Unidades por pack</label>
-                              <button
-                                onClick={() => setUnidadesPorPackActive(!unidadesPorPackActive)}
-                                disabled={isUnidadesPorPackLocked}
-                                className={`w-10 h-5 rounded-full transition-colors relative ${
-                                  unidadesPorPackActive ? "bg-blue-500" : "bg-gray-300"
-                                } ${isUnidadesPorPackLocked ? "opacity-50 cursor-not-allowed" : ""}`}
-                              >
-                                <div
-                                  className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${
-                                    unidadesPorPackActive ? "translate-x-5" : "translate-x-0"
-                                  }`}
-                                />
-                              </button>
-                            </div>
+                            <label className="text-sm font-medium text-gray-700">Unidades por pack</label>
                             <input
-                              type="number"
-                              value={unidadesPorPack}
+                              type="text"
+                              value={unidadesPorPack === "N.E." ? "" : unidadesPorPack}
                               onChange={(e) => {
-                                const value = Number.parseInt(e.target.value) || 1
-                                setUnidadesPorPack(value < 1 ? "1" : e.target.value)
+                                const value = e.target.value
+                                if (value === "") {
+                                  setUnidadesPorPack("N.E.")
+                                } else if (/^\d+$/.test(value)) {
+                                  const numValue = Number.parseInt(value)
+                                  if (numValue < 1) {
+                                    setUnidadesPorPack("1")
+                                  } else {
+                                    setUnidadesPorPack(value)
+                                  }
+                                }
+                                // Ignore non-numeric input
                               }}
-                              disabled={!unidadesPorPackActive || isUnidadesPorPackLocked}
-                              min="1"
+                              disabled={formatoVenta === "unidad" || isUnidadesPorPackLocked}
                               className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                !unidadesPorPackActive || isUnidadesPorPackLocked
+                                formatoVenta === "unidad" || isUnidadesPorPackLocked
                                   ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
                                   : "bg-white border-gray-300 text-gray-900"
                               }`}
-                              placeholder="1"
+                              placeholder="N.E."
                             />
                           </div>
                         </div>
@@ -913,10 +997,10 @@ export function ItemDetailPanel({
                             <label className="text-sm font-medium text-gray-700">Volumen de la unidad</label>
                             <button
                               onClick={() => setVolumenActive(!volumenActive)}
-                              disabled={shouldInheritField(fatherItem?.volumenActive)}
+                              disabled={shouldStrictlyInherit(fatherItem?.volumenActive)}
                               className={`w-10 h-5 rounded-full transition-colors relative ${
                                 volumenActive ? "bg-blue-500" : "bg-gray-300"
-                              } ${shouldInheritField(fatherItem?.volumenActive) ? "opacity-50 cursor-not-allowed" : ""}`}
+                              } ${shouldStrictlyInherit(fatherItem?.volumenActive) ? "opacity-50 cursor-not-allowed" : ""}`}
                             >
                               <div
                                 className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${
@@ -934,9 +1018,9 @@ export function ItemDetailPanel({
                                   type="number"
                                   value={volumenCantidad}
                                   onChange={(e) => setVolumenCantidad(e.target.value)}
-                                  disabled={shouldInheritField(fatherItem?.volumenCantidad)}
+                                  disabled={shouldStrictlyInherit(fatherItem?.volumenCantidad)}
                                   className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                    shouldInheritField(fatherItem?.volumenCantidad)
+                                    shouldStrictlyInherit(fatherItem?.volumenCantidad)
                                       ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
                                       : "bg-white border-gray-300 text-gray-900"
                                   }`}
@@ -949,9 +1033,9 @@ export function ItemDetailPanel({
                                 <select
                                   value={volumenUnidad}
                                   onChange={(e) => setVolumenUnidad(e.target.value)}
-                                  disabled={shouldInheritField(fatherItem?.volumenUnidad)}
+                                  disabled={shouldStrictlyInherit(fatherItem?.volumenUnidad)}
                                   className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none ${
-                                    shouldInheritField(fatherItem?.volumenUnidad)
+                                    shouldStrictlyInherit(fatherItem?.volumenUnidad)
                                       ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
                                       : "bg-white border-gray-300 text-gray-900 cursor-pointer"
                                   }`}
@@ -1453,7 +1537,7 @@ export function ItemDetailPanel({
                       {variantItems.length > 0 ? (
                         <div className="flex-1 overflow-y-auto">
                           <div className="border border-gray-300 rounded-lg overflow-hidden">
-                            <div className="grid grid-cols-4 bg-gray-100 border-b border-gray-300 sticky top-0">
+                            <div className="grid grid-cols-4 bg-gray-100 border-b border-gray-300">
                               <div className="px-4 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
                                 SKU
                               </div>
@@ -1591,7 +1675,12 @@ export function ItemDetailPanel({
                                               type="number"
                                               value={stock.total}
                                               onChange={(e) =>
-                                                updateDepositStock(variant.sku, Number.parseInt(e.target.value) || 0)
+                                                updateDepositStock(
+                                                  variant.sku,
+                                                  deposit,
+                                                  "total",
+                                                  Number.parseInt(e.target.value) || 0,
+                                                )
                                               }
                                               className="w-full bg-transparent text-right focus:outline-none focus:bg-gray-100 px-2 py-1 rounded border border-transparent hover:border-gray-300 focus:border-blue-500"
                                             />
@@ -1601,7 +1690,12 @@ export function ItemDetailPanel({
                                               type="number"
                                               value={stock.reservado}
                                               onChange={(e) =>
-                                                updateDepositStock(variant.sku, Number.parseInt(e.target.value) || 0)
+                                                updateDepositStock(
+                                                  variant.sku,
+                                                  deposit,
+                                                  "reservado",
+                                                  Number.parseInt(e.target.value) || 0,
+                                                )
                                               }
                                               className="w-full bg-transparent text-right focus:outline-none focus:bg-gray-100 px-2 py-1 rounded border border-transparent hover:border-gray-300 focus:border-blue-500"
                                             />
@@ -1652,9 +1746,9 @@ export function ItemDetailPanel({
                               type="text"
                               value={categoria}
                               onChange={(e) => setCategoria(e.target.value)}
-                              disabled={shouldInheritField(fatherItem?.categoria)}
+                              disabled={shouldStrictlyInherit(fatherItem?.categoria)}
                               className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                shouldInheritField(fatherItem?.categoria)
+                                shouldStrictlyInherit(fatherItem?.categoria)
                                   ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
                                   : "bg-white border-gray-300 text-gray-900"
                               }`}
@@ -1668,9 +1762,9 @@ export function ItemDetailPanel({
                               type="text"
                               value={marca}
                               onChange={(e) => setMarca(e.target.value)}
-                              disabled={shouldInheritField(fatherItem?.marca)}
+                              disabled={shouldStrictlyInherit(fatherItem?.marca)}
                               className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                shouldInheritField(fatherItem?.marca)
+                                shouldStrictlyInherit(fatherItem?.marca)
                                   ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
                                   : "bg-white border-gray-300 text-gray-900"
                               }`}
@@ -1691,9 +1785,9 @@ export function ItemDetailPanel({
                             <select
                               value={formatoVenta}
                               onChange={(e) => setFormatoVenta(e.target.value)}
-                              disabled={shouldInheritField(fatherItem?.formatoVenta)}
+                              disabled={shouldStrictlyInherit(fatherItem?.formatoVenta)}
                               className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none ${
-                                shouldInheritField(fatherItem?.formatoVenta)
+                                shouldStrictlyInherit(fatherItem?.formatoVenta)
                                   ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
                                   : "bg-white border-gray-300 text-gray-900 cursor-pointer"
                               }`}
@@ -1704,37 +1798,31 @@ export function ItemDetailPanel({
                           </div>
 
                           <div className="flex flex-col gap-2">
-                            <div className="flex items-center gap-2">
-                              <label className="text-sm font-medium text-gray-700">Unidades por pack</label>
-                              <button
-                                onClick={() => setUnidadesPorPackActive(!unidadesPorPackActive)}
-                                disabled={isUnidadesPorPackLocked}
-                                className={`w-10 h-5 rounded-full transition-colors relative ${
-                                  unidadesPorPackActive ? "bg-blue-500" : "bg-gray-300"
-                                } ${isUnidadesPorPackLocked ? "opacity-50 cursor-not-allowed" : ""}`}
-                              >
-                                <div
-                                  className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${
-                                    unidadesPorPackActive ? "translate-x-5" : "translate-x-0"
-                                  }`}
-                                />
-                              </button>
-                            </div>
+                            <label className="text-sm font-medium text-gray-700">Unidades por pack</label>
                             <input
-                              type="number"
-                              value={unidadesPorPack}
+                              type="text"
+                              value={unidadesPorPack === "N.E." ? "" : unidadesPorPack}
                               onChange={(e) => {
-                                const value = Number.parseInt(e.target.value) || 1
-                                setUnidadesPorPack(value < 1 ? "1" : e.target.value)
+                                const value = e.target.value
+                                if (value === "") {
+                                  setUnidadesPorPack("N.E.")
+                                } else if (/^\d+$/.test(value)) {
+                                  const numValue = Number.parseInt(value)
+                                  if (numValue < 1) {
+                                    setUnidadesPorPack("1")
+                                  } else {
+                                    setUnidadesPorPack(value)
+                                  }
+                                }
+                                // Ignore non-numeric input
                               }}
-                              disabled={!unidadesPorPackActive || isUnidadesPorPackLocked}
-                              min="1"
+                              disabled={formatoVenta === "unidad" || isUnidadesPorPackLocked}
                               className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                !unidadesPorPackActive || isUnidadesPorPackLocked
+                                formatoVenta === "unidad" || isUnidadesPorPackLocked
                                   ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
                                   : "bg-white border-gray-300 text-gray-900"
                               }`}
-                              placeholder="1"
+                              placeholder="N.E."
                             />
                           </div>
                         </div>
@@ -1744,10 +1832,10 @@ export function ItemDetailPanel({
                             <label className="text-sm font-medium text-gray-700">Volumen de la unidad</label>
                             <button
                               onClick={() => setVolumenActive(!volumenActive)}
-                              disabled={shouldInheritField(fatherItem?.volumenActive)}
+                              disabled={shouldStrictlyInherit(fatherItem?.volumenActive)}
                               className={`w-10 h-5 rounded-full transition-colors relative ${
                                 volumenActive ? "bg-blue-500" : "bg-gray-300"
-                              } ${shouldInheritField(fatherItem?.volumenActive) ? "opacity-50 cursor-not-allowed" : ""}`}
+                              } ${shouldStrictlyInherit(fatherItem?.volumenActive) ? "opacity-50 cursor-not-allowed" : ""}`}
                             >
                               <div
                                 className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${
@@ -1765,9 +1853,9 @@ export function ItemDetailPanel({
                                   type="number"
                                   value={volumenCantidad}
                                   onChange={(e) => setVolumenCantidad(e.target.value)}
-                                  disabled={shouldInheritField(fatherItem?.volumenCantidad)}
+                                  disabled={shouldStrictlyInherit(fatherItem?.volumenCantidad)}
                                   className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                    shouldInheritField(fatherItem?.volumenCantidad)
+                                    shouldStrictlyInherit(fatherItem?.volumenCantidad)
                                       ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
                                       : "bg-white border-gray-300 text-gray-900"
                                   }`}
@@ -1780,9 +1868,9 @@ export function ItemDetailPanel({
                                 <select
                                   value={volumenUnidad}
                                   onChange={(e) => setVolumenUnidad(e.target.value)}
-                                  disabled={shouldInheritField(fatherItem?.volumenUnidad)}
+                                  disabled={shouldStrictlyInherit(fatherItem?.volumenUnidad)}
                                   className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none ${
-                                    shouldInheritField(fatherItem?.volumenUnidad)
+                                    shouldStrictlyInherit(fatherItem?.volumenUnidad)
                                       ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
                                       : "bg-white border-gray-300 text-gray-900 cursor-pointer"
                                   }`}

@@ -64,9 +64,8 @@ export interface DepositStock {
 
 export interface DepositStockMap {
   [itemSku: string]: {
-    Ibiza: DepositStock
+    Torcuato: DepositStock
     Trujui: DepositStock
-    Ciudadela: DepositStock
   }
 }
 

@@ -226,12 +226,57 @@ export function ItemsGrid({
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-              {/* Grilla */}
+      <div
+        className="fixed top-[236px] px-4 bg-[#f8f9fa] border-gray-200 z-[15] transition-all duration-300 border-l-0 border-r-0 pb-2 pt-2 mt-0.5 bg-slate-50"
+        style={{
+          left: isExpanded ? "288px" : "96px",
+          width: isExpanded ? "calc(100% - 308px)" : "calc(100% - 116px)",
+        }}
+      >
+        {/* Tab Header Labels */}
+        <div className="pl-[2px] pr-[1px]">
+          <div className="flex items-center ml-0">
+            {/* All selector with same left offset as item checkboxes */}
+            <div className="flex items-center justify-center h-9 bg-slate-200 border border-slate-300 border-b-0 border-t-0 rounded-xs shadow-none w-auto ml-[-17px] border-l-0 border-r px-[13px] rounded-l-sm">
+              <button
+                onClick={handleSelectAllClick}
+                className={`h-4.5 w-4.5 transition-colors cursor-pointer flex items-center justify-center border-2 rounded-sm bg-white ${
+                  selectAllActive
+                    ? "bg-primary border-primary hover:bg-primary/90 hover:border-primary/90"
+                    : "bg-transparent border-border hover:border-muted-foreground"
+                }`}
+              ></button>
+            </div>
+
+            {/* Tab header matching exact item card structure */}
+            <div className="flex-1 grid grid-cols-14 h-9 bg-slate-200 border border-gray-300 rounded-xs border-none">
+              <div className="col-span-4 flex items-center px-4 py-2 justify-center border-solid border-r border-slate-300 pl-4 pr-4 mr-1">
+                <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Título</span>
+              </div>
+              <div className="col-span-2 flex items-center justify-center px-4 py-2 border-solid border-r border-slate-300 mr-[5px]">
+                <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Marca</span>
+              </div>
+              <div className="col-span-2 flex items-center justify-center px-4 py-2 border-solid border border-b-0 border-t-0 border-l-0 border-slate-300 mr-[7px]">
+                <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Categoría</span>
+              </div>
+              <div className="col-span-3 flex items-center justify-center py-2 border-solid border-r border-slate-300 px-4 mx-1.5 ml-0 mr-[9px]">
+                <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Atributos</span>
+              </div>
+              <div className="col-span-3 flex items-center justify-center py-2 mx-0 ml-0 px-0">
+                <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Stock</span>
+              </div>
+            </div>
+
+            <div className="relative -ml-3">
               <div className="relative">
                 <button
                   onClick={() => setGridSizeDropdownOpen(!gridSizeDropdownOpen)}
-                  className="h-8 px-2.5 flex flex-col items-center justify-center rounded hover:bg-gray-100 transition-colors min-w-[48px] cursor-pointer border shadow-sm border-[rgba(228,230,235,0.6)] rounded-sm"
+                  className="flex flex-col items-center justify-center rounded hover:bg-gray-100 transition-colors min-w-[48px] cursor-pointer border rounded-xs h-9 shadow-none bg-slate-200 border-solid border-slate-300 border-r-0 border-b-0 border-t-0 px-2.5 rounded-r-sm"
                   title="Tamaño de grilla"
                 >
                   <span className="text-[9px] text-gray-500 uppercase tracking-wider leading-none">Grilla</span>
@@ -269,53 +314,6 @@ export function ItemsGrid({
                   </div>
                 )}
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div
-        className="fixed top-[236px] px-4 bg-[#f8f9fa] border-gray-200 z-[15] transition-all duration-300 border-l-0 border-r-0 pb-2 pt-2 mt-0.5 bg-slate-50"
-        style={{
-          left: isExpanded ? "288px" : "96px",
-          width: isExpanded ? "calc(100% - 324px)" : "calc(100% - 132px)",
-        }}
-      >
-        {/* Tab Header Labels */}
-        <div className="px-0">
-          <div className="flex items-center gap-2">
-            {/* All selector with same left offset as item checkboxes */}
-            <button
-              onClick={handleSelectAllClick}
-              className={`relative left-[-8px] h-4.5 w-4.5 transition-colors cursor-pointer flex items-center justify-center border-2 rounded-sm ${
-                selectAllActive
-                  ? "bg-primary border-primary hover:bg-primary/90 hover:border-primary/90"
-                  : "bg-transparent border-border hover:border-muted-foreground"
-              }`}
-            ></button>
-
-            {/* Tab header matching exact item card structure */}
-            <div className="flex-1 grid grid-cols-14 h-9 bg-slate-200 border border-gray-300 rounded-xs border-none">
-              <div className="col-span-4 flex items-center px-4 py-2 justify-center border-solid border-r border-slate-300">
-                <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Título</span>
-              </div>
-              <div className="col-span-2 flex items-center justify-center px-4 py-2 border-solid border-r border-slate-300">
-                <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Marca</span>
-              </div>
-              <div className="col-span-2 flex items-center justify-center px-4 py-2 border-solid border border-b-0 border-t-0 border-l-0 border-slate-300">
-                <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Categoría</span>
-              </div>
-              <div className="col-span-3 flex items-center justify-center px-4 py-2 border-solid border-r border-slate-300">
-                <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Atributos</span>
-              </div>
-              <div className="col-span-3 flex items-center justify-center px-4 py-2">
-                <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Stock</span>
-              </div>
-            </div>
-
-            {/* Spacer matching item card more options menu width */}
-            <div className="flex items-center gap-2 pl-3">
-              <div className="w-4"></div>
             </div>
           </div>
         </div>

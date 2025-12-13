@@ -50,7 +50,7 @@ export function ItemCard({
         </div>
 
         <div
-          className={`flex-1 ${gridSize === "lg" ? "h-22" : gridSize === "md" ? "h-14" : "h-9"} ${gridSize !== "lg" ? "rounded-xs" : "rounded-md"} grid grid-cols-14 ${
+          className={`flex-1 border-slate-100 ${gridSize === "lg" ? "h-22" : gridSize === "md" ? "h-14" : "h-9"} ${gridSize !== "lg" ? "rounded-xs" : "rounded-md"} grid grid-cols-14 ${
             item.isAgrupador || item.hasVariants
               ? `bg-white border border-border hover:bg-gray-50 transition-colors cursor-pointer`
               : "bg-white border border-border"

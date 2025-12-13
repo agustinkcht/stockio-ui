@@ -86,7 +86,7 @@ export default function DepositosPage() {
   const [selectAllActive, setSelectAllActive] = useState(false)
   const [showNuevoDropdown, setShowNuevoDropdown] = useState(false)
   const [showAccionesDropdown, setShowAccionesDropdown] = useState(false)
-  const [itemSelected, setItemSelected] = useState([false, false, false])
+  const [itemSelected, setItemSelected] = useState([false, false])
   const [changeTracker, setChangeTracker] = useState({ hasUnsavedChanges: false, canUndo: false, canRedo: false })
   const [isSaving, setIsSaving] = useState(false)
   const [itemCreated, setItemCreated] = useState(false)
@@ -97,9 +97,9 @@ export default function DepositosPage() {
 
   const depositos = [
     {
-      nombre: "Ibiza",
+      nombre: "Torcuato",
       icon: Building,
-      direccion: "Angel Delía 1190, Muñiz",
+      direccion: "Av. San Martín 2450, San Miguel",
       estado: "Activo",
       canales: [
         { name: "ML", active: true },
@@ -128,28 +128,12 @@ export default function DepositosPage() {
         disponible: 49850,
       },
     },
-    {
-      nombre: "Ciudadela",
-      icon: Store,
-      direccion: "Av. Rivadavia 2050, CABA",
-      estado: "Activo",
-      canales: [
-        { name: "ML", active: false },
-        { name: "E-Com", active: false },
-        { name: "PDV", active: true },
-      ],
-      stock: {
-        total: 38920,
-        reservado: 5670,
-        disponible: 33250,
-      },
-    },
   ]
 
   const handleSelectAllClick = () => {
     const newState = !selectAllActive
     setSelectAllActive(newState)
-    setItemSelected([newState, newState, newState])
+    setItemSelected([newState, newState])
   }
 
   const handleItemButtonClick = (index: number) => {

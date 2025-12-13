@@ -27,11 +27,11 @@ export function useItems() {
 
   useEffect(() => {
     const fetchItems = async () => {
-        if (USE_MOCK_DATA) {
-            setItems(INITIAL_ITEMS)
-            setIsLoading(false)
+      if (USE_MOCK_DATA) {
+        setItems(INITIAL_ITEMS)
+        setIsLoading(false)
         return
-  }
+      }
       try {
         const response = await fetch("/api/items")
 
@@ -55,7 +55,7 @@ export function useItems() {
     const initialDepositStock: DepositStockMap = {}
 
     const distributeStock = (totalStock: number, reservedStock: number) => {
-      const deposits = ["Ibiza", "Trujui", "Ciudadela"]
+      const deposits = ["Torcuato", "Trujui"]
       const stockDistribution: any = {}
 
       let remainingTotal = totalStock
@@ -117,15 +117,14 @@ export function useItems() {
 
   const updateDepositStock = (
     sku: string,
-    deposit: "Ibiza" | "Trujui" | "Ciudadela",
+    deposit: "Torcuato" | "Trujui",
     field: "total" | "reservado",
     value: number,
   ) => {
     setDepositStock((prev) => {
       const currentSkuStock = prev[sku] || {
-        Ibiza: { total: 0, reservado: 0 },
+        Torcuato: { total: 0, reservado: 0 },
         Trujui: { total: 0, reservado: 0 },
-        Ciudadela: { total: 0, reservado: 0 },
       }
 
       return {
