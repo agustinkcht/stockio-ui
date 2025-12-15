@@ -79,9 +79,9 @@ export const TEMPLATES: Template[] = [
     ],
   },
 
-  // --- CHAMPAGNE ---
+  // --- ESPUMANTES ---
   {
-    name: "Champagne",
+    name: "Espumantes",
     atributosPrincipales: [
       { key: "Dosaje", value: "" }, // Brut Nature, Extra Brut, Brut, Extra Sec, Sec, Demi Sec, Doux…
     ],
@@ -97,28 +97,6 @@ export const TEMPLATES: Template[] = [
       { key: "Temperatura de Servicio", value: "" }, // 8–10°C (más frío para estilos frescos, un poco más para millésimes)
       { key: "Maridaje", value: "" }, // Mariscos, sushi, quesos suaves, aperitivos, postres (según dosaje)
       { key: "Estuche", value: "" }, // Caja, tubo, edición regalo, estuche premium…
-    ],
-  },
-
-  // --- VINO ESPUMANTE ---
-  {
-    name: "Vino Espumante",
-    atributosPrincipales: [
-      { key: "Varietal", value: "" },
-      // Chardonnay, Pinot Noir, Chenin, o blends tradicionales para espumantes.
-    ],
-    atributosInformativos: [
-      { key: "Dosaje", value: "" }, // Brut Nature, Extra Brut, Brut, Demi Sec, Dulce… (el estilo de dulzor del espumante)
-      { key: "Línea", value: "" }, // Extra Brut, Rosé, Apéritif, Dulce Natural, o nombres comerciales específicos.
-      { key: "Perfil Sensorial", value: "" }, // Fresco y frutado, cítrico, floral, notas de pan tostado (según método), etc.
-      { key: "Bodega", value: "" }, // Chandon, Navarro Correas, Nieto Senetiner, Domiciano, etc.
-      { key: "Origen", value: "" }, // Mendoza, Valle de Uco, Luján de Cuyo, Patagonia…
-      { key: "Crianza", value: "" }, // tipo y tiempo de crianza
-      { key: "Enólogo", value: "" }, // Enólogo responsable (opcional; no siempre declarado en espumantes comerciales)
-      { key: "ABV", value: "" }, // Alcohol típico del espumante: 11%, 12%, 12.5%…
-      { key: "Temperatura de Servicio", value: "" }, // 6–8°C (temperatura recomendada para espumantes)
-      { key: "Maridaje", value: "" }, // Aperitivos, sushi, mariscos, postres (según dosaje)
-      { key: "Estuche", value: "" }, // Sin estuche, caja, tubo, estuche de regalo…
     ],
   },
 
@@ -145,6 +123,47 @@ export const TEMPLATES: Template[] = [
       { key: "Estilo", value: "" }, // London Dry, Dorado, Blanco…
       { key: "Origen", value: "" }, // Suecia
       { key: "Añejamiento", value: "" },
+      { key: "ABV", value: "" }, // 37.5%, 40%, 43%…
+      { key: "Estuche", value: "" },
+    ],
+  },
+  {
+    name: "Ron",
+    atributosPrincipales: [{ key: "Tipo", value: "" }], // Blanco, Dorado...
+    atributosInformativos: [
+      { key: "Origen", value: "" }, // Suecia
+      { key: "Añejamiento", value: "" },
+      { key: "ABV", value: "" }, // 37.5%, 40%, 43%…
+      { key: "Estuche", value: "" },
+    ],
+  },
+  {
+    name: "Tequila",
+    atributosPrincipales: [{ key: "Tipo", value: "" }], // Blanco, Plata, etc.
+    atributosInformativos: [
+      { key: "Origen", value: "" }, // Suecia
+      { key: "Añejamiento", value: "" },
+      { key: "ABV", value: "" }, // 37.5%, 40%, 43%…
+      { key: "Estuche", value: "" },
+    ],
+  },
+    // --- GIN ---
+  {
+    name: "Gin",
+    atributosPrincipales: [{ key: "Sabor", value: "" }], //original, raspberri, botánicos
+    atributosInformativos: [
+      { key: "Estilo", value: "" }, // London Dry, Dorado, Blanco…
+      { key: "Origen", value: "" }, // Suecia
+      { key: "ABV", value: "" }, // 37.5%, 40%, 43%…
+      { key: "Estuche", value: "" },
+    ],
+  },
+    // --- Vodka ---
+    {
+    name: "Vodka",
+    atributosPrincipales: [{ key: "Sabor", value: "" }], //original, raspberri, botánicos
+    atributosInformativos: [
+      { key: "Origen", value: "" }, // Suecia
       { key: "ABV", value: "" }, // 37.5%, 40%, 43%…
       { key: "Estuche", value: "" },
     ],

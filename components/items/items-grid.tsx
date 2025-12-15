@@ -23,6 +23,7 @@ interface ItemsGridProps {
   setGridSizeDropdownOpen: (value: boolean) => void
   setGridSize: (size: string) => void
   isExpanded?: boolean
+  isScrolled?: boolean
 }
 
 export function ItemsGrid({
@@ -42,6 +43,7 @@ export function ItemsGrid({
   setGridSizeDropdownOpen,
   setGridSize,
   isExpanded = true,
+  isScrolled = false,
 }: ItemsGridProps) {
   const massiveActionsRef = useRef<HTMLDivElement>(null)
   const orderRef = useRef<HTMLDivElement>(null)
@@ -52,6 +54,10 @@ export function ItemsGrid({
   const [showFilterDropdown, setShowFilterDropdown] = useState(false)
 
   const hasSelectedItems = itemSelected.some((selected) => selected)
+
+  useEffect(() => {
+    console.log("[v0] ItemsGrid - isScrolled prop changed to:", isScrolled)
+  }, [isScrolled])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -75,17 +81,19 @@ export function ItemsGrid({
   return (
     <>
       <div
-        className="fixed top-[84px] h-[206px] bg-slate-50 z-[5] transition-all duration-300"
+        className={`fixed bg-slate-50 z-[5] transition-all duration-300 ${isScrolled ? "opacity-0" : "opacity-100"}`}
         style={{
+          top: "84px",
+          height: "206px",
           left: isExpanded ? "288px" : "96px",
           width: isExpanded ? "calc(100% - 324px)" : "calc(100% - 132px)",
         }}
       />
 
-      {/* Tab Buttons Section - Card with white background and rounded borders */}
       <div
-        className="fixed top-[180px] px-4 bg-white border rounded-lg z-[15] transition-all duration-300 pb-0 shadow-sm border-[rgba(228,230,235,0.5)]"
+        className="fixed px-4 bg-white border rounded-lg z-[15] pb-0 shadow-sm border-[rgba(228,230,235,0.5)] transition-all duration-300"
         style={{
+          top: isScrolled ? "84px" : "180px",
           left: isExpanded ? "288px" : "96px",
           width: isExpanded ? "calc(100% - 324px)" : "calc(100% - 132px)",
         }}
@@ -232,8 +240,9 @@ export function ItemsGrid({
       </div>
 
       <div
-        className="fixed top-[236px] px-4 bg-[#f8f9fa] border-gray-200 z-[15] transition-all duration-300 border-l-0 border-r-0 pb-2 pt-2 mt-0.5 bg-slate-50"
+        className="fixed px-4 bg-[#f8f9fa] border-gray-200 z-[15] border-l-0 border-r-0 pb-2 pt-2 mt-0.5 bg-slate-50 transition-all duration-300"
         style={{
+          top: isScrolled ? "140px" : "236px",
           left: isExpanded ? "288px" : "96px",
           width: isExpanded ? "calc(100% - 308px)" : "calc(100% - 116px)",
         }}
@@ -319,7 +328,7 @@ export function ItemsGrid({
         </div>
       </div>
 
-      <div className="h-[180px]" />
+      <div className={isScrolled ? "h-[96px]" : "h-[180px]"} />
 
       {/* Items Grid - scrollable area */}
       <div className="pb-4 pl-[18px] pr-2">

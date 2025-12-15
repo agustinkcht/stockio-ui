@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
 import { Sidebar } from "@/components/layout/sidebar"
 import { TopNav } from "@/components/layout/top-nav"
@@ -24,6 +26,7 @@ export default function Page() {
   const [isSaving, setIsSaving] = useState(false)
   const [itemCreated, setItemCreated] = useState(false)
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true)
+  const [isScrolled, setIsScrolled] = useState(false)
 
   const {
     items,
@@ -202,6 +205,13 @@ export default function Page() {
     setTimeout(() => setItemCreated(false), 100)
   }
 
+  const handleScroll = (e: React.UIEvent<HTMLElement>) => {
+    const scrollTop = e.currentTarget.scrollTop
+    console.log("[v0] Scroll detected - scrollTop:", scrollTop)
+    setIsScrolled(scrollTop > 20) // Trigger after 20px scroll
+    console.log("[v0] isScrolled state set to:", scrollTop > 20)
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground flex" onClick={handleCloseDropdowns}>
       {/* Sidebar */}
@@ -263,11 +273,13 @@ export default function Page() {
             handleOpenNuevoItem={handleOpenNuevoItem}
             handleOpenNuevoItemConVariantes={handleOpenNuevoItemConVariantes}
             isExpanded={isSidebarExpanded}
+            isScrolled={isScrolled}
           />
         )}
 
         <main
           className={`flex-1 overflow-y-auto transition-all duration-200 bg-[rgba(250,251,253,1)] ${showNuevoItemModal && !isNuevoItemMinimized ? "blur-sm" : ""} ${showNuevoItemConVariantesModal && !isNuevoItemConVariantesMinimized ? "blur-sm" : ""} ${!selectedItem ? "mt-[5.25rem]" : "mt-[5.25rem]"}`}
+          onScroll={handleScroll}
         >
           {selectedItem ? (
             <ItemDetailPanel
@@ -309,6 +321,7 @@ export default function Page() {
                   setGridSizeDropdownOpen={setGridSizeDropdownOpen}
                   setGridSize={setGridSize}
                   isExpanded={isSidebarExpanded}
+                  isScrolled={isScrolled}
                 />
               </div>
             </div>

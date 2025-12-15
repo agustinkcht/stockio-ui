@@ -1,6 +1,6 @@
 "use client"
 
-import { Plus, Grid3x3, Layers, MoreVertical, Upload, Download, BookOpen, Pencil, Trash2, Search } from "lucide-react"
+import { Plus, Grid3x3, Layers, MoreVertical, Upload, Download, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRef, useState, useEffect } from "react"
 
@@ -9,14 +9,8 @@ interface ToolbarProps {
   setShowNuevoDropdown: (value: boolean) => void
   handleOpenNuevoItem: () => void
   handleOpenNuevoItemConVariantes: () => void
-  hasSelectedItems: boolean
   isExpanded?: boolean
-  selectAllActive: boolean
-  handleSelectAllClick: () => void
-  gridSize: string
-  gridSizeDropdownOpen: boolean
-  setGridSizeDropdownOpen: (value: boolean) => void
-  setGridSize: (size: string) => void
+  isScrolled?: boolean
 }
 
 export function Toolbar({
@@ -24,14 +18,8 @@ export function Toolbar({
   setShowNuevoDropdown,
   handleOpenNuevoItem,
   handleOpenNuevoItemConVariantes,
-  hasSelectedItems,
   isExpanded = true,
-  selectAllActive,
-  handleSelectAllClick,
-  gridSize,
-  gridSizeDropdownOpen,
-  setGridSizeDropdownOpen,
-  setGridSize,
+  isScrolled = false,
 }: ToolbarProps) {
   const nuevoRef = useRef<HTMLDivElement>(null)
   const moreOptionsRef = useRef<HTMLDivElement>(null)
@@ -61,7 +49,7 @@ export function Toolbar({
 
   return (
     <div
-      className="fixed top-[84px] bg-transparent z-30 transition-all duration-300"
+      className={`fixed top-[84px] bg-transparent z-30 transition-all duration-300 ${isScrolled ? "opacity-0 pointer-events-none translate-y-[-20px]" : "opacity-100 translate-y-0"}`}
       style={{ left: isExpanded ? "256px" : "64px" }}
     >
       <div className="px-8 pt-6 pb-2 flex justify-start bg-transparent">
@@ -75,27 +63,6 @@ export function Toolbar({
                 className="w-full h-8 pl-9 pr-3 border shadow-sm rounded-md text-xs placeholder:text-gray-600 text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 bg-white backdrop-blur-sm transition-all border-[rgba(202,213,227,0.842391304347826)]"
               />
             </div>
-
-            {hasSelectedItems && (
-              <div className="flex items-center gap-2 pr-3 border-r border-gray-200 animate-in fade-in-0 slide-in-from-left-5 duration-300">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 text-xs hover:bg-gray-100 transition-colors cursor-pointer"
-                >
-                  <Pencil className="w-3.5 h-3.5 mr-1.5" />
-                  Editar
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 px-2 hover:bg-gray-100 transition-colors cursor-pointer"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </Button>
-              </div>
-            )}
 
             <div className="relative" ref={nuevoRef}>
               <Button
