@@ -1,8 +1,8 @@
 "use client"
 
 import type React from "react"
+import { useEffect, useState } from "react"
 
-import { useState } from "react"
 import { Sidebar } from "@/components/layout/sidebar"
 import { TopNav } from "@/components/layout/top-nav"
 import { UtilityBar } from "@/components/layout/utility-bar"
@@ -27,6 +27,11 @@ export default function Page() {
   const [itemCreated, setItemCreated] = useState(false)
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true)
   const [isScrolled, setIsScrolled] = useState(false)
+
+  useEffect(() => {
+    console.log("[v0] Page component mounted - scroll detection ready")
+  }, [])
+  // </CHANGE>
 
   const {
     items,
@@ -207,9 +212,10 @@ export default function Page() {
 
   const handleScroll = (e: React.UIEvent<HTMLElement>) => {
     const scrollTop = e.currentTarget.scrollTop
-    console.log("[v0] Scroll detected - scrollTop:", scrollTop)
-    setIsScrolled(scrollTop > 20) // Trigger after 20px scroll
-    console.log("[v0] isScrolled state set to:", scrollTop > 20)
+    console.log("[v0] Scroll event fired - scrollTop:", scrollTop)
+    const shouldBeScrolled = scrollTop > 50
+    console.log("[v0] Setting isScrolled to:", shouldBeScrolled)
+    setIsScrolled(shouldBeScrolled)
   }
 
   return (
