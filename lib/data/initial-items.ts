@@ -4198,61 +4198,6 @@ export const INITIAL_ITEMS: Item[] = [
       },
     ],
   },
-  //LICORES
-  {
-    name: "Jägermeister 700ml",
-    categoria: "Licores",
-    hasVariants: false,
-    isAgrupador: false,
-    sku: "LICR-JGRM700-ORIG",
-    codigoUniversal: "4067700013019",
-    marca: "Jägermeister",
-    proveedor: "Mast-Jägermeister SE",
-    codigoProveedor: "MJ-DE-700-ORIG",
-    formatoVenta: "unidad",
-    volumenActive: true,
-    volumenCantidad: 700,
-    volumenUnidad: "ml",
-    stock: {
-      total: "48",
-      reservado: "6",
-      disponible: "42",
-    },
-    atributosPrincipales: [{ key: "Sabor", value: "Original" }],
-    atributosInformativos: [
-      { key: "Tipo de Licor", value: "Licor herbal amargo" },
-      { key: "Origen", value: "Alemania" },
-      { key: "ABV", value: "35%" },
-      { key: "Estuche", value: "Sin estuche" },
-    ],
-  },
-  {
-    name: "Sheridan's Original",
-    categoria: "Licores",
-    hasVariants: false,
-    isAgrupador: false,
-    sku: "LICR-SHER700-CACR",
-    codigoUniversal: "5391530012345",
-    marca: "Sheridan's",
-    proveedor: "Diageo",
-    codigoProveedor: "DIA-SHER-700",
-    formatoVenta: "unidad",
-    volumenActive: true,
-    volumenCantidad: 700,
-    volumenUnidad: "ml",
-    stock: {
-      total: "36",
-      reservado: "5",
-      disponible: "31",
-    },
-    atributosPrincipales: [{ key: "Sabor", value: "Café y crema" }],
-    atributosInformativos: [
-      { key: "Tipo de Licor", value: "Licor de crema y café" },
-      { key: "Origen", value: "Irlanda" },
-      { key: "ABV", value: "15.5%" },
-      { key: "Estuche", value: "Sin estuche" },
-    ],
-  },
   {
     name: "Bombay Sapphire",
     categoria: "Gin",
@@ -4570,4 +4515,832 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Estuche", value: "Sin estuche" },
     ],
   },
+  // --- RON: HAVANA CLUB (AGRUPADOR) ---
+{
+  name: "Havana Club",
+  categoria: "Ron",
+  hasVariants: true,
+  isAgrupador: true,
+  sku: "RON-HAVCLUB",
+  marca: "Havana Club",
+  proveedor: "Havana Club International",
+  formatoVenta: "unidad",
+  volumenActive: true,
+  volumenCantidad: 750,
+  volumenUnidad: "ml",
+
+  containerAtributosPrincipales: [
+    { key: "Tipo", variantes: ["Añejo 3 Años", "Especial", "Añejo 7 Años"] },
+  ],
+
+  atributosInformativos: [
+    { key: "Origen", value: "Cuba" },
+    { key: "Añejamiento", value: "" }, // per variant
+    { key: "ABV", value: "" }, // per variant
+    { key: "Estuche", value: "Sin estuche" },
+  ],
+
+  variantCount: 3,
+  variants: [
+    {
+      name: "Havana Club",
+      sku: "RON-HAVCLUB-AN3",
+      codigoUniversal: "7799002001001",
+      codigoProveedor: "HC-AN3-750",
+      categoria: "Ron",
+      marca: "Havana Club",
+      atributosPrincipales: [{ key: "Tipo", value: "Añejo 3 Años" }],
+      atributosInformativos: [
+        { key: "Añejamiento", value: "3 años" },
+        { key: "ABV", value: "40%" },
+      ],
+      stock: { total: "30", reservado: "4", disponible: "26" },
+    },
+    {
+      name: "Havana Club",
+      sku: "RON-HAVCLUB-ESPC",
+      codigoUniversal: "7799002001002",
+      codigoProveedor: "HC-ESP-750",
+      categoria: "Ron",
+      marca: "Havana Club",
+      atributosPrincipales: [{ key: "Tipo", value: "Especial" }],
+      atributosInformativos: [
+        { key: "Añejamiento", value: "Blend añejado (no especificado)" },
+        { key: "ABV", value: "40%" },
+      ],
+      stock: { total: "26", reservado: "3", disponible: "23" },
+    },
+    {
+      name: "Havana Club",
+      sku: "RON-HAVCLUB-AN7",
+      codigoUniversal: "7799002001003",
+      codigoProveedor: "HC-AN7-750",
+      categoria: "Ron",
+      marca: "Havana Club",
+      atributosPrincipales: [{ key: "Tipo", value: "Añejo 7 Años" }],
+      atributosInformativos: [
+        { key: "Añejamiento", value: "7 años" },
+        { key: "ABV", value: "40%" },
+      ],
+      stock: { total: "18", reservado: "2", disponible: "16" },
+    },
+  ],
+},
+
+// --- RON: BACARDI (AGRUPADOR) ---
+{
+  name: "Bacardí",
+  categoria: "Ron",
+  hasVariants: true,
+  isAgrupador: true,
+  sku: "RON-BACARDI",
+  marca: "Bacardí",
+  proveedor: "Bacardi Limited",
+  formatoVenta: "unidad",
+  volumenActive: true,
+  volumenCantidad: 750,
+  volumenUnidad: "ml",
+
+  containerAtributosPrincipales: [
+    { key: "Tipo", variantes: ["Blanco", "Dorado", "Añejo"] },
+  ],
+
+  atributosInformativos: [
+    { key: "Origen", value: "Puerto Rico" },
+    { key: "Añejamiento", value: "" }, // per variant
+    { key: "ABV", value: "" }, // per variant
+    { key: "Estuche", value: "Sin estuche" },
+  ],
+
+  variantCount: 3,
+  variants: [
+    {
+      name: "Bacardí",
+      sku: "RON-BACARDI-BLCO",
+      codigoUniversal: "7799002001101",
+      codigoProveedor: "BAC-BLC-750",
+      categoria: "Ron",
+      marca: "Bacardí",
+      atributosPrincipales: [{ key: "Tipo", value: "Blanco" }],
+      atributosInformativos: [
+        { key: "Añejamiento", value: "Breve (no especificado)" },
+        { key: "ABV", value: "40%" },
+      ],
+      stock: { total: "40", reservado: "6", disponible: "34" },
+    },
+    {
+      name: "Bacardí",
+      sku: "RON-BACARDI-DORD",
+      codigoUniversal: "7799002001102",
+      codigoProveedor: "BAC-ORO-750",
+      categoria: "Ron",
+      marca: "Bacardí",
+      atributosPrincipales: [{ key: "Tipo", value: "Dorado" }],
+      atributosInformativos: [
+        { key: "Añejamiento", value: "Añejo (no especificado)" },
+        { key: "ABV", value: "40%" },
+      ],
+      stock: { total: "32", reservado: "5", disponible: "27" },
+    },
+    {
+      name: "Bacardí",
+      sku: "RON-BACARDI-ANJO",
+      codigoUniversal: "7799002001103",
+      codigoProveedor: "BAC-ANJ-750",
+      categoria: "Ron",
+      marca: "Bacardí",
+      atributosPrincipales: [{ key: "Tipo", value: "Añejo" }],
+      atributosInformativos: [
+        { key: "Añejamiento", value: "Añejo (no especificado)" },
+        { key: "ABV", value: "40%" },
+      ],
+      stock: { total: "22", reservado: "3", disponible: "19" },
+    },
+  ],
+},
+
+// --- RON: MALIBU (STANDALONE) ---
+{
+  name: "Malibu",
+  categoria: "Ron",
+  hasVariants: false,
+  isAgrupador: false,
+  sku: "RON-MALIBU-COCO",
+  codigoUniversal: "7799002001201",
+  marca: "Malibu",
+  proveedor: "Pernod Ricard",
+  codigoProveedor: "MAL-COC-750",
+  formatoVenta: "unidad",
+  volumenActive: true,
+  volumenCantidad: 750,
+  volumenUnidad: "ml",
+
+  stock: { total: "28", reservado: "4", disponible: "24" },
+
+  atributosPrincipales: [{ key: "Tipo", value: "Saborizado" }],
+  atributosInformativos: [
+    { key: "Origen", value: "Barbados" },
+    { key: "Añejamiento", value: "No aplica" },
+    { key: "ABV", value: "21%" },
+    { key: "Estuche", value: "Sin estuche" },
+
+    // Extra (pedido específico)
+    { key: "Sabor", value: "Coco" },
+  ],
+},
+
+// --- TEQUILA: DON JULIO (AGRUPADOR) ---
+{
+  name: "Don Julio",
+  categoria: "Tequila",
+  hasVariants: true,
+  isAgrupador: true,
+  sku: "TEQ-DONJUL",
+  marca: "Don Julio",
+  proveedor: "Diageo",
+  formatoVenta: "unidad",
+  volumenActive: true,
+  volumenCantidad: 750,
+  volumenUnidad: "ml",
+
+  containerAtributosPrincipales: [
+    { key: "Tipo", variantes: ["Blanco", "Reposado", "Añejo"] },
+  ],
+
+  atributosInformativos: [
+    { key: "Origen", value: "México" },
+    { key: "Añejamiento", value: "" }, // per variant
+    { key: "ABV", value: "" }, // per variant
+    { key: "Estuche", value: "Sin estuche" },
+  ],
+
+  variantCount: 3,
+  variants: [
+    {
+      name: "Don Julio",
+      sku: "TEQ-DONJUL-BLCO",
+      codigoUniversal: "7799002001301",
+      codigoProveedor: "DJ-BLC-750",
+      categoria: "Tequila",
+      marca: "Don Julio",
+      atributosPrincipales: [{ key: "Tipo", value: "Blanco" }],
+      atributosInformativos: [
+        { key: "Añejamiento", value: "Sin añejamiento" },
+        { key: "ABV", value: "40%" },
+      ],
+      stock: { total: "18", reservado: "2", disponible: "16" },
+    },
+    {
+      name: "Don Julio",
+      sku: "TEQ-DONJUL-REPO",
+      codigoUniversal: "7799002001302",
+      codigoProveedor: "DJ-REP-750",
+      categoria: "Tequila",
+      marca: "Don Julio",
+      atributosPrincipales: [{ key: "Tipo", value: "Reposado" }],
+      atributosInformativos: [
+        { key: "Añejamiento", value: "Reposado (no especificado)" },
+        { key: "ABV", value: "40%" },
+      ],
+      stock: { total: "14", reservado: "2", disponible: "12" },
+    },
+    {
+      name: "Don Julio",
+      sku: "TEQ-DONJUL-ANJO",
+      codigoUniversal: "7799002001303",
+      codigoProveedor: "DJ-ANJ-750",
+      categoria: "Tequila",
+      marca: "Don Julio",
+      atributosPrincipales: [{ key: "Tipo", value: "Añejo" }],
+      atributosInformativos: [
+        { key: "Añejamiento", value: "Añejo (no especificado)" },
+        { key: "ABV", value: "40%" },
+      ],
+      stock: { total: "10", reservado: "1", disponible: "9" },
+    },
+  ],
+},
+
+// --- TEQUILA: PATRÓN SILVER (STANDALONE) ---
+{
+  name: "Patrón Silver",
+  categoria: "Tequila",
+  hasVariants: false,
+  isAgrupador: false,
+  sku: "TEQ-PATRON-SILV",
+  codigoUniversal: "7799002001401",
+  marca: "Patrón",
+  proveedor: "Bacardi",
+  codigoProveedor: "PAT-SIL-750",
+  formatoVenta: "unidad",
+  volumenActive: true,
+  volumenCantidad: 750,
+  volumenUnidad: "ml",
+
+  stock: { total: "12", reservado: "2", disponible: "10" },
+
+  atributosPrincipales: [{ key: "Tipo", value: "Silver" }],
+  atributosInformativos: [
+    { key: "Origen", value: "México" },
+    { key: "Añejamiento", value: "Sin añejamiento" },
+    { key: "ABV", value: "40%" },
+    { key: "Estuche", value: "Sin estuche" },
+  ],
+},
+{
+  name: "Johnnie Walker 750 ml",
+  categoria: "Whiskies",
+  hasVariants: true,
+  isAgrupador: true,
+  sku: "WHKY-JW750",
+  marca: "Johnnie Walker",
+  proveedor: "Diageo",
+  formatoVenta: "unidad",
+  volumenActive: true,
+  volumenCantidad: 750,
+  volumenUnidad: "ml",
+
+  containerAtributosPrincipales: [
+    { key: "Línea", variantes: ["Red Label", "Black Label", "Double Black", "Blue Label"] },
+  ],
+
+  atributosInformativos: [
+    { key: "Tipo de Whisky", value: "Scotch" },
+    { key: "Método de Elaboración", value: "Blended" },
+    { key: "Origen", value: "Escocia" },
+    { key: "Añejamiento", value: "" },
+    { key: "Tipo de Barrica", value: "Roble" },
+    { key: "ABV", value: "" },
+    { key: "Estuche", value: "" },
+  ],
+
+  variantCount: 4,
+  variants: [
+    {
+      name: "Johnnie Walker 750 ml",
+      sku: "WHKY-JW750-RED",
+      codigoUniversal: "5000267011011",
+      codigoProveedor: "JW-RED-750",
+      categoria: "Whiskies",
+      marca: "Johnnie Walker",
+      atributosPrincipales: [{ key: "Línea", value: "Red Label" }],
+      atributosInformativos: [
+        { key: "Añejamiento", value: "Sin declaración de edad" },
+        { key: "ABV", value: "40%" },
+        { key: "Estuche", value: "Sin estuche" },
+      ],
+      stock: { total: "48", reservado: "6", disponible: "42" },
+    },
+    {
+      name: "Johnnie Walker 750 ml",
+      sku: "WHKY-JW750-BLACK",
+      codigoUniversal: "5000267024233",
+      codigoProveedor: "JW-BLACK-750",
+      categoria: "Whiskies",
+      marca: "Johnnie Walker",
+      atributosPrincipales: [{ key: "Línea", value: "Black Label" }],
+      atributosInformativos: [
+        { key: "Añejamiento", value: "12 años" },
+        { key: "ABV", value: "40%" },
+        { key: "Estuche", value: "Caja" },
+      ],
+      stock: { total: "36", reservado: "4", disponible: "32" },
+    },
+    {
+      name: "Johnnie Walker 750 ml",
+      sku: "WHKY-JW750-DBLK",
+      codigoUniversal: "5000267092843",
+      codigoProveedor: "JW-DBLACK-750",
+      categoria: "Whiskies",
+      marca: "Johnnie Walker",
+      atributosPrincipales: [{ key: "Línea", value: "Double Black" }],
+      atributosInformativos: [
+        { key: "Añejamiento", value: "Sin declaración de edad" },
+        { key: "ABV", value: "40%" },
+        { key: "Estuche", value: "Caja" },
+      ],
+      stock: { total: "24", reservado: "3", disponible: "21" },
+    },
+    {
+      name: "Johnnie Walker 750 ml",
+      sku: "WHKY-JW750-BLUE",
+      codigoUniversal: "5000267014012",
+      codigoProveedor: "JW-BLUE-750",
+      categoria: "Whiskies",
+      marca: "Johnnie Walker",
+      atributosPrincipales: [{ key: "Línea", value: "Blue Label" }],
+      atributosInformativos: [
+        { key: "Añejamiento", value: "Selección de whiskies añejos" },
+        { key: "ABV", value: "40%" },
+        { key: "Estuche", value: "Estuche premium" },
+      ],
+      stock: { total: "12", reservado: "2", disponible: "10" },
+    },
+  ],
+},
+
+{
+  name: "Johnnie Walker 1 L",
+  categoria: "Whiskies",
+  hasVariants: true,
+  isAgrupador: true,
+  sku: "WHKY-JW1L",
+  marca: "Johnnie Walker",
+  proveedor: "Diageo",
+  formatoVenta: "unidad",
+  volumenActive: true,
+  volumenCantidad: 1000,
+  volumenUnidad: "ml",
+
+  containerAtributosPrincipales: [
+    { key: "Línea", variantes: ["Red Label", "Black Label"] },
+  ],
+
+  atributosInformativos: [
+    { key: "Tipo de Whisky", value: "Scotch" },
+    { key: "Método de Elaboración", value: "Blended" },
+    { key: "Origen", value: "Escocia" },
+    { key: "Añejamiento", value: "" },
+    { key: "Tipo de Barrica", value: "Roble" },
+    { key: "ABV", value: "" },
+    { key: "Estuche", value: "" },
+  ],
+
+  variantCount: 2,
+  variants: [
+    {
+      name: "Johnnie Walker 1 L",
+      sku: "WHKY-JW1L-RED",
+      codigoUniversal: "5000267011110",
+      codigoProveedor: "JW-RED-1L",
+      categoria: "Whiskies",
+      marca: "Johnnie Walker",
+      atributosPrincipales: [{ key: "Línea", value: "Red Label" }],
+      atributosInformativos: [
+        { key: "Añejamiento", value: "Sin declaración de edad" },
+        { key: "ABV", value: "40%" },
+        { key: "Estuche", value: "Sin estuche" },
+      ],
+      stock: { total: "30", reservado: "4", disponible: "26" },
+    },
+    {
+      name: "Johnnie Walker 1 L",
+      sku: "WHKY-JW1L-BLACK",
+      codigoUniversal: "5000267024318",
+      codigoProveedor: "JW-BLACK-1L",
+      categoria: "Whiskies",
+      marca: "Johnnie Walker",
+      atributosPrincipales: [{ key: "Línea", value: "Black Label" }],
+      atributosInformativos: [
+        { key: "Añejamiento", value: "12 años" },
+        { key: "ABV", value: "40%" },
+        { key: "Estuche", value: "Caja" },
+      ],
+      stock: { total: "20", reservado: "3", disponible: "17" },
+    },
+  ],
+},
+
+{
+  name: "Jack Daniel’s Old No.7",
+  categoria: "Whiskies",
+  hasVariants: false,
+  isAgrupador: false,
+  sku: "WHKY-JD-OLD7",
+  codigoUniversal: "5099873001338",
+  marca: "Jack Daniel’s",
+  proveedor: "Brown-Forman",
+  formatoVenta: "unidad",
+  volumenActive: true,
+  volumenCantidad: 750,
+  volumenUnidad: "ml",
+
+  stock: { total: "40", reservado: "5", disponible: "35" },
+
+  atributosPrincipales: [{ key: "Línea", value: "Old No.7" }],
+  atributosInformativos: [
+    { key: "Tipo de Whisky", value: "Tennessee" },
+    { key: "Método de Elaboración", value: "Filtrado por carbón" },
+    { key: "Origen", value: "Estados Unidos" },
+    { key: "Añejamiento", value: "Sin declaración de edad" },
+    { key: "Tipo de Barrica", value: "Roble americano" },
+    { key: "ABV", value: "40%" },
+    { key: "Estuche", value: "Sin estuche" },
+  ],
+},
+
+{
+  name: "Jack Daniel’s Tennessee Honey",
+  categoria: "Whiskies",
+  hasVariants: false,
+  isAgrupador: false,
+  sku: "WHKY-JD-HONEY",
+  codigoUniversal: "5099873021343",
+  marca: "Jack Daniel’s",
+  proveedor: "Brown-Forman",
+  formatoVenta: "unidad",
+  volumenActive: true,
+  volumenCantidad: 750,
+  volumenUnidad: "ml",
+
+  stock: { total: "28", reservado: "4", disponible: "24" },
+
+  atributosPrincipales: [{ key: "Línea", value: "Tennessee Honey" }],
+  atributosInformativos: [
+    { key: "Tipo de Whisky", value: "Tennessee con licor de miel" },
+    { key: "Método de Elaboración", value: "Blended" },
+    { key: "Origen", value: "Estados Unidos" },
+    { key: "Añejamiento", value: "Sin declaración de edad" },
+    { key: "Tipo de Barrica", value: "Roble americano" },
+    { key: "ABV", value: "35%" },
+    { key: "Estuche", value: "Sin estuche" },
+  ],
+},
+
+{
+  name: "Jack Daniel’s Single Barrel",
+  categoria: "Whiskies",
+  hasVariants: false,
+  isAgrupador: false,
+  sku: "WHKY-JD-SBAR",
+  codigoUniversal: "5099873018008",
+  marca: "Jack Daniel’s",
+  proveedor: "Brown-Forman",
+  formatoVenta: "unidad",
+  volumenActive: true,
+  volumenCantidad: 750,
+  volumenUnidad: "ml",
+
+  stock: { total: "18", reservado: "2", disponible: "16" },
+
+  atributosPrincipales: [{ key: "Línea", value: "Single Barrel" }],
+  atributosInformativos: [
+    { key: "Tipo de Whisky", value: "Tennessee" },
+    { key: "Método de Elaboración", value: "Single Barrel" },
+    { key: "Origen", value: "Estados Unidos" },
+    { key: "Añejamiento", value: "Selección especial" },
+    { key: "Tipo de Barrica", value: "Roble americano tostado" },
+    { key: "ABV", value: "45%" },
+    { key: "Estuche", value: "Caja" },
+  ],
+},
+
+{
+  name: "Jameson Original",
+  categoria: "Whiskies",
+  hasVariants: false,
+  isAgrupador: false,
+  sku: "WHKY-JMS-ORIG",
+  codigoUniversal: "5011007003005",
+  marca: "Jameson",
+  proveedor: "Pernod Ricard",
+  formatoVenta: "unidad",
+  volumenActive: true,
+  volumenCantidad: 750,
+  volumenUnidad: "ml",
+
+  stock: { total: "34", reservado: "4", disponible: "30" },
+
+  atributosPrincipales: [{ key: "Línea", value: "Original" }],
+  atributosInformativos: [
+    { key: "Tipo de Whisky", value: "Irish" },
+    { key: "Método de Elaboración", value: "Triple destilado" },
+    { key: "Origen", value: "Irlanda" },
+    { key: "Añejamiento", value: "Mínimo 4 años" },
+    { key: "Tipo de Barrica", value: "Bourbon & Jerez" },
+    { key: "ABV", value: "40%" },
+    { key: "Estuche", value: "Sin estuche" },
+  ],
+},
+
+{
+  name: "Jameson Black Barrel",
+  categoria: "Whiskies",
+  hasVariants: false,
+  isAgrupador: false,
+  sku: "WHKY-JMS-BBLK",
+  codigoUniversal: "5011007024369",
+  marca: "Jameson",
+  proveedor: "Pernod Ricard",
+  formatoVenta: "unidad",
+  volumenActive: true,
+  volumenCantidad: 750,
+  volumenUnidad: "ml",
+
+  stock: { total: "22", reservado: "3", disponible: "19" },
+
+  atributosPrincipales: [{ key: "Línea", value: "Black Barrel" }],
+  atributosInformativos: [
+    { key: "Tipo de Whisky", value: "Irish" },
+    { key: "Método de Elaboración", value: "Triple destilado" },
+    { key: "Origen", value: "Irlanda" },
+    { key: "Añejamiento", value: "Barricas doblemente tostadas" },
+    { key: "Tipo de Barrica", value: "Roble americano" },
+    { key: "ABV", value: "40%" },
+    { key: "Estuche", value: "Caja" },
+  ],
+},
+// --- LICORES ---
+  //LICORES
+  {
+    name: "Jägermeister 700ml",
+    categoria: "Licores",
+    hasVariants: false,
+    isAgrupador: false,
+    sku: "LICR-JGRM700-ORIG",
+    codigoUniversal: "4067700013019",
+    marca: "Jägermeister",
+    proveedor: "Mast-Jägermeister SE",
+    codigoProveedor: "MJ-DE-700-ORIG",
+    formatoVenta: "unidad",
+    volumenActive: true,
+    volumenCantidad: 700,
+    volumenUnidad: "ml",
+    stock: {
+      total: "48",
+      reservado: "6",
+      disponible: "42",
+    },
+    atributosPrincipales: [{ key: "Sabor", value: "Original" }],
+    atributosInformativos: [
+      { key: "Tipo de Licor", value: "Licor herbal amargo" },
+      { key: "Origen", value: "Alemania" },
+      { key: "ABV", value: "35%" },
+      { key: "Estuche", value: "Sin estuche" },
+    ],
+  },
+  {
+    name: "Sheridan's Original",
+    categoria: "Licores",
+    hasVariants: false,
+    isAgrupador: false,
+    sku: "LICR-SHER700-CACR",
+    codigoUniversal: "5391530012345",
+    marca: "Sheridan's",
+    proveedor: "Diageo",
+    codigoProveedor: "DIA-SHER-700",
+    formatoVenta: "unidad",
+    volumenActive: true,
+    volumenCantidad: 700,
+    volumenUnidad: "ml",
+    stock: {
+      total: "36",
+      reservado: "5",
+      disponible: "31",
+    },
+    atributosPrincipales: [{ key: "Sabor", value: "Café y crema" }],
+    atributosInformativos: [
+      { key: "Tipo de Licor", value: "Licor de crema y café" },
+      { key: "Origen", value: "Irlanda" },
+      { key: "ABV", value: "15.5%" },
+      { key: "Estuche", value: "Sin estuche" },
+    ],
+  },
+
+// FIREBALL
+{
+  name: "Fireball 750 ml",
+  categoria: "Licores",
+  hasVariants: false,
+  isAgrupador: false,
+  sku: "LICR-FIRB750-CANE",
+  codigoUniversal: "088004009303",
+  marca: "Fireball",
+  proveedor: "Sazerac Company",
+  codigoProveedor: "SAZ-FIRB-750-CANE",
+  formatoVenta: "unidad",
+  volumenActive: true,
+  volumenCantidad: 750,
+  volumenUnidad: "ml",
+
+  stock: { total: "24", reservado: "3", disponible: "21" },
+
+  atributosPrincipales: [{ key: "Sabor", value: "Canela" }],
+  atributosInformativos: [
+    { key: "Tipo de Licor", value: "Licor de whisky y canela" },
+    { key: "Origen", value: "Canadá" },
+    { key: "ABV", value: "33%" },
+    { key: "Estuche", value: "Sin estuche" },
+  ],
+},
+
+// COINTREAU
+{
+  name: "Cointreau 700 ml",
+  categoria: "Licores",
+  hasVariants: false,
+  isAgrupador: false,
+  sku: "LICR-COIN700-ORIG",
+  codigoUniversal: "07035542004202",
+  marca: "Cointreau",
+  proveedor: "Rémy Cointreau",
+  codigoProveedor: "RC-COIN-700-ORIG",
+  formatoVenta: "unidad",
+  volumenActive: true,
+  volumenCantidad: 700,
+  volumenUnidad: "ml",
+
+  stock: { total: "18", reservado: "2", disponible: "16" },
+
+  atributosPrincipales: [{ key: "Sabor", value: "Original" }],
+  atributosInformativos: [
+    { key: "Tipo de Licor", value: "Triple sec (licor de naranja)" },
+    { key: "Origen", value: "Francia" },
+    { key: "ABV", value: "40%" },
+    { key: "Estuche", value: "Sin estuche" },
+  ],
+},
+
+// BAILEYS (AGRUPADOR)
+{
+  name: "Baileys",
+  categoria: "Licores",
+  hasVariants: true,
+  isAgrupador: true,
+  sku: "LICR-BAILYS",
+  marca: "Baileys",
+  proveedor: "Diageo",
+  formatoVenta: "unidad",
+  volumenActive: true,
+  volumenCantidad: 750,
+  volumenUnidad: "ml",
+
+  containerAtributosPrincipales: [
+    { key: "Sabor", variantes: ["Original", "Chocolate Luxe", "Salted Caramel", "Strawberries & Cream"] },
+  ],
+
+  atributosInformativos: [
+    { key: "Tipo de Licor", value: "Licor de crema" },
+    { key: "Origen", value: "Irlanda" },
+    { key: "ABV", value: "17%" },
+    { key: "Estuche", value: "Sin estuche" },
+  ],
+
+  variantCount: 4,
+  variants: [
+    {
+      name: "Baileys",
+      sku: "LICR-BAIO750-ORIG",
+      codigoUniversal: "5011013100132",
+      codigoProveedor: "DIA-BAIO-750-ORIG",
+      categoria: "Licores",
+      marca: "Baileys",
+      atributosPrincipales: [{ key: "Sabor", value: "Original" }],
+      stock: { total: "30", reservado: "4", disponible: "26" },
+    },
+    {
+      name: "Baileys",
+      sku: "LICR-BAIO750-CHOC",
+      codigoUniversal: "5011013933877",
+      codigoProveedor: "DIA-BAIO-750-CHOC",
+      categoria: "Licores",
+      marca: "Baileys",
+      atributosPrincipales: [{ key: "Sabor", value: "Chocolate Luxe" }],
+      stock: { total: "14", reservado: "2", disponible: "12" },
+    },
+    {
+      name: "Baileys",
+      sku: "LICR-BAIO750-CARA",
+      codigoUniversal: "5011013935048",
+      codigoProveedor: "DIA-BAIO-750-CARA",
+      categoria: "Licores",
+      marca: "Baileys",
+      atributosPrincipales: [{ key: "Sabor", value: "Salted Caramel" }],
+      stock: { total: "16", reservado: "2", disponible: "14" },
+    },
+    {
+      name: "Baileys",
+      sku: "LICR-BAIO750-STCR",
+      codigoUniversal: "5011013935055",
+      codigoProveedor: "DIA-BAIO-750-STCR",
+      categoria: "Licores",
+      marca: "Baileys",
+      atributosPrincipales: [{ key: "Sabor", value: "Strawberries & Cream" }],
+      stock: { total: "12", reservado: "1", disponible: "11" },
+    },
+  ],
+},
+
+// WILD AFRICA CREAM
+{
+  name: "Wild Africa Cream 750 ml",
+  categoria: "Licores",
+  hasVariants: false,
+  isAgrupador: false,
+  sku: "LICR-WAFC750-CREM",
+  codigoUniversal: "6009653011924",
+  marca: "Wild Africa Cream",
+  proveedor: "Wild Africa Cream",
+  codigoProveedor: "WAC-WAFC-750-CREM",
+  formatoVenta: "unidad",
+  volumenActive: true,
+  volumenCantidad: 750,
+  volumenUnidad: "ml",
+
+  stock: { total: "16", reservado: "2", disponible: "14" },
+
+  atributosPrincipales: [{ key: "Sabor", value: "Crema" }],
+  atributosInformativos: [
+    { key: "Tipo de Licor", value: "Licor de crema" },
+    { key: "Origen", value: "Sudáfrica" },
+    { key: "ABV", value: "15%" },
+    { key: "Estuche", value: "Sin estuche" },
+  ],
+},
+
+// STREGA
+{
+  name: "Strega 700 ml",
+  categoria: "Licores",
+  hasVariants: false,
+  isAgrupador: false,
+  sku: "LICR-STRE700-ORIG",
+  codigoUniversal: "0000080220718",
+  marca: "Strega",
+  proveedor: "Strega Alberti",
+  codigoProveedor: "STA-STRE-700-ORIG",
+  formatoVenta: "unidad",
+  volumenActive: true,
+  volumenCantidad: 700,
+  volumenUnidad: "ml",
+
+  stock: { total: "14", reservado: "2", disponible: "12" },
+
+  atributosPrincipales: [{ key: "Sabor", value: "Original" }],
+  atributosInformativos: [
+    { key: "Tipo de Licor", value: "Licor herbal" },
+    { key: "Origen", value: "Italia" },
+    { key: "ABV", value: "40%" },
+    { key: "Estuche", value: "Sin estuche" },
+  ],
+},
+
+// TOFKA
+{
+  name: "Tofka 700 ml",
+  categoria: "Licores",
+  hasVariants: false,
+  isAgrupador: false,
+  sku: "LICR-TOFK700-TOFF",
+  codigoUniversal: "5060049029993",
+  marca: "Tofka",
+  proveedor: "Tofka",
+  codigoProveedor: "TOF-TOFK-700-TOFF",
+  formatoVenta: "unidad",
+  volumenActive: true,
+  volumenCantidad: 700,
+  volumenUnidad: "ml",
+
+  stock: { total: "12", reservado: "1", disponible: "11" },
+
+  atributosPrincipales: [{ key: "Sabor", value: "Toffee" }],
+  atributosInformativos: [
+    { key: "Tipo de Licor", value: "Licor a base de vodka sabor toffee" },
+    { key: "Origen", value: "Reino Unido" },
+    { key: "ABV", value: "35%" },
+    { key: "Estuche", value: "Sin estuche" },
+  ],
+}
+
+
 ]

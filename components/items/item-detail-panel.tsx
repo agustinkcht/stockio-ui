@@ -798,21 +798,8 @@ export function ItemDetailPanel({
 
           {/* Right Column - Tabs and Content */}
           <div className="col-span-7 flex flex-col w-full ml-0 overflow-hidden">
-            {/* CHANGE: Added background layer to cover gap and hide scrolling content */}
-            <div
-              className="fixed top-[84px] h-6 bg-slate-50 z-20"
-              style={{
-                width: isExpanded ? "calc((100vw - 16.5rem) * 0.7 - 1.5rem)" : "calc((100vw - 4rem) * 0.7 - 1.5rem)",
-              }}
-            />
-
-            {/* Tab Buttons - Made fixed to stay in place while scrolling */}
-            <div
-              className="fixed flex items-center gap-0 h-10 mb-4 bg-slate-50 z-10 transition-all duration-300"
-              style={{
-                width: isExpanded ? "calc((100vw - 16.5rem) * 0.7 - 1.5rem)" : "calc((100vw - 4rem) * 0.7 - 1.5rem)",
-              }}
-            >
+            {/* Tab Buttons - Now uses natural document flow */}
+            <div className="flex items-center gap-0 h-10 mb-4 bg-slate-50 z-10">
               {isViewingContainer ? (
                 <>
                   <button
@@ -892,8 +879,8 @@ export function ItemDetailPanel({
               )}
             </div>
 
-            {/* Tab Content - Added top margin to account for fixed segment buttons */}
-            <div className="flex-1 mt-14">
+            {/* Tab Content - Removed mt-14, now uses natural flow */}
+            <div className="flex-1">
               {isViewingContainer ? (
                 // Container item tab content
                 <>

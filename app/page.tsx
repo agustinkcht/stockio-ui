@@ -1,7 +1,5 @@
 "use client"
-
-import type React from "react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
 import { Sidebar } from "@/components/layout/sidebar"
 import { TopNav } from "@/components/layout/top-nav"
@@ -26,12 +24,6 @@ export default function Page() {
   const [isSaving, setIsSaving] = useState(false)
   const [itemCreated, setItemCreated] = useState(false)
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true)
-  const [isScrolled, setIsScrolled] = useState(false)
-
-  useEffect(() => {
-    console.log("[v0] Page component mounted - scroll detection ready")
-  }, [])
-  // </CHANGE>
 
   const {
     items,
@@ -210,14 +202,6 @@ export default function Page() {
     setTimeout(() => setItemCreated(false), 100)
   }
 
-  const handleScroll = (e: React.UIEvent<HTMLElement>) => {
-    const scrollTop = e.currentTarget.scrollTop
-    console.log("[v0] Scroll event fired - scrollTop:", scrollTop)
-    const shouldBeScrolled = scrollTop > 50
-    console.log("[v0] Setting isScrolled to:", shouldBeScrolled)
-    setIsScrolled(shouldBeScrolled)
-  }
-
   return (
     <div className="min-h-screen bg-background text-foreground flex" onClick={handleCloseDropdowns}>
       {/* Sidebar */}
@@ -279,13 +263,11 @@ export default function Page() {
             handleOpenNuevoItem={handleOpenNuevoItem}
             handleOpenNuevoItemConVariantes={handleOpenNuevoItemConVariantes}
             isExpanded={isSidebarExpanded}
-            isScrolled={isScrolled}
           />
         )}
 
         <main
-          className={`flex-1 overflow-y-auto transition-all duration-200 bg-[rgba(250,251,253,1)] ${showNuevoItemModal && !isNuevoItemMinimized ? "blur-sm" : ""} ${showNuevoItemConVariantesModal && !isNuevoItemConVariantesMinimized ? "blur-sm" : ""} ${!selectedItem ? "mt-[5.25rem]" : "mt-[5.25rem]"}`}
-          onScroll={handleScroll}
+          className={`flex-1 overflow-y-auto transition-all duration-200 bg-[rgba(250,251,253,1)] ${showNuevoItemModal && !isNuevoItemMinimized ? "blur-sm" : ""} ${showNuevoItemConVariantesModal && !isNuevoItemConVariantesMinimized ? "blur-sm" : ""}`}
         >
           {selectedItem ? (
             <ItemDetailPanel
@@ -309,7 +291,7 @@ export default function Page() {
             />
           ) : (
             <div className="px-8 pb-8 overflow-hidden">
-              <div className="rounded-xl border mt-7 border-[rgba(228,230,235,0.5)] bg-transparent shadow-none border-none">
+              <div className="rounded-xl border border-[rgba(228,230,235,0.5)] bg-transparent shadow-none border-none">
                 <ItemsGrid
                   items={items}
                   gridSize={gridSize}
@@ -327,7 +309,6 @@ export default function Page() {
                   setGridSizeDropdownOpen={setGridSizeDropdownOpen}
                   setGridSize={setGridSize}
                   isExpanded={isSidebarExpanded}
-                  isScrolled={isScrolled}
                 />
               </div>
             </div>

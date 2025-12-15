@@ -28,7 +28,7 @@ export function TopNav({
 }: TopNavProps) {
   return (
     <div
-      className="border-b px-8 flex items-center justify-between fixed top-0 right-0 left-0 blur-glass z-30 h-12 transition-all duration-300 border-sidebar bg-[rgba(253,254,254,1)]"
+      className="border-b px-8 flex items-center justify-between fixed top-0 right-0 left-0 blur-glass z-40 h-12 transition-all duration-300 border-sidebar bg-[rgba(253,254,254,1)]"
       style={{ left: isExpanded ? "256px" : "64px" }}
     >
       <div className="flex items-center gap-3">

@@ -10,7 +10,6 @@ interface ToolbarProps {
   handleOpenNuevoItem: () => void
   handleOpenNuevoItemConVariantes: () => void
   isExpanded?: boolean
-  isScrolled?: boolean
 }
 
 export function Toolbar({
@@ -19,7 +18,6 @@ export function Toolbar({
   handleOpenNuevoItem,
   handleOpenNuevoItemConVariantes,
   isExpanded = true,
-  isScrolled = false,
 }: ToolbarProps) {
   const nuevoRef = useRef<HTMLDivElement>(null)
   const moreOptionsRef = useRef<HTMLDivElement>(null)
@@ -49,11 +47,11 @@ export function Toolbar({
 
   return (
     <div
-      className={`fixed top-[84px] bg-transparent z-30 transition-all duration-300 ${isScrolled ? "opacity-0 pointer-events-none translate-y-[-20px]" : "opacity-100 translate-y-0"}`}
+      className={`bg-transparent z-30 transition-all duration-300 opacity-100 translate-y-0`}
       style={{ left: isExpanded ? "256px" : "64px" }}
     >
       <div className="px-8 pt-6 pb-2 flex justify-start bg-transparent">
-        <div className="h-12 bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50 shadow-sm px-4 flex items-center gap-3 transition-all duration-300 mb-0">
+        <div className="h-12 relative top-[86px] bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50 shadow-sm px-4 flex items-center gap-3 transition-all duration-300 mb-0">
           <div className="flex items-center gap-2 pl-5 pr-1">
             <div className="relative w-80 mr-2">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black opacity-100 w-3.5 h-3.5 z-10" />
