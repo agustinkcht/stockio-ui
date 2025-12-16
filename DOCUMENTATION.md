@@ -25,7 +25,7 @@ Parent items serve as templates that automatically generate child variants based
 - `variants` - Array containing all generated child items
 
 **Example:**
-\`\`\`typescript
+```typescript
 {
   name: "Camiseta Deportiva",
   containerAtributosPrincipales: [
@@ -34,7 +34,7 @@ Parent items serve as templates that automatically generate child variants based
   ],
   // This generates 3 × 4 = 12 child variants automatically
 }
-\`\`\`
+```
 
 #### Atributos Configuration UI
 
@@ -166,7 +166,7 @@ The dynamic bar appears when there are unsaved changes and provides:
 ## Data Models
 
 ### Item Interface
-\`\`\`typescript
+```typescript
 interface Item {
   id: string
   name: string
@@ -192,16 +192,16 @@ interface Item {
   foto?: string
   descripcion?: string
 }
-\`\`\`
+```
 
 ### DepositoStock Interface
-\`\`\`typescript
+```typescript
 interface DepositoStock {
   id: string
   name: string
   stock: number
 }
-\`\`\`
+```
 
 ## Technology Stack
 

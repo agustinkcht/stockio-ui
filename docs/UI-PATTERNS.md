@@ -14,7 +14,7 @@
 
 #### 1. Sticky Section Setup
 
-\`\`\`tsx
+```tsx
 {/* Sticky Section */}
 <div
   className={`sticky bg-white border border-gray-200 rounded-lg shadow-sm z-10`}
@@ -27,11 +27,11 @@
 
 {/* Spacer to maintain layout when sticky activates */}
 <div style={{ height: `${HEIGHT}px` }} />
-\`\`\`
+```
 
 #### 2. Masking Layer
 
-\`\`\`tsx
+```tsx
 {/* Background masking layer */}
 <div
   className={`fixed bg-[#f8f9fa] pointer-events-none z-20 transition-all duration-300 ease-in-out`}
@@ -42,7 +42,7 @@
     height: `${GAP_HEIGHT}px`,
   }}
 />
-\`\`\`
+```
 
 **Key Attributes:**
 - `fixed` - Stays in place during scroll
@@ -53,18 +53,18 @@
 
 #### 3. Z-Index Hierarchy
 
-\`\`\`
+```
 Scrolling content:    z-0 (default)
 Sticky sections:      z-10
 Masking layers:       z-20
 Sticky toolbar:       z-30 (above masks)
 Fixed navbar:         z-40+ (topmost)
-\`\`\`
+```
 
 ### Real Implementation Example (Items Grid)
 
 **Layout Structure:**
-\`\`\`
+```
 TopNav:         48px height, fixed top-0
 UtilityBar:     84px height, fixed top-[48px]
 Toolbar:        24px height, sticky top-[84px], z-30
@@ -72,10 +72,10 @@ Toolbar:        24px height, sticky top-[84px], z-30
 Tab Section:    sticky top-[180px], z-10
 ---GAP: 2px---  (masked)
 Items Grid:     scrollable content
-\`\`\`
+```
 
 **Masking Layer:**
-\`\`\`tsx
+```tsx
 <div
   className="fixed bg-[#f8f9fa] pointer-events-none z-20 transition-all duration-300 ease-in-out"
   style={{
@@ -85,7 +85,7 @@ Items Grid:     scrollable content
     height: "96px",   // Cover 24px gap + extend to tab section (180px - 84px)
   }}
 />
-\`\`\`
+```
 
 **Calculations:**
 - Toolbar position: 84px (TopNav 48px + UtilityBar 36px visible + spacing)
@@ -98,7 +98,7 @@ Items Grid:     scrollable content
 
 **Solution:** Match nested padding structure
 
-\`\`\`tsx
+```tsx
 {/* Tab Section - nested padding */}
 <div className="px-4">           {/* Outer: 16px */}
   <div className="px-4">         {/* Inner: 16px (total 32px) */}
@@ -110,7 +110,7 @@ Items Grid:     scrollable content
 <div className="pl-[18px] pr-12">  {/* Left: 18px, Right: 48px */}
   {/* Items align with labels above */}
 </div>
-\`\`\`
+```
 
 **Technique:** Use arbitrary values `pl-[18px]` for surgical precision when standard Tailwind classes don't align perfectly.
 
@@ -120,11 +120,11 @@ Items Grid:     scrollable content
 
 **Pattern:** Prevent content from escaping boundaries
 
-\`\`\`tsx
+```tsx
 <div className="overflow-hidden">
   {/* Clipped content */}
 </div>
-\`\`\`
+```
 
 **Use with:** Sticky sections to ensure scrolling content doesn't escape horizontally or appear in wrong areas.
 
@@ -134,7 +134,7 @@ Items Grid:     scrollable content
 
 **Pattern:** Dynamic positioning based on sidebar state
 
-\`\`\`tsx
+```tsx
 style={{
   left: isSidebarExpanded ? "240px" : "64px",
   right: 0,
@@ -142,7 +142,7 @@ style={{
     ? "calc(100% - 240px)" 
     : "calc(100% - 64px)",
 }}
-\`\`\`
+```
 
 **Applied to:**
 - Masking layers

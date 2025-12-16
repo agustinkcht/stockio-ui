@@ -118,13 +118,13 @@ Tracks inventory across multiple warehouses.
 - `descripcion` - Description
 
 **Usage:**
-\`\`\`sql
+```sql
 -- Insert new brand
 INSERT INTO marcas (nombre, activo) VALUES ('Proemio', true);
 
 -- Link to item
 UPDATE items SET marca_id = (SELECT id FROM marcas WHERE nombre = 'Proemio');
-\`\`\`
+```
 
 ---
 
@@ -148,7 +148,7 @@ UPDATE items SET marca_id = (SELECT id FROM marcas WHERE nombre = 'Proemio');
 - `activo` - Active status
 
 **Usage:**
-\`\`\`sql
+```sql
 -- Insert warehouse
 INSERT INTO depositos (codigo, nombre, activo) VALUES ('CENTRAL', 'Depósito Central', true);
 
@@ -160,7 +160,7 @@ VALUES (
   (SELECT id FROM depositos WHERE codigo = 'CENTRAL'),
   100, 100, 0
 );
-\`\`\`
+```
 
 ---
 
@@ -192,11 +192,11 @@ All possible values for each attribute type.
 - `activo` - Active status
 
 **Example:**
-\`\`\`sql
+```sql
 -- Add a new varietal value
 INSERT INTO atributo_valores (atributo_tipo_id, valor, activo)
 SELECT id, 'Merlot', true FROM atributo_tipos WHERE codigo = 'varietal';
-\`\`\`
+```
 
 ---
 
@@ -209,14 +209,14 @@ Links **individual items** to their attributes.
 - `atributo_valor_id` - Foreign key → `atributo_valores.id`
 
 **Usage:**
-\`\`\`sql
+```sql
 -- Assign "Malbec" attribute to an item
 INSERT INTO item_atributos (sku, atributo_valor_id)
 SELECT 'ITEM-001', av.id
 FROM atributo_valores av
 JOIN atributo_tipos at ON av.atributo_tipo_id = at.id
 WHERE at.codigo = 'varietal' AND av.valor = 'Malbec';
-\`\`\`
+```
 
 ---
 
@@ -229,7 +229,7 @@ Links **variants** to their specific attribute values.
 - `atributo_valor_id` - Foreign key → `atributo_valores.id`
 
 **Example:**
-\`\`\`sql
+```sql
 -- Assign "Malbec 2019" to a variant
 INSERT INTO variant_atributos (variant_sku, atributo_valor_id)
 SELECT 'PROEMIO-MAL-2019', av.id
@@ -237,7 +237,7 @@ FROM atributo_valores av
 JOIN atributo_tipos at ON av.atributo_tipo_id = at.id
 WHERE (at.codigo = 'varietal' AND av.valor = 'Malbec')
    OR (at.codigo = 'anada' AND av.valor = '2019');
-\`\`\`
+```
 
 ---
 
@@ -251,7 +251,7 @@ Defines which attribute combinations variants CAN have.
 - `atributo_valor_id` - Foreign key → `atributo_valores.id`
 
 **Example:**
-\`\`\`sql
+```sql
 -- Define that "Vino Proemio" variants can have Malbec, CS, or CF
 INSERT INTO container_atributos_posibles (parent_sku, atributo_tipo_id, atributo_valor_id)
 SELECT 
@@ -261,7 +261,7 @@ SELECT
 FROM atributo_tipos at
 JOIN atributo_valores av ON av.atributo_tipo_id = at.id
 WHERE at.codigo = 'varietal' AND av.valor IN ('Malbec', 'Cabernet Sauvignon', 'Cabernet Franc');
-\`\`\`
+```
 
 ---
 
@@ -306,7 +306,7 @@ Tracks all stock changes.
 
 ### Creating an Individual Item
 
-\`\`\`sql
+```sql
 -- 1. Ensure marca and proveedor exist
 INSERT INTO marcas (nombre, activo) VALUES ('MarcaX', true) ON CONFLICT DO NOTHING;
 INSERT INTO proveedores (nombre, activo) VALUES ('ProveedorY', true) ON CONFLICT DO NOTHING;
@@ -339,13 +339,13 @@ VALUES (
   (SELECT id FROM depositos WHERE codigo = 'CENTRAL'),
   100, 100, 0
 );
-\`\`\`
+```
 
 ---
 
 ### Creating a Parent Item with Variants
 
-\`\`\`sql
+```sql
 -- 1. Insert parent item
 INSERT INTO items (
   sku, name, marca_id, proveedor_id, has_variants, is_agrupador, variant_count
@@ -391,13 +391,13 @@ INSERT INTO stock (sku, deposito, deposito_id, total, disponible, reservado)
 VALUES
   ('VARIANT-001', 'CENTRAL', (SELECT id FROM depositos WHERE codigo = 'CENTRAL'), 50, 50, 0),
   ('VARIANT-002', 'CENTRAL', (SELECT id FROM depositos WHERE codigo = 'CENTRAL'), 30, 30, 0);
-\`\`\`
+```
 
 ---
 
 ### Querying Items with Attributes
 
-\`\`\`sql
+```sql
 -- Get individual item with all attributes
 SELECT 
   i.sku,
@@ -428,7 +428,7 @@ LEFT JOIN variant_atributos va ON iv.sku = va.variant_sku
 LEFT JOIN atributo_valores av ON va.atributo_valor_id = av.id
 LEFT JOIN atributo_tipos at ON av.atributo_tipo_id = at.id
 WHERE i.sku = 'PARENT-001';
-\`\`\`
+```
 
 ---
 

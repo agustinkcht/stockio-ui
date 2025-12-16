@@ -46,14 +46,14 @@ The system uses a sophisticated inheritance model where parent items define shar
 - Simple inventory items
 
 **Identification in Data:**
-\`\`\`typescript
+```typescript
 {
   hasVariants: false,
   isAgrupador: false,
   // No variants array
   // No containerAtributosPrincipales
 }
-\`\`\`
+```
 
 ---
 
@@ -73,7 +73,7 @@ The system uses a sophisticated inheritance model where parent items define shar
 - Items that need centralized management of shared attributes
 
 **Identification in Data:**
-\`\`\`typescript
+```typescript
 {
   hasVariants: true,
   isAgrupador: true,
@@ -81,7 +81,7 @@ The system uses a sophisticated inheritance model where parent items define shar
   containerAtributosPrincipales: [...],  // Defines variant matrix
   // Has most info fields but NO codigoProveedor
 }
-\`\`\`
+```
 
 ---
 
@@ -101,7 +101,7 @@ The system uses a sophisticated inheritance model where parent items define shar
 - Individual SKUs within a product line
 
 **Identification in Data:**
-\`\`\`typescript
+```typescript
 // Exists inside parent's variants array
 variants: [
   {
@@ -111,7 +111,7 @@ variants: [
     // Inherits locked fields from parent
   }
 ]
-\`\`\`
+```
 
 ---
 
@@ -195,7 +195,7 @@ variants: [
 | `atributosInformativos` | Atributo[] | Informational attributes inherited by variants |
 
 **Type Definitions:**
-\`\`\`typescript
+```typescript
 interface Atributo {
   key: string    // Attribute name
   value: string  // Attribute value
@@ -205,7 +205,7 @@ interface ContainerAtributo {
   key: string        // Attribute name
   variantes: string[]  // Array of all possible values
 }
-\`\`\`
+```
 
 ---
 
@@ -232,7 +232,7 @@ The info segment consists of three subsections with distinct inheritance behavio
 - Applies regardless of whether parent value is filled or empty
 
 **Example:**
-\`\`\`typescript
+```typescript
 // Parent (Agrupador)
 {
   name: "Vino Proemio",
@@ -254,7 +254,7 @@ The info segment consists of three subsections with distinct inheritance behavio
   categoria: "Vinos",        // Locked, cannot edit
   marca: "Norton"            // Locked, cannot edit
 }
-\`\`\`
+```
 
 ---
 
@@ -271,7 +271,7 @@ The info segment consists of three subsections with distinct inheritance behavio
 - All variants must have same presentation format
 
 **Example:**
-\`\`\`typescript
+```typescript
 // Parent (Agrupador)
 {
   formatoVenta: "unidad",
@@ -288,7 +288,7 @@ The info segment consists of three subsections with distinct inheritance behavio
   volumenUnidad: "ml"          // Locked
   // These fields shown as disabled in UI
 }
-\`\`\`
+```
 
 ---
 
@@ -300,7 +300,7 @@ The info segment consists of three subsections with distinct inheritance behavio
 
 ##### Case A: Proveedor Filled in Parent (Locked)
 
-\`\`\`typescript
+```typescript
 // Parent (Agrupador)
 {
   proveedor: "Bodega Norton"
@@ -318,7 +318,7 @@ The info segment consists of three subsections with distinct inheritance behavio
   proveedor: "Bodega Norton",    // Locked (same as parent)
   codigoProveedor: "NORTON-002"  // Editable (different from variant 1)
 }
-\`\`\`
+```
 
 **Behavior:** When parent has `proveedor` value, children inherit it as locked field.
 
@@ -326,7 +326,7 @@ The info segment consists of three subsections with distinct inheritance behavio
 
 ##### Case B: Proveedor Empty in Parent (Editable)
 
-\`\`\`typescript
+```typescript
 // Parent (Agrupador)
 {
   proveedor: ""  // Empty string
@@ -344,7 +344,7 @@ The info segment consists of three subsections with distinct inheritance behavio
   proveedor: "Distribuidor B",   // Editable (can be different)
   codigoProveedor: "DIST-B-001"  // Editable (unique per variant)
 }
-\`\`\`
+```
 
 **Behavior:** When parent has empty `proveedor`, children can set their own values.
 
@@ -383,18 +383,18 @@ Atributos informativos provide additional product information and follow a flexi
 **Definition:** Parent defines both key AND value - children inherit complete pair (locked).
 
 **Parent Structure:**
-\`\`\`typescript
+```typescript
 atributosInformativos: [
   { key: "Bodega", value: "Trapiche" },
   { key: "Origen", value: "Mendoza" }
 ]
-\`\`\`
+```
 
 **Child Structure:**
-\`\`\`typescript
+```typescript
 // Children do NOT redefine these attributes
 // They automatically inherit and display them as locked
-\`\`\`
+```
 
 **UI Behavior:**
 - Attributes appear in child's detail view
@@ -402,7 +402,7 @@ atributosInformativos: [
 - Values cannot be modified
 
 **Example - Complete Flow:**
-\`\`\`typescript
+```typescript
 // Parent: Vino Trapiche Gran Medalla
 {
   name: "Vino Trapiche Gran Medalla",
@@ -424,7 +424,7 @@ atributosInformativos: [
   // - Graduación Alcohólica: 14,5% (locked)
   // - Enólogo: Daniel Pi (locked)
 }
-\`\`\`
+```
 
 ---
 
@@ -433,19 +433,19 @@ atributosInformativos: [
 **Definition:** Parent defines key with empty value - children can fill in their own values.
 
 **Parent Structure:**
-\`\`\`typescript
+```typescript
 atributosInformativos: [
   { key: "Bodega", value: "Trapiche" },           // Case 1: Locked
   { key: "Tiempo en Barrica", value: "" }         // Case 2: Empty (children define)
 ]
-\`\`\`
+```
 
 **Child Structure:**
-\`\`\`typescript
+```typescript
 atributosInformativos: [
   { key: "Tiempo en Barrica", value: "18 meses" }  // Fills parent's empty value
 ]
-\`\`\`
+```
 
 **UI Behavior:**
 - Parent-defined locked attributes appear as read-only
@@ -453,7 +453,7 @@ atributosInformativos: [
 - Each child can have different values for the empty-value keys
 
 **Example - Complete Flow:**
-\`\`\`typescript
+```typescript
 // Parent: Vino Trapiche Gran Medalla
 {
   name: "Vino Trapiche Gran Medalla",
@@ -492,7 +492,7 @@ atributosInformativos: [
   // - Tiempo en Barrica: 12 meses (editable, different from variant 1)
   // - Potencial de Guarda: 10 años (editable, different from variant 1)
 }
-\`\`\`
+```
 
 ---
 
@@ -501,16 +501,16 @@ atributosInformativos: [
 **Definition:** Attributes NOT defined in parent - specific children can add unique attributes.
 
 **Parent Structure:**
-\`\`\`typescript
+```typescript
 atributosInformativos: [
   { key: "Bodega", value: "Trapiche" },
   { key: "Origen", value: "Valle de Uco" }
   // NO "Etiqueta" attribute defined
 ]
-\`\`\`
+```
 
 **Child Structure:**
-\`\`\`typescript
+```typescript
 // Most children don't include "Etiqueta"
 
 // But one specific child adds it:
@@ -518,7 +518,7 @@ atributosInformativos: [
   { key: "Tiempo en Barrica", value: "12 meses" },
   { key: "Etiqueta", value: "Roja" }  // Exclusive to this variant only
 ]
-\`\`\`
+```
 
 **UI Behavior:**
 - Exclusive attributes only appear for the specific variant that defines them
@@ -526,7 +526,7 @@ atributosInformativos: [
 - Fully editable (not locked)
 
 **Example - Complete Flow:**
-\`\`\`typescript
+```typescript
 // Parent: Vino Trapiche Gran Medalla
 {
   name: "Vino Trapiche Gran Medalla",
@@ -565,7 +565,7 @@ atributosInformativos: [
   // - Tiempo en Barrica: 12 meses (editable)
   // - Etiqueta: Roja (editable, unique to this variant)
 }
-\`\`\`
+```
 
 **Use Case:** Special editions, limited runs, or variants with unique characteristics not shared with siblings.
 
@@ -601,14 +601,14 @@ Atributos principales define what makes each variant unique. They follow a stric
 #### Parent Structure: containerAtributosPrincipales
 
 **Format:**
-\`\`\`typescript
+```typescript
 containerAtributosPrincipales: [
   { 
     key: "AttributeName",
     variantes: ["Value1", "Value2", "Value3"]  // Array of ALL possible values
   }
 ]
-\`\`\`
+```
 
 **Purpose:**
 - Defines which attributes differentiate variants
@@ -620,14 +620,14 @@ containerAtributosPrincipales: [
 #### Child Structure: atributosPrincipales
 
 **Format:**
-\`\`\`typescript
+```typescript
 atributosPrincipales: [
   { 
     key: "AttributeName",  // Must match parent key
     value: "Value1"        // Single value from parent's variantes array
   }
 ]
-\`\`\`
+```
 
 **Purpose:**
 - Selects ONE specific value from each parent attribute
@@ -641,7 +641,7 @@ atributosPrincipales: [
 **Definition:** Parent defines TWO attributes - creates 2D matrix of variants.
 
 **Example:**
-\`\`\`typescript
+```typescript
 // Parent: Vino Proemio
 {
   name: "Vino Proemio",
@@ -687,7 +687,7 @@ atributosPrincipales: [
 }
 
 // ... and so on for all 8 combinations
-\`\`\`
+```
 
 **Rules:**
 - Each variant MUST have exactly 2 atributos principales
@@ -701,7 +701,7 @@ atributosPrincipales: [
 **Definition:** Parent defines ONLY ONE attribute - variants differ by single characteristic.
 
 **Example:**
-\`\`\`typescript
+```typescript
 // Parent: Champagne Collection
 {
   name: "Champagne Collection",
@@ -734,7 +734,7 @@ atributosPrincipales: [
     // ONLY ONE atributo principal
   ]
 }
-\`\`\`
+```
 
 **Rules:**
 - Variants can ONLY have 1 atributo principal (matching parent)
@@ -748,7 +748,7 @@ atributosPrincipales: [
 **Definition:** If parent has attribute with empty `variantes` array, it's invalid and ignored.
 
 **Example:**
-\`\`\`typescript
+```typescript
 // Parent: Bad Configuration
 {
   name: "Product with Issues",
@@ -774,7 +774,7 @@ atributosPrincipales: [
     // "Región" NOT included because parent had empty variantes
   ]
 }
-\`\`\`
+```
 
 **Rules:**
 - Attributes with `variantes: []` are considered invalid
@@ -819,7 +819,7 @@ This section provides complete, real-world examples of each item type with all f
 
 **Use Case:** A unique champagne product without variations.
 
-\`\`\`typescript
+```typescript
 {
   // Core identification
   name: "Champagne Domiciano",
@@ -867,7 +867,7 @@ This section provides complete, real-world examples of each item type with all f
     { key: "Temperatura de Servicio", value: "6–8°C" }
   ]
 }
-\`\`\`
+```
 
 **Key Points:**
 - All fields are directly editable
@@ -884,7 +884,7 @@ This section provides complete, real-world examples of each item type with all f
 
 #### Parent Item (Agrupador):
 
-\`\`\`typescript
+```typescript
 {
   // Core identification
   name: "Vino Proemio",
@@ -944,7 +944,7 @@ This section provides complete, real-world examples of each item type with all f
     // See individual variants below
   ]
 }
-\`\`\`
+```
 
 **Parent Key Points:**
 - NO stock field (stock lives in variants)
@@ -957,7 +957,7 @@ This section provides complete, real-world examples of each item type with all f
 
 #### Variant 1: Malbec 2019
 
-\`\`\`typescript
+```typescript
 {
   // Core identification - Inherited from parent
   name: "Vino Proemio",           // LOCKED (from parent)
@@ -1009,7 +1009,7 @@ This section provides complete, real-world examples of each item type with all f
     // - Enólogo: David Bonomi (locked)
   ]
 }
-\`\`\`
+```
 
 **Variant 1 Key Points:**
 - Inherits name, categoria, marca (locked)
@@ -1023,7 +1023,7 @@ This section provides complete, real-world examples of each item type with all f
 
 #### Variant 2: Malbec 2014
 
-\`\`\`typescript
+```typescript
 {
   name: "Vino Proemio",
   categoria: "Vinos",
@@ -1055,7 +1055,7 @@ This section provides complete, real-world examples of each item type with all f
     { key: "Potencial de Guarda", value: "10 años" } // Different value
   ]
 }
-\`\`\`
+```
 
 **Variant 2 Key Points:**
 - Same varietal, different year (different combination from matrix)
@@ -1068,7 +1068,7 @@ This section provides complete, real-world examples of each item type with all f
 
 #### Variant 3: Cabernet Sauvignon 2019
 
-\`\`\`typescript
+```typescript
 {
   name: "Vino Proemio",
   categoria: "Vinos",
@@ -1100,7 +1100,7 @@ This section provides complete, real-world examples of each item type with all f
     { key: "Potencial de Guarda", value: "8 años" }
   ]
 }
-\`\`\`
+```
 
 **Variant 3 Key Points:**
 - Different varietal, same year (another valid combination from matrix)
@@ -1115,7 +1115,7 @@ This section provides complete, real-world examples of each item type with all f
 
 #### Parent:
 
-\`\`\`typescript
+```typescript
 {
   name: "Vino Trapiche Gran Medalla",
   categoria: "Vinos",
@@ -1157,13 +1157,13 @@ This section provides complete, real-world examples of each item type with all f
 
   variants: [...]
 }
-\`\`\`
+```
 
 ---
 
 #### Regular Variant: Malbec 2014
 
-\`\`\`typescript
+```typescript
 {
   name: "Vino Trapiche Gran Medalla",
   sku: "VINO-TRAP-GRAN-MEDA-MALB-2014",
@@ -1195,13 +1195,13 @@ This section provides complete, real-world examples of each item type with all f
     // NO "Etiqueta" - regular variant
   ]
 }
-\`\`\`
+```
 
 ---
 
 #### Special Variant: Cabernet Sauvignon 2020 (with Exclusive Attribute)
 
-\`\`\`typescript
+```typescript
 {
   name: "Vino Trapiche Gran Medalla",
   sku: "VINO-TRAP-GRAN-MEDA-CABE-SAUV-2020",
@@ -1236,7 +1236,7 @@ This section provides complete, real-world examples of each item type with all f
     { key: "Etiqueta", value: "Roja" }
   ]
 }
-\`\`\`
+```
 
 **Special Variant Key Points:**
 - Has all standard inheritance (locked parent fields)

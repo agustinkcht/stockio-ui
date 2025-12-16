@@ -267,7 +267,7 @@ export default function Page() {
         )}
 
         <main
-          className={`flex-1 overflow-y-auto transition-all duration-200 bg-[rgba(250,251,253,1)] ${showNuevoItemModal && !isNuevoItemMinimized ? "blur-sm" : ""} ${showNuevoItemConVariantesModal && !isNuevoItemConVariantesMinimized ? "blur-sm" : ""}`}
+          className={`flex-1 transition-all duration-200 bg-[rgba(250,251,253,1)] ${showNuevoItemModal && !isNuevoItemMinimized ? "blur-sm" : ""} ${showNuevoItemConVariantesModal && !isNuevoItemConVariantesMinimized ? "blur-sm" : ""}`}
         >
           {selectedItem ? (
             <ItemDetailPanel
@@ -290,7 +290,7 @@ export default function Page() {
               isExpanded={isSidebarExpanded}
             />
           ) : (
-            <div className="px-8 pb-8 overflow-hidden">
+            <div className="px-8 pb-8">
               <div className="rounded-xl border border-[rgba(228,230,235,0.5)] bg-transparent shadow-none border-none">
                 <ItemsGrid
                   items={items}

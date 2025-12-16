@@ -19,7 +19,7 @@
 
 ## 📁 PROJECT STRUCTURE
 
-\`\`\`
+```
 /app
   page.tsx              # Main application shell
   layout.tsx            # Root layout with fonts
@@ -57,7 +57,7 @@
   utils.ts              # Utility functions (cn, etc)
   /data
     initial-items.ts    # Mock data for development
-\`\`\`
+```
 
 ---
 
@@ -96,7 +96,7 @@
 7. `useItemDetail()` - Selected item + tab state
 
 ### Data Flow
-\`\`\`
+```
 app/page.tsx (main orchestrator)
     ↓
 Hooks provide state + handlers
@@ -108,7 +108,7 @@ Components render + call handlers
 Hooks update state
     ↓
 React re-renders
-\`\`\`
+```
 
 ### Layout Responsiveness
 All layout components accept `isExpanded` prop to respond to sidebar state:
@@ -182,7 +182,7 @@ When sidebar expands (264px) or collapses (64px), layouts adjust margins with tr
 ### Core Types
 
 **Item** (base)
-\`\`\`typescript
+```typescript
 {
   name: string
   sku?: string
@@ -198,10 +198,10 @@ When sidebar expands (264px) or collapses (64px), layouts adjust margins with tr
   hasVariants?: boolean
   isAgrupador?: boolean
 }
-\`\`\`
+```
 
 **ItemVariant**
-\`\`\`typescript
+```typescript
 {
   name: string
   sku: string
@@ -209,7 +209,7 @@ When sidebar expands (264px) or collapses (64px), layouts adjust margins with tr
   stock: { total, reservado, disponible }
   atributosPrincipales?: Atributo[]
 }
-\`\`\`
+```
 
 **Item Types**:
 1. **Simple Item**: No variants, direct stock
@@ -217,7 +217,7 @@ When sidebar expands (264px) or collapses (64px), layouts adjust margins with tr
 3. **Agrupador (Container)**: isAgrupador=true, contains items[]
 
 ### Deposit Stock
-\`\`\`typescript
+```typescript
 DepositStockMap = {
   [itemSku]: {
     Ibiza: { total, reservado }
@@ -225,7 +225,7 @@ DepositStockMap = {
     Ciudadela: { total, reservado }
   }
 }
-\`\`\`
+```
 
 ---
 
@@ -300,9 +300,9 @@ DepositStockMap = {
 ## 🧪 DEBUGGING & TESTING
 
 ### Console Logs Pattern
-\`\`\`typescript
+```typescript
 console.log("[v0] ComponentName - action description:", data)
-\`\`\`
+```
 
 Examples:
 - `console.log("[v0] useItems - hasUnsavedDeletes changed to:", value)`
@@ -313,12 +313,12 @@ Examples:
 - Check before making changes: `ReadFile` the latest debug log
 
 ### Current Debug Status (Last Check)
-\`\`\`
+```
 [v0] useItems - hasUnsavedDeletes: false
 [v0] useItems - deletedItems count: 0
 [v0] useChangeTracker - changes count: 0
 [v0] useChangeTracker - hasUnsavedChanges: false
-\`\`\`
+```
 ✅ No errors, clean state
 
 ---
@@ -453,10 +453,10 @@ Examples:
 - **API Routes**: Defined but using mock mode (`USE_MOCK_DATA = true`)
 
 ### Feature Flags
-\`\`\`typescript
+```typescript
 // In hooks/use-items.ts
 const USE_MOCK_DATA = true  // Toggle for real API vs mock
-\`\`\`
+```
 
 ---
 
@@ -473,7 +473,7 @@ const USE_MOCK_DATA = true  // Toggle for real API vs mock
 - ✅ Added vertical dividers for visual hierarchy
 
 ### Layout Configuration
-\`\`\`
+```
 Navbar: Chevrons | Bookmarks | Message Bell User
          (left)      (center)       (right)
 
@@ -482,7 +482,7 @@ Utility Bar: View Name | X Check Undo Redo
 
 Sidebar: Collapsed (64px) or Expanded (264px)
          Toggle button at bottom
-\`\`\`
+```
 
 ---
 

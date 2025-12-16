@@ -35,7 +35,7 @@ Run scripts in order:
 
 ### Database Structure After Refactor
 
-\`\`\`
+```
 items
 ├── Individual items (parent_sku = NULL, has_variants = false)
 ├── Parent items (parent_sku = NULL, has_variants = true)
@@ -46,11 +46,11 @@ stock
 
 item_atributos
 └── Links ALL items (individual or variant) to their attributes
-\`\`\`
+```
 
 ### Example Data Structure
 
-\`\`\`sql
+```sql
 -- Individual item
 sku: 'CHAMP-001'
 parent_sku: NULL
@@ -73,11 +73,11 @@ sku: 'PROEMIO-CS-2019'
 parent_sku: 'PROEMIO'
 has_variants: false
 → Stock: 'PROEMIO-CS-2019' ✅
-\`\`\`
+```
 
 ### Key Queries
 
-\`\`\`sql
+```sql
 -- Get all individual items (no parent, no variants)
 SELECT * FROM items 
 WHERE parent_sku IS NULL 
@@ -107,7 +107,7 @@ SELECT s.*, i.name
 FROM stock s
 JOIN items i ON s.sku = i.sku
 WHERE i.parent_sku = 'PROEMIO';
-\`\`\`
+```
 
 ### Safety Notes
 
@@ -120,7 +120,7 @@ WHERE i.parent_sku = 'PROEMIO';
 
 If needed, restore from backup tables:
 
-\`\`\`sql
+```sql
 -- Restore items
 TRUNCATE items CASCADE;
 INSERT INTO items SELECT * FROM _backup_items;
@@ -132,7 +132,7 @@ INSERT INTO item_variants SELECT * FROM _backup_item_variants;
 -- Restore stock
 TRUNCATE stock CASCADE;
 INSERT INTO stock SELECT * FROM _backup_stock;
-\`\`\`
+```
 
 ## Post-Refactor Application Updates
 
