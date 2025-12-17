@@ -630,12 +630,12 @@ export function ItemDetailPanel({
           {/* Left Column - Item Info (suspended card) - Made fixed to stay in place while scrolling */}
           <div className="col-span-3">
             <div
-              className="fixed bg-card rounded-xl h-[550px] shadow-lg border border-border overflow-hidden flex flex-col transition-all duration-300"
+              className="fixed bg-card rounded-xl h-[675px] shadow-lg border border-border overflow-hidden flex flex-col transition-all duration-300 mt-9"
               style={{
                 width: isExpanded ? "calc((100vw - 16.5rem) * 0.3 - 1.5rem)" : "calc((100vw - 4rem) * 0.3 - 1.5rem)",
               }}
             >
-              <div className="p-6 overflow-y-auto">
+              <div className="p-6 overflow-y-auto mt-0">
                 <div>
                   <h2 className="font-semibold text-foreground text-lg">{selectedItem.name}</h2>
                   <div className="flex items-center gap-2 mt-2">
