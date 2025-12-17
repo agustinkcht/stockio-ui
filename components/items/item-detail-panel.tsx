@@ -628,18 +628,18 @@ export function ItemDetailPanel({
       <div className="px-8 pt-6 pb-6 bg-slate-50 min-h-screen mt-[84px]">
         <div className="grid grid-cols-10 gap-24">
           {/* Left Column - Item Info (suspended card) - Made fixed to stay in place while scrolling */}
-          <div className="col-span-3 mt-[34px]">
+          <div className="col-span-3 mt-0">
             <div
-              className="fixed bg-card rounded-xl h-[600px] shadow-lg border border-border overflow-hidden flex flex-col transition-all duration-300 mt-0"
+              className="fixed bg-card rounded-xl h-[600px] border overflow-hidden flex flex-col transition-all duration-300 mt-0 border-solid border-slate-100 shadow-xl"
               style={{
                 width: isExpanded ? "calc((100vw - 16.5rem) * 0.3 - 1.5rem)" : "calc((100vw - 4rem) * 0.3 - 1.5rem)",
               }}
             >
-              <div className="p-6 overflow-y-auto mt-0">
+              <div className="p-6 mt-0">
                 <div>
-                  <h2 className="font-semibold text-foreground text-lg">{selectedItem.name}</h2>
+                  <h2 className="font-semibold text-foreground text-lg mb-0">{selectedItem.name}</h2>
                   <div className="flex items-center gap-2 mt-2">
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground mt-[3px]">
                       {isViewingContainer ? "SKU Padre:" : "SKU:"}{" "}
                       {editingSku ? (
                         <input
