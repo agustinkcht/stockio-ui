@@ -241,6 +241,15 @@ export default function Page() {
           isExpanded={isSidebarExpanded}
         />
 
+        <div
+          className="fixed top-12 right-0 left-0 h-4 z-[39] pointer-events-none transition-all duration-300"
+          style={{
+            left: isSidebarExpanded ? "256px" : "64px",
+            backdropFilter: "blur(2px)",
+            WebkitBackdropFilter: "blur(2px)",
+          }}
+        />
+
         {/* UtilityBar */}
         <UtilityBar
           breadcrumbs={breadcrumbs}

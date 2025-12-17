@@ -221,13 +221,13 @@ export function ItemsGrid({
         {/* Tab Header */}
         <div className="px-4 bg-[#f8f9fa] border-gray-200 border-l-0 border-r-0 pb-2 pt-2 bg-slate-50 mt-px">
           {/* Tab Header Labels */}
-          <div className="pl-[2px] pr-[1px]">
-            <div className="flex items-center ml-0">
+          <div className="pl-0 pr-0 w-full">
+            <div className="flex items-center ml-0 w-full">
               {/* All selector with same left offset as item checkboxes */}
-              <div className="flex items-center justify-center h-9 bg-slate-200 border border-slate-300 border-b-0 border-t-0 rounded-xs shadow-none w-auto ml-[-17px] border-l-0 border-r px-[13px] rounded-l-sm">
+              <div className="flex items-center justify-center h-9 bg-slate-200 border border-slate-300 border-b-0 border-t-0 rounded-xs shadow-none w-auto border-l-0 border-r px-[13px] rounded-l-sm mr-0 ml-[-17px]">
                 <button
                   onClick={handleSelectAllClick}
-                  className={`h-4.5 w-4.5 transition-colors cursor-pointer flex items-center justify-center border-2 rounded-sm bg-white ${
+                  className={`h-4.5 w-4.5 transition-colors cursor-pointer flex items-center justify-center rounded-sm bg-white border border-slate-300 ${
                     selectAllActive
                       ? "bg-primary border-primary hover:bg-primary/90 hover:border-primary/90"
                       : "bg-transparent border-border hover:border-muted-foreground"
@@ -237,28 +237,28 @@ export function ItemsGrid({
 
               {/* Tab header matching exact item card structure */}
               <div className="flex-1 grid grid-cols-14 h-9 bg-slate-200 border border-gray-300 rounded-xs border-none">
-                <div className="col-span-4 flex items-center px-4 py-2 justify-center border-solid border-r border-slate-300 pl-4 pr-4 mr-1">
+                <div className="col-span-4 flex items-center px-4 py-2 justify-center border-solid border-r border-slate-300 pl-4 pr-4 mr-0">
                   <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Título</span>
                 </div>
-                <div className="col-span-2 flex items-center justify-center px-4 py-2 border-solid border-r border-slate-300 mr-[5px]">
+                <div className="col-span-2 flex items-center justify-center px-4 py-2 border-solid border-r border-slate-300 ml-0 mr-0">
                   <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Marca</span>
                 </div>
-                <div className="col-span-2 flex items-center justify-center px-4 py-2 border-solid border border-b-0 border-t-0 border-l-0 border-slate-300 mr-[7px]">
+                <div className="col-span-2 flex items-center justify-center px-4 py-2 border-solid border border-b-0 border-t-0 border-l-0 border-slate-300 mr-0">
                   <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Categoría</span>
                 </div>
-                <div className="col-span-3 flex items-center justify-center py-2 border-solid border-r border-slate-300 px-4 mx-1.5 ml-0 mr-[9px]">
+                <div className="col-span-3 flex items-center justify-center py-2 border-solid border-r border-slate-300 px-4 mx-1.5 ml-0 mr-px">
                   <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Atributos</span>
                 </div>
-                <div className="col-span-3 flex items-center justify-center py-2 mx-0 ml-0 px-0">
+                <div className="col-span-3 flex items-center justify-center py-2 mx-0 ml-0 px-0 mr-0">
                   <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Stock</span>
                 </div>
               </div>
 
-              <div className="relative -ml-3">
-                <div className="relative">
+              <div className="relative">
+                <div className="relative mx-0 mr-[-14px]">
                   <button
                     onClick={() => setGridSizeDropdownOpen(!gridSizeDropdownOpen)}
-                    className="flex flex-col items-center justify-center rounded hover:bg-gray-100 transition-colors min-w-[48px] cursor-pointer border rounded-xs h-9 shadow-none bg-slate-200 border-solid border-slate-300 border-r-0 border-b-0 border-t-0 px-2.5 rounded-r-sm"
+                    className="flex flex-col items-center justify-center rounded hover:bg-gray-100 transition-colors min-w-[48px] cursor-pointer border rounded-xs h-9 shadow-none bg-slate-200 border-solid border-slate-300 border-r-0 border-b-0 border-t-0 rounded-r-sm px-2.5 ml-0"
                     title="Tamaño de grilla"
                   >
                     <span className="text-[9px] text-gray-500 uppercase tracking-wider leading-none">Grilla</span>

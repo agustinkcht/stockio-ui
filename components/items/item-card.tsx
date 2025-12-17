@@ -33,24 +33,30 @@ export function ItemCard({
   return (
     <div>
       <div
-        className="flex items-center gap-2 bg-transparent"
+        className="flex items-center gap-2 bg-transparent mb-0.5"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <div>
+        <div
+          className="p-2 -m-2 cursor-pointer py-4 pl-2"
+          onClick={(e) => {
+            e.stopPropagation()
+            onSelectClick(index)
+          }}
+        >
           <button
             onClick={(e) => {
               e.stopPropagation()
               onSelectClick(index)
             }}
-            className={`relative left-[-8px] h-4.5 w-4.5 transition-colors cursor-pointer flex items-center justify-center border-2 text-sidebar-accent bg-slate-900 rounded-full ${
+            className={`relative left-[-7px] h-4.5 w-4.5 transition-colors cursor-pointer flex items-center justify-center text-sidebar-accent bg-slate-900 rounded-full ml-0 border shadow-xs border-slate-300 ${
               isSelected ? "bg-primary border-primary hover:opacity-90" : "bg-transparent border-border"
-            }`}
+            } ${!isHovered && !isSelected ? "opacity-0" : "opacity-100"} transition-opacity`}
           ></button>
         </div>
 
         <div
-          className={`flex-1 border-slate-100 ${gridSize === "lg" ? "h-22" : gridSize === "md" ? "h-14" : "h-9"} ${gridSize !== "lg" ? "rounded-xs" : "rounded-md"} grid ${
+          className={`flex-1 border-slate-100 border-solid mb-0 shadow-md ${gridSize === "lg" ? "h-22" : gridSize === "md" ? "h-14" : "h-9"} ${gridSize !== "lg" ? "rounded-xs" : "rounded-md"} grid ${
             item.isAgrupador || item.hasVariants
               ? `grid-cols-14 bg-white border border-border hover:bg-gray-50 transition-colors cursor-pointer`
               : "grid-cols-14 bg-white border border-border"
@@ -382,37 +388,41 @@ export function ItemCard({
           )}
         </div>
 
-        <div className="flex items-center gap-2 px-3">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                onClick={(e) => e.stopPropagation()}
-                className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-              >
-                <MoreVertical className="w-4 h-4" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation()
-                }}
-              >
-                Editar
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation()
-                  if (onDelete) {
-                    onDelete(item)
-                  }
-                }}
-                className="text-destructive hover:text-destructive/90"
-              >
-                Eliminar
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <div className={`flex items-center gap-2 px-3 ${!isHovered ? "opacity-0" : "opacity-100"} transition-opacity`}>
+          
+
+          <div className="p-2 -m-2 py-4 px-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                >
+                  <MoreVertical className="w-4 h-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation()
+                  }}
+                >
+                  Editar
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (onDelete) {
+                      onDelete(item)
+                    }
+                  }}
+                  className="text-destructive hover:text-destructive/90"
+                >
+                  Eliminar
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
 
