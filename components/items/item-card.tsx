@@ -99,24 +99,18 @@ export function ItemCard({
               {/* Marca Column */}
               <div
                 className={`col-span-2 h-full flex items-center justify-center bg-white border-border px-4 border-r-0`}
-              >
-                
-              </div>
+              ></div>
 
               {/* Categoría Column */}
               <div
                 className={`col-span-2 h-full flex items-center justify-center bg-white border-border px-4 border-r-0`}
-              >
-                
-              </div>
+              ></div>
 
               {/* Atributos/Variant Count Column - Unified */}
               {item.hasVariants ? (
                 <div
                   className={`col-span-3 h-full flex items-center justify-center bg-white border-border px-4 border-r-0`}
-                >
-                  
-                </div>
+                ></div>
               ) : item.isAgrupador ? (
                 <div
                   className={`col-span-3 h-full flex items-center justify-center border-r bg-white border-border px-4`}
@@ -125,8 +119,7 @@ export function ItemCard({
 
               {/* Stock/Variant Count Column */}
               {item.hasVariants ? (
-                <div className="col-span-3 h-full flex items-center justify-center bg-white px-4">
-                  </div>
+                <div className="col-span-3 h-full flex items-center justify-center bg-white px-4"></div>
               ) : null}
             </>
           ) : (
@@ -242,25 +235,43 @@ export function ItemCard({
                   {item.atributosPrincipales && item.atributosPrincipales.length > 0 ? (
                     <>
                       {gridSize === "sm" ? (
-                        <div className="grid grid-cols-2 gap-x-4 w-full">
+                        <div
+                          className={
+                            item.atributosPrincipales.length === 1 ? "w-full" : "grid grid-cols-2 gap-x-4 w-full"
+                          }
+                        >
                           {item.atributosPrincipales.slice(0, 2).map((attr, idx) => (
-                            <div key={idx} className="flex items-center gap-1.5 min-w-0">
+                            <div
+                              key={idx}
+                              className={
+                                item.atributosPrincipales.length === 1
+                                  ? "flex items-center justify-center gap-1.5"
+                                  : "flex items-center gap-1.5 min-w-0"
+                              }
+                            >
                               <span className="text-sm text-muted-foreground shrink-0">{attr.key}:</span>
                               <span className="text-sm text-foreground truncate" title={attr.value || "-"}>
                                 {attr.value || "-"}
                               </span>
                             </div>
                           ))}
-                          {item.atributosPrincipales.length === 1 && (
-                            <div className="flex items-center">
-                              <span className="text-sm text-muted-foreground">-</span>
-                            </div>
-                          )}
                         </div>
                       ) : (
-                        <>
+                        <div
+                          className={
+                            item.atributosPrincipales.length === 1 ? "flex items-center justify-center" : "flex"
+                          }
+                          style={{ width: "100%" }}
+                        >
                           {item.atributosPrincipales.map((attr, idx) => (
-                            <div key={idx} className="flex flex-col items-center gap-0.5 flex-1 min-w-0">
+                            <div
+                              key={idx}
+                              className={
+                                item.atributosPrincipales.length === 1
+                                  ? "flex flex-col items-center gap-0.5"
+                                  : "flex flex-col items-center gap-0.5 flex-1 min-w-0"
+                              }
+                            >
                               <span className="text-[10px] text-muted-foreground uppercase tracking-wide truncate w-full text-center">
                                 {attr.key}
                               </span>
@@ -272,12 +283,7 @@ export function ItemCard({
                               </span>
                             </div>
                           ))}
-                          {item.atributosPrincipales.length === 1 && (
-                            <div className="flex flex-col items-center gap-0.5 flex-1 min-w-0">
-                              <span className="text-sm text-muted-foreground">-</span>
-                            </div>
-                          )}
-                        </>
+                        </div>
                       )}
                     </>
                   ) : (

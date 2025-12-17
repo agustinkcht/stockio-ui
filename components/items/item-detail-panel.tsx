@@ -310,20 +310,6 @@ export function ItemDetailPanel({
 
   const isInitialMount = useRef(true)
 
-  // State for attribute views
-  // const [showAtributosView, setShowAtributosView] = useState(false) // <-- REMOVED DUPLICATE STATE
-  // const hasExistingAttributes = Boolean( // <-- REMOVED DUPLICATE LOGIC
-  //   (selectedItem?.atributosPrincipales && selectedItem.atributosPrincipales.length > 0) ||
-  //     (selectedItem?.atributosInformativos && selectedItem.atributosInformativos.length > 0) ||
-  //     (selectedItem?.containerAtributosPrincipales && selectedItem.containerAtributosPrincipales.length > 0),
-  // )
-
-  // const [showIndividualAtributosView, setShowIndividualAtributosView] = useState(false) // <-- REMOVED DUPLICATE STATE
-
-  useEffect(() => {
-    //setShowIndividualAtributosView(hasExistingAttributes) // <-- REMOVED DUPLICATE LOGIC
-  }, [selectedItem?.sku, hasExistingAttributes])
-
   // State for variant input
   const [varianteInput, setVarianteInput] = useState<Record<number, string>>({})
 
@@ -639,7 +625,7 @@ export function ItemDetailPanel({
     <>
       {/* <Breadcrumb dynamicContent={null} /> */}
 
-      <div className="px-8 pt-6 pb-6 bg-slate-50 min-h-screen">
+      <div className="px-8 pt-6 pb-6 bg-slate-50 min-h-screen mt-[84px]">
         <div className="grid grid-cols-10 gap-24">
           {/* Left Column - Item Info (suspended card) - Made fixed to stay in place while scrolling */}
           <div className="col-span-3">
@@ -733,54 +719,32 @@ export function ItemDetailPanel({
                       )}
                     </div>
                   )}
+                  {!isViewingContainer && <div className="border-t border-border my-4 mb-7"></div>}
                 </div>
 
-                <div className="mt-6">
-                  <div className="flex items-center justify-between mb-2 mt-2">
-                    <h3 className="text-sm font-medium text-foreground">Imagen del Producto</h3>
-                    <div className="flex gap-1">
-                      <button
-                        onClick={() => setImageView("imagen")}
-                        className={`px-2 py-1 text-xs rounded transition-colors ${
-                          imageView === "imagen"
-                            ? "bg-accent text-primary"
-                            : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                        }`}
-                      >
-                        Imagen
-                      </button>
-                      <button
-                        onClick={() => setImageView("descripcion")}
-                        className={`px-2 py-1 text-xs rounded transition-colors ${
-                          imageView === "descripcion"
-                            ? "bg-accent text-primary"
-                            : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                        }`}
-                      >
-                        Descripción
-                      </button>
-                    </div>
-                  </div>
-
-                  {imageView === "imagen" ? (
-                    <div className="w-full h-48 bg-accent rounded-lg flex items-center justify-center border-2 border-dashed border-border mt-8">
+                {!isViewingContainer && (
+                  <div className="mt-6">
+                    <div className="w-full h-48 bg-accent rounded-lg flex items-center justify-center border-2 border-dashed border-border">
                       <span className="text-sm text-muted-foreground">Sin Imagen</span>
                     </div>
-                  ) : (
+
+                    <div className="border-t border-border my-4 mt-8"></div>
+
                     <div className="w-full">
+                      <h3 className="text-sm font-medium text-foreground text-left ml-3 mb-0">Descripción</h3>
                       {editingDescripcion ? (
                         <textarea
                           value={descripcionValue}
                           onChange={(e) => setDescripcionValue(e.target.value)}
                           onBlur={handleDescripcionBlur}
-                          className="w-full h-48 bg-secondary border border-border rounded-lg p-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                          className="w-full h-32 bg-transparent border-none rounded-lg p-3 text-sm text-foreground focus:outline-none focus:ring-0 resize-none"
                           placeholder="Agregar descripción del producto..."
                           autoFocus
                         />
                       ) : (
                         <div
                           onClick={() => setEditingDescripcion(true)}
-                          className="w-full h-48 bg-secondary border border-border rounded-lg p-3 text-sm text-foreground cursor-text hover:border-muted-foreground overflow-y-auto"
+                          className="w-full border border-border rounded-lg p-3 text-sm text-foreground cursor-text hover:border-muted-foreground overflow-y-auto bg-transparent border-none h-24"
                         >
                           {descripcionValue || (
                             <span className="text-muted-foreground">Click para agregar descripción...</span>
@@ -788,8 +752,66 @@ export function ItemDetailPanel({
                         </div>
                       )}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
+
+                {isViewingContainer && (
+                  <div className="mt-6">
+                    <div className="flex items-center justify-between mb-2 mt-2">
+                      <h3 className="text-sm font-medium text-foreground">Imagen del Producto</h3>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => setImageView("imagen")}
+                          className={`px-2 py-1 text-xs rounded transition-colors ${
+                            imageView === "imagen"
+                              ? "bg-accent text-primary"
+                              : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                          }`}
+                        >
+                          Imagen
+                        </button>
+                        <button
+                          onClick={() => setImageView("descripcion")}
+                          className={`px-2 py-1 text-xs rounded transition-colors ${
+                            imageView === "descripcion"
+                              ? "bg-accent text-primary"
+                              : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                          }`}
+                        >
+                          Descripción
+                        </button>
+                      </div>
+                    </div>
+
+                    {imageView === "imagen" ? (
+                      <div className="w-full h-48 bg-accent rounded-lg flex items-center justify-center border-2 border-dashed border-border mt-8">
+                        <span className="text-sm text-muted-foreground">Sin Imagen</span>
+                      </div>
+                    ) : (
+                      <div className="w-full">
+                        {editingDescripcion ? (
+                          <textarea
+                            value={descripcionValue}
+                            onChange={(e) => setDescripcionValue(e.target.value)}
+                            onBlur={handleDescripcionBlur}
+                            className="w-full h-48 bg-secondary border border-border rounded-lg p-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                            placeholder="Agregar descripción del producto..."
+                            autoFocus
+                          />
+                        ) : (
+                          <div
+                            onClick={() => setEditingDescripcion(true)}
+                            className="w-full h-48 bg-secondary border border-border rounded-lg p-3 text-sm text-foreground cursor-text hover:border-muted-foreground overflow-y-auto"
+                          >
+                            {descripcionValue || (
+                              <span className="text-muted-foreground">Click para agregar descripción...</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Rest of the content with updated light mode styling */}
               </div>
