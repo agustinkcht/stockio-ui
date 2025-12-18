@@ -2,7 +2,7 @@
 
 import type { Item, DepositStock } from "@/lib/types"
 import { ItemCard } from "./item-card"
-import { Pencil, Trash2, ArrowUpDown, Filter, Layers, ClipboardCheckIcon, Search, Download } from "lucide-react"
+import { Pencil, Trash2, ArrowUpDown, Filter, Layers, ClipboardCheckIcon, Search, GalleryHorizontalEndIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRef, useState, useEffect } from "react"
 
@@ -106,7 +106,7 @@ export function ItemsGrid({
                   size="sm"
                   className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer"
                 >
-                  <Download className="w-3.5 h-3.5 mr-1.5" />
+                  <GalleryHorizontalEndIcon className="w-3.5 h-3.5 mr-1.5" />
                   Exportar
                 </Button>
 
