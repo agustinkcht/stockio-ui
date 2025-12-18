@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { ChevronDown, ChevronRight, Copy, MoreVertical } from "lucide-react"
 import type { Item } from "@/lib/types"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -29,16 +29,62 @@ export function ItemCard({
   onDelete,
 }: ItemCardProps) {
   const [isHovered, setIsHovered] = useState(false)
+  const [isDebounced, setIsDebounced] = useState(false)
+  const [showTransition, setShowTransition] = useState(false)
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  const handleMouseEnter = () => {
+    setIsHovered(true)
+    setShowTransition(true)
+    hoverTimeoutRef.current = setTimeout(() => {
+      setIsDebounced(true)
+    }, 300)
+  }
+
+  const handleMouseLeave = () => {
+    setIsHovered(false)
+    setIsDebounced(false)
+    setShowTransition(true)
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current)
+    }
+  }
+
+  const handleButtonMouseEnter = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current)
+    }
+    setShowTransition(false)
+    setIsDebounced(true)
+  }
+
+  const handleButtonMouseLeave = () => {
+    // Only hide if not hovering over the item
+    if (!isHovered) {
+      setIsDebounced(false)
+      setShowTransition(false)
+    }
+  }
 
   return (
     <div>
       <div
         className="flex items-center gap-2 bg-transparent mb-0.5"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         <div
           className="p-2 -m-2 cursor-pointer py-4 pl-2"
+          onMouseEnter={handleButtonMouseEnter}
+          onMouseLeave={handleButtonMouseLeave}
           onClick={(e) => {
             e.stopPropagation()
             onSelectClick(index)
@@ -51,7 +97,7 @@ export function ItemCard({
             }}
             className={`relative left-[-7px] h-4.5 w-4.5 transition-colors cursor-pointer flex items-center justify-center text-sidebar-accent bg-slate-900 rounded-full ml-0 border shadow-xs border-slate-300 ${
               isSelected ? "bg-primary border-primary hover:opacity-90" : "bg-transparent border-border"
-            } ${!isHovered && !isSelected ? "opacity-0" : "opacity-100"} transition-opacity`}
+            } ${!isDebounced && !isSelected ? "opacity-0" : "opacity-100"} ${showTransition ? "transition-opacity" : ""}`}
           ></button>
         </div>
 
@@ -111,22 +157,6 @@ export function ItemCard({
               <div
                 className={`col-span-2 h-full flex items-center justify-center bg-white border-border px-4 border-r-0`}
               ></div>
-
-              {/* Atributos/Variant Count Column - Unified */}
-              {item.hasVariants ? (
-                <div
-                  className={`col-span-3 h-full flex items-center justify-center bg-white border-border px-4 border-r-0`}
-                ></div>
-              ) : item.isAgrupador ? (
-                <div
-                  className={`col-span-3 h-full flex items-center justify-center border-r bg-white border-border px-4`}
-                ></div>
-              ) : null}
-
-              {/* Stock/Variant Count Column */}
-              {item.hasVariants ? (
-                <div className="col-span-3 h-full flex items-center justify-center bg-white px-4"></div>
-              ) : null}
             </>
           ) : (
             <>
@@ -202,33 +232,17 @@ export function ItemCard({
               </div>
 
               {/* Atributos Column */}
-              {item.hasVariants ? (
+              {item.hasVariants || item.isAgrupador ? (
                 <div
                   className={`col-span-3 h-full flex items-center justify-center border-r bg-white ${
                     item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
                   } px-4`}
                 >
-                  <span
-                    className={`${gridSize === "sm" ? "text-sm" : "text-sm"} ${
-                      item.hasVariants || item.isAgrupador ? "text-container-item-foreground" : "text-foreground"
-                    }`}
-                  >
-                    Item con variantes
-                  </span>
-                </div>
-              ) : item.isAgrupador ? (
-                <div
-                  className={`col-span-3 h-full flex items-center justify-center border-r bg-white ${
-                    item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
-                  } px-4`}
-                >
-                  <span
-                    className={`${gridSize === "sm" ? "text-sm" : "text-sm"} ${
-                      item.hasVariants || item.isAgrupador ? "text-container-item-foreground" : "text-foreground"
-                    }`}
-                  >
-                    Grupo
-                  </span>
+                  {item.hasVariants ? (
+                    <span className="text-sm text-container-item-foreground">Item con variantes</span>
+                  ) : (
+                    <span className="text-sm text-container-item-foreground">Grupo</span>
+                  )}
                 </div>
               ) : (
                 <div
@@ -321,27 +335,11 @@ export function ItemCard({
               {/* Stock Column */}
               {item.hasVariants ? (
                 <div className="col-span-3 h-full flex items-center justify-center bg-white px-4">
-                  <span
-                    className={`${gridSize === "sm" ? "text-sm" : "text-sm"} ${
-                      item.hasVariants || item.isAgrupador
-                        ? "text-container-item-foreground/80"
-                        : "text-muted-foreground"
-                    }`}
-                  >
-                    {item.variantCount} variantes
-                  </span>
+                  <span className="text-sm text-container-item-foreground/80">{item.variantCount} variantes</span>
                 </div>
               ) : item.isAgrupador ? (
                 <div className="col-span-3 h-full flex items-center justify-center bg-white px-4">
-                  <span
-                    className={`${gridSize === "sm" ? "text-sm" : "text-sm"} ${
-                      item.hasVariants || item.isAgrupador
-                        ? "text-container-item-foreground/80"
-                        : "text-muted-foreground"
-                    }`}
-                  >
-                    {item.itemCount} items
-                  </span>
+                  <span className="text-sm text-container-item-foreground/80">{item.itemCount} items</span>
                 </div>
               ) : (
                 <div
@@ -388,41 +386,41 @@ export function ItemCard({
           )}
         </div>
 
-        <div className={`flex items-center gap-2 px-3 ${!isHovered ? "opacity-0" : "opacity-100"} transition-opacity`}>
-          
-
-          <div className="p-2 -m-2 py-4 px-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  onClick={(e) => e.stopPropagation()}
-                  className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                >
-                  <MoreVertical className="w-4 h-4" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40">
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation()
-                  }}
-                >
-                  Editar
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    if (onDelete) {
-                      onDelete(item)
-                    }
-                  }}
-                  className="text-destructive hover:text-destructive/90"
-                >
-                  Eliminar
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+        <div
+          className={`flex items-center gap-2 px-3 ${!isDebounced ? "opacity-0" : "opacity-100"} transition-opacity duration-300`}
+          onMouseEnter={handleButtonMouseEnter}
+          onMouseLeave={handleButtonMouseLeave}
+        >
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                onClick={(e) => e.stopPropagation()}
+                className="p-2 -m-2 py-4 px-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer focus-visible:outline-none"
+              >
+                <MoreVertical className="w-4 h-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation()
+                }}
+              >
+                Editar
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (onDelete) {
+                    onDelete(item)
+                  }
+                }}
+                className="text-destructive hover:text-destructive/90"
+              >
+                Eliminar
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

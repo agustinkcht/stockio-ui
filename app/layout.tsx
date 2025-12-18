@@ -11,7 +11,7 @@ const sourceSerif4 = Source_Serif_4({
 })
 
 export const metadata: Metadata = {
-  title: "Dendrit - Gestión de Inventario",
+  title: "Stockio - Suite de Negocio",
   description: "Sistema de gestión de inventario",
   generator: "v0.app",
   icons: {

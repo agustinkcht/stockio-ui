@@ -2,7 +2,7 @@
 
 import type { Item, DepositStock } from "@/lib/types"
 import { ItemCard } from "./item-card"
-import { Pencil, Trash2, ArrowUpDown, Filter, Layers, ClipboardCheckIcon } from "lucide-react"
+import { Pencil, Trash2, ArrowUpDown, Filter, Layers, ClipboardCheckIcon, Search, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRef, useState, useEffect } from "react"
 
@@ -74,12 +74,14 @@ export function ItemsGrid({
 
   return (
     <>
-      <div className="sticky top-[92px] z-20 bg-slate-50">
+      <div className="sticky top-[-2px] z-20 backdrop-blur-[2px] bg-slate-50">
+        <div className="w-full h-2 bg-transparent" />
+
         {/* Tab Buttons */}
         <div className="mt-24 px-4 bg-white border rounded-lg pb-0 shadow-sm border-[rgba(228,230,235,0.5)]">
           <div className="px-4 pt-3">
             <div className="flex items-center justify-between border-b border-gray-200 pb-2.5 pr-5 pl-2 border-none">
-              {/* Left: Massive Actions */}
+              {/* Left: Buttons section */}
               <div className="flex items-center gap-2 border-0 border-none ml-1.5 mr-0">
                 <Button
                   variant="ghost"
@@ -99,12 +101,17 @@ export function ItemsGrid({
                   Auditoría de Stock
                 </Button>
 
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5 mr-1.5" />
+                  Exportar
+                </Button>
+
                 {hasSelectedItems && (
                   <>
-                    {/* Vertical divider line */}
-                    <div className="h-6 w-px bg-gray-300 mx-2" />
-
-                    {/* Agregar a colección button - only visible when items selected */}
                     <Button
                       variant="ghost"
                       size="sm"
@@ -113,14 +120,12 @@ export function ItemsGrid({
                       <Layers className="w-3.5 h-3.5 mr-1.5" />
                       Agregar a colección
                     </Button>
-                    {/* Eliminar button - only visible when items selected */}
                     <Button
                       variant="ghost"
                       size="sm"
                       className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer bg-[rgba(194,-16,-16,0.7)] text-slate-200"
                     >
-                      <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-                      Eliminar
+                      <Trash2 className="w-3.5 h-3.5 mr-0" />
                     </Button>
                   </>
                 )}
@@ -128,6 +133,15 @@ export function ItemsGrid({
 
               {/* Right: View Controls - Always active */}
               <div className="flex items-center gap-2">
+                <div className="relative w-64 mx-2">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black opacity-100 w-3.5 h-3.5 z-10" />
+                  <input
+                    type="text"
+                    placeholder="Buscar artículos..."
+                    className="w-full h-8 pl-9 pr-3 border shadow-sm rounded-md text-xs placeholder:text-gray-600 text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 bg-white backdrop-blur-sm transition-all border-[rgba(202,213,227,0.842391304347826)]"
+                  />
+                </div>
+
                 {/* Ordenar */}
                 <div className="relative mr-3" ref={orderRef}>
                   <button
@@ -219,7 +233,7 @@ export function ItemsGrid({
         </div>
 
         {/* Tab Header */}
-        <div className="px-4 bg-[#f8f9fa] border-gray-200 border-l-0 border-r-0 pb-2 pt-2 bg-slate-50 mt-px">
+        <div className="px-4 bg-[#f8f9fa] border-gray-200 border-l-0 border-r-0 pb-2 pt-2 mt-px bg-transparent">
           {/* Tab Header Labels */}
           <div className="pl-0 pr-0 w-full">
             <div className="flex items-center ml-0 w-full">

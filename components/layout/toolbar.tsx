@@ -1,6 +1,6 @@
 "use client"
 
-import { Plus, Grid3x3, Layers, MoreVertical, Upload, Download, Search } from "lucide-react"
+import { Plus, Grid3x3, Layers, MoreVertical, Upload, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRef, useState, useEffect } from "react"
 
@@ -21,10 +21,8 @@ export function Toolbar({
 }: ToolbarProps) {
   const nuevoRef = useRef<HTMLDivElement>(null)
   const moreOptionsRef = useRef<HTMLDivElement>(null)
-  const massiveActionsRef = useRef<HTMLDivElement>(null)
 
   const [showMoreOptionsDropdown, setShowMoreOptionsDropdown] = useState(false)
-  const [showMassiveActionsDropdown, setShowMassiveActionsDropdown] = useState(false)
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -33,9 +31,6 @@ export function Toolbar({
       }
       if (moreOptionsRef.current && !moreOptionsRef.current.contains(event.target as Node)) {
         setShowMoreOptionsDropdown(false)
-      }
-      if (massiveActionsRef.current && !massiveActionsRef.current.contains(event.target as Node)) {
-        setShowMassiveActionsDropdown(false)
       }
     }
 
@@ -53,15 +48,6 @@ export function Toolbar({
       <div className="px-8 pt-6 pb-2 flex justify-start bg-transparent">
         <div className="h-12 relative top-[86px] bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50 shadow-sm px-4 flex items-center gap-3 transition-all duration-300 mb-0">
           <div className="flex items-center gap-2 pl-5 pr-1">
-            <div className="relative w-80 mr-2">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black opacity-100 w-3.5 h-3.5 z-10" />
-              <input
-                type="text"
-                placeholder="Buscar artículos..."
-                className="w-full h-8 pl-9 pr-3 border shadow-sm rounded-md text-xs placeholder:text-gray-600 text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 bg-white backdrop-blur-sm transition-all border-[rgba(202,213,227,0.842391304347826)]"
-              />
-            </div>
-
             <div className="relative" ref={nuevoRef}>
               <Button
                 variant="ghost"
@@ -100,14 +86,7 @@ export function Toolbar({
             </div>
 
             <div className="relative" ref={moreOptionsRef}>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowMoreOptionsDropdown(!showMoreOptionsDropdown)}
-                className="h-8 px-2 hover:bg-gray-100 transition-colors cursor-pointer"
-              >
-                <MoreVertical className="w-3.5 h-3.5" />
-              </Button>
+              
 
               {showMoreOptionsDropdown && (
                 <div className="absolute left-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-in fade-in-0 slide-in-from-top-2 duration-200">

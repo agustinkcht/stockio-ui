@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Sidebar } from "@/components/layout/sidebar"
 import { TopNav } from "@/components/layout/top-nav"
 import { UtilityBar } from "@/components/layout/utility-bar"
-import { Toolbar } from "@/components/layout/toolbar"
+import { StockIntelligenceWidgets } from "@/components/widgets/stock-intelligence-widgets"
 import { ItemsGrid } from "@/components/items/items-grid"
 import { ItemDetailPanel } from "@/components/items/item-detail-panel"
 import { NuevoItemModal } from "@/components/modals/nuevo-item-modal"
@@ -266,9 +266,7 @@ export default function Page() {
         />
 
         {!selectedItem && (
-          <Toolbar
-            showNuevoDropdown={showNuevoDropdown}
-            setShowNuevoDropdown={setShowNuevoDropdown}
+          <StockIntelligenceWidgets
             handleOpenNuevoItem={handleOpenNuevoItem}
             handleOpenNuevoItemConVariantes={handleOpenNuevoItemConVariantes}
             isExpanded={isSidebarExpanded}
