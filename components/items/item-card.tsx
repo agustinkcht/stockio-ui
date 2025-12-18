@@ -67,7 +67,6 @@ export function ItemCard({
   }
 
   const handleButtonMouseLeave = () => {
-    // Only hide if not hovering over the item
     if (!isHovered) {
       setIsDebounced(false)
       setShowTransition(false)
@@ -95,7 +94,7 @@ export function ItemCard({
               e.stopPropagation()
               onSelectClick(index)
             }}
-            className={`relative left-[-7px] h-4.5 w-4.5 transition-colors cursor-pointer flex items-center justify-center text-sidebar-accent bg-slate-900 rounded-full ml-0 border shadow-xs border-slate-300 ${
+            className={`relative left-[-7px] h-4.5 w-4.5 transition-colors cursor-pointer flex items-center justify-center text-sidebar-accent rounded-full ml-0 border shadow-xs border-slate-300 bg-sky-950 ${
               isSelected ? "bg-primary border-primary hover:opacity-90" : "bg-transparent border-border"
             } ${!isDebounced && !isSelected ? "opacity-0" : "opacity-100"} ${showTransition ? "transition-opacity" : ""}`}
           ></button>
@@ -113,10 +112,8 @@ export function ItemCard({
             }
           }}
         >
-          {/* Título Column - Show for agrupadores and containers */}
           {item.isAgrupador || item.hasVariants ? (
             <>
-              {/* Título Column */}
               <div
                 className={`col-span-4 flex flex-col justify-center h-full bg-white border-border px-4 cursor-pointer transition-colors hover:bg-gray-50 border-r-0`}
                 onClick={(e) => {
@@ -148,19 +145,16 @@ export function ItemCard({
                 </div>
               </div>
 
-              {/* Marca Column */}
               <div
                 className={`col-span-2 h-full flex items-center justify-center bg-white border-border px-4 border-r-0`}
               ></div>
 
-              {/* Categoría Column */}
               <div
                 className={`col-span-2 h-full flex items-center justify-center bg-white border-border px-4 border-r-0`}
               ></div>
             </>
           ) : (
             <>
-              {/* Título Column */}
               <div
                 className={`col-span-4 flex flex-col justify-center h-full border-r bg-white ${
                   item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
@@ -201,7 +195,6 @@ export function ItemCard({
                 )}
               </div>
 
-              {/* Marca Column */}
               <div
                 className={`col-span-2 h-full flex items-center justify-center border-r bg-white ${
                   item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
@@ -216,7 +209,6 @@ export function ItemCard({
                 </span>
               </div>
 
-              {/* Categoría Column */}
               <div
                 className={`col-span-2 h-full flex items-center justify-center border-r bg-white ${
                   item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
@@ -231,7 +223,6 @@ export function ItemCard({
                 </span>
               </div>
 
-              {/* Atributos Column */}
               {item.hasVariants || item.isAgrupador ? (
                 <div
                   className={`col-span-3 h-full flex items-center justify-center border-r bg-white ${
@@ -332,7 +323,6 @@ export function ItemCard({
                 </div>
               )}
 
-              {/* Stock Column */}
               {item.hasVariants ? (
                 <div className="col-span-3 h-full flex items-center justify-center bg-white px-4">
                   <span className="text-sm text-container-item-foreground/80">{item.variantCount} variantes</span>

@@ -1,6 +1,6 @@
 "use client"
 
-import { Plus, Grid3x3, Layers, Upload } from "lucide-react"
+import { Plus, ListPlusIcon,Grid3x3, Layers, Upload } from "lucide-react"
 import { useRef, useState, useEffect } from "react"
 
 interface StockIntelligenceWidgetsProps {
@@ -44,10 +44,10 @@ export function StockIntelligenceWidgets({
             <div className="relative" ref={nuevoRef}>
               <button
                 onClick={() => setShowNuevoDropdown(!showNuevoDropdown)}
-                className="w-full h-24 bg-white hover:bg-gray-50 rounded-lg border border-gray-200 shadow-sm transition-all duration-200 hover:shadow-md cursor-pointer flex flex-col items-center justify-center gap-2 group"
+                className="w-full h-24 bg-white hover:bg-gray-50 rounded-lg border transition-all duration-200 hover:shadow-md cursor-pointer flex flex-col items-center justify-center gap-2 group border-[rgba(225,232,240,0.5)] shadow-sm"
               >
                 <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                  <Plus className="w-5 h-5 text-blue-600" />
+                  <Plus className="w-5 h-5 text-blue-900" />
                 </div>
                 <span className="text-sm font-medium text-gray-700">Crear Nuevo</span>
               </button>
@@ -88,10 +88,10 @@ export function StockIntelligenceWidgets({
             <div className="relative" ref={creacionMasivaRef}>
               <button
                 onClick={() => setShowCreacionMasivaDropdown(!showCreacionMasivaDropdown)}
-                className="w-full h-24 bg-white hover:bg-gray-50 rounded-lg border border-gray-200 shadow-sm transition-all duration-200 hover:shadow-md cursor-pointer flex flex-col items-center justify-center gap-2 group"
+                className="w-full h-24 bg-white hover:bg-gray-50 rounded-lg border transition-all duration-200 hover:shadow-md cursor-pointer flex flex-col items-center justify-center gap-2 group border-[rgba(225,232,240,0.5)] shadow-sm"
               >
-                <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
-                  <Grid3x3 className="w-5 h-5 text-purple-600" />
+                <div className="w-10 h-10 rounded-full flex items-center justify-center group-hover:bg-purple-100 transition-colors bg-blue-50">
+                  <ListPlusIcon className="w-5 h-5 text-blue-900" />
                 </div>
                 <span className="text-sm font-medium text-gray-700">Creación Masiva</span>
               </button>

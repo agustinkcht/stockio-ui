@@ -2,9 +2,10 @@
 
 import type { Item, DepositStock } from "@/lib/types"
 import { ItemCard } from "./item-card"
-import { Pencil, Trash2, ArrowUpDown, Filter, Layers, ClipboardCheckIcon, Search, GalleryHorizontalEndIcon } from "lucide-react"
+import { Pencil, Trash2, ArrowUpDown, Filter, Layers, ClipboardCheckIcon, Search, MoreVertical, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRef, useState, useEffect } from "react"
+import { searchItems } from "@/lib/utils/item-utils"
 
 interface ItemsGridProps {
   items: Item[]
@@ -46,12 +47,17 @@ export function ItemsGrid({
   const massiveActionsRef = useRef<HTMLDivElement>(null)
   const orderRef = useRef<HTMLDivElement>(null)
   const filterRef = useRef<HTMLDivElement>(null)
+  const moreOptionsRef = useRef<HTMLDivElement>(null)
 
   const [showMassiveActionsDropdown, setShowMassiveActionsDropdown] = useState(false)
   const [showOrderDropdown, setShowOrderDropdown] = useState(false)
   const [showFilterDropdown, setShowFilterDropdown] = useState(false)
+  const [showMoreOptionsDropdown, setShowMoreOptionsDropdown] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
 
   const hasSelectedItems = itemSelected.some((selected) => selected)
+
+  const filteredItems = searchItems(items, searchQuery)
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -63,6 +69,9 @@ export function ItemsGrid({
       }
       if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
         setShowFilterDropdown(false)
+      }
+      if (moreOptionsRef.current && !moreOptionsRef.current.contains(event.target as Node)) {
+        setShowMoreOptionsDropdown(false)
       }
     }
 
@@ -101,21 +110,12 @@ export function ItemsGrid({
                   Auditoría de Stock
                 </Button>
 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer"
-                >
-                  <GalleryHorizontalEndIcon className="w-3.5 h-3.5 mr-1.5" />
-                  Exportar
-                </Button>
-
                 {hasSelectedItems && (
                   <>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer text-slate-200 bg-[rgba(15,23,43,1)]"
+                      className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer text-slate-200 bg-sky-950"
                     >
                       <Layers className="w-3.5 h-3.5 mr-1.5" />
                       Agregar a colección
@@ -132,21 +132,32 @@ export function ItemsGrid({
               </div>
 
               {/* Right: View Controls - Always active */}
-              <div className="flex items-center gap-2">
-                <div className="relative w-64 mx-2">
+              <div className="flex items-center gap-0 flex-1">
+                <div className="relative flex-1 mx-2 transition-all duration-300">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black opacity-100 w-3.5 h-3.5 z-10" />
                   <input
                     type="text"
                     placeholder="Buscar artículos..."
-                    className="w-full h-8 pl-9 pr-3 border shadow-sm rounded-md text-xs placeholder:text-gray-600 text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 bg-white backdrop-blur-sm transition-all border-[rgba(202,213,227,0.842391304347826)]"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full h-8 pl-9 pr-9 border shadow-sm rounded-md text-xs placeholder:text-gray-600 text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 bg-white backdrop-blur-sm transition-all duration-300 border-[rgba(202,213,227,0.842391304347826)]"
                   />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors z-10"
+                      title="Limpiar búsqueda"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
 
                 {/* Ordenar */}
                 <div className="relative mr-3" ref={orderRef}>
                   <button
                     onClick={() => setShowOrderDropdown(!showOrderDropdown)}
-                    className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 transition-colors group cursor-pointer border border-gray-200/40 shadow-sm rounded-full"
+                    className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 transition-colors group cursor-pointer border border-gray-200/40 shadow-sm rounded-full mr-[-4px]"
                     title="Ordenar"
                   >
                     <ArrowUpDown className="w-4 h-4 text-gray-600 group-hover:text-gray-900" />
@@ -181,7 +192,7 @@ export function ItemsGrid({
                 <div className="relative" ref={filterRef}>
                   <button
                     onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-                    className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 transition-colors group cursor-pointer border border-gray-200/40 shadow-sm rounded-full"
+                    className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 transition-colors group cursor-pointer border border-gray-200/40 shadow-sm rounded-full mr-2"
                     title="Filtros"
                   >
                     <Filter className="w-4 h-4 text-gray-600 group-hover:text-gray-900" />
@@ -223,6 +234,26 @@ export function ItemsGrid({
                             Limpiar
                           </button>
                         </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* More Options */}
+                <div className="relative" ref={moreOptionsRef}>
+                  <button
+                    onClick={() => setShowMoreOptionsDropdown(!showMoreOptionsDropdown)}
+                    className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 transition-colors group cursor-pointer border border-gray-200/40 shadow-sm rounded-full mr-0"
+                    title="Más opciones"
+                  >
+                    <MoreVertical className="w-4 h-4 text-gray-600 group-hover:text-gray-900" />
+                  </button>
+                  {showMoreOptionsDropdown && (
+                    <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-in fade-in-0 slide-in-from-top-2 duration-200">
+                      <div className="py-1">
+                        <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">
+                          Exportar
+                        </button>
                       </div>
                     </div>
                   )}
@@ -319,22 +350,30 @@ export function ItemsGrid({
 
       {/* Items Grid - scrollable area */}
       <div className="pb-4 pl-[18px] pr-2">
-        <div className={gridSize === "lg" ? "space-y-2" : "space-y-0"}>
-          {items.map((item, index) => (
-            <ItemCard
-              key={index}
-              item={item}
-              index={index}
-              gridSize={gridSize}
-              isSelected={itemSelected[index]}
-              isExpanded={expandedItems[index]}
-              onSelectClick={handleItemButtonClick}
-              onItemClick={handleItemClick}
-              onToggleExpansion={toggleVariantExpansion}
-              onDelete={onDeleteItem}
-            />
-          ))}
-        </div>
+        {filteredItems.length === 0 && searchQuery ? (
+          <div className="flex flex-col items-center justify-center py-16 text-gray-500">
+            <Search className="w-12 h-12 mb-4 text-gray-300" />
+            <p className="text-lg font-medium">No se encontraron resultados</p>
+            <p className="text-sm mt-1">Intenta con otros términos de búsqueda</p>
+          </div>
+        ) : (
+          <div className={gridSize === "lg" ? "space-y-2" : "space-y-0"}>
+            {filteredItems.map((item, index) => (
+              <ItemCard
+                key={index}
+                item={item}
+                index={index}
+                gridSize={gridSize}
+                isSelected={itemSelected[index]}
+                isExpanded={expandedItems[index]}
+                onSelectClick={handleItemButtonClick}
+                onItemClick={handleItemClick}
+                onToggleExpansion={toggleVariantExpansion}
+                onDelete={onDeleteItem}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </>
   )
