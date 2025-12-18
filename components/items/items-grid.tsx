@@ -1,11 +1,23 @@
 "use client"
 
-import type { Item, DepositStock } from "@/lib/types"
+import type { Item, DepositStock, SortFactorConfig, FilterConfig } from "@/lib/types"
 import { ItemCard } from "./item-card"
-import { Pencil, Trash2, ArrowUpDown, Filter, Layers, ClipboardCheckIcon, Search, MoreVertical, X } from "lucide-react"
+import {
+  Pencil,
+  Trash2,
+  ArrowUpDown,
+  ListFilterIcon,
+  Layers,
+  ClipboardCheckIcon,
+  Search,
+  MoreVertical,
+  X,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useRef, useState, useEffect } from "react"
-import { searchItems } from "@/lib/utils/item-utils"
+import { useRef, useState, useEffect, useMemo } from "react"
+import { searchItems, sortItems, filterItems, getUniqueCategorias, getUniqueMarcas } from "@/lib/utils/item-utils"
+import { OrdenModal } from "@/components/modals/orden-modal"
+import { FiltrosModal } from "@/components/modals/filtros-modal"
 
 interface ItemsGridProps {
   items: Item[]
@@ -54,10 +66,34 @@ export function ItemsGrid({
   const [showFilterDropdown, setShowFilterDropdown] = useState(false)
   const [showMoreOptionsDropdown, setShowMoreOptionsDropdown] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const [showOrderModal, setShowOrderModal] = useState(false)
+  const [showFilterModal, setShowFilterModal] = useState(false)
+  const [filterConfig, setFilterConfig] = useState<FilterConfig>({
+    tipos: [],
+    categorias: [],
+    marcas: [],
+    stock: [],
+    depositos: [],
+  })
+  const [sortConfig, setSortConfig] = useState<SortFactorConfig[]>([{ factor: "categoria", direction: "asc" }])
 
   const hasSelectedItems = itemSelected.some((selected) => selected)
 
-  const filteredItems = searchItems(items, searchQuery)
+  const availableCategorias = useMemo(() => getUniqueCategorias(items), [items])
+  const availableMarcas = useMemo(() => getUniqueMarcas(items), [items])
+  const availableDepositos = useMemo(() => ["Torcuato", "Trujui"], []) // Hardcoded for now
+
+  const searchedItems = searchItems(items, searchQuery)
+  const filteredItems = filterItems(searchedItems, filterConfig)
+  const sortedAndFilteredItems = sortItems(filteredItems, sortConfig)
+
+  const handleApplySortConfig = (newConfig: SortFactorConfig[]) => {
+    setSortConfig(newConfig)
+  }
+
+  const handleApplyFilters = (newFilters: FilterConfig) => {
+    setFilterConfig(newFilters)
+  }
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -81,6 +117,13 @@ export function ItemsGrid({
     }
   }, [])
 
+  const hasActiveFilters =
+    filterConfig.tipos.length > 0 ||
+    filterConfig.categorias.length > 0 ||
+    filterConfig.marcas.length > 0 ||
+    filterConfig.stock.length > 0 ||
+    filterConfig.depositos.length > 0
+
   return (
     <>
       <div className="sticky top-[-2px] z-20 backdrop-blur-[2px] bg-slate-50">
@@ -95,18 +138,22 @@ export function ItemsGrid({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer"
+                  className={`h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer ${
+                    hasSelectedItems ? "bg-blue-50 text-blue-900" : ""
+                  }`}
                 >
-                  <Pencil className="w-3.5 h-3.5 mr-1.5" />
+                  <Pencil className={`w-3.5 h-3.5 mr-1.5 ${hasSelectedItems ? "text-blue-900" : ""}`} />
                   Editor Masivo
                 </Button>
 
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer whitespace-nowrap"
+                  className={`h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer whitespace-nowrap ${
+                    hasSelectedItems ? "bg-blue-50 text-blue-900" : ""
+                  }`}
                 >
-                  <ClipboardCheckIcon className="w-4 h-4 mr-1.5" />
+                  <ClipboardCheckIcon className={`w-4 h-4 mr-1.5 ${hasSelectedItems ? "text-blue-900" : ""}`} />
                   Auditoría de Stock
                 </Button>
 
@@ -115,7 +162,7 @@ export function ItemsGrid({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer text-slate-200 bg-sky-950"
+                      className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer text-blue-900 bg-blue-50"
                     >
                       <Layers className="w-3.5 h-3.5 mr-1.5" />
                       Agregar a colección
@@ -156,87 +203,27 @@ export function ItemsGrid({
                 {/* Ordenar */}
                 <div className="relative mr-3" ref={orderRef}>
                   <button
-                    onClick={() => setShowOrderDropdown(!showOrderDropdown)}
+                    onClick={() => setShowOrderModal(true)}
                     className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 transition-colors group cursor-pointer border border-gray-200/40 shadow-sm rounded-full mr-[-4px]"
                     title="Ordenar"
                   >
                     <ArrowUpDown className="w-4 h-4 text-gray-600 group-hover:text-gray-900" />
                   </button>
-                  {showOrderDropdown && (
-                    <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-in fade-in-0 slide-in-from-top-2 duration-200">
-                      <div className="py-1">
-                        <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">
-                          A-Z (Alfabético)
-                        </button>
-                        <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">
-                          Z-A (Alfabético inverso)
-                        </button>
-                        <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">
-                          Mayor cantidad de stock
-                        </button>
-                        <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">
-                          Menor cantidad de stock
-                        </button>
-                        <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">
-                          Recientes primero
-                        </button>
-                        <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">
-                          Antiguos primero
-                        </button>
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 {/* Filtros */}
                 <div className="relative" ref={filterRef}>
                   <button
-                    onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-                    className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 transition-colors group cursor-pointer border border-gray-200/40 shadow-sm rounded-full mr-2"
+                    onClick={() => setShowFilterModal(true)}
+                    className={`w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 transition-colors group cursor-pointer border shadow-sm rounded-full mr-2 ${
+                      hasActiveFilters ? "border-blue-500 bg-blue-50" : "border-gray-200/40"
+                    }`}
                     title="Filtros"
                   >
-                    <Filter className="w-4 h-4 text-gray-600 group-hover:text-gray-900" />
+                    <ListFilterIcon
+                      className={`w-4 h-4 ${hasActiveFilters ? "text-blue-600" : "text-gray-600 group-hover:text-gray-900"}`}
+                    />
                   </button>
-                  {showFilterDropdown && (
-                    <div className="absolute right-0 top-full mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-in fade-in-0 slide-in-from-top-2 duration-200">
-                      <div className="p-4 space-y-3">
-                        <div>
-                          <label className="text-xs text-gray-500 uppercase tracking-wide mb-1 block">Tipo</label>
-                          <select className="w-full bg-gray-50 border border-gray-200 rounded text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
-                            <option value="">Todos</option>
-                            <option value="individual">Items Individuales</option>
-                            <option value="variantes">Items con Variantes</option>
-                            <option value="grupos">Grupos</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="text-xs text-gray-500 uppercase tracking-wide mb-1 block">Stock</label>
-                          <select className="w-full bg-gray-50 border border-gray-200 rounded text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
-                            <option value="">Todos</option>
-                            <option value="disponible">Con Stock Disponible</option>
-                            <option value="sin-stock">Sin Stock</option>
-                            <option value="bajo">Stock Bajo</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="text-xs text-gray-500 uppercase tracking-wide mb-1 block">Depósito</label>
-                          <select className="w-full bg-gray-50 border border-gray-200 rounded text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
-                            <option value="">Todos</option>
-                            <option value="principal">Principal</option>
-                            <option value="secundario">Secundario</option>
-                          </select>
-                        </div>
-                        <div className="pt-2 flex gap-2">
-                          <button className="flex-1 px-3 py-1.5 text-xs bg-gray-900 hover:bg-gray-800 text-white rounded transition-colors cursor-pointer">
-                            Aplicar
-                          </button>
-                          <button className="px-3 py-1.5 text-xs text-gray-600 hover:text-gray-900 transition-colors cursor-pointer">
-                            Limpiar
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 {/* More Options */}
@@ -350,15 +337,21 @@ export function ItemsGrid({
 
       {/* Items Grid - scrollable area */}
       <div className="pb-4 pl-[18px] pr-2">
-        {filteredItems.length === 0 && searchQuery ? (
+        {sortedAndFilteredItems.length === 0 && (searchQuery || hasActiveFilters) ? (
           <div className="flex flex-col items-center justify-center py-16 text-gray-500">
             <Search className="w-12 h-12 mb-4 text-gray-300" />
             <p className="text-lg font-medium">No se encontraron resultados</p>
-            <p className="text-sm mt-1">Intenta con otros términos de búsqueda</p>
+            <p className="text-sm mt-1">
+              {searchQuery && hasActiveFilters
+                ? "Intenta con otros términos de búsqueda o ajusta los filtros"
+                : searchQuery
+                  ? "Intenta con otros términos de búsqueda"
+                  : "Intenta ajustando los filtros"}
+            </p>
           </div>
         ) : (
           <div className={gridSize === "lg" ? "space-y-2" : "space-y-0"}>
-            {filteredItems.map((item, index) => (
+            {sortedAndFilteredItems.map((item, index) => (
               <ItemCard
                 key={index}
                 item={item}
@@ -375,6 +368,23 @@ export function ItemsGrid({
           </div>
         )}
       </div>
+
+      <OrdenModal
+        isOpen={showOrderModal}
+        onClose={() => setShowOrderModal(false)}
+        onApply={handleApplySortConfig}
+        initialPriorities={sortConfig}
+      />
+
+      <FiltrosModal
+        isOpen={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        onApply={handleApplyFilters}
+        initialFilters={filterConfig}
+        availableCategorias={availableCategorias}
+        availableMarcas={availableMarcas}
+        availableDepositos={availableDepositos}
+      />
     </>
   )
 }

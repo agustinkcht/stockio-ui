@@ -1,4 +1,12 @@
-import type { Item, ItemVariant, ItemWithVariants } from "../types"
+import type {
+  Item,
+  ItemVariant,
+  ItemWithVariants,
+  SortFactor,
+  SortFactorConfig,
+  SortDirection,
+  FilterConfig,
+} from "../types"
 
 export function getItemDisplayName(item: Item): string {
   const attributes = []
@@ -167,4 +175,181 @@ export function searchItems(items: Item[], searchQuery: string): Item[] {
   }
 
   return results
+}
+
+/**
+ * Sort items based on priority-based configuration
+ * Applies sorting factors in order of priority
+ */
+export function sortItems(items: Item[], sortConfig: SortFactorConfig[]): Item[] {
+  if (!sortConfig || sortConfig.length === 0) return items
+
+  const sortedItems = [...items]
+
+  sortedItems.sort((a, b) => {
+    for (const config of sortConfig) {
+      const comparison = compareItems(a, b, config.factor, config.direction)
+      if (comparison !== 0) return comparison
+    }
+    return 0
+  })
+
+  return sortedItems
+}
+
+/**
+ * Compare two items based on a specific factor and direction
+ */
+function compareItems(a: Item, b: Item, factor: SortFactor, direction: SortDirection): number {
+  let comparison = 0
+
+  switch (factor) {
+    case "titulo":
+      comparison = (a.name || "").localeCompare(b.name || "")
+      break
+
+    case "categoria":
+      comparison = (a.categoria || "").localeCompare(b.categoria || "")
+      break
+
+    case "marca":
+      comparison = (a.marca || "").localeCompare(b.marca || "")
+      break
+
+    case "fecha":
+      // For now, we'll sort by SKU as a proxy for creation date
+      // In a real app, you'd have a createdAt timestamp
+      comparison = (a.sku || "").localeCompare(b.sku || "")
+      break
+
+    case "stock":
+      const stockA = Number.parseFloat(a.stock?.total || "0")
+      const stockB = Number.parseFloat(b.stock?.total || "0")
+      comparison = stockA - stockB
+      break
+  }
+
+  return direction === "asc" ? comparison : -comparison
+}
+
+/**
+ * Filter items based on FilterConfig
+ * Applies all active filters to the items list
+ */
+export function filterItems(items: Item[], filterConfig: FilterConfig): Item[] {
+  if (
+    !filterConfig ||
+    (filterConfig.tipos.length === 0 &&
+      filterConfig.categorias.length === 0 &&
+      filterConfig.marcas.length === 0 &&
+      filterConfig.stock.length === 0 &&
+      filterConfig.depositos.length === 0)
+  ) {
+    return items
+  }
+
+  return items.filter((item) => {
+    // Filter by tipo
+    if (filterConfig.tipos.length > 0) {
+      let matchesTipo = false
+
+      if (item.isAgrupador && filterConfig.tipos.includes("agrupador")) {
+        matchesTipo = true
+      } else if (item.hasVariants && filterConfig.tipos.includes("variantes")) {
+        matchesTipo = true
+      } else if (!item.isAgrupador && !item.hasVariants && filterConfig.tipos.includes("individual")) {
+        matchesTipo = true
+      }
+
+      if (!matchesTipo) return false
+    }
+
+    // Filter by categoria
+    if (filterConfig.categorias.length > 0) {
+      if (!item.categoria || !filterConfig.categorias.includes(item.categoria)) {
+        return false
+      }
+    }
+
+    // Filter by marca
+    if (filterConfig.marcas.length > 0) {
+      if (!item.marca || !filterConfig.marcas.includes(item.marca)) {
+        return false
+      }
+    }
+
+    // Filter by stock status
+    if (filterConfig.stock.length > 0) {
+      const total = Number.parseFloat(item.stock?.total || "0")
+      const disponible = Number.parseFloat(item.stock?.disponible || "0")
+      const reservado = Number.parseFloat(item.stock?.reservado || "0")
+
+      let matchesStock = false
+
+      if (filterConfig.stock.includes("sin-stock") && total === 0) {
+        matchesStock = true
+      }
+      if (filterConfig.stock.includes("disponible") && disponible > 0) {
+        matchesStock = true
+      }
+      if (filterConfig.stock.includes("reservado") && reservado > 0) {
+        matchesStock = true
+      }
+
+      if (!matchesStock) return false
+    }
+
+    // Filter by deposito - for now we skip this as we don't have deposito info on items
+    // In the future, you would query the stock table to check if item has stock in specific depositos
+
+    return true
+  })
+}
+
+/**
+ * Get unique categories from items list
+ */
+export function getUniqueCategorias(items: Item[]): string[] {
+  const categorias = new Set<string>()
+
+  items.forEach((item) => {
+    if (item.categoria) {
+      categorias.add(item.categoria)
+    }
+
+    // Also check sub-items in agrupadores
+    if (item.isAgrupador && item.items) {
+      item.items.forEach((subItem) => {
+        if (subItem.categoria) {
+          categorias.add(subItem.categoria)
+        }
+      })
+    }
+  })
+
+  return Array.from(categorias).sort()
+}
+
+/**
+ * Get unique brands from items list
+ */
+export function getUniqueMarcas(items: Item[]): string[] {
+  const marcas = new Set<string>()
+
+  items.forEach((item) => {
+    if (item.marca) {
+      marcas.add(item.marca)
+    }
+
+    // Also check sub-items in agrupadores
+    if (item.isAgrupador && item.items) {
+      item.items.forEach((subItem) => {
+        if (subItem.marca) {
+          marcas.add(subItem.marca)
+        }
+      })
+    }
+  })
+
+  return Array.from(marcas).sort()
 }

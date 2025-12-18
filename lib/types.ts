@@ -138,3 +138,28 @@ export interface StockAdjustment {
   motivo: string
   observaciones?: string
 }
+
+export type SortFactor = "titulo" | "categoria" | "marca" | "fecha" | "stock"
+
+export type SortDirection = "asc" | "desc"
+
+export interface SortFactorConfig {
+  factor: SortFactor
+  direction: SortDirection
+}
+
+export interface SortConfig {
+  priorities: SortFactorConfig[]
+}
+
+export type ItemTipo = "individual" | "variantes" | "agrupador"
+
+export type StockFilter = "sin-stock" | "disponible" | "reservado"
+
+export interface FilterConfig {
+  tipos: ItemTipo[]
+  categorias: string[]
+  marcas: string[]
+  stock: StockFilter[]
+  depositos: string[]
+}

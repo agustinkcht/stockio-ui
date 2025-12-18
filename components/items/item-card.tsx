@@ -94,8 +94,8 @@ export function ItemCard({
               e.stopPropagation()
               onSelectClick(index)
             }}
-            className={`relative left-[-7px] h-4.5 w-4.5 transition-colors cursor-pointer flex items-center justify-center text-sidebar-accent rounded-full ml-0 border shadow-xs border-slate-300 bg-sky-950 ${
-              isSelected ? "bg-primary border-primary hover:opacity-90" : "bg-transparent border-border"
+            className={`relative left-[-7px] h-4.5 w-4.5 transition-colors cursor-pointer flex items-center justify-center text-sidebar-accent rounded-full ml-0 border shadow-xs border-slate-300 ${
+              isSelected ? "bg-sky-900 border-primary hover:opacity-90" : "bg-transparent border-border"
             } ${!isDebounced && !isSelected ? "opacity-0" : "opacity-100"} ${showTransition ? "transition-opacity" : ""}`}
           ></button>
         </div>
@@ -147,11 +147,22 @@ export function ItemCard({
 
               <div
                 className={`col-span-2 h-full flex items-center justify-center bg-white border-border px-4 border-r-0`}
-              ></div>
+              >
+                <span className="text-sm text-card-foreground">{item.marca || "-"}</span>
+              </div>
 
               <div
                 className={`col-span-2 h-full flex items-center justify-center bg-white border-border px-4 border-r-0`}
-              ></div>
+              >
+                <span className="text-sm text-card-foreground">{item.categoria || "-"}</span>
+              </div>
+
+              <div
+                className={`col-span-3 h-full flex items-center justify-center bg-white border-r-0 ${
+                  item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
+                } px-4`}
+              >
+              </div>
             </>
           ) : (
             <>
@@ -223,105 +234,89 @@ export function ItemCard({
                 </span>
               </div>
 
-              {item.hasVariants || item.isAgrupador ? (
-                <div
-                  className={`col-span-3 h-full flex items-center justify-center border-r bg-white ${
-                    item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
-                  } px-4`}
-                >
-                  {item.hasVariants ? (
-                    <span className="text-sm text-container-item-foreground">Item con variantes</span>
-                  ) : (
-                    <span className="text-sm text-container-item-foreground">Grupo</span>
-                  )}
-                </div>
-              ) : (
-                <div
-                  className="col-span-3 h-full flex items-center border-r border-border bg-white px-4 cursor-pointer hover:bg-gray-50 transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onItemClick(item, "atributos")
-                  }}
-                >
-                  {item.atributosPrincipales && item.atributosPrincipales.length > 0 ? (
-                    <>
-                      {gridSize === "sm" ? (
-                        <div
-                          className={
-                            item.atributosPrincipales.length === 1 ? "w-full" : "grid grid-cols-2 gap-x-4 w-full"
-                          }
-                        >
-                          {item.atributosPrincipales.slice(0, 2).map((attr, idx) => (
-                            <div
-                              key={idx}
-                              className={
-                                item.atributosPrincipales.length === 1
-                                  ? "flex items-center justify-center gap-1.5"
-                                  : "flex items-center gap-1.5 min-w-0"
-                              }
+              <div
+                className="col-span-3 h-full flex items-center bg-white px-4 cursor-pointer hover:bg-gray-50 transition-colors border-r"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onItemClick(item, "atributos")
+                }}
+              >
+                {item.atributosPrincipales && item.atributosPrincipales.length > 0 ? (
+                  <>
+                    {gridSize === "sm" ? (
+                      <div
+                        className={
+                          item.atributosPrincipales.length === 1 ? "w-full" : "grid grid-cols-2 gap-x-4 w-full"
+                        }
+                      >
+                        {item.atributosPrincipales.slice(0, 2).map((attr, idx) => (
+                          <div
+                            key={idx}
+                            className={
+                              item.atributosPrincipales.length === 1
+                                ? "flex items-center justify-center gap-1.5"
+                                : "flex items-center gap-1.5 min-w-0"
+                            }
+                          >
+                            <span className="text-sm text-muted-foreground shrink-0">{attr.key}:</span>
+                            <span className="text-sm text-foreground truncate" title={attr.value || "-"}>
+                              {attr.value || "-"}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div
+                        className={item.atributosPrincipales.length === 1 ? "flex items-center justify-center" : "flex"}
+                        style={{ width: "100%" }}
+                      >
+                        {item.atributosPrincipales.map((attr, idx) => (
+                          <div
+                            key={idx}
+                            className={
+                              item.atributosPrincipales.length === 1
+                                ? "flex flex-col items-center gap-0.5"
+                                : "flex flex-col items-center gap-0.5 flex-1 min-w-0"
+                            }
+                          >
+                            <span className="text-[10px] text-muted-foreground uppercase tracking-wide truncate w-full text-center">
+                              {attr.key}
+                            </span>
+                            <span
+                              className="text-sm text-foreground truncate w-full text-center"
+                              title={attr.value || "-"}
                             >
-                              <span className="text-sm text-muted-foreground shrink-0">{attr.key}:</span>
-                              <span className="text-sm text-foreground truncate" title={attr.value || "-"}>
-                                {attr.value || "-"}
-                              </span>
-                            </div>
-                          ))}
+                              {attr.value || "-"}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {gridSize === "sm" ? (
+                      <div className="grid grid-cols-2 gap-x-4 w-full">
+                        <div className="flex items-center">
+                          <span className="text-sm text-muted-foreground">-</span>
                         </div>
-                      ) : (
-                        <div
-                          className={
-                            item.atributosPrincipales.length === 1 ? "flex items-center justify-center" : "flex"
-                          }
-                          style={{ width: "100%" }}
-                        >
-                          {item.atributosPrincipales.map((attr, idx) => (
-                            <div
-                              key={idx}
-                              className={
-                                item.atributosPrincipales.length === 1
-                                  ? "flex flex-col items-center gap-0.5"
-                                  : "flex flex-col items-center gap-0.5 flex-1 min-w-0"
-                              }
-                            >
-                              <span className="text-[10px] text-muted-foreground uppercase tracking-wide truncate w-full text-center">
-                                {attr.key}
-                              </span>
-                              <span
-                                className="text-sm text-foreground truncate w-full text-center"
-                                title={attr.value || "-"}
-                              >
-                                {attr.value || "-"}
-                              </span>
-                            </div>
-                          ))}
+                        <div className="flex items-center">
+                          <span className="text-sm text-muted-foreground">-</span>
                         </div>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      {gridSize === "sm" ? (
-                        <div className="grid grid-cols-2 gap-x-4 w-full">
-                          <div className="flex items-center">
-                            <span className="text-sm text-muted-foreground">-</span>
-                          </div>
-                          <div className="flex items-center">
-                            <span className="text-sm text-muted-foreground">-</span>
-                          </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex flex-col items-center gap-0.5 flex-1">
+                          <span className="text-sm text-muted-foreground">-</span>
                         </div>
-                      ) : (
-                        <>
-                          <div className="flex flex-col items-center gap-0.5 flex-1">
-                            <span className="text-sm text-muted-foreground">-</span>
-                          </div>
-                          <div className="flex flex-col items-center gap-0.5 flex-1">
-                            <span className="text-sm text-muted-foreground">-</span>
-                          </div>
-                        </>
-                      )}
-                    </>
-                  )}
-                </div>
-              )}
+                        <div className="flex flex-col items-center gap-0.5 flex-1">
+                          <span className="text-sm text-muted-foreground">-</span>
+                        </div>
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
 
               {item.hasVariants ? (
                 <div className="col-span-3 h-full flex items-center justify-center bg-white px-4">
