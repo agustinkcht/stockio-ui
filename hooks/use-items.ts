@@ -143,7 +143,7 @@ export function useItems() {
   const handleCreateNuevoItem = async (itemTitulo: string, itemTemplate: string, handleClose: () => void) => {
     if (!itemTitulo.trim()) {
       alert("El título es obligatorio")
-      return
+      return null
     }
 
     setIsCreatingItem(true)
@@ -202,13 +202,16 @@ export function useItems() {
       if (response.ok) {
         setItems([newItem, ...items])
         handleClose()
+        return newItem
       } else {
         console.error("[v0] Failed to create item")
         alert("Error al crear el item")
+        return null
       }
     } catch (error) {
       console.error("[v0] Error creating item:", error)
       alert("Error al crear el item")
+      return null
     } finally {
       setIsCreatingItem(false)
     }
@@ -221,7 +224,7 @@ export function useItems() {
   ) => {
     if (!itemTitulo.trim()) {
       alert("El título es obligatorio")
-      return
+      return null
     }
 
     setIsCreatingItem(true)
@@ -279,13 +282,16 @@ export function useItems() {
       if (response.ok) {
         setItems([newItem, ...items])
         handleClose()
+        return newItem
       } else {
         console.error("[v0] Failed to create item with variants")
         alert("Error al crear el item con variantes")
+        return null
       }
     } catch (error) {
       console.error("[v0] Error creating item with variants:", error)
       alert("Error al crear el item con variantes")
+      return null
     } finally {
       setIsCreatingItem(false)
     }

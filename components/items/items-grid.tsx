@@ -179,8 +179,8 @@ export function ItemsGrid({
               </div>
 
               {/* Right: View Controls - Always active */}
-              <div className="flex items-center gap-0 flex-1">
-                <div className="relative flex-1 mx-2 transition-all duration-300">
+              <div className="flex items-center gap-0">
+                <div className="relative w-80 mx-2 transition-all duration-300">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black opacity-100 w-3.5 h-3.5 z-10" />
                   <input
                     type="text"
@@ -251,12 +251,12 @@ export function ItemsGrid({
         </div>
 
         {/* Tab Header */}
-        <div className="px-4 bg-[#f8f9fa] border-gray-200 border-l-0 border-r-0 pb-2 pt-2 mt-px bg-transparent">
+        <div className="px-4 bg-[#f8f9fa] border-gray-200 border-l-0 border-r-0 bg-transparent mt-1 pt-2 mb-0 pb-0 shadow-xl">
           {/* Tab Header Labels */}
           <div className="pl-0 pr-0 w-full">
             <div className="flex items-center ml-0 w-full">
               {/* All selector with same left offset as item checkboxes */}
-              <div className="flex items-center justify-center h-9 bg-slate-200 border border-slate-300 border-b-0 border-t-0 rounded-xs shadow-none w-auto border-l-0 border-r px-[13px] rounded-l-sm mr-0 ml-[-17px]">
+              <div className="flex items-center justify-center h-9 bg-slate-100 border rounded-xs shadow-none w-auto border-r px-[13px] rounded-l-sm mr-0 ml-[-17px] border-[rgba(225,232,240,0.6)] border-b border-l border-t">
                 <button
                   onClick={handleSelectAllClick}
                   className={`h-4.5 w-4.5 transition-colors cursor-pointer flex items-center justify-center rounded-sm bg-white border border-slate-300 ${
@@ -268,20 +268,20 @@ export function ItemsGrid({
               </div>
 
               {/* Tab header matching exact item card structure */}
-              <div className="flex-1 grid grid-cols-14 h-9 bg-slate-200 border border-gray-300 rounded-xs border-none">
-                <div className="col-span-4 flex items-center px-4 py-2 justify-center border-solid border-r border-slate-300 pl-4 pr-4 mr-0">
+              <div className="flex-1 grid grid-cols-14 h-9 bg-slate-100 border border-gray-300 rounded-xs border-none">
+                <div className="col-span-4 flex items-center px-4 py-2 justify-center border-solid pl-4 pr-4 mr-0 border border-l-0 border-[rgba(225,232,240,0.6)]">
                   <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Título</span>
                 </div>
-                <div className="col-span-2 flex items-center justify-center px-4 py-2 border-solid border-r border-slate-300 ml-0 mr-0">
+                <div className="col-span-2 flex items-center justify-center px-4 py-2 border-solid border-r ml-0 mr-0 border-b border-t border-l-0 border-[rgba(225,232,240,0.6)]">
                   <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Marca</span>
                 </div>
-                <div className="col-span-2 flex items-center justify-center px-4 py-2 border-solid border border-b-0 border-t-0 border-l-0 border-slate-300 mr-0">
+                <div className="col-span-2 flex items-center justify-center px-4 py-2 border-solid border mr-0 border-b border-t border-[rgba(225,232,240,0.6)] border-l-0">
                   <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Categoría</span>
                 </div>
-                <div className="col-span-3 flex items-center justify-center py-2 border-solid border-r border-slate-300 px-4 mx-1.5 ml-0 mr-px">
+                <div className="col-span-3 flex items-center justify-center py-2 border-solid border-r px-4 mx-1.5 ml-0 mr-px border-t border-b border-[rgba(225,232,240,0.6)] border-l-0">
                   <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Atributos</span>
                 </div>
-                <div className="col-span-3 flex items-center justify-center py-2 mx-0 ml-0 px-0 mr-0">
+                <div className="col-span-3 flex items-center justify-center py-2 mx-0 ml-0 px-0 mr-0 border-b border-[rgba(225,232,240,0.6)] border-t border-l-0 border-r-0">
                   <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Stock</span>
                 </div>
               </div>
@@ -290,7 +290,7 @@ export function ItemsGrid({
                 <div className="relative mx-0 mr-[-14px]">
                   <button
                     onClick={() => setGridSizeDropdownOpen(!gridSizeDropdownOpen)}
-                    className="flex flex-col items-center justify-center rounded hover:bg-gray-100 transition-colors min-w-[48px] cursor-pointer border rounded-xs h-9 shadow-none bg-slate-200 border-solid border-slate-300 border-r-0 border-b-0 border-t-0 rounded-r-sm px-2.5 ml-0"
+                    className="flex flex-col items-center justify-center rounded hover:bg-gray-100 transition-colors min-w-[48px] cursor-pointer border rounded-xs h-9 shadow-none bg-slate-100 border-solid rounded-r-sm px-2.5 ml-0 border-b border-t border-r border-slate-200"
                     title="Tamaño de grilla"
                   >
                     <span className="text-[9px] text-gray-500 uppercase tracking-wider leading-none">Grilla</span>
@@ -336,7 +336,7 @@ export function ItemsGrid({
       {/* End sticky container */}
 
       {/* Items Grid - scrollable area */}
-      <div className="pb-4 pl-[18px] pr-2">
+      <div className="pb-4 pl-[18px] pr-2 pt-3">
         {sortedAndFilteredItems.length === 0 && (searchQuery || hasActiveFilters) ? (
           <div className="flex flex-col items-center justify-center py-16 text-gray-500">
             <Search className="w-12 h-12 mb-4 text-gray-300" />
@@ -350,21 +350,25 @@ export function ItemsGrid({
             </p>
           </div>
         ) : (
-          <div className={gridSize === "lg" ? "space-y-2" : "space-y-0"}>
-            {sortedAndFilteredItems.map((item, index) => (
-              <ItemCard
-                key={index}
-                item={item}
-                index={index}
-                gridSize={gridSize}
-                isSelected={itemSelected[index]}
-                isExpanded={expandedItems[index]}
-                onSelectClick={handleItemButtonClick}
-                onItemClick={handleItemClick}
-                onToggleExpansion={toggleVariantExpansion}
-                onDelete={onDeleteItem}
-              />
-            ))}
+          <div>
+            {sortedAndFilteredItems.map((item, index) => {
+              const nextItem = sortedAndFilteredItems[index + 1]
+              return (
+                <ItemCard
+                  key={index}
+                  item={item}
+                  index={index}
+                  gridSize={gridSize}
+                  isSelected={itemSelected[index]}
+                  isExpanded={expandedItems[index]}
+                  onSelectClick={handleItemButtonClick}
+                  onItemClick={handleItemClick}
+                  onToggleExpansion={toggleVariantExpansion}
+                  onDelete={onDeleteItem}
+                  nextItem={nextItem}
+                />
+              )
+            })}
           </div>
         )}
       </div>

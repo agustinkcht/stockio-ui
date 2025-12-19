@@ -826,7 +826,7 @@ export function ItemDetailPanel({
                 <>
                   <button
                     onClick={() => setSelectedDetailTab("info")}
-                    className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer ${
+                    className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer rounded-tl-md ${
                       selectedDetailTab === "info"
                         ? "border-primary bg-accent text-foreground"
                         : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
@@ -856,7 +856,7 @@ export function ItemDetailPanel({
                   </button>
                   <button
                     onClick={() => setSelectedDetailTab("stock-variantes")}
-                    className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer ${
+                    className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer rounded-tr-md ${
                       selectedDetailTab === "stock-variantes"
                         ? "border-primary bg-accent text-foreground"
                         : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
@@ -869,7 +869,7 @@ export function ItemDetailPanel({
                 <>
                   <button
                     onClick={() => setSelectedDetailTab("info")}
-                    className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer ${
+                    className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer rounded-tl-md ${
                       selectedDetailTab === "info"
                         ? "border-primary bg-accent text-foreground"
                         : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
@@ -889,7 +889,7 @@ export function ItemDetailPanel({
                   </button>
                   <button
                     onClick={() => setSelectedDetailTab("stock")}
-                    className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer ${
+                    className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer rounded-tr-md ${
                       selectedDetailTab === "stock"
                         ? "border-primary bg-accent text-foreground"
                         : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"

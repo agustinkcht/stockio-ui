@@ -187,7 +187,10 @@ export default function Page() {
   }
 
   const handleCreateItemWithSuccess = async (itemTitulo: string, itemTemplate: string, handleClose: () => void) => {
-    await handleCreateNuevoItem(itemTitulo, itemTemplate, handleClose)
+    const newItem = await handleCreateNuevoItem(itemTitulo, itemTemplate, handleClose)
+    if (newItem) {
+      handleItemClickWithNavigation(newItem, "info")
+    }
     setItemCreated(true)
     setTimeout(() => setItemCreated(false), 100)
   }
@@ -197,14 +200,17 @@ export default function Page() {
     itemTemplate: string,
     handleClose: () => void,
   ) => {
-    await handleCreateNuevoItemConVariantes(itemTitulo, itemTemplate, handleClose)
+    const newItem = await handleCreateNuevoItemConVariantes(itemTitulo, itemTemplate, handleClose)
+    if (newItem) {
+      handleItemClickWithNavigation(newItem, "info")
+    }
     setItemCreated(true)
     setTimeout(() => setItemCreated(false), 100)
   }
 
   return (
     <div className="min-h-screen bg-background text-foreground flex" onClick={handleCloseDropdowns}>
-      {/* Sidebar */}
+      {/* Sidebar with overlay */}
       <div onClick={(e) => e.stopPropagation()}>
         <Sidebar
           sidebarItems={SIDEBAR_ITEMS}
@@ -222,6 +228,13 @@ export default function Page() {
           isExpanded={isSidebarExpanded}
           setIsExpanded={setIsSidebarExpanded}
         />
+        {(showNuevoItemModal || showNuevoItemConVariantesModal) && (
+          <div
+            className={`fixed top-0 left-0 h-screen bg-black/50 z-[60] pointer-events-none transition-all duration-300 ${
+              isSidebarExpanded ? "w-64" : "w-16"
+            }`}
+          />
+        )}
       </div>
 
       {/* Main Content Area */}
@@ -273,9 +286,7 @@ export default function Page() {
           />
         )}
 
-        <main
-          className={`flex-1 transition-all duration-200 bg-[rgba(250,251,253,1)] ${showNuevoItemModal && !isNuevoItemMinimized ? "blur-sm" : ""} ${showNuevoItemConVariantesModal && !isNuevoItemConVariantesMinimized ? "blur-sm" : ""}`}
-        >
+        <main className="flex-1 transition-all duration-200 bg-[rgba(250,251,253,1)]">
           {selectedItem ? (
             <ItemDetailPanel
               selectedItem={selectedItem}
