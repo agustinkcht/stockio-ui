@@ -4,14 +4,17 @@ import type { Item, DepositStock, SortFactorConfig, FilterConfig } from "@/lib/t
 import { ItemCard } from "./item-card"
 import {
   Pencil,
-  Trash2,
+  BlocksIcon,
   ArrowUpDown,
   ListFilterIcon,
-  Layers,
   ClipboardCheckIcon,
   Search,
   MoreVertical,
   X,
+  Layers,
+  DollarSign,
+  ExternalLink,
+  Trash2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRef, useState, useEffect, useMemo } from "react"
@@ -130,7 +133,7 @@ export function ItemsGrid({
         <div className="w-full h-2 bg-transparent" />
 
         {/* Tab Buttons */}
-        <div className="mt-24 px-4 bg-white border rounded-lg pb-0 shadow-sm border-[rgba(228,230,235,0.5)]">
+        <div className="mt-24 px-4 bg-white border rounded-lg shadow-sm border-[rgba(228,230,235,0.5)] pt-[5px] pb-[5px]">
           <div className="px-4 pt-3">
             <div className="flex items-center justify-between border-b border-gray-200 pb-2.5 pr-5 pl-2 border-none">
               {/* Left: Buttons section */}
@@ -142,7 +145,9 @@ export function ItemsGrid({
                     hasSelectedItems ? "bg-blue-50 text-blue-900" : ""
                   }`}
                 >
-                  <Pencil className={`w-3.5 h-3.5 mr-1.5 ${hasSelectedItems ? "text-blue-900" : ""}`} />
+                  <Pencil
+                    className={`w-3.5 h-3.5 mr-1.5 transition-colors ${hasSelectedItems ? "text-blue-900" : "text-gray-600 group-hover:text-gray-900"}`}
+                  />
                   Editor Masivo
                 </Button>
 
@@ -153,34 +158,71 @@ export function ItemsGrid({
                     hasSelectedItems ? "bg-blue-50 text-blue-900" : ""
                   }`}
                 >
-                  <ClipboardCheckIcon className={`w-4 h-4 mr-1.5 ${hasSelectedItems ? "text-blue-900" : ""}`} />
+                  <ClipboardCheckIcon
+                    className={`w-4 h-4 mr-1.5 ${hasSelectedItems ? "text-blue-900" : "text-gray-600 group-hover:text-gray-900"}`}
+                  />
                   Auditoría de Stock
                 </Button>
 
-                {hasSelectedItems && (
-                  <>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer text-blue-900 bg-blue-50"
-                    >
-                      <Layers className="w-3.5 h-3.5 mr-1.5" />
-                      Agregar a colección
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer bg-[rgba(194,-16,-16,0.7)] text-slate-200"
-                    >
-                      <Trash2 className="w-3.5 h-3.5 mr-0" />
-                    </Button>
-                  </>
-                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer whitespace-nowrap ${
+                    hasSelectedItems ? "bg-blue-50 text-blue-900" : ""
+                  }`}
+                >
+                  <BlocksIcon
+                    className={`w-3.5 h-3.5 mr-1.5 ${hasSelectedItems ? "text-blue-900" : "text-gray-600 group-hover:text-gray-900"}`}
+                  />
+                  Movimiento de Stock
+                </Button>
+
+                <div className="relative" ref={moreOptionsRef}>
+                  <button
+                    onClick={() => setShowMoreOptionsDropdown(!showMoreOptionsDropdown)}
+                    className={`w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 transition-colors group cursor-pointer border shadow-sm rounded-full ${
+                      hasSelectedItems ? "border-[rgba(228,230,235,0.6)] bg-blue-50" : "border-[rgba(228,230,235,0.6)]"
+                    }`}
+                    title="Más opciones"
+                  >
+                    <MoreVertical
+                      className={`w-4 h-4 ${hasSelectedItems ? "text-blue-900" : "text-gray-600 group-hover:text-gray-900"}`}
+                    />
+                  </button>
+                  {showMoreOptionsDropdown && (
+                    <div className="absolute left-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-in fade-in-0 slide-in-from-top-2 duration-200">
+                      <div className="py-1">
+                        {hasSelectedItems && (
+                          <>
+                            <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer flex items-center gap-2">
+                              <Layers className="w-4 h-4" />
+                              Agregar a colección
+                            </button>
+                            <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer flex items-center gap-2">
+                              <DollarSign className="w-4 h-4" />
+                              Ver en listas de precio
+                            </button>
+                          </>
+                        )}
+                        <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer flex items-center gap-2">
+                          <ExternalLink className="w-4 h-4" />
+                          Exportar
+                        </button>
+                        {hasSelectedItems && (
+                          <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer flex items-center gap-2">
+                            <Trash2 className="w-4 h-4" />
+                            Eliminar
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Right: View Controls - Always active */}
-              <div className="flex items-center gap-0">
-                <div className="relative w-80 mx-2 transition-all duration-300">
+              <div className="flex items-center gap-0 ml-4 flex-1">
+                <div className="relative flex-1 mx-2 transition-all duration-300">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black opacity-100 w-3.5 h-3.5 z-10" />
                   <input
                     type="text"
@@ -225,26 +267,6 @@ export function ItemsGrid({
                     />
                   </button>
                 </div>
-
-                {/* More Options */}
-                <div className="relative" ref={moreOptionsRef}>
-                  <button
-                    onClick={() => setShowMoreOptionsDropdown(!showMoreOptionsDropdown)}
-                    className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 transition-colors group cursor-pointer border border-gray-200/40 shadow-sm rounded-full mr-0"
-                    title="Más opciones"
-                  >
-                    <MoreVertical className="w-4 h-4 text-gray-600 group-hover:text-gray-900" />
-                  </button>
-                  {showMoreOptionsDropdown && (
-                    <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-in fade-in-0 slide-in-from-top-2 duration-200">
-                      <div className="py-1">
-                        <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">
-                          Exportar
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
               </div>
             </div>
           </div>
@@ -256,7 +278,7 @@ export function ItemsGrid({
           <div className="pl-0 pr-0 w-full">
             <div className="flex items-center ml-0 w-full">
               {/* All selector with same left offset as item checkboxes */}
-              <div className="flex items-center justify-center h-9 bg-slate-100 border rounded-xs shadow-none w-auto border-r px-[13px] rounded-l-sm mr-0 ml-[-17px] border-[rgba(225,232,240,0.6)] border-b border-l border-t">
+              <div className="flex items-center justify-center h-9 bg-slate-200 border rounded-xs shadow-none w-auto border-r px-[13px] rounded-l-sm mr-0 ml-[-17px] border-b border-l border-t border-[rgba(202,213,227,0.61)]">
                 <button
                   onClick={handleSelectAllClick}
                   className={`h-4.5 w-4.5 transition-colors cursor-pointer flex items-center justify-center rounded-sm bg-white border border-slate-300 ${
@@ -268,20 +290,20 @@ export function ItemsGrid({
               </div>
 
               {/* Tab header matching exact item card structure */}
-              <div className="flex-1 grid grid-cols-14 h-9 bg-slate-100 border border-gray-300 rounded-xs border-none">
-                <div className="col-span-4 flex items-center px-4 py-2 justify-center border-solid pl-4 pr-4 mr-0 border border-l-0 border-[rgba(225,232,240,0.6)]">
+              <div className="flex-1 grid grid-cols-14 h-9 bg-slate-200 border border-gray-300 rounded-xs border-none">
+                <div className="col-span-4 flex items-center px-4 py-2 justify-center border-solid pl-4 pr-4 mr-0 border border-l-0 border-[rgba(202,213,227,0.61)]">
                   <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Título</span>
                 </div>
-                <div className="col-span-2 flex items-center justify-center px-4 py-2 border-solid border-r ml-0 mr-0 border-b border-t border-l-0 border-[rgba(225,232,240,0.6)]">
+                <div className="col-span-2 flex items-center justify-center px-4 py-2 border-solid border-r ml-0 mr-0 border-b border-t border-l-0 border-[rgba(202,213,227,0.61)]">
                   <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Marca</span>
                 </div>
-                <div className="col-span-2 flex items-center justify-center px-4 py-2 border-solid border mr-0 border-b border-t border-[rgba(225,232,240,0.6)] border-l-0">
+                <div className="col-span-2 flex items-center justify-center px-4 py-2 border-solid border mr-0 border-b border-t border-l-0 border-[rgba(202,213,227,0.61)]">
                   <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Categoría</span>
                 </div>
-                <div className="col-span-3 flex items-center justify-center py-2 border-solid border-r px-4 mx-1.5 ml-0 mr-px border-t border-b border-[rgba(225,232,240,0.6)] border-l-0">
+                <div className="col-span-3 flex items-center justify-center py-2 border-solid border-r px-4 mx-1.5 ml-0 mr-px border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
                   <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Atributos</span>
                 </div>
-                <div className="col-span-3 flex items-center justify-center py-2 mx-0 ml-0 px-0 mr-0 border-b border-[rgba(225,232,240,0.6)] border-t border-l-0 border-r-0">
+                <div className="col-span-3 flex items-center justify-center py-2 mx-0 ml-0 px-0 mr-0 border-b border-t border-l-0 border-r-0 border-[rgba(202,213,227,0.61)]">
                   <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Stock</span>
                 </div>
               </div>
@@ -290,7 +312,7 @@ export function ItemsGrid({
                 <div className="relative mx-0 mr-[-14px]">
                   <button
                     onClick={() => setGridSizeDropdownOpen(!gridSizeDropdownOpen)}
-                    className="flex flex-col items-center justify-center rounded hover:bg-gray-100 transition-colors min-w-[48px] cursor-pointer border rounded-xs h-9 shadow-none bg-slate-100 border-solid rounded-r-sm px-2.5 ml-0 border-b border-t border-r border-slate-200"
+                    className="flex flex-col items-center justify-center rounded hover:bg-gray-100 transition-colors min-w-[48px] cursor-pointer border rounded-xs h-9 shadow-none border-solid rounded-r-sm px-2.5 ml-0 border-b border-t border-r bg-slate-200 border-[rgba(202,213,227,0.61)]"
                     title="Tamaño de grilla"
                   >
                     <span className="text-[9px] text-gray-500 uppercase tracking-wider leading-none">Grilla</span>
