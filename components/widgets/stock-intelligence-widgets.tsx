@@ -54,13 +54,13 @@ export function StockIntelligenceWidgets({
 
               {showNuevoDropdown && (
                 <div className="absolute left-0 top-full mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-in fade-in-0 slide-in-from-top-2 duration-200">
-                  <div className="py-1">
+                  <div className="p-1">
                     <button
                       onClick={() => {
                         handleOpenNuevoItem()
                         setShowNuevoDropdown(false)
                       }}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer"
+                      className="w-full rounded-lg text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer"
                     >
                       <Plus className="w-4 h-4 text-gray-400" />
                       Item
@@ -70,12 +70,12 @@ export function StockIntelligenceWidgets({
                         handleOpenNuevoItemConVariantes()
                         setShowNuevoDropdown(false)
                       }}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer"
+                      className="w-full rounded-lg text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer"
                     >
                       <Grid3x3 className="w-4 h-4 text-gray-400" />
                       Item con Variantes
                     </button>
-                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer">
+                    <button className="w-full rounded-lg text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer">
                       <Layers className="w-4 h-4 text-gray-400" />
                       Combo
                     </button>
@@ -98,12 +98,12 @@ export function StockIntelligenceWidgets({
 
               {showCreacionMasivaDropdown && (
                 <div className="absolute left-0 top-full mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-in fade-in-0 slide-in-from-top-2 duration-200">
-                  <div className="py-1">
-                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer">
+                  <div className="p-1">
+                    <button className="w-full rounded-lg text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer">
                       <Grid3x3 className="w-4 h-4 text-gray-400" />
                       Creador Masivo
                     </button>
-                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer">
+                    <button className="w-full rounded-lg text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer">
                       <Upload className="w-4 h-4 text-gray-400" />
                       Importar CSV
                     </button>

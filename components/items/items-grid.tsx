@@ -191,25 +191,25 @@ export function ItemsGrid({
                   </button>
                   {showMoreOptionsDropdown && (
                     <div className="absolute left-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-in fade-in-0 slide-in-from-top-2 duration-200">
-                      <div className="py-1">
+                      <div className="p-1">
                         {hasSelectedItems && (
                           <>
-                            <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer flex items-center gap-2">
+                            <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer flex items-center gap-2 rounded-lg">
                               <Layers className="w-4 h-4" />
                               Agregar a colección
                             </button>
-                            <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer flex items-center gap-2">
+                            <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer flex items-center gap-2 rounded-lg">
                               <DollarSign className="w-4 h-4" />
                               Ver en listas de precio
                             </button>
                           </>
                         )}
-                        <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer flex items-center gap-2">
+                        <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer flex items-center gap-2 rounded-lg">
                           <ExternalLink className="w-4 h-4" />
                           Exportar
                         </button>
                         {hasSelectedItems && (
-                          <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer flex items-center gap-2">
+                          <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer flex items-center gap-2 rounded-lg">
                             <Trash2 className="w-4 h-4" />
                             Eliminar
                           </button>

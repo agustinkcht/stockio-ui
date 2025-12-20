@@ -61,22 +61,22 @@ export function Toolbar({
 
               {showNuevoDropdown && (
                 <div className="absolute left-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-in fade-in-0 slide-in-from-top-2 duration-200">
-                  <div className="py-1">
+                  <div className="p-1">
                     <button
                       onClick={handleOpenNuevoItem}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer"
+                      className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer rounded-lg"
                     >
                       <Plus className="w-4 h-4 text-gray-400" />
                       Item
                     </button>
                     <button
                       onClick={handleOpenNuevoItemConVariantes}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer"
+                      className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer rounded-lg"
                     >
                       <Grid3x3 className="w-4 h-4 text-gray-400" />
                       Item con Variantes
                     </button>
-                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer">
+                    <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer rounded-lg">
                       <Layers className="w-4 h-4 text-gray-400" />
                       Combo
                     </button>
@@ -86,20 +86,28 @@ export function Toolbar({
             </div>
 
             <div className="relative" ref={moreOptionsRef}>
-              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowMoreOptionsDropdown(!showMoreOptionsDropdown)}
+                className="h-8 text-xs hover:bg-gray-100 transition-colors cursor-pointer border shadow-sm border-[rgba(228,230,235,0.6)]"
+              >
+                <MoreVertical className="w-4 h-4 mr-1.5" />
+                Más Opciones
+              </Button>
 
               {showMoreOptionsDropdown && (
                 <div className="absolute left-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-in fade-in-0 slide-in-from-top-2 duration-200">
-                  <div className="py-1">
-                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer">
+                  <div className="p-1">
+                    <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer rounded-lg">
                       <Grid3x3 className="w-4 h-4 text-gray-400" />
                       Creación Masiva
                     </button>
-                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer">
+                    <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer rounded-lg">
                       <Upload className="w-4 h-4 text-gray-400" />
                       Importar CSV
                     </button>
-                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer">
+                    <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer rounded-lg">
                       <Download className="w-4 h-4 text-gray-400" />
                       Exportar CSV
                     </button>

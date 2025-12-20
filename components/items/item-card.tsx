@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { ChevronDown, ChevronRight, Copy, MoreVertical } from "lucide-react"
+import { ChevronDown, ChevronRight, Copy, MoreVertical, Layers, DollarSign, Trash2 } from "lucide-react"
 import type { Item } from "@/lib/types"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
@@ -109,7 +109,7 @@ export function ItemCard({
     setShowTransition(true)
     hoverTimeoutRef.current = setTimeout(() => {
       setIsDebounced(true)
-    }, 600)
+    }, 900)
   }
 
   const handleMouseLeave = () => {
@@ -471,13 +471,24 @@ export function ItemCard({
                 <MoreVertical className="w-4 h-4" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuContent align="end" className="w-48 p-1">
               <DropdownMenuItem
                 onClick={(e) => {
                   e.stopPropagation()
+                  // TODO: Implement agregar a colección functionality
                 }}
               >
-                Editar
+                <Layers className="w-4 h-4 mr-2" />
+                Agregar a Colección
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation()
+                  // TODO: Implement ver en listas de precio functionality
+                }}
+              >
+                <DollarSign className="w-4 h-4 mr-2" />
+                Ver en Listas de Precios
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={(e) => {
@@ -486,8 +497,9 @@ export function ItemCard({
                     onDelete(item)
                   }
                 }}
-                className="text-destructive hover:text-destructive/90"
+                className="text-red-600 focus:text-red-600"
               >
+                <Trash2 className="w-4 h-4 mr-2" />
                 Eliminar
               </DropdownMenuItem>
             </DropdownMenuContent>
