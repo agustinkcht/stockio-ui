@@ -221,15 +221,15 @@ export function ItemsGrid({
               </div>
 
               {/* Right: View Controls - Always active */}
-              <div className="flex items-center gap-0 ml-4 flex-1">
-                <div className="relative flex-1 mx-2 transition-all duration-300">
+              <div className="flex items-center gap-0 flex-1 ml-0">
+                <div className="relative flex-1 mx-2 transition-all duration-300 ml-2.5 mr-2.5">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black opacity-100 w-3.5 h-3.5 z-10" />
                   <input
                     type="text"
                     placeholder="Buscar artículos..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full h-8 pl-9 pr-9 border shadow-sm rounded-md text-xs placeholder:text-gray-600 text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 bg-white backdrop-blur-sm transition-all duration-300 border-[rgba(202,213,227,0.842391304347826)]"
+                    className="w-full h-8 pl-9 pr-9 border shadow-sm rounded-md text-xs placeholder:text-gray-600 text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 bg-white backdrop-blur-sm transition-all duration-300 border-[rgba(202,213,227,0.842391304347826)] ml-0"
                   />
                   {searchQuery && (
                     <button
