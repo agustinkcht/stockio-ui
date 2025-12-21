@@ -133,9 +133,9 @@ export function ItemsGrid({
         <div className="w-full h-2 bg-transparent" />
 
         {/* Tab Buttons */}
-        <div className="mt-24 px-4 bg-white border rounded-lg shadow-sm border-[rgba(228,230,235,0.5)] pt-[5px] pb-[5px]">
-          <div className="px-4 pt-3">
-            <div className="flex items-center justify-between border-b border-gray-200 pb-2.5 pr-5 pl-2 border-none">
+        <div className="mt-24 px-4 bg-white border rounded-lg shadow-sm border-[rgba(228,230,235,0.5)] pt-2 pb-2">
+          <div className="px-4 pt-3 pb-3">
+            <div className="flex items-center justify-between border-b border-gray-200 border-none pl-0 pr-0 pb-0">
               {/* Left: Buttons section */}
               <div className="flex items-center gap-2 border-0 border-none ml-1.5 mr-0">
                 <Button
