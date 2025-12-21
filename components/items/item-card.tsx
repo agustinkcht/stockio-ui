@@ -165,7 +165,7 @@ export function ItemCard({
 
         <div
           // 22 - 14 - 9 / 22 - 16 - 10
-          className={`flex-1 border-solid mb-0 border-slate-200/65 shadow-md ${gridSize === "lg" ? "h-22" : gridSize === "md" ? "h-17" : "h-10"} ${roundedClass} grid ${
+          className={`flex-1 border-solid mb-0 border-slate-200/65 shadow-md ${gridSize === "lg" ? "h-22" : gridSize === "md" ? "h-16" : "h-10"} ${roundedClass} grid ${
             item.isAgrupador || item.hasVariants
               ? `grid-cols-14 bg-white border border-border hover:bg-gray-50 transition-colors cursor-pointer overflow-hidden`
               : "grid-cols-14 bg-white border border-border overflow-hidden"

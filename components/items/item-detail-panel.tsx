@@ -630,16 +630,17 @@ export function ItemDetailPanel({
           {/* Left Column - Item Info (suspended card) - Made fixed to stay in place while scrolling */}
           <div className="col-span-3 mt-4">
             <div
-              className="fixed bg-card rounded-xl h-[610px] border overflow-hidden flex flex-col transition-all duration-300 mt-0 border-solid border-slate-100 shadow-xl"
+              className="fixed bg-card rounded-r-xl h-[calc(100vh-84px)] border overflow-hidden flex flex-col transition-all duration-300 top-[84px] border-solid border-slate-100 shadow-xl"
               style={{
-                width: isExpanded ? "calc((100vw - 16.5rem) * 0.3 - 1.5rem)" : "calc((100vw - 4rem) * 0.3 - 1.5rem)",
+                width: isExpanded ? "calc((100vw - 16rem - 4rem) * 0.3 + 2rem)" : "calc((100vw - 4rem - 4rem) * 0.3)",
+                left: isExpanded ? "16rem" : "4rem",
               }}
             >
-              <div className="p-6 mt-0">
-                <div>
+              <div className="p-6 mt-0 px-8 pl-9 pr-8">
+                <div className="mt-2 mb-0">
                   <h2 className="font-semibold text-foreground text-lg mb-0">{selectedItem.name}</h2>
-                  <div className="flex items-center gap-2 mt-2">
-                    <p className="text-sm text-muted-foreground mt-[3px]">
+                  <div className="flex items-center gap-2 mt-6">
+                    <p className="text-sm text-muted-foreground mt-0">
                       {isViewingContainer ? "SKU Padre:" : "SKU:"}{" "}
                       {editingSku ? (
                         <input
@@ -681,7 +682,7 @@ export function ItemDetailPanel({
                   </div>
 
                   {!isViewingContainer && (
-                    <div className="flex items-center gap-2 mt-1">
+                    <div className="flex items-center gap-2 mt-1 mb-0">
                       <p className="text-sm text-muted-foreground">Código Universal:</p>
                       {editingCodigoUniversal ? (
                         <input
@@ -719,19 +720,16 @@ export function ItemDetailPanel({
                       )}
                     </div>
                   )}
-                  {!isViewingContainer && <div className="border-t border-border my-4 mb-7"></div>}
                 </div>
 
-                {!isViewingContainer && (
-                  <div className="mt-6">
-                    <div className="w-full h-64 bg-accent rounded-lg flex items-center justify-center border-2 border-dashed border-border">
+                {isViewingContainer && (
+                  <div className="mt-9">
+                    <div className="w-full h-64 bg-accent rounded-lg flex items-center justify-center border-2 border-dashed border-border mt-0 mb-9">
                       <span className="text-sm text-muted-foreground">Sin Imagen</span>
                     </div>
 
-                    <div className="border-t border-border my-4 mt-8"></div>
-
-                    <div className="w-full">
-                      <h3 className="text-sm font-medium text-foreground text-left ml-3 mb-0">Descripción</h3>
+                    <div className="w-full mt-0">
+                      <h3 className="text-sm font-medium text-foreground text-left ml-3 mb-0 mt-0">Descripción</h3>
                       {editingDescripcion ? (
                         <textarea
                           value={descripcionValue}
@@ -755,61 +753,34 @@ export function ItemDetailPanel({
                   </div>
                 )}
 
-                {isViewingContainer && (
-                  <div className="mt-6">
-                    <div className="flex items-center justify-between mb-2 mt-2">
-                      <h3 className="text-sm font-medium text-foreground">Imagen del Producto</h3>
-                      <div className="flex gap-1">
-                        <button
-                          onClick={() => setImageView("imagen")}
-                          className={`px-2 py-1 text-xs rounded transition-colors ${
-                            imageView === "imagen"
-                              ? "bg-accent text-primary"
-                              : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                          }`}
-                        >
-                          Imagen
-                        </button>
-                        <button
-                          onClick={() => setImageView("descripcion")}
-                          className={`px-2 py-1 text-xs rounded transition-colors ${
-                            imageView === "descripcion"
-                              ? "bg-accent text-primary"
-                              : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                          }`}
-                        >
-                          Descripción
-                        </button>
-                      </div>
+                {!isViewingContainer && (
+                  <div className="mt-9">
+                    <div className="w-full h-64 bg-accent rounded-lg flex items-center justify-center border-2 border-dashed border-border mt-0 mb-9">
+                      <span className="text-sm text-muted-foreground">Sin Imagen</span>
                     </div>
 
-                    {imageView === "imagen" ? (
-                      <div className="w-full h-48 bg-accent rounded-lg flex items-center justify-center border-2 border-dashed border-border mt-8">
-                        <span className="text-sm text-muted-foreground">Sin Imagen</span>
-                      </div>
-                    ) : (
-                      <div className="w-full">
-                        {editingDescripcion ? (
-                          <textarea
-                            value={descripcionValue}
-                            onChange={(e) => setDescripcionValue(e.target.value)}
-                            onBlur={handleDescripcionBlur}
-                            className="w-full h-48 bg-secondary border border-border rounded-lg p-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-                            placeholder="Agregar descripción del producto..."
-                            autoFocus
-                          />
-                        ) : (
-                          <div
-                            onClick={() => setEditingDescripcion(true)}
-                            className="w-full h-48 bg-secondary border border-border rounded-lg p-3 text-sm text-foreground cursor-text hover:border-muted-foreground overflow-y-auto"
-                          >
-                            {descripcionValue || (
-                              <span className="text-muted-foreground">Click para agregar descripción...</span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
+                    <div className="w-full mt-0">
+                      <h3 className="text-sm font-medium text-foreground text-left ml-3 mb-0 mt-0">Descripción</h3>
+                      {editingDescripcion ? (
+                        <textarea
+                          value={descripcionValue}
+                          onChange={(e) => setDescripcionValue(e.target.value)}
+                          onBlur={handleDescripcionBlur}
+                          className="w-full h-32 bg-transparent border-none rounded-lg p-3 text-sm text-foreground focus:outline-none focus:ring-0 resize-none"
+                          placeholder="Agregar descripción del producto..."
+                          autoFocus
+                        />
+                      ) : (
+                        <div
+                          onClick={() => setEditingDescripcion(true)}
+                          className="w-full border border-border rounded-lg p-3 text-sm text-foreground cursor-text hover:border-muted-foreground overflow-y-auto bg-transparent border-none h-24"
+                        >
+                          {descripcionValue || (
+                            <span className="text-muted-foreground">Click para agregar descripción...</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
