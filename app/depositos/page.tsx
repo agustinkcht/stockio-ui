@@ -2,7 +2,6 @@
 
 import { useState, useRef } from "react"
 import {
-  Search,
   ShoppingBag,
   Store,
   Box,
@@ -44,6 +43,7 @@ const sidebarItems = [
     label: "Stock",
     hasDropdown: true,
     dropdownItems: ["Artículos", "Depósitos", "Compras", "Catálogo", "Proveedores"],
+    active: true,
   },
   {
     icon: Tag,
@@ -81,8 +81,6 @@ const breadcrumbs = [{ label: "Inventario" }, { label: "Depósitos", href: "/dep
 export default function DepositosPage() {
   const [selectedChannel, setSelectedChannel] = useState("general")
   const [hoveredDropdown, setHoveredDropdown] = useState<number | null>(null)
-  const [hoveredSearch, setHoveredSearch] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
   const [selectAllActive, setSelectAllActive] = useState(false)
   const [showNuevoDropdown, setShowNuevoDropdown] = useState(false)
   const [showAccionesDropdown, setShowAccionesDropdown] = useState(false)
@@ -90,10 +88,8 @@ export default function DepositosPage() {
   const [changeTracker, setChangeTracker] = useState({ hasUnsavedChanges: false, canUndo: false, canRedo: false })
   const [isSaving, setIsSaving] = useState(false)
   const [itemCreated, setItemCreated] = useState(false)
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false)
 
   const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const depositos = [
     {
@@ -148,42 +144,12 @@ export default function DepositosPage() {
 
   const hasSelectedItems = itemSelected.some((selected) => selected)
 
-  const handleDropdownMouseEnter = (index: number) => {
-    if (dropdownTimeoutRef.current) {
-      clearTimeout(dropdownTimeoutRef.current)
-      dropdownTimeoutRef.current = null
-    }
+  const handleDropdownOpen = (index: number) => {
     setHoveredDropdown(index)
   }
 
-  const handleDropdownMouseLeave = () => {
-    dropdownTimeoutRef.current = setTimeout(() => {
-      setHoveredDropdown(null)
-    }, 250)
-  }
-
-  const handleSearchMouseEnter = () => {
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current)
-      searchTimeoutRef.current = null
-    }
-    setHoveredSearch(true)
-  }
-
-  const handleSearchMouseLeave = () => {
-    searchTimeoutRef.current = setTimeout(() => {
-      setHoveredSearch(false)
-      setSearchQuery("")
-    }, 250)
-  }
-
-  const getFilteredDropdownItems = (items: string[]) => {
-    if (!searchQuery) return items
-    return items.filter((item) => item.toLowerCase().includes(searchQuery.toLowerCase()))
-  }
-
-  const hasMatchingItems = (items: string[]) => {
-    return items.some((item) => item.toLowerCase().includes(searchQuery.toLowerCase()))
+  const handleDropdownClose = () => {
+    setHoveredDropdown(null)
   }
 
   const handleUndo = () => {
@@ -208,24 +174,13 @@ export default function DepositosPage() {
         <Sidebar
           sidebarItems={sidebarItems}
           bottomSidebarItems={bottomSidebarItems}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          hoveredSearch={hoveredSearch}
           hoveredDropdown={hoveredDropdown}
-          handleSearchMouseEnter={handleSearchMouseEnter}
-          handleSearchMouseLeave={handleSearchMouseLeave}
-          handleDropdownMouseEnter={handleDropdownMouseEnter}
-          handleDropdownMouseLeave={handleDropdownMouseLeave}
-          getFilteredDropdownItems={getFilteredDropdownItems}
-          hasMatchingItems={hasMatchingItems}
-          isExpanded={isSidebarExpanded}
-          setIsExpanded={setIsSidebarExpanded}
+          onDropdownOpen={handleDropdownOpen}
+          onDropdownClose={handleDropdownClose}
         />
       </div>
 
-      <div
-        className={`flex-1 flex flex-col transition-all duration-300 bg-slate-50 ${isSidebarExpanded ? "ml-64" : "ml-16"}`}
-      >
+      <div className="flex-1 flex flex-col bg-slate-50 ml-20">
         <TopNav
           currentView="depositos"
           navigationHistory={[]}
@@ -236,7 +191,7 @@ export default function DepositosPage() {
           onNavigateForward={() => {}}
           onRestoreTab={() => {}}
           onCloseTab={() => {}}
-          isExpanded={isSidebarExpanded}
+          isExpanded={false}
         />
 
         {/* UtilityBar */}
@@ -251,12 +206,12 @@ export default function DepositosPage() {
           onGuardar={handleGuardar}
           isSaving={isSaving}
           itemCreated={itemCreated}
-          isExpanded={isSidebarExpanded}
+          isExpanded={false}
         />
 
         <div
           className="h-18 border-b border-border flex items-center fixed right-0 left-0 z-20 bg-white"
-          style={{ top: "8.25rem", marginLeft: isSidebarExpanded ? "16rem" : "4rem" }}
+          style={{ top: "8.25rem", marginLeft: "5rem" }}
         >
           <div className="flex items-center gap-2 pl-8">
             <button
@@ -317,126 +272,100 @@ export default function DepositosPage() {
             </div>
           </div>
 
-          <div className="flex-1 flex justify-center px-8">
-            <div className="relative w-full max-w-2xl">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black opacity-100 z-10 w-3.5 h-3.5" />
-              <input
-                type="text"
-                placeholder="Buscar depósitos..."
-                className="w-full pl-10 pr-4 py-1.5 bg-white backdrop-blur-sm border border-border rounded-md text-gray-600 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
+          <div className="flex-1 overflow-y-auto transition-all duration-200 bg-slate-50 mt-[12.75rem] px-8 pb-8">
+            <div className="px-8 pt-1.5">
+              <div className="flex items-center gap-2 h-10 mb-2 mt-0">
+                <div className="w-4 flex-shrink-0"></div>
 
-          <div className="flex items-center gap-2 pr-8">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!hasSelectedItems}
-              className={`bg-white border-border ${
-                hasSelectedItems
-                  ? "text-foreground hover:bg-gray-100 cursor-pointer"
-                  : "text-gray-400 cursor-not-allowed"
-              }`}
-            >
-              <MoreHorizontal className="w-4 h-4" />
-            </Button>
+                <div className="flex-1 h-full bg-gray-900/30 border border-gray-800 rounded-md grid grid-cols-11 border-none">
+                  <div className="col-span-2 flex items-center h-full border-r border-gray-700 gap-2 px-4">
+                    <span className="text-xs text-gray-400 uppercase tracking-wider font-medium">Nombre</span>
+                  </div>
+
+                  <div className="col-span-3 h-full flex items-center justify-center border-r border-gray-700 px-4">
+                    <span className="text-xs text-gray-400 uppercase tracking-wider font-medium">Dirección</span>
+                  </div>
+
+                  <div className="col-span-3 h-full flex items-center justify-center border-r border-gray-700 px-4">
+                    <span className="text-xs text-gray-400 uppercase tracking-wider font-medium">Stock</span>
+                  </div>
+
+                  <div className="col-span-3 h-full flex items-center justify-center px-4">
+                    <span className="text-xs text-gray-400 uppercase tracking-wider font-medium">Canales de Venta</span>
+                  </div>
+                </div>
+
+                <div className="w-[108px] flex-shrink-0"></div>
+              </div>
+            </div>
+
+            <div className="px-8">
+              <div className="space-y-2 pb-8">
+                {depositos.map((deposito, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleItemButtonClick(index)}
+                      className={`w-4 h-4 ${itemSelected[index] ? "bg-gray-400" : "bg-gray-800"} border border-gray-700 rounded-md hover:cursor-pointer transition-colors flex items-center justify-center flex-shrink-0`}
+                    ></button>
+
+                    <div className="flex-1 h-18 rounded-md grid grid-cols-11 bg-slate-900 border border-gray-800 hover:bg-gray-800/50 transition-colors cursor-pointer">
+                      <div className="col-span-2 flex items-center h-full border-r border-gray-700 gap-2 px-4">
+                        <deposito.icon className="w-4 h-4 flex-shrink-0 text-emerald-600" />
+                        <span className="text-sm text-gray-300">{deposito.nombre}</span>
+                      </div>
+
+                      <div className="col-span-3 h-full flex items-center justify-center border-r border-gray-700 px-4">
+                        <span className="text-sm text-gray-300">{deposito.direccion}</span>
+                      </div>
+
+                      <div className="col-span-3 h-full flex items-center justify-evenly gap-3 border-r border-gray-700 px-4">
+                        <div className="flex flex-col items-center gap-0.5">
+                          <span className="text-[10px] text-gray-500 uppercase tracking-wide">Total</span>
+                          <span className="text-sm text-gray-300">{deposito.stock.total.toLocaleString()}</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-0.5">
+                          <span className="text-[10px] text-gray-500 uppercase tracking-wide">Reservado</span>
+                          <span className="text-sm text-gray-300">{deposito.stock.reservado.toLocaleString()}</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-0.5">
+                          <span className="text-[10px] text-gray-500 uppercase tracking-wide">Disponible</span>
+                          <span className="text-sm text-gray-300">{deposito.stock.disponible.toLocaleString()}</span>
+                        </div>
+                      </div>
+
+                      <div className="col-span-3 h-full flex items-center justify-center gap-2 px-4">
+                        {deposito.canales.map((canal, canalIndex) => (
+                          <span
+                            key={canalIndex}
+                            className={`text-xs px-2 py-1 rounded ${
+                              canal.active
+                                ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                                : "bg-gray-800 text-gray-500 border border-gray-700"
+                            }`}
+                          >
+                            {canal.name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 px-4">
+                      <button className="text-gray-400 hover:text-white transition-colors">
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button className="text-gray-400 hover:text-red-400 transition-colors">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                      <button className="text-gray-400 hover:text-white transition-colors">
+                        <MoreHorizontal className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
-
-        <main className="flex-1 overflow-y-auto transition-all duration-200 bg-slate-50 mt-[12.75rem] px-8 pb-8">
-          <div className="px-8 pt-1.5">
-            <div className="flex items-center gap-2 h-10 mb-2 mt-0">
-              <div className="w-4 flex-shrink-0"></div>
-
-              <div className="flex-1 h-full bg-gray-900/30 border border-gray-800 rounded-md grid grid-cols-11 border-none">
-                <div className="col-span-2 flex items-center h-full border-r border-gray-700 gap-2 px-4">
-                  <span className="text-xs text-gray-400 uppercase tracking-wider font-medium">Nombre</span>
-                </div>
-
-                <div className="col-span-3 h-full flex items-center justify-center border-r border-gray-700 px-4">
-                  <span className="text-xs text-gray-400 uppercase tracking-wider font-medium">Dirección</span>
-                </div>
-
-                <div className="col-span-3 h-full flex items-center justify-center border-r border-gray-700 px-4">
-                  <span className="text-xs text-gray-400 uppercase tracking-wider font-medium">Stock</span>
-                </div>
-
-                <div className="col-span-3 h-full flex items-center justify-center px-4">
-                  <span className="text-xs text-gray-400 uppercase tracking-wider font-medium">Canales de Venta</span>
-                </div>
-              </div>
-
-              <div className="w-[108px] flex-shrink-0"></div>
-            </div>
-          </div>
-
-          <div className="px-8">
-            <div className="space-y-2 pb-8">
-              {depositos.map((deposito, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleItemButtonClick(index)}
-                    className={`w-4 h-4 ${itemSelected[index] ? "bg-gray-400" : "bg-gray-800"} border border-gray-700 rounded-md hover:cursor-pointer transition-colors flex items-center justify-center flex-shrink-0`}
-                  ></button>
-
-                  <div className="flex-1 h-18 rounded-md grid grid-cols-11 bg-slate-900 border border-gray-800 hover:bg-gray-800/50 transition-colors cursor-pointer">
-                    <div className="col-span-2 flex items-center h-full border-r border-gray-700 gap-2 px-4">
-                      <deposito.icon className="w-4 h-4 flex-shrink-0 text-emerald-600" />
-                      <span className="text-sm text-gray-300">{deposito.nombre}</span>
-                    </div>
-
-                    <div className="col-span-3 h-full flex items-center justify-center border-r border-gray-700 px-4">
-                      <span className="text-sm text-gray-300">{deposito.direccion}</span>
-                    </div>
-
-                    <div className="col-span-3 h-full flex items-center justify-evenly gap-3 border-r border-gray-700 px-4">
-                      <div className="flex flex-col items-center gap-0.5">
-                        <span className="text-[10px] text-gray-500 uppercase tracking-wide">Total</span>
-                        <span className="text-sm text-gray-300">{deposito.stock.total.toLocaleString()}</span>
-                      </div>
-                      <div className="flex flex-col items-center gap-0.5">
-                        <span className="text-[10px] text-gray-500 uppercase tracking-wide">Reservado</span>
-                        <span className="text-sm text-gray-300">{deposito.stock.reservado.toLocaleString()}</span>
-                      </div>
-                      <div className="flex flex-col items-center gap-0.5">
-                        <span className="text-[10px] text-gray-500 uppercase tracking-wide">Disponible</span>
-                        <span className="text-sm text-gray-300">{deposito.stock.disponible.toLocaleString()}</span>
-                      </div>
-                    </div>
-
-                    <div className="col-span-3 h-full flex items-center justify-center gap-2 px-4">
-                      {deposito.canales.map((canal, canalIndex) => (
-                        <span
-                          key={canalIndex}
-                          className={`text-xs px-2 py-1 rounded ${
-                            canal.active
-                              ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
-                              : "bg-gray-800 text-gray-500 border border-gray-700"
-                          }`}
-                        >
-                          {canal.name}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 px-4">
-                    <button className="text-gray-400 hover:text-white transition-colors">
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                    <button className="text-gray-400 hover:text-red-400 transition-colors">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                    <button className="text-gray-400 hover:text-white transition-colors">
-                      <MoreHorizontal className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </main>
       </div>
     </div>
   )

@@ -1,6 +1,5 @@
 "use client"
 import { Minus, X } from "lucide-react"
-import { TEMPLATES } from "@/lib/constants"
 import { LoadingBar } from "@/components/ui/loading-bar"
 import { useEffect, useRef } from "react"
 
@@ -120,28 +119,6 @@ export function NuevoItemConVariantesModal({
                   placeholder="Ingresá el título del item contenedor"
                   className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
-              </div>
-
-              <div className="border-t border-gray-200 my-4"></div>
-
-              {/* Template Field */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-900">Template</label>
-                <p className="text-xs text-gray-500">
-                  Usá un template para definir la estructura de información y atributos del nuevo item contenedor
-                </p>
-                <select
-                  value={itemTemplate}
-                  onChange={(e) => setItemTemplate(e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer"
-                >
-                  <option value="">Seleccioná un template</option>
-                  {TEMPLATES.map((template) => (
-                    <option key={template.id} value={template.id}>
-                      {template.name}
-                    </option>
-                  ))}
-                </select>
               </div>
             </div>
           </div>

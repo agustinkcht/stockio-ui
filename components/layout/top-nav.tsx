@@ -1,5 +1,5 @@
 "use client"
-import { ChevronLeft, ChevronRight, MessageCircle, Bell, User, DotSquareIcon } from "lucide-react"
+import { ChevronLeft, ChevronRight, User } from "lucide-react"
 
 const mockBookmarks = [
   { id: "champagne-domiciano", label: "Champagne Domiciano" },
@@ -46,36 +46,16 @@ export function TopNav({
         >
           <ChevronRight className="w-4 h-4" />
         </button>
+
+        <div className="flex items-center gap-2.5 px-3 py-1.5 border border-border rounded-lg bg-background/50 hover:bg-background transition-colors cursor-pointer ml-3">
+          <div className="p-1.5 bg-sidebar-accent rounded-md">
+            <User className="w-4 h-4 text-navbar-foreground" />
+          </div>
+          <span className="text-sm font-medium text-navbar-foreground">In Vino Veritás - Admin</span>
+        </div>
       </div>
 
-      <div className="h-6 w-px bg-border mx-4" />
-
-      <div className="flex items-center gap-1 flex-1 justify-start">
-        {mockBookmarks.map((bookmark) => (
-          <button
-            key={bookmark.id}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs text-navbar-foreground/70 hover:text-navbar-foreground hover:bg-gray-100 transition-colors cursor-pointer"
-          >
-            <DotSquareIcon className="w-3.5 h-3.5" />
-            <span className="font-medium">{bookmark.label}</span>
-          </button>
-        ))}
-      </div>
-
-      <div className="h-6 w-px bg-border mx-4" />
-
-      <div className="flex items-center mr-5 gap-[42px]">
-        <button className="p-2 text-navbar-foreground/70 hover:text-navbar-foreground hover:bg-navbar-accent rounded-md transition-colors">
-          <MessageCircle className="w-5 h-5" />
-        </button>
-        <button className="p-2 text-navbar-foreground/70 hover:text-navbar-foreground hover:bg-navbar-accent rounded-md transition-colors">
-          <Bell className="w-5 h-5" />
-        </button>
-
-        <button className="p-2 text-navbar-foreground/70 hover:text-navbar-foreground hover:bg-navbar-accent rounded-md transition-colors mr-0">
-          <User className="w-5 h-5" />
-        </button>
-      </div>
+      <div className="flex-1" />
     </div>
   )
 }

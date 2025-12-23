@@ -4,9 +4,8 @@ import { useState } from "react"
 import { Sidebar } from "@/components/layout/sidebar"
 import { TopNav } from "@/components/layout/top-nav"
 import { UtilityBar } from "@/components/layout/utility-bar"
-import { StockIntelligenceWidgets } from "@/components/widgets/stock-intelligence-widgets"
-import { ItemsGrid } from "@/components/items/items-grid"
 import { ItemDetailPanel } from "@/components/items/item-detail-panel"
+import { ItemsGrid } from "@/components/items/items-grid"
 import { NuevoItemModal } from "@/components/modals/nuevo-item-modal"
 import { NuevoItemConVariantesModal } from "@/components/modals/nuevo-item-con-variantes-modal"
 import { TemplateModal } from "@/components/modals/template-modal"
@@ -23,7 +22,6 @@ import type { Item } from "@/lib/types"
 export default function Page() {
   const [isSaving, setIsSaving] = useState(false)
   const [itemCreated, setItemCreated] = useState(false)
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true)
 
   const {
     items,
@@ -71,10 +69,8 @@ export default function Page() {
     setItemUbicacion,
     handleRestoreNuevoItemConVariantes,
   } = useModals()
+
   const {
-    searchQuery,
-    setSearchQuery,
-    hoveredSearch,
     hoveredDropdown,
     showNuevoDropdown,
     setShowNuevoDropdown,
@@ -84,14 +80,11 @@ export default function Page() {
     gridSizeDropdownOpen,
     setGridSizeDropdownOpen,
     setGridSize,
-    handleSearchMouseEnter,
-    handleSearchMouseLeave,
     handleDropdownMouseEnter,
     handleDropdownMouseLeave,
-    getFilteredDropdownItems,
-    hasMatchingItems,
     handleCloseDropdowns,
   } = useSidebar()
+
   const {
     selectedItem,
     setSelectedItem,
@@ -215,32 +208,17 @@ export default function Page() {
         <Sidebar
           sidebarItems={SIDEBAR_ITEMS}
           bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          hoveredSearch={hoveredSearch}
           hoveredDropdown={hoveredDropdown}
-          handleSearchMouseEnter={handleSearchMouseEnter}
-          handleSearchMouseLeave={handleSearchMouseLeave}
-          handleDropdownMouseEnter={handleDropdownMouseEnter}
-          handleDropdownMouseLeave={handleDropdownMouseLeave}
-          getFilteredDropdownItems={getFilteredDropdownItems}
-          hasMatchingItems={hasMatchingItems}
-          isExpanded={isSidebarExpanded}
-          setIsExpanded={setIsSidebarExpanded}
+          onDropdownOpen={handleDropdownMouseEnter}
+          onDropdownClose={handleDropdownMouseLeave}
         />
         {(showNuevoItemModal || showNuevoItemConVariantesModal) && (
-          <div
-            className={`fixed top-0 left-0 h-screen bg-black/50 z-[60] pointer-events-none transition-all duration-300 ${
-              isSidebarExpanded ? "w-64" : "w-16"
-            }`}
-          />
+          <div className="fixed top-0 left-0 h-screen bg-black/50 z-[60] pointer-events-none w-20" />
         )}
       </div>
 
       {/* Main Content Area */}
-      <div
-        className={`flex-1 flex flex-col transition-all duration-300 bg-slate-50 ${isSidebarExpanded ? "ml-64" : "ml-16"}`}
-      >
+      <div className="flex-1 flex flex-col bg-slate-50 ml-20">
         <TopNav
           currentView={currentView}
           navigationHistory={navigationHistory}
@@ -251,13 +229,13 @@ export default function Page() {
           onNavigateForward={handleNavigateForward}
           onRestoreTab={handleRestoreTab}
           onCloseTab={handleCloseTabFromNavbar}
-          isExpanded={isSidebarExpanded}
+          isExpanded={false}
         />
 
         <div
-          className="fixed top-12 right-0 left-0 h-4 z-[39] pointer-events-none transition-all duration-300"
+          className="fixed top-12 right-0 left-0 h-4 z-[39] pointer-events-none"
           style={{
-            left: isSidebarExpanded ? "256px" : "64px",
+            left: "80px",
             backdropFilter: "blur(2px)",
             WebkitBackdropFilter: "blur(2px)",
           }}
@@ -275,16 +253,8 @@ export default function Page() {
           onGuardar={handleGuardar}
           isSaving={isSaving}
           itemCreated={itemCreated}
-          isExpanded={isSidebarExpanded}
+          isExpanded={false}
         />
-
-        {!selectedItem && (
-          <StockIntelligenceWidgets
-            handleOpenNuevoItem={handleOpenNuevoItem}
-            handleOpenNuevoItemConVariantes={handleOpenNuevoItemConVariantes}
-            isExpanded={isSidebarExpanded}
-          />
-        )}
 
         <main className="flex-1 transition-all duration-200 bg-[rgba(250,251,253,1)]">
           {selectedItem ? (
@@ -305,7 +275,7 @@ export default function Page() {
               onDuplicate={(item) => console.log("Duplicate", item)}
               onDelete={handleDeleteWithTracking}
               variantChangeHandlers={{}}
-              isExpanded={isSidebarExpanded}
+              isExpanded={false}
             />
           ) : (
             <div className="px-8 pb-8">
@@ -326,7 +296,9 @@ export default function Page() {
                   gridSizeDropdownOpen={gridSizeDropdownOpen}
                   setGridSizeDropdownOpen={setGridSizeDropdownOpen}
                   setGridSize={setGridSize}
-                  isExpanded={isSidebarExpanded}
+                  isExpanded={false}
+                  handleOpenNuevoItem={handleOpenNuevoItem}
+                  handleOpenNuevoItemConVariantes={handleOpenNuevoItemConVariantes}
                 />
               </div>
             </div>

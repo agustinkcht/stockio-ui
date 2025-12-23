@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { ChevronDown, ChevronRight, Copy, MoreVertical, Layers, DollarSign, Trash2 } from "lucide-react"
+import { ChevronDown, ChevronRight, Copy, MoreVertical, Layers, Trash2 } from "lucide-react"
 import type { Item } from "@/lib/types"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
@@ -63,7 +63,6 @@ export function ItemCard({
   isLastChild = false,
 }: ItemCardProps) {
   const [isHovered, setIsHovered] = useState(false)
-  const [isDebounced, setIsDebounced] = useState(false)
   const [showTransition, setShowTransition] = useState(false)
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -107,14 +106,10 @@ export function ItemCard({
   const handleMouseEnter = () => {
     setIsHovered(true)
     setShowTransition(true)
-    hoverTimeoutRef.current = setTimeout(() => {
-      setIsDebounced(true)
-    }, 900)
   }
 
   const handleMouseLeave = () => {
     setIsHovered(false)
-    setIsDebounced(false)
     setShowTransition(true)
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current)
@@ -126,12 +121,10 @@ export function ItemCard({
       clearTimeout(hoverTimeoutRef.current)
     }
     setShowTransition(false)
-    setIsDebounced(true)
   }
 
   const handleButtonMouseLeave = () => {
     if (!isHovered) {
-      setIsDebounced(false)
       setShowTransition(false)
     }
   }
@@ -159,16 +152,15 @@ export function ItemCard({
             }}
             className={`relative left-[-7px] h-4.5 w-4.5 transition-colors cursor-pointer flex items-center justify-center text-sidebar-accent rounded-full ml-0 border shadow-xs border-slate-300 ${
               isSelected ? "bg-sky-950 border-primary hover:opacity-90" : "bg-transparent border-border"
-            } ${!isDebounced && !isSelected ? "opacity-0" : "opacity-100"} ${showTransition ? "transition-opacity" : ""}`}
+            } ${!isHovered && !isSelected ? "opacity-0" : "opacity-100"} ${showTransition ? "transition-opacity" : ""}`}
           ></button>
         </div>
 
         <div
-          // 22 - 14 - 9 / 22 - 16 - 10
           className={`flex-1 border-solid mb-0 border-slate-200/65 shadow-md ${gridSize === "lg" ? "h-22" : gridSize === "md" ? "h-16" : "h-10"} ${roundedClass} grid ${
             item.isAgrupador || item.hasVariants
-              ? `grid-cols-14 bg-white border border-border hover:bg-gray-50 transition-colors cursor-pointer overflow-hidden`
-              : "grid-cols-14 bg-white border border-border overflow-hidden"
+              ? `grid-cols-14 ${isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors cursor-pointer overflow-hidden`
+              : `grid-cols-14 ${isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors overflow-hidden`
           }`}
           onClick={(e) => {
             if (item.hasVariants || item.isAgrupador) {
@@ -179,7 +171,7 @@ export function ItemCard({
           {item.isAgrupador || item.hasVariants ? (
             <>
               <div
-                className={`col-span-4 flex flex-col justify-center h-full bg-white px-4 cursor-pointer transition-colors hover:bg-gray-50 border-r border-slate-100`}
+                className={`col-span-4 flex flex-col justify-center h-full px-4 cursor-pointer transition-colors border-r border-slate-100`}
                 onClick={(e) => {
                   e.stopPropagation()
                   onItemClick(item, "info", true)
@@ -210,19 +202,27 @@ export function ItemCard({
               </div>
 
               <div
-                className={`col-span-2 h-full flex items-center justify-center bg-white px-4 border-r border-slate-100`}
+                className={`col-span-2 h-full flex items-center justify-center px-4 border-r border-slate-100`}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onItemClick(item, "info", true)
+                }}
               >
                 <span className="text-sm text-card-foreground">{item.marca || "-"}</span>
               </div>
 
               <div
-                className={`col-span-2 h-full flex items-center justify-center bg-white px-4 border-r border-slate-100`}
+                className={`col-span-2 h-full flex items-center justify-center px-4 border-r border-slate-100`}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onItemClick(item, "info", true)
+                }}
               >
                 <span className="text-sm text-card-foreground">{item.categoria || "-"}</span>
               </div>
 
               <div
-                className={`col-span-3 h-full flex items-center justify-center bg-white border-r border-slate-100 ${
+                className={`col-span-3 h-full flex items-center justify-center px-4 border-slate-100 border-r-0 ${
                   item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
                 } px-4`}
               ></div>
@@ -230,11 +230,9 @@ export function ItemCard({
           ) : (
             <>
               <div
-                className={`col-span-4 flex flex-col justify-center h-full border-r bg-white border-slate-100 ${
+                className={`col-span-4 flex flex-col justify-center h-full border-r border-slate-100 ${
                   item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
-                } px-4 cursor-pointer transition-colors ${
-                  item.hasVariants || item.isAgrupador ? "hover:bg-gray-50" : "hover:bg-gray-50"
-                }`}
+                } px-4 cursor-pointer transition-colors`}
                 onClick={(e) => {
                   e.stopPropagation()
                   if (item.hasVariants || item.isAgrupador) {
@@ -285,9 +283,13 @@ export function ItemCard({
               </div>
 
               <div
-                className={`col-span-2 h-full flex items-center justify-center border-r bg-white border-slate-100 ${
+                className={`col-span-2 h-full flex items-center justify-center border-r border-slate-100 ${
                   item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
-                } px-4`}
+                } px-4 cursor-pointer transition-colors`}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onItemClick(item, "info", false)
+                }}
               >
                 <span
                   className={`${gridSize === "sm" ? "text-sm" : "text-sm"} ${
@@ -303,9 +305,13 @@ export function ItemCard({
               </div>
 
               <div
-                className={`col-span-2 h-full flex items-center justify-center border-r bg-white border-slate-100 ${
+                className={`col-span-2 h-full flex items-center justify-center border-r border-slate-100 ${
                   item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
-                } px-4`}
+                } px-4 cursor-pointer transition-colors`}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onItemClick(item, "info", false)
+                }}
               >
                 <span
                   className={`${gridSize === "sm" ? "text-sm" : "text-sm"} ${
@@ -321,7 +327,7 @@ export function ItemCard({
               </div>
 
               <div
-                className="col-span-3 h-full flex items-center bg-white px-4 cursor-pointer hover:bg-gray-50 transition-colors border-r border-slate-100"
+                className="col-span-3 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100"
                 onClick={(e) => {
                   e.stopPropagation()
                   onItemClick(item, "atributos")
@@ -405,16 +411,16 @@ export function ItemCard({
               </div>
 
               {item.hasVariants ? (
-                <div className="col-span-3 h-full flex items-center justify-center bg-white px-4">
+                <div className="col-span-3 h-full flex items-center justify-center px-4">
                   <span className="text-sm text-container-item-foreground/80">{item.variantCount} variantes</span>
                 </div>
               ) : item.isAgrupador ? (
-                <div className="col-span-3 h-full flex items-center justify-center bg-white px-4">
+                <div className="col-span-3 h-full flex items-center justify-center px-4">
                   <span className="text-sm text-container-item-foreground/80">{item.itemCount} items</span>
                 </div>
               ) : (
                 <div
-                  className="col-span-3 h-full flex items-center bg-white px-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                  className="col-span-3 h-full flex items-center px-4 cursor-pointer transition-colors"
                   onClick={(e) => {
                     e.stopPropagation()
                     onItemClick(item, "stock")
@@ -458,7 +464,7 @@ export function ItemCard({
         </div>
 
         <div
-          className={`flex items-center gap-2 px-3 ${!isDebounced ? "opacity-0" : "opacity-100"} transition-opacity duration-300`}
+          className={`flex items-center gap-2 px-3 ${!isHovered ? "opacity-0" : "opacity-100"} transition-opacity duration-300`}
           onMouseEnter={handleButtonMouseEnter}
           onMouseLeave={handleButtonMouseLeave}
         >
@@ -484,20 +490,8 @@ export function ItemCard({
               <DropdownMenuItem
                 onClick={(e) => {
                   e.stopPropagation()
-                  // TODO: Implement ver en listas de precio functionality
+                  onDelete?.(item)
                 }}
-              >
-                <DollarSign className="w-4 h-4 mr-2" />
-                Ver en Listas de Precios
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation()
-                  if (onDelete) {
-                    onDelete(item)
-                  }
-                }}
-                className="text-red-600 focus:text-red-600"
               >
                 <Trash2 className="w-4 h-4 mr-2" />
                 Eliminar

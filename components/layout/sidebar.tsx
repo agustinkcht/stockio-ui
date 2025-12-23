@@ -1,243 +1,180 @@
 "use client"
 
-import { Search, PanelLeftClose, PanelLeftOpen } from "lucide-react"
+import { useRef } from "react"
 import type { SidebarItem } from "@/lib/types"
 
 interface SidebarProps {
   sidebarItems: SidebarItem[]
   bottomSidebarItems: SidebarItem[]
-  searchQuery: string
-  setSearchQuery: (query: string) => void
-  hoveredSearch: boolean
   hoveredDropdown: number | null
-  handleSearchMouseEnter: () => void
-  handleSearchMouseLeave: () => void
-  handleDropdownMouseEnter: (index: number) => void
-  handleDropdownMouseLeave: () => void
-  getFilteredDropdownItems: (items: string[]) => string[]
-  hasMatchingItems: (items: string[]) => boolean
-  isExpanded: boolean
-  setIsExpanded: (expanded: boolean) => void
+  onDropdownOpen: (index: number) => void
+  onDropdownClose: () => void
 }
 
 export function Sidebar({
   sidebarItems,
   bottomSidebarItems,
-  searchQuery,
-  setSearchQuery,
-  hoveredSearch,
   hoveredDropdown,
-  handleSearchMouseEnter,
-  handleSearchMouseLeave,
-  handleDropdownMouseEnter,
-  handleDropdownMouseLeave,
-  getFilteredDropdownItems,
-  hasMatchingItems,
-  isExpanded,
-  setIsExpanded,
+  onDropdownOpen,
+  onDropdownClose,
 }: SidebarProps) {
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const openTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  const handleModuleEnter = (index: number, hasDropdown: boolean) => {
+    console.log("[v0] Module enter:", index, "hasDropdown:", hasDropdown)
+
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current)
+      closeTimeoutRef.current = null
+    }
+    if (openTimeoutRef.current) {
+      clearTimeout(openTimeoutRef.current)
+      openTimeoutRef.current = null
+    }
+
+    if (hasDropdown) {
+      onDropdownOpen(index)
+    } else {
+      onDropdownClose()
+    }
+  }
+
+  const handleModuleLeave = (hasDropdown: boolean) => {
+    console.log("[v0] Module leave, hasDropdown:", hasDropdown)
+
+    if (!hasDropdown) return
+
+    if (openTimeoutRef.current) {
+      clearTimeout(openTimeoutRef.current)
+      openTimeoutRef.current = null
+    }
+
+    closeTimeoutRef.current = setTimeout(() => {
+      onDropdownClose()
+      closeTimeoutRef.current = null
+    }, 250)
+  }
+
+  const handleDropdownEnter = () => {
+    console.log("[v0] Dropdown enter")
+
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current)
+      closeTimeoutRef.current = null
+    }
+    if (openTimeoutRef.current) {
+      clearTimeout(openTimeoutRef.current)
+      openTimeoutRef.current = null
+    }
+  }
+
+  const handleDropdownLeave = () => {
+    console.log("[v0] Dropdown leave")
+
+    if (openTimeoutRef.current) {
+      clearTimeout(openTimeoutRef.current)
+      openTimeoutRef.current = null
+    }
+
+    closeTimeoutRef.current = setTimeout(() => {
+      onDropdownClose()
+      closeTimeoutRef.current = null
+    }, 250)
+  }
+
   return (
-    <div
-      className={`${isExpanded ? "w-64" : "w-16"} blur-glass border-r px-2 h-screen transition-all duration-300 flex flex-col fixed left-0 top-0 z-50 border-sidebar bg-[rgba(253,254,254,1)]`}
-    >
-      <div className="flex items-center justify-between py-4 px-2 pb-2.5 pt-[9px] pl-[7px]">
-        <div className="flex items-center gap-4">
-          {isExpanded && <span className="text-sidebar-foreground font-semibold text-lg">Stockio</span>}
-        </div>
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="w-8 h-8 flex items-center justify-center rounded-md text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors cursor-pointer"
-          title={isExpanded ? "Colapsar sidebar" : "Expandir sidebar"}
-        >
-          {isExpanded ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
-        </button>
+    <div className="w-20 border-r h-screen flex flex-col fixed left-0 top-0 z-50 border-sidebar bg-[rgba(253,254,254,1)]">
+      {/* Logo */}
+      <div className="flex items-center justify-center py-4 px-2">
+        <span className="text-sidebar-foreground font-bold text-xl">S</span>
       </div>
 
-      {isExpanded ? (
-        <div className="relative px-2 mb-2.5">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black opacity-100 w-4 h-4 z-10" />
-            <input
-              type="text"
-              placeholder="Buscar módulos..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border shadow-sm rounded-md text-gray-600 placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 bg-white backdrop-blur-sm transition-all border-[rgba(202,213,227,0.842391304347826)] h-8 text-xs"
-            />
-          </div>
-        </div>
-      ) : (
-        <div
-          className="relative px-2 mb-2.5"
-          onMouseEnter={handleSearchMouseEnter}
-          onMouseLeave={handleSearchMouseLeave}
-        >
-          <div className="flex justify-center">
-            <button
-              className={`w-12 h-8 flex items-center justify-center rounded-md transition-all cursor-pointer ${
-                hoveredSearch || searchQuery
-                  ? "bg-sidebar-accent text-sidebar-foreground"
-                  : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-              } ${hoveredDropdown !== null && !hoveredSearch ? "blur-[1.5px] opacity-25" : ""}`}
-            >
-              <Search className="w-5 h-5 flex-shrink-0" />
-            </button>
-          </div>
+      {/* Main Navigation */}
+      <nav className="flex-1 space-y-1 px-2">
+        {sidebarItems.map((item, index) => {
+          const isHovered = hoveredDropdown === index
+          const hasDropdown = item.hasDropdown && item.dropdownItems && item.dropdownItems.length > 0
 
-          {hoveredSearch && (
-            <>
-              <div
-                className="absolute left-full top-0 w-2 h-8 z-[200]"
-                onMouseEnter={handleSearchMouseEnter}
-                onMouseLeave={handleSearchMouseLeave}
-              />
-              <div
-                className="absolute left-full top-0 ml-2 w-64 bg-popover border border-border rounded-md shadow-lg z-[200] p-3"
-                onMouseEnter={handleSearchMouseEnter}
-                onMouseLeave={handleSearchMouseLeave}
+          return (
+            <div key={index} className={`relative ${isHovered ? "z-[201]" : "z-[100]"}`}>
+              {/* Module Button */}
+              <button
+                className="flex flex-col items-center gap-1 w-full py-2 rounded-lg transition-colors cursor-pointer pt-0 relative z-[100]"
+                onMouseEnter={() => handleModuleEnter(index, hasDropdown)}
+                onMouseLeave={() => handleModuleLeave(hasDropdown)}
               >
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black opacity-100 w-4 h-4 z-10" />
-                  <input
-                    type="text"
-                    placeholder="Buscar módulos..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border shadow-sm rounded-md text-gray-600 placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 bg-white backdrop-blur-sm transition-all border-[rgba(202,213,227,0.842391304347826)]"
-                    autoFocus
+                {/* Icon Container - only this gets hover bg */}
+                <div
+                  className={`flex items-center justify-center size-8 rounded-md transition-colors ${
+                    item.active || isHovered ? "bg-gray-100" : "hover:bg-gray-100"
+                  }`}
+                >
+                  <item.icon
+                    className={`flex-shrink-0 size-5 ${
+                      item.active || isHovered ? "text-sidebar-foreground" : "text-sidebar-foreground/70"
+                    }`}
                   />
                 </div>
-              </div>
-            </>
-          )}
-        </div>
-      )}
 
-      <nav className={`flex-1 ${isExpanded ? "space-y-1" : "space-y-2"}`}>
-        {sidebarItems.map((item, index) => (
-          <div
-            key={index}
-            className={`relative transition-all duration-300 ${
-              hoveredDropdown !== null && hoveredDropdown !== index && !hoveredSearch ? "blur-[1px] opacity-25" : ""
-            }`}
-            onMouseEnter={() => item.hasDropdown && !isExpanded && handleDropdownMouseEnter(index)}
-            onMouseLeave={() => item.hasDropdown && !isExpanded && handleDropdownMouseLeave()}
-          >
-            {isExpanded ? (
-              <button
-                onClick={() => item.hasDropdown && handleDropdownMouseEnter(index)}
-                className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-md transition-colors bg-transparent cursor-pointer ${
-                  item.active || hoveredDropdown === index
-                    ? "bg-gray-100 text-sidebar-foreground"
-                    : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-gray-100"
-                }`}
-              >
-                <item.icon className="w-5 h-5 flex-shrink-0" />
-                <span className="text-sm font-medium">{item.label}</span>
+                {/* Label - no hover effect */}
+                <span className="text-[10px] font-medium text-center leading-tight px-1 max-w-full truncate text-sidebar-foreground/70">
+                  {item.label}
+                </span>
               </button>
-            ) : (
-              <button
-                className={`flex items-center justify-center w-12 h-[42px] mx-auto rounded-md transition-colors cursor-pointer ${
-                  item.active
-                    ? "bg-gray-100 text-sidebar-foreground"
-                    : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-gray-100"
-                }`}
-              >
-                <item.icon className="w-5 h-5 flex-shrink-0" />
-              </button>
-            )}
 
-            {!isExpanded && item.hasDropdown && hoveredDropdown === index && (
-              <>
+              {/* Dropdown Panel */}
+              {hasDropdown && isHovered && (
                 <div
-                  className="absolute left-full top-0 w-2 h-[42px] z-[200]"
-                  onMouseEnter={() => handleDropdownMouseEnter(index)}
-                  onMouseLeave={handleDropdownMouseLeave}
-                />
-                <div
-                  className="absolute left-full top-0 ml-2 w-56 bg-popover border border-border rounded-md shadow-lg z-[200] animate-in fade-in-0 slide-in-from-left-2 duration-200"
-                  onMouseEnter={() => handleDropdownMouseEnter(index)}
-                  onMouseLeave={handleDropdownMouseLeave}
-                  style={{ minHeight: "fit-content" }}
+                  className="absolute left-full top-0 ml-2 z-[200] pointer-events-auto"
+                  onMouseEnter={handleDropdownEnter}
+                  onMouseLeave={handleDropdownLeave}
                 >
-                  <div className="px-4 py-3 border-b border-border">
-                    <h3 className="text-sm font-semibold text-popover-foreground uppercase tracking-wider">
-                      {item.label}
-                    </h3>
-                  </div>
-                  <div className="py-2">
-                    {(searchQuery ? getFilteredDropdownItems(item.dropdownItems) : item.dropdownItems).map(
-                      (dropdownItem, dropdownIndex) => (
+                  <div className="w-56 bg-popover border border-border rounded-md shadow-lg animate-in fade-in-0 slide-in-from-left-2 duration-150">
+                    {/* Dropdown Header */}
+                    <div className="px-4 py-3 border-b border-border">
+                      <h3 className="text-sm font-semibold text-popover-foreground uppercase tracking-wider">
+                        {item.label}
+                      </h3>
+                    </div>
+
+                    {/* Dropdown Items */}
+                    <div className="py-2">
+                      {item.dropdownItems?.map((dropdownItem, dropdownIndex) => (
                         <button
                           key={dropdownIndex}
                           onClick={() => {
                             if (dropdownItem === "Depósitos") {
                               window.location.href = "/depositos"
                             }
+                            onDropdownClose()
                           }}
-                          className={`w-full text-left px-4 py-2 text-sm cursor-pointer ${
-                            searchQuery && dropdownItem.toLowerCase().includes(searchQuery.toLowerCase())
-                              ? "text-popover-foreground bg-gray-100 hover:bg-gray-100/80"
-                              : "text-muted-foreground hover:text-popover-foreground hover:bg-gray-100/50"
-                          }`}
+                          className="w-full text-left px-4 py-2 text-sm cursor-pointer text-muted-foreground hover:text-popover-foreground hover:bg-gray-100/50 transition-colors"
                         >
                           {dropdownItem}
                         </button>
-                      ),
-                    )}
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </>
-            )}
-
-            {isExpanded && item.hasDropdown && hoveredDropdown === index && (
-              <div className="absolute left-0 right-0 top-full mt-1 space-y-0.5 animate-in fade-in-0 slide-in-from-top-1 duration-200 z-[100] rounded-md border border-border shadow-sm py-1 bg-slate-100">
-                {(searchQuery ? getFilteredDropdownItems(item.dropdownItems) : item.dropdownItems).map(
-                  (dropdownItem, dropdownIndex) => (
-                    <button
-                      key={dropdownIndex}
-                      onClick={() => {
-                        if (dropdownItem === "Depósitos") {
-                          window.location.href = "/depositos"
-                        }
-                      }}
-                      className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors cursor-pointer ${
-                        searchQuery && dropdownItem.toLowerCase().includes(searchQuery.toLowerCase())
-                          ? "text-sidebar-foreground bg-gray-100/70 hover:bg-gray-100"
-                          : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-gray-100/50"
-                      }`}
-                    >
-                      {dropdownItem}
-                    </button>
-                  ),
-                )}
-              </div>
-            )}
-          </div>
-        ))}
+              )}
+            </div>
+          )
+        })}
       </nav>
 
-      <nav className={`mt-auto mb-4 ${isExpanded ? "space-y-1" : "space-y-2"}`}>
+      {/* Bottom Navigation */}
+      <nav className="mt-auto mb-4 space-y-1 px-2">
         {bottomSidebarItems.map((item, index) => (
           <div key={index}>
-            {isExpanded ? (
-              <button
-                className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-md transition-colors cursor-pointer text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-gray-100 ${
-                  hoveredDropdown !== null && !hoveredSearch ? "blur-[1.5px] opacity-25" : ""
-                }`}
-              >
-                <item.icon className="w-5 h-5 flex-shrink-0" />
-                <span className="text-sm font-medium">{item.label}</span>
-              </button>
-            ) : (
-              <button
-                className={`flex items-center justify-center w-12 h-[42px] mx-auto rounded-md transition-colors cursor-pointer text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-gray-100 ${
-                  hoveredDropdown !== null && !hoveredSearch ? "blur-[1.5px] opacity-25" : ""
-                }`}
-              >
-                <item.icon className="w-5 h-5 flex-shrink-0" />
-              </button>
-            )}
+            <button className="flex flex-col items-center gap-1 w-full py-2 rounded-lg transition-colors cursor-pointer">
+              <div className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-gray-100 transition-colors">
+                <item.icon className="w-5 h-5 flex-shrink-0 text-sidebar-foreground/70" />
+              </div>
+              <span className="text-[10px] font-medium text-center leading-tight px-1 max-w-full truncate text-sidebar-foreground/70">
+                {item.label}
+              </span>
+            </button>
           </div>
         ))}
       </nav>
