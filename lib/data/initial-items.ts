@@ -57,6 +57,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "10 años" },
         ],
         stock: { total: "60", reservado: "12", disponible: "48" },
+        precio: { costo: 45000, margen: 50, iva: 21, precioFinal: 81675 },
       },
       {
         name: "Proemio Grand Reserve",
@@ -75,6 +76,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "8 años" },
         ],
         stock: { total: "54", reservado: "10", disponible: "44" },
+        precio: { costo: 42000, margen: 50, iva: 21, precioFinal: 76230 },
       },
 
       // --- CABERNET SAUVIGNON ---
@@ -95,6 +97,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "10 años" },
         ],
         stock: { total: "48", reservado: "9", disponible: "39" },
+        precio: { costo: 48000, margen: 50, iva: 21, precioFinal: 87120 },
       },
       {
         name: "Proemio Grand Reserve",
@@ -113,6 +116,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "8 años" },
         ],
         stock: { total: "42", reservado: "8", disponible: "34" },
+        precio: { costo: 46000, margen: 50, iva: 21, precioFinal: 83490 },
       },
 
       // --- SYRAH ---
@@ -133,6 +137,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "9 años" },
         ],
         stock: { total: "36", reservado: "6", disponible: "30" },
+        precio: { costo: 44000, margen: 50, iva: 21, precioFinal: 79860 },
       },
       {
         name: "Proemio Grand Reserve",
@@ -151,6 +156,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "8 años" },
         ],
         stock: { total: "32", reservado: "5", disponible: "27" },
+        precio: { costo: 43000, margen: 50, iva: 21, precioFinal: 78045 },
       },
     ],
   },
@@ -211,6 +217,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "10 años" },
         ],
         stock: { total: "40", reservado: "8", disponible: "32" },
+        precio: { costo: 52000, margen: 50, iva: 21, precioFinal: 94380 },
       },
       {
         name: "Proemio Ícono",
@@ -232,6 +239,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "9 años" },
         ],
         stock: { total: "36", reservado: "7", disponible: "29" },
+        precio: { costo: 49000, margen: 50, iva: 21, precioFinal: 88890 },
       },
 
       // --- CABERNET SAUVIGNON ---
@@ -255,6 +263,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "10 años" },
         ],
         stock: { total: "34", reservado: "6", disponible: "28" },
+        precio: { costo: 50000, margen: 50, iva: 21, precioFinal: 90750 },
       },
       {
         name: "Proemio Ícono",
@@ -276,6 +285,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "9 años" },
         ],
         stock: { total: "30", reservado: "5", disponible: "25" },
+        precio: { costo: 48000, margen: 50, iva: 21, precioFinal: 87120 },
       },
 
       // --- PETIT VERDOT ---
@@ -299,6 +309,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "10 años" },
         ],
         stock: { total: "26", reservado: "4", disponible: "22" },
+        precio: { costo: 51000, margen: 50, iva: 21, precioFinal: 92415 },
       },
       {
         name: "Proemio Ícono",
@@ -320,6 +331,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "9 años" },
         ],
         stock: { total: "24", reservado: "4", disponible: "20" },
+        precio: { costo: 49000, margen: 50, iva: 21, precioFinal: 88890 },
       },
     ],
   },
@@ -386,6 +398,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Pastas y carnes blancas" },
         ],
         stock: { total: "40", reservado: "5", disponible: "35" },
+        precio: { costo: 15000, margen: 50, iva: 21, precioFinal: 27150 },
       },
 
       // --- SYRAH ---
@@ -411,6 +424,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Carnes y platos especiados" },
         ],
         stock: { total: "38", reservado: "4", disponible: "34" },
+        precio: { costo: 15000, margen: 50, iva: 21, precioFinal: 27150 },
       },
 
       // --- CHARDONNAY ---
@@ -436,6 +450,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Pescados y pastas cremosas" },
         ],
         stock: { total: "18", reservado: "2", disponible: "16" },
+        precio: { costo: 16000, margen: 50, iva: 21, precioFinal: 29040 },
       },
 
       // --- CABERNET ---
@@ -461,6 +476,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Carnes y quesos duros" },
         ],
         stock: { total: "22", reservado: "3", disponible: "19" },
+        precio: { costo: 15000, margen: 50, iva: 21, precioFinal: 27150 },
       },
 
       // --- SAUVIGNON BLANC ---
@@ -486,6 +502,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Ensaladas y mariscos" },
         ],
         stock: { total: "26", reservado: "3", disponible: "23" },
+        precio: { costo: 14000, margen: 50, iva: 21, precioFinal: 25410 },
       },
 
       // --- TORRONTÉS ---
@@ -511,6 +528,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Comida asiática y quesos suaves" },
         ],
         stock: { total: "30", reservado: "4", disponible: "26" },
+        precio: { costo: 14000, margen: 50, iva: 21, precioFinal: 25410 },
       },
 
       // --- MALBEC ROSADO ---
@@ -536,10 +554,10 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Aperitivos y picadas" },
         ],
         stock: { total: "28", reservado: "3", disponible: "25" },
+        precio: { costo: 15000, margen: 50, iva: 21, precioFinal: 27150 },
       },
     ],
   },
-  // Puna Reserva
   {
     name: "Puna Reserva",
     categoria: "Vinos",
@@ -593,6 +611,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "6 años" },
         ],
         stock: { total: "48", reservado: "6", disponible: "42" },
+        precio: { costo: 22000, margen: 50, iva: 21, precioFinal: 39930 },
       },
       {
         name: "Puna Reserva",
@@ -611,10 +630,10 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "7 años" },
         ],
         stock: { total: "36", reservado: "4", disponible: "32" },
+        precio: { costo: 23000, margen: 50, iva: 21, precioFinal: 41730 },
       },
     ],
   },
-  // Puna Gran Reserva
   {
     name: "Puna Gran Reserva",
     categoria: "Vinos",
@@ -630,12 +649,10 @@ export const INITIAL_ITEMS: Item[] = [
     volumenCantidad: 750,
     volumenUnidad: "ml",
     stock: { total: "24", reservado: "3", disponible: "21" },
-
     atributosPrincipales: [
       { key: "Varietal", value: "Malbec" },
       { key: "Año", value: "2020" },
     ],
-
     atributosInformativos: [
       { key: "Tipo de Vino", value: "Tinto" },
       { key: "Línea", value: "Gran Reserva" },
@@ -651,8 +668,8 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Maridaje", value: "Carnes rojas y platos intensos" },
       { key: "Estuche", value: "Caja" },
     ],
+    precio: { costo: 35000, margen: 50, iva: 21, precioFinal: 63525 },
   },
-
   {
     name: "Puna Helios",
     categoria: "Vinos",
@@ -708,6 +725,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "ABV", value: "" },
         ],
         stock: { total: "20", reservado: "2", disponible: "18" },
+        precio: { costo: 28000, margen: 50, iva: 21, precioFinal: 50820 },
       },
       {
         name: "Puna Helios",
@@ -728,6 +746,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "ABV", value: "" },
         ],
         stock: { total: "18", reservado: "2", disponible: "16" },
+        precio: { costo: 28000, margen: 50, iva: 21, precioFinal: 50820 },
       },
       {
         name: "Puna Helios",
@@ -749,6 +768,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "ABV", value: "" },
         ],
         stock: { total: "16", reservado: "2", disponible: "14" },
+        precio: { costo: 29000, margen: 50, iva: 21, precioFinal: 52605 },
       },
     ],
   },
@@ -806,6 +826,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "10 años" },
         ],
         stock: { total: "18", reservado: "3", disponible: "15" },
+        precio: { costo: 65000, margen: 50, iva: 21, precioFinal: 117975 },
       },
 
       // --- 2016 ---
@@ -826,6 +847,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "8 años" },
         ],
         stock: { total: "22", reservado: "4", disponible: "18" },
+        precio: { costo: 62000, margen: 50, iva: 21, precioFinal: 112530 },
       },
 
       // --- 2018 ---
@@ -846,6 +868,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "9 años" },
         ],
         stock: { total: "30", reservado: "6", disponible: "24" },
+        precio: { costo: 58000, margen: 50, iva: 21, precioFinal: 105190 },
       },
 
       // --- 2019 ---
@@ -866,6 +889,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "8 años" },
         ],
         stock: { total: "42", reservado: "7", disponible: "35" },
+        precio: { costo: 56000, margen: 50, iva: 21, precioFinal: 101640 },
       },
 
       // --- 2021 ---
@@ -886,6 +910,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "8 años" },
         ],
         stock: { total: "38", reservado: "6", disponible: "32" },
+        precio: { costo: 54000, margen: 50, iva: 21, precioFinal: 97860 },
       },
 
       // --- 2022 ---
@@ -906,6 +931,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "8 años" },
         ],
         stock: { total: "46", reservado: "9", disponible: "37" },
+        precio: { costo: 53000, margen: 50, iva: 21, precioFinal: 96090 },
       },
 
       // --- 2023 ---
@@ -926,6 +952,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "8 años" },
         ],
         stock: { total: "50", reservado: "10", disponible: "40" },
+        precio: { costo: 52000, margen: 50, iva: 21, precioFinal: 94380 },
       },
     ],
   },
@@ -990,6 +1017,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Carnes rojas, pastas y quesos curados" },
         ],
         stock: { total: "36", reservado: "5", disponible: "31" },
+        precio: { costo: 75000, margen: 50, iva: 21, precioFinal: 136125 },
       },
       {
         name: "Angélica Zapata Alta",
@@ -1004,7 +1032,7 @@ export const INITIAL_ITEMS: Item[] = [
         ],
         atributosInformativos: [
           { key: "Tipo de Vino", value: "Tinto" },
-          { key: "Perfil Sensorial", value: "Ciruela madura, cacao y especias dulces" },
+          { key: "Perfil Sensorial", value: "Ciruela madura, cacao suave, especias dulces" },
           { key: "Crianza", value: "18 meses en roble francés" },
           { key: "Tipo de Barrica", value: "Roble francés (≈50% nuevas)" },
           { key: "Potencial de Guarda", value: "10 años" },
@@ -1013,6 +1041,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Carnes a la parrilla y platos intensos" },
         ],
         stock: { total: "34", reservado: "4", disponible: "30" },
+        precio: { costo: 72000, margen: 50, iva: 21, precioFinal: 130680 },
       },
       {
         name: "Angélica Zapata Alta",
@@ -1036,6 +1065,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Cordero, carnes rojas y guisos" },
         ],
         stock: { total: "30", reservado: "4", disponible: "26" },
+        precio: { costo: 70000, margen: 50, iva: 21, precioFinal: 126750 },
       },
 
       // -------------------- CABERNET SAUVIGNON --------------------
@@ -1061,6 +1091,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Carnes rojas, hongos y platos especiados" },
         ],
         stock: { total: "28", reservado: "4", disponible: "24" },
+        precio: { costo: 75000, margen: 50, iva: 21, precioFinal: 136125 },
       },
       {
         name: "Angélica Zapata Alta",
@@ -1084,6 +1115,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Bife, estofados y quesos curados" },
         ],
         stock: { total: "26", reservado: "3", disponible: "23" },
+        precio: { costo: 72000, margen: 50, iva: 21, precioFinal: 130680 },
       },
       {
         name: "Angélica Zapata Alta",
@@ -1107,6 +1139,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Carnes rojas y platos intensos" },
         ],
         stock: { total: "22", reservado: "3", disponible: "19" },
+        precio: { costo: 70000, margen: 50, iva: 21, precioFinal: 126750 },
       },
 
       // -------------------- CABERNET FRANC --------------------
@@ -1132,6 +1165,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Carnes, platos con hierbas y quesos" },
         ],
         stock: { total: "20", reservado: "3", disponible: "17" },
+        precio: { costo: 75000, margen: 50, iva: 21, precioFinal: 136125 },
       },
       {
         name: "Angélica Zapata Alta",
@@ -1155,6 +1189,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Cordero y platos especiados" },
         ],
         stock: { total: "18", reservado: "2", disponible: "16" },
+        precio: { costo: 72000, margen: 50, iva: 21, precioFinal: 130680 },
       },
       {
         name: "Angélica Zapata Alta",
@@ -1178,6 +1213,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Carnes y platos con hongos" },
         ],
         stock: { total: "16", reservado: "2", disponible: "14" },
+        precio: { costo: 70000, margen: 50, iva: 21, precioFinal: 126750 },
       },
 
       // -------------------- MERLOT --------------------
@@ -1203,6 +1239,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Pastas, aves y carnes suaves" },
         ],
         stock: { total: "22", reservado: "3", disponible: "19" },
+        precio: { costo: 73000, margen: 50, iva: 21, precioFinal: 132330 },
       },
       {
         name: "Angélica Zapata Alta",
@@ -1226,6 +1263,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Carnes blancas y quesos semiduros" },
         ],
         stock: { total: "18", reservado: "2", disponible: "16" },
+        precio: { costo: 70000, margen: 50, iva: 21, precioFinal: 126750 },
       },
       {
         name: "Angélica Zapata Alta",
@@ -1249,6 +1287,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Pastas y carnes al horno" },
         ],
         stock: { total: "16", reservado: "2", disponible: "14" },
+        precio: { costo: 68000, margen: 50, iva: 21, precioFinal: 123030 },
       },
 
       // -------------------- CHARDONNAY --------------------
@@ -1274,6 +1313,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Pescados, mariscos y quesos suaves" },
         ],
         stock: { total: "26", reservado: "4", disponible: "22" },
+        precio: { costo: 70000, margen: 50, iva: 21, precioFinal: 126750 },
       },
       {
         name: "Angélica Zapata Alta",
@@ -1297,6 +1337,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Sushi, mariscos y pastas suaves" },
         ],
         stock: { total: "22", reservado: "3", disponible: "19" },
+        precio: { costo: 68000, margen: 50, iva: 21, precioFinal: 123030 },
       },
       {
         name: "Angélica Zapata Alta",
@@ -1320,6 +1361,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Pescados grasos y quesos semiblandos" },
         ],
         stock: { total: "18", reservado: "2", disponible: "16" },
+        precio: { costo: 66000, margen: 50, iva: 21, precioFinal: 119430 },
       },
     ],
   },
@@ -1355,6 +1397,7 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Temperatura de Servicio", value: "16–18°C" },
       { key: "Maridaje", value: "Asados y guisos intensos" },
     ],
+    precio: { costo: 18000, margen: 50, iva: 21, precioFinal: 32580 },
   },
   {
     name: "Chañarmuyo Clásico",
@@ -1402,6 +1445,7 @@ export const INITIAL_ITEMS: Item[] = [
         ],
         atributosInformativos: [{ key: "Perfil Sensorial", value: "Fruta roja, taninos suaves" }],
         stock: { total: "30", reservado: "4", disponible: "26" },
+        precio: { costo: 12000, margen: 50, iva: 21, precioFinal: 21720 },
       },
       {
         name: "Chañarmuyo Clásico",
@@ -1419,6 +1463,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Perfil Sensorial", value: "Fruta negra, especias y estructura equilibrada" },
         ],
         stock: { total: "26", reservado: "3", disponible: "23" },
+        precio: { costo: 13000, margen: 50, iva: 21, precioFinal: 23595 },
       },
       {
         name: "Chañarmuyo Clásico",
@@ -1433,6 +1478,7 @@ export const INITIAL_ITEMS: Item[] = [
         ],
         atributosInformativos: [{ key: "Perfil Sensorial", value: "Cítrico, notas a manzana verde" }],
         stock: { total: "22", reservado: "2", disponible: "20" },
+        precio: { costo: 13000, margen: 50, iva: 21, precioFinal: 23595 },
       },
       {
         name: "Chañarmuyo Clásico",
@@ -1447,6 +1493,7 @@ export const INITIAL_ITEMS: Item[] = [
         ],
         atributosInformativos: [{ key: "Perfil Sensorial", value: "Fruta roja y frescor" }],
         stock: { total: "24", reservado: "3", disponible: "21" },
+        precio: { costo: 12000, margen: 50, iva: 21, precioFinal: 21720 },
       },
     ],
   },
@@ -1499,6 +1546,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "10 años" },
         ],
         stock: { total: "18", reservado: "3", disponible: "15" },
+        precio: { costo: 30000, margen: 50, iva: 21, precioFinal: 54450 },
       },
       {
         name: "Chañarmuyo Gran Vino",
@@ -1516,6 +1564,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "9 años" },
         ],
         stock: { total: "20", reservado: "4", disponible: "16" },
+        precio: { costo: 30000, margen: 50, iva: 21, precioFinal: 54450 },
       },
       {
         name: "Chañarmuyo Gran Vino",
@@ -1533,6 +1582,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "12 años" },
         ],
         stock: { total: "16", reservado: "2", disponible: "14" },
+        precio: { costo: 32000, margen: 50, iva: 21, precioFinal: 58080 },
       },
       {
         name: "Chañarmuyo Gran Vino",
@@ -1550,6 +1600,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "11 años" },
         ],
         stock: { total: "18", reservado: "3", disponible: "15" },
+        precio: { costo: 32000, margen: 50, iva: 21, precioFinal: 58080 },
       },
       {
         name: "Chañarmuyo Gran Vino",
@@ -1567,6 +1618,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "10 años" },
         ],
         stock: { total: "22", reservado: "4", disponible: "18" },
+        precio: { costo: 30000, margen: 50, iva: 21, precioFinal: 54450 },
       },
       {
         name: "Chañarmuyo Gran Vino",
@@ -1584,6 +1636,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "9 años" },
         ],
         stock: { total: "24", reservado: "4", disponible: "20" },
+        precio: { costo: 30000, margen: 50, iva: 21, precioFinal: 54450 },
       },
       {
         name: "Chañarmuyo Gran Vino",
@@ -1601,6 +1654,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "11 años" },
         ],
         stock: { total: "20", reservado: "3", disponible: "17" },
+        precio: { costo: 31000, margen: 50, iva: 21, precioFinal: 56265 },
       },
       {
         name: "Chañarmuyo Gran Vino",
@@ -1618,6 +1672,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "10 años" },
         ],
         stock: { total: "22", reservado: "3", disponible: "19" },
+        precio: { costo: 30000, margen: 50, iva: 21, precioFinal: 54450 },
       },
     ],
   },
@@ -1670,6 +1725,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "10 años" },
         ],
         stock: { total: "18", reservado: "3", disponible: "15" },
+        precio: { costo: 38000, margen: 50, iva: 21, precioFinal: 68910 },
       },
       {
         name: "Chañarmuyo Viña Providencia",
@@ -1687,6 +1743,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "8 años" },
         ],
         stock: { total: "20", reservado: "4", disponible: "16" },
+        precio: { costo: 36000, margen: 50, iva: 21, precioFinal: 65160 },
       },
     ],
   },
@@ -1749,6 +1806,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Estuche", value: "Sin estuche" },
         ],
         stock: { total: "36", reservado: "4", disponible: "32" },
+        precio: { costo: 25000, margen: 50, iva: 21, precioFinal: 45375 },
       },
 
       // --- MALBEC (Estuche de Duelas) ---
@@ -1772,6 +1830,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Estuche", value: "Estuche de Duelas" },
         ],
         stock: { total: "18", reservado: "2", disponible: "16" },
+        precio: { costo: 28000, margen: 50, iva: 21, precioFinal: 50820 },
       },
 
       // --- BLEND (sin estuche) ---
@@ -1796,6 +1855,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Estuche", value: "Sin estuche" },
         ],
         stock: { total: "30", reservado: "3", disponible: "27" },
+        precio: { costo: 26000, margen: 50, iva: 21, precioFinal: 47130 },
       },
 
       // --- BLEND (Estuche de Duelas) ---
@@ -1820,6 +1880,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Estuche", value: "Estuche de Duelas" },
         ],
         stock: { total: "14", reservado: "2", disponible: "12" },
+        precio: { costo: 29000, margen: 50, iva: 21, precioFinal: 52605 },
       },
     ],
   },
@@ -1861,6 +1922,7 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Maridaje", value: "Carnes rojas, parrilla, pastas con salsas intensas" },
       { key: "Estuche", value: "Sin estuche" },
     ],
+    precio: { costo: 18000, margen: 50, iva: 21, precioFinal: 32580 },
   },
 
   {
@@ -1916,6 +1978,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "10 años" },
         ],
         stock: { total: "24", reservado: "3", disponible: "21" },
+        precio: { costo: 28000, margen: 50, iva: 21, precioFinal: 50820 },
       },
       {
         name: "Domiciano Gran Reserva",
@@ -1934,6 +1997,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Potencial de Guarda", value: "10 años" },
         ],
         stock: { total: "20", reservado: "2", disponible: "18" },
+        precio: { costo: 29000, margen: 50, iva: 21, precioFinal: 52605 },
       },
     ],
   },
@@ -1991,6 +2055,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Empanadas de carne" },
         ],
         stock: { total: "30", reservado: "4", disponible: "26" },
+        precio: { costo: 20000, margen: 50, iva: 21, precioFinal: 36300 },
       },
       {
         name: "Domiciano Reserva Nocturna",
@@ -2009,6 +2074,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Estofado de osobuco" },
         ],
         stock: { total: "24", reservado: "3", disponible: "21" },
+        precio: { costo: 21000, margen: 50, iva: 21, precioFinal: 38115 },
       },
       {
         name: "Domiciano Reserva Nocturna",
@@ -2027,6 +2093,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Cordero a las finas hierbas" },
         ],
         stock: { total: "22", reservado: "3", disponible: "19" },
+        precio: { costo: 20000, margen: 50, iva: 21, precioFinal: 36300 },
       },
     ],
   },
@@ -2066,6 +2133,7 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Maridaje", value: "Aperitivos, mariscos, sushi" },
       { key: "Estuche", value: "Sin estuche" },
     ],
+    precio: { costo: 16000, margen: 50, iva: 21, precioFinal: 29040 },
   },
 
   {
@@ -2124,6 +2192,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Sandwich de ojo de bife y provolone" },
         ],
         stock: { total: "28", reservado: "4", disponible: "24" },
+        precio: { costo: 15000, margen: 50, iva: 21, precioFinal: 27150 },
       },
 
       // Malbec
@@ -2144,6 +2213,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Pastas rellenas con bolognesa" },
         ],
         stock: { total: "34", reservado: "5", disponible: "29" },
+        precio: { costo: 14000, margen: 50, iva: 21, precioFinal: 25410 },
       },
 
       // Blanco Dulce
@@ -2164,6 +2234,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Cheesecake o crème brûlée" },
         ],
         stock: { total: "20", reservado: "3", disponible: "17" },
+        precio: { costo: 15000, margen: 50, iva: 21, precioFinal: 27150 },
       },
 
       // Blend (Malbec - Cabernet Franc)
@@ -2185,6 +2256,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "A elección (estilo relaxed)" },
         ],
         stock: { total: "18", reservado: "2", disponible: "16" },
+        precio: { costo: 15000, margen: 50, iva: 21, precioFinal: 27150 },
       },
 
       // Chardonnay
@@ -2205,6 +2277,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "A elección (estilo relaxed)" },
         ],
         stock: { total: "26", reservado: "4", disponible: "22" },
+        precio: { costo: 16000, margen: 50, iva: 21, precioFinal: 29040 },
       },
     ],
   },
@@ -2244,6 +2317,7 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Maridaje", value: "Postres, quesos suaves, frutas" },
       { key: "Estuche", value: "Sin estuche" },
     ],
+    precio: { costo: 15000, margen: 50, iva: 21, precioFinal: 27150 },
   },
   {
     name: "Domiciano Mistela",
@@ -2280,13 +2354,14 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Temperatura de Servicio", value: "8–10°C" },
       { key: "Estuche", value: "Sin estuche" },
     ],
+    precio: { costo: 12000, margen: 50, iva: 21, precioFinal: 21720 },
   },
   {
     name: "Salentein Single Vineyard",
-    categoria: "Vinos",
+    categoria: "Espumantes",
     hasVariants: true,
     isAgrupador: true,
-    sku: "VNO-SALSVYD",
+    sku: "ESP-SALSVYD",
     marca: "Salentein",
     proveedor: "Bodegas Salentein",
     formatoVenta: "unidad",
@@ -2339,6 +2414,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "ABV", value: "14.5%" },
         ],
         stock: { total: "18", reservado: "2", disponible: "16" },
+        precio: { costo: 60000, margen: 50, iva: 21, precioFinal: 108900 },
       },
       {
         name: "Salentein Single Vineyard",
@@ -2360,6 +2436,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "ABV", value: "14.5%" },
         ],
         stock: { total: "16", reservado: "2", disponible: "14" },
+        precio: { costo: 58000, margen: 50, iva: 21, precioFinal: 105190 },
       },
       {
         name: "Salentein Single Vineyard",
@@ -2381,6 +2458,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "ABV", value: "14.5%" },
         ],
         stock: { total: "14", reservado: "1", disponible: "13" },
+        precio: { costo: 56000, margen: 50, iva: 21, precioFinal: 101640 },
       },
 
       // --- CABERNET FRANC ---
@@ -2404,6 +2482,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "ABV", value: "14.5%" },
         ],
         stock: { total: "12", reservado: "1", disponible: "11" },
+        precio: { costo: 60000, margen: 50, iva: 21, precioFinal: 108900 },
       },
       {
         name: "Salentein Single Vineyard",
@@ -2425,6 +2504,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "ABV", value: "14.5%" },
         ],
         stock: { total: "12", reservado: "2", disponible: "10" },
+        precio: { costo: 58000, margen: 50, iva: 21, precioFinal: 105190 },
       },
       {
         name: "Salentein Single Vineyard",
@@ -2446,6 +2526,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "ABV", value: "14.5%" },
         ],
         stock: { total: "10", reservado: "1", disponible: "9" },
+        precio: { costo: 56000, margen: 50, iva: 21, precioFinal: 101640 },
       },
 
       // --- CHARDONNAY ---
@@ -2469,6 +2550,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "ABV", value: "13.5%" },
         ],
         stock: { total: "14", reservado: "2", disponible: "12" },
+        precio: { costo: 58000, margen: 50, iva: 21, precioFinal: 105190 },
       },
       {
         name: "Salentein Single Vineyard",
@@ -2490,6 +2572,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "ABV", value: "13.5%" },
         ],
         stock: { total: "12", reservado: "1", disponible: "11" },
+        precio: { costo: 56000, margen: 50, iva: 21, precioFinal: 101640 },
       },
       {
         name: "Salentein Single Vineyard",
@@ -2511,6 +2594,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "ABV", value: "13.5%" },
         ],
         stock: { total: "10", reservado: "1", disponible: "9" },
+        precio: { costo: 54000, margen: 50, iva: 21, precioFinal: 97860 },
       },
     ],
   },
@@ -2563,6 +2647,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Aperitivos, mariscos, sushi" },
         ],
         stock: { total: "24", reservado: "3", disponible: "21" },
+        precio: { costo: 22000, margen: 50, iva: 21, precioFinal: 39930 },
       },
       {
         name: "Salentein",
@@ -2580,6 +2665,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Mariscos, quesos suaves, aperitivos" },
         ],
         stock: { total: "18", reservado: "2", disponible: "16" },
+        precio: { costo: 24000, margen: 50, iva: 21, precioFinal: 43560 },
       },
       {
         name: "Salentein",
@@ -2597,324 +2683,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Salmón, sushi, tapas" },
         ],
         stock: { total: "16", reservado: "2", disponible: "14" },
-      },
-    ],
-  },
-  {
-    name: "Salentein Reserva",
-    categoria: "Vinos",
-    hasVariants: true,
-    isAgrupador: true,
-    sku: "VNO-SALRES",
-    marca: "Salentein",
-    proveedor: "Bodegas Salentein",
-    formatoVenta: "unidad",
-    volumenActive: true,
-    volumenCantidad: 750,
-    volumenUnidad: "ml",
-
-    // Matrix: Varietal × Año
-    containerAtributosPrincipales: [
-      { key: "Varietal", variantes: ["Malbec", "Cabernet Sauvignon", "Chardonnay"] },
-      { key: "Año", variantes: ["2021", "2022", "2023"] },
-    ],
-
-    atributosInformativos: [
-      { key: "Línea", value: "Reserva" },
-      { key: "Perfil Sensorial", value: "" }, // filled per variant
-      { key: "Bodega", value: "Bodegas Salentein" },
-      { key: "Origen", value: "Valle de Uco, Mendoza, Argentina" },
-      { key: "Crianza", value: "" }, // filled per variant
-      { key: "Tipo de Barrica", value: "" }, // filled per variant
-      { key: "Potencial de Guarda", value: "" }, // filled per variant
-      { key: "Enólogo", value: "Equipo enológico Salentein" },
-      { key: "ABV", value: "" }, // filled per variant
-      { key: "Temperatura de Servicio", value: "Tinto 16–18°C / Blanco 8–10°C" },
-      { key: "Maridaje", value: "Comida diaria, pastas y carnes (según varietal)" },
-      { key: "Estuche", value: "Sin estuche" },
-    ],
-
-    variantCount: 9,
-    variants: [
-      // --- MALBEC ---
-      {
-        name: "Salentein Reserva",
-        sku: "VNO-SALRES-MALB-2021",
-        codigoUniversal: "7798074865313",
-        codigoProveedor: "SAL-RES-MALB-2021",
-        categoria: "Vinos",
-        marca: "Salentein",
-        atributosPrincipales: [
-          { key: "Varietal", value: "Malbec" },
-          { key: "Año", value: "2021" },
-        ],
-        atributosInformativos: [
-          { key: "Tipo de Vino", value: "Tinto" },
-          { key: "Perfil Sensorial", value: "Ciruela, violeta, especias suaves" },
-          { key: "Crianza", value: "8 meses en barrica" },
-          { key: "Tipo de Barrica", value: "Roble (mix)" },
-          { key: "Potencial de Guarda", value: "5 años" },
-          { key: "ABV", value: "14%" },
-        ],
-        stock: { total: "36", reservado: "4", disponible: "32" },
-      },
-      {
-        name: "Salentein Reserva",
-        sku: "VNO-SALRES-MALB-2022",
-        codigoUniversal: "7798074868444",
-        codigoProveedor: "SAL-RES-MALB-2022",
-        categoria: "Vinos",
-        marca: "Salentein",
-        atributosPrincipales: [
-          { key: "Varietal", value: "Malbec" },
-          { key: "Año", value: "2022" },
-        ],
-        atributosInformativos: [
-          { key: "Tipo de Vino", value: "Tinto" },
-          { key: "Perfil Sensorial", value: "Fruta roja, cacao leve, taninos redondos" },
-          { key: "Crianza", value: "8 meses en barrica" },
-          { key: "Tipo de Barrica", value: "Roble (mix)" },
-          { key: "Potencial de Guarda", value: "5 años" },
-          { key: "ABV", value: "14%" },
-        ],
-        stock: { total: "34", reservado: "3", disponible: "31" },
-      },
-      {
-        name: "Salentein Reserva",
-        sku: "VNO-SALRES-MALB-2023",
-        codigoUniversal: "7798074868451",
-        codigoProveedor: "SAL-RES-MALB-2023",
-        categoria: "Vinos",
-        marca: "Salentein",
-        atributosPrincipales: [
-          { key: "Varietal", value: "Malbec" },
-          { key: "Año", value: "2023" },
-        ],
-        atributosInformativos: [
-          { key: "Tipo de Vino", value: "Tinto" },
-          { key: "Perfil Sensorial", value: "Fruta fresca, floral, final jugoso" },
-          { key: "Crianza", value: "8 meses en barrica" },
-          { key: "Tipo de Barrica", value: "Roble (mix)" },
-          { key: "Potencial de Guarda", value: "4 años" },
-          { key: "ABV", value: "14%" },
-        ],
-        stock: { total: "32", reservado: "3", disponible: "29" },
-      },
-
-      // --- CABERNET SAUVIGNON ---
-      {
-        name: "Salentein Reserva",
-        sku: "VNO-SALRES-CABS-2021",
-        codigoUniversal: "7798074868468",
-        codigoProveedor: "SAL-RES-CABS-2021",
-        categoria: "Vinos",
-        marca: "Salentein",
-        atributosPrincipales: [
-          { key: "Varietal", value: "Cabernet Sauvignon" },
-          { key: "Año", value: "2021" },
-        ],
-        atributosInformativos: [
-          { key: "Tipo de Vino", value: "Tinto" },
-          { key: "Perfil Sensorial", value: "Cassis, pimiento asado, especias" },
-          { key: "Crianza", value: "8 meses en barrica" },
-          { key: "Tipo de Barrica", value: "Roble (mix)" },
-          { key: "Potencial de Guarda", value: "6 años" },
-          { key: "ABV", value: "14%" },
-        ],
-        stock: { total: "28", reservado: "3", disponible: "25" },
-      },
-      {
-        name: "Salentein Reserva",
-        sku: "VNO-SALRES-CABS-2022",
-        codigoUniversal: "7798074868475",
-        codigoProveedor: "SAL-RES-CABS-2022",
-        categoria: "Vinos",
-        marca: "Salentein",
-        atributosPrincipales: [
-          { key: "Varietal", value: "Cabernet Sauvignon" },
-          { key: "Año", value: "2022" },
-        ],
-        atributosInformativos: [
-          { key: "Tipo de Vino", value: "Tinto" },
-          { key: "Perfil Sensorial", value: "Fruta negra, pimienta, final seco" },
-          { key: "Crianza", value: "8 meses en barrica" },
-          { key: "Tipo de Barrica", value: "Roble (mix)" },
-          { key: "Potencial de Guarda", value: "6 años" },
-          { key: "ABV", value: "14%" },
-        ],
-        stock: { total: "26", reservado: "2", disponible: "24" },
-      },
-      {
-        name: "Salentein Reserva",
-        sku: "VNO-SALRES-CABS-2023",
-        codigoUniversal: "7798074868482",
-        codigoProveedor: "SAL-RES-CABS-2023",
-        categoria: "Vinos",
-        marca: "Salentein",
-        atributosPrincipales: [
-          { key: "Varietal", value: "Cabernet Sauvignon" },
-          { key: "Año", value: "2023" },
-        ],
-        atributosInformativos: [
-          { key: "Tipo de Vino", value: "Tinto" },
-          { key: "Perfil Sensorial", value: "Cassis, hierbas, tanino firme" },
-          { key: "Crianza", value: "8 meses en barrica" },
-          { key: "Tipo de Barrica", value: "Roble (mix)" },
-          { key: "Potencial de Guarda", value: "5 años" },
-          { key: "ABV", value: "14%" },
-        ],
-        stock: { total: "24", reservado: "2", disponible: "22" },
-      },
-
-      // --- CHARDONNAY ---
-      {
-        name: "Salentein Reserva",
-        sku: "VNO-SALRES-CHAR-2021",
-        codigoUniversal: "7798074868499",
-        codigoProveedor: "SAL-RES-CHAR-2021",
-        categoria: "Vinos",
-        marca: "Salentein",
-        atributosPrincipales: [
-          { key: "Varietal", value: "Chardonnay" },
-          { key: "Año", value: "2021" },
-        ],
-        atributosInformativos: [
-          { key: "Tipo de Vino", value: "Blanco" },
-          { key: "Perfil Sensorial", value: "Cítrico, pera, toque cremoso" },
-          { key: "Crianza", value: "4 meses sobre lías" },
-          { key: "Tipo de Barrica", value: "Parcial en roble (mix)" },
-          { key: "Potencial de Guarda", value: "3 años" },
-          { key: "ABV", value: "13.5%" },
-        ],
-        stock: { total: "30", reservado: "3", disponible: "27" },
-      },
-      {
-        name: "Salentein Reserva",
-        sku: "VNO-SALRES-CHAR-2022",
-        codigoUniversal: "7798074868505",
-        codigoProveedor: "SAL-RES-CHAR-2022",
-        categoria: "Vinos",
-        marca: "Salentein",
-        atributosPrincipales: [
-          { key: "Varietal", value: "Chardonnay" },
-          { key: "Año", value: "2022" },
-        ],
-        atributosInformativos: [
-          { key: "Tipo de Vino", value: "Blanco" },
-          { key: "Perfil Sensorial", value: "Manzana, flores blancas, final fresco" },
-          { key: "Crianza", value: "4 meses sobre lías" },
-          { key: "Tipo de Barrica", value: "Parcial en roble (mix)" },
-          { key: "Potencial de Guarda", value: "3 años" },
-          { key: "ABV", value: "13.5%" },
-        ],
-        stock: { total: "28", reservado: "2", disponible: "26" },
-      },
-      {
-        name: "Salentein Reserva",
-        sku: "VNO-SALRES-CHAR-2023",
-        codigoUniversal: "7798074868512",
-        codigoProveedor: "SAL-RES-CHAR-2023",
-        categoria: "Vinos",
-        marca: "Salentein",
-        atributosPrincipales: [
-          { key: "Varietal", value: "Chardonnay" },
-          { key: "Año", value: "2023" },
-        ],
-        atributosInformativos: [
-          { key: "Tipo de Vino", value: "Blanco" },
-          { key: "Perfil Sensorial", value: "Durazno blanco, cítrico, suave" },
-          { key: "Crianza", value: "4 meses sobre lías" },
-          { key: "Tipo de Barrica", value: "Parcial en roble (mix)" },
-          { key: "Potencial de Guarda", value: "2 años" },
-          { key: "ABV", value: "13.5%" },
-        ],
-        stock: { total: "26", reservado: "2", disponible: "24" },
-      },
-    ],
-  },
-
-  // --- SALENTEIN (agrupador por dosaje) ---
-  {
-    name: "Salentein",
-    categoria: "Espumantes",
-    hasVariants: true,
-    isAgrupador: true,
-    sku: "ESP-SALENT",
-    marca: "Salentein",
-    proveedor: "Bodega Salentein",
-    formatoVenta: "unidad",
-    volumenActive: true,
-    volumenCantidad: 750,
-    volumenUnidad: "ml",
-
-    containerAtributosPrincipales: [{ key: "Dosaje", variantes: ["Extra Brut", "Brut Nature", "Brut Rosé"] }],
-
-    atributosInformativos: [
-      { key: "Varietal", value: "" }, // varía por hijo cuando aplica
-      { key: "Línea", value: "Espumantes" },
-      { key: "Perfil Sensorial", value: "" }, // por hijo
-      { key: "Bodega", value: "Bodega Salentein" },
-      { key: "Origen", value: "Valle de Uco, Mendoza, Argentina" },
-      { key: "Crianza", value: "" }, // por hijo cuando aplica
-      { key: "Enólogo", value: "" },
-      { key: "ABV", value: "" }, // por hijo cuando aplica
-      { key: "Temperatura de Servicio", value: "6–8°C" },
-      { key: "Maridaje", value: "" }, // por hijo
-      { key: "Estuche", value: "Sin estuche" },
-    ],
-
-    variantCount: 3,
-    variants: [
-      {
-        name: "Salentein",
-        sku: "ESP-SALENT-EXBR",
-        codigoUniversal: "7798123401027",
-        codigoProveedor: "SAL-ESP-EXBR-750",
-        categoria: "Espumantes",
-        marca: "Salentein",
-        atributosPrincipales: [{ key: "Dosaje", value: "Extra Brut" }],
-        atributosInformativos: [
-          { key: "Varietal", value: "Chardonnay 65% - Pinot Noir 35%" },
-          { key: "Perfil Sensorial", value: "Cítrico y frutal, con notas de pan tostado" },
-          { key: "Crianza", value: "6 meses sobre lías (sur lie)" },
-          { key: "ABV", value: "" },
-          { key: "Maridaje", value: "Aperitivos, mariscos, sushi" },
-        ],
-        stock: { total: "24", reservado: "3", disponible: "21" },
-      },
-      {
-        name: "Salentein",
-        sku: "ESP-SALENT-BRNA",
-        codigoUniversal: "7798123401034",
-        codigoProveedor: "SAL-ESP-BRNA-750",
-        categoria: "Espumantes",
-        marca: "Salentein",
-        atributosPrincipales: [{ key: "Dosaje", value: "Brut Nature" }],
-        atributosInformativos: [
-          { key: "Varietal", value: "" },
-          { key: "Perfil Sensorial", value: "Amplio y untuoso, con notas a pan tostado" },
-          { key: "Crianza", value: "" },
-          { key: "ABV", value: "" },
-          { key: "Maridaje", value: "Mariscos, quesos suaves, aperitivos" },
-        ],
-        stock: { total: "18", reservado: "2", disponible: "16" },
-      },
-      {
-        name: "Salentein",
-        sku: "ESP-SALENT-BRRO",
-        codigoUniversal: "7798123401041",
-        codigoProveedor: "SAL-ESP-BRRO-750",
-        categoria: "Espumantes",
-        marca: "Salentein",
-        atributosPrincipales: [{ key: "Dosaje", value: "Brut Rosé" }],
-        atributosInformativos: [
-          { key: "Varietal", value: "Pinot Noir" },
-          { key: "Perfil Sensorial", value: "Frutas rojas y frescura marcada" },
-          { key: "Crianza", value: "" },
-          { key: "ABV", value: "12.5%" },
-          { key: "Maridaje", value: "Salmón, sushi, tapas" },
-        ],
-        stock: { total: "16", reservado: "2", disponible: "14" },
+        precio: { costo: 23000, margen: 50, iva: 21, precioFinal: 41730 },
       },
     ],
   },
@@ -2962,6 +2731,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Crianza", value: "Chardonnay/Pinot Noir 2001" },
         ],
         stock: { total: "12", reservado: "2", disponible: "10" },
+        precio: { costo: 95000, margen: 50, iva: 21, precioFinal: 172125 },
       },
       {
         name: "Baron B Héritage 001",
@@ -2976,6 +2746,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Crianza", value: "Chardonnay/Pinot Noir 2011" },
         ],
         stock: { total: "10", reservado: "1", disponible: "9" },
+        precio: { costo: 90000, margen: 50, iva: 21, precioFinal: 163125 },
       },
       {
         name: "Baron B Héritage 001",
@@ -2990,6 +2761,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Crianza", value: "Chardonnay/Pinot Noir 2015" },
         ],
         stock: { total: "8", reservado: "1", disponible: "7" },
+        precio: { costo: 85000, margen: 50, iva: 21, precioFinal: 154125 },
       },
     ],
   },
@@ -3037,6 +2809,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Crianza", value: "Chardonnay 2011" },
         ],
         stock: { total: "10", reservado: "1", disponible: "9" },
+        precio: { costo: 105000, margen: 50, iva: 21, precioFinal: 190575 },
       },
       {
         name: "Baron B Héritage 003",
@@ -3051,6 +2824,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Crianza", value: "Chardonnay 2015" },
         ],
         stock: { total: "9", reservado: "1", disponible: "8" },
+        precio: { costo: 100000, margen: 50, iva: 21, precioFinal: 181500 },
       },
       {
         name: "Baron B Héritage 003",
@@ -3065,6 +2839,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Crianza", value: "Chardonnay 2019" },
         ],
         stock: { total: "8", reservado: "1", disponible: "7" },
+        precio: { costo: 95000, margen: 50, iva: 21, precioFinal: 172125 },
       },
     ],
   },
@@ -3100,9 +2875,10 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Maridaje", value: "Aperitivos, mariscos, sushi" },
       { key: "Estuche", value: "Sin estuche" },
     ],
+    precio: { costo: 15000, margen: 50, iva: 21, precioFinal: 27150 },
   },
   // =========================
-  // CRUZAT
+  // CRUZZAT
   // =========================
   {
     name: "Cruzat Single Vineyard",
@@ -3151,6 +2927,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Ostras, sushi, aperitivos" },
         ],
         stock: { total: "18", reservado: "2", disponible: "16" },
+        precio: { costo: 25000, margen: 50, iva: 21, precioFinal: 45375 },
       },
       {
         name: "Cruzat Single Vineyard",
@@ -3169,6 +2946,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Mariscos, quesos suaves" },
         ],
         stock: { total: "14", reservado: "1", disponible: "13" },
+        precio: { costo: 26000, margen: 50, iva: 21, precioFinal: 47130 },
       },
     ],
   },
@@ -3220,6 +2998,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Aperitivos, entradas" },
         ],
         stock: { total: "40", reservado: "4", disponible: "36" },
+        precio: { costo: 16000, margen: 50, iva: 21, precioFinal: 29040 },
       },
       {
         name: "Cruzat Cuvée",
@@ -3237,6 +3016,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Sushi, mariscos" },
         ],
         stock: { total: "34", reservado: "3", disponible: "31" },
+        precio: { costo: 17000, margen: 50, iva: 21, precioFinal: 30765 },
       },
       {
         name: "Cruzat Cuvée",
@@ -3247,13 +3027,14 @@ export const INITIAL_ITEMS: Item[] = [
         marca: "Cruzat",
         atributosPrincipales: [{ key: "Dosaje", value: "Brut Rosé" }],
         atributosInformativos: [
-          { key: "Varietal", value: "Blend (base Pinot Noir / Malbec)" },
+          { key: "Varietal", value: "Blend (rosé)" },
           { key: "Perfil Sensorial", value: "Frutos rojos, floral, fresco" },
           { key: "Crianza", value: "Método tradicional, crianza sobre lías" },
           { key: "ABV", value: "12%" },
           { key: "Maridaje", value: "Salmón, tapeo" },
         ],
         stock: { total: "22", reservado: "2", disponible: "20" },
+        precio: { costo: 17000, margen: 50, iva: 21, precioFinal: 30765 },
       },
       {
         name: "Cruzat Cuvée",
@@ -3271,6 +3052,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Ostras, quesos" },
         ],
         stock: { total: "16", reservado: "1", disponible: "15" },
+        precio: { costo: 17000, margen: 50, iva: 21, precioFinal: 30765 },
       },
     ],
   },
@@ -3321,6 +3103,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Mariscos, cocina fina" },
         ],
         stock: { total: "12", reservado: "1", disponible: "11" },
+        precio: { costo: 20000, margen: 50, iva: 21, precioFinal: 36300 },
       },
       {
         name: "Cruzat Premier",
@@ -3334,9 +3117,10 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Varietal", value: "Pinot Noir (rosé)" },
           { key: "Perfil Sensorial", value: "Frutos rojos, floral, elegante" },
           { key: "ABV", value: "12%" },
-          { key: "Maridaje", value: "Salmón, tapas" },
+          { key: "Maridaje", value: "Salmón, tapeo" },
         ],
         stock: { total: "10", reservado: "1", disponible: "9" },
+        precio: { costo: 20000, margen: 50, iva: 21, precioFinal: 36300 },
       },
       {
         name: "Cruzat Premier",
@@ -3353,6 +3137,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Ostras, quesos" },
         ],
         stock: { total: "8", reservado: "1", disponible: "7" },
+        precio: { costo: 20000, margen: 50, iva: 21, precioFinal: 36300 },
       },
     ],
   },
@@ -3404,6 +3189,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Mariscos, aperitivos" },
         ],
         stock: { total: "20", reservado: "2", disponible: "18" },
+        precio: { costo: 25000, margen: 50, iva: 21, precioFinal: 45375 },
       },
       {
         name: "Alma Negra",
@@ -3418,6 +3204,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Salmón, tapeo" },
         ],
         stock: { total: "16", reservado: "2", disponible: "14" },
+        precio: { costo: 26000, margen: 50, iva: 21, precioFinal: 47130 },
       },
     ],
   },
@@ -3431,7 +3218,7 @@ export const INITIAL_ITEMS: Item[] = [
     hasVariants: false,
     isAgrupador: false,
     sku: "ESP-LBOSCA-EXBR",
-    codigoUniversal: "7799901002501",
+    codigoUniversal: "7799002001001",
     codigoProveedor: "LB-ESP-EXBR-750",
     marca: "Luigi Bosca",
     proveedor: "Luigi Bosca (Familia Arizu)",
@@ -3457,6 +3244,7 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Maridaje", value: "Mariscos, sushi" },
       { key: "Estuche", value: "Sin estuche" },
     ],
+    precio: { costo: 20000, margen: 50, iva: 21, precioFinal: 36300 },
   },
 
   // =========================
@@ -3496,7 +3284,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         name: "Lagarde",
         sku: "ESP-LAGARD-EXBR",
-        codigoUniversal: "7799901002601",
+        codigoUniversal: "7799001002601",
         codigoProveedor: "LAG-ESP-EXBR",
         categoria: "Espumantes",
         marca: "Lagarde",
@@ -3509,11 +3297,12 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Aperitivos, mariscos" },
         ],
         stock: { total: "14", reservado: "2", disponible: "12" },
+        precio: { costo: 18000, margen: 50, iva: 21, precioFinal: 32580 },
       },
       {
         name: "Lagarde",
         sku: "ESP-LAGARD-BRRS",
-        codigoUniversal: "7799901002602",
+        codigoUniversal: "7799001002602",
         codigoProveedor: "LAG-ESP-BRRS",
         categoria: "Espumantes",
         marca: "Lagarde",
@@ -3526,6 +3315,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Salmón, tapeo" },
         ],
         stock: { total: "12", reservado: "1", disponible: "11" },
+        precio: { costo: 19000, margen: 50, iva: 21, precioFinal: 34485 },
       },
     ],
   },
@@ -3578,11 +3368,12 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Ostras, mariscos" },
         ],
         stock: { total: "10", reservado: "1", disponible: "9" },
+        precio: { costo: 25000, margen: 50, iva: 21, precioFinal: 45375 },
       },
       {
         name: "Bressia Royale",
         sku: "ESP-BRROY-BRRS",
-        codigoUniversal: "7799901002702",
+        codigoUniversal: "7799001002702",
         codigoProveedor: "BRE-ROY-BRRS",
         categoria: "Espumantes",
         marca: "Bressia",
@@ -3593,6 +3384,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Salmón, sushi" },
         ],
         stock: { total: "8", reservado: "1", disponible: "7" },
+        precio: { costo: 26000, margen: 50, iva: 21, precioFinal: 47130 },
       },
     ],
   },
@@ -3645,6 +3437,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Aperitivos, pescados, mariscos" },
         ],
         stock: { total: "22", reservado: "3", disponible: "19" },
+        precio: { costo: 15000, margen: 50, iva: 21, precioFinal: 27150 },
       },
       {
         name: "Norton",
@@ -3662,6 +3455,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Ostras, sushi, quesos suaves" },
         ],
         stock: { total: "14", reservado: "2", disponible: "12" },
+        precio: { costo: 16000, margen: 50, iva: 21, precioFinal: 29040 },
       },
       {
         name: "Norton",
@@ -3679,6 +3473,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Maridaje", value: "Salmón, sushi, tapas" },
         ],
         stock: { total: "12", reservado: "1", disponible: "11" },
+        precio: { costo: 15000, margen: 50, iva: 21, precioFinal: 27150 },
       },
     ],
   },
@@ -3739,6 +3534,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Estuche", value: "Sin estuche" },
         ],
         stock: { total: "24", reservado: "3", disponible: "21" },
+        precio: { costo: 15000, margen: 50, iva: 21, precioFinal: 27150 },
       },
       {
         name: "Alta Vista Atemporal",
@@ -3762,6 +3558,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Estuche", value: "Sin estuche" },
         ],
         stock: { total: "18", reservado: "2", disponible: "16" },
+        precio: { costo: 16000, margen: 50, iva: 21, precioFinal: 29040 },
       },
       {
         name: "Alta Vista Atemporal",
@@ -3785,10 +3582,15 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Estuche", value: "Sin estuche" },
         ],
         stock: { total: "14", reservado: "2", disponible: "12" },
+        precio: { costo: 16000, margen: 50, iva: 21, precioFinal: 29040 },
       },
     ],
   },
 
+  // =========================
+  //
+  //
+  //
   // =========================
   // DOMAINE BOUSQUET (ONE agrupador only) — ORGANIC
   // =========================
@@ -3846,6 +3648,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Estuche", value: "Sin estuche" },
         ],
         stock: { total: "20", reservado: "2", disponible: "18" },
+        precio: { costo: 17000, margen: 50, iva: 21, precioFinal: 30765 },
       },
       {
         name: "Domaine Bousquet Organic",
@@ -3870,6 +3673,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Estuche", value: "Sin estuche" },
         ],
         stock: { total: "16", reservado: "2", disponible: "14" },
+        precio: { costo: 18000, margen: 50, iva: 21, precioFinal: 32580 },
       },
       {
         name: "Domaine Bousquet Organic",
@@ -3894,6 +3698,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Estuche", value: "Sin estuche" },
         ],
         stock: { total: "12", reservado: "1", disponible: "11" },
+        precio: { costo: 18000, margen: 50, iva: 21, precioFinal: 32580 },
       },
     ],
   },
@@ -3954,6 +3759,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Estuche", value: "Sin estuche" },
         ],
         stock: { total: "14", reservado: "2", disponible: "12" },
+        precio: { costo: 16000, margen: 50, iva: 21, precioFinal: 29040 },
       },
       {
         name: "Nieto Senetiner",
@@ -3977,6 +3783,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Estuche", value: "Sin estuche" },
         ],
         stock: { total: "18", reservado: "2", disponible: "16" },
+        precio: { costo: 15000, margen: 50, iva: 21, precioFinal: 27150 },
       },
       {
         name: "Nieto Senetiner",
@@ -4000,6 +3807,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Estuche", value: "Sin estuche" },
         ],
         stock: { total: "12", reservado: "1", disponible: "11" },
+        precio: { costo: 16000, margen: 50, iva: 21, precioFinal: 29040 },
       },
     ],
   },
@@ -4043,6 +3851,7 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Maridaje", value: "Aperitivos, mariscos, ensaladas" },
       { key: "Estuche", value: "Sin estuche" },
     ],
+    precio: { costo: 14000, margen: 50, iva: 21, precioFinal: 25410 },
   },
 
   // =========================
@@ -4103,6 +3912,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Estuche", value: "Sin estuche" },
         ],
         stock: { total: "20", reservado: "2", disponible: "18" },
+        precio: { costo: 18000, margen: 50, iva: 21, precioFinal: 32580 },
       },
       {
         name: "Chandon",
@@ -4126,6 +3936,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Estuche", value: "Sin estuche" },
         ],
         stock: { total: "24", reservado: "3", disponible: "21" },
+        precio: { costo: 17000, margen: 50, iva: 21, precioFinal: 30765 },
       },
       {
         name: "Chandon",
@@ -4149,6 +3960,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Estuche", value: "Sin estuche" },
         ],
         stock: { total: "30", reservado: "4", disponible: "26" },
+        precio: { costo: 16000, margen: 50, iva: 21, precioFinal: 29040 },
       },
       {
         name: "Chandon",
@@ -4172,6 +3984,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Estuche", value: "Sin estuche" },
         ],
         stock: { total: "16", reservado: "2", disponible: "14" },
+        precio: { costo: 16000, margen: 50, iva: 21, precioFinal: 29040 },
       },
       {
         name: "Chandon",
@@ -4195,6 +4008,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Estuche", value: "Sin estuche" },
         ],
         stock: { total: "14", reservado: "2", disponible: "12" },
+        precio: { costo: 17000, margen: 50, iva: 21, precioFinal: 30765 },
       },
     ],
   },
@@ -4221,6 +4035,7 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "ABV", value: "47%" },
       { key: "Estuche", value: "Sin estuche" },
     ],
+    precio: { costo: 16000, margen: 50, iva: 21, precioFinal: 29040 },
   },
 
   {
@@ -4246,6 +4061,7 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "ABV", value: "41%" },
       { key: "Estuche", value: "Sin estuche" },
     ],
+    precio: { costo: 12000, margen: 50, iva: 21, precioFinal: 21720 },
   },
 
   // =====================
@@ -4284,6 +4100,7 @@ export const INITIAL_ITEMS: Item[] = [
         atributosPrincipales: [{ key: "Sabor", value: "Original" }],
         atributosInformativos: [],
         stock: { total: "18", reservado: "2", disponible: "16" },
+        precio: { costo: 11000, margen: 50, iva: 21, precioFinal: 19965 },
       },
       {
         name: "Restinga",
@@ -4294,6 +4111,7 @@ export const INITIAL_ITEMS: Item[] = [
         atributosPrincipales: [{ key: "Sabor", value: "Destilado Otoño" }],
         atributosInformativos: [],
         stock: { total: "14", reservado: "2", disponible: "12" },
+        precio: { costo: 12000, margen: 50, iva: 21, precioFinal: 21720 },
       },
       {
         name: "Restinga",
@@ -4304,6 +4122,7 @@ export const INITIAL_ITEMS: Item[] = [
         atributosPrincipales: [{ key: "Sabor", value: "Flavoured Edition" }],
         atributosInformativos: [],
         stock: { total: "12", reservado: "1", disponible: "11" },
+        precio: { costo: 13000, margen: 50, iva: 21, precioFinal: 23595 },
       },
     ],
   },
@@ -4334,6 +4153,7 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "ABV", value: "40%" },
       { key: "Estuche", value: "Sin estuche" },
     ],
+    precio: { costo: 10000, margen: 50, iva: 21, precioFinal: 18150 },
   },
 
   // ===============================
@@ -4372,6 +4192,7 @@ export const INITIAL_ITEMS: Item[] = [
         atributosPrincipales: [{ key: "Sabor", value: "Original" }],
         atributosInformativos: [],
         stock: { total: "10", reservado: "1", disponible: "9" },
+        precio: { costo: 12000, margen: 50, iva: 21, precioFinal: 21720 },
       },
       {
         name: "Aconcagua Special Edition",
@@ -4382,6 +4203,7 @@ export const INITIAL_ITEMS: Item[] = [
         atributosPrincipales: [{ key: "Sabor", value: "Red Berries" }],
         atributosInformativos: [],
         stock: { total: "8", reservado: "1", disponible: "7" },
+        precio: { costo: 13000, margen: 50, iva: 21, precioFinal: 23595 },
       },
       {
         name: "Aconcagua Special Edition",
@@ -4392,6 +4214,7 @@ export const INITIAL_ITEMS: Item[] = [
         atributosPrincipales: [{ key: "Sabor", value: "Cardamom" }],
         atributosInformativos: [],
         stock: { total: "8", reservado: "1", disponible: "7" },
+        precio: { costo: 13000, margen: 50, iva: 21, precioFinal: 23595 },
       },
     ],
   },
@@ -4429,6 +4252,7 @@ export const INITIAL_ITEMS: Item[] = [
         atributosPrincipales: [{ key: "Sabor", value: "Original" }],
         atributosInformativos: [],
         stock: { total: "48", reservado: "6", disponible: "42" },
+        precio: { costo: 12000, margen: 50, iva: 21, precioFinal: 21720 },
       },
       {
         name: "Absolut",
@@ -4440,6 +4264,7 @@ export const INITIAL_ITEMS: Item[] = [
         atributosPrincipales: [{ key: "Sabor", value: "Raspberry" }],
         atributosInformativos: [],
         stock: { total: "36", reservado: "4", disponible: "32" },
+        precio: { costo: 13000, margen: 50, iva: 21, precioFinal: 23595 },
       },
       {
         name: "Absolut",
@@ -4451,6 +4276,7 @@ export const INITIAL_ITEMS: Item[] = [
         atributosPrincipales: [{ key: "Sabor", value: "Pear" }],
         atributosInformativos: [],
         stock: { total: "30", reservado: "3", disponible: "27" },
+        precio: { costo: 13000, margen: 50, iva: 21, precioFinal: 23595 },
       },
       {
         name: "Absolut",
@@ -4462,6 +4288,7 @@ export const INITIAL_ITEMS: Item[] = [
         atributosPrincipales: [{ key: "Sabor", value: "Vanilla" }],
         atributosInformativos: [],
         stock: { total: "28", reservado: "3", disponible: "25" },
+        precio: { costo: 13000, margen: 50, iva: 21, precioFinal: 23595 },
       },
     ],
   },
@@ -4489,6 +4316,7 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "ABV", value: "40%" },
       { key: "Estuche", value: "Sin estuche" },
     ],
+    precio: { costo: 20000, margen: 50, iva: 21, precioFinal: 36300 },
   },
   {
     name: "Grey Goose",
@@ -4512,835 +4340,8 @@ export const INITIAL_ITEMS: Item[] = [
     atributosInformativos: [
       { key: "Origen", value: "Francia" },
       { key: "ABV", value: "40%" },
-      { key: "Estuche", value: "Sin estuche" },
+      { key: "Estuche", value: "Sin" },
     ],
+    precio: { costo: 25000, margen: 50, iva: 21, precioFinal: 45375 },
   },
-  // --- RON: HAVANA CLUB (AGRUPADOR) ---
-{
-  name: "Havana Club",
-  categoria: "Ron",
-  hasVariants: true,
-  isAgrupador: true,
-  sku: "RON-HAVCLUB",
-  marca: "Havana Club",
-  proveedor: "Havana Club International",
-  formatoVenta: "unidad",
-  volumenActive: true,
-  volumenCantidad: 750,
-  volumenUnidad: "ml",
-
-  containerAtributosPrincipales: [
-    { key: "Tipo", variantes: ["Añejo 3 Años", "Especial", "Añejo 7 Años"] },
-  ],
-
-  atributosInformativos: [
-    { key: "Origen", value: "Cuba" },
-    { key: "Añejamiento", value: "" }, // per variant
-    { key: "ABV", value: "" }, // per variant
-    { key: "Estuche", value: "Sin estuche" },
-  ],
-
-  variantCount: 3,
-  variants: [
-    {
-      name: "Havana Club",
-      sku: "RON-HAVCLUB-AN3",
-      codigoUniversal: "7799002001001",
-      codigoProveedor: "HC-AN3-750",
-      categoria: "Ron",
-      marca: "Havana Club",
-      atributosPrincipales: [{ key: "Tipo", value: "Añejo 3 Años" }],
-      atributosInformativos: [
-        { key: "Añejamiento", value: "3 años" },
-        { key: "ABV", value: "40%" },
-      ],
-      stock: { total: "30", reservado: "4", disponible: "26" },
-    },
-    {
-      name: "Havana Club",
-      sku: "RON-HAVCLUB-ESPC",
-      codigoUniversal: "7799002001002",
-      codigoProveedor: "HC-ESP-750",
-      categoria: "Ron",
-      marca: "Havana Club",
-      atributosPrincipales: [{ key: "Tipo", value: "Especial" }],
-      atributosInformativos: [
-        { key: "Añejamiento", value: "Blend añejado (no especificado)" },
-        { key: "ABV", value: "40%" },
-      ],
-      stock: { total: "26", reservado: "3", disponible: "23" },
-    },
-    {
-      name: "Havana Club",
-      sku: "RON-HAVCLUB-AN7",
-      codigoUniversal: "7799002001003",
-      codigoProveedor: "HC-AN7-750",
-      categoria: "Ron",
-      marca: "Havana Club",
-      atributosPrincipales: [{ key: "Tipo", value: "Añejo 7 Años" }],
-      atributosInformativos: [
-        { key: "Añejamiento", value: "7 años" },
-        { key: "ABV", value: "40%" },
-      ],
-      stock: { total: "18", reservado: "2", disponible: "16" },
-    },
-  ],
-},
-
-// --- RON: BACARDI (AGRUPADOR) ---
-{
-  name: "Bacardí",
-  categoria: "Ron",
-  hasVariants: true,
-  isAgrupador: true,
-  sku: "RON-BACARDI",
-  marca: "Bacardí",
-  proveedor: "Bacardi Limited",
-  formatoVenta: "unidad",
-  volumenActive: true,
-  volumenCantidad: 750,
-  volumenUnidad: "ml",
-
-  containerAtributosPrincipales: [
-    { key: "Tipo", variantes: ["Blanco", "Dorado", "Añejo"] },
-  ],
-
-  atributosInformativos: [
-    { key: "Origen", value: "Puerto Rico" },
-    { key: "Añejamiento", value: "" }, // per variant
-    { key: "ABV", value: "" }, // per variant
-    { key: "Estuche", value: "Sin estuche" },
-  ],
-
-  variantCount: 3,
-  variants: [
-    {
-      name: "Bacardí",
-      sku: "RON-BACARDI-BLCO",
-      codigoUniversal: "7799002001101",
-      codigoProveedor: "BAC-BLC-750",
-      categoria: "Ron",
-      marca: "Bacardí",
-      atributosPrincipales: [{ key: "Tipo", value: "Blanco" }],
-      atributosInformativos: [
-        { key: "Añejamiento", value: "Breve (no especificado)" },
-        { key: "ABV", value: "40%" },
-      ],
-      stock: { total: "40", reservado: "6", disponible: "34" },
-    },
-    {
-      name: "Bacardí",
-      sku: "RON-BACARDI-DORD",
-      codigoUniversal: "7799002001102",
-      codigoProveedor: "BAC-ORO-750",
-      categoria: "Ron",
-      marca: "Bacardí",
-      atributosPrincipales: [{ key: "Tipo", value: "Dorado" }],
-      atributosInformativos: [
-        { key: "Añejamiento", value: "Añejo (no especificado)" },
-        { key: "ABV", value: "40%" },
-      ],
-      stock: { total: "32", reservado: "5", disponible: "27" },
-    },
-    {
-      name: "Bacardí",
-      sku: "RON-BACARDI-ANJO",
-      codigoUniversal: "7799002001103",
-      codigoProveedor: "BAC-ANJ-750",
-      categoria: "Ron",
-      marca: "Bacardí",
-      atributosPrincipales: [{ key: "Tipo", value: "Añejo" }],
-      atributosInformativos: [
-        { key: "Añejamiento", value: "Añejo (no especificado)" },
-        { key: "ABV", value: "40%" },
-      ],
-      stock: { total: "22", reservado: "3", disponible: "19" },
-    },
-  ],
-},
-
-// --- RON: MALIBU (STANDALONE) ---
-{
-  name: "Malibu",
-  categoria: "Ron",
-  hasVariants: false,
-  isAgrupador: false,
-  sku: "RON-MALIBU-COCO",
-  codigoUniversal: "7799002001201",
-  marca: "Malibu",
-  proveedor: "Pernod Ricard",
-  codigoProveedor: "MAL-COC-750",
-  formatoVenta: "unidad",
-  volumenActive: true,
-  volumenCantidad: 750,
-  volumenUnidad: "ml",
-
-  stock: { total: "28", reservado: "4", disponible: "24" },
-
-  atributosPrincipales: [{ key: "Tipo", value: "Saborizado" }],
-  atributosInformativos: [
-    { key: "Origen", value: "Barbados" },
-    { key: "Añejamiento", value: "No aplica" },
-    { key: "ABV", value: "21%" },
-    { key: "Estuche", value: "Sin estuche" },
-
-    // Extra (pedido específico)
-    { key: "Sabor", value: "Coco" },
-  ],
-},
-
-// --- TEQUILA: DON JULIO (AGRUPADOR) ---
-{
-  name: "Don Julio",
-  categoria: "Tequila",
-  hasVariants: true,
-  isAgrupador: true,
-  sku: "TEQ-DONJUL",
-  marca: "Don Julio",
-  proveedor: "Diageo",
-  formatoVenta: "unidad",
-  volumenActive: true,
-  volumenCantidad: 750,
-  volumenUnidad: "ml",
-
-  containerAtributosPrincipales: [
-    { key: "Tipo", variantes: ["Blanco", "Reposado", "Añejo"] },
-  ],
-
-  atributosInformativos: [
-    { key: "Origen", value: "México" },
-    { key: "Añejamiento", value: "" }, // per variant
-    { key: "ABV", value: "" }, // per variant
-    { key: "Estuche", value: "Sin estuche" },
-  ],
-
-  variantCount: 3,
-  variants: [
-    {
-      name: "Don Julio",
-      sku: "TEQ-DONJUL-BLCO",
-      codigoUniversal: "7799002001301",
-      codigoProveedor: "DJ-BLC-750",
-      categoria: "Tequila",
-      marca: "Don Julio",
-      atributosPrincipales: [{ key: "Tipo", value: "Blanco" }],
-      atributosInformativos: [
-        { key: "Añejamiento", value: "Sin añejamiento" },
-        { key: "ABV", value: "40%" },
-      ],
-      stock: { total: "18", reservado: "2", disponible: "16" },
-    },
-    {
-      name: "Don Julio",
-      sku: "TEQ-DONJUL-REPO",
-      codigoUniversal: "7799002001302",
-      codigoProveedor: "DJ-REP-750",
-      categoria: "Tequila",
-      marca: "Don Julio",
-      atributosPrincipales: [{ key: "Tipo", value: "Reposado" }],
-      atributosInformativos: [
-        { key: "Añejamiento", value: "Reposado (no especificado)" },
-        { key: "ABV", value: "40%" },
-      ],
-      stock: { total: "14", reservado: "2", disponible: "12" },
-    },
-    {
-      name: "Don Julio",
-      sku: "TEQ-DONJUL-ANJO",
-      codigoUniversal: "7799002001303",
-      codigoProveedor: "DJ-ANJ-750",
-      categoria: "Tequila",
-      marca: "Don Julio",
-      atributosPrincipales: [{ key: "Tipo", value: "Añejo" }],
-      atributosInformativos: [
-        { key: "Añejamiento", value: "Añejo (no especificado)" },
-        { key: "ABV", value: "40%" },
-      ],
-      stock: { total: "10", reservado: "1", disponible: "9" },
-    },
-  ],
-},
-
-// --- TEQUILA: PATRÓN SILVER (STANDALONE) ---
-{
-  name: "Patrón Silver",
-  categoria: "Tequila",
-  hasVariants: false,
-  isAgrupador: false,
-  sku: "TEQ-PATRON-SILV",
-  codigoUniversal: "7799002001401",
-  marca: "Patrón",
-  proveedor: "Bacardi",
-  codigoProveedor: "PAT-SIL-750",
-  formatoVenta: "unidad",
-  volumenActive: true,
-  volumenCantidad: 750,
-  volumenUnidad: "ml",
-
-  stock: { total: "12", reservado: "2", disponible: "10" },
-
-  atributosPrincipales: [{ key: "Tipo", value: "Silver" }],
-  atributosInformativos: [
-    { key: "Origen", value: "México" },
-    { key: "Añejamiento", value: "Sin añejamiento" },
-    { key: "ABV", value: "40%" },
-    { key: "Estuche", value: "Sin estuche" },
-  ],
-},
-{
-  name: "Johnnie Walker 750 ml",
-  categoria: "Whiskies",
-  hasVariants: true,
-  isAgrupador: true,
-  sku: "WHKY-JW750",
-  marca: "Johnnie Walker",
-  proveedor: "Diageo",
-  formatoVenta: "unidad",
-  volumenActive: true,
-  volumenCantidad: 750,
-  volumenUnidad: "ml",
-
-  containerAtributosPrincipales: [
-    { key: "Línea", variantes: ["Red Label", "Black Label", "Double Black", "Blue Label"] },
-  ],
-
-  atributosInformativos: [
-    { key: "Tipo de Whisky", value: "Scotch" },
-    { key: "Método de Elaboración", value: "Blended" },
-    { key: "Origen", value: "Escocia" },
-    { key: "Añejamiento", value: "" },
-    { key: "Tipo de Barrica", value: "Roble" },
-    { key: "ABV", value: "" },
-    { key: "Estuche", value: "" },
-  ],
-
-  variantCount: 4,
-  variants: [
-    {
-      name: "Johnnie Walker 750 ml",
-      sku: "WHKY-JW750-RED",
-      codigoUniversal: "5000267011011",
-      codigoProveedor: "JW-RED-750",
-      categoria: "Whiskies",
-      marca: "Johnnie Walker",
-      atributosPrincipales: [{ key: "Línea", value: "Red Label" }],
-      atributosInformativos: [
-        { key: "Añejamiento", value: "Sin declaración de edad" },
-        { key: "ABV", value: "40%" },
-        { key: "Estuche", value: "Sin estuche" },
-      ],
-      stock: { total: "48", reservado: "6", disponible: "42" },
-    },
-    {
-      name: "Johnnie Walker 750 ml",
-      sku: "WHKY-JW750-BLACK",
-      codigoUniversal: "5000267024233",
-      codigoProveedor: "JW-BLACK-750",
-      categoria: "Whiskies",
-      marca: "Johnnie Walker",
-      atributosPrincipales: [{ key: "Línea", value: "Black Label" }],
-      atributosInformativos: [
-        { key: "Añejamiento", value: "12 años" },
-        { key: "ABV", value: "40%" },
-        { key: "Estuche", value: "Caja" },
-      ],
-      stock: { total: "36", reservado: "4", disponible: "32" },
-    },
-    {
-      name: "Johnnie Walker 750 ml",
-      sku: "WHKY-JW750-DBLK",
-      codigoUniversal: "5000267092843",
-      codigoProveedor: "JW-DBLACK-750",
-      categoria: "Whiskies",
-      marca: "Johnnie Walker",
-      atributosPrincipales: [{ key: "Línea", value: "Double Black" }],
-      atributosInformativos: [
-        { key: "Añejamiento", value: "Sin declaración de edad" },
-        { key: "ABV", value: "40%" },
-        { key: "Estuche", value: "Caja" },
-      ],
-      stock: { total: "24", reservado: "3", disponible: "21" },
-    },
-    {
-      name: "Johnnie Walker 750 ml",
-      sku: "WHKY-JW750-BLUE",
-      codigoUniversal: "5000267014012",
-      codigoProveedor: "JW-BLUE-750",
-      categoria: "Whiskies",
-      marca: "Johnnie Walker",
-      atributosPrincipales: [{ key: "Línea", value: "Blue Label" }],
-      atributosInformativos: [
-        { key: "Añejamiento", value: "Selección de whiskies añejos" },
-        { key: "ABV", value: "40%" },
-        { key: "Estuche", value: "Estuche premium" },
-      ],
-      stock: { total: "12", reservado: "2", disponible: "10" },
-    },
-  ],
-},
-
-{
-  name: "Johnnie Walker 1 L",
-  categoria: "Whiskies",
-  hasVariants: true,
-  isAgrupador: true,
-  sku: "WHKY-JW1L",
-  marca: "Johnnie Walker",
-  proveedor: "Diageo",
-  formatoVenta: "unidad",
-  volumenActive: true,
-  volumenCantidad: 1000,
-  volumenUnidad: "ml",
-
-  containerAtributosPrincipales: [
-    { key: "Línea", variantes: ["Red Label", "Black Label"] },
-  ],
-
-  atributosInformativos: [
-    { key: "Tipo de Whisky", value: "Scotch" },
-    { key: "Método de Elaboración", value: "Blended" },
-    { key: "Origen", value: "Escocia" },
-    { key: "Añejamiento", value: "" },
-    { key: "Tipo de Barrica", value: "Roble" },
-    { key: "ABV", value: "" },
-    { key: "Estuche", value: "" },
-  ],
-
-  variantCount: 2,
-  variants: [
-    {
-      name: "Johnnie Walker 1 L",
-      sku: "WHKY-JW1L-RED",
-      codigoUniversal: "5000267011110",
-      codigoProveedor: "JW-RED-1L",
-      categoria: "Whiskies",
-      marca: "Johnnie Walker",
-      atributosPrincipales: [{ key: "Línea", value: "Red Label" }],
-      atributosInformativos: [
-        { key: "Añejamiento", value: "Sin declaración de edad" },
-        { key: "ABV", value: "40%" },
-        { key: "Estuche", value: "Sin estuche" },
-      ],
-      stock: { total: "30", reservado: "4", disponible: "26" },
-    },
-    {
-      name: "Johnnie Walker 1 L",
-      sku: "WHKY-JW1L-BLACK",
-      codigoUniversal: "5000267024318",
-      codigoProveedor: "JW-BLACK-1L",
-      categoria: "Whiskies",
-      marca: "Johnnie Walker",
-      atributosPrincipales: [{ key: "Línea", value: "Black Label" }],
-      atributosInformativos: [
-        { key: "Añejamiento", value: "12 años" },
-        { key: "ABV", value: "40%" },
-        { key: "Estuche", value: "Caja" },
-      ],
-      stock: { total: "20", reservado: "3", disponible: "17" },
-    },
-  ],
-},
-
-{
-  name: "Jack Daniel’s Old No.7",
-  categoria: "Whiskies",
-  hasVariants: false,
-  isAgrupador: false,
-  sku: "WHKY-JD-OLD7",
-  codigoUniversal: "5099873001338",
-  marca: "Jack Daniel’s",
-  proveedor: "Brown-Forman",
-  formatoVenta: "unidad",
-  volumenActive: true,
-  volumenCantidad: 750,
-  volumenUnidad: "ml",
-
-  stock: { total: "40", reservado: "5", disponible: "35" },
-
-  atributosPrincipales: [{ key: "Línea", value: "Old No.7" }],
-  atributosInformativos: [
-    { key: "Tipo de Whisky", value: "Tennessee" },
-    { key: "Método de Elaboración", value: "Filtrado por carbón" },
-    { key: "Origen", value: "Estados Unidos" },
-    { key: "Añejamiento", value: "Sin declaración de edad" },
-    { key: "Tipo de Barrica", value: "Roble americano" },
-    { key: "ABV", value: "40%" },
-    { key: "Estuche", value: "Sin estuche" },
-  ],
-},
-
-{
-  name: "Jack Daniel’s Tennessee Honey",
-  categoria: "Whiskies",
-  hasVariants: false,
-  isAgrupador: false,
-  sku: "WHKY-JD-HONEY",
-  codigoUniversal: "5099873021343",
-  marca: "Jack Daniel’s",
-  proveedor: "Brown-Forman",
-  formatoVenta: "unidad",
-  volumenActive: true,
-  volumenCantidad: 750,
-  volumenUnidad: "ml",
-
-  stock: { total: "28", reservado: "4", disponible: "24" },
-
-  atributosPrincipales: [{ key: "Línea", value: "Tennessee Honey" }],
-  atributosInformativos: [
-    { key: "Tipo de Whisky", value: "Tennessee con licor de miel" },
-    { key: "Método de Elaboración", value: "Blended" },
-    { key: "Origen", value: "Estados Unidos" },
-    { key: "Añejamiento", value: "Sin declaración de edad" },
-    { key: "Tipo de Barrica", value: "Roble americano" },
-    { key: "ABV", value: "35%" },
-    { key: "Estuche", value: "Sin estuche" },
-  ],
-},
-
-{
-  name: "Jack Daniel’s Single Barrel",
-  categoria: "Whiskies",
-  hasVariants: false,
-  isAgrupador: false,
-  sku: "WHKY-JD-SBAR",
-  codigoUniversal: "5099873018008",
-  marca: "Jack Daniel’s",
-  proveedor: "Brown-Forman",
-  formatoVenta: "unidad",
-  volumenActive: true,
-  volumenCantidad: 750,
-  volumenUnidad: "ml",
-
-  stock: { total: "18", reservado: "2", disponible: "16" },
-
-  atributosPrincipales: [{ key: "Línea", value: "Single Barrel" }],
-  atributosInformativos: [
-    { key: "Tipo de Whisky", value: "Tennessee" },
-    { key: "Método de Elaboración", value: "Single Barrel" },
-    { key: "Origen", value: "Estados Unidos" },
-    { key: "Añejamiento", value: "Selección especial" },
-    { key: "Tipo de Barrica", value: "Roble americano tostado" },
-    { key: "ABV", value: "45%" },
-    { key: "Estuche", value: "Caja" },
-  ],
-},
-
-{
-  name: "Jameson Original",
-  categoria: "Whiskies",
-  hasVariants: false,
-  isAgrupador: false,
-  sku: "WHKY-JMS-ORIG",
-  codigoUniversal: "5011007003005",
-  marca: "Jameson",
-  proveedor: "Pernod Ricard",
-  formatoVenta: "unidad",
-  volumenActive: true,
-  volumenCantidad: 750,
-  volumenUnidad: "ml",
-
-  stock: { total: "34", reservado: "4", disponible: "30" },
-
-  atributosPrincipales: [{ key: "Línea", value: "Original" }],
-  atributosInformativos: [
-    { key: "Tipo de Whisky", value: "Irish" },
-    { key: "Método de Elaboración", value: "Triple destilado" },
-    { key: "Origen", value: "Irlanda" },
-    { key: "Añejamiento", value: "Mínimo 4 años" },
-    { key: "Tipo de Barrica", value: "Bourbon & Jerez" },
-    { key: "ABV", value: "40%" },
-    { key: "Estuche", value: "Sin estuche" },
-  ],
-},
-
-{
-  name: "Jameson Black Barrel",
-  categoria: "Whiskies",
-  hasVariants: false,
-  isAgrupador: false,
-  sku: "WHKY-JMS-BBLK",
-  codigoUniversal: "5011007024369",
-  marca: "Jameson",
-  proveedor: "Pernod Ricard",
-  formatoVenta: "unidad",
-  volumenActive: true,
-  volumenCantidad: 750,
-  volumenUnidad: "ml",
-
-  stock: { total: "22", reservado: "3", disponible: "19" },
-
-  atributosPrincipales: [{ key: "Línea", value: "Black Barrel" }],
-  atributosInformativos: [
-    { key: "Tipo de Whisky", value: "Irish" },
-    { key: "Método de Elaboración", value: "Triple destilado" },
-    { key: "Origen", value: "Irlanda" },
-    { key: "Añejamiento", value: "Barricas doblemente tostadas" },
-    { key: "Tipo de Barrica", value: "Roble americano" },
-    { key: "ABV", value: "40%" },
-    { key: "Estuche", value: "Caja" },
-  ],
-},
-// --- LICORES ---
-  //LICORES
-  {
-    name: "Jägermeister 700ml",
-    categoria: "Licores",
-    hasVariants: false,
-    isAgrupador: false,
-    sku: "LICR-JGRM700-ORIG",
-    codigoUniversal: "4067700013019",
-    marca: "Jägermeister",
-    proveedor: "Mast-Jägermeister SE",
-    codigoProveedor: "MJ-DE-700-ORIG",
-    formatoVenta: "unidad",
-    volumenActive: true,
-    volumenCantidad: 700,
-    volumenUnidad: "ml",
-    stock: {
-      total: "48",
-      reservado: "6",
-      disponible: "42",
-    },
-    atributosPrincipales: [{ key: "Sabor", value: "Original" }],
-    atributosInformativos: [
-      { key: "Tipo de Licor", value: "Licor herbal amargo" },
-      { key: "Origen", value: "Alemania" },
-      { key: "ABV", value: "35%" },
-      { key: "Estuche", value: "Sin estuche" },
-    ],
-  },
-  {
-    name: "Sheridan's Original",
-    categoria: "Licores",
-    hasVariants: false,
-    isAgrupador: false,
-    sku: "LICR-SHER700-CACR",
-    codigoUniversal: "5391530012345",
-    marca: "Sheridan's",
-    proveedor: "Diageo",
-    codigoProveedor: "DIA-SHER-700",
-    formatoVenta: "unidad",
-    volumenActive: true,
-    volumenCantidad: 700,
-    volumenUnidad: "ml",
-    stock: {
-      total: "36",
-      reservado: "5",
-      disponible: "31",
-    },
-    atributosPrincipales: [{ key: "Sabor", value: "Café y crema" }],
-    atributosInformativos: [
-      { key: "Tipo de Licor", value: "Licor de crema y café" },
-      { key: "Origen", value: "Irlanda" },
-      { key: "ABV", value: "15.5%" },
-      { key: "Estuche", value: "Sin estuche" },
-    ],
-  },
-
-// FIREBALL
-{
-  name: "Fireball 750 ml",
-  categoria: "Licores",
-  hasVariants: false,
-  isAgrupador: false,
-  sku: "LICR-FIRB750-CANE",
-  codigoUniversal: "088004009303",
-  marca: "Fireball",
-  proveedor: "Sazerac Company",
-  codigoProveedor: "SAZ-FIRB-750-CANE",
-  formatoVenta: "unidad",
-  volumenActive: true,
-  volumenCantidad: 750,
-  volumenUnidad: "ml",
-
-  stock: { total: "24", reservado: "3", disponible: "21" },
-
-  atributosPrincipales: [{ key: "Sabor", value: "Canela" }],
-  atributosInformativos: [
-    { key: "Tipo de Licor", value: "Licor de whisky y canela" },
-    { key: "Origen", value: "Canadá" },
-    { key: "ABV", value: "33%" },
-    { key: "Estuche", value: "Sin estuche" },
-  ],
-},
-
-// COINTREAU
-{
-  name: "Cointreau 700 ml",
-  categoria: "Licores",
-  hasVariants: false,
-  isAgrupador: false,
-  sku: "LICR-COIN700-ORIG",
-  codigoUniversal: "07035542004202",
-  marca: "Cointreau",
-  proveedor: "Rémy Cointreau",
-  codigoProveedor: "RC-COIN-700-ORIG",
-  formatoVenta: "unidad",
-  volumenActive: true,
-  volumenCantidad: 700,
-  volumenUnidad: "ml",
-
-  stock: { total: "18", reservado: "2", disponible: "16" },
-
-  atributosPrincipales: [{ key: "Sabor", value: "Original" }],
-  atributosInformativos: [
-    { key: "Tipo de Licor", value: "Triple sec (licor de naranja)" },
-    { key: "Origen", value: "Francia" },
-    { key: "ABV", value: "40%" },
-    { key: "Estuche", value: "Sin estuche" },
-  ],
-},
-
-// BAILEYS (AGRUPADOR)
-{
-  name: "Baileys",
-  categoria: "Licores",
-  hasVariants: true,
-  isAgrupador: true,
-  sku: "LICR-BAILYS",
-  marca: "Baileys",
-  proveedor: "Diageo",
-  formatoVenta: "unidad",
-  volumenActive: true,
-  volumenCantidad: 750,
-  volumenUnidad: "ml",
-
-  containerAtributosPrincipales: [
-    { key: "Sabor", variantes: ["Original", "Chocolate Luxe", "Salted Caramel", "Strawberries & Cream"] },
-  ],
-
-  atributosInformativos: [
-    { key: "Tipo de Licor", value: "Licor de crema" },
-    { key: "Origen", value: "Irlanda" },
-    { key: "ABV", value: "17%" },
-    { key: "Estuche", value: "Sin estuche" },
-  ],
-
-  variantCount: 4,
-  variants: [
-    {
-      name: "Baileys",
-      sku: "LICR-BAIO750-ORIG",
-      codigoUniversal: "5011013100132",
-      codigoProveedor: "DIA-BAIO-750-ORIG",
-      categoria: "Licores",
-      marca: "Baileys",
-      atributosPrincipales: [{ key: "Sabor", value: "Original" }],
-      stock: { total: "30", reservado: "4", disponible: "26" },
-    },
-    {
-      name: "Baileys",
-      sku: "LICR-BAIO750-CHOC",
-      codigoUniversal: "5011013933877",
-      codigoProveedor: "DIA-BAIO-750-CHOC",
-      categoria: "Licores",
-      marca: "Baileys",
-      atributosPrincipales: [{ key: "Sabor", value: "Chocolate Luxe" }],
-      stock: { total: "14", reservado: "2", disponible: "12" },
-    },
-    {
-      name: "Baileys",
-      sku: "LICR-BAIO750-CARA",
-      codigoUniversal: "5011013935048",
-      codigoProveedor: "DIA-BAIO-750-CARA",
-      categoria: "Licores",
-      marca: "Baileys",
-      atributosPrincipales: [{ key: "Sabor", value: "Salted Caramel" }],
-      stock: { total: "16", reservado: "2", disponible: "14" },
-    },
-    {
-      name: "Baileys",
-      sku: "LICR-BAIO750-STCR",
-      codigoUniversal: "5011013935055",
-      codigoProveedor: "DIA-BAIO-750-STCR",
-      categoria: "Licores",
-      marca: "Baileys",
-      atributosPrincipales: [{ key: "Sabor", value: "Strawberries & Cream" }],
-      stock: { total: "12", reservado: "1", disponible: "11" },
-    },
-  ],
-},
-
-// WILD AFRICA CREAM
-{
-  name: "Wild Africa Cream 750 ml",
-  categoria: "Licores",
-  hasVariants: false,
-  isAgrupador: false,
-  sku: "LICR-WAFC750-CREM",
-  codigoUniversal: "6009653011924",
-  marca: "Wild Africa Cream",
-  proveedor: "Wild Africa Cream",
-  codigoProveedor: "WAC-WAFC-750-CREM",
-  formatoVenta: "unidad",
-  volumenActive: true,
-  volumenCantidad: 750,
-  volumenUnidad: "ml",
-
-  stock: { total: "16", reservado: "2", disponible: "14" },
-
-  atributosPrincipales: [{ key: "Sabor", value: "Crema" }],
-  atributosInformativos: [
-    { key: "Tipo de Licor", value: "Licor de crema" },
-    { key: "Origen", value: "Sudáfrica" },
-    { key: "ABV", value: "15%" },
-    { key: "Estuche", value: "Sin estuche" },
-  ],
-},
-
-// STREGA
-{
-  name: "Strega 700 ml",
-  categoria: "Licores",
-  hasVariants: false,
-  isAgrupador: false,
-  sku: "LICR-STRE700-ORIG",
-  codigoUniversal: "0000080220718",
-  marca: "Strega",
-  proveedor: "Strega Alberti",
-  codigoProveedor: "STA-STRE-700-ORIG",
-  formatoVenta: "unidad",
-  volumenActive: true,
-  volumenCantidad: 700,
-  volumenUnidad: "ml",
-
-  stock: { total: "14", reservado: "2", disponible: "12" },
-
-  atributosPrincipales: [{ key: "Sabor", value: "Original" }],
-  atributosInformativos: [
-    { key: "Tipo de Licor", value: "Licor herbal" },
-    { key: "Origen", value: "Italia" },
-    { key: "ABV", value: "40%" },
-    { key: "Estuche", value: "Sin estuche" },
-  ],
-},
-
-// TOFKA
-{
-  name: "Tofka 700 ml",
-  categoria: "Licores",
-  hasVariants: false,
-  isAgrupador: false,
-  sku: "LICR-TOFK700-TOFF",
-  codigoUniversal: "5060049029993",
-  marca: "Tofka",
-  proveedor: "Tofka",
-  codigoProveedor: "TOF-TOFK-700-TOFF",
-  formatoVenta: "unidad",
-  volumenActive: true,
-  volumenCantidad: 700,
-  volumenUnidad: "ml",
-
-  stock: { total: "12", reservado: "1", disponible: "11" },
-
-  atributosPrincipales: [{ key: "Sabor", value: "Toffee" }],
-  atributosInformativos: [
-    { key: "Tipo de Licor", value: "Licor a base de vodka sabor toffee" },
-    { key: "Origen", value: "Reino Unido" },
-    { key: "ABV", value: "35%" },
-    { key: "Estuche", value: "Sin estuche" },
-  ],
-}
-
-
 ]

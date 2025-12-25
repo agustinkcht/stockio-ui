@@ -10,7 +10,6 @@ interface BreadcrumbItem {
 }
 
 interface UtilityBarProps {
-  // URDG buttons props
   hasUnsavedChanges?: boolean
   canUndo?: boolean
   canRedo?: boolean
@@ -104,10 +103,7 @@ export function UtilityBar({
   }, [itemCreated])
 
   return (
-    <div
-      className="border-b border-border px-8 flex flex-col fixed top-12 right-0 left-0 backdrop-blur-md z-40 transition-all duration-300 bg-[rgba(253,254,254,1)]"
-      style={{ left: isExpanded ? "256px" : "64px", width: isExpanded ? "calc(100% - 256px)" : "calc(100% - 64px)" }}
-    >
+    <div className="border-b border-border px-8 flex flex-col transition-all duration-300 bg-white">
       <div className="flex items-center justify-between h-[36px]">
         <div className="flex items-center">
           <Breadcrumb items={breadcrumbItems} />

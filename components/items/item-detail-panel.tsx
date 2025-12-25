@@ -551,7 +551,7 @@ export function ItemDetailPanel({
         .toUpperCase()
         .replace(/[^A-Z0-9\s]/g, "")
         .split(" ")
-        .map((word) => word.substring(0, 3))
+        .map((word: string) => word.substring(0, 3))
         .join("-")
         .substring(0, 15)
       await navigator.clipboard.writeText(skuPadre)
@@ -625,257 +625,250 @@ export function ItemDetailPanel({
     <>
       {/* <Breadcrumb dynamicContent={null} /> */}
 
-      <div className="px-8 pt-6 pb-6 bg-slate-50 min-h-screen mt-[84px]">
+      <div className="px-8 pb-6 bg-slate-50 min-h-screen pl-8 pt-0">
         <div className="grid grid-cols-10 gap-24">
-          {/* Left Column - Item Info (suspended card) - Made fixed to stay in place while scrolling */}
-          <div className="col-span-3 mt-4">
-            <div
-              className="fixed bg-card rounded-r-xl h-[calc(100vh-84px)] border overflow-hidden flex flex-col transition-all duration-300 top-[84px] border-solid border-slate-100 shadow-xl"
-              style={{
-                width: isExpanded ? "calc((100vw - 16rem - 4rem) * 0.3 + 2rem)" : "calc((100vw - 4rem - 4rem) * 0.3)",
-                left: isExpanded ? "16rem" : "4rem",
-              }}
-            >
-              <div className="p-6 mt-0 px-8 pl-9 pr-8">
-                <div className="mt-2 mb-0">
-                  <h2 className="font-semibold text-foreground text-lg mb-0">{selectedItem.name}</h2>
-                  <div className="border-t border-slate-200 my-4 -mx-8"></div>
+          <div className="col-span-3 sticky top-[0px] z-20 backdrop-blur-[2px] bg-card rounded-xl h-fit border flex flex-col transition-all duration-300 border-solid border-slate-100 shadow-xl mt-4">
+            <div className=" p-6 mt-0 px-8 pl-9 pr-8">
+              <div className="mt-2 mb-0">
+                <h2 className="font-semibold text-foreground text-lg mb-0">{selectedItem.name}</h2>
+                <div className="border-t border-slate-200 my-4 -mx-8"></div>
 
-                  <div className="flex items-center gap-2 mt-6">
-                    <p className="text-sm text-muted-foreground mt-0">
-                      {isViewingContainer ? "SKU Padre:" : "SKU:"}{" "}
-                      {editingSku ? (
-                        <input
-                          type="text"
-                          value={skuValue}
-                          onChange={(e) => setSkuValue(e.target.value)}
-                          onBlur={handleSkuBlur}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") handleSkuBlur()
-                          }}
-                          className="inline-block w-48 bg-secondary border border-border text-foreground px-2 py-0.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                          autoFocus
-                        />
-                      ) : (
-                        <span
-                          onClick={() => setEditingSku(true)}
-                          className="font-mono text-foreground cursor-pointer hover:underline"
-                        >
-                          {selectedItem?.sku ||
-                            selectedItem?.name
-                              .toUpperCase()
-                              .replace(/[^A-Z0-9\s]/g, "")
-                              .split(" ")
-                              .map((word: string) => word.substring(0, 3))
-                              .join("-")
-                              .substring(0, 15)}
-                        </span>
-                      )}
-                    </p>
-                    {!editingSku && (
-                      <button
-                        onClick={handleCopySku}
-                        className="text-muted-foreground hover:text-foreground transition-colors"
-                        title="Copiar SKU"
+                <div className="flex items-center gap-2 mt-6">
+                  <p className="text-sm text-muted-foreground mt-0">
+                    {isViewingContainer ? "SKU Padre:" : "SKU:"}{" "}
+                    {editingSku ? (
+                      <input
+                        type="text"
+                        value={skuValue}
+                        onChange={(e) => setSkuValue(e.target.value)}
+                        onBlur={handleSkuBlur}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleSkuBlur()
+                        }}
+                        className="inline-block w-48 bg-secondary border border-border text-foreground px-2 py-0.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        autoFocus
+                      />
+                    ) : (
+                      <span
+                        onClick={() => setEditingSku(true)}
+                        className="font-mono text-foreground cursor-pointer hover:underline"
                       >
-                        {skuCopied ? <span className="text-success text-xs">✓</span> : <Copy className="h-3.5 w-3.5" />}
-                      </button>
+                        {selectedItem?.sku ||
+                          selectedItem?.name
+                            .toUpperCase()
+                            .replace(/[^A-Z0-9\s]/g, "")
+                            .split(" ")
+                            .map((word: string) => word.substring(0, 3))
+                            .join("-")
+                            .substring(0, 15)}
+                      </span>
                     )}
-                  </div>
-
-                  {!isViewingContainer && (
-                    <div className="flex items-center gap-2 mt-1 mb-0">
-                      <p className="text-sm text-muted-foreground">Código Universal:</p>
-                      {editingCodigoUniversal ? (
-                        <input
-                          type="text"
-                          value={codigoUniversalValue}
-                          onChange={(e) => setCodigoUniversalValue(e.target.value)}
-                          onBlur={handleCodigoUniversalBlur}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") handleCodigoUniversalBlur()
-                          }}
-                          className="inline-block w-48 bg-secondary border border-border text-foreground px-2 py-0.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                          autoFocus
-                        />
-                      ) : (
-                        <span
-                          onClick={() => setEditingCodigoUniversal(true)}
-                          className="font-mono text-foreground cursor-pointer hover:underline"
-                        >
-                          {selectedItem.codigoUniversal || "N/A"}
-                        </span>
-                      )}
-                      {!editingCodigoUniversal && (
-                        <button
-                          onClick={handleCopyCodigoUniversal}
-                          className="text-muted-foreground hover:text-foreground transition-colors"
-                          title="Copiar Código Universal"
-                          disabled={!selectedItem?.codigoUniversal}
-                        >
-                          {codigoUniversalCopied ? (
-                            <span className="text-success text-xs">✓</span>
-                          ) : (
-                            <Copy className="h-3.5 w-3.5" />
-                          )}
-                        </button>
-                      )}
-                    </div>
+                  </p>
+                  {!editingSku && (
+                    <button
+                      onClick={handleCopySku}
+                      className="text-muted-foreground hover:text-foreground transition-colors"
+                      title="Copiar SKU"
+                    >
+                      {skuCopied ? <span className="text-success text-xs">✓</span> : <Copy className="h-3.5 w-3.5" />}
+                    </button>
                   )}
                 </div>
 
-                {isViewingContainer && (
-                  <div className="mt-9">
-                    <div className="w-full h-64 bg-accent rounded-lg flex items-center justify-center border-2 border-dashed border-border mt-0 mb-9">
-                      <span className="text-sm text-muted-foreground">Sin Imagen</span>
-                    </div>
-
-                    <div className="w-full mt-0">
-                      <h3 className="text-sm font-medium text-foreground text-left ml-3 mb-0 mt-0">Descripción</h3>
-                      {editingDescripcion ? (
-                        <textarea
-                          value={descripcionValue}
-                          onChange={(e) => setDescripcionValue(e.target.value)}
-                          onBlur={handleDescripcionBlur}
-                          className="w-full h-32 bg-transparent border-none rounded-lg p-3 text-sm text-foreground focus:outline-none focus:ring-0 resize-none"
-                          placeholder="Agregar descripción del producto..."
-                          autoFocus
-                        />
-                      ) : (
-                        <div
-                          onClick={() => setEditingDescripcion(true)}
-                          className="w-full border border-border rounded-lg p-3 text-sm text-foreground cursor-text hover:border-muted-foreground overflow-y-auto bg-transparent border-none h-24"
-                        >
-                          {descripcionValue || (
-                            <span className="text-muted-foreground">Click para agregar descripción...</span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
                 {!isViewingContainer && (
-                  <div className="mt-9">
-                    <div className="w-full h-64 bg-accent rounded-lg flex items-center justify-center border-2 border-dashed border-border mt-0 mb-9">
-                      <span className="text-sm text-muted-foreground">Sin Imagen</span>
-                    </div>
-
-                    <div className="w-full mt-0">
-                      <h3 className="text-sm font-medium text-foreground text-left ml-3 mb-0 mt-0">Descripción</h3>
-                      {editingDescripcion ? (
-                        <textarea
-                          value={descripcionValue}
-                          onChange={(e) => setDescripcionValue(e.target.value)}
-                          onBlur={handleDescripcionBlur}
-                          className="w-full h-32 bg-transparent border-none rounded-lg p-3 text-sm text-foreground focus:outline-none focus:ring-0 resize-none"
-                          placeholder="Agregar descripción del producto..."
-                          autoFocus
-                        />
-                      ) : (
-                        <div
-                          onClick={() => setEditingDescripcion(true)}
-                          className="w-full border border-border rounded-lg p-3 text-sm text-foreground cursor-text hover:border-muted-foreground overflow-y-auto bg-transparent border-none h-24"
-                        >
-                          {descripcionValue || (
-                            <span className="text-muted-foreground">Click para agregar descripción...</span>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                  <div className="flex items-center gap-2 mt-1 mb-0">
+                    <p className="text-sm text-muted-foreground">Código Universal:</p>
+                    {editingCodigoUniversal ? (
+                      <input
+                        type="text"
+                        value={codigoUniversalValue}
+                        onChange={(e) => setCodigoUniversalValue(e.target.value)}
+                        onBlur={handleCodigoUniversalBlur}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleCodigoUniversalBlur()
+                        }}
+                        className="inline-block w-48 bg-secondary border border-border text-foreground px-2 py-0.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        autoFocus
+                      />
+                    ) : (
+                      <span
+                        onClick={() => setEditingCodigoUniversal(true)}
+                        className="font-mono text-foreground cursor-pointer hover:underline"
+                      >
+                        {selectedItem.codigoUniversal || "N/A"}
+                      </span>
+                    )}
+                    {!editingCodigoUniversal && (
+                      <button
+                        onClick={handleCopyCodigoUniversal}
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                        title="Copiar Código Universal"
+                        disabled={!selectedItem?.codigoUniversal}
+                      >
+                        {codigoUniversalCopied ? (
+                          <span className="text-success text-xs">✓</span>
+                        ) : (
+                          <Copy className="h-3.5 w-3.5" />
+                        )}
+                      </button>
+                    )}
                   </div>
                 )}
-
-                {/* Rest of the content with updated light mode styling */}
               </div>
+
+              {isViewingContainer && (
+                <div className="mt-9">
+                  <div className="w-full h-64 bg-accent rounded-lg flex items-center justify-center border-2 border-dashed border-border mt-0 mb-9">
+                    <span className="text-sm text-muted-foreground">Sin Imagen</span>
+                  </div>
+
+                  <div className="w-full mt-0">
+                    <h3 className="text-sm font-medium text-foreground text-left ml-3 mb-0 mt-0">Descripción</h3>
+                    {editingDescripcion ? (
+                      <textarea
+                        value={descripcionValue}
+                        onChange={(e) => setDescripcionValue(e.target.value)}
+                        onBlur={handleDescripcionBlur}
+                        className="w-full h-32 bg-transparent border-none rounded-lg p-3 text-sm text-foreground focus:outline-none focus:ring-0 resize-none"
+                        placeholder="Agregar descripción del producto..."
+                        autoFocus
+                      />
+                    ) : (
+                      <div
+                        onClick={() => setEditingDescripcion(true)}
+                        className="w-full border border-border rounded-lg p-3 text-sm text-foreground cursor-text hover:border-muted-foreground overflow-y-auto bg-transparent border-none h-24"
+                      >
+                        {descripcionValue || (
+                          <span className="text-muted-foreground">Click para agregar descripción...</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {!isViewingContainer && (
+                <div className="mt-9">
+                  <div className="w-full h-64 bg-accent rounded-lg flex items-center justify-center border-2 border-dashed border-border mt-0 mb-9">
+                    <span className="text-sm text-muted-foreground">Sin Imagen</span>
+                  </div>
+
+                  <div className="w-full mt-0">
+                    <h3 className="text-sm font-medium text-foreground text-left ml-3 mb-0 mt-0">Descripción</h3>
+                    {editingDescripcion ? (
+                      <textarea
+                        value={descripcionValue}
+                        onChange={(e) => setDescripcionValue(e.target.value)}
+                        onBlur={handleDescripcionBlur}
+                        className="w-full h-32 bg-transparent border-none rounded-lg p-3 text-sm text-foreground focus:outline-none focus:ring-0 resize-none"
+                        placeholder="Agregar descripción del producto..."
+                        autoFocus
+                      />
+                    ) : (
+                      <div
+                        onClick={() => setEditingDescripcion(true)}
+                        className="w-full border border-border rounded-lg p-3 text-sm text-foreground cursor-text hover:border-muted-foreground overflow-y-auto bg-transparent border-none h-24"
+                      >
+                        {descripcionValue || (
+                          <span className="text-muted-foreground">Click para agregar descripción...</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Rest of the content with updated light mode styling */}
             </div>
           </div>
 
-          {/* Right Column - Tabs and Content */}
-          <div className="col-span-7 flex flex-col w-full ml-0 overflow-hidden">
-            {/* Tab Buttons - Now uses natural document flow */}
-            <div className="flex items-center gap-0 h-10 mb-4 bg-slate-50 z-10">
-              {isViewingContainer ? (
-                <>
-                  <button
-                    onClick={() => setSelectedDetailTab("info")}
-                    className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer rounded-tl-md ${
-                      selectedDetailTab === "info"
-                        ? "border-primary bg-accent text-foreground"
-                        : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                    }`}
-                  >
-                    <span className="text-sm font-medium uppercase tracking-wider">Info</span>
-                  </button>
-                  <button
-                    onClick={() => setSelectedDetailTab("atributos")}
-                    className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer ${
-                      selectedDetailTab === "atributos"
-                        ? "border-primary bg-accent text-foreground"
-                        : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                    }`}
-                  >
-                    <span className="text-sm font-medium uppercase tracking-wider">Atributos</span>
-                  </button>
-                  <button
-                    onClick={() => setSelectedDetailTab("variantes")}
-                    className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer ${
-                      selectedDetailTab === "variantes"
-                        ? "border-primary bg-accent text-foreground"
-                        : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                    }`}
-                  >
-                    <span className="text-sm font-medium uppercase tracking-wider">Variantes</span>
-                  </button>
-                  <button
-                    onClick={() => setSelectedDetailTab("stock-variantes")}
-                    className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer rounded-tr-md ${
-                      selectedDetailTab === "stock-variantes"
-                        ? "border-primary bg-accent text-foreground"
-                        : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                    }`}
-                  >
-                    <span className="text-sm font-medium uppercase tracking-wider">Stock</span>
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => setSelectedDetailTab("info")}
-                    className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer rounded-tl-md ${
-                      selectedDetailTab === "info"
-                        ? "border-primary bg-accent text-foreground"
-                        : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                    }`}
-                  >
-                    <span className="text-sm font-medium uppercase tracking-wider">Info</span>
-                  </button>
-                  <button
-                    onClick={() => setSelectedDetailTab("atributos")}
-                    className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer ${
-                      selectedDetailTab === "atributos"
-                        ? "border-primary bg-accent text-foreground"
-                        : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                    }`}
-                  >
-                    <span className="text-sm font-medium uppercase tracking-wider">Atributos</span>
-                  </button>
-                  <button
-                    onClick={() => setSelectedDetailTab("stock")}
-                    className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer rounded-tr-md ${
-                      selectedDetailTab === "stock"
-                        ? "border-primary bg-accent text-foreground"
-                        : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                    }`}
-                  >
-                    <span className="text-sm font-medium uppercase tracking-wider">Stock</span>
-                  </button>
-                </>
-              )}
+          {/* Right Column - Segment Buttons + Content */}
+          <div className="col-span-7 flex flex-col">
+            {/* Sticky Segment Buttons */}
+            <div className="sticky top-[0px] z-20 backdrop-blur-[2px] bg-slate-50 mb-4">
+              <div className="flex items-center gap-0 h-10 mt-3">
+                {isViewingContainer ? (
+                  <>
+                    <button
+                      onClick={() => setSelectedDetailTab("info")}
+                      className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer rounded-tl-md ${
+                        selectedDetailTab === "info"
+                          ? "border-primary bg-accent text-foreground"
+                          : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                      }`}
+                    >
+                      <span className="text-sm font-medium uppercase tracking-wider">Info</span>
+                    </button>
+                    <button
+                      onClick={() => setSelectedDetailTab("atributos")}
+                      className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer ${
+                        selectedDetailTab === "atributos"
+                          ? "border-primary bg-accent text-foreground"
+                          : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                      }`}
+                    >
+                      <span className="text-sm font-medium uppercase tracking-wider">Atributos</span>
+                    </button>
+                    <button
+                      onClick={() => setSelectedDetailTab("variantes")}
+                      className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer ${
+                        selectedDetailTab === "variantes"
+                          ? "border-primary bg-accent text-foreground"
+                          : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                      }`}
+                    >
+                      <span className="text-sm font-medium uppercase tracking-wider">Variantes</span>
+                    </button>
+                    <button
+                      onClick={() => setSelectedDetailTab("stock-variantes")}
+                      className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer rounded-tr-md ${
+                        selectedDetailTab === "stock-variantes"
+                          ? "border-primary bg-accent text-foreground"
+                          : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                      }`}
+                    >
+                      <span className="text-sm font-medium uppercase tracking-wider">Stock</span>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setSelectedDetailTab("info")}
+                      className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer rounded-tl-md ${
+                        selectedDetailTab === "info"
+                          ? "border-primary bg-accent text-foreground"
+                          : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                      }`}
+                    >
+                      <span className="text-sm font-medium uppercase tracking-wider">Info</span>
+                    </button>
+                    <button
+                      onClick={() => setSelectedDetailTab("atributos")}
+                      className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer ${
+                        selectedDetailTab === "atributos"
+                          ? "border-primary bg-accent text-foreground"
+                          : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                      }`}
+                    >
+                      <span className="text-sm font-medium uppercase tracking-wider">Atributos</span>
+                    </button>
+                    <button
+                      onClick={() => setSelectedDetailTab("stock")}
+                      className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer rounded-tr-md ${
+                        selectedDetailTab === "stock"
+                          ? "border-primary bg-accent text-foreground"
+                          : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                      }`}
+                    >
+                      <span className="text-sm font-medium uppercase tracking-wider">Stock</span>
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
 
-            {/* Tab Content - Removed mt-14, now uses natural flow */}
-            <div className="flex-1">
+            {/* Tab Content */}
+            <div className="flex-1 w-full overflow-hidden">
               {isViewingContainer ? (
                 // Container item tab content
                 <>

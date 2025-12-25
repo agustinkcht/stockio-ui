@@ -15,6 +15,12 @@ export interface ItemVariant {
     reservado: string
     disponible: string
   }
+  precio?: {
+    costo: number
+    margen: number
+    iva: number
+    precioFinal: number
+  }
   sku: string
   codigoUniversal: string
   marca?: string
@@ -31,6 +37,12 @@ export interface Item {
     total: string
     reservado: string
     disponible: string
+  }
+  precio?: {
+    costo: number
+    margen: number
+    iva: number
+    precioFinal: number
   }
   hasVariants?: boolean
   isAgrupador?: boolean
@@ -94,8 +106,14 @@ export interface SidebarItem {
   icon: any
   label: string
   hasDropdown?: boolean
-  dropdownItems?: string[]
+  dropdown?: DropdownItem[]
+  dropdownItems?: string[] // Deprecated, keeping for backward compatibility
   active?: boolean
+}
+
+export interface DropdownItem {
+  label: string
+  href: string
 }
 
 export interface MinimizedTab {
@@ -105,7 +123,7 @@ export interface MinimizedTab {
 
 export type DetailTab = "info" | "atributos" | "variantes" | "stock" | "stock-variantes"
 
-export type GridSize = "sm" | "md" | "lg"
+export type GridSize = "sm"
 
 export type FormatoVenta = "unidad" | "pack"
 

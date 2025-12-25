@@ -25,9 +25,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    // Removed dark class - light mode is now default
-    <html className="bg-secondary" lang="en">
-      <body className={`font-sans antialiased ${geistSans.className}`}>
+    <html className="bg-[rgb(243,242,238)]" lang="en">
+      <body className={`font-sans antialiased bg-[rgb(243,242,238)] ${geistSans.className}`}>
         {children}
         <Analytics />
       </body>

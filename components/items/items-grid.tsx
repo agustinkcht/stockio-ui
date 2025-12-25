@@ -15,7 +15,7 @@ interface ItemsGridProps {
   itemSelected: boolean[]
   expandedItems: Record<number, boolean>
   handleItemButtonClick: (index: number) => void
-  handleItemClick: (item: Item, tab: string, isContainer?: boolean) => void
+  handleItemClick: (item: Item) => void // Simplified signature
   toggleVariantExpansion: (index: number) => void
   updateDepositStock?: (itemSku: string, depositId: string, quantity: number) => void
   depositStock?: DepositStock[]
@@ -115,11 +115,11 @@ export function ItemsGrid({
 
   return (
     <>
-      <div className="sticky top-[0px] z-20 backdrop-blur-[2px] bg-slate-50">
+      <div className="sticky top-[0px] z-20 backdrop-blur-[2px] bg-slate-50 mt-0">
         <div className="w-full h-2 bg-transparent" />
 
         {/* Tab Buttons */}
-        <div className="mt-24 px-4 bg-white border rounded-lg shadow-sm border-[rgba(228,230,235,0.5)] pt-2 pb-2">
+        <div className="px-4 bg-white border rounded-lg shadow-sm border-[rgba(228,230,235,0.5)] mt-2 pt-1 pb-1">
           <div className="px-4 pt-3 pb-3 pl-0 pr-0">
             <div className="flex items-center justify-between border-b border-gray-200 border-none pl-0 pr-0 pb-0">
               <div className="flex items-center gap-2 border-0 border-none ml-1.5 mr-0 flex-shrink-0">
@@ -233,12 +233,9 @@ export function ItemsGrid({
               </div>
 
               {/* Tab header matching exact item card structure */}
-              <div className="flex-1 grid grid-cols-14 h-9 bg-slate-200 border border-gray-300 rounded-xs border-none">
-                <div className="col-span-4 flex items-center px-4 py-2 justify-center border-solid pl-4 pr-4 mr-0 border border-l-0 border-[rgba(202,213,227,0.61)]">
+              <div className="flex-1 grid grid-cols-13 h-9 bg-slate-200 border border-gray-300 rounded-xs border-none">
+                <div className="col-span-5 flex items-center px-4 py-2 justify-center border-solid pl-4 pr-4 mr-0 border border-l-0 border-[rgba(202,213,227,0.61)]">
                   <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Título</span>
-                </div>
-                <div className="col-span-2 flex items-center justify-center px-4 py-2 border-solid border-r ml-0 mr-0 border-b border-t border-l-0 border-[rgba(202,213,227,0.61)]">
-                  <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Marca</span>
                 </div>
                 <div className="col-span-2 flex items-center justify-center px-4 py-2 border-solid border mr-0 border-b border-t border-l-0 border-[rgba(202,213,227,0.61)]">
                   <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Categoría</span>
@@ -265,30 +262,12 @@ export function ItemsGrid({
                     <div className="absolute right-0 top-full mt-1 w-16 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
                       <button
                         onClick={() => {
-                          setGridSize("lg")
-                          setGridSizeDropdownOpen(false)
-                        }}
-                        className="w-full px-3 py-2 text-center text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
-                      >
-                        LG
-                      </button>
-                      <button
-                        onClick={() => {
                           setGridSize("md")
                           setGridSizeDropdownOpen(false)
                         }}
                         className="w-full px-3 py-2 text-center text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
                       >
                         MD
-                      </button>
-                      <button
-                        onClick={() => {
-                          setGridSize("sm")
-                          setGridSizeDropdownOpen(false)
-                        }}
-                        className="w-full px-3 py-2 text-center text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
-                      >
-                        SM
                       </button>
                     </div>
                   )}

@@ -1,7 +1,9 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect, useRef } from "react"
-import { ChevronDown, ChevronRight, Copy, MoreVertical, Layers, Trash2 } from "lucide-react"
+import { ChevronDown, ChevronRight, MoreVertical, Layers, Trash2, Copy } from "lucide-react"
 import type { Item } from "@/lib/types"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
@@ -12,7 +14,7 @@ interface ItemCardProps {
   isSelected: boolean
   isExpanded: boolean
   onSelectClick: (index: number) => void
-  onItemClick: (item: Item, tab: string, isContainer?: boolean) => void
+  onItemClick: (item: Item) => void // Simplified signature - no longer needs tab parameter
   onToggleExpansion: (index: number) => void
   onDelete?: (item: Item) => void
   nextItem?: Item // Added for dynamic margin calculation
@@ -64,6 +66,7 @@ export function ItemCard({
 }: ItemCardProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [showTransition, setShowTransition] = useState(false)
+  const [copiedSku, setCopiedSku] = useState(false)
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const marginClass = calculateMarginBottom(item, nextItem, isChild)
@@ -129,6 +132,13 @@ export function ItemCard({
     }
   }
 
+  const handleCopySku = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    await navigator.clipboard.writeText(item.sku)
+    setCopiedSku(true)
+    setTimeout(() => setCopiedSku(false), 2000)
+  }
+
   return (
     <div className={marginClass}>
       <div
@@ -159,8 +169,8 @@ export function ItemCard({
         <div
           className={`flex-1 border-solid mb-0 border-slate-200/65 shadow-md ${gridSize === "lg" ? "h-22" : gridSize === "md" ? "h-16" : "h-10"} ${roundedClass} grid ${
             item.isAgrupador || item.hasVariants
-              ? `grid-cols-14 ${isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors cursor-pointer overflow-hidden`
-              : `grid-cols-14 ${isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors overflow-hidden`
+              ? `grid-cols-13 ${isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors cursor-pointer overflow-hidden`
+              : `grid-cols-13 ${isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors overflow-hidden`
           }`}
           onClick={(e) => {
             if (item.hasVariants || item.isAgrupador) {
@@ -171,20 +181,23 @@ export function ItemCard({
           {item.isAgrupador || item.hasVariants ? (
             <>
               <div
-                className={`col-span-4 flex flex-col justify-center h-full px-4 cursor-pointer transition-colors border-r border-slate-100`}
+                className={`col-span-5 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors border-r border-slate-100`}
                 onClick={(e) => {
                   e.stopPropagation()
-                  onItemClick(item, "info", true)
+                  onItemClick(item)
                 }}
               >
-                <div className="flex items-center gap-2">
+                {/* Product Image */}
+
+                {/* Product Info with POS styling */}
+                <div className="flex-1 min-w-0 flex items-center gap-2 mb-1">
                   {(item.hasVariants || item.isAgrupador) && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
                         onToggleExpansion(index)
                       }}
-                      className={`transition-colors cursor-pointer ${
+                      className={`transition-colors cursor-pointer flex-shrink-0 ${
                         item.hasVariants || item.isAgrupador
                           ? "text-container-item-foreground hover:text-foreground"
                           : "text-muted-foreground hover:text-foreground"
@@ -193,29 +206,42 @@ export function ItemCard({
                       {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                     </button>
                   )}
-                  <span
-                    className={`${gridSize === "sm" ? "text-sm" : "text-sm"} text-container-item-foreground font-medium`}
-                  >
-                    {item.name}
-                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`${gridSize === "sm" ? "text-sm" : "text-sm"} text-container-item-foreground font-medium truncate`}
+                      >
+                        {item.name}
+                      </span>
+                      {(item.hasVariants || item.isAgrupador) && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground whitespace-nowrap">
+                          {item.isAgrupador ? `${item.itemCount || 0} items` : `${item.variantCount || 0} var.`}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
+                      {item.marca && <span className="text-xs text-muted-foreground">·</span>}
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-muted-foreground">{item.sku}</span>
+                        <button
+                          onClick={handleCopySku}
+                          className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+                          title="Copy SKU"
+                        >
+                          <Copy className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
               <div
-                className={`col-span-2 h-full flex items-center justify-center px-4 border-r border-slate-100`}
+                className={`col-span-2 h-full flex items-center justify-center px-4 border-slate-100 border-r-0`}
                 onClick={(e) => {
                   e.stopPropagation()
-                  onItemClick(item, "info", true)
-                }}
-              >
-                <span className="text-sm text-card-foreground">{item.marca || "-"}</span>
-              </div>
-
-              <div
-                className={`col-span-2 h-full flex items-center justify-center px-4 border-r border-slate-100`}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onItemClick(item, "info", true)
+                  onItemClick(item)
                 }}
               >
                 <span className="text-sm text-card-foreground">{item.categoria || "-"}</span>
@@ -230,56 +256,46 @@ export function ItemCard({
           ) : (
             <>
               <div
-                className={`col-span-4 flex flex-col justify-center h-full border-r border-slate-100 ${
+                className={`col-span-5 flex items-center gap-3 h-full border-r border-slate-100 ${
                   item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
                 } px-4 cursor-pointer transition-colors`}
                 onClick={(e) => {
                   e.stopPropagation()
-                  if (item.hasVariants || item.isAgrupador) {
-                    onItemClick(item, "info", true)
-                  } else {
-                    onItemClick(item, "info", false)
-                  }
+                  onItemClick(item)
                 }}
               >
-                {isChild ? (
-                  item.sku && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        navigator.clipboard.writeText(item.sku)
-                      }}
-                      className="inline-flex items-center gap-1.5 text-xs text-muted-foreground font-mono hover:text-foreground transition-colors group w-fit"
-                    >
-                      <span>SKU: {item.sku}</span>
-                      <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </button>
-                  )
-                ) : (
-                  <div className="flex items-center gap-2">
+                {/* Product Image */}
+
+                {/* Product Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
                     <span
                       className={`${gridSize === "sm" ? "text-sm" : "text-sm"} ${
-                        item.hasVariants || item.isAgrupador
-                          ? "text-container-item-foreground font-medium"
-                          : "text-foreground font-medium"
-                      }`}
+                        isChild
+                          ? "text-muted-foreground"
+                          : item.hasVariants || item.isAgrupador
+                            ? "text-container-item-foreground"
+                            : "text-foreground"
+                      } font-medium truncate`}
                     >
                       {item.name}
                     </span>
                   </div>
-                )}
-                {!isChild && gridSize !== "sm" && !item.hasVariants && !item.isAgrupador && item.sku && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      navigator.clipboard.writeText(item.sku)
-                    }}
-                    className="inline-flex items-center gap-1.5 text-xs text-muted-foreground font-mono hover:text-foreground transition-colors group w-fit"
-                  >
-                    <span>SKU: {item.sku}</span>
-                    <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </button>
-                )}
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
+                    {item.marca && <span className="text-xs text-muted-foreground">·</span>}
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs text-muted-foreground">{item.sku}</span>
+                      <button
+                        onClick={handleCopySku}
+                        className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+                        title="Copy SKU"
+                      >
+                        <Copy className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div
@@ -288,49 +304,17 @@ export function ItemCard({
                 } px-4 cursor-pointer transition-colors`}
                 onClick={(e) => {
                   e.stopPropagation()
-                  onItemClick(item, "info", false)
+                  onItemClick(item)
                 }}
               >
-                <span
-                  className={`${gridSize === "sm" ? "text-sm" : "text-sm"} ${
-                    isChild
-                      ? "text-muted-foreground"
-                      : item.hasVariants || item.isAgrupador
-                        ? "text-container-item-foreground"
-                        : "text-foreground"
-                  }`}
-                >
-                  {item.marca || "-"}
-                </span>
+                <span className="text-sm text-card-foreground">{item.categoria || "-"}</span>
               </div>
 
               <div
-                className={`col-span-2 h-full flex items-center justify-center border-r border-slate-100 ${
-                  item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
-                } px-4 cursor-pointer transition-colors`}
+                className={`col-span-3 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100`}
                 onClick={(e) => {
                   e.stopPropagation()
-                  onItemClick(item, "info", false)
-                }}
-              >
-                <span
-                  className={`${gridSize === "sm" ? "text-sm" : "text-sm"} ${
-                    isChild
-                      ? "text-muted-foreground"
-                      : item.hasVariants || item.isAgrupador
-                        ? "text-container-item-foreground"
-                        : "text-foreground"
-                  }`}
-                >
-                  {item.categoria || "-"}
-                </span>
-              </div>
-
-              <div
-                className="col-span-3 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onItemClick(item, "atributos")
+                  onItemClick(item)
                 }}
               >
                 {item.atributosPrincipales && item.atributosPrincipales.length > 0 ? (
@@ -423,7 +407,7 @@ export function ItemCard({
                   className="col-span-3 h-full flex items-center px-4 cursor-pointer transition-colors"
                   onClick={(e) => {
                     e.stopPropagation()
-                    onItemClick(item, "stock")
+                    onItemClick(item)
                   }}
                 >
                   {gridSize === "sm" ? (

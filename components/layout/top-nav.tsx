@@ -1,5 +1,5 @@
 "use client"
-import { ChevronLeft, ChevronRight, User } from "lucide-react"
+import { User } from "lucide-react"
 
 const mockBookmarks = [
   { id: "champagne-domiciano", label: "Champagne Domiciano" },
@@ -27,28 +27,10 @@ export function TopNav({
   isExpanded = true,
 }: TopNavProps) {
   return (
-    <div
-      className="border-b px-8 flex items-center justify-between fixed top-0 right-0 left-0 blur-glass z-40 h-12 transition-all duration-300 border-sidebar bg-[rgba(253,254,254,1)]"
-      style={{ left: isExpanded ? "256px" : "64px" }}
-    >
+    <div className="flex items-center justify-between fixed top-0 left-0 right-0 z-40 transition-all duration-300 px-1 h-10">
       <div className="flex items-center gap-3">
-        <button
-          onClick={onNavigateBack}
-          disabled={historyIndex === 0}
-          className={`p-1.5 rounded-md transition-colors ${historyIndex === 0 ? "text-navbar-foreground/30" : "text-navbar-foreground/70 cursor-pointer hover:bg-navbar-accent"}`}
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-        <button
-          onClick={onNavigateForward}
-          disabled={historyIndex === navigationHistory.length - 1}
-          className={`p-1.5 rounded-md transition-colors ${historyIndex === navigationHistory.length - 1 ? "text-navbar-foreground/30" : "text-navbar-foreground/70 cursor-pointer hover:bg-navbar-accent"}`}
-        >
-          <ChevronRight className="w-4 h-4" />
-        </button>
-
-        <div className="flex items-center gap-2.5 px-3 py-1.5 border border-border rounded-lg bg-background/50 hover:bg-background transition-colors cursor-pointer ml-3">
-          <div className="p-1.5 bg-sidebar-accent rounded-md">
+        <div className="flex items-center gap-2.5 px-3 border border-border bg-white/80 backdrop-blur-sm hover:bg-white transition-colors cursor-pointer ml-0 mt-1.5 rounded-sm py-1.5">
+          <div className="p-1.5 bg-sidebar-accent rounded-md px-1 py-1 mt-0">
             <User className="w-4 h-4 text-navbar-foreground" />
           </div>
           <span className="text-sm font-medium text-navbar-foreground">In Vino Veritás - Admin</span>

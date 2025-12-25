@@ -21,9 +21,20 @@
 
 ```
 /app
-  page.tsx              # Main application shell
+  page.tsx              # Main application shell (redirects to /inventario/articulos)
   layout.tsx            # Root layout with fonts
   globals.css           # Tailwind v4 + theme tokens
+  /inventario
+    /articulos
+      page.tsx          # Items grid view
+      /[item]
+        page.tsx        # Dynamic item detail route
+  /precios
+    /lista-de-precios
+      page.tsx          # Price lists view
+  /mi-negocio
+    /pdv
+      page.tsx          # Punto de venta (POS)
   
 /components
   /items
@@ -46,7 +57,7 @@
   use-items.ts          # Item CRUD + deletion tracking
   use-change-tracker.ts # Undo/redo change management
   use-item-selection.ts # Grid selection logic
-  use-navigation.ts     # View navigation history
+  use-navigation.ts     # View navigation history (deprecated - now using Next.js router)
   use-modals.ts         # Modal state management
   use-sidebar.ts        # Sidebar state + dropdowns
   use-item-detail.ts    # Detail panel state
@@ -61,6 +72,69 @@
 
 ---
 
+## 🏗️ APPLICATION ARCHITECTURE
+
+### **Three-Part Layout System**
+
+Stockio uses a **consistent three-part layout** that is shared across ALL pages and views:
+
+#### 1. **Navbar** (Top Navigation)
+- **Component**: `components/layout/top-nav.tsx`
+- **Position**: Fixed at top of viewport
+- **Height**: `64px` (h-16)
+- **Content**: 
+  - Left: Business info (NOIRE | Admin)
+  - Center: Bookmarks
+  - Right: Message icon, Bell icon, User icon
+- **Shared**: Present on every single page/view
+
+#### 2. **Sidebar** (Left Navigation)
+- **Component**: `components/layout/sidebar.tsx`
+- **Position**: Fixed at left edge, full height
+- **Width**: `64px` collapsed / `264px` expanded
+- **Content**:
+  - Module navigation (Mi Negocio, Inventario, Ventas, etc.)
+  - Dropdown menus with sub-modules
+  - Search functionality (when expanded)
+  - Toggle button
+- **Shared**: Present on every single page/view
+- **Navigation**: Uses Next.js router with href prop for module/sub-module navigation
+
+#### 3. **Panel** (Main Content Container)
+- **Structure**: Two-part container
+  - **Utility Bar** (`components/layout/utility-bar.tsx`): Top section with view name + URDG buttons
+  - **Content Area**: Dynamic content that changes per page/route
+- **Position**: Below navbar, to the right of sidebar
+- **Margins**: Adjusts based on sidebar state (expanded/collapsed)
+- **Content Changes**: The Panel structure stays the same, but what's **inside** changes per route
+
+### **Dynamic Routing Pattern**
+
+Stockio uses Next.js **dynamic routes** with the `module/sub-module` pattern:
+
+**Examples:**
+- `/inventario/articulos` → Items grid view
+- `/inventario/articulos/[item]` → Individual item detail (dynamic SKU parameter)
+- `/precios/lista-de-precios` → Price lists view
+- `/mi-negocio/pdv` → Punto de venta (POS) view
+
+**Key Principle**: To add new views, create folders following `module/sub-module` pattern. The layout (Navbar + Sidebar + Panel) automatically wraps the content.
+
+### **Content Inside the Panel - Route Examples**
+
+What changes between routes is the **content inside the Panel**:
+
+| Route | Panel Content |
+|-------|---------------|
+| `/inventario/articulos` | Toolbar + ItemsGrid component |
+| `/inventario/articulos/abc123` | ItemDetailPanel for item "abc123" |
+| `/precios/lista-de-precios` | Price list UI components |
+| `/mi-negocio/pdv` | Point of sale interface |
+
+The **Panel wrapper** (Utility Bar + content area) is consistent. Only the inner content changes.
+
+---
+
 ## 🔤 ACRONYMS & QUICK REFERENCE
 
 ### Key Terms
@@ -72,52 +146,12 @@
 - **Variante** = Item variant (e.g., different colors/sizes)
 
 ### File Shortcuts
-- **Main Shell**: `app/page.tsx`
+- **Main Routes**: `app/inventario/articulos/page.tsx`, `app/inventario/articulos/[item]/page.tsx`
 - **Item CRUD**: `hooks/use-items.ts`
 - **Change Tracking**: `hooks/use-change-tracker.ts`
 - **Sidebar Logic**: `hooks/use-sidebar.ts` + `components/layout/sidebar.tsx`
 - **Types**: `lib/types.ts`
 - **Constants**: `lib/constants.ts`
-
----
-
-## 🏗️ ARCHITECTURE PATTERNS
-
-### State Management
-**Pattern**: Custom hooks + React useState (no external state library)
-
-**Key Hooks**:
-1. `useItems()` - Item data, CRUD operations, deletion tracking
-2. `useChangeTracker()` - Undo/redo stack management
-3. `useItemSelection()` - Grid checkbox selection
-4. `useNavigation()` - Browser-like back/forward history
-5. `useModals()` - Modal visibility + minimization state
-6. `useSidebar()` - Sidebar expansion, search, dropdown hovers
-7. `useItemDetail()` - Selected item + tab state
-
-### Data Flow
-```
-app/page.tsx (main orchestrator)
-    ↓
-Hooks provide state + handlers
-    ↓
-Props passed to components
-    ↓
-Components render + call handlers
-    ↓
-Hooks update state
-    ↓
-React re-renders
-```
-
-### Layout Responsiveness
-All layout components accept `isExpanded` prop to respond to sidebar state:
-- `<TopNav isExpanded={...} />`
-- `<UtilityBar isExpanded={...} />`
-- `<Toolbar isExpanded={...} />`
-- `<ItemDetailPanel isExpanded={...} />`
-
-When sidebar expands (264px) or collapses (64px), layouts adjust margins with transitions.
 
 ---
 
@@ -128,7 +162,7 @@ When sidebar expands (264px) or collapses (64px), layouts adjust margins with tr
 **Navbar (TopNav)**
 - Location: Top fixed bar
 - Contains: 
-  - Left: Back/forward chevrons, business info (NOIRE | Admin)
+  - Left: Business info (NOIRE | Admin)
   - Center: Bookmarks (mock: Champagne Domiciano, Precios 2025, Colección Navidad)
   - Right: Message icon, Bell icon, vertical divider, User icon
 - Responsive: Adjusts left margin based on sidebar state
@@ -152,28 +186,15 @@ When sidebar expands (264px) or collapses (64px), layouts adjust margins with tr
   - Hover dropdowns in collapsed mode
   - Inline dropdowns in expanded mode
   - Click-outside closes dropdowns
-  - Clicking same module closes its dropdown
+  - Navigation via Next.js router (href prop)
 
 **Toolbar**
-- Location: Below utility bar (only visible in grid view)
+- Location: Below utility bar (only visible in items grid view)
 - Contains:
   - Left: Nuevo dropdown, Acciones dropdown
   - Center: Select All checkbox
   - Right: Grid size selector (sm/md/lg)
-- Conditional: Hidden when item detail is open
-
-### Item Views
-
-**ItemsGrid**
-- Grid of item cards
-- Grid sizes: sm (6 cols), md (5 cols), lg (4 cols)
-- Features: Selection checkboxes, quick stock edit, expand variants
-
-**ItemDetailPanel**
-- Full item details
-- Tabs: Info, Atributos, Variantes, Stock, Stock Variantes
-- Sections: Header, tabs, content area, action buttons
-- Features: Edit inline, deposit stock management, delete
+- Conditional: Only shown on `/inventario/articulos` route
 
 ---
 

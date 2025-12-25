@@ -9,7 +9,7 @@ export function useSidebar() {
   const [hoveredSearch, setHoveredSearch] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
 
-  const [gridSize, setGridSize] = useState<"sm" | "md" | "lg">("md")
+  const [gridSize, setGridSize] = useState<"sm">("sm")
   const [gridSizeDropdownOpen, setGridSizeDropdownOpen] = useState(false)
   const [showNuevoDropdown, setShowNuevoDropdown] = useState(false)
   const [showAccionesDropdown, setShowAccionesDropdown] = useState(false)

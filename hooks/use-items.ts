@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import type { Item, DepositStockMap } from "@/lib/types"
 import { TEMPLATES } from "@/lib/constants"
-import { INITIAL_ITEMS } from "@/lib/data/initial-items"
+import { generateStandaloneSKU, generateParentSKU, generateUniqueSKU } from "@/lib/utils/sku-generator"
 
 interface DeletedItemWithPosition {
   item: Item
@@ -28,7 +28,55 @@ export function useItems() {
   useEffect(() => {
     const fetchItems = async () => {
       if (USE_MOCK_DATA) {
-        setItems(INITIAL_ITEMS)
+        try {
+          const storedItems = localStorage.getItem("stockio-items")
+          if (storedItems) {
+            let parsedItems = JSON.parse(storedItems)
+            console.log("[v0] useItems - Loaded items from localStorage:", parsedItems.length)
+
+            parsedItems = parsedItems.map((item: Item) => ({
+              ...item,
+              variantCount: item.variants?.length || 0,
+              itemCount: item.items?.length || 0,
+            }))
+
+            const skuMap = new Map<string, number>()
+            parsedItems.forEach((item: Item) => {
+              const count = skuMap.get(item.sku) || 0
+              skuMap.set(item.sku, count + 1)
+            })
+
+            const duplicates = Array.from(skuMap.entries()).filter(([_, count]) => count > 1)
+            if (duplicates.length > 0) {
+              console.log("[v0] DUPLICATES FOUND IN LOCALSTORAGE:")
+              duplicates.forEach(([sku, count]) => {
+                console.log(`  - SKU "${sku}" appears ${count} times`)
+                const dupeItems = parsedItems.filter((item: Item) => item.sku === sku)
+                console.log(
+                  "    Items:",
+                  dupeItems.map((item: Item) => item.name),
+                )
+              })
+
+              // Remove duplicates, keeping only the first occurrence
+              const uniqueItems = parsedItems.filter(
+                (item: Item, index: number, self: Item[]) => self.findIndex((i: Item) => i.sku === item.sku) === index,
+              )
+              console.log("[v0] Removed duplicates, items reduced from", parsedItems.length, "to", uniqueItems.length)
+              localStorage.setItem("stockio-items", JSON.stringify(uniqueItems))
+              setItems(uniqueItems)
+            } else {
+              setItems(parsedItems)
+            }
+          } else {
+            console.log("[v0] useItems - No localStorage data, starting with empty inventory")
+            setItems([])
+            localStorage.setItem("stockio-items", JSON.stringify([]))
+          }
+        } catch (error) {
+          console.error("[v0] Error loading from localStorage:", error)
+          setItems([])
+        }
         setIsLoading(false)
         return
       }
@@ -39,10 +87,10 @@ export function useItems() {
           const data = await response.json()
           setItems(data)
         } else {
-          setItems(INITIAL_ITEMS)
+          setItems([])
         }
       } catch (error) {
-        setItems(INITIAL_ITEMS)
+        setItems([])
       } finally {
         setIsLoading(false)
       }
@@ -148,14 +196,9 @@ export function useItems() {
 
     setIsCreatingItem(true)
 
-    const generateSku = () => {
-      const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-      let sku = ""
-      for (let i = 0; i < 12; i++) {
-        sku += chars.charAt(Math.floor(Math.random() * chars.length))
-      }
-      return sku
-    }
+    const existingSkus = items.map((item) => item.sku)
+    const baseSku = generateStandaloneSKU({ title: itemTitulo })
+    const sku = generateUniqueSKU(baseSku, existingSkus)
 
     const generateCodigoUniversal = () => {
       return Math.floor(Math.random() * 9000000000000) + 1000000000000
@@ -181,7 +224,7 @@ export function useItems() {
       },
       hasVariants: false,
       isAgrupador: false,
-      sku: generateSku(),
+      sku: sku,
       codigoUniversal: generateCodigoUniversal().toString(),
       marca: "",
       modelo: "",
@@ -190,9 +233,20 @@ export function useItems() {
       codigoProveedor: "",
       atributosPrincipales: atributosPrincipalesFromTemplate,
       atributosInformativos: atributosInformativosFromTemplate,
+      variantCount: 0,
+      itemCount: 0,
     }
 
     try {
+      if (USE_MOCK_DATA) {
+        const updatedItems = [newItem, ...items]
+        localStorage.setItem("stockio-items", JSON.stringify(updatedItems))
+        console.log("[v0] Saved new item to localStorage:", newItem.sku)
+        setItems(updatedItems)
+        handleClose()
+        return newItem
+      }
+
       const response = await fetch("/api/items", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -229,14 +283,9 @@ export function useItems() {
 
     setIsCreatingItem(true)
 
-    const generateSku = () => {
-      const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-      let sku = ""
-      for (let i = 0; i < 12; i++) {
-        sku += chars.charAt(Math.floor(Math.random() * chars.length))
-      }
-      return sku
-    }
+    const existingSkus = items.map((item) => item.sku)
+    const baseSku = generateParentSKU({ title: itemTitulo })
+    const sku = generateUniqueSKU(baseSku, existingSkus)
 
     const generateCodigoUniversal = () => {
       return Math.floor(Math.random() * 9000000000000) + 1000000000000
@@ -260,7 +309,7 @@ export function useItems() {
       name: itemTitulo,
       hasVariants: true,
       isAgrupador: true,
-      sku: generateSku(),
+      sku: sku,
       codigoUniversal: generateCodigoUniversal().toString(),
       marca: "",
       modelo: "",
@@ -270,9 +319,20 @@ export function useItems() {
       containerAtributosPrincipales: containerAtributosPrincipalesFromTemplate,
       atributosInformativos: atributosInformativosFromTemplate,
       variants: [],
+      variantCount: 0,
+      itemCount: 0,
     }
 
     try {
+      if (USE_MOCK_DATA) {
+        const updatedItems = [newItem, ...items]
+        localStorage.setItem("stockio-items", JSON.stringify(updatedItems))
+        console.log("[v0] Saved new item with variants to localStorage:", newItem.sku)
+        setItems(updatedItems)
+        handleClose()
+        return newItem
+      }
+
       const response = await fetch("/api/items", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -355,6 +415,15 @@ export function useItems() {
 
     console.log("[v0] useItems - saveDelete called")
     try {
+      if (USE_MOCK_DATA) {
+        // For localStorage mode, directly update localStorage with the current items state
+        localStorage.setItem("stockio-items", JSON.stringify(items))
+        console.log("[v0] Updated localStorage after deletion, remaining items:", items.length)
+        setDeletedItems([])
+        setHasUnsavedDeletes(false)
+        return
+      }
+
       const skus = deletedItems.map(({ item }) => item.sku)
 
       const response = await fetch("/api/items/batch-delete", {

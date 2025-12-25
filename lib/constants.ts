@@ -1,4 +1,4 @@
-import { Store, ShoppingBag, Slack, PackagePlus, Box, Tag, HelpCircle, Settings } from "lucide-react"
+import { Store, Box, Tag, HelpCircle, Settings } from "lucide-react"
 import type { SidebarItem, Template } from "./types"
 
 export const SAVED_ATRIBUTOS: Record<string, string[]> = {
@@ -147,7 +147,7 @@ export const TEMPLATES: Template[] = [
       { key: "Estuche", value: "" },
     ],
   },
-    // --- GIN ---
+  // --- GIN ---
   {
     name: "Gin",
     atributosPrincipales: [{ key: "Sabor", value: "" }], //original, raspberri, botánicos
@@ -158,8 +158,8 @@ export const TEMPLATES: Template[] = [
       { key: "Estuche", value: "" },
     ],
   },
-    // --- Vodka ---
-    {
+  // --- Vodka ---
+  {
     name: "Vodka",
     atributosPrincipales: [{ key: "Sabor", value: "" }], //original, raspberri, botánicos
     atributosInformativos: [
@@ -206,20 +206,19 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     icon: Store,
     label: "Mi Negocio",
     hasDropdown: true,
-    dropdownItems: ["Punto de Venta"],
+    dropdown: [{ label: "Punto de Venta", href: "/mi-negocio/pdv" }],
   },
   {
     icon: Tag,
     label: "Precios",
     hasDropdown: true,
-    dropdownItems: ["Listas de Precios"],
+    dropdown: [{ label: "Listas de Precios", href: "/precios/lista-de-precios" }],
   },
   {
     icon: Box,
     label: "Inventario",
     hasDropdown: true,
-    dropdownItems: ["Artículos"],
-    active: true,
+    dropdown: [{ label: "Artículos", href: "/inventario/articulos" }],
   },
 ]
 

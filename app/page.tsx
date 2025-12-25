@@ -1,14 +1,7 @@
 "use client"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { useState } from "react"
-
-import { Sidebar } from "@/components/layout/sidebar"
-import { TopNav } from "@/components/layout/top-nav"
-import { UtilityBar } from "@/components/layout/utility-bar"
-import { ItemDetailPanel } from "@/components/items/item-detail-panel"
-import { ItemsGrid } from "@/components/items/items-grid"
-import { NuevoItemModal } from "@/components/modals/nuevo-item-modal"
-import { NuevoItemConVariantesModal } from "@/components/modals/nuevo-item-con-variantes-modal"
-import { TemplateModal } from "@/components/modals/template-modal"
 import { useItems } from "@/hooks/use-items"
 import { useItemSelection } from "@/hooks/use-item-selection"
 import { useNavigation } from "@/hooks/use-navigation"
@@ -16,12 +9,16 @@ import { useModals } from "@/hooks/use-modals"
 import { useSidebar } from "@/hooks/use-sidebar"
 import { useItemDetail } from "@/hooks/use-item-detail"
 import { useChangeTracker } from "@/hooks/use-change-tracker"
-import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 import type { Item } from "@/lib/types"
 
 export default function Page() {
+  const router = useRouter()
   const [isSaving, setIsSaving] = useState(false)
   const [itemCreated, setItemCreated] = useState(false)
+
+  useEffect(() => {
+    router.push("/precios/lista-de-precios")
+  }, [router])
 
   const {
     items,
@@ -202,145 +199,8 @@ export default function Page() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex" onClick={handleCloseDropdowns}>
-      {/* Sidebar with overlay */}
-      <div onClick={(e) => e.stopPropagation()}>
-        <Sidebar
-          sidebarItems={SIDEBAR_ITEMS}
-          bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
-          hoveredDropdown={hoveredDropdown}
-          onDropdownOpen={handleDropdownMouseEnter}
-          onDropdownClose={handleDropdownMouseLeave}
-        />
-        {(showNuevoItemModal || showNuevoItemConVariantesModal) && (
-          <div className="fixed top-0 left-0 h-screen bg-black/50 z-[60] pointer-events-none w-20" />
-        )}
-      </div>
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col bg-slate-50 ml-20">
-        <TopNav
-          currentView={currentView}
-          navigationHistory={navigationHistory}
-          historyIndex={historyIndex}
-          minimizedTabs={minimizedTabs}
-          activeNavTab={activeNavTab}
-          onNavigateBack={handleNavigateBack}
-          onNavigateForward={handleNavigateForward}
-          onRestoreTab={handleRestoreTab}
-          onCloseTab={handleCloseTabFromNavbar}
-          isExpanded={false}
-        />
-
-        <div
-          className="fixed top-12 right-0 left-0 h-4 z-[39] pointer-events-none"
-          style={{
-            left: "80px",
-            backdropFilter: "blur(2px)",
-            WebkitBackdropFilter: "blur(2px)",
-          }}
-        />
-
-        {/* UtilityBar */}
-        <UtilityBar
-          breadcrumbs={breadcrumbs}
-          hasUnsavedChanges={changeTracker.hasUnsavedChanges || hasUnsavedDeletes}
-          canUndo={changeTracker.canUndo}
-          canRedo={changeTracker.canRedo}
-          onUndo={handleUndo}
-          onRedo={handleRedo}
-          onDeshacer={handleDeshacer}
-          onGuardar={handleGuardar}
-          isSaving={isSaving}
-          itemCreated={itemCreated}
-          isExpanded={false}
-        />
-
-        <main className="flex-1 transition-all duration-200 bg-[rgba(250,251,253,1)]">
-          {selectedItem ? (
-            <ItemDetailPanel
-              selectedItem={selectedItem}
-              selectedDetailTab={selectedDetailTab}
-              setSelectedDetailTab={setSelectedDetailTab}
-              expandedItems={expandedItems}
-              toggleVariantExpansion={toggleVariantExpansion}
-              depositStock={depositStock}
-              updateDepositStock={updateDepositStock}
-              updateItem={updateItem}
-              allItems={items}
-              item={selectedItem}
-              onClose={() => setSelectedItem(null)}
-              onFieldChange={(itemId, field, value) => updateItem(itemId, { [field]: value })}
-              isSaving={isSaving}
-              onDuplicate={(item) => console.log("Duplicate", item)}
-              onDelete={handleDeleteWithTracking}
-              variantChangeHandlers={{}}
-              isExpanded={false}
-            />
-          ) : (
-            <div className="px-8 pb-8">
-              <div className="rounded-xl border border-[rgba(228,230,235,0.5)] bg-transparent shadow-none border-none">
-                <ItemsGrid
-                  items={items}
-                  gridSize={gridSize}
-                  itemSelected={itemSelected}
-                  expandedItems={expandedItems}
-                  handleItemButtonClick={handleItemButtonClick}
-                  handleItemClick={handleItemClickWithNavigation}
-                  toggleVariantExpansion={toggleVariantExpansion}
-                  updateDepositStock={updateDepositStock}
-                  depositStock={depositStock}
-                  onDeleteItem={handleDeleteWithTracking}
-                  selectAllActive={selectAllActive}
-                  handleSelectAllClick={handleSelectAllClick}
-                  gridSizeDropdownOpen={gridSizeDropdownOpen}
-                  setGridSizeDropdownOpen={setGridSizeDropdownOpen}
-                  setGridSize={setGridSize}
-                  isExpanded={false}
-                  handleOpenNuevoItem={handleOpenNuevoItem}
-                  handleOpenNuevoItemConVariantes={handleOpenNuevoItemConVariantes}
-                />
-              </div>
-            </div>
-          )}
-        </main>
-      </div>
-
-      {/* Modals */}
-      <TemplateModal showTemplateModal={showTemplateModal} setShowTemplateModal={setShowTemplateModal} />
-
-      <NuevoItemModal
-        showNuevoItemModal={showNuevoItemModal}
-        isNuevoItemMinimized={isNuevoItemMinimized}
-        handleMinimizeNuevoItem={handleMinimizeNuevoItem}
-        handleCloseNuevoItem={handleCloseNuevoItem}
-        itemTitulo={itemTitulo}
-        setItemTitulo={setItemTitulo}
-        itemTemplate={itemTemplate}
-        setItemTemplate={setItemTemplate}
-        itemUbicacion={itemUbicacion}
-        setItemUbicacion={setItemUbicacion}
-        handleCreateNuevoItem={handleCreateItemWithSuccess}
-        isCreatingItem={isCreatingItem}
-      />
-
-      <NuevoItemConVariantesModal
-        showNuevoItemConVariantesModal={showNuevoItemConVariantesModal}
-        isNuevoItemConVariantesMinimized={isNuevoItemConVariantesMinimized}
-        handleMinimizeNuevoItemConVariantes={handleMinimizeNuevoItemConVariantes}
-        handleCloseNuevoItemConVariantes={handleCloseNuevoItemConVariantes}
-        setIsNuevoItemConVariantesMinimized={setIsNuevoItemConVariantesMinimized}
-        setActiveNavTab={setActiveNavTab}
-        activeNavTab={activeNavTab}
-        itemTitulo={itemTitulo}
-        setItemTitulo={setItemTitulo}
-        itemTemplate={itemTemplate}
-        setItemTemplate={setItemTemplate}
-        itemUbicacion={itemUbicacion}
-        setItemUbicacion={setItemUbicacion}
-        handleCreateNuevoItemConVariantes={handleCreateItemConVariantesWithSuccess}
-        isCreatingItem={isCreatingItem}
-      />
+    <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+      <p>Redirecting...</p>
     </div>
   )
 }

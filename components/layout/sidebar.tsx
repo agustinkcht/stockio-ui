@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef } from "react"
+import { useRouter, usePathname } from "next/navigation"
 import type { SidebarItem } from "@/lib/types"
 
 interface SidebarProps {
@@ -18,12 +19,21 @@ export function Sidebar({
   onDropdownOpen,
   onDropdownClose,
 }: SidebarProps) {
+  const router = useRouter()
+  const pathname = usePathname()
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const openTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  const handleModuleEnter = (index: number, hasDropdown: boolean) => {
-    console.log("[v0] Module enter:", index, "hasDropdown:", hasDropdown)
+  const getActiveModule = (item: SidebarItem): boolean => {
+    if (item.dropdown && item.dropdown.length > 0) {
+      return item.dropdown.some((dropdownItem) =>
+        pathname.startsWith(dropdownItem.href.split("/").slice(0, 2).join("/")),
+      )
+    }
+    return false
+  }
 
+  const handleModuleEnter = (index: number, hasDropdown: boolean) => {
     if (closeTimeoutRef.current) {
       clearTimeout(closeTimeoutRef.current)
       closeTimeoutRef.current = null
@@ -41,8 +51,6 @@ export function Sidebar({
   }
 
   const handleModuleLeave = (hasDropdown: boolean) => {
-    console.log("[v0] Module leave, hasDropdown:", hasDropdown)
-
     if (!hasDropdown) return
 
     if (openTimeoutRef.current) {
@@ -57,8 +65,6 @@ export function Sidebar({
   }
 
   const handleDropdownEnter = () => {
-    console.log("[v0] Dropdown enter")
-
     if (closeTimeoutRef.current) {
       clearTimeout(closeTimeoutRef.current)
       closeTimeoutRef.current = null
@@ -70,8 +76,6 @@ export function Sidebar({
   }
 
   const handleDropdownLeave = () => {
-    console.log("[v0] Dropdown leave")
-
     if (openTimeoutRef.current) {
       clearTimeout(openTimeoutRef.current)
       openTimeoutRef.current = null
@@ -83,21 +87,24 @@ export function Sidebar({
     }, 250)
   }
 
-  return (
-    <div className="w-20 border-r h-screen flex flex-col fixed left-0 top-0 z-50 border-sidebar bg-[rgba(253,254,254,1)]">
-      {/* Logo */}
-      <div className="flex items-center justify-center py-4 px-2">
-        <span className="text-sidebar-foreground font-bold text-xl">S</span>
-      </div>
+  const handleDropdownItemClick = (href: string) => {
+    router.push(href)
+    onDropdownClose()
+  }
 
+  return (
+    <div className="h-full flex flex-col z-[99999] bg-white shadow-sm rounded-lg w-20">
       {/* Main Navigation */}
-      <nav className="flex-1 space-y-1 px-2">
+      <nav className="flex-1 space-y-1 px-2 pt-4">
         {sidebarItems.map((item, index) => {
           const isHovered = hoveredDropdown === index
-          const hasDropdown = item.hasDropdown && item.dropdownItems && item.dropdownItems.length > 0
+          const isActive = getActiveModule(item)
+          const hasDropdown =
+            item.hasDropdown &&
+            ((item.dropdown && item.dropdown.length > 0) || (item.dropdownItems && item.dropdownItems.length > 0))
 
           return (
-            <div key={index} className={`relative ${isHovered ? "z-[201]" : "z-[100]"}`}>
+            <div key={index} className={`relative ${isHovered ? "z-[100001]" : "z-[100000]"}`}>
               {/* Module Button */}
               <button
                 className="flex flex-col items-center gap-1 w-full py-2 rounded-lg transition-colors cursor-pointer pt-0 relative z-[100]"
@@ -107,12 +114,12 @@ export function Sidebar({
                 {/* Icon Container - only this gets hover bg */}
                 <div
                   className={`flex items-center justify-center size-8 rounded-md transition-colors ${
-                    item.active || isHovered ? "bg-gray-100" : "hover:bg-gray-100"
+                    isActive || isHovered ? "bg-gray-100" : "hover:bg-gray-100"
                   }`}
                 >
                   <item.icon
                     className={`flex-shrink-0 size-5 ${
-                      item.active || isHovered ? "text-sidebar-foreground" : "text-sidebar-foreground/70"
+                      isActive || isHovered ? "text-sidebar-foreground" : "text-sidebar-foreground/70"
                     }`}
                   />
                 </div>
@@ -126,7 +133,7 @@ export function Sidebar({
               {/* Dropdown Panel */}
               {hasDropdown && isHovered && (
                 <div
-                  className="absolute left-full top-0 ml-2 z-[200] pointer-events-auto"
+                  className="absolute left-full top-0 ml-2 z-[100002] pointer-events-auto"
                   onMouseEnter={handleDropdownEnter}
                   onMouseLeave={handleDropdownLeave}
                 >
@@ -140,20 +147,30 @@ export function Sidebar({
 
                     {/* Dropdown Items */}
                     <div className="py-2">
-                      {item.dropdownItems?.map((dropdownItem, dropdownIndex) => (
+                      {item.dropdown?.map((dropdownItem, dropdownIndex) => (
                         <button
                           key={dropdownIndex}
-                          onClick={() => {
-                            if (dropdownItem === "Depósitos") {
-                              window.location.href = "/depositos"
-                            }
-                            onDropdownClose()
-                          }}
+                          onClick={() => handleDropdownItemClick(dropdownItem.href)}
                           className="w-full text-left px-4 py-2 text-sm cursor-pointer text-muted-foreground hover:text-popover-foreground hover:bg-gray-100/50 transition-colors"
                         >
-                          {dropdownItem}
+                          {dropdownItem.label}
                         </button>
                       ))}
+                      {!item.dropdown &&
+                        item.dropdownItems?.map((dropdownItem, dropdownIndex) => (
+                          <button
+                            key={dropdownIndex}
+                            onClick={() => {
+                              if (dropdownItem === "Depósitos") {
+                                router.push("/depositos")
+                              }
+                              onDropdownClose()
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm cursor-pointer text-muted-foreground hover:text-popover-foreground hover:bg-gray-100/50 transition-colors"
+                          >
+                            {dropdownItem}
+                          </button>
+                        ))}
                     </div>
                   </div>
                 </div>
