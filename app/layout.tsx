@@ -27,7 +27,7 @@ export default function RootLayout({
   return (
     <html className="bg-[rgb(243,242,238)]" lang="en">
       <body className={`font-sans antialiased bg-[rgb(243,242,238)] ${geistSans.className}`}>
-        {children}
+        <div className="min-h-screen bg-[rgb(243,242,238)]">{children}</div>
         <Analytics />
       </body>
     </html>

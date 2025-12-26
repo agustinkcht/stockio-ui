@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { ChevronDown, ChevronRight, MoreVertical, Layers, Trash2, Copy } from "lucide-react"
 import type { Item } from "@/lib/types"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -68,6 +67,14 @@ export function ItemCard({
   const [showTransition, setShowTransition] = useState(false)
   const [copiedSku, setCopiedSku] = useState(false)
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  const variantCount = useMemo(() => {
+    return item.variantCount || item.variants?.length || 0
+  }, [item.variantCount, item.variants])
+
+  const itemCount = useMemo(() => {
+    return item.itemCount || item.items?.length || 0
+  }, [item.itemCount, item.items])
 
   const marginClass = calculateMarginBottom(item, nextItem, isChild)
 
@@ -215,7 +222,7 @@ export function ItemCard({
                       </span>
                       {(item.hasVariants || item.isAgrupador) && (
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground whitespace-nowrap">
-                          {item.isAgrupador ? `${item.itemCount || 0} items` : `${item.variantCount || 0} var.`}
+                          {item.hasVariants ? `${variantCount} var.` : `${itemCount} items`}
                         </span>
                       )}
                     </div>
@@ -396,11 +403,11 @@ export function ItemCard({
 
               {item.hasVariants ? (
                 <div className="col-span-3 h-full flex items-center justify-center px-4">
-                  <span className="text-sm text-container-item-foreground/80">{item.variantCount} variantes</span>
+                  <span className="text-sm text-container-item-foreground/80">{variantCount} variantes</span>
                 </div>
               ) : item.isAgrupador ? (
                 <div className="col-span-3 h-full flex items-center justify-center px-4">
-                  <span className="text-sm text-container-item-foreground/80">{item.itemCount} items</span>
+                  <span className="text-sm text-container-item-foreground/80">{itemCount} items</span>
                 </div>
               ) : (
                 <div

@@ -9,19 +9,7 @@ import { useSidebar } from "@/hooks/use-sidebar"
 import { useItems } from "@/hooks/use-items"
 import { usePOS } from "@/hooks/use-pos"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
-import {
-  ShoppingCart,
-  User,
-  Undo2,
-  Redo2,
-  X,
-  Check,
-  MessageSquare,
-  Bell,
-  ShoppingBag,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react"
+import { ShoppingCart, User, Undo2, Redo2, X, Check, ChevronLeft, ChevronRight } from "lucide-react"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 
 export default function PuntoDeVentaPage() {
@@ -99,28 +87,6 @@ export default function PuntoDeVentaPage() {
                     <User className="w-4 h-4 text-foreground" />
                   </div>
                   <span className="text-sm font-medium text-foreground">In Vino Veritás - Admin</span>
-
-                  {/* Action Icons */}
-                  <div className="flex items-center gap-1 ml-2 pl-2 border-l border-border/50">
-                    <button
-                      className="p-1.5 hover:bg-muted rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground px-7"
-                      title="Mensajes"
-                    >
-                      <MessageSquare className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors" />
-                    </button>
-                    <button
-                      className="p-1.5 hover:bg-muted rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground"
-                      title="Notificaciones"
-                    >
-                      <Bell className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors" />
-                    </button>
-                    <button
-                      className="p-1.5 hover:bg-muted rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground"
-                      title="Pedidos"
-                    >
-                      <ShoppingBag className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors" />
-                    </button>
-                  </div>
                 </div>
               </div>
 

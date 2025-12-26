@@ -1,10 +1,10 @@
 "use client"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { User, Undo2, Redo2, X, Check } from "lucide-react"
 
 import { Sidebar } from "@/components/layout/sidebar"
-import { TopNav } from "@/components/layout/top-nav"
-import { UtilityBar } from "@/components/layout/utility-bar"
+import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { ItemsGrid } from "@/components/items/items-grid"
 import { NuevoItemModal } from "@/components/modals/nuevo-item-modal"
 import { NuevoItemConVariantesModal } from "@/components/modals/nuevo-item-con-variantes-modal"
@@ -179,24 +179,8 @@ export default function ArticulosPage() {
 
   return (
     <div className="min-h-screen bg-[rgb(243,242,238)]">
-      <TopNav
-        currentView="inventario"
-        navigationHistory={[]}
-        historyIndex={0}
-        minimizedTabs={minimizedTabs}
-        activeNavTab={activeNavTab}
-        onNavigateBack={() => {}}
-        onNavigateForward={() => {}}
-        onRestoreTab={handleRestoreTab}
-        onCloseTab={handleCloseTabFromNavbar}
-        isExpanded={false}
-      />
-
-      <div className="pt-[calc(2.5rem+6px)] px-[6px] pb-[6px] flex gap-[6px] h-screen" onClick={handleCloseDropdowns}>
-        <div
-          onClick={(e) => e.stopPropagation()}
-          className="relative h-[calc(100vh-2.5rem-12px)] sticky top-[calc(2.5rem+6px)] w-auto z-[100003]"
-        >
+      <div className="px-[6px] py-[6px] flex gap-[6px] h-screen" onClick={handleCloseDropdowns}>
+        <div onClick={(e) => e.stopPropagation()} className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
           <Sidebar
             sidebarItems={SIDEBAR_ITEMS}
             bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
@@ -209,50 +193,100 @@ export default function ArticulosPage() {
           )}
         </div>
 
-        <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-2.5rem-12px)] overflow-hidden relative z-10">
-          <UtilityBar
-            breadcrumbs={breadcrumbs}
-            hasUnsavedChanges={changeTracker.hasUnsavedChanges || hasUnsavedDeletes}
-            canUndo={changeTracker.canUndo}
-            canRedo={changeTracker.canRedo}
-            onUndo={handleUndo}
-            onRedo={handleRedo}
-            onDeshacer={handleDeshacer}
-            onGuardar={handleGuardar}
-            isSaving={isSaving}
-            itemCreated={itemCreated}
-            isExpanded={false}
-          />
+        <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
+          <div className="relative border-b border-border h-[44px] bg-white">
+            <div className="px-4 flex items-center justify-between h-full">
+              {/* Left: Breadcrumbs */}
+              <div className="flex items-center">
+                <Breadcrumb items={breadcrumbs} />
+              </div>
 
-          <main className="flex-1 bg-[rgba(250,251,253,1)] overflow-auto">
-            <div className="px-8 pb-8">
-              <div className="rounded-xl border border-[rgba(228,230,235,0.5)] bg-transparent shadow-none border-none">
-                <ItemsGrid
-                  items={items}
-                  gridSize={gridSize}
-                  itemSelected={itemSelected}
-                  expandedItems={expandedItems}
-                  handleItemButtonClick={handleItemButtonClick}
-                  handleItemClick={handleItemClick}
-                  toggleVariantExpansion={toggleVariantExpansion}
-                  updateDepositStock={updateDepositStock}
-                  depositStock={depositStock}
-                  onDeleteItem={handleDeleteWithTracking}
-                  selectAllActive={selectAllActive}
-                  handleSelectAllClick={handleSelectAllClick}
-                  gridSizeDropdownOpen={gridSizeDropdownOpen}
-                  setGridSizeDropdownOpen={setGridSizeDropdownOpen}
-                  setGridSize={setGridSize}
-                  isExpanded={false}
-                  handleOpenNuevoItem={handleOpenNuevoItem}
-                  handleOpenNuevoItemConVariantes={handleOpenNuevoItemConVariantes}
-                />
+              {/* Center: User Info Panel - Blur & Transparent */}
+              <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center gap-3">
+                <div className="flex items-center gap-3 px-4 py-2 bg-background/60 backdrop-blur-md border border-border/50 rounded-lg shadow-sm">
+                  <div className="p-1.5 bg-muted/80 rounded-md">
+                    <User className="w-4 h-4 text-foreground" />
+                  </div>
+                  <span className="text-sm font-medium text-foreground">In Vino Veritás - Admin</span>
+                </div>
+              </div>
+
+              {/* Right: Utility Buttons */}
+              <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-0.5 px-1 py-0.5 rounded-md bg-muted/50 mr-1.5">
+                  <button
+                    onClick={handleUndo}
+                    disabled={!changeTracker.canUndo}
+                    className="p-1.5 hover:bg-muted rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground px-7"
+                    title="Deshacer último cambio"
+                  >
+                    <Undo2 className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={handleRedo}
+                    disabled={!changeTracker.canRedo}
+                    className="p-1.5 hover:bg-muted rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground px-7"
+                    title="Rehacer último cambio"
+                  >
+                    <Redo2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                <div className="h-5 w-px bg-border/60" />
+
+                <button
+                  onClick={handleDeshacer}
+                  disabled={!changeTracker.hasUnsavedChanges && !hasUnsavedDeletes}
+                  className="p-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground px-7"
+                  title="Deshacer cambios"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+
+                <button
+                  onClick={handleGuardar}
+                  disabled={!changeTracker.hasUnsavedChanges && !hasUnsavedDeletes}
+                  className="p-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-primary px-7"
+                  title="Guardar cambios"
+                >
+                  <Check className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <main className="flex-1 flex bg-[rgba(250,251,253,1)] overflow-hidden">
+            <div className="flex-1 flex flex-col overflow-auto">
+              <div className="px-8 pb-8 pt-4">
+                <div className="rounded-xl border border-[rgba(228,230,235,0.5)] bg-transparent shadow-none border-none">
+                  <ItemsGrid
+                    items={items}
+                    gridSize={gridSize}
+                    itemSelected={itemSelected}
+                    expandedItems={expandedItems}
+                    handleItemButtonClick={handleItemButtonClick}
+                    handleItemClick={handleItemClick}
+                    toggleVariantExpansion={toggleVariantExpansion}
+                    updateDepositStock={updateDepositStock}
+                    depositStock={depositStock}
+                    onDeleteItem={handleDeleteWithTracking}
+                    selectAllActive={selectAllActive}
+                    handleSelectAllClick={handleSelectAllClick}
+                    gridSizeDropdownOpen={gridSizeDropdownOpen}
+                    setGridSizeDropdownOpen={setGridSizeDropdownOpen}
+                    setGridSize={setGridSize}
+                    isExpanded={false}
+                    handleOpenNuevoItem={handleOpenNuevoItem}
+                    handleOpenNuevoItemConVariantes={handleOpenNuevoItemConVariantes}
+                  />
+                </div>
               </div>
             </div>
           </main>
         </div>
       </div>
 
+      {/* Existing modals */}
       <TemplateModal showTemplateModal={showTemplateModal} setShowTemplateModal={setShowTemplateModal} />
 
       <NuevoItemModal
