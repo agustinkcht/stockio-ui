@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import type { Item, DepositStockMap } from "@/lib/types"
 import { TEMPLATES } from "@/lib/constants"
+import { INITIAL_ITEMS } from "@/lib/data/initial-items"
 import { generateStandaloneSKU, generateParentSKU, generateUniqueSKU } from "@/lib/utils/sku-generator"
 
 interface DeletedItemWithPosition {
@@ -69,13 +70,23 @@ export function useItems() {
               setItems(parsedItems)
             }
           } else {
-            console.log("[v0] useItems - No localStorage data, starting with empty inventory")
-            setItems([])
-            localStorage.setItem("stockio-items", JSON.stringify([]))
+            console.log("[v0] useItems - No localStorage data, loading INITIAL_ITEMS")
+            const itemsWithCounts = INITIAL_ITEMS.map((item: Item) => ({
+              ...item,
+              variantCount: item.variants?.length || 0,
+              itemCount: item.items?.length || 0,
+            }))
+            setItems(itemsWithCounts)
+            localStorage.setItem("stockio-items", JSON.stringify(itemsWithCounts))
           }
         } catch (error) {
           console.error("[v0] Error loading from localStorage:", error)
-          setItems([])
+          const itemsWithCounts = INITIAL_ITEMS.map((item: Item) => ({
+            ...item,
+            variantCount: item.variants?.length || 0,
+            itemCount: item.items?.length || 0,
+          }))
+          setItems(itemsWithCounts)
         }
         setIsLoading(false)
         return
@@ -416,7 +427,6 @@ export function useItems() {
     console.log("[v0] useItems - saveDelete called")
     try {
       if (USE_MOCK_DATA) {
-        // For localStorage mode, directly update localStorage with the current items state
         localStorage.setItem("stockio-items", JSON.stringify(items))
         console.log("[v0] Updated localStorage after deletion, remaining items:", items.length)
         setDeletedItems([])

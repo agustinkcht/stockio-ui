@@ -2,6 +2,8 @@
 
 import { useState, useMemo, useRef, useEffect } from "react"
 import { Search, Package, Plus, ChevronDown } from "lucide-react"
+import Image from "next/image"
+import { getCategoryImage } from "@/lib/utils/category-images"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -134,8 +136,14 @@ export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
                   onClick={() => (hasVariants ? toggleExpanded(item.sku || "") : handleAddItem(item))}
                 >
                   {/* Product Image */}
-                  <div className="w-12 h-12 rounded-md bg-muted/50 flex items-center justify-center overflow-hidden flex-shrink-0">
-                    <Package className="h-5 w-5 text-muted-foreground/50" />
+                  <div className="w-12 h-12 rounded-md bg-gradient-to-br from-muted/30 to-muted/60 flex items-center justify-center overflow-hidden flex-shrink-0 relative">
+                    <Image
+                      src={getCategoryImage(item.categoria) || "/placeholder.svg"}
+                      alt={item.name}
+                      fill
+                      className="object-cover"
+                      sizes="48px"
+                    />
                   </div>
 
                   {/* Product Info */}
@@ -207,9 +215,17 @@ export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
                           )}
                           onClick={() => handleAddItem(item, variant)}
                         >
-                          <div className="w-8 h-8 rounded bg-muted/50 flex items-center justify-center flex-shrink-0">
-                            <Package className="h-3 w-3 text-muted-foreground/50" />
+                          {/* Product Image for Variants */}
+                          <div className="w-8 h-8 rounded bg-gradient-to-br from-muted/30 to-muted/60 flex items-center justify-center overflow-hidden flex-shrink-0 relative">
+                            <Image
+                              src={getCategoryImage(item.categoria) || "/placeholder.svg"}
+                              alt={variant.name}
+                              fill
+                              className="object-cover"
+                              sizes="32px"
+                            />
                           </div>
+
                           <div className="flex-1 min-w-0">
                             <p className="text-sm truncate">{getFullTitle(variant)}</p>
                             <p className="text-xs text-muted-foreground">{variant.sku}</p>

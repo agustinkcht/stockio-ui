@@ -5,6 +5,7 @@ import { useState, useEffect, useRef, useMemo } from "react"
 import { ChevronDown, ChevronRight, MoreVertical, Layers, Trash2, Copy } from "lucide-react"
 import type { Item } from "@/lib/types"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { getCategoryImage } from "@/lib/utils/category-images"
 
 interface ItemCardProps {
   item: Item
@@ -188,13 +189,20 @@ export function ItemCard({
           {item.isAgrupador || item.hasVariants ? (
             <>
               <div
-                className={`col-span-5 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors border-r border-slate-100`}
+                className={`col-span-5 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors border-slate-100 border-r-0`}
                 onClick={(e) => {
                   e.stopPropagation()
                   onItemClick(item)
                 }}
               >
-                {/* Product Image */}
+                {/* Product Thumbnail with category-based image */}
+                <div className="w-12 h-12 flex-shrink-0 rounded-md bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden">
+                  <img
+                    src={getCategoryImage(item.categoria) || "/placeholder.svg"}
+                    alt={item.categoria || "Product"}
+                    className="w-8 h-8 object-contain opacity-60"
+                  />
+                </div>
 
                 {/* Product Info with POS styling */}
                 <div className="flex-1 min-w-0 flex items-center gap-2 mb-1">
@@ -251,7 +259,7 @@ export function ItemCard({
                   onItemClick(item)
                 }}
               >
-                <span className="text-sm text-card-foreground">{item.categoria || "-"}</span>
+                <span className="text-sm text-slate-400">{item.categoria || "-"}</span>
               </div>
 
               <div
@@ -271,7 +279,14 @@ export function ItemCard({
                   onItemClick(item)
                 }}
               >
-                {/* Product Image */}
+                {/* Product Thumbnail with category-based image */}
+                <div className="w-12 h-12 flex-shrink-0 rounded-md bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden">
+                  <img
+                    src={getCategoryImage(item.categoria) || "/placeholder.svg"}
+                    alt={item.categoria || "Product"}
+                    className="w-8 h-8 object-contain opacity-60"
+                  />
+                </div>
 
                 {/* Product Info */}
                 <div className="flex-1 min-w-0">

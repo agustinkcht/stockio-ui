@@ -7,6 +7,8 @@ import { ChevronDown, ChevronRight, Plus, Copy, X, Undo2, Redo2 } from "lucide-r
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
 import { SAVED_ATRIBUTOS, TEMPLATES, DEPOSITS } from "@/lib/constants"
+import { getCategoryImage } from "@/lib/utils/category-images"
+import Image from "next/image"
 // import { Breadcrumb } from "@/components/layout/breadcrumb"
 
 interface ItemDetailPanelProps {
@@ -627,9 +629,37 @@ export function ItemDetailPanel({
 
       <div className="px-8 pb-6 bg-slate-50 min-h-screen pl-8 pt-0">
         <div className="grid grid-cols-10 gap-24">
-          <div className="col-span-3 sticky top-[0px] z-20 backdrop-blur-[2px] bg-card rounded-xl h-fit border flex flex-col transition-all duration-300 border-solid border-slate-100 shadow-xl mt-4">
-            <div className=" p-6 mt-0 px-8 pl-9 pr-8">
-              <div className="mt-2 mb-0">
+          <div className="col-span-3 sticky top-4 z-20 rounded-xl max-h-[calc(100vh-2rem)] overflow-y-auto border flex flex-col transition-all duration-300 border-slate-100 mt-4 bg-transparent border-none shadow-none">
+            <div className="p-6 mt-0 px-8 pl-9 pr-8 bg-transparent border-none shadow-none">
+              {isViewingContainer && (
+                <div className="mt-2">
+                  <div className="w-full h-64 bg-muted/30 rounded-lg flex items-center justify-center overflow-hidden">
+                    <Image
+                      src={getCategoryImage(selectedItem.categoria) || "/placeholder.svg"}
+                      alt={selectedItem.name}
+                      width={200}
+                      height={256}
+                      className="object-contain"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {!isViewingContainer && (
+                <div className="mt-2">
+                  <div className="w-full h-64 bg-muted/30 rounded-lg flex items-center justify-center overflow-hidden">
+                    <Image
+                      src={getCategoryImage(selectedItem.categoria) || "/placeholder.svg"}
+                      alt={selectedItem.name}
+                      width={200}
+                      height={256}
+                      className="object-contain"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-6 mb-0">
                 <h2 className="font-semibold text-foreground text-lg mb-0">{selectedItem.name}</h2>
                 <div className="border-t border-slate-200 my-4 -mx-8"></div>
 
@@ -718,10 +748,6 @@ export function ItemDetailPanel({
 
               {isViewingContainer && (
                 <div className="mt-9">
-                  <div className="w-full h-64 bg-accent rounded-lg flex items-center justify-center border-2 border-dashed border-border mt-0 mb-9">
-                    <span className="text-sm text-muted-foreground">Sin Imagen</span>
-                  </div>
-
                   <div className="w-full mt-0">
                     <h3 className="text-sm font-medium text-foreground text-left ml-3 mb-0 mt-0">Descripción</h3>
                     {editingDescripcion ? (
@@ -749,10 +775,6 @@ export function ItemDetailPanel({
 
               {!isViewingContainer && (
                 <div className="mt-9">
-                  <div className="w-full h-64 bg-accent rounded-lg flex items-center justify-center border-2 border-dashed border-border mt-0 mb-9">
-                    <span className="text-sm text-muted-foreground">Sin Imagen</span>
-                  </div>
-
                   <div className="w-full mt-0">
                     <h3 className="text-sm font-medium text-foreground text-left ml-3 mb-0 mt-0">Descripción</h3>
                     {editingDescripcion ? (
