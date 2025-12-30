@@ -1,17 +1,17 @@
 "use client"
 import { useState } from "react"
-import { User, Undo2, Redo2, X, Check } from "lucide-react"
+import { Undo2, Redo2, X, Check } from "lucide-react"
 
 import { Sidebar } from "@/components/layout/sidebar"
 import { PriceGrid } from "@/components/prices/price-grid"
 import { NuevoItemModal } from "@/components/modals/nuevo-item-modal"
 import { NuevoItemConVariantesModal } from "@/components/modals/nuevo-item-con-variantes-modal"
 import { TemplateModal } from "@/components/modals/template-modal"
+import { UserPanel } from "@/components/layout/user-panel"
 import { useItems } from "@/hooks/use-items"
 import { useItemSelection } from "@/hooks/use-item-selection"
 import { useModals } from "@/hooks/use-modals"
 import { useSidebar } from "@/hooks/use-sidebar"
-import { useChangeTracker } from "@/hooks/use-change-tracker"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import type { Item } from "@/lib/types"
@@ -34,6 +34,16 @@ export default function ListaDePreciosPage() {
     hasUnsavedDeletes,
     deletedItems,
     isCreatingItem,
+    // Change tracking functions
+    editField,
+    editVariantField,
+    undoEdit,
+    redoEdit,
+    saveEdit,
+    cancelEdit,
+    hasUnsavedEdits,
+    canUndoEdit,
+    canRedoEdit,
   } = useItems()
 
   const { itemSelected, selectAllActive, hasSelectedItems, handleItemButtonClick, handleSelectAllClick } =
@@ -82,26 +92,30 @@ export default function ListaDePreciosPage() {
     handleCloseDropdowns,
   } = useSidebar()
 
-  const changeTracker = useChangeTracker()
-
   const breadcrumbs = [{ label: "Precios" }, { label: "Lista de Precios", href: "/precios/lista-de-precios" }]
 
+  const canUndo = canUndoEdit || hasUnsavedDeletes
+  const canRedo = canRedoEdit
+  const hasChanges = hasUnsavedEdits || hasUnsavedDeletes
+
   const handleUndo = () => {
-    const change = changeTracker.undo()
-    if (change?.type === "delete") {
+    if (canUndoEdit) {
+      undoEdit()
+    } else if (hasUnsavedDeletes) {
       undoDelete()
     }
   }
 
   const handleRedo = () => {
-    const change = changeTracker.redo()
-    if (change?.type === "delete") {
-      deleteItem(change.data)
+    if (canRedoEdit) {
+      redoEdit()
     }
   }
 
   const handleDeshacer = () => {
-    changeTracker.undoAll()
+    if (hasUnsavedEdits) {
+      cancelEdit()
+    }
     if (hasUnsavedDeletes) {
       undoDelete()
     }
@@ -109,28 +123,47 @@ export default function ListaDePreciosPage() {
 
   const handleGuardar = async () => {
     setIsSaving(true)
-
     try {
-      const changes = changeTracker.saveAll()
-
+      if (hasUnsavedEdits) {
+        saveEdit()
+      }
       if (hasUnsavedDeletes) {
         await saveDelete()
       }
-
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await new Promise((resolve) => setTimeout(resolve, 300))
     } finally {
       setIsSaving(false)
     }
   }
 
+  const handlePriceFieldChange = (itemSku: string, field: string, value: any) => {
+    // Check if this is a variant by looking through parent items
+    let isVariant = false
+    let parentSku: string | undefined
+
+    for (const item of items) {
+      if (item.variants) {
+        const variant = item.variants.find((v: any) => v.sku === itemSku)
+        if (variant) {
+          isVariant = true
+          parentSku = item.sku
+          break
+        }
+      }
+    }
+
+    if (isVariant && parentSku) {
+      editVariantField(parentSku, itemSku, field, value)
+    } else {
+      editField(itemSku, field, value)
+    }
+  }
+
   const handleDeleteWithTracking = (item: Item) => {
-    const originalIndex = items.findIndex((i) => i.sku === item.sku)
-    changeTracker.trackChange("delete", item, { originalIndex })
     deleteItem(item)
   }
 
   const handleItemClick = (item: Item) => {
-    // No navigation for precios view
     console.log("[v0] Item clicked in precios view:", item.titulo)
   }
 
@@ -189,22 +222,16 @@ export default function ListaDePreciosPage() {
                 <Breadcrumb items={breadcrumbs} />
               </div>
 
-              {/* Center: User Info Panel - Blur & Transparent */}
-              <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center gap-3">
-                <div className="flex items-center gap-3 px-4 py-2 bg-background/60 backdrop-blur-md border border-border/50 rounded-lg shadow-sm">
-                  <div className="p-1.5 bg-muted/80 rounded-md">
-                    <User className="w-4 h-4 text-foreground" />
-                  </div>
-                  <span className="text-sm font-medium text-foreground">In Vino Veritás - Admin</span>
-                </div>
+              <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center gap-3 mt-0">
+                <UserPanel />
               </div>
 
-              {/* Right: Utility Buttons */}
+              {/* Right: URDG Buttons */}
               <div className="flex items-center gap-1.5">
                 <div className="flex items-center gap-0.5 px-1 py-0.5 rounded-md bg-muted/50 mr-1.5">
                   <button
                     onClick={handleUndo}
-                    disabled={!changeTracker.canUndo}
+                    disabled={!canUndo}
                     className="p-1.5 hover:bg-muted rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground px-7"
                     title="Deshacer último cambio"
                   >
@@ -212,7 +239,7 @@ export default function ListaDePreciosPage() {
                   </button>
                   <button
                     onClick={handleRedo}
-                    disabled={!changeTracker.canRedo}
+                    disabled={!canRedo}
                     className="p-1.5 hover:bg-muted rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground px-7"
                     title="Rehacer último cambio"
                   >
@@ -224,7 +251,7 @@ export default function ListaDePreciosPage() {
 
                 <button
                   onClick={handleDeshacer}
-                  disabled={!changeTracker.hasUnsavedChanges && !hasUnsavedDeletes}
+                  disabled={!hasChanges}
                   className="p-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground px-7"
                   title="Deshacer cambios"
                 >
@@ -233,7 +260,7 @@ export default function ListaDePreciosPage() {
 
                 <button
                   onClick={handleGuardar}
-                  disabled={!changeTracker.hasUnsavedChanges && !hasUnsavedDeletes}
+                  disabled={!hasChanges || isSaving}
                   className="p-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-primary px-7"
                   title="Guardar cambios"
                 >
@@ -243,26 +270,21 @@ export default function ListaDePreciosPage() {
             </div>
           </div>
 
-          <main className="flex-1 flex bg-[rgba(250,251,253,1)] overflow-hidden">
-            <div className="flex-1 flex flex-col overflow-auto">
-              <div className="px-8 pb-8 pt-4">
-                <div className="rounded-xl border border-[rgba(228,230,235,0.5)] bg-transparent shadow-none border-none">
-                  <PriceGrid
-                    items={items}
-                    gridSize={gridSize}
-                    itemSelected={itemSelected}
-                    expandedItems={expandedItems}
-                    handleItemButtonClick={handleItemButtonClick}
-                    toggleVariantExpansion={toggleVariantExpansion}
-                    selectAllActive={selectAllActive}
-                    handleSelectAllClick={handleSelectAllClick}
-                    gridSizeDropdownOpen={gridSizeDropdownOpen}
-                    setGridSizeDropdownOpen={setGridSizeDropdownOpen}
-                    setGridSize={setGridSize}
-                  />
-                </div>
-              </div>
-            </div>
+          <main className="flex-1 flex bg-slate-50 overflow-hidden">
+            <PriceGrid
+              items={items}
+              gridSize={gridSize}
+              itemSelected={itemSelected}
+              expandedItems={expandedItems}
+              handleItemButtonClick={handleItemButtonClick}
+              toggleVariantExpansion={toggleVariantExpansion}
+              selectAllActive={selectAllActive}
+              handleSelectAllClick={handleSelectAllClick}
+              gridSizeDropdownOpen={gridSizeDropdownOpen}
+              setGridSizeDropdownOpen={setGridSizeDropdownOpen}
+              setGridSize={setGridSize}
+              onPriceFieldChange={handlePriceFieldChange}
+            />
           </main>
         </div>
       </div>

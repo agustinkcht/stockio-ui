@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { User, Undo2, Redo2, X, Check } from "lucide-react"
+import { Undo2, Redo2, X, Check } from "lucide-react"
 
 import { Sidebar } from "@/components/layout/sidebar"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
@@ -9,6 +9,7 @@ import { ItemsGrid } from "@/components/items/items-grid"
 import { NuevoItemModal } from "@/components/modals/nuevo-item-modal"
 import { NuevoItemConVariantesModal } from "@/components/modals/nuevo-item-con-variantes-modal"
 import { TemplateModal } from "@/components/modals/template-modal"
+import { UserPanel } from "@/components/layout/user-panel"
 import { useItems } from "@/hooks/use-items"
 import { useItemSelection } from "@/hooks/use-item-selection"
 import { useModals } from "@/hooks/use-modals"
@@ -21,7 +22,7 @@ export default function ArticulosPage() {
   const router = useRouter()
   const [isSaving, setIsSaving] = useState(false)
   const [itemCreated, setItemCreated] = useState(false)
-  const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>({}) // Added state to track which parent items are expanded
+  const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>({})
 
   const {
     items,
@@ -136,11 +137,13 @@ export default function ArticulosPage() {
   }
 
   const handleItemClick = (item: Item) => {
+    console.log("[v0] handleItemClick called with item:", item)
+    console.log("[v0] item.sku:", item.sku)
+    console.log("[v0] Navigating to:", `/inventario/articulos/${item.sku}`)
     router.push(`/inventario/articulos/${item.sku}`)
   }
 
   const toggleVariantExpansion = (index: number) => {
-    // Added function to toggle expansion of parent items
     setExpandedItems((prev) => ({
       ...prev,
       [index]: !prev[index],
@@ -194,21 +197,15 @@ export default function ArticulosPage() {
         </div>
 
         <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
-          <div className="relative border-b border-border h-[44px] bg-white">
+          <div className="relative border-b border-border h-[44px] bg-white z-[100004]">
             <div className="px-4 flex items-center justify-between h-full">
               {/* Left: Breadcrumbs */}
               <div className="flex items-center">
                 <Breadcrumb items={breadcrumbs} />
               </div>
 
-              {/* Center: User Info Panel - Blur & Transparent */}
-              <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center gap-3">
-                <div className="flex items-center gap-3 px-4 py-2 bg-background/60 backdrop-blur-md border border-border/50 rounded-lg shadow-sm">
-                  <div className="p-1.5 bg-muted/80 rounded-md">
-                    <User className="w-4 h-4 text-foreground" />
-                  </div>
-                  <span className="text-sm font-medium text-foreground">In Vino Veritás - Admin</span>
-                </div>
+              <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center gap-3 mt-0">
+                <UserPanel />
               </div>
 
               {/* Right: Utility Buttons */}

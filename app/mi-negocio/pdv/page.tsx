@@ -5,16 +5,22 @@ import { Sidebar } from "@/components/layout/sidebar"
 import { ProductSearch } from "@/components/pos/product-search"
 import { CartPanel } from "@/components/pos/cart-panel"
 import { CheckoutPanel } from "@/components/pos/checkout-panel"
+import { UserPanel } from "@/components/layout/user-panel"
 import { useSidebar } from "@/hooks/use-sidebar"
 import { useItems } from "@/hooks/use-items"
 import { usePOS } from "@/hooks/use-pos"
+import { useVentas } from "@/hooks/use-ventas"
+import { useClientes } from "@/hooks/use-clientes"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
-import { ShoppingCart, User, Undo2, Redo2, X, Check, ChevronLeft, ChevronRight } from "lucide-react"
+import { ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
+import type { VentaItem } from "@/lib/types"
 
 export default function PuntoDeVentaPage() {
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
-  const { items } = useItems()
+  const { items, reduceStock } = useItems()
+  const { addVenta } = useVentas()
+  const { clientes, getClienteById, incrementTransactionCount } = useClientes()
   const [showCheckoutSuccess, setShowCheckoutSuccess] = useState(false)
   const [isCartExpanded, setIsCartExpanded] = useState(false)
 
@@ -43,6 +49,8 @@ export default function PuntoDeVentaPage() {
   const breadcrumbs = [{ label: "Mi Negocio" }, { label: "Punto de Venta", href: "/mi-negocio/pdv" }]
 
   const handleCheckout = () => {
+    if (cart.length === 0) return
+
     console.log("[v0] Processing checkout:", {
       cart,
       selectedClientId,
@@ -50,6 +58,70 @@ export default function PuntoDeVentaPage() {
       total,
     })
 
+    cart.forEach((cartItem) => {
+      const sku = cartItem.variant?.sku || cartItem.item.sku
+      if (!sku) return
+
+      if (cartItem.variant) {
+        // It's a variant - find the parent item
+        const parentItem = items.find((i) => i.variants?.some((v) => v.sku === sku))
+        if (parentItem) {
+          reduceStock(sku, cartItem.quantity, parentItem.sku)
+        }
+      } else {
+        // It's a standalone item
+        reduceStock(sku, cartItem.quantity)
+      }
+
+      console.log(`[v0] PDV - Reduced stock for ${sku} by ${cartItem.quantity}`)
+    })
+
+    // 2. Create venta items
+    const ventaItems: VentaItem[] = cart.map((cartItem) => ({
+      sku: cartItem.variant?.sku || cartItem.item.sku || "",
+      name: cartItem.variant?.name || cartItem.item.name,
+      quantity: cartItem.quantity,
+      unitPrice: cartItem.unitPrice,
+      discount: cartItem.discount,
+      discountType: cartItem.discountType === "percentage" ? "percent" : "fixed",
+      total: cartItem.subtotal,
+      categoria: cartItem.item.categoria,
+    }))
+
+    // 3. Get client info
+    const cliente = selectedClientId ? getClienteById(selectedClientId) : null
+    const clienteNombre = cliente
+      ? cliente.tipo === "empresa"
+        ? cliente.razonSocial || ""
+        : `${cliente.nombre} ${cliente.apellido}`
+      : "Consumidor Final"
+
+    // 4. Create the venta record
+    const now = new Date()
+    const fecha = now.toISOString().split("T")[0]
+    const hora = now.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })
+
+    addVenta({
+      fecha,
+      hora,
+      clienteId: selectedClientId || "CONSUMIDOR_FINAL",
+      clienteNombre,
+      items: ventaItems,
+      subtotal,
+      descuento: globalDiscount,
+      descuentoTipo: globalDiscountType === "percentage" ? "percent" : "fixed",
+      total,
+      metodoPago: paymentMethod,
+      estado: "completada",
+      vendedor: "Admin",
+    })
+
+    // 5. Increment transaction count for the client
+    if (selectedClientId) {
+      incrementTransactionCount(selectedClientId)
+    }
+
+    // Show success and clear cart
     setShowCheckoutSuccess(true)
     setTimeout(() => {
       setShowCheckoutSuccess(false)
@@ -81,52 +153,12 @@ export default function PuntoDeVentaPage() {
               </div>
 
               {/* Center: User Info Panel - Blur & Transparent */}
-              <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center gap-3">
-                <div className="flex items-center gap-3 px-4 py-2 bg-background/60 backdrop-blur-md border border-border/50 rounded-lg shadow-sm">
-                  <div className="p-1.5 bg-muted/80 rounded-md">
-                    <User className="w-4 h-4 text-foreground" />
-                  </div>
-                  <span className="text-sm font-medium text-foreground">In Vino Veritás - Admin</span>
-                </div>
+              <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center gap-3 mt-0">
+                <UserPanel />
               </div>
 
-              {/* Right: Utility Buttons */}
-              <div className="flex items-center gap-1.5">
-                <div className="flex items-center gap-0.5 px-1 py-0.5 rounded-md bg-muted/50 mr-1.5">
-                  <button
-                    disabled
-                    className="p-1.5 hover:bg-muted rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground px-7"
-                    title="Deshacer último cambio"
-                  >
-                    <Undo2 className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    disabled
-                    className="p-1.5 hover:bg-muted rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground px-7"
-                    title="Rehacer último cambio"
-                  >
-                    <Redo2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-
-                <div className="h-5 w-px bg-border/60" />
-
-                <button
-                  disabled
-                  className="p-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground px-7"
-                  title="Deshacer cambios"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-
-                <button
-                  disabled
-                  className="p-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-primary px-7"
-                  title="Guardar cambios"
-                >
-                  <Check className="w-4 h-4" />
-                </button>
-              </div>
+              {/* Right: Empty */}
+              <div />
             </div>
           </div>
 
@@ -138,10 +170,10 @@ export default function PuntoDeVentaPage() {
 
             {/* Cart & Checkout Panel - Right Side */}
             <div
-              className={`flex flex-col bg-card transition-all duration-300 ${isCartExpanded ? "w-[60vw]" : "w-[380px]"}`}
+              className={`flex flex-col bg-card transition-all duration-300 ${isCartExpanded ? "w-[50vw]" : "w-[380px]"}`}
             >
               {/* Cart Header */}
-              <div className="p-4 border-b border-border/50 flex items-center gap-3 justify-between">
+              <div className="p-4 border-b border-border/50 flex items-center gap-3 justify-between py-3.5">
                 {/* Expand/Collapse Button */}
                 <button
                   onClick={() => setIsCartExpanded(!isCartExpanded)}

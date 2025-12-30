@@ -177,8 +177,8 @@ export function ItemCard({
         <div
           className={`flex-1 border-solid mb-0 border-slate-200/65 shadow-md ${gridSize === "lg" ? "h-22" : gridSize === "md" ? "h-16" : "h-10"} ${roundedClass} grid ${
             item.isAgrupador || item.hasVariants
-              ? `grid-cols-13 ${isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors cursor-pointer overflow-hidden`
-              : `grid-cols-13 ${isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors overflow-hidden`
+              ? `grid-cols-11 ${isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors cursor-pointer overflow-hidden`
+              : `grid-cols-11 ${isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors overflow-hidden`
           }`}
           onClick={(e) => {
             if (item.hasVariants || item.isAgrupador) {
@@ -192,6 +192,7 @@ export function ItemCard({
                 className={`col-span-5 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors border-slate-100 border-r-0`}
                 onClick={(e) => {
                   e.stopPropagation()
+                  console.log("[v0] ItemCard clicked - isChild:", isChild, "item:", item)
                   onItemClick(item)
                 }}
               >
@@ -237,6 +238,8 @@ export function ItemCard({
                     <div className="flex items-center gap-2 mt-0.5">
                       {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
                       {item.marca && <span className="text-xs text-muted-foreground">·</span>}
+                      {item.categoria && <span className="text-xs text-muted-foreground">{item.categoria}</span>}
+                      {item.categoria && <span className="text-xs text-muted-foreground">·</span>}
                       <div className="flex items-center gap-1.5">
                         <span className="text-xs text-muted-foreground">{item.sku}</span>
                         <button
@@ -253,16 +256,6 @@ export function ItemCard({
               </div>
 
               <div
-                className={`col-span-2 h-full flex items-center justify-center px-4 border-slate-100 border-r-0`}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onItemClick(item)
-                }}
-              >
-                <span className="text-sm text-slate-400">{item.categoria || "-"}</span>
-              </div>
-
-              <div
                 className={`col-span-3 h-full flex items-center justify-center px-4 border-slate-100 border-r-0 ${
                   item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
                 } px-4`}
@@ -276,6 +269,7 @@ export function ItemCard({
                 } px-4 cursor-pointer transition-colors`}
                 onClick={(e) => {
                   e.stopPropagation()
+                  console.log("[v0] ItemCard clicked - isChild:", isChild, "item:", item)
                   onItemClick(item)
                 }}
               >
@@ -306,6 +300,8 @@ export function ItemCard({
                   <div className="flex items-center gap-2 mt-0.5">
                     {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
                     {item.marca && <span className="text-xs text-muted-foreground">·</span>}
+                    {item.categoria && <span className="text-xs text-muted-foreground">{item.categoria}</span>}
+                    {item.categoria && <span className="text-xs text-muted-foreground">·</span>}
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs text-muted-foreground">{item.sku}</span>
                       <button
@@ -321,21 +317,10 @@ export function ItemCard({
               </div>
 
               <div
-                className={`col-span-2 h-full flex items-center justify-center border-r border-slate-100 ${
-                  item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
-                } px-4 cursor-pointer transition-colors`}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onItemClick(item)
-                }}
-              >
-                <span className="text-sm text-card-foreground">{item.categoria || "-"}</span>
-              </div>
-
-              <div
                 className={`col-span-3 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100`}
                 onClick={(e) => {
                   e.stopPropagation()
+                  console.log("[v0] ItemCard clicked - isChild:", isChild, "item:", item)
                   onItemClick(item)
                 }}
               >
@@ -394,7 +379,10 @@ export function ItemCard({
                 ) : (
                   <>
                     {gridSize === "sm" ? (
-                      <div className="grid grid-cols-2 gap-x-4 w-full">
+                      <div className="grid grid-cols-3 gap-x-3 w-full">
+                        <div className="flex items-center">
+                          <span className="text-sm text-muted-foreground">-</span>
+                        </div>
                         <div className="flex items-center">
                           <span className="text-sm text-muted-foreground">-</span>
                         </div>
@@ -404,6 +392,9 @@ export function ItemCard({
                       </div>
                     ) : (
                       <>
+                        <div className="flex flex-col items-center gap-0.5 flex-1">
+                          <span className="text-sm text-muted-foreground">-</span>
+                        </div>
                         <div className="flex flex-col items-center gap-0.5 flex-1">
                           <span className="text-sm text-muted-foreground">-</span>
                         </div>
@@ -429,6 +420,7 @@ export function ItemCard({
                   className="col-span-3 h-full flex items-center px-4 cursor-pointer transition-colors"
                   onClick={(e) => {
                     e.stopPropagation()
+                    console.log("[v0] ItemCard clicked - isChild:", isChild, "item:", item)
                     onItemClick(item)
                   }}
                 >

@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Geist, Source_Serif_4 } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
+import { AccountProvider } from "@/lib/contexts/account-context"
 import "./globals.css"
 
 const geistSans = Geist({ subsets: ["latin"] })
@@ -27,7 +28,9 @@ export default function RootLayout({
   return (
     <html className="bg-[rgb(243,242,238)]" lang="en">
       <body className={`font-sans antialiased bg-[rgb(243,242,238)] ${geistSans.className}`}>
-        <div className="min-h-screen bg-[rgb(243,242,238)]">{children}</div>
+        <AccountProvider>
+          <div className="min-h-screen bg-[rgb(243,242,238)]">{children}</div>
+        </AccountProvider>
         <Analytics />
       </body>
     </html>

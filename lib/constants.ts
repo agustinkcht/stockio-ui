@@ -1,4 +1,4 @@
-import { Store, Box, Tag, HelpCircle, Settings } from "lucide-react"
+import { Store, Box, Tag, HelpCircle, Settings, Receipt, Users, Wallet } from "lucide-react"
 import type { SidebarItem, Template } from "./types"
 
 export const SAVED_ATRIBUTOS: Record<string, string[]> = {
@@ -96,7 +96,7 @@ export const TEMPLATES: Template[] = [
       { key: "ABV", value: "" }, // Usualmente 12% – 12.5%
       { key: "Temperatura de Servicio", value: "" }, // 8–10°C (más frío para estilos frescos, un poco más para millésimes)
       { key: "Maridaje", value: "" }, // Mariscos, sushi, quesos suaves, aperitivos, postres (según dosaje)
-      { key: "Estuche", value: "" }, // Caja, tubo, edición regalo, estuche premium…
+      { key: "Estuche", value: "" }, // Presentación: Sin estuche, caja, tubo, estuche de regalo…
     ],
   },
 
@@ -158,7 +158,7 @@ export const TEMPLATES: Template[] = [
       { key: "Estuche", value: "" },
     ],
   },
-  // --- Vodka ---
+  // --- VODKA ---
   {
     name: "Vodka",
     atributosPrincipales: [{ key: "Sabor", value: "" }], //original, raspberri, botánicos
@@ -207,6 +207,30 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     label: "Mi Negocio",
     hasDropdown: true,
     dropdown: [{ label: "Punto de Venta", href: "/mi-negocio/pdv" }],
+  },
+  {
+    icon: Receipt,
+    label: "Ventas",
+    hasDropdown: true,
+    dropdown: [{ label: "Ventas", href: "/ventas/ventas" }],
+  },
+  {
+    icon: Wallet,
+    label: "Compras",
+    hasDropdown: true,
+    dropdown: [
+      { label: "Compras", href: "/compras/compras" },
+      { label: "Portal de Compras", href: "/compras/portal-de-compras" },
+    ],
+  },
+  {
+    icon: Users,
+    label: "Contactos",
+    hasDropdown: true,
+    dropdown: [
+      { label: "Clientes", href: "/contactos/clientes" },
+      { label: "Proveedores", href: "/contactos/proveedores" },
+    ],
   },
   {
     icon: Tag,

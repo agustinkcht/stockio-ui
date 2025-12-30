@@ -89,7 +89,7 @@ export function CheckoutPanel({
   return (
     <div className="border-t border-border/50 bg-card">
       {/* Client Selection */}
-      <div className="p-4 border-b border-border/30">
+      <div className="p-4 border-b border-border/30 py-2">
         {showClientSearch ? (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -181,7 +181,7 @@ export function CheckoutPanel({
       </div>
 
       {/* Payment Method */}
-      <div className="p-4 border-b border-border/30">
+      <div className="p-4 border-b border-border/30 py-2">
         <p className="text-xs text-muted-foreground mb-2">Método de pago</p>
         <div className="grid grid-cols-4 gap-2">
           {paymentMethods.map((method) => (

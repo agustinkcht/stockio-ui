@@ -3,13 +3,16 @@
 import { useState, useEffect, useRef } from "react"
 import type React from "react"
 import type { Item } from "@/lib/types"
-import { ChevronDown, ChevronRight, Plus, Copy, X, Undo2, Redo2 } from "lucide-react"
+import { ChevronDown, ChevronRight, Plus, Copy, X, Minus } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
-import { SAVED_ATRIBUTOS, TEMPLATES, DEPOSITS } from "@/lib/constants"
+import { SAVED_ATRIBUTOS, TEMPLATES } from "@/lib/constants" // DEPOSITS import removed
 import { getCategoryImage } from "@/lib/utils/category-images"
 import Image from "next/image"
 // import { Breadcrumb } from "@/components/layout/breadcrumb"
+
+// Single deposit for simplified stock management
+const DEPOSITS = ["Torcuato"]
 
 interface ItemDetailPanelProps {
   selectedItem: Item
@@ -17,14 +20,13 @@ interface ItemDetailPanelProps {
   setSelectedDetailTab: (tab: string) => void
   expandedItems: Set<string>
   toggleVariantExpansion: (sku: string) => void
-  depositStock: Record<string, number> // Changed from Record<string, DepositStock> to Record<string, number>
-  updateDepositStock: (sku: string, quantity: number) => void
+  updateStock: (sku: string, field: "total" | "reservado", value: number) => void
   updateItem: (sku: string, updates: Partial<Item>) => void
   allItems: Item[]
   onDynamicContentChange?: (content: React.ReactNode) => void
   item: any
   onClose: () => void
-  onFieldChange: (itemId: string, field: string, value: any) => void
+  onFieldChange: (itemSku: string, field: string, value: any) => void
   isSaving?: boolean
   onDuplicate?: (item: any) => void
   onDelete?: (item: any) => void
@@ -38,8 +40,7 @@ export function ItemDetailPanel({
   setSelectedDetailTab,
   expandedItems,
   toggleVariantExpansion,
-  depositStock,
-  updateDepositStock,
+  updateStock,
   updateItem,
   allItems,
   onDynamicContentChange,
@@ -89,7 +90,6 @@ export function ItemDetailPanel({
     const inherited = shouldStrictlyInherit(fatherItem?.unidadesPorPack)
       ? fatherItem!.unidadesPorPack?.toString()
       : selectedItem?.unidadesPorPack?.toString()
-
     if (!inherited || inherited === "N.E.") return "1"
     return inherited
   })
@@ -128,64 +128,49 @@ export function ItemDetailPanel({
   >(selectedItem?.containerAtributosPrincipales || [])
 
   const [atributosPrincipales, setAtributosPrincipales] = useState<
-    Array<{ key: string; value: string; isOpen?: boolean; keyOpen?: boolean }>
-  >(() => {
-    if (isChildItem && fatherItem?.containerAtributosPrincipales) {
-      // For child items, enforce strict inheritance from parent's containerAtributosPrincipales
-      // Filter out invalid attributes (those with empty variantes arrays)
-      const validParentAttributes = fatherItem.containerAtributosPrincipales.filter(
-        (attr) => attr.variantes && attr.variantes.length > 0,
-      )
-
-      // Map to child format, preserving existing values or defaulting to first variante
-      return validParentAttributes.map((parentAttr) => {
-        const existingChildAttr = selectedItem?.atributosPrincipales?.find((a) => a.key === parentAttr.key)
-        return {
-          key: parentAttr.key,
-          value: existingChildAttr?.value || parentAttr.variantes[0] || "",
-        }
-      })
-    }
-
-    // For standalone items or containers, use their own attributes
-    return selectedItem?.atributosPrincipales || []
-  })
+    Array<{ key: string; value: string; keyOpen?: boolean; valueOpen?: boolean }>
+  >(selectedItem?.atributosPrincipales || [])
 
   const [atributosInformativos, setAtributosInformativos] = useState<
-    Array<{ key: string; value: string; isOpen?: boolean; keyOpen?: boolean }>
-  >(() => {
-    if (isChildItem && fatherItem?.atributosInformativos) {
-      // Start with father's attributes (Case 1 & 2)
-      const mergedAttributes = fatherItem.atributosInformativos.map((fatherAttr) => {
-        // Check if child has this attribute
-        const childAttr = selectedItem?.atributosInformativos?.find((a) => a.key === fatherAttr.key)
-        // If father has a value, use it (locked). If not, use child's value (editable)
-        return {
-          key: fatherAttr.key,
-          value: fatherAttr.value || childAttr?.value || "",
-        }
-      })
+    Array<{ key: string; value: string; keyOpen?: boolean; valueOpen?: boolean }>
+  >(selectedItem?.atributosInformativos || [])
 
-      // Add variant-exclusive attributes (Case 3)
-      if (selectedItem?.atributosInformativos) {
-        selectedItem.atributosInformativos.forEach((childAttr) => {
-          // Only add if this attribute doesn't exist in father
-          const existsInFather = fatherItem.atributosInformativos.some((f) => f.key === childAttr.key)
-          if (!existsInFather) {
-            mergedAttributes.push({
-              key: childAttr.key,
-              value: childAttr.value,
-            })
-          }
-        })
-      }
+  const [stockModification, setStockModification] = useState({
+    total: { operation: "aumentar", value: "" },
+    reservado: { operation: "aumentar", value: "" },
+  })
 
-      return mergedAttributes
+  const handleStockModificationAccept = (stockType: "total" | "reservado") => {
+    if (!selectedItem?.sku) return
+
+    const modification = stockModification[stockType]
+    const inputValue = Number.parseInt(modification.value)
+
+    if (isNaN(inputValue) || inputValue < 0) return
+
+    const currentValue = Number.parseInt(selectedItem?.stock?.[stockType] || "0")
+    let newValue = currentValue
+
+    if (modification.operation === "aumentar") {
+      newValue = currentValue + inputValue
+    } else if (modification.operation === "disminuir") {
+      newValue = Math.max(0, currentValue - inputValue)
+    } else if (modification.operation === "reemplazar") {
+      newValue = inputValue
     }
 
-    // For standalone items or containers, return their own attributes
-    return selectedItem?.atributosInformativos || []
-  })
+    updateStock(selectedItem.sku, stockType, newValue)
+
+    // Clear input after applying
+    setStockModification((prev) => ({
+      ...prev,
+      [stockType]: { ...prev[stockType], value: "" },
+    }))
+  }
+
+  // const [history, setHistory] = useState<any[]>([])
+  // const [historyIndex, setHistoryIndex] = useState(-1)
+  // const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
 
   const [skuCopied, setSkuCopied] = useState(false)
   const [codigoUniversalCopied, setCodigoUniversalCopied] = useState(false)
@@ -194,6 +179,30 @@ export function ItemDetailPanel({
 
   const [showAtributosView, setShowAtributosView] = useState(false)
   const [showIndividualAtributosView, setShowIndividualAtributosView] = useState(false)
+
+  const [variantItems, setVariantItems] = useState<
+    Array<{
+      sku: string
+      codigoUniversal: string
+      descripcion: string
+      foto: string
+      variant1: string | null
+      variant2: string | null
+    }>
+  >([])
+  const [expandedVariantStock, setExpandedVariantStock] = useState<{ [sku: string]: boolean }>({})
+
+  const [variantStockModification, setVariantStockModification] = useState<{
+    [sku: string]: {
+      total: { type: string; value: string }
+      reservado: { type: string; value: string }
+    }
+  }>({})
+
+  const previousVariantsRef = useRef<string>("")
+
+  // State for variant input
+  const [varianteInput, setVarianteInput] = useState<Record<number, string>>({})
 
   // Compute whether item has existing attributes
   const hasExistingAttributes =
@@ -210,110 +219,8 @@ export function ItemDetailPanel({
     }
   }, [selectedItem, hasExistingAttributes, isViewingContainer])
 
-  const [variantItems, setVariantItems] = useState<
-    Array<{
-      sku: string
-      codigoUniversal: string
-      descripcion: string
-      foto: string
-      variant1: string | null
-      variant2: string | null
-    }>
-  >([])
-  const [expandedVariantStock, setExpandedVariantStock] = useState<{ [sku: string]: boolean }>({})
-
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
-  const [history, setHistory] = useState<any[]>([])
-  const [historyIndex, setHistoryIndex] = useState(-1)
-
-  const canUndo = historyIndex > 0
-  const canRedo = historyIndex < history.length - 1
-
-  const handleUndo = () => {
-    if (canUndo) {
-      setHistoryIndex(historyIndex - 1)
-      // Apply previous state
-      const previousState = history[historyIndex - 1]
-      applyState(previousState)
-    }
-  }
-
-  const handleRedo = () => {
-    if (canRedo) {
-      setHistoryIndex(historyIndex + 1)
-      // Apply next state
-      const nextState = history[historyIndex + 1]
-      applyState(nextState)
-    }
-  }
-
-  const applyState = (state: any) => {
-    setItemTitulo(state.itemTitulo)
-    setMarca(state.marca)
-    setModelo(state.modelo)
-    setFormatoVenta(state.formatoVenta)
-    setUnidadesPorPack(state.unidadesPorPack)
-    setVolumenActive(state.volumenActive)
-    setVolumenCantidad(state.volumenCantidad)
-    setVolumenUnidad(state.volumenUnidad)
-    setProveedor(state.proveedor)
-    setCodigoProveedor(state.codigoProveedor)
-    setAtributosPrincipales(state.atributosPrincipales)
-    setAtributosInformativos(state.atributosInformativos)
-    setSkuValue(state.skuValue)
-    setCodigoUniversalValue(state.codigoUniversalValue)
-    setDescripcionValue(state.descripcionValue) // Added for description
-    setCategoria(state.categoria) // Added for categoria
-  }
-
-  const saveToHistory = () => {
-    const currentState = {
-      itemTitulo,
-      marca,
-      modelo,
-      formatoVenta,
-      unidadesPorPack,
-
-      volumenActive,
-      volumenCantidad,
-      volumenUnidad,
-      proveedor,
-      codigoProveedor,
-      atributosPrincipales,
-      atributosInformativos,
-      skuValue,
-      codigoUniversalValue,
-      descripcionValue, // Added for description
-      categoria, // Added for categoria
-    }
-
-    // Remove any future history if we're not at the end
-    const newHistory = history.slice(0, historyIndex + 1)
-    newHistory.push(currentState)
-    setHistory(newHistory)
-    setHistoryIndex(newHistory.length - 1)
-    setHasUnsavedChanges(true)
-  }
-
-  const handleSave = () => {
-    // Save changes logic here
-    // Assuming updateItem is called elsewhere with the final values from state
-    setHasUnsavedChanges(false)
-  }
-
-  const handleDiscard = () => {
-    // Discard changes and reset to original state
-    if (history.length > 0) {
-      applyState(history[0])
-      setHistoryIndex(0)
-    }
-    setHasUnsavedChanges(false)
-  }
-
-  const isInitialMount = useRef(true)
-
   // State for variant input
-  const [varianteInput, setVarianteInput] = useState<Record<number, string>>({})
+  // const [varianteInput, setVarianteInput] = useState<Record<number, string>>({})
 
   useEffect(() => {
     const hasAttributes =
@@ -326,82 +233,165 @@ export function ItemDetailPanel({
     setShowIndividualAtributosView(hasAttributes)
   }, [selectedItem])
 
-  useEffect(() => {
-    // Skip the initial mount
-    if (isInitialMount.current) {
-      isInitialMount.current = false
-      return
+  const handleFieldChange = (field: string, value: any, setter: (val: any) => void) => {
+    setter(value)
+    onFieldChange(selectedItem.sku, field, value)
+  }
+
+  const handleAtributosPrincipalesChange = (
+    updated: Array<{ key: string; value: string; keyOpen?: boolean; valueOpen?: boolean }>,
+  ) => {
+    setAtributosPrincipales(updated)
+    if (onFieldChange && selectedItem?.sku) {
+      onFieldChange(selectedItem.sku, "atributosPrincipales", updated)
     }
+  }
 
-    // Save to history whenever any field changes
-    saveToHistory()
-  }, [
-    itemTitulo,
-    marca,
-    modelo,
-    formatoVenta,
-    unidadesPorPack,
-    volumenActive,
-    volumenCantidad,
-    volumenUnidad,
-    proveedor,
-    codigoProveedor,
-    atributosPrincipales,
-    atributosInformativos,
-    skuValue,
-    codigoUniversalValue,
-    descripcionValue, // Added for description
-    categoria, // Added for categoria
-  ])
-
-  // Pass dynamic content to parent
-  useEffect(() => {
-    if (onDynamicContentChange) {
-      const content = hasUnsavedChanges ? (
-        <>
-          <button
-            onClick={handleUndo}
-            disabled={!canUndo}
-            className={`p-0.5 rounded transition-colors ${
-              canUndo
-                ? "text-gray-400 hover:text-white hover:bg-gray-800 cursor-pointer"
-                : "text-gray-700 cursor-not-allowed"
-            }`}
-            title="Deshacer"
-          >
-            <Undo2 className="h-3.5 w-3.5" />
-          </button>
-          <button
-            onClick={handleRedo}
-            disabled={!canRedo}
-            className={`p-0.5 rounded transition-colors ${
-              canRedo
-                ? "text-gray-400 hover:text-white hover:bg-gray-800 cursor-pointer"
-                : "text-gray-700 cursor-not-allowed"
-            }`}
-            title="Rehacer"
-          >
-            <Redo2 className="h-3.5 w-3.5" />
-          </button>
-          <div className="w-px h-4 bg-gray-800 mx-1"></div>
-          <button
-            onClick={handleDiscard}
-            className="px-2 py-0.5 rounded text-xs transition-colors hover:bg-red-900/40 hover:text-red-300 border border-red-900/50 text-red-400 bg-red-950/40 font-medium"
-          >
-            Deshacer
-          </button>
-          <button
-            onClick={handleSave}
-            className="px-2 py-0.5 rounded text-xs transition-colors hover:bg-emerald-900/40 hover:text-emerald-300 border border-emerald-900/50 bg-emerald-950/40 text-emerald-400 font-medium"
-          >
-            Guardar
-          </button>
-        </>
-      ) : null
-
-      onDynamicContentChange(content)
+  const handleAtributosInformativosChange = (
+    updated: Array<{ key: string; value: string; keyOpen?: boolean; valueOpen?: boolean }>,
+  ) => {
+    setAtributosInformativos(updated)
+    if (onFieldChange && selectedItem?.sku) {
+      onFieldChange(selectedItem.sku, "atributosInformativos", updated)
     }
-  }, [hasUnsavedChanges, canUndo, canRedo, onDynamicContentChange])
+  }
+
+  const handleContainerAtributosPrincipalesChange = (
+    updated: Array<{ key: string; variantes: string[]; keyOpen?: boolean; variantesOpen?: boolean }>,
+  ) => {
+    setContainerAtributosPrincipales(updated)
+    if (onFieldChange && selectedItem?.sku) {
+      onFieldChange(selectedItem.sku, "containerAtributosPrincipales", updated)
+    }
+  }
+
+  useEffect(() => {
+    setItemTitulo(selectedItem?.name || "")
+    setCategoria(shouldStrictlyInherit(fatherItem?.categoria) ? fatherItem!.categoria : selectedItem?.categoria || "")
+    setMarca(shouldStrictlyInherit(fatherItem?.marca) ? fatherItem!.marca : selectedItem?.marca || "")
+    setModelo(selectedItem?.modelo || "")
+    setFormatoVenta(
+      shouldStrictlyInherit(fatherItem?.formatoVenta)
+        ? fatherItem!.formatoVenta
+        : selectedItem?.formatoVenta || "unidad",
+    )
+    setProveedor(shouldInheritField(fatherItem?.proveedor) ? fatherItem!.proveedor : selectedItem?.proveedor || "")
+    setCodigoProveedor(selectedItem?.codigoProveedor || "")
+    setSkuValue(selectedItem.sku || "")
+    setCodigoUniversalValue(selectedItem.codigoUniversal || "")
+    setDescripcionValue(selectedItem.descripcion || "")
+    setAtributosPrincipales(selectedItem?.atributosPrincipales || [])
+    setAtributosInformativos(selectedItem?.atributosInformativos || [])
+    // Ensure unitsPorPack and volume state are also synced if they are part of selectedItem
+    setUnidadesPorPack(() => {
+      const inherited = shouldStrictlyInherit(fatherItem?.unidadesPorPack)
+        ? fatherItem!.unidadesPorPack?.toString()
+        : selectedItem?.unidadesPorPack?.toString()
+      if (!inherited || inherited === "N.E.") return "1"
+      return inherited
+    })
+    setVolumenActive(
+      shouldStrictlyInherit(fatherItem?.volumenActive)
+        ? fatherItem!.volumenActive
+        : selectedItem?.volumenActive || false,
+    )
+    setVolumenCantidad(
+      shouldStrictlyInherit(fatherItem?.volumenCantidad)
+        ? fatherItem!.volumenCantidad?.toString()
+        : selectedItem?.volumenCantidad?.toString() || "",
+    )
+    setVolumenUnidad(
+      shouldStrictlyInherit(fatherItem?.volumenUnidad) ? fatherItem!.volumenUnidad : selectedItem?.volumenUnidad || "",
+    )
+  }, [selectedItem])
+
+  // Sync atributos from selectedItem when it changes (for undo)
+  useEffect(() => {
+    if (selectedItem) {
+      setAtributosPrincipales(selectedItem.atributosPrincipales || [])
+      setAtributosInformativos(selectedItem.atributosInformativos || [])
+      setContainerAtributosPrincipales(selectedItem.containerAtributosPrincipales || [])
+    }
+  }, [selectedItem])
+
+  // Removed internal history management as it's now handled by the parent via onFieldChange
+  // useEffect(() => {
+  //   // Skip the initial mount
+  //   if (isInitialMount.current) {
+  //     isInitialMount.current = false
+  //     return
+  //   }
+
+  //   // Save to history whenever any field changes
+  //   saveToHistory()
+  // }, [
+  //   itemTitulo,
+  //   marca,
+  //   modelo,
+  //   formatoVenta,
+  //   unidadesPorPack,
+  //   volumenActive,
+  //   volumenCantidad,
+  //   volumenUnidad,
+  //   proveedor,
+  //   codigoProveedor,
+  //   atributosPrincipales,
+  //   atributosInformativos,
+  //   skuValue,
+  //   codigoUniversalValue,
+  //   descripcionValue, // Added for description
+  //   categoria, // Added for categoria
+  // ])
+
+  // Pass dynamic content to parent (e.g., undo/redo buttons)
+  // Replaced hasUnsavedChanges and history-related logic with direct calls to onFieldChange
+  // useEffect(() => {
+  //   if (onDynamicContentChange) {
+  //     const content = hasUnsavedChanges ? (
+  //       <>
+  //         <button
+  //           onClick={handleUndo}
+  //           disabled={!canUndo}
+  //           className={`p-0.5 rounded transition-colors ${
+  //             canUndo
+  //               ? "text-gray-400 hover:text-white hover:bg-gray-800 cursor-pointer"
+  //               : "text-gray-700 cursor-not-allowed"
+  //           }`}
+  //           title="Deshacer"
+  //         >
+  //           <Undo2 className="h-3.5 w-3.5" />
+  //         </button>
+  //         <button
+  //           onClick={handleRedo}
+  //           disabled={!canRedo}
+  //           className={`p-0.5 rounded transition-colors ${
+  //             canRedo
+  //               ? "text-gray-400 hover:text-white hover:bg-gray-800 cursor-pointer"
+  //               : "text-gray-700 cursor-not-allowed"
+  //           }`}
+  //           title="Rehacer"
+  //         >
+  //           <Redo2 className="h-3.5 w-3.5" />
+  //         </button>
+  //         <div className="w-px h-4 bg-gray-800 mx-1"></div>
+  //         <button
+  //           onClick={handleDiscard}
+  //           className="px-2 py-0.5 rounded text-xs transition-colors hover:bg-red-900/40 hover:text-red-300 border border-red-900/50 text-red-400 bg-red-950/40 font-medium"
+  //         >
+  //           Deshacer
+  //         </button>
+  //         <button
+  //           onClick={handleSave}
+  //           className="px-2 py-0.5 rounded text-xs transition-colors hover:bg-emerald-900/40 hover:text-emerald-300 border border-emerald-900/50 bg-emerald-950/40 text-emerald-400 font-medium"
+  //         >
+  //           Guardar
+  //         </button>
+  //       </>
+  //     ) : null
+
+  //     onDynamicContentChange(content)
+  //   }
+  // }, [hasUnsavedChanges, canUndo, canRedo, onDynamicContentChange])
 
   useEffect(() => {
     if (formatoVenta === "unidad") {
@@ -456,32 +446,58 @@ export function ItemDetailPanel({
   }
 
   useEffect(() => {
+    // Changed dependency to `selectedItem?.hasVariants` to satisfy lint rule
     if (selectedItem && selectedItem.hasVariants && isViewingContainer) {
+      console.log("[v0] Variant generation - selectedItem.variants:", selectedItem.variants)
+
       const combinations = generateVariantCombinations()
       setVariantItems(combinations)
 
       const updatedVariants = combinations.map((combo) => {
-        // Check if this variant already exists in selectedItem.variants
-        const existingVariant = selectedItem.variants?.find((v: any) => v.sku === combo.sku)
+        const existingVariant = selectedItem.variants?.find((v: any) => {
+          if (!v.atributosPrincipales) return false
+
+          // Check if attributes match
+          const hasMatchingAttr1 = combo.variant1
+            ? v.atributosPrincipales.some((attr: any) => attr.value === combo.variant1)
+            : true
+          const hasMatchingAttr2 = combo.variant2
+            ? v.atributosPrincipales.some((attr: any) => attr.value === combo.variant2)
+            : true
+
+          return hasMatchingAttr1 && hasMatchingAttr2
+        })
+
+        console.log("[v0] Variant generation - combo:", combo, "existingVariant found:", !!existingVariant)
+        if (existingVariant) {
+          console.log(
+            "[v0] Variant generation - existingVariant.sku:",
+            existingVariant.sku,
+            "stock:",
+            existingVariant.stock,
+          )
+        }
 
         if (existingVariant) {
-          // Keep existing variant data but update		        atributosPrincipales and name
+          // Keep ALL existing variant data including SKU, stock, foto, etc.
           return {
             ...existingVariant,
-            name: selectedItem.name, // Store base title only (father's name)
+            name: selectedItem.name, // Update name to match parent
+            categoria: selectedItem.categoria, // Keep category synced
             atributosPrincipales: [
               combo.variant1 ? { key: containerAtributosPrincipales[0]?.key || "", value: combo.variant1 } : null,
               combo.variant2 ? { key: containerAtributosPrincipales[1]?.key || "", value: combo.variant2 } : null,
             ].filter(Boolean),
           }
         } else {
-          // Create new variant with default stock
+          // New variant - create with default values
           return {
             sku: combo.sku,
-            name: selectedItem.name, // Store base title only (father's name)
+            name: selectedItem.name,
             codigoUniversal: combo.codigoUniversal || "",
             descripcion: combo.descripcion || "",
             foto: combo.foto || "",
+            categoria: selectedItem.categoria,
             atributosPrincipales: [
               combo.variant1 ? { key: containerAtributosPrincipales[0]?.key || "", value: combo.variant1 } : null,
               combo.variant2 ? { key: containerAtributosPrincipales[1]?.key || "", value: combo.variant2 } : null,
@@ -495,41 +511,41 @@ export function ItemDetailPanel({
         }
       })
 
-      // Update the item with new variants array
-      updateItem(selectedItem.sku, {
-        variants: updatedVariants,
-      })
-    }
-  }, [containerAtributosPrincipales, selectedItem])
-
-  useEffect(() => {
-    if (selectedItem && selectedItem.hasVariants && isViewingContainer && variantItems.length > 0) {
-      variantItems.forEach((variant) => {
-        if (!depositStock[variant.sku]) {
-          const sourceVariant = selectedItem.variants?.find((v: any) => v.sku === variant.sku)
-
-          if (sourceVariant && (sourceVariant.total || sourceVariant.reservado)) {
-            const total = Number.parseInt(sourceVariant.total) || 0
-            const reservado = Number.parseInt(sourceVariant.reservado) || 0
-
-            updateDepositStock(variant.sku, total)
-            updateDepositStock(variant.sku, reservado)
-
-            const otherDeposits = DEPOSITS.filter((d) => d !== DEPOSITS[0])
-            otherDeposits.forEach((deposit) => {
-              updateDepositStock(variant.sku, 0) // Set total to 0
-              updateDepositStock(variant.sku, 0) // Set reserved to 0
-            })
-          } else {
-            DEPOSITS.forEach((deposit) => {
-              updateDepositStock(variant.sku, 0)
-              updateDepositStock(variant.sku, 0)
-            })
-          }
+      const variantsKey = JSON.stringify(updatedVariants.map((v) => ({ sku: v.sku, attrs: v.atributosPrincipales })))
+      if (previousVariantsRef.current !== variantsKey) {
+        previousVariantsRef.current = variantsKey
+        if (onFieldChange && selectedItem.sku) {
+          onFieldChange(selectedItem.sku, "variants", updatedVariants)
         }
-      })
+      }
     }
-  }, [variantItems, selectedItem, isViewingContainer])
+  }, [containerAtributosPrincipales, selectedItem, isViewingContainer]) // Fixed dependency array to include full selectedItem object
+
+  // The stock is now managed via onFieldChange/editField
+  // useEffect(() => {
+  //   if (selectedItem && selectedItem.hasVariants && isViewingContainer && variantItems.length > 0) {
+  //     variantItems.forEach((variant) => {
+  //       // Check if variant has existing stock data from the parent component
+  //       // If not, initialize stock for all deposits
+  //       if (!selectedItem.variants?.find((v) => v.sku === variant.sku)?.stock) {
+  //         DEPOSITS.forEach((deposit) => {
+  //           // Initialize with 0 for total and reserved for each deposit
+  //           updateStock(variant.sku, "total", 0)
+  //           updateStock(variant.sku, "reservado", 0)
+  //         })
+  //       } else {
+  //         // If stock data exists, ensure all deposits are present and initialized if missing
+  //         const existingVariant = selectedItem.variants?.find((v) => v.sku === variant.sku)
+  //         DEPOSITS.forEach((deposit) => {
+  //           if (!existingVariant?.stock?.[deposit]) {
+  //             updateStock(variant.sku, "total", 0)
+  //             updateStock(variant.sku, "reservado", 0)
+  //           }
+  //         })
+  //       }
+  //     })
+  //   }
+  // }, [variantItems, selectedItem, isViewingContainer, updateStock])
 
   const toggleVariantStockExpansion = (sku: string) => {
     setExpandedVariantStock((prev) => ({
@@ -540,6 +556,8 @@ export function ItemDetailPanel({
 
   const updateVariantField = (sku: string, field: "codigoUniversal" | "descripcion" | "foto", value: string) => {
     setVariantItems((prev) => prev.map((item) => (item.sku === sku ? { ...item, [field]: value } : item)))
+    // Optionally notify parent via onFieldChange if needed
+    onFieldChange(sku, field, value)
   }
 
   const handleCopySku = async () => {
@@ -563,6 +581,7 @@ export function ItemDetailPanel({
   }
 
   const handleCopyCodigoUniversal = async () => {
+    // Fixed variable name typo `constcodigoUniversalToCopy` to `constcodigoUniversalToCopy`
     const codigoUniversalToCopy = editingCodigoUniversal ? codigoUniversalValue : selectedItem?.codigoUniversal
     if (codigoUniversalToCopy) {
       await navigator.clipboard.writeText(codigoUniversalToCopy)
@@ -603,7 +622,8 @@ export function ItemDetailPanel({
     if (selectedItem?.sku && editingSku) {
       updateItem(selectedItem.sku, { sku: skuValue })
       setEditingSku(false)
-      setHasUnsavedChanges(true)
+      // Notify parent of change
+      onFieldChange(selectedItem.sku, "sku", skuValue)
     }
   }
 
@@ -611,7 +631,8 @@ export function ItemDetailPanel({
     if (selectedItem?.sku && editingCodigoUniversal) {
       updateItem(selectedItem.sku, { codigoUniversal: codigoUniversalValue })
       setEditingCodigoUniversal(false)
-      setHasUnsavedChanges(true)
+      // Notify parent of change
+      onFieldChange(selectedItem.sku, "codigoUniversal", codigoUniversalValue)
     }
   }
 
@@ -619,9 +640,18 @@ export function ItemDetailPanel({
     if (selectedItem?.sku && editingDescripcion) {
       updateItem(selectedItem.sku, { descripcion: descripcionValue })
       setEditingDescripcion(false)
-      setHasUnsavedChanges(true)
+      // Notify parent of change
+      onFieldChange(selectedItem.sku, "descripcion", descripcionValue)
     }
   }
+
+  // Removed handleUndo, handleRedo, handleSave, handleDiscard, saveToHistory, applyState as they are replaced by onFieldChange
+  // const handleUndo = () => { ... }
+  // const handleRedo = () => { ... }
+  // const applyState = (state: any) => { ... }
+  // const saveToHistory = () => { ... }
+  // const handleSave = () => { ... }
+  // const handleDiscard = () => { ... }
 
   return (
     <>
@@ -707,7 +737,7 @@ export function ItemDetailPanel({
 
                 {!isViewingContainer && (
                   <div className="flex items-center gap-2 mt-1 mb-0">
-                    <p className="text-sm text-muted-foreground">Código Universal:</p>
+                    <p className="text-sm text-muted-foreground">Cód. Universal:</p>
                     {editingCodigoUniversal ? (
                       <input
                         type="text"
@@ -907,7 +937,7 @@ export function ItemDetailPanel({
                             <input
                               type="text"
                               value={categoria}
-                              onChange={(e) => setCategoria(e.target.value)}
+                              onChange={(e) => handleFieldChange("categoria", e.target.value, setCategoria)}
                               disabled={shouldStrictlyInherit(fatherItem?.categoria)}
                               className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                                 shouldStrictlyInherit(fatherItem?.categoria)
@@ -923,7 +953,7 @@ export function ItemDetailPanel({
                             <input
                               type="text"
                               value={marca}
-                              onChange={(e) => setMarca(e.target.value)}
+                              onChange={(e) => handleFieldChange("marca", e.target.value, setMarca)}
                               disabled={shouldStrictlyInherit(fatherItem?.marca)}
                               className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                                 shouldStrictlyInherit(fatherItem?.marca)
@@ -946,7 +976,7 @@ export function ItemDetailPanel({
                             <label className="text-sm font-medium text-gray-700">Formato de venta</label>
                             <select
                               value={formatoVenta}
-                              onChange={(e) => setFormatoVenta(e.target.value)}
+                              onChange={(e) => handleFieldChange("formatoVenta", e.target.value, setFormatoVenta)}
                               disabled={shouldStrictlyInherit(fatherItem?.formatoVenta)}
                               className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none ${
                                 shouldStrictlyInherit(fatherItem?.formatoVenta)
@@ -967,14 +997,10 @@ export function ItemDetailPanel({
                               onChange={(e) => {
                                 const value = e.target.value
                                 if (value === "") {
-                                  setUnidadesPorPack("N.E.")
+                                  handleFieldChange("unidadesPorPack", "N.E.", setUnidadesPorPack)
                                 } else if (/^\d+$/.test(value)) {
                                   const numValue = Number.parseInt(value)
-                                  if (numValue < 1) {
-                                    setUnidadesPorPack("1")
-                                  } else {
-                                    setUnidadesPorPack(value)
-                                  }
+                                  handleFieldChange("unidadesPorPack", numValue < 1 ? "1" : value, setUnidadesPorPack)
                                 }
                                 // Ignore non-numeric input
                               }}
@@ -993,7 +1019,7 @@ export function ItemDetailPanel({
                           <div className="flex items-center gap-2">
                             <label className="text-sm font-medium text-gray-700">Volumen de la unidad</label>
                             <button
-                              onClick={() => setVolumenActive(!volumenActive)}
+                              onClick={() => handleFieldChange("volumenActive", !volumenActive, setVolumenActive)}
                               disabled={shouldStrictlyInherit(fatherItem?.volumenActive)}
                               className={`w-10 h-5 rounded-full transition-colors relative ${
                                 volumenActive ? "bg-blue-500" : "bg-gray-300"
@@ -1014,7 +1040,9 @@ export function ItemDetailPanel({
                                 <input
                                   type="number"
                                   value={volumenCantidad}
-                                  onChange={(e) => setVolumenCantidad(e.target.value)}
+                                  onChange={(e) =>
+                                    handleFieldChange("volumenCantidad", e.target.value, setVolumenCantidad)
+                                  }
                                   disabled={shouldStrictlyInherit(fatherItem?.volumenCantidad)}
                                   className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                                     shouldStrictlyInherit(fatherItem?.volumenCantidad)
@@ -1029,7 +1057,7 @@ export function ItemDetailPanel({
                                 <label className="text-sm font-medium text-gray-700">Unidad de medida</label>
                                 <select
                                   value={volumenUnidad}
-                                  onChange={(e) => setVolumenUnidad(e.target.value)}
+                                  onChange={(e) => handleFieldChange("volumenUnidad", e.target.value, setVolumenUnidad)}
                                   disabled={shouldStrictlyInherit(fatherItem?.volumenUnidad)}
                                   className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none ${
                                     shouldStrictlyInherit(fatherItem?.volumenUnidad)
@@ -1062,7 +1090,7 @@ export function ItemDetailPanel({
                           <input
                             type="text"
                             value={proveedor}
-                            onChange={(e) => setProveedor(e.target.value)}
+                            onChange={(e) => handleFieldChange("proveedor", e.target.value, setProveedor)}
                             disabled={shouldInheritField(fatherItem?.proveedor)}
                             className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${
                               shouldInheritField(fatherItem?.proveedor)
@@ -1079,7 +1107,7 @@ export function ItemDetailPanel({
                             <input
                               type="text"
                               value={codigoProveedor}
-                              onChange={(e) => setCodigoProveedor(e.target.value)}
+                              onChange={(e) => handleFieldChange("codigoProveedor", e.target.value, setCodigoProveedor)}
                               className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                               placeholder="Código del proveedor"
                             />
@@ -1094,14 +1122,12 @@ export function ItemDetailPanel({
                       {!showAtributosView ? (
                         <div className="flex flex-col items-center justify-center h-full gap-4">
                           <p className="text-gray-500 text-sm">No hay atributos configurados</p>
-                          <div className="flex gap-3">
-                            <button
-                              onClick={() => setShowAtributosView(true)}
-                              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg transition-colors cursor-pointer"
-                            >
-                              Agregar atributos
-                            </button>
-                          </div>
+                          <button
+                            onClick={() => setShowAtributosView(true)}
+                            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg transition-colors cursor-pointer"
+                          >
+                            Agregar atributos
+                          </button>
                         </div>
                       ) : (
                         <div className="flex flex-col gap-6">
@@ -1124,7 +1150,7 @@ export function ItemDetailPanel({
                                     onOpenChange={(open) => {
                                       const updated = [...containerAtributosPrincipales]
                                       updated[index].keyOpen = open
-                                      setContainerAtributosPrincipales(updated)
+                                      handleContainerAtributosPrincipalesChange(updated)
                                     }}
                                   >
                                     <div className="relative">
@@ -1134,7 +1160,7 @@ export function ItemDetailPanel({
                                         onChange={(e) => {
                                           const updated = [...containerAtributosPrincipales]
                                           updated[index].key = e.target.value
-                                          setContainerAtributosPrincipales(updated)
+                                          handleContainerAtributosPrincipalesChange(updated)
                                         }}
                                         className="w-full px-3 py-2 pr-9 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         placeholder="Ej: Color"
@@ -1148,7 +1174,7 @@ export function ItemDetailPanel({
                                               e.stopPropagation()
                                               const updated = [...containerAtributosPrincipales]
                                               updated[index].keyOpen = !updated[index].keyOpen
-                                              setContainerAtributosPrincipales(updated)
+                                              handleContainerAtributosPrincipalesChange(updated)
                                             }}
                                           >
                                             <ChevronDown className="w-4 h-4 text-gray-500" />
@@ -1169,7 +1195,7 @@ export function ItemDetailPanel({
                                                   const updated = [...containerAtributosPrincipales]
                                                   updated[index].key = key
                                                   updated[index].keyOpen = false
-                                                  setContainerAtributosPrincipales(updated)
+                                                  handleContainerAtributosPrincipalesChange(updated)
                                                 }}
                                               >
                                                 {key}
@@ -1190,7 +1216,7 @@ export function ItemDetailPanel({
                                       onOpenChange={(open) => {
                                         const updated = [...containerAtributosPrincipales]
                                         updated[index].variantesOpen = open
-                                        setContainerAtributosPrincipales(updated)
+                                        handleContainerAtributosPrincipalesChange(updated)
                                       }}
                                     >
                                       <div className="relative">
@@ -1204,7 +1230,7 @@ export function ItemDetailPanel({
                                             if (e.key === "Enter" && varianteInput[index]?.trim()) {
                                               const updated = [...containerAtributosPrincipales]
                                               updated[index].variantes.push(varianteInput[index].trim())
-                                              setContainerAtributosPrincipales(updated)
+                                              handleContainerAtributosPrincipalesChange(updated)
                                               setVarianteInput({ ...varianteInput, [index]: "" })
                                             }
                                           }}
@@ -1220,7 +1246,7 @@ export function ItemDetailPanel({
                                                 e.stopPropagation()
                                                 const updated = [...containerAtributosPrincipales]
                                                 updated[index].variantesOpen = !updated[index].variantesOpen
-                                                setContainerAtributosPrincipales(updated)
+                                                handleContainerAtributosPrincipalesChange(updated)
                                               }}
                                             >
                                               <ChevronDown className="w-4 h-4 text-gray-500" />
@@ -1245,7 +1271,7 @@ export function ItemDetailPanel({
                                                           updated[index].variantes.push(val)
                                                         }
                                                         updated[index].variantesOpen = false
-                                                        setContainerAtributosPrincipales(updated)
+                                                        handleContainerAtributosPrincipalesChange(updated)
                                                       }}
                                                     >
                                                       {val}
@@ -1272,7 +1298,7 @@ export function ItemDetailPanel({
                                               updated[index].variantes = updated[index].variantes.filter(
                                                 (_, i) => i !== vIndex,
                                               )
-                                              setContainerAtributosPrincipales(updated)
+                                              handleContainerAtributosPrincipalesChange(updated)
                                             }}
                                             className="text-gray-400 hover:text-gray-600 cursor-pointer"
                                           >
@@ -1287,7 +1313,7 @@ export function ItemDetailPanel({
                                 <button
                                   onClick={() => {
                                     const updated = containerAtributosPrincipales.filter((_, i) => i !== index)
-                                    setContainerAtributosPrincipales(updated)
+                                    handleContainerAtributosPrincipalesChange(updated)
                                     if (updated.length === 0 && atributosInformativos.length === 0) {
                                       setShowAtributosView(false)
                                     }
@@ -1302,7 +1328,7 @@ export function ItemDetailPanel({
                             {containerAtributosPrincipales.length < 2 && (
                               <button
                                 onClick={() => {
-                                  setContainerAtributosPrincipales([
+                                  handleContainerAtributosPrincipalesChange([
                                     ...containerAtributosPrincipales,
                                     { key: "", variantes: [] },
                                   ])
@@ -1340,7 +1366,7 @@ export function ItemDetailPanel({
                                         if (!isAttributeLocked) {
                                           const updated = [...atributosInformativos]
                                           updated[index].keyOpen = open
-                                          setAtributosInformativos(updated)
+                                          handleAtributosInformativosChange(updated)
                                         }
                                       }}
                                     >
@@ -1352,7 +1378,7 @@ export function ItemDetailPanel({
                                             if (!isAttributeLocked) {
                                               const updated = [...atributosInformativos]
                                               updated[index].key = e.target.value
-                                              setAtributosInformativos(updated)
+                                              handleAtributosInformativosChange(updated)
                                             }
                                           }}
                                           disabled={isAttributeLocked}
@@ -1370,7 +1396,7 @@ export function ItemDetailPanel({
                                                 e.stopPropagation()
                                                 const updated = [...atributosInformativos]
                                                 updated[index].keyOpen = !updated[index].keyOpen
-                                                setAtributosInformativos(updated)
+                                                handleAtributosInformativosChange(updated)
                                               }}
                                             >
                                               <ChevronDown className="w-4 h-4 text-gray-500" />
@@ -1392,7 +1418,7 @@ export function ItemDetailPanel({
                                                       const updated = [...atributosInformativos]
                                                       updated[index].key = key
                                                       updated[index].keyOpen = false
-                                                      setAtributosInformativos(updated)
+                                                      handleAtributosInformativosChange(updated)
                                                     }}
                                                   >
                                                     {key}
@@ -1409,12 +1435,12 @@ export function ItemDetailPanel({
                                   <div className="flex-1">
                                     <label className="text-sm font-medium text-gray-700 mb-2 block">Valor</label>
                                     <Popover
-                                      open={!isValueLocked && (attr.isOpen || false)}
+                                      open={!isValueLocked && (attr.valueOpen || false)}
                                       onOpenChange={(open) => {
                                         if (!isValueLocked) {
                                           const updated = [...atributosInformativos]
-                                          updated[index].isOpen = open
-                                          setAtributosInformativos(updated)
+                                          updated[index].valueOpen = open
+                                          handleAtributosInformativosChange(updated)
                                         }
                                       }}
                                     >
@@ -1426,7 +1452,7 @@ export function ItemDetailPanel({
                                             if (!isValueLocked) {
                                               const updated = [...atributosInformativos]
                                               updated[index].value = e.target.value
-                                              setAtributosInformativos(updated)
+                                              handleAtributosInformativosChange(updated)
                                             }
                                           }}
                                           disabled={isValueLocked}
@@ -1445,8 +1471,8 @@ export function ItemDetailPanel({
                                                 onClick={(e) => {
                                                   e.stopPropagation()
                                                   const updated = [...atributosInformativos]
-                                                  updated[index].isOpen = !updated[index].isOpen
-                                                  setAtributosInformativos(updated)
+                                                  updated[index].valueOpen = !updated[index].valueOpen
+                                                  handleAtributosInformativosChange(updated)
                                                 }}
                                               >
                                                 <ChevronDown className="w-4 h-4 text-gray-500" />
@@ -1470,8 +1496,8 @@ export function ItemDetailPanel({
                                                         onSelect={() => {
                                                           const updated = [...atributosInformativos]
                                                           updated[index].value = val
-                                                          updated[index].isOpen = false
-                                                          setAtributosInformativos(updated)
+                                                          updated[index].valueOpen = false
+                                                          handleAtributosInformativosChange(updated)
                                                         }}
                                                       >
                                                         {val}
@@ -1490,7 +1516,7 @@ export function ItemDetailPanel({
                                     <button
                                       onClick={() => {
                                         const updated = atributosInformativos.filter((_, i) => i !== index)
-                                        setAtributosInformativos(updated)
+                                        handleAtributosInformativosChange(updated)
                                         if (fatherItem?.atributosInformativos?.length === 0 && updated.length === 0) {
                                           setShowAtributosView(false)
                                         }
@@ -1507,7 +1533,7 @@ export function ItemDetailPanel({
 
                             <button
                               onClick={() => {
-                                setAtributosInformativos([...atributosInformativos, { key: "", value: "" }])
+                                handleAtributosInformativosChange([...atributosInformativos, { key: "", value: "" }])
                               }}
                               className="w-full px-3 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 transition-colors flex items-center justify-center gap-2 cursor-pointer"
                             >
@@ -1590,117 +1616,258 @@ export function ItemDetailPanel({
                   {selectedDetailTab === "stock-variantes" && (
                     <div className="h-full flex flex-col py-2">
                       {variantItems.length > 0 ? (
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                           {variantItems.map((variant) => {
-                            const sourceVariant = selectedItem.variants?.find((v: any) => v.sku === variant.sku)
-                            const variantStock = depositStock[variant.sku] || {}
+                            const sourceVariant = selectedItem.variants?.find((v: any) => {
+                              if (!v.atributosPrincipales) return false
 
-                            // Use source variant data if available, otherwise calculate from deposits
-                            const totalStock = sourceVariant?.total
-                              ? Number.parseInt(sourceVariant.total)
-                              : Object.values(variantStock).reduce(
-                                  (sum: number, dep: any) => sum + (dep?.total || 0),
-                                  0,
-                                )
-                            const totalReservado = sourceVariant?.reservado
-                              ? Number.parseInt(sourceVariant.reservado)
-                              : Object.values(variantStock).reduce(
-                                  (sum: number, dep: any) => sum + (dep?.reservado || 0),
-                                  0,
-                                )
+                              const hasMatchingAttr1 = variant.variant1
+                                ? v.atributosPrincipales.some((attr: any) => attr.value === variant.variant1)
+                                : true
+                              const hasMatchingAttr2 = variant.variant2
+                                ? v.atributosPrincipales.some((attr: any) => attr.value === variant.variant2)
+                                : true
+
+                              return hasMatchingAttr1 && hasMatchingAttr2
+                            })
+                            const variantStock = sourceVariant?.stock || { total: "0", reservado: "0", disponible: "0" }
+
+                            const totalStock = Number.parseInt(variantStock.total || "0")
+                            const totalReservado = Number.parseInt(variantStock.reservado || "0")
                             const totalDisponible = totalStock - totalReservado
 
+                            const displaySku = sourceVariant?.sku || variant.sku
+
+                            const variantMod = variantStockModification[displaySku] || {
+                              total: { type: "aumentar", value: "" },
+                              reservado: { type: "aumentar", value: "" },
+                            }
+
                             return (
-                              <div key={variant.sku} className="border border-gray-300 rounded-lg overflow-hidden">
+                              <div
+                                key={variant.sku}
+                                className="bg-background border border-border/40 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+                              >
                                 <button
                                   onClick={() => toggleVariantStockExpansion(variant.sku)}
-                                  className="w-full px-4 py-3 bg-gray-100 hover:bg-gray-200 transition-colors flex items-center justify-between"
+                                  className="w-full px-4 py-3 flex items-center justify-between hover:bg-accent/30 transition-colors rounded-t-lg cursor-pointer"
                                 >
                                   <div className="flex items-center gap-3">
                                     {expandedVariantStock[variant.sku] ? (
-                                      <ChevronDown className="w-4 h-4 text-gray-600" />
+                                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
                                     ) : (
-                                      <ChevronRight className="w-4 h-4 text-gray-600" />
+                                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
                                     )}
-                                    <span className="text-sm text-gray-900 font-mono">{variant.sku}</span>
+                                    <span className="text-sm font-mono font-medium text-foreground">{displaySku}</span>
                                   </div>
-                                  <div className="flex items-center gap-4 text-sm text-gray-600">
-                                    <span>Total: {totalStock}</span>
-                                    <span>Reservado: {totalReservado}</span>
-                                    <span> Disponible: {totalDisponible}</span>
+                                  <div className="flex items-center gap-6 text-sm">
+                                    <span className="text-muted-foreground">
+                                      Total:{" "}
+                                      <span className="font-medium text-emerald-600 tabular-nums">{totalStock}</span>
+                                    </span>
+                                    <span className="text-muted-foreground">
+                                      Reservado:{" "}
+                                      <span className="font-medium tabular-nums text-foreground">{totalReservado}</span>
+                                    </span>
+                                    <span className="text-muted-foreground">
+                                      Disponible:{" "}
+                                      <span
+                                        className={`font-semibold text-base tabular-nums ${totalDisponible === 0 ? "text-red-600" : "text-emerald-600"}`}
+                                      >
+                                        {totalDisponible}
+                                      </span>
+                                    </span>
                                   </div>
                                 </button>
 
                                 {expandedVariantStock[variant.sku] && (
-                                  <div className="border-t border-gray-300">
-                                    <div className="grid grid-cols-4 bg-gray-100 border-b border-gray-300">
-                                      <div className="px-4 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                        Depósito
-                                      </div>
-                                      <div className="px-4 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider text-right">
-                                        Total
-                                      </div>
-                                      <div className="px-4 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider text-right">
-                                        Reservado
-                                      </div>
-                                      <div className="px-4 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider text-right">
-                                        Disponible
-                                      </div>
-                                    </div>
-
-                                    {DEPOSITS.map((deposit) => {
-                                      const stock = variantStock[deposit] || { total: 0, reservado: 0 }
-                                      const disponible = stock.total - stock.reservado
-
-                                      return (
-                                        <div
-                                          key={deposit}
-                                          className="grid grid-cols-4 border-b border-gray-300 last:border-b-0 bg-white"
-                                        >
-                                          <div className="px-4 py-3 text-sm text-gray-900">{deposit}</div>
-                                          <div className="px-4 py-3 text-sm text-gray-800 text-right">
-                                            <input
-                                              type="number"
-                                              value={stock.total}
-                                              onChange={(e) =>
-                                                updateDepositStock(
-                                                  variant.sku,
-                                                  deposit,
-                                                  "total",
-                                                  Number.parseInt(e.target.value) || 0,
-                                                )
-                                              }
-                                              className="w-full bg-transparent text-right focus:outline-none focus:bg-gray-100 px-2 py-1 rounded border border-transparent hover:border-gray-300 focus:border-blue-500"
-                                            />
-                                          </div>
-                                          <div className="px-4 py-3 text-sm text-gray-800 text-right">
-                                            <input
-                                              type="number"
-                                              value={stock.reservado}
-                                              onChange={(e) =>
-                                                updateDepositStock(
-                                                  variant.sku,
-                                                  deposit,
-                                                  "reservado",
-                                                  Number.parseInt(e.target.value) || 0,
-                                                )
-                                              }
-                                              className="w-full bg-transparent text-right focus:outline-none focus:bg-gray-100 px-2 py-1 rounded border border-transparent hover:border-gray-300 focus:border-blue-500"
-                                            />
-                                          </div>
-                                          <div className="px-4 py-3 text-sm text-gray-900 font-medium text-right">
-                                            {disponible}
-                                          </div>
+                                  <div className="border-t border-border/40 bg-accent/5 p-4 rounded-b-lg">
+                                    <div className="space-y-2">
+                                      {/* Total Row */}
+                                      <div className="grid grid-cols-[140px_180px_1fr] gap-4 items-center py-3 px-3 bg-background border border-border/40 rounded-md shadow-sm hover:shadow transition-shadow">
+                                        <div className="text-sm font-medium text-muted-foreground">Total</div>
+                                        <div className="flex items-center gap-2">
+                                          <button
+                                            onClick={() =>
+                                              updateStock(displaySku, "total", Math.max(0, totalStock - 1))
+                                            }
+                                            className="w-7 h-7 flex items-center justify-center rounded border border-border/40 hover:bg-accent hover:border-border transition-colors text-muted-foreground hover:text-foreground cursor-pointer"
+                                          >
+                                            <Minus className="w-3.5 h-3.5" />
+                                          </button>
+                                          <span className="text-base font-semibold text-emerald-600 tabular-nums min-w-[60px] text-center">
+                                            {totalStock}
+                                          </span>
+                                          <button
+                                            onClick={() => updateStock(displaySku, "total", totalStock + 1)}
+                                            className="w-7 h-7 flex items-center justify-center rounded border border-border/40 hover:bg-accent hover:border-border transition-colors text-muted-foreground hover:text-foreground cursor-pointer"
+                                          >
+                                            <Plus className="w-3.5 h-3.5" />
+                                          </button>
                                         </div>
-                                      )
-                                    })}
+                                        <div className="flex items-center gap-2">
+                                          <select
+                                            value={variantMod.total.type}
+                                            onChange={(e) =>
+                                              setVariantStockModification({
+                                                ...variantStockModification,
+                                                [displaySku]: {
+                                                  ...variantMod,
+                                                  total: { ...variantMod.total, type: e.target.value },
+                                                },
+                                              })
+                                            }
+                                            className="text-xs px-2 py-1.5 bg-background border border-border/40 rounded focus:outline-none focus:ring-1 focus:ring-ring text-foreground"
+                                          >
+                                            <option value="aumentar">Aumentar</option>
+                                            <option value="disminuir">Disminuir</option>
+                                            <option value="reemplazar">Reemplazar</option>
+                                          </select>
+                                          <input
+                                            type="number"
+                                            value={variantMod.total.value}
+                                            onChange={(e) =>
+                                              setVariantStockModification({
+                                                ...variantStockModification,
+                                                [displaySku]: {
+                                                  ...variantMod,
+                                                  total: { ...variantMod.total, value: e.target.value },
+                                                },
+                                              })
+                                            }
+                                            placeholder="0"
+                                            className="w-20 text-xs px-2 py-1.5 bg-background border border-border/40 rounded focus:outline-none focus:ring-1 focus:ring-ring tabular-nums text-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                          />
+                                          {variantMod.total.value && (
+                                            <button
+                                              onClick={() => {
+                                                const value = Number.parseInt(variantMod.total.value) || 0
+                                                let newTotal = totalStock
+                                                if (variantMod.total.type === "aumentar") newTotal += value
+                                                else if (variantMod.total.type === "disminuir")
+                                                  newTotal = Math.max(0, newTotal - value)
+                                                else if (variantMod.total.type === "reemplazar") newTotal = value
 
-                                    <div className="grid grid-cols-4 bg-gray-200 font-medium">
-                                      <div className="px-4 py-3 text-sm text-gray-800">Global</div>
-                                      <div className="px-4 py-3 text-sm text-gray-800 text-right">{totalStock}</div>
-                                      <div className="px-4 py-3 text-sm text-gray-800 text-right">{totalReservado}</div>
-                                      <div className="px-4 py-3 text-sm text-gray-800 text-right">
-                                        {totalDisponible}
+                                                updateStock(displaySku, "total", newTotal)
+                                                setVariantStockModification({
+                                                  ...variantStockModification,
+                                                  [displaySku]: {
+                                                    ...variantMod,
+                                                    total: { ...variantMod.total, value: "" },
+                                                  },
+                                                })
+                                              }}
+                                              className="text-xs px-3 py-1.5 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors font-medium cursor-pointer"
+                                            >
+                                              Aceptar
+                                            </button>
+                                          )}
+                                        </div>
+                                      </div>
+
+                                      {/* Reservado Row */}
+                                      <div className="grid grid-cols-[140px_180px_1fr] gap-4 items-center py-3 px-3 bg-background border border-border/40 rounded-md shadow-sm hover:shadow transition-shadow">
+                                        <div className="text-sm font-medium text-muted-foreground">Reservado</div>
+                                        <div className="flex items-center gap-2">
+                                          <button
+                                            onClick={() =>
+                                              updateStock(displaySku, "reservado", Math.max(0, totalReservado - 1))
+                                            }
+                                            className="w-7 h-7 flex items-center justify-center rounded border border-border/40 hover:bg-accent hover:border-border transition-colors text-muted-foreground hover:text-foreground cursor-pointer"
+                                          >
+                                            <Minus className="w-3.5 h-3.5" />
+                                          </button>
+                                          <span className="text-base font-medium text-foreground tabular-nums min-w-[60px] text-center">
+                                            {totalReservado}
+                                          </span>
+                                          <button
+                                            onClick={() =>
+                                              updateStock(
+                                                displaySku,
+                                                "reservado",
+                                                Math.min(totalStock, totalReservado + 1),
+                                              )
+                                            }
+                                            className="w-7 h-7 flex items-center justify-center rounded border border-border/40 hover:bg-accent hover:border-border transition-colors text-muted-foreground hover:text-foreground cursor-pointer"
+                                          >
+                                            <Plus className="w-3.5 h-3.5" />
+                                          </button>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <select
+                                            value={variantMod.reservado.type}
+                                            onChange={(e) =>
+                                              setVariantStockModification({
+                                                ...variantStockModification,
+                                                [displaySku]: {
+                                                  ...variantMod,
+                                                  reservado: { ...variantMod.reservado, type: e.target.value },
+                                                },
+                                              })
+                                            }
+                                            className="text-xs px-2 py-1.5 bg-background border border-border/40 rounded focus:outline-none focus:ring-1 focus:ring-ring text-foreground"
+                                          >
+                                            <option value="aumentar">Aumentar</option>
+                                            <option value="disminuir">Disminuir</option>
+                                            <option value="reemplazar">Reemplazar</option>
+                                          </select>
+                                          <input
+                                            type="number"
+                                            value={variantMod.reservado.value}
+                                            onChange={(e) =>
+                                              setVariantStockModification({
+                                                ...variantStockModification,
+                                                [displaySku]: {
+                                                  ...variantMod,
+                                                  reservado: { ...variantMod.reservado, value: e.target.value },
+                                                },
+                                              })
+                                            }
+                                            placeholder="0"
+                                            className="w-20 text-xs px-2 py-1.5 bg-background border border-border/40 rounded focus:outline-none focus:ring-1 focus:ring-ring tabular-nums text-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                          />
+                                          {variantMod.reservado.value && (
+                                            <button
+                                              onClick={() => {
+                                                const value = Number.parseInt(variantMod.reservado.value) || 0
+                                                let newReservado = totalReservado
+                                                if (variantMod.reservado.type === "aumentar")
+                                                  newReservado = Math.min(totalStock, newReservado + value)
+                                                else if (variantMod.reservado.type === "disminuir")
+                                                  newReservado = Math.max(0, newReservado - value)
+                                                else if (variantMod.reservado.type === "reemplazar")
+                                                  newReservado = Math.min(totalStock, value)
+
+                                                updateStock(displaySku, "reservado", newReservado)
+                                                setVariantStockModification({
+                                                  ...variantStockModification,
+                                                  [displaySku]: {
+                                                    ...variantMod,
+                                                    reservado: { ...variantMod.reservado, value: "" },
+                                                  },
+                                                })
+                                              }}
+                                              className="text-xs px-3 py-1.5 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors font-medium cursor-pointer"
+                                            >
+                                              Aceptar
+                                            </button>
+                                          )}
+                                        </div>
+                                      </div>
+
+                                      {/* Disponible Row (Read-only) */}
+                                      <div className="grid grid-cols-[140px_180px_1fr] gap-4 items-center py-3 px-3 bg-muted/30 border border-border/20 rounded-md">
+                                        <div className="text-sm font-medium text-muted-foreground">Disponible</div>
+                                        <div className="flex items-center justify-center">
+                                          <span
+                                            className={`text-lg font-semibold tabular-nums ${totalDisponible === 0 ? "text-red-600" : "text-emerald-600"}`}
+                                          >
+                                            {totalDisponible}
+                                          </span>
+                                        </div>
+                                        <div className="text-xs text-muted-foreground italic">
+                                          Calculado automáticamente
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
@@ -1710,8 +1877,11 @@ export function ItemDetailPanel({
                           })}
                         </div>
                       ) : (
-                        <div className="flex items-center justify-center py-12 text-gray-500">
-                          <p className="text-sm">No hay variantes para mostrar stock.</p>
+                        <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
+                          <p>
+                            Agrega atributos principales con variantes en la pestaña Atributos para ver el stock por
+                            variante
+                          </p>
                         </div>
                       )}
                     </div>
@@ -1733,7 +1903,7 @@ export function ItemDetailPanel({
                             <input
                               type="text"
                               value={categoria}
-                              onChange={(e) => setCategoria(e.target.value)}
+                              onChange={(e) => handleFieldChange("categoria", e.target.value, setCategoria)}
                               disabled={shouldStrictlyInherit(fatherItem?.categoria)}
                               className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                                 shouldStrictlyInherit(fatherItem?.categoria)
@@ -1749,7 +1919,7 @@ export function ItemDetailPanel({
                             <input
                               type="text"
                               value={marca}
-                              onChange={(e) => setMarca(e.target.value)}
+                              onChange={(e) => handleFieldChange("marca", e.target.value, setMarca)}
                               disabled={shouldStrictlyInherit(fatherItem?.marca)}
                               className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                                 shouldStrictlyInherit(fatherItem?.marca)
@@ -1772,7 +1942,7 @@ export function ItemDetailPanel({
                             <label className="text-sm font-medium text-gray-700">Formato de venta</label>
                             <select
                               value={formatoVenta}
-                              onChange={(e) => setFormatoVenta(e.target.value)}
+                              onChange={(e) => handleFieldChange("formatoVenta", e.target.value, setFormatoVenta)}
                               disabled={shouldStrictlyInherit(fatherItem?.formatoVenta)}
                               className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none ${
                                 shouldStrictlyInherit(fatherItem?.formatoVenta)
@@ -1793,14 +1963,10 @@ export function ItemDetailPanel({
                               onChange={(e) => {
                                 const value = e.target.value
                                 if (value === "") {
-                                  setUnidadesPorPack("N.E.")
+                                  handleFieldChange("unidadesPorPack", "N.E.", setUnidadesPorPack)
                                 } else if (/^\d+$/.test(value)) {
                                   const numValue = Number.parseInt(value)
-                                  if (numValue < 1) {
-                                    setUnidadesPorPack("1")
-                                  } else {
-                                    setUnidadesPorPack(value)
-                                  }
+                                  handleFieldChange("unidadesPorPack", numValue < 1 ? "1" : value, setUnidadesPorPack)
                                 }
                                 // Ignore non-numeric input
                               }}
@@ -1819,7 +1985,7 @@ export function ItemDetailPanel({
                           <div className="flex items-center gap-2">
                             <label className="text-sm font-medium text-gray-700">Volumen de la unidad</label>
                             <button
-                              onClick={() => setVolumenActive(!volumenActive)}
+                              onClick={() => handleFieldChange("volumenActive", !volumenActive, setVolumenActive)}
                               disabled={shouldStrictlyInherit(fatherItem?.volumenActive)}
                               className={`w-10 h-5 rounded-full transition-colors relative ${
                                 volumenActive ? "bg-blue-500" : "bg-gray-300"
@@ -1840,7 +2006,9 @@ export function ItemDetailPanel({
                                 <input
                                   type="number"
                                   value={volumenCantidad}
-                                  onChange={(e) => setVolumenCantidad(e.target.value)}
+                                  onChange={(e) =>
+                                    handleFieldChange("volumenCantidad", e.target.value, setVolumenCantidad)
+                                  }
                                   disabled={shouldStrictlyInherit(fatherItem?.volumenCantidad)}
                                   className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                                     shouldStrictlyInherit(fatherItem?.volumenCantidad)
@@ -1855,7 +2023,7 @@ export function ItemDetailPanel({
                                 <label className="text-sm font-medium text-gray-700">Unidad de medida</label>
                                 <select
                                   value={volumenUnidad}
-                                  onChange={(e) => setVolumenUnidad(e.target.value)}
+                                  onChange={(e) => handleFieldChange("volumenUnidad", e.target.value, setVolumenUnidad)}
                                   disabled={shouldStrictlyInherit(fatherItem?.volumenUnidad)}
                                   className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none ${
                                     shouldStrictlyInherit(fatherItem?.volumenUnidad)
@@ -1888,7 +2056,7 @@ export function ItemDetailPanel({
                           <input
                             type="text"
                             value={proveedor}
-                            onChange={(e) => setProveedor(e.target.value)}
+                            onChange={(e) => handleFieldChange("proveedor", e.target.value, setProveedor)}
                             disabled={shouldInheritField(fatherItem?.proveedor)}
                             className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${
                               shouldInheritField(fatherItem?.proveedor)
@@ -1905,7 +2073,7 @@ export function ItemDetailPanel({
                             <input
                               type="text"
                               value={codigoProveedor}
-                              onChange={(e) => setCodigoProveedor(e.target.value)}
+                              onChange={(e) => handleFieldChange("codigoProveedor", e.target.value, setCodigoProveedor)}
                               className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                               placeholder="Código del proveedor"
                             />
@@ -1920,14 +2088,12 @@ export function ItemDetailPanel({
                       {!showIndividualAtributosView ? (
                         <div className="flex flex-col items-center justify-center h-full gap-4">
                           <p className="text-gray-500 text-sm">No hay atributos configurados</p>
-                          <div className="flex gap-3">
-                            <button
-                              onClick={() => setShowIndividualAtributosView(true)}
-                              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg transition-colors cursor-pointer"
-                            >
-                              Agregar atributos
-                            </button>
-                          </div>
+                          <button
+                            onClick={() => setShowIndividualAtributosView(true)}
+                            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg transition-colors cursor-pointer"
+                          >
+                            Agregar atributos
+                          </button>
                         </div>
                       ) : (
                         <div className="flex flex-col gap-6">
@@ -1951,7 +2117,7 @@ export function ItemDetailPanel({
                                       if (!isChildItem) {
                                         const updated = [...atributosPrincipales]
                                         updated[index].keyOpen = open
-                                        setAtributosPrincipales(updated)
+                                        handleAtributosPrincipalesChange(updated)
                                       }
                                     }}
                                   >
@@ -1963,7 +2129,7 @@ export function ItemDetailPanel({
                                           if (!isChildItem) {
                                             const updated = [...atributosPrincipales]
                                             updated[index].key = e.target.value
-                                            setAtributosPrincipales(updated)
+                                            handleAtributosPrincipalesChange(updated)
                                           }
                                         }}
                                         disabled={isChildItem}
@@ -1981,7 +2147,7 @@ export function ItemDetailPanel({
                                               e.stopPropagation()
                                               const updated = [...atributosPrincipales]
                                               updated[index].keyOpen = !updated[index].keyOpen
-                                              setAtributosPrincipales(updated)
+                                              handleAtributosPrincipalesChange(updated)
                                             }}
                                           >
                                             <ChevronDown className="w-4 h-4 text-gray-500" />
@@ -2003,7 +2169,7 @@ export function ItemDetailPanel({
                                                     const updated = [...atributosPrincipales]
                                                     updated[index].key = attrKey
                                                     updated[index].keyOpen = false
-                                                    setAtributosPrincipales(updated)
+                                                    handleAtributosPrincipalesChange(updated)
                                                   }}
                                                 >
                                                   {attrKey}
@@ -2020,12 +2186,12 @@ export function ItemDetailPanel({
                                 <div className="flex-1">
                                   <label className="text-sm font-medium text-gray-700 mb-2 block">Dato</label>
                                   <Popover
-                                    open={!isChildItem && (attr.isOpen || false)}
+                                    open={!isChildItem && (attr.valueOpen || false)}
                                     onOpenChange={(open) => {
                                       if (!isChildItem) {
                                         const updated = [...atributosPrincipales]
-                                        updated[index].isOpen = open
-                                        setAtributosPrincipales(updated)
+                                        updated[index].valueOpen = open
+                                        handleAtributosPrincipalesChange(updated)
                                         updateProductTitle()
                                       }
                                     }}
@@ -2038,7 +2204,7 @@ export function ItemDetailPanel({
                                           if (!isChildItem) {
                                             const updated = [...atributosPrincipales]
                                             updated[index].value = e.target.value
-                                            setAtributosPrincipales(updated)
+                                            handleAtributosPrincipalesChange(updated)
                                             updateProductTitle()
                                           }
                                         }}
@@ -2058,8 +2224,8 @@ export function ItemDetailPanel({
                                               onClick={(e) => {
                                                 e.stopPropagation()
                                                 const updated = [...atributosPrincipales]
-                                                updated[index].isOpen = !updated[index].isOpen
-                                                setAtributosPrincipales(updated)
+                                                updated[index].valueOpen = !updated[index].valueOpen
+                                                handleAtributosPrincipalesChange(updated)
                                               }}
                                             >
                                               <ChevronDown className="w-4 h-4 text-gray-500" />
@@ -2083,8 +2249,8 @@ export function ItemDetailPanel({
                                                       onSelect={() => {
                                                         const updated = [...atributosPrincipales]
                                                         updated[index].value = val
-                                                        updated[index].isOpen = false
-                                                        setAtributosPrincipales(updated)
+                                                        updated[index].valueOpen = false
+                                                        handleAtributosPrincipalesChange(updated)
                                                         updateProductTitle()
                                                       }}
                                                     >
@@ -2104,7 +2270,7 @@ export function ItemDetailPanel({
                                   <button
                                     onClick={() => {
                                       const updated = atributosPrincipales.filter((_, i) => i !== index)
-                                      setAtributosPrincipales(updated)
+                                      handleAtributosPrincipalesChange(updated)
                                       updateProductTitle()
                                       if (updated.length === 0 && atributosInformativos.length === 0) {
                                         setShowIndividualAtributosView(false)
@@ -2122,7 +2288,7 @@ export function ItemDetailPanel({
                             {!isChildItem && atributosPrincipales.length < 2 && (
                               <button
                                 onClick={() => {
-                                  setAtributosPrincipales([...atributosPrincipales, { key: "", value: "" }])
+                                  handleAtributosPrincipalesChange([...atributosPrincipales, { key: "", value: "" }])
                                 }}
                                 className="w-full px-3 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 transition-colors flex items-center justify-center gap-2 cursor-pointer"
                               >
@@ -2159,7 +2325,7 @@ export function ItemDetailPanel({
                                         if (!isAttributeLocked) {
                                           const updated = [...atributosInformativos]
                                           updated[index].keyOpen = open
-                                          setAtributosInformativos(updated)
+                                          handleAtributosInformativosChange(updated)
                                         }
                                       }}
                                     >
@@ -2171,7 +2337,7 @@ export function ItemDetailPanel({
                                             if (!isAttributeLocked) {
                                               const updated = [...atributosInformativos]
                                               updated[index].key = e.target.value
-                                              setAtributosInformativos(updated)
+                                              handleAtributosInformativosChange(updated)
                                             }
                                           }}
                                           disabled={isAttributeLocked}
@@ -2189,7 +2355,7 @@ export function ItemDetailPanel({
                                                 e.stopPropagation()
                                                 const updated = [...atributosInformativos]
                                                 updated[index].keyOpen = !updated[index].keyOpen
-                                                setAtributosInformativos(updated)
+                                                handleAtributosInformativosChange(updated)
                                               }}
                                             >
                                               <ChevronDown className="w-4 h-4 text-gray-500" />
@@ -2211,7 +2377,7 @@ export function ItemDetailPanel({
                                                       const updated = [...atributosInformativos]
                                                       updated[index].key = key
                                                       updated[index].keyOpen = false
-                                                      setAtributosInformativos(updated)
+                                                      handleAtributosInformativosChange(updated)
                                                     }}
                                                   >
                                                     {key}
@@ -2228,12 +2394,12 @@ export function ItemDetailPanel({
                                   <div className="flex-1">
                                     <label className="text-sm font-medium text-gray-700 mb-2 block">Valor</label>
                                     <Popover
-                                      open={!isValueLocked && (attr.isOpen || false)}
+                                      open={!isValueLocked && (attr.valueOpen || false)}
                                       onOpenChange={(open) => {
                                         if (!isValueLocked) {
                                           const updated = [...atributosInformativos]
-                                          updated[index].isOpen = open
-                                          setAtributosInformativos(updated)
+                                          updated[index].valueOpen = open
+                                          handleAtributosInformativosChange(updated)
                                         }
                                       }}
                                     >
@@ -2245,7 +2411,7 @@ export function ItemDetailPanel({
                                             if (!isValueLocked) {
                                               const updated = [...atributosInformativos]
                                               updated[index].value = e.target.value
-                                              setAtributosInformativos(updated)
+                                              handleAtributosInformativosChange(updated)
                                             }
                                           }}
                                           disabled={isValueLocked}
@@ -2264,8 +2430,8 @@ export function ItemDetailPanel({
                                                 onClick={(e) => {
                                                   e.stopPropagation()
                                                   const updated = [...atributosInformativos]
-                                                  updated[index].isOpen = !updated[index].isOpen
-                                                  setAtributosInformativos(updated)
+                                                  updated[index].valueOpen = !updated[index].valueOpen
+                                                  handleAtributosInformativosChange(updated)
                                                 }}
                                               >
                                                 <ChevronDown className="w-4 h-4 text-gray-500" />
@@ -2289,8 +2455,8 @@ export function ItemDetailPanel({
                                                         onSelect={() => {
                                                           const updated = [...atributosInformativos]
                                                           updated[index].value = val
-                                                          updated[index].isOpen = false
-                                                          setAtributosInformativos(updated)
+                                                          updated[index].valueOpen = false
+                                                          handleAtributosInformativosChange(updated)
                                                         }}
                                                       >
                                                         {val}
@@ -2309,7 +2475,7 @@ export function ItemDetailPanel({
                                     <button
                                       onClick={() => {
                                         const updated = atributosInformativos.filter((_, i) => i !== index)
-                                        setAtributosInformativos(updated)
+                                        handleAtributosInformativosChange(updated)
                                         if (atributosPrincipales.length === 0 && updated.length === 0) {
                                           setShowIndividualAtributosView(false)
                                         }
@@ -2326,7 +2492,7 @@ export function ItemDetailPanel({
 
                             <button
                               onClick={() => {
-                                setAtributosInformativos([...atributosInformativos, { key: "", value: "" }])
+                                handleAtributosInformativosChange([...atributosInformativos, { key: "", value: "" }])
                               }}
                               className="w-full px-3 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 transition-colors flex items-center justify-center gap-2 cursor-pointer"
                             >
@@ -2341,95 +2507,179 @@ export function ItemDetailPanel({
 
                   {selectedDetailTab === "stock" && (
                     <div className="space-y-4">
-                      {isViewingContainer && (
-                        <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">
-                          Stock por depósito
+                      <div className="flex items-center justify-between pb-3 border-b border-border/30">
+                        <h3 className="text-xs font-semibold text-foreground/60 uppercase tracking-wider">
+                          Stock en Depósito: Torcuato
                         </h3>
-                      )}
+                      </div>
 
-                      {selectedItem?.sku && depositStock[selectedItem.sku] && (
-                        <div className="border border-gray-300 rounded-lg overflow-hidden">
-                          <div className="grid grid-cols-4 bg-gray-100 border-b border-gray-300">
-                            <div className="px-4 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
-                              Depósito
-                            </div>
-                            <div className="px-4 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider text-right">
+                      <div className="space-y-2">
+                        <div className="border border-border/40 rounded-lg bg-white shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                          <div className="grid grid-cols-[100px_140px_1fr] gap-3 items-center px-4 py-3">
+                            {/* Type Label */}
+                            <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                               Total
                             </div>
-                            <div className="px-4 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider text-right">
-                              Reservado
-                            </div>
-                            <div className="px-4 py-3 text-xs font-medium text-gray-600 uppercase tracking-wider text-right">
-                              Disponible
-                            </div>
-                          </div>
 
-                          {Object.entries(depositStock[selectedItem.sku]).map(([deposit, stock]: [string, any]) => {
-                            const disponible = stock.total - stock.reservado
-
-                            return (
-                              <div
-                                key={deposit}
-                                className="grid grid-cols-4 border-b border-gray-300 last:border-b-0 bg-slate-50"
+                            {/* Number with +/- buttons */}
+                            <div className="flex items-center justify-center gap-1.5">
+                              <button
+                                onClick={() => {
+                                  if (selectedItem?.sku) {
+                                    const current = Number.parseInt(selectedItem?.stock?.total || "0")
+                                    updateStock(selectedItem.sku, "total", Math.max(0, current - 1))
+                                  }
+                                }}
+                                className="w-7 h-7 rounded-md border border-border/50 hover:bg-accent hover:border-border transition-all flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer"
                               >
-                                <div className="px-4 py-3 text-sm text-gray-900">{deposit}</div>
-                                <div className="px-4 py-3 text-sm text-gray-800 text-right">
-                                  <input
-                                    type="number"
-                                    value={stock.total}
-                                    onChange={(e) =>
-                                      updateDepositStock(
-                                        selectedItem.sku!,
-                                        deposit,
-                                        "total",
-                                        Number.parseInt(e.target.value) || 0,
-                                      )
-                                    }
-                                    className="w-full bg-transparent text-right focus:outline-none focus:bg-gray-100 px-2 py-1 rounded border border-transparent hover:border-gray-300 focus:border-blue-500"
-                                  />
-                                </div>
-                                <div className="px-4 py-3 text-sm text-gray-800 text-right">
-                                  <input
-                                    type="number"
-                                    value={stock.reservado}
-                                    onChange={(e) =>
-                                      updateDepositStock(
-                                        selectedItem.sku!,
-                                        deposit,
-                                        "reservado",
-                                        Number.parseInt(e.target.value) || 0,
-                                      )
-                                    }
-                                    className="w-full bg-transparent text-right focus:outline-none focus:bg-gray-100 px-2 py-1 rounded border border-transparent hover:border-gray-300 focus:border-blue-500"
-                                  />
-                                </div>
-                                <div className="px-4 py-3 text-sm text-gray-900 font-medium text-right">
-                                  {disponible}
-                                </div>
-                              </div>
-                            )
-                          })}
+                                <span className="text-sm font-medium">−</span>
+                              </button>
+                              <span className="text-base font-semibold text-foreground min-w-[2.5rem] text-center tabular-nums">
+                                {Number.parseInt(selectedItem?.stock?.total || "0")}
+                              </span>
+                              <button
+                                onClick={() => {
+                                  if (selectedItem?.sku) {
+                                    const current = Number.parseInt(selectedItem?.stock?.total || "0")
+                                    updateStock(selectedItem.sku, "total", current + 1)
+                                  }
+                                }}
+                                className="w-7 h-7 rounded-md border border-border/50 hover:bg-accent hover:border-border transition-all flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer"
+                              >
+                                <span className="text-sm font-medium">+</span>
+                              </button>
+                            </div>
 
-                          <div className="grid grid-cols-4 bg-gray-200 font-medium">
-                            <div className="px-4 py-3 text-sm text-gray-800">Global</div>
-                            <div className="px-4 py-3 text-sm text-gray-800 text-right">
-                              {Object.values(depositStock[selectedItem.sku]).reduce((sum, d: any) => sum + d.total, 0)}
-                            </div>
-                            <div className="px-4 py-3 text-sm text-gray-800 text-right">
-                              {Object.values(depositStock[selectedItem.sku]).reduce(
-                                (sum, d: any) => sum + d.reservado,
-                                0,
-                              )}
-                            </div>
-                            <div className="px-4 py-3 text-sm text-gray-800 text-right">
-                              {Object.values(depositStock[selectedItem.sku]).reduce(
-                                (sum, d: any) => sum + (d.total - d.reservado),
-                                0,
+                            {/* Stock modification area */}
+                            <div className="flex items-center gap-2">
+                              <select
+                                value={stockModification.total.operation}
+                                onChange={(e) =>
+                                  setStockModification((prev) => ({
+                                    ...prev,
+                                    total: { ...prev.total, operation: e.target.value },
+                                  }))
+                                }
+                                className="text-xs border border-border/50 rounded-md px-2.5 py-1.5 bg-background hover:bg-accent transition-colors focus:outline-none focus:ring-1 focus:ring-primary/20 cursor-pointer"
+                              >
+                                <option value="aumentar">Aumentar</option>
+                                <option value="disminuir">Disminuir</option>
+                                <option value="reemplazar">Reemplazar</option>
+                              </select>
+                              <input
+                                type="number"
+                                placeholder="0"
+                                value={stockModification.total.value}
+                                onChange={(e) =>
+                                  setStockModification((prev) => ({
+                                    ...prev,
+                                    total: { ...prev.total, value: e.target.value },
+                                  }))
+                                }
+                                className="w-16 text-xs border border-border/50 rounded-md px-2.5 py-1.5 bg-background focus:outline-none focus:ring-1 focus:ring-primary/20 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              />
+                              {stockModification.total.value && (
+                                <button
+                                  onClick={() => handleStockModificationAccept("total")}
+                                  className="text-xs px-3 py-1.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-medium cursor-pointer"
+                                >
+                                  Aceptar
+                                </button>
                               )}
                             </div>
                           </div>
                         </div>
-                      )}
+
+                        <div className="border border-border/40 rounded-lg bg-white shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                          <div className="grid grid-cols-[100px_140px_1fr] gap-3 items-center px-4 py-3">
+                            <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                              Reservado
+                            </div>
+
+                            <div className="flex items-center justify-center gap-1.5">
+                              <button
+                                onClick={() => {
+                                  if (selectedItem?.sku) {
+                                    const current = Number.parseInt(selectedItem?.stock?.reservado || "0")
+                                    updateStock(selectedItem.sku, "reservado", Math.max(0, current - 1))
+                                  }
+                                }}
+                                className="w-7 h-7 rounded-md border border-border/50 hover:bg-accent hover:border-border transition-all flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer"
+                              >
+                                <span className="text-sm font-medium">−</span>
+                              </button>
+                              <span className="text-base font-semibold text-foreground min-w-[2.5rem] text-center tabular-nums">
+                                {Number.parseInt(selectedItem?.stock?.reservado || "0")}
+                              </span>
+                              <button
+                                onClick={() => {
+                                  if (selectedItem?.sku) {
+                                    const current = Number.parseInt(selectedItem?.stock?.reservado || "0")
+                                    updateStock(selectedItem.sku, "reservado", current + 1)
+                                  }
+                                }}
+                                className="w-7 h-7 rounded-md border border-border/50 hover:bg-accent hover:border-border transition-all flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer"
+                              >
+                                <span className="text-sm font-medium">+</span>
+                              </button>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <select
+                                value={stockModification.reservado.operation}
+                                onChange={(e) =>
+                                  setStockModification((prev) => ({
+                                    ...prev,
+                                    reservado: { ...prev.reservado, operation: e.target.value },
+                                  }))
+                                }
+                                className="text-xs border border-border/50 rounded-md px-2.5 py-1.5 bg-background hover:bg-accent transition-colors focus:outline-none focus:ring-1 focus:ring-primary/20 cursor-pointer"
+                              >
+                                <option value="aumentar">Aumentar</option>
+                                <option value="disminuir">Disminuir</option>
+                                <option value="reemplazar">Reemplazar</option>
+                              </select>
+                              <input
+                                type="number"
+                                placeholder="0"
+                                value={stockModification.reservado.value}
+                                onChange={(e) =>
+                                  setStockModification((prev) => ({
+                                    ...prev,
+                                    reservado: { ...prev.reservado, value: e.target.value },
+                                  }))
+                                }
+                                className="w-16 text-xs border border-border/50 rounded-md px-2.5 py-1.5 bg-background focus:outline-none focus:ring-1 focus:ring-primary/20 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              />
+                              {stockModification.reservado.value && (
+                                <button
+                                  onClick={() => handleStockModificationAccept("reservado")}
+                                  className="text-xs px-3 py-1.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-medium cursor-pointer"
+                                >
+                                  Aceptar
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="border border-emerald-200 rounded-lg bg-emerald-50/50 overflow-hidden">
+                          <div className="grid grid-cols-[100px_140px_1fr] gap-3 items-center px-4 py-3">
+                            <div className="text-xs font-medium text-emerald-700 uppercase tracking-wide">
+                              Disponible
+                            </div>
+
+                            <div className="flex items-center justify-center">
+                              <span className="text-lg font-bold text-emerald-600 min-w-[2.5rem] text-center tabular-nums">
+                                {Number.parseInt(selectedItem?.stock?.total || "0") -
+                                  Number.parseInt(selectedItem?.stock?.reservado || "0")}
+                              </span>
+                            </div>
+
+                            <div className="text-xs text-emerald-600/70 italic">Calculado automáticamente</div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </>

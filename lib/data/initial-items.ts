@@ -2358,10 +2358,10 @@ export const INITIAL_ITEMS: Item[] = [
   },
   {
     name: "Salentein Single Vineyard",
-    categoria: "Espumantes",
+    categoria: "Vinos",
     hasVariants: true,
     isAgrupador: true,
-    sku: "ESP-SALSVYD",
+    sku: "VNO-SALSVYD",
     marca: "Salentein",
     proveedor: "Bodegas Salentein",
     formatoVenta: "unidad",
@@ -2878,983 +2878,6 @@ export const INITIAL_ITEMS: Item[] = [
     precio: { costo: 15000, margen: 50, iva: 21, precioFinal: 27150 },
   },
   // =========================
-  // CRUZZAT
-  // =========================
-  {
-    name: "Cruzat Single Vineyard",
-    categoria: "Espumantes",
-    hasVariants: true,
-    isAgrupador: true,
-    sku: "ESP-CRZSVYD",
-    marca: "Cruzat",
-    proveedor: "Bodega Cruzat",
-    formatoVenta: "unidad",
-    volumenActive: true,
-    volumenCantidad: 750,
-    volumenUnidad: "ml",
-
-    containerAtributosPrincipales: [{ key: "Dosaje", variantes: ["Extra Brut", "Brut Nature"] }],
-
-    atributosInformativos: [
-      { key: "Varietal", value: "" }, // per child
-      { key: "Línea", value: "Single Vineyard" },
-      { key: "Perfil Sensorial", value: "" }, // per child
-      { key: "Bodega", value: "Bodega Cruzat" },
-      { key: "Origen", value: "Valle de Uco, Mendoza, Argentina" },
-      { key: "Crianza", value: "" }, // per child
-      { key: "Enólogo", value: "Equipo enológico Cruzat" },
-      { key: "ABV", value: "" }, // per child
-      { key: "Temperatura de Servicio", value: "6–8°C" },
-      { key: "Maridaje", value: "" }, // per child
-      { key: "Estuche", value: "Sin estuche" },
-    ],
-
-    variantCount: 2,
-    variants: [
-      {
-        name: "Cruzat Single Vineyard",
-        sku: "ESP-CRZSVYD-EXBR",
-        codigoUniversal: "7799901002101",
-        codigoProveedor: "CRZ-SV-EXBR",
-        categoria: "Espumantes",
-        marca: "Cruzat",
-        atributosPrincipales: [{ key: "Dosaje", value: "Extra Brut" }],
-        atributosInformativos: [
-          { key: "Varietal", value: "Chardonnay (Blanc de Blancs)" },
-          { key: "Perfil Sensorial", value: "Cítrico, floral, burbuja fina" },
-          { key: "Crianza", value: "Crianza sobre lías (método tradicional)" },
-          { key: "ABV", value: "12%" },
-          { key: "Maridaje", value: "Ostras, sushi, aperitivos" },
-        ],
-        stock: { total: "18", reservado: "2", disponible: "16" },
-        precio: { costo: 25000, margen: 50, iva: 21, precioFinal: 45375 },
-      },
-      {
-        name: "Cruzat Single Vineyard",
-        sku: "ESP-CRZSVYD-BRNT",
-        codigoUniversal: "7799901002102",
-        codigoProveedor: "CRZ-SV-BRNT-ORG",
-        categoria: "Espumantes",
-        marca: "Cruzat",
-        atributosPrincipales: [{ key: "Dosaje", value: "Brut Nature" }],
-        atributosInformativos: [
-          { key: "Orgánico", value: "Sí" },
-          { key: "Varietal", value: "Chardonnay & Pinot Noir" },
-          { key: "Perfil Sensorial", value: "Seco, mineral, elegante" },
-          { key: "Crianza", value: "Crianza sobre lías (método tradicional)" },
-          { key: "ABV", value: "12%" },
-          { key: "Maridaje", value: "Mariscos, quesos suaves" },
-        ],
-        stock: { total: "14", reservado: "1", disponible: "13" },
-        precio: { costo: 26000, margen: 50, iva: 21, precioFinal: 47130 },
-      },
-    ],
-  },
-
-  {
-    name: "Cruzat Cuvée",
-    categoria: "Espumantes",
-    hasVariants: true,
-    isAgrupador: true,
-    sku: "ESP-CRZCUV",
-    marca: "Cruzat",
-    proveedor: "Bodega Cruzat",
-    formatoVenta: "unidad",
-    volumenActive: true,
-    volumenCantidad: 750,
-    volumenUnidad: "ml",
-
-    containerAtributosPrincipales: [{ key: "Dosaje", variantes: ["Brut", "Extra Brut", "Brut Rosé", "Brut Nature"] }],
-
-    atributosInformativos: [
-      { key: "Varietal", value: "" }, // per child
-      { key: "Línea", value: "Cuvée" },
-      { key: "Perfil Sensorial", value: "" }, // per child
-      { key: "Bodega", value: "Bodega Cruzat" },
-      { key: "Origen", value: "Mendoza, Argentina" },
-      { key: "Crianza", value: "" }, // per child
-      { key: "Enólogo", value: "Equipo enológico Cruzat" },
-      { key: "ABV", value: "" }, // per child
-      { key: "Temperatura de Servicio", value: "6–8°C" },
-      { key: "Maridaje", value: "" }, // per child
-      { key: "Estuche", value: "Sin estuche" },
-    ],
-
-    variantCount: 4,
-    variants: [
-      {
-        name: "Cruzat Cuvée",
-        sku: "ESP-CRZCUV-BRUT",
-        codigoUniversal: "7799901002201",
-        codigoProveedor: "CRZ-CUV-BRUT",
-        categoria: "Espumantes",
-        marca: "Cruzat",
-        atributosPrincipales: [{ key: "Dosaje", value: "Brut" }],
-        atributosInformativos: [
-          { key: "Varietal", value: "Blend" },
-          { key: "Perfil Sensorial", value: "Frutado, fresco, burbuja fina" },
-          { key: "Crianza", value: "Método Charmat / crianza corta" },
-          { key: "ABV", value: "12%" },
-          { key: "Maridaje", value: "Aperitivos, entradas" },
-        ],
-        stock: { total: "40", reservado: "4", disponible: "36" },
-        precio: { costo: 16000, margen: 50, iva: 21, precioFinal: 29040 },
-      },
-      {
-        name: "Cruzat Cuvée",
-        sku: "ESP-CRZCUV-EXBR",
-        codigoUniversal: "7799901002202",
-        codigoProveedor: "CRZ-CUV-EXBR",
-        categoria: "Espumantes",
-        marca: "Cruzat",
-        atributosPrincipales: [{ key: "Dosaje", value: "Extra Brut" }],
-        atributosInformativos: [
-          { key: "Varietal", value: "Blend" },
-          { key: "Perfil Sensorial", value: "Cítrico, seco, elegante" },
-          { key: "Crianza", value: "Método tradicional, crianza sobre lías" },
-          { key: "ABV", value: "12%" },
-          { key: "Maridaje", value: "Sushi, mariscos" },
-        ],
-        stock: { total: "34", reservado: "3", disponible: "31" },
-        precio: { costo: 17000, margen: 50, iva: 21, precioFinal: 30765 },
-      },
-      {
-        name: "Cruzat Cuvée",
-        sku: "ESP-CRZCUV-BRRS",
-        codigoUniversal: "7799901002203",
-        codigoProveedor: "CRZ-CUV-BRRS",
-        categoria: "Espumantes",
-        marca: "Cruzat",
-        atributosPrincipales: [{ key: "Dosaje", value: "Brut Rosé" }],
-        atributosInformativos: [
-          { key: "Varietal", value: "Blend (rosé)" },
-          { key: "Perfil Sensorial", value: "Frutos rojos, floral, fresco" },
-          { key: "Crianza", value: "Método tradicional, crianza sobre lías" },
-          { key: "ABV", value: "12%" },
-          { key: "Maridaje", value: "Salmón, tapeo" },
-        ],
-        stock: { total: "22", reservado: "2", disponible: "20" },
-        precio: { costo: 17000, margen: 50, iva: 21, precioFinal: 30765 },
-      },
-      {
-        name: "Cruzat Cuvée",
-        sku: "ESP-CRZCUV-BRNT",
-        codigoUniversal: "7799901002204",
-        codigoProveedor: "CRZ-CUV-BRNT",
-        categoria: "Espumantes",
-        marca: "Cruzat",
-        atributosPrincipales: [{ key: "Dosaje", value: "Brut Nature" }],
-        atributosInformativos: [
-          { key: "Varietal", value: "Blend" },
-          { key: "Perfil Sensorial", value: "Muy seco, mineral, final largo" },
-          { key: "Crianza", value: "Método tradicional, crianza sobre lías" },
-          { key: "ABV", value: "12%" },
-          { key: "Maridaje", value: "Ostras, quesos" },
-        ],
-        stock: { total: "16", reservado: "1", disponible: "15" },
-        precio: { costo: 17000, margen: 50, iva: 21, precioFinal: 30765 },
-      },
-    ],
-  },
-
-  {
-    name: "Cruzat Premier",
-    categoria: "Espumantes",
-    hasVariants: true,
-    isAgrupador: true,
-    sku: "ESP-CRZPRM",
-    marca: "Cruzat",
-    proveedor: "Bodega Cruzat",
-    formatoVenta: "unidad",
-    volumenActive: true,
-    volumenCantidad: 750,
-    volumenUnidad: "ml",
-
-    containerAtributosPrincipales: [{ key: "Dosaje", variantes: ["Extra Brut", "Extra Brut Rosé", "Brut Nature"] }],
-
-    atributosInformativos: [
-      { key: "Varietal", value: "" }, // per child
-      { key: "Línea", value: "Premier" },
-      { key: "Perfil Sensorial", value: "" }, // per child
-      { key: "Bodega", value: "Bodega Cruzat" },
-      { key: "Origen", value: "Valle de Uco, Mendoza, Argentina" },
-      { key: "Crianza", value: "Larga sobre lías" },
-      { key: "Enólogo", value: "Equipo enológico Cruzat" },
-      { key: "ABV", value: "" }, // per child
-      { key: "Temperatura de Servicio", value: "6–8°C" },
-      { key: "Maridaje", value: "" }, // per child
-      { key: "Estuche", value: "Sin estuche" },
-    ],
-
-    variantCount: 3,
-    variants: [
-      {
-        name: "Cruzat Premier",
-        sku: "ESP-CRZPRM-EXBR",
-        codigoUniversal: "7799901002301",
-        codigoProveedor: "CRZ-PRM-EXBR",
-        categoria: "Espumantes",
-        marca: "Cruzat",
-        atributosPrincipales: [{ key: "Dosaje", value: "Extra Brut" }],
-        atributosInformativos: [
-          { key: "Varietal", value: "Chardonnay & Pinot Noir" },
-          { key: "Perfil Sensorial", value: "Cítrico, brioche, burbuja fina" },
-          { key: "ABV", value: "12%" },
-          { key: "Maridaje", value: "Mariscos, cocina fina" },
-        ],
-        stock: { total: "12", reservado: "1", disponible: "11" },
-        precio: { costo: 20000, margen: 50, iva: 21, precioFinal: 36300 },
-      },
-      {
-        name: "Cruzat Premier",
-        sku: "ESP-CRZPRM-EXRS",
-        codigoUniversal: "7799901002302",
-        codigoProveedor: "CRZ-PRM-EXRS",
-        categoria: "Espumantes",
-        marca: "Cruzat",
-        atributosPrincipales: [{ key: "Dosaje", value: "Extra Brut Rosé" }],
-        atributosInformativos: [
-          { key: "Varietal", value: "Pinot Noir (rosé)" },
-          { key: "Perfil Sensorial", value: "Frutos rojos, floral, elegante" },
-          { key: "ABV", value: "12%" },
-          { key: "Maridaje", value: "Salmón, tapeo" },
-        ],
-        stock: { total: "10", reservado: "1", disponible: "9" },
-        precio: { costo: 20000, margen: 50, iva: 21, precioFinal: 36300 },
-      },
-      {
-        name: "Cruzat Premier",
-        sku: "ESP-CRZPRM-BRNT",
-        codigoUniversal: "7799901002303",
-        codigoProveedor: "CRZ-PRM-BRNT",
-        categoria: "Espumantes",
-        marca: "Cruzat",
-        atributosPrincipales: [{ key: "Dosaje", value: "Brut Nature" }],
-        atributosInformativos: [
-          { key: "Varietal", value: "Chardonnay" },
-          { key: "Perfil Sensorial", value: "Seco, mineral, final largo" },
-          { key: "ABV", value: "12%" },
-          { key: "Maridaje", value: "Ostras, quesos" },
-        ],
-        stock: { total: "8", reservado: "1", disponible: "7" },
-        precio: { costo: 20000, margen: 50, iva: 21, precioFinal: 36300 },
-      },
-    ],
-  },
-
-  // =========================
-  // ALMA NEGRA
-  // =========================
-  {
-    name: "Alma Negra",
-    categoria: "Espumantes",
-    hasVariants: true,
-    isAgrupador: true,
-    sku: "ESP-ALMNEG",
-    marca: "Alma Negra",
-    proveedor: "Tikal (Ernesto Catena)",
-    formatoVenta: "unidad",
-    volumenActive: true,
-    volumenCantidad: 750,
-    volumenUnidad: "ml",
-
-    containerAtributosPrincipales: [{ key: "Dosaje", variantes: ["Brut Nature", "Brut Nature Rosé"] }],
-
-    atributosInformativos: [
-      { key: "Varietal", value: "Blend" },
-      { key: "Línea", value: "Alma Negra" },
-      { key: "Perfil Sensorial", value: "" }, // per child
-      { key: "Bodega", value: "Tikal" },
-      { key: "Origen", value: "Mendoza, Argentina" },
-      { key: "Crianza", value: "Método tradicional, crianza sobre lías" },
-      { key: "Enólogo", value: "Equipo enológico" },
-      { key: "ABV", value: "12%" },
-      { key: "Temperatura de Servicio", value: "6–8°C" },
-      { key: "Maridaje", value: "" }, // per child
-      { key: "Estuche", value: "Sin estuche" },
-    ],
-
-    variantCount: 2,
-    variants: [
-      {
-        name: "Alma Negra",
-        sku: "ESP-ALMNEG-BRNT",
-        codigoUniversal: "7799901002401",
-        codigoProveedor: "ALMN-EPN-BRNT",
-        categoria: "Espumantes",
-        marca: "Alma Negra",
-        atributosPrincipales: [{ key: "Dosaje", value: "Brut Nature" }],
-        atributosInformativos: [
-          { key: "Perfil Sensorial", value: "Seco, cítrico, burbuja fina" },
-          { key: "Maridaje", value: "Mariscos, aperitivos" },
-        ],
-        stock: { total: "20", reservado: "2", disponible: "18" },
-        precio: { costo: 25000, margen: 50, iva: 21, precioFinal: 45375 },
-      },
-      {
-        name: "Alma Negra",
-        sku: "ESP-ALMNEG-BRRS",
-        codigoUniversal: "7799901002402",
-        codigoProveedor: "ALMN-EPN-BRRS",
-        categoria: "Espumantes",
-        marca: "Alma Negra",
-        atributosPrincipales: [{ key: "Dosaje", value: "Brut Nature Rosé" }],
-        atributosInformativos: [
-          { key: "Perfil Sensorial", value: "Frutos rojos, seco, elegante" },
-          { key: "Maridaje", value: "Salmón, tapeo" },
-        ],
-        stock: { total: "16", reservado: "2", disponible: "14" },
-        precio: { costo: 26000, margen: 50, iva: 21, precioFinal: 47130 },
-      },
-    ],
-  },
-
-  // =========================
-  // LUIGI BOSCA (standalone)
-  // =========================
-  {
-    name: "Luigi Bosca",
-    categoria: "Espumantes",
-    hasVariants: false,
-    isAgrupador: false,
-    sku: "ESP-LBOSCA-EXBR",
-    codigoUniversal: "7799002001001",
-    codigoProveedor: "LB-ESP-EXBR-750",
-    marca: "Luigi Bosca",
-    proveedor: "Luigi Bosca (Familia Arizu)",
-    formatoVenta: "unidad",
-    volumenActive: true,
-    volumenCantidad: 750,
-    volumenUnidad: "ml",
-
-    stock: { total: "18", reservado: "2", disponible: "16" },
-
-    atributosPrincipales: [{ key: "Dosaje", value: "Extra Brut" }],
-
-    atributosInformativos: [
-      { key: "Varietal", value: "Blend" },
-      { key: "Línea", value: "Espumante" },
-      { key: "Perfil Sensorial", value: "Cítrico, brioche, burbuja fina" },
-      { key: "Bodega", value: "Luigi Bosca" },
-      { key: "Origen", value: "Mendoza, Argentina" },
-      { key: "Crianza", value: "Crianza sobre lías" },
-      { key: "Enólogo", value: "Equipo enológico" },
-      { key: "ABV", value: "12%" },
-      { key: "Temperatura de Servicio", value: "6–8°C" },
-      { key: "Maridaje", value: "Mariscos, sushi" },
-      { key: "Estuche", value: "Sin estuche" },
-    ],
-    precio: { costo: 20000, margen: 50, iva: 21, precioFinal: 36300 },
-  },
-
-  // =========================
-  // LAGARDE (2 agrupadores/lineas -> 1 agrupador con 2 dosajes)
-  // =========================
-  {
-    name: "Lagarde",
-    categoria: "Espumantes",
-    hasVariants: true,
-    isAgrupador: true,
-    sku: "ESP-LAGARD",
-    marca: "Lagarde",
-    proveedor: "Bodega Lagarde",
-    formatoVenta: "unidad",
-    volumenActive: true,
-    volumenCantidad: 750,
-    volumenUnidad: "ml",
-
-    containerAtributosPrincipales: [{ key: "Dosaje", variantes: ["Extra Brut", "Brut Rosé"] }],
-
-    atributosInformativos: [
-      { key: "Varietal", value: "" }, // per child
-      { key: "Línea", value: "Espumante" },
-      { key: "Perfil Sensorial", value: "" }, // per child
-      { key: "Bodega", value: "Bodega Lagarde" },
-      { key: "Origen", value: "Mendoza, Argentina" },
-      { key: "Crianza", value: "" }, // per child
-      { key: "Enólogo", value: "Equipo enológico Lagarde" },
-      { key: "ABV", value: "" }, // per child
-      { key: "Temperatura de Servicio", value: "6–8°C" },
-      { key: "Maridaje", value: "" }, // per child
-      { key: "Estuche", value: "Sin estuche" },
-    ],
-
-    variantCount: 2,
-    variants: [
-      {
-        name: "Lagarde",
-        sku: "ESP-LAGARD-EXBR",
-        codigoUniversal: "7799001002601",
-        codigoProveedor: "LAG-ESP-EXBR",
-        categoria: "Espumantes",
-        marca: "Lagarde",
-        atributosPrincipales: [{ key: "Dosaje", value: "Extra Brut" }],
-        atributosInformativos: [
-          { key: "Varietal", value: "Chardonnay & Pinot Noir" },
-          { key: "Perfil Sensorial", value: "Cítrico, seco, elegante" },
-          { key: "Crianza", value: "Crianza sobre lías" },
-          { key: "ABV", value: "12%" },
-          { key: "Maridaje", value: "Aperitivos, mariscos" },
-        ],
-        stock: { total: "14", reservado: "2", disponible: "12" },
-        precio: { costo: 18000, margen: 50, iva: 21, precioFinal: 32580 },
-      },
-      {
-        name: "Lagarde",
-        sku: "ESP-LAGARD-BRRS",
-        codigoUniversal: "7799001002602",
-        codigoProveedor: "LAG-ESP-BRRS",
-        categoria: "Espumantes",
-        marca: "Lagarde",
-        atributosPrincipales: [{ key: "Dosaje", value: "Brut Rosé" }],
-        atributosInformativos: [
-          { key: "Varietal", value: "Blend (rosé)" },
-          { key: "Perfil Sensorial", value: "Frutos rojos, fresco, burbuja fina" },
-          { key: "Crianza", value: "Crianza sobre lías" },
-          { key: "ABV", value: "12%" },
-          { key: "Maridaje", value: "Salmón, tapeo" },
-        ],
-        stock: { total: "12", reservado: "1", disponible: "11" },
-        precio: { costo: 19000, margen: 50, iva: 21, precioFinal: 34485 },
-      },
-    ],
-  },
-
-  // =========================
-  // BRESSIA (2 lineas -> 1 agrupador Royale con 2 dosajes)
-  // =========================
-  {
-    name: "Bressia Royale",
-    categoria: "Espumantes",
-    hasVariants: true,
-    isAgrupador: true,
-    sku: "ESP-BRROY",
-    marca: "Bressia",
-    proveedor: "Bodega Bressia",
-    formatoVenta: "unidad",
-    volumenActive: true,
-    volumenCantidad: 750,
-    volumenUnidad: "ml",
-
-    containerAtributosPrincipales: [{ key: "Dosaje", variantes: ["Brut Nature", "Brut Nature Rosé"] }],
-
-    atributosInformativos: [
-      { key: "Varietal", value: "" }, // per child
-      { key: "Línea", value: "Royale" },
-      { key: "Perfil Sensorial", value: "" }, // per child
-      { key: "Bodega", value: "Bodega Bressia" },
-      { key: "Origen", value: "Mendoza, Argentina" },
-      { key: "Crianza", value: "Crianza sobre lías" },
-      { key: "Enólogo", value: "Equipo enológico Bressia" },
-      { key: "ABV", value: "12%" },
-      { key: "Temperatura de Servicio", value: "6–8°C" },
-      { key: "Maridaje", value: "" }, // per child
-      { key: "Estuche", value: "Sin estuche" },
-    ],
-
-    variantCount: 2,
-    variants: [
-      {
-        name: "Bressia Royale",
-        sku: "ESP-BRROY-BRNT",
-        codigoUniversal: "7799901002701",
-        codigoProveedor: "BRE-ROY-BRNT",
-        categoria: "Espumantes",
-        marca: "Bressia",
-        atributosPrincipales: [{ key: "Dosaje", value: "Brut Nature" }],
-        atributosInformativos: [
-          { key: "Varietal", value: "Pinot Noir & Chardonnay" },
-          { key: "Perfil Sensorial", value: "Seco, mineral, burbuja fina" },
-          { key: "Maridaje", value: "Ostras, mariscos" },
-        ],
-        stock: { total: "10", reservado: "1", disponible: "9" },
-        precio: { costo: 25000, margen: 50, iva: 21, precioFinal: 45375 },
-      },
-      {
-        name: "Bressia Royale",
-        sku: "ESP-BRROY-BRRS",
-        codigoUniversal: "7799001002702",
-        codigoProveedor: "BRE-ROY-BRRS",
-        categoria: "Espumantes",
-        marca: "Bressia",
-        atributosPrincipales: [{ key: "Dosaje", value: "Brut Nature Rosé" }],
-        atributosInformativos: [
-          { key: "Varietal", value: "Pinot Noir (rosé)" },
-          { key: "Perfil Sensorial", value: "Frutos rojos, seco, elegante" },
-          { key: "Maridaje", value: "Salmón, sushi" },
-        ],
-        stock: { total: "8", reservado: "1", disponible: "7" },
-        precio: { costo: 26000, margen: 50, iva: 21, precioFinal: 47130 },
-      },
-    ],
-  },
-
-  // --- NORTON (agrupador por dosaje) ---
-  {
-    name: "Norton",
-    categoria: "Espumantes",
-    hasVariants: true,
-    isAgrupador: true,
-    sku: "ESP-NORTON",
-    marca: "Norton",
-    proveedor: "Bodega Norton",
-    formatoVenta: "unidad",
-    volumenActive: true,
-    volumenCantidad: 750,
-    volumenUnidad: "ml",
-
-    containerAtributosPrincipales: [{ key: "Dosaje", variantes: ["Extra Brut", "Brut Nature", "Brut Rosé"] }],
-
-    atributosInformativos: [
-      { key: "Varietal", value: "" }, // por hijo
-      { key: "Línea", value: "Espumantes" },
-      { key: "Perfil Sensorial", value: "" }, // por hijo
-      { key: "Bodega", value: "Bodega Norton" },
-      { key: "Origen", value: "Mendoza, Argentina" },
-      { key: "Crianza", value: "" }, // por hijo
-      { key: "Enólogo", value: "" },
-      { key: "ABV", value: "" }, // por hijo
-      { key: "Temperatura de Servicio", value: "6–8°C" },
-      { key: "Maridaje", value: "" }, // por hijo
-      { key: "Estuche", value: "Sin estuche" },
-    ],
-
-    variantCount: 3,
-    variants: [
-      {
-        name: "Norton",
-        sku: "ESP-NORTON-EXBR",
-        codigoUniversal: "7798123401058",
-        codigoProveedor: "NOR-ESP-EXBR-750",
-        categoria: "Espumantes",
-        marca: "Norton",
-        atributosPrincipales: [{ key: "Dosaje", value: "Extra Brut" }],
-        atributosInformativos: [
-          { key: "Varietal", value: "Chardonnay" },
-          { key: "Perfil Sensorial", value: "Fresco y frutal, burbuja fina" },
-          { key: "Crianza", value: "" },
-          { key: "ABV", value: "12%" },
-          { key: "Maridaje", value: "Aperitivos, pescados, mariscos" },
-        ],
-        stock: { total: "22", reservado: "3", disponible: "19" },
-        precio: { costo: 15000, margen: 50, iva: 21, precioFinal: 27150 },
-      },
-      {
-        name: "Norton",
-        sku: "ESP-NORTON-BRNA",
-        codigoUniversal: "7798123401065",
-        codigoProveedor: "NOR-ESP-BRNA-750",
-        categoria: "Espumantes",
-        marca: "Norton",
-        atributosPrincipales: [{ key: "Dosaje", value: "Brut Nature" }],
-        atributosInformativos: [
-          { key: "Varietal", value: "" },
-          { key: "Perfil Sensorial", value: "Seco, elegante y mineral" },
-          { key: "Crianza", value: "" },
-          { key: "ABV", value: "" },
-          { key: "Maridaje", value: "Ostras, sushi, quesos suaves" },
-        ],
-        stock: { total: "14", reservado: "2", disponible: "12" },
-        precio: { costo: 16000, margen: 50, iva: 21, precioFinal: 29040 },
-      },
-      {
-        name: "Norton",
-        sku: "ESP-NORTON-BRRO",
-        codigoUniversal: "7798123401072",
-        codigoProveedor: "NOR-ESP-BRRO-750",
-        categoria: "Espumantes",
-        marca: "Norton",
-        atributosPrincipales: [{ key: "Dosaje", value: "Brut Rosé" }],
-        atributosInformativos: [
-          { key: "Varietal", value: "" },
-          { key: "Perfil Sensorial", value: "Frutos rojos y frescura" },
-          { key: "Crianza", value: "" },
-          { key: "ABV", value: "" },
-          { key: "Maridaje", value: "Salmón, sushi, tapas" },
-        ],
-        stock: { total: "12", reservado: "1", disponible: "11" },
-        precio: { costo: 15000, margen: 50, iva: 21, precioFinal: 27150 },
-      },
-    ],
-  },
-
-  // =========================
-  // ALTA VISTA
-  // =========================
-  {
-    name: "Alta Vista Atemporal",
-    categoria: "Espumantes",
-    hasVariants: true,
-    isAgrupador: true,
-    sku: "ESP-ALTVAT-ATMP",
-    marca: "Alta Vista",
-    proveedor: "Bodega Alta Vista",
-    formatoVenta: "unidad",
-    volumenActive: true,
-    volumenCantidad: 750,
-    volumenUnidad: "ml",
-
-    containerAtributosPrincipales: [{ key: "Dosaje", variantes: ["Brut", "Extra Brut", "Brut Rosé"] }],
-
-    atributosInformativos: [
-      { key: "Varietal", value: "Blend" },
-      { key: "Línea", value: "Atemporal" },
-      { key: "Perfil Sensorial", value: "" },
-      { key: "Bodega", value: "Bodega Alta Vista" },
-      { key: "Origen", value: "Mendoza, Argentina" },
-      { key: "Crianza", value: "" },
-      { key: "Enólogo", value: "Equipo Enológico Alta Vista" },
-      { key: "ABV", value: "" },
-      { key: "Temperatura de Servicio", value: "6–8°C" },
-      { key: "Maridaje", value: "" },
-      { key: "Estuche", value: "Sin estuche" },
-    ],
-
-    variantCount: 3,
-    variants: [
-      {
-        name: "Alta Vista Atemporal",
-        sku: "ESP-ALTVAT-BRUT",
-        codigoUniversal: "7799002000002",
-        codigoProveedor: "ALTV-ATMP-BRUT-750",
-        categoria: "Espumantes",
-        marca: "Alta Vista",
-        atributosPrincipales: [{ key: "Dosaje", value: "Brut" }],
-        atributosInformativos: [
-          { key: "Varietal", value: "Blend" },
-          { key: "Línea", value: "Atemporal" },
-          { key: "Perfil Sensorial", value: "Fresco, frutal, burbuja fina" },
-          { key: "Bodega", value: "Bodega Alta Vista" },
-          { key: "Origen", value: "Mendoza, Argentina" },
-          { key: "Crianza", value: "Método Charmat" },
-          { key: "Enólogo", value: "Equipo Enológico Alta Vista" },
-          { key: "ABV", value: "12%" },
-          { key: "Temperatura de Servicio", value: "6–8°C" },
-          { key: "Maridaje", value: "Aperitivos, mariscos, sushi" },
-          { key: "Estuche", value: "Sin estuche" },
-        ],
-        stock: { total: "24", reservado: "3", disponible: "21" },
-        precio: { costo: 15000, margen: 50, iva: 21, precioFinal: 27150 },
-      },
-      {
-        name: "Alta Vista Atemporal",
-        sku: "ESP-ALTVAT-EXBR",
-        codigoUniversal: "7799002000019",
-        codigoProveedor: "ALTV-ATMP-EXBR-750",
-        categoria: "Espumantes",
-        marca: "Alta Vista",
-        atributosPrincipales: [{ key: "Dosaje", value: "Extra Brut" }],
-        atributosInformativos: [
-          { key: "Varietal", value: "Blend" },
-          { key: "Línea", value: "Atemporal" },
-          { key: "Perfil Sensorial", value: "Seco, cítrico, elegante" },
-          { key: "Bodega", value: "Bodega Alta Vista" },
-          { key: "Origen", value: "Mendoza, Argentina" },
-          { key: "Crianza", value: "Método Charmat" },
-          { key: "Enólogo", value: "Equipo Enológico Alta Vista" },
-          { key: "ABV", value: "12%" },
-          { key: "Temperatura de Servicio", value: "6–8°C" },
-          { key: "Maridaje", value: "Ostras, quesos suaves, sushi" },
-          { key: "Estuche", value: "Sin estuche" },
-        ],
-        stock: { total: "18", reservado: "2", disponible: "16" },
-        precio: { costo: 16000, margen: 50, iva: 21, precioFinal: 29040 },
-      },
-      {
-        name: "Alta Vista Atemporal",
-        sku: "ESP-ALTVAT-BRRO",
-        codigoUniversal: "7799002000026",
-        codigoProveedor: "ALTV-ATMP-BRRO-750",
-        categoria: "Espumantes",
-        marca: "Alta Vista",
-        atributosPrincipales: [{ key: "Dosaje", value: "Brut Rosé" }],
-        atributosInformativos: [
-          { key: "Varietal", value: "Blend" },
-          { key: "Línea", value: "Atemporal" },
-          { key: "Perfil Sensorial", value: "Frutos rojos, floral, suave" },
-          { key: "Bodega", value: "Bodega Alta Vista" },
-          { key: "Origen", value: "Mendoza, Argentina" },
-          { key: "Crianza", value: "Método Charmat" },
-          { key: "Enólogo", value: "Equipo Enológico Alta Vista" },
-          { key: "ABV", value: "12%" },
-          { key: "Temperatura de Servicio", value: "6–8°C" },
-          { key: "Maridaje", value: "Salmón, entradas, postres frutales" },
-          { key: "Estuche", value: "Sin estuche" },
-        ],
-        stock: { total: "14", reservado: "2", disponible: "12" },
-        precio: { costo: 16000, margen: 50, iva: 21, precioFinal: 29040 },
-      },
-    ],
-  },
-
-  // =========================
-  //
-  //
-  //
-  // =========================
-  // DOMAINE BOUSQUET (ONE agrupador only) — ORGANIC
-  // =========================
-  {
-    name: "Domaine Bousquet Organic",
-    categoria: "Espumantes",
-    hasVariants: true,
-    isAgrupador: true,
-    sku: "ESP-DBOORG",
-    marca: "Domaine Bousquet",
-    proveedor: "Domaine Bousquet",
-    formatoVenta: "unidad",
-    volumenActive: true,
-    volumenCantidad: 750,
-    volumenUnidad: "ml",
-
-    containerAtributosPrincipales: [{ key: "Dosaje", variantes: ["Brut", "Extra Brut", "Brut Rosé"] }],
-
-    atributosInformativos: [
-      { key: "Varietal", value: "Blend" },
-      { key: "Línea", value: "Organic" },
-      { key: "Perfil Sensorial", value: "" },
-      { key: "Bodega", value: "Domaine Bousquet" },
-      { key: "Origen", value: "Valle de Uco, Mendoza, Argentina" },
-      { key: "Crianza", value: "" },
-      { key: "Enólogo", value: "Equipo Enológico Domaine Bousquet" },
-      { key: "ABV", value: "" },
-      { key: "Temperatura de Servicio", value: "6–8°C" },
-      { key: "Maridaje", value: "" },
-      { key: "Estuche", value: "Sin estuche" },
-    ],
-
-    variantCount: 3,
-    variants: [
-      {
-        name: "Domaine Bousquet Organic",
-        sku: "ESP-DBOORG-BRUT",
-        codigoUniversal: "7799002000033",
-        codigoProveedor: "DBO-ORG-BRUT-750",
-        categoria: "Espumantes",
-        marca: "Domaine Bousquet",
-        atributosPrincipales: [{ key: "Dosaje", value: "Brut" }],
-        atributosInformativos: [
-          { key: "Orgánico", value: "Sí" },
-          { key: "Varietal", value: "Blend" },
-          { key: "Línea", value: "Organic" },
-          { key: "Perfil Sensorial", value: "Fresco, manzana, cítrico" },
-          { key: "Bodega", value: "Domaine Bousquet" },
-          { key: "Origen", value: "Valle de Uco, Mendoza, Argentina" },
-          { key: "Crianza", value: "Método Charmat" },
-          { key: "Enólogo", value: "Equipo Enológico Domaine Bousquet" },
-          { key: "ABV", value: "12%" },
-          { key: "Temperatura de Servicio", value: "6–8°C" },
-          { key: "Maridaje", value: "Aperitivos, pescados, ensaladas" },
-          { key: "Estuche", value: "Sin estuche" },
-        ],
-        stock: { total: "20", reservado: "2", disponible: "18" },
-        precio: { costo: 17000, margen: 50, iva: 21, precioFinal: 30765 },
-      },
-      {
-        name: "Domaine Bousquet Organic",
-        sku: "ESP-DBOORG-EXBR",
-        codigoUniversal: "7799002000040",
-        codigoProveedor: "DBO-ORG-EXBR-750",
-        categoria: "Espumantes",
-        marca: "Domaine Bousquet",
-        atributosPrincipales: [{ key: "Dosaje", value: "Extra Brut" }],
-        atributosInformativos: [
-          { key: "Orgánico", value: "Sí" },
-          { key: "Varietal", value: "Blend" },
-          { key: "Línea", value: "Organic" },
-          { key: "Perfil Sensorial", value: "Seco, cítrico, mineral" },
-          { key: "Bodega", value: "Domaine Bousquet" },
-          { key: "Origen", value: "Valle de Uco, Mendoza, Argentina" },
-          { key: "Crianza", value: "Método Charmat" },
-          { key: "Enólogo", value: "Equipo Enológico Domaine Bousquet" },
-          { key: "ABV", value: "12%" },
-          { key: "Temperatura de Servicio", value: "6–8°C" },
-          { key: "Maridaje", value: "Mariscos, sushi, quesos suaves" },
-          { key: "Estuche", value: "Sin estuche" },
-        ],
-        stock: { total: "16", reservado: "2", disponible: "14" },
-        precio: { costo: 18000, margen: 50, iva: 21, precioFinal: 32580 },
-      },
-      {
-        name: "Domaine Bousquet Organic",
-        sku: "ESP-DBOORG-BRRO",
-        codigoUniversal: "7799002000057",
-        codigoProveedor: "DBO-ORG-BRRO-750",
-        categoria: "Espumantes",
-        marca: "Domaine Bousquet",
-        atributosPrincipales: [{ key: "Dosaje", value: "Brut Rosé" }],
-        atributosInformativos: [
-          { key: "Orgánico", value: "Sí" },
-          { key: "Varietal", value: "Blend" },
-          { key: "Línea", value: "Organic" },
-          { key: "Perfil Sensorial", value: "Frutilla, cereza, floral" },
-          { key: "Bodega", value: "Domaine Bousquet" },
-          { key: "Origen", value: "Valle de Uco, Mendoza, Argentina" },
-          { key: "Crianza", value: "Método Charmat" },
-          { key: "Enólogo", value: "Equipo Enológico Domaine Bousquet" },
-          { key: "ABV", value: "12%" },
-          { key: "Temperatura de Servicio", value: "6–8°C" },
-          { key: "Maridaje", value: "Aperitivos, sushi, postres frutales" },
-          { key: "Estuche", value: "Sin estuche" },
-        ],
-        stock: { total: "12", reservado: "1", disponible: "11" },
-        precio: { costo: 18000, margen: 50, iva: 21, precioFinal: 32580 },
-      },
-    ],
-  },
-
-  // =========================
-  // NIETO SENETINER
-  // =========================
-  {
-    name: "Nieto Senetiner",
-    categoria: "Espumantes",
-    hasVariants: true,
-    isAgrupador: true,
-    sku: "ESP-NIETSEN",
-    marca: "Nieto Senetiner",
-    proveedor: "Bodega Nieto Senetiner",
-    formatoVenta: "unidad",
-    volumenActive: true,
-    volumenCantidad: 750,
-    volumenUnidad: "ml",
-
-    containerAtributosPrincipales: [{ key: "Dosaje", variantes: ["Brut Nature", "Extra Brut", "Brut Rosé"] }],
-
-    atributosInformativos: [
-      { key: "Varietal", value: "Blend" },
-      { key: "Línea", value: "Espumante" },
-      { key: "Perfil Sensorial", value: "" },
-      { key: "Bodega", value: "Bodega Nieto Senetiner" },
-      { key: "Origen", value: "Mendoza, Argentina" },
-      { key: "Crianza", value: "" },
-      { key: "Enólogo", value: "Equipo Enológico Nieto Senetiner" },
-      { key: "ABV", value: "" },
-      { key: "Temperatura de Servicio", value: "6–8°C" },
-      { key: "Maridaje", value: "" },
-      { key: "Estuche", value: "Sin estuche" },
-    ],
-
-    variantCount: 3,
-    variants: [
-      {
-        name: "Nieto Senetiner",
-        sku: "ESP-NIETSEN-BRNA",
-        codigoUniversal: "7799002000064",
-        codigoProveedor: "NIETO-ESP-BRNA-750",
-        categoria: "Espumantes",
-        marca: "Nieto Senetiner",
-        atributosPrincipales: [{ key: "Dosaje", value: "Brut Nature" }],
-        atributosInformativos: [
-          { key: "Varietal", value: "Blend" },
-          { key: "Línea", value: "Espumante" },
-          { key: "Perfil Sensorial", value: "Muy seco, cítrico, mineral" },
-          { key: "Bodega", value: "Bodega Nieto Senetiner" },
-          { key: "Origen", value: "Mendoza, Argentina" },
-          { key: "Crianza", value: "Método Charmat" },
-          { key: "Enólogo", value: "Equipo Enológico Nieto Senetiner" },
-          { key: "ABV", value: "12%" },
-          { key: "Temperatura de Servicio", value: "6–8°C" },
-          { key: "Maridaje", value: "Ostras, sushi, quesos suaves" },
-          { key: "Estuche", value: "Sin estuche" },
-        ],
-        stock: { total: "14", reservado: "2", disponible: "12" },
-        precio: { costo: 16000, margen: 50, iva: 21, precioFinal: 29040 },
-      },
-      {
-        name: "Nieto Senetiner",
-        sku: "ESP-NIETSEN-EXBR",
-        codigoUniversal: "7799002000071",
-        codigoProveedor: "NIETO-ESP-EXBR-750",
-        categoria: "Espumantes",
-        marca: "Nieto Senetiner",
-        atributosPrincipales: [{ key: "Dosaje", value: "Extra Brut" }],
-        atributosInformativos: [
-          { key: "Varietal", value: "Blend" },
-          { key: "Línea", value: "Espumante" },
-          { key: "Perfil Sensorial", value: "Seco, manzana verde, elegante" },
-          { key: "Bodega", value: "Bodega Nieto Senetiner" },
-          { key: "Origen", value: "Mendoza, Argentina" },
-          { key: "Crianza", value: "Método Charmat" },
-          { key: "Enólogo", value: "Equipo Enológico Nieto Senetiner" },
-          { key: "ABV", value: "12%" },
-          { key: "Temperatura de Servicio", value: "6–8°C" },
-          { key: "Maridaje", value: "Aperitivos, pescados, sushi" },
-          { key: "Estuche", value: "Sin estuche" },
-        ],
-        stock: { total: "18", reservado: "2", disponible: "16" },
-        precio: { costo: 15000, margen: 50, iva: 21, precioFinal: 27150 },
-      },
-      {
-        name: "Nieto Senetiner",
-        sku: "ESP-NIETSEN-BRRO",
-        codigoUniversal: "7799002000088",
-        codigoProveedor: "NIETO-ESP-BRRO-750",
-        categoria: "Espumantes",
-        marca: "Nieto Senetiner",
-        atributosPrincipales: [{ key: "Dosaje", value: "Brut Rosé" }],
-        atributosInformativos: [
-          { key: "Varietal", value: "Blend" },
-          { key: "Línea", value: "Espumante" },
-          { key: "Perfil Sensorial", value: "Frutos rojos, floral, fresco" },
-          { key: "Bodega", value: "Bodega Nieto Senetiner" },
-          { key: "Origen", value: "Mendoza, Argentina" },
-          { key: "Crianza", value: "Método Charmat" },
-          { key: "Enólogo", value: "Equipo Enológico Nieto Senetiner" },
-          { key: "ABV", value: "12%" },
-          { key: "Temperatura de Servicio", value: "6–8°C" },
-          { key: "Maridaje", value: "Entradas, salmón, postres frutales" },
-          { key: "Estuche", value: "Sin estuche" },
-        ],
-        stock: { total: "12", reservado: "1", disponible: "11" },
-        precio: { costo: 16000, margen: 50, iva: 21, precioFinal: 29040 },
-      },
-    ],
-  },
-
-  // =========================
-  // BIANCHI
-  // =========================
-  {
-    name: "Bianchi Particular",
-    categoria: "Espumantes",
-    hasVariants: false,
-    isAgrupador: false,
-    sku: "ESP-BIANPAR-BRUT",
-    codigoUniversal: "7799002000095",
-    marca: "Bianchi",
-    proveedor: "Bodegas Bianchi",
-    codigoProveedor: "BIAN-PART-BRUT-750",
-    formatoVenta: "unidad",
-    volumenActive: true,
-    volumenCantidad: 750,
-    volumenUnidad: "ml",
-
-    stock: {
-      total: "18",
-      reservado: "2",
-      disponible: "16",
-    },
-
-    atributosPrincipales: [{ key: "Dosaje", value: "Brut" }],
-
-    atributosInformativos: [
-      { key: "Varietal", value: "Blend" },
-      { key: "Línea", value: "Particular" },
-      { key: "Perfil Sensorial", value: "Fresco, cítrico, burbuja fina" },
-      { key: "Bodega", value: "Bodegas Bianchi" },
-      { key: "Origen", value: "Mendoza, Argentina" },
-      { key: "Crianza", value: "Método Charmat" },
-      { key: "Enólogo", value: "Equipo Enológico Bianchi" },
-      { key: "ABV", value: "12%" },
-      { key: "Temperatura de Servicio", value: "6–8°C" },
-      { key: "Maridaje", value: "Aperitivos, mariscos, ensaladas" },
-      { key: "Estuche", value: "Sin estuche" },
-    ],
-    precio: { costo: 14000, margen: 50, iva: 21, precioFinal: 25410 },
-  },
-
-  // =========================
   // CHANDON
   // =========================
   {
@@ -4343,5 +3366,856 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Estuche", value: "Sin" },
     ],
     precio: { costo: 25000, margen: 50, iva: 21, precioFinal: 45375 },
+  },
+  // --- RON: HAVANA CLUB (AGRUPADOR) ---
+  {
+    name: "Havana Club",
+    categoria: "Ron",
+    hasVariants: true,
+    isAgrupador: true,
+    sku: "RON-HAVCLUB",
+    marca: "Havana Club",
+    proveedor: "Havana Club International",
+    formatoVenta: "unidad",
+    volumenActive: true,
+    volumenCantidad: 750,
+    volumenUnidad: "ml",
+
+    containerAtributosPrincipales: [{ key: "Tipo", variantes: ["Añejo 3 Años", "Especial", "Añejo 7 Años"] }],
+
+    atributosInformativos: [
+      { key: "Origen", value: "Cuba" },
+      { key: "Añejamiento", value: "" }, // per variant
+      { key: "ABV", value: "" }, // per variant
+      { key: "Estuche", value: "Sin estuche" },
+    ],
+
+    variantCount: 3,
+    variants: [
+      {
+        name: "Havana Club",
+        sku: "RON-HAVCLUB-AN3",
+        codigoUniversal: "7799002001001",
+        codigoProveedor: "HC-AN3-750",
+        categoria: "Ron",
+        marca: "Havana Club",
+        atributosPrincipales: [{ key: "Tipo", value: "Añejo 3 Años" }],
+        atributosInformativos: [
+          { key: "Añejamiento", value: "3 años" },
+          { key: "ABV", value: "40%" },
+        ],
+        stock: { total: "30", reservado: "4", disponible: "26" },
+        precio: { costo: 18000, margen: 55, iva: 21, precioFinal: 33750 },
+      },
+      {
+        name: "Havana Club",
+        sku: "RON-HAVCLUB-ESPC",
+        codigoUniversal: "7799002001002",
+        codigoProveedor: "HC-ESP-750",
+        categoria: "Ron",
+        marca: "Havana Club",
+        atributosPrincipales: [{ key: "Tipo", value: "Especial" }],
+        atributosInformativos: [
+          { key: "Añejamiento", value: "Blend añejado (no especificado)" },
+          { key: "ABV", value: "40%" },
+        ],
+        stock: { total: "26", reservado: "3", disponible: "23" },
+        precio: { costo: 20000, margen: 55, iva: 21, precioFinal: 37500 },
+      },
+      {
+        name: "Havana Club",
+        sku: "RON-HAVCLUB-AN7",
+        codigoUniversal: "7799002001003",
+        codigoProveedor: "HC-AN7-750",
+        categoria: "Ron",
+        marca: "Havana Club",
+        atributosPrincipales: [{ key: "Tipo", value: "Añejo 7 Años" }],
+        atributosInformativos: [
+          { key: "Añejamiento", value: "7 años" },
+          { key: "ABV", value: "40%" },
+        ],
+        stock: { total: "18", reservado: "2", disponible: "16" },
+        precio: { costo: 28000, margen: 55, iva: 21, precioFinal: 52500 },
+      },
+    ],
+  },
+
+  // --- RON: BACARDI (AGRUPADOR) ---
+  {
+    name: "Bacardí",
+    categoria: "Ron",
+    hasVariants: true,
+    isAgrupador: true,
+    sku: "RON-BACARDI",
+    marca: "Bacardí",
+    proveedor: "Bacardi Limited",
+    formatoVenta: "unidad",
+    volumenActive: true,
+    volumenCantidad: 750,
+    volumenUnidad: "ml",
+
+    containerAtributosPrincipales: [{ key: "Tipo", variantes: ["Blanco", "Dorado", "Añejo"] }],
+
+    atributosInformativos: [
+      { key: "Origen", value: "Puerto Rico" },
+      { key: "Añejamiento", value: "" }, // per variant
+      { key: "ABV", value: "" }, // per variant
+      { key: "Estuche", value: "Sin estuche" },
+    ],
+
+    variantCount: 3,
+    variants: [
+      {
+        name: "Bacardí",
+        sku: "RON-BACARDI-BLCO",
+        codigoUniversal: "7799002001101",
+        codigoProveedor: "BAC-BLC-750",
+        categoria: "Ron",
+        marca: "Bacardí",
+        atributosPrincipales: [{ key: "Tipo", value: "Blanco" }],
+        atributosInformativos: [
+          { key: "Añejamiento", value: "Breve (no especificado)" },
+          { key: "ABV", value: "40%" },
+        ],
+        stock: { total: "40", reservado: "6", disponible: "34" },
+        precio: { costo: 12000, margen: 60, iva: 21, precioFinal: 22680 },
+      },
+      {
+        name: "Bacardí",
+        sku: "RON-BACARDI-DORD",
+        codigoUniversal: "7799002001102",
+        codigoProveedor: "BAC-ORO-750",
+        categoria: "Ron",
+        marca: "Bacardí",
+        atributosPrincipales: [{ key: "Tipo", value: "Dorado" }],
+        atributosInformativos: [
+          { key: "Añejamiento", value: "Añejo (no especificado)" },
+          { key: "ABV", value: "40%" },
+        ],
+        stock: { total: "32", reservado: "5", disponible: "27" },
+        precio: { costo: 14000, margen: 60, iva: 21, precioFinal: 26460 },
+      },
+      {
+        name: "Bacardí",
+        sku: "RON-BACARDI-ANJO",
+        codigoUniversal: "7799002001103",
+        codigoProveedor: "BAC-ANJ-750",
+        categoria: "Ron",
+        marca: "Bacardí",
+        atributosPrincipales: [{ key: "Tipo", value: "Añejo" }],
+        atributosInformativos: [
+          { key: "Añejamiento", value: "Añejo (no especificado)" },
+          { key: "ABV", value: "40%" },
+        ],
+        stock: { total: "22", reservado: "3", disponible: "19" },
+        precio: { costo: 16000, margen: 60, iva: 21, precioFinal: 30240 },
+      },
+    ],
+  },
+
+  // --- RON: MALIBU (STANDALONE) ---
+  {
+    name: "Malibu",
+    categoria: "Ron",
+    hasVariants: false,
+    isAgrupador: false,
+    sku: "RON-MALIBU-COCO",
+    codigoUniversal: "7799002001201",
+    marca: "Malibu",
+    proveedor: "Pernod Ricard",
+    codigoProveedor: "MAL-COC-750",
+    formatoVenta: "unidad",
+    volumenActive: true,
+    volumenCantidad: 750,
+    volumenUnidad: "ml",
+
+    stock: { total: "28", reservado: "4", disponible: "24" },
+
+    atributosPrincipales: [{ key: "Tipo", value: "Saborizado" }],
+    atributosInformativos: [
+      { key: "Origen", value: "Barbados" },
+      { key: "Añejamiento", value: "No aplica" },
+      { key: "ABV", value: "21%" },
+      { key: "Estuche", value: "Sin estuche" },
+
+      // Extra (pedido específico)
+      { key: "Sabor", value: "Coco" },
+    ],
+    precio: { costo: 14000, margen: 50, iva: 21, precioFinal: 25550 },
+  },
+
+  // --- TEQUILA: DON JULIO (AGRUPADOR) ---
+  {
+    name: "Don Julio",
+    categoria: "Tequila",
+    hasVariants: true,
+    isAgrupador: true,
+    sku: "TEQ-DONJUL",
+    marca: "Don Julio",
+    proveedor: "Diageo",
+    formatoVenta: "unidad",
+    volumenActive: true,
+    volumenCantidad: 750,
+    volumenUnidad: "ml",
+
+    containerAtributosPrincipales: [{ key: "Tipo", variantes: ["Blanco", "Reposado", "Añejo"] }],
+
+    atributosInformativos: [
+      { key: "Origen", value: "México" },
+      { key: "Añejamiento", value: "" }, // per variant
+      { key: "ABV", value: "" }, // per variant
+      { key: "Estuche", value: "Sin estuche" },
+    ],
+
+    variantCount: 3,
+    variants: [
+      {
+        name: "Don Julio",
+        sku: "TEQ-DONJUL-BLCO",
+        codigoUniversal: "7799002001301",
+        codigoProveedor: "DJ-BLC-750",
+        categoria: "Tequila",
+        marca: "Don Julio",
+        atributosPrincipales: [{ key: "Tipo", value: "Blanco" }],
+        atributosInformativos: [
+          { key: "Añejamiento", value: "Sin añejamiento" },
+          { key: "ABV", value: "40%" },
+        ],
+        stock: { total: "18", reservado: "2", disponible: "16" },
+        precio: { costo: 22000, margen: 50, iva: 21, precioFinal: 39825 },
+      },
+      {
+        name: "Don Julio",
+        sku: "TEQ-DONJUL-REPO",
+        codigoUniversal: "7799002001302",
+        codigoProveedor: "DJ-REP-750",
+        categoria: "Tequila",
+        marca: "Don Julio",
+        atributosPrincipales: [{ key: "Tipo", value: "Reposado" }],
+        atributosInformativos: [
+          { key: "Añejamiento", value: "Reposado (no especificado)" },
+          { key: "ABV", value: "40%" },
+        ],
+        stock: { total: "14", reservado: "2", disponible: "12" },
+        precio: { costo: 24000, margen: 50, iva: 21, precioFinal: 43440 },
+      },
+      {
+        name: "Don Julio",
+        sku: "TEQ-DONJUL-ANJO",
+        codigoUniversal: "7799002001303",
+        codigoProveedor: "DJ-ANJ-750",
+        categoria: "Tequila",
+        marca: "Don Julio",
+        atributosPrincipales: [{ key: "Tipo", value: "Añejo" }],
+        atributosInformativos: [
+          { key: "Añejamiento", value: "Añejo (no especificado)" },
+          { key: "ABV", value: "40%" },
+        ],
+        stock: { total: "10", reservado: "1", disponible: "9" },
+        precio: { costo: 28000, margen: 50, iva: 21, precioFinal: 50610 },
+      },
+    ],
+  },
+
+  // --- TEQUILA: PATRÓN SILVER (STANDALONE) ---
+  {
+    name: "Patrón Silver",
+    categoria: "Tequila",
+    hasVariants: false,
+    isAgrupador: false,
+    sku: "TEQ-PATRON-SILV",
+    codigoUniversal: "7799002001401",
+    marca: "Patrón",
+    proveedor: "Bacardi",
+    codigoProveedor: "PAT-SIL-750",
+    formatoVenta: "unidad",
+    volumenActive: true,
+    volumenCantidad: 750,
+    volumenUnidad: "ml",
+
+    stock: { total: "12", reservado: "2", disponible: "10" },
+
+    atributosPrincipales: [{ key: "Tipo", value: "Silver" }],
+    atributosInformativos: [
+      { key: "Origen", value: "México" },
+      { key: "Añejamiento", value: "Sin añejamiento" },
+      { key: "ABV", value: "40%" },
+      { key: "Estuche", value: "Sin estuche" },
+    ],
+    precio: { costo: 26000, margen: 50, iva: 21, precioFinal: 47030 },
+  },
+  {
+    name: "Johnnie Walker 750 ml",
+    categoria: "Whiskies",
+    hasVariants: true,
+    isAgrupador: true,
+    sku: "WHKY-JW750",
+    marca: "Johnnie Walker",
+    proveedor: "Diageo",
+    formatoVenta: "unidad",
+    volumenActive: true,
+    volumenCantidad: 750,
+    volumenUnidad: "ml",
+
+    containerAtributosPrincipales: [
+      { key: "Línea", variantes: ["Red Label", "Black Label", "Double Black", "Blue Label"] },
+    ],
+
+    atributosInformativos: [
+      { key: "Tipo de Whisky", value: "Scotch" },
+      { key: "Método de Elaboración", value: "Blended" },
+      { key: "Origen", value: "Escocia" },
+      { key: "Añejamiento", value: "" },
+      { key: "Tipo de Barrica", value: "Roble" },
+      { key: "ABV", value: "" },
+      { key: "Estuche", value: "" },
+    ],
+
+    variantCount: 4,
+    variants: [
+      {
+        name: "Johnnie Walker 750 ml",
+        sku: "WHKY-JW750-RED",
+        codigoUniversal: "5000267011011",
+        codigoProveedor: "JW-RED-750",
+        categoria: "Whiskies",
+        marca: "Johnnie Walker",
+        atributosPrincipales: [{ key: "Línea", value: "Red Label" }],
+        atributosInformativos: [
+          { key: "Añejamiento", value: "Sin declaración de edad" },
+          { key: "ABV", value: "40%" },
+          { key: "Estuche", value: "Sin estuche" },
+        ],
+        stock: { total: "48", reservado: "6", disponible: "42" },
+        precio: { costo: 20000, margen: 60, iva: 21, precioFinal: 37800 },
+      },
+      {
+        name: "Johnnie Walker 750 ml",
+        sku: "WHKY-JW750-BLACK",
+        codigoUniversal: "5000267024233",
+        codigoProveedor: "JW-BLACK-750",
+        categoria: "Whiskies",
+        marca: "Johnnie Walker",
+        atributosPrincipales: [{ key: "Línea", value: "Black Label" }],
+        atributosInformativos: [
+          { key: "Añejamiento", value: "12 años" },
+          { key: "ABV", value: "40%" },
+          { key: "Estuche", value: "Caja" },
+        ],
+        stock: { total: "36", reservado: "4", disponible: "32" },
+        precio: { costo: 28000, margen: 55, iva: 21, precioFinal: 52500 },
+      },
+      {
+        name: "Johnnie Walker 750 ml",
+        sku: "WHKY-JW750-DBLK",
+        codigoUniversal: "5000267092843",
+        codigoProveedor: "JW-DBLACK-750",
+        categoria: "Whiskies",
+        marca: "Johnnie Walker",
+        atributosPrincipales: [{ key: "Línea", value: "Double Black" }],
+        atributosInformativos: [
+          { key: "Añejamiento", value: "Sin declaración de edad" },
+          { key: "ABV", value: "40%" },
+          { key: "Estuche", value: "Caja" },
+        ],
+        stock: { total: "24", reservado: "3", disponible: "21" },
+        precio: { costo: 32000, margen: 55, iva: 21, precioFinal: 60000 },
+      },
+      {
+        name: "Johnnie Walker 750 ml",
+        sku: "WHKY-JW750-BLUE",
+        codigoUniversal: "5000267014012",
+        codigoProveedor: "JW-BLUE-750",
+        categoria: "Whiskies",
+        marca: "Johnnie Walker",
+        atributosPrincipales: [{ key: "Línea", value: "Blue Label" }],
+        atributosInformativos: [
+          { key: "Añejamiento", value: "Selección de whiskies añejos" },
+          { key: "ABV", value: "40%" },
+          { key: "Estuche", value: "Estuche premium" },
+        ],
+        stock: { total: "12", reservado: "2", disponible: "10" },
+        precio: { costo: 80000, margen: 40, iva: 21, precioFinal: 136500 },
+      },
+    ],
+  },
+
+  {
+    name: "Johnnie Walker 1 L",
+    categoria: "Whiskies",
+    hasVariants: true,
+    isAgrupador: true,
+    sku: "WHKY-JW1L",
+    marca: "Johnnie Walker",
+    proveedor: "Diageo",
+    formatoVenta: "unidad",
+    volumenActive: true,
+    volumenCantidad: 1000,
+    volumenUnidad: "ml",
+
+    containerAtributosPrincipales: [{ key: "Línea", variantes: ["Red Label", "Black Label"] }],
+
+    atributosInformativos: [
+      { key: "Tipo de Whisky", value: "Scotch" },
+      { key: "Método de Elaboración", value: "Blended" },
+      { key: "Origen", value: "Escocia" },
+      { key: "Añejamiento", value: "" },
+      { key: "Tipo de Barrica", value: "Roble" },
+      { key: "ABV", value: "" },
+      { key: "Estuche", value: "" },
+    ],
+
+    variantCount: 2,
+    variants: [
+      {
+        name: "Johnnie Walker 1 L",
+        sku: "WHKY-JW1L-RED",
+        codigoUniversal: "5000267011110",
+        codigoProveedor: "JW-RED-1L",
+        categoria: "Whiskies",
+        marca: "Johnnie Walker",
+        atributosPrincipales: [{ key: "Línea", value: "Red Label" }],
+        atributosInformativos: [
+          { key: "Añejamiento", value: "Sin declaración de edad" },
+          { key: "ABV", value: "40%" },
+          { key: "Estuche", value: "Sin estuche" },
+        ],
+        stock: { total: "30", reservado: "4", disponible: "26" },
+        precio: { costo: 26000, margen: 60, iva: 21, precioFinal: 49140 },
+      },
+      {
+        name: "Johnnie Walker 1 L",
+        sku: "WHKY-JW1L-BLACK",
+        codigoUniversal: "5000267024318",
+        codigoProveedor: "JW-BLACK-1L",
+        categoria: "Whiskies",
+        marca: "Johnnie Walker",
+        atributosPrincipales: [{ key: "Línea", value: "Black Label" }],
+        atributosInformativos: [
+          { key: "Añejamiento", value: "12 años" },
+          { key: "ABV", value: "40%" },
+          { key: "Estuche", value: "Caja" },
+        ],
+        stock: { total: "20", reservado: "3", disponible: "17" },
+        precio: { costo: 36000, margen: 55, iva: 21, precioFinal: 67500 },
+      },
+    ],
+  },
+
+  {
+    name: "Jack Daniel’s Old No.7",
+    categoria: "Whiskies",
+    hasVariants: false,
+    isAgrupador: false,
+    sku: "WHKY-JD-OLD7",
+    codigoUniversal: "5099873001338",
+    marca: "Jack Daniel’s",
+    proveedor: "Brown-Forman",
+    formatoVenta: "unidad",
+    volumenActive: true,
+    volumenCantidad: 750,
+    volumenUnidad: "ml",
+
+    stock: { total: "40", reservado: "5", disponible: "35" },
+
+    atributosPrincipales: [{ key: "Línea", value: "Old No.7" }],
+    atributosInformativos: [
+      { key: "Tipo de Whisky", value: "Tennessee" },
+      { key: "Método de Elaboración", value: "Filtrado por carbón" },
+      { key: "Origen", value: "Estados Unidos" },
+      { key: "Añejamiento", value: "Sin declaración de edad" },
+      { key: "Tipo de Barrica", value: "Roble americano" },
+      { key: "ABV", value: "40%" },
+      { key: "Estuche", value: "Sin estuche" },
+    ],
+    precio: { costo: 18000, margen: 60, iva: 21, precioFinal: 34020 },
+  },
+
+  {
+    name: "Jack Daniel’s Tennessee Honey",
+    categoria: "Whiskies",
+    hasVariants: false,
+    isAgrupador: false,
+    sku: "WHKY-JD-HONEY",
+    codigoUniversal: "5099873021343",
+    marca: "Jack Daniel’s",
+    proveedor: "Brown-Forman",
+    formatoVenta: "unidad",
+    volumenActive: true,
+    volumenCantidad: 750,
+    volumenUnidad: "ml",
+
+    stock: { total: "28", reservado: "4", disponible: "24" },
+
+    atributosPrincipales: [{ key: "Línea", value: "Tennessee Honey" }],
+    atributosInformativos: [
+      { key: "Tipo de Whisky", value: "Tennessee con licor de miel" },
+      { key: "Método de Elaboración", value: "Blended" },
+      { key: "Origen", value: "Estados Unidos" },
+      { key: "Añejamiento", value: "Sin declaración de edad" },
+      { key: "Tipo de Barrica", value: "Roble americano" },
+      { key: "ABV", value: "35%" },
+      { key: "Estuche", value: "Sin estuche" },
+    ],
+    precio: { costo: 19000, margen: 60, iva: 21, precioFinal: 35940 },
+  },
+
+  {
+    name: "Jack Daniel’s Single Barrel",
+    categoria: "Whiskies",
+    hasVariants: false,
+    isAgrupador: false,
+    sku: "WHKY-JD-SBAR",
+    codigoUniversal: "5099873018008",
+    marca: "Jack Daniel’s",
+    proveedor: "Brown-Forman",
+    formatoVenta: "unidad",
+    volumenActive: true,
+    volumenCantidad: 750,
+    volumenUnidad: "ml",
+
+    stock: { total: "18", reservado: "2", disponible: "16" },
+
+    atributosPrincipales: [{ key: "Línea", value: "Single Barrel" }],
+    atributosInformativos: [
+      { key: "Tipo de Whisky", value: "Tennessee" },
+      { key: "Método de Elaboración", value: "Single Barrel" },
+      { key: "Origen", value: "Estados Unidos" },
+      { key: "Añejamiento", value: "Selección especial" },
+      { key: "Tipo de Barrica", value: "Roble americano tostado" },
+      { key: "ABV", value: "45%" },
+      { key: "Estuche", value: "Caja" },
+    ],
+    precio: { costo: 32000, margen: 55, iva: 21, precioFinal: 60000 },
+  },
+
+  {
+    name: "Jameson Original",
+    categoria: "Whiskies",
+    hasVariants: false,
+    isAgrupador: false,
+    sku: "WHKY-JMS-ORIG",
+    codigoUniversal: "5011007003005",
+    marca: "Jameson",
+    proveedor: "Pernod Ricard",
+    formatoVenta: "unidad",
+    volumenActive: true,
+    volumenCantidad: 750,
+    volumenUnidad: "ml",
+
+    stock: { total: "34", reservado: "4", disponible: "30" },
+
+    atributosPrincipales: [{ key: "Línea", value: "Original" }],
+    atributosInformativos: [
+      { key: "Tipo de Whisky", value: "Irish" },
+      { key: "Método de Elaboración", value: "Triple destilado" },
+      { key: "Origen", value: "Irlanda" },
+      { key: "Añejamiento", value: "Mínimo 4 años" },
+      { key: "Tipo de Barrica", value: "Bourbon & Jerez" },
+      { key: "ABV", value: "40%" },
+      { key: "Estuche", value: "Sin estuche" },
+    ],
+    precio: { costo: 19000, margen: 60, iva: 21, precioFinal: 35940 },
+  },
+
+  {
+    name: "Jameson Black Barrel",
+    categoria: "Whiskies",
+    hasVariants: false,
+    isAgrupador: false,
+    sku: "WHKY-JMS-BBLK",
+    codigoUniversal: "5011007024369",
+    marca: "Jameson",
+    proveedor: "Pernod Ricard",
+    formatoVenta: "unidad",
+    volumenActive: true,
+    volumenCantidad: 750,
+    volumenUnidad: "ml",
+
+    stock: { total: "22", reservado: "3", disponible: "19" },
+
+    atributosPrincipales: [{ key: "Línea", value: "Black Barrel" }],
+    atributosInformativos: [
+      { key: "Tipo de Whisky", value: "Irish" },
+      { key: "Método de Elaboración", value: "Triple destilado" },
+      { key: "Origen", value: "Irlanda" },
+      { key: "Añejamiento", value: "Barricas doblemente tostadas" },
+      { key: "Tipo de Barrica", value: "Roble americano" },
+      { key: "ABV", value: "40%" },
+      { key: "Estuche", value: "Caja" },
+    ],
+    precio: { costo: 22000, margen: 55, iva: 21, precioFinal: 41250 },
+  },
+  // --- LICORES ---
+  //LICORES
+  {
+    name: "Jägermeister 700 ml",
+    categoria: "Licores",
+    hasVariants: false,
+    isAgrupador: false,
+    sku: "LICR-JGRM700-ORIG",
+    codigoUniversal: "4067700013019",
+    marca: "Jägermeister",
+    proveedor: "Mast-Jägermeister SE",
+    codigoProveedor: "MJ-DE-700-ORIG",
+    formatoVenta: "unidad",
+    volumenActive: true,
+    volumenCantidad: 700,
+    volumenUnidad: "ml",
+    stock: {
+      total: "48",
+      reservado: "6",
+      disponible: "42",
+    },
+    atributosPrincipales: [{ key: "Sabor", value: "Original" }],
+    atributosInformativos: [
+      { key: "Tipo de Licor", value: "Licor herbal amargo" },
+      { key: "Origen", value: "Alemania" },
+      { key: "ABV", value: "35%" },
+      { key: "Estuche", value: "Sin estuche" },
+    ],
+    precio: { costo: 14000, margen: 65, iva: 21, precioFinal: 27615 },
+  },
+  {
+    name: "Sheridan's Original",
+    categoria: "Licores",
+    hasVariants: false,
+    isAgrupador: false,
+    sku: "LICR-SHER700-CACR",
+    codigoUniversal: "5060049029993",
+    marca: "Sheridan's",
+    proveedor: "Diageo",
+    codigoProveedor: "DIA-SHER-700",
+    formatoVenta: "unidad",
+    volumenActive: true,
+    volumenCantidad: 700,
+    volumenUnidad: "ml",
+    stock: {
+      total: "36",
+      reservado: "5",
+      disponible: "31",
+    },
+    atributosPrincipales: [{ key: "Sabor", value: "Café y crema" }],
+    atributosInformativos: [
+      { key: "Tipo de Licor", value: "Licor de crema y café" },
+      { key: "Origen", value: "Irlanda" },
+      { key: "ABV", value: "15.5%" },
+      { key: "Estuche", value: "Sin estuche" },
+    ],
+    precio: { costo: 16000, margen: 60, iva: 21, precioFinal: 30240 },
+  },
+
+  // FIREBALL
+  {
+    name: "Fireball 750 ml",
+    categoria: "Licores",
+    hasVariants: false,
+    isAgrupador: false,
+    sku: "LICR-FIRB750-CANE",
+    codigoUniversal: "088004009303",
+    marca: "Fireball",
+    proveedor: "Sazerac Company",
+    codigoProveedor: "SAZ-FIRB-750-CANE",
+    formatoVenta: "unidad",
+    volumenActive: true,
+    volumenCantidad: 750,
+    volumenUnidad: "ml",
+
+    stock: { total: "24", reservado: "3", disponible: "21" },
+
+    atributosPrincipales: [{ key: "Sabor", value: "Canela" }],
+    atributosInformativos: [
+      { key: "Tipo de Licor", value: "Licor de whisky y canela" },
+      { key: "Origen", value: "Canadá" },
+      { key: "ABV", value: "33%" },
+      { key: "Estuche", value: "Sin estuche" },
+    ],
+    precio: { costo: 13000, margen: 65, iva: 21, precioFinal: 25650 },
+  },
+
+  // COINTREAU
+  {
+    name: "Cointreau 700 ml",
+    categoria: "Licores",
+    hasVariants: false,
+    isAgrupador: false,
+    sku: "LICR-COIN700-ORIG",
+    codigoUniversal: "07035542004202",
+    marca: "Cointreau",
+    proveedor: "Rémy Cointreau",
+    codigoProveedor: "RC-COIN-700-ORIG",
+    formatoVenta: "unidad",
+    volumenActive: true,
+    volumenCantidad: 700,
+    volumenUnidad: "ml",
+
+    stock: { total: "18", reservado: "2", disponible: "16" },
+
+    atributosPrincipales: [{ key: "Sabor", value: "Original" }],
+    atributosInformativos: [
+      { key: "Tipo de Licor", value: "Triple sec (licor de naranja)" },
+      { key: "Origen", value: "Francia" },
+      { key: "ABV", value: "40%" },
+      { key: "Estuche", value: "Sin estuche" },
+    ],
+    precio: { costo: 20000, margen: 55, iva: 21, precioFinal: 37500 },
+  },
+
+  // BAILEYS (AGRUPADOR)
+  {
+    name: "Baileys",
+    categoria: "Licores",
+    hasVariants: true,
+    isAgrupador: true,
+    sku: "LICR-BAILYS",
+    marca: "Baileys",
+    proveedor: "Diageo",
+    formatoVenta: "unidad",
+    volumenActive: true,
+    volumenCantidad: 750,
+    volumenUnidad: "ml",
+
+    containerAtributosPrincipales: [
+      { key: "Sabor", variantes: ["Original", "Chocolate Luxe", "Salted Caramel", "Strawberries & Cream"] },
+    ],
+
+    atributosInformativos: [
+      { key: "Tipo de Licor", value: "Licor de crema" },
+      { key: "Origen", value: "Irlanda" },
+      { key: "ABV", value: "17%" },
+      { key: "Estuche", value: "Sin estuche" },
+    ],
+
+    variantCount: 4,
+    variants: [
+      {
+        name: "Baileys",
+        sku: "LICR-BAIO750-ORIG",
+        codigoUniversal: "5011013100132",
+        codigoProveedor: "DIA-BAIO-750-ORIG",
+        categoria: "Licores",
+        marca: "Baileys",
+        atributosPrincipales: [{ key: "Sabor", value: "Original" }],
+        stock: { total: "30", reservado: "4", disponible: "26" },
+        precio: { costo: 15000, margen: 60, iva: 21, precioFinal: 28350 },
+      },
+      {
+        name: "Baileys",
+        sku: "LICR-BAIO750-CHOC",
+        codigoUniversal: "5011013933877",
+        codigoProveedor: "DIA-BAIO-750-CHOC",
+        categoria: "Licores",
+        marca: "Baileys",
+        atributosPrincipales: [{ key: "Sabor", value: "Chocolate Luxe" }],
+        stock: { total: "14", reservado: "2", disponible: "12" },
+        precio: { costo: 16000, margen: 60, iva: 21, precioFinal: 30240 },
+      },
+      {
+        name: "Baileys",
+        sku: "LICR-BAIO750-CARA",
+        codigoUniversal: "5011013935048",
+        codigoProveedor: "DIA-BAIO-750-CARA",
+        categoria: "Licores",
+        marca: "Baileys",
+        atributosPrincipales: [{ key: "Sabor", value: "Salted Caramel" }],
+        stock: { total: "16", reservado: "2", disponible: "14" },
+        precio: { costo: 16500, margen: 60, iva: 21, precioFinal: 31185 },
+      },
+      {
+        name: "Baileys",
+        sku: "LICR-BAIO750-STCR",
+        codigoUniversal: "5011013935055",
+        codigoProveedor: "DIA-BAIO-750-STCR",
+        categoria: "Licores",
+        marca: "Baileys",
+        atributosPrincipales: [{ key: "Sabor", value: "Strawberries & Cream" }],
+        stock: { total: "12", reservado: "1", disponible: "11" },
+        precio: { costo: 16500, margen: 60, iva: 21, precioFinal: 31185 },
+      },
+    ],
+  },
+
+  // WILD AFRICA CREAM
+  {
+    name: "Wild Africa Cream 750 ml",
+    categoria: "Licores",
+    hasVariants: false,
+    isAgrupador: false,
+    sku: "LICR-WAFC750-CREM",
+    codigoUniversal: "6009653011924",
+    marca: "Wild Africa Cream",
+    proveedor: "Wild Africa Cream",
+    codigoProveedor: "WAC-WAFC-750-CREM",
+    formatoVenta: "unidad",
+    volumenActive: true,
+    volumenCantidad: 750,
+    volumenUnidad: "ml",
+
+    stock: { total: "16", reservado: "2", disponible: "14" },
+
+    atributosPrincipales: [{ key: "Sabor", value: "Crema" }],
+    atributosInformativos: [
+      { key: "Tipo de Licor", value: "Licor de crema" },
+      { key: "Origen", value: "Sudáfrica" },
+      { key: "ABV", value: "15%" },
+      { key: "Estuche", value: "Sin estuche" },
+    ],
+    precio: { costo: 12000, margen: 65, iva: 21, precioFinal: 23670 },
+  },
+
+  // STREGA
+  {
+    name: "Strega 700 ml",
+    categoria: "Licores",
+    hasVariants: false,
+    isAgrupador: false,
+    sku: "LICR-STRE700-ORIG",
+    codigoUniversal: "0000080220718",
+    marca: "Strega",
+    proveedor: "Strega Alberti",
+    codigoProveedor: "STA-STRE-700-ORIG",
+    formatoVenta: "unidad",
+    volumenActive: true,
+    volumenCantidad: 700,
+    volumenUnidad: "ml",
+
+    stock: { total: "14", reservado: "2", disponible: "12" },
+
+    atributosPrincipales: [{ key: "Sabor", value: "Original" }],
+    atributosInformativos: [
+      { key: "Tipo de Licor", value: "Licor herbal" },
+      { key: "Origen", value: "Italia" },
+      { key: "ABV", value: "40%" },
+      { key: "Estuche", value: "Sin estuche" },
+    ],
+    precio: { costo: 18000, margen: 60, iva: 21, precioFinal: 34020 },
+  },
+
+  // TOFKA
+  {
+    name: "Tofka 700 ml",
+    categoria: "Licores",
+    hasVariants: false,
+    isAgrupador: false,
+    sku: "LICR-TOFK700-TOFF",
+    codigoUniversal: "5060049029993",
+    marca: "Tofka",
+    proveedor: "Tofka",
+    codigoProveedor: "TOF-TOFK-700-TOFF",
+    formatoVenta: "unidad",
+    volumenActive: true,
+    volumenCantidad: 700,
+    volumenUnidad: "ml",
+
+    stock: { total: "12", reservado: "1", disponible: "11" },
+
+    atributosPrincipales: [{ key: "Sabor", value: "Toffee" }],
+    atributosInformativos: [
+      { key: "Tipo de Licor", value: "Licor a base de vodka sabor toffee" },
+      { key: "Origen", value: "Reino Unido" },
+      { key: "ABV", value: "35%" },
+      { key: "Estuche", value: "Sin estuche" },
+    ],
+    precio: { costo: 11000, margen: 70, iva: 21, precioFinal: 22055 },
   },
 ]

@@ -157,7 +157,65 @@ export interface StockAdjustment {
   observaciones?: string
 }
 
-export type SortFactor = "titulo" | "categoria" | "marca" | "fecha" | "stock"
+export type PaymentMethod = "efectivo" | "tarjeta" | "transferencia" | "cuenta_corriente"
+
+export interface VentaItem {
+  sku: string
+  name: string
+  quantity: number
+  unitPrice: number
+  discount: number
+  discountType: "percent" | "fixed"
+  total: number
+  categoria?: string
+}
+
+export interface Venta {
+  id: string
+  fecha: string
+  hora: string
+  clienteId: string
+  clienteNombre: string
+  items: VentaItem[]
+  subtotal: number
+  descuento: number
+  descuentoTipo: "percent" | "fixed"
+  total: number
+  metodoPago: PaymentMethod
+  estado: "completada" | "pendiente" | "cancelada"
+  vendedor: string
+  observaciones?: string
+}
+
+export interface CompraItem {
+  sku: string
+  name: string
+  quantity: number
+  unitPrice: number
+  discount: number
+  discountType: "percent" | "fixed"
+  total: number
+  categoria?: string
+}
+
+export interface Compra {
+  id: string
+  fecha: string
+  hora: string
+  proveedorId: string
+  proveedorNombre: string
+  items: CompraItem[]
+  subtotal: number
+  descuento: number
+  descuentoTipo: "percent" | "fixed"
+  total: number
+  metodoPago: PaymentMethod
+  estado: "completada" | "pendiente" | "cancelada"
+  comprador: string
+  observaciones?: string
+}
+
+export type SortFactor = "titulo" | "categoria" | "marca" | "fecha" | "stock" | "costo" | "margen" | "precioFinal"
 
 export type SortDirection = "asc" | "desc"
 
@@ -180,4 +238,52 @@ export interface FilterConfig {
   marcas: string[]
   stock: StockFilter[]
   depositos: string[]
+}
+
+export type ClienteSortFactor = "nombre" | "tipo" | "condicionIva" | "ciudad"
+
+export interface ClienteSortFactorConfig {
+  factor: ClienteSortFactor
+  direction: SortDirection
+}
+
+export interface ClienteFilterConfig {
+  tipos: ("particular" | "empresa")[]
+  condicionesIva: string[]
+  ciudades: string[]
+}
+
+export type ProveedorSortFactor = "nombre" | "tipo" | "condicionIva" | "ciudad"
+
+export interface ProveedorSortFactorConfig {
+  factor: ProveedorSortFactor
+  direction: SortDirection
+}
+
+export interface ProveedorFilterConfig {
+  tipos: ("particular" | "empresa")[]
+  condicionesIva: string[]
+  ciudades: string[]
+}
+
+export interface FiltrosClientes {
+  tipo?: "particular" | "empresa"
+  condicionIva?: string
+  ciudad?: string
+}
+
+export interface OrdenClientes {
+  factor: ClienteSortFactor
+  direction: SortDirection
+}
+
+export interface FiltrosProveedores {
+  tipo?: "particular" | "empresa"
+  condicionIva?: string
+  ciudad?: string
+}
+
+export interface OrdenProveedores {
+  factor: ProveedorSortFactor
+  direction: SortDirection
 }

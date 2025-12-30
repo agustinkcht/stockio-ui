@@ -1,23 +1,12 @@
 "use client"
 
-import type { Item, ItemVariant } from "@/lib/types" // Updated import to include ItemVariant
-import {
-  Plus,
-  ArrowUpDown,
-  ListFilterIcon,
-  Search,
-  X,
-  ChevronDown,
-  ChevronRight,
-  MoreVertical,
-  Copy,
-} from "lucide-react"
+import type { Item, ItemVariant, SortFactorConfig, FilterConfig } from "@/lib/types"
+import { Plus, ArrowUpDown, ListFilterIcon, Search, X, ChevronDown, ChevronRight, Copy, Grid3x3 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRef, useState, useEffect, useMemo } from "react"
 import { searchItems, sortItems, filterItems, getUniqueCategorias, getUniqueMarcas } from "@/lib/utils/item-utils"
-import { OrdenModal } from "@/components/modals/orden-modal"
-import { FiltrosModal } from "@/components/modals/filtros-modal"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { OrdenModalPrecios } from "@/components/modals/orden-modal-precios"
+import { FiltrosModalPrecios } from "@/components/modals/filtros-modal-precios"
 
 interface PricingData {
   costo: number
@@ -38,6 +27,7 @@ interface PriceGridProps {
   gridSizeDropdownOpen: boolean
   setGridSizeDropdownOpen: (value: boolean) => void
   setGridSize: (size: string) => void
+  onPriceFieldChange?: (itemSku: string, field: string, value: any) => void
 }
 
 const IVA_OPTIONS = [
@@ -58,74 +48,73 @@ export function PriceGrid({
   gridSizeDropdownOpen,
   setGridSizeDropdownOpen,
   setGridSize,
+  onPriceFieldChange,
 }: PriceGridProps) {
   const orderRef = useRef<HTMLDivElement>(null)
   const filterRef = useRef<HTMLDivElement>(null)
   const accionRef = useRef<HTMLDivElement>(null)
-  const [isHovered, setIsHovered] = useState<number | null>(null) // Declared isHovered state
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
 
   const [showOrderModal, setShowOrderModal] = useState(false)
   const [showFilterModal, setShowFilterModal] = useState(false)
   const [showAccionDropdown, setShowAccionDropdown] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
-  const [pricingData, setPricingData] = useState<Record<string, PricingData>>({})
+
+  const [activeFilters, setActiveFilters] = useState<FilterConfig>({
+    tipos: [],
+    categorias: [],
+    marcas: [],
+    stock: [],
+    depositos: [],
+  })
+
+  const [sortPriorities, setSortPriorities] = useState<SortFactorConfig[]>([{ factor: "categoria", direction: "asc" }])
 
   const availableCategorias = useMemo(() => getUniqueCategorias(items), [items])
   const availableMarcas = useMemo(() => getUniqueMarcas(items), [items])
   const availableDepositos = useMemo(() => ["Torcuato", "Trujui"], [])
 
-  const searchedItems = searchItems(items, searchTerm)
-  const filteredItems = filterItems(searchedItems, { tipos: [], categorias: [], marcas: [], stock: [], depositos: [] })
-  const sortedAndFilteredItems = sortItems(filteredItems, [{ factor: "categoria", direction: "asc" }])
+  const searchedItems = useMemo(() => searchItems(items, searchTerm), [items, searchTerm])
+  const filteredItems = useMemo(() => filterItems(searchedItems, activeFilters), [searchedItems, activeFilters])
+  const sortedAndFilteredItems = useMemo(
+    () => sortItems(filteredItems, sortPriorities),
+    [filteredItems, sortPriorities],
+  )
 
   const calculatePrecioFinal = (costo: number, margen: number, iva: number): number => {
-    return costo * (1 + margen / 100) * (1 + iva / 100)
+    return Math.round(costo * (1 + margen / 100) * (1 + iva / 100))
   }
 
   const calculateMargen = (precioFinal: number, costo: number, iva: number): number => {
     if (costo === 0) return 0
-    return (precioFinal / (costo * (1 + iva / 100)) - 1) * 100
+    return Math.round((precioFinal / (costo * (1 + iva / 100)) - 1) * 1000) / 10
   }
 
-  const updatePricingField = (sku: string, field: keyof PricingData, value: number) => {
-    setPricingData((prev) => {
-      const current = prev[sku] || { costo: 0, margen: 0, iva: 0, precioFinal: 0 }
-      const updated = { ...current, [field]: value }
+  const updatePricingField = (
+    itemSku: string,
+    field: keyof PricingData,
+    value: number,
+    currentPricing: PricingData,
+  ) => {
+    let formattedValue = value
+    if (field === "costo" || field === "precioFinal") {
+      formattedValue = Math.round(value)
+    } else if (field === "margen") {
+      formattedValue = Math.round(value * 10) / 10
+    }
 
-      if (field === "precioFinal") {
-        updated.margen = calculateMargen(value, updated.costo, updated.iva)
-      } else {
-        updated.precioFinal = calculatePrecioFinal(updated.costo, updated.margen, updated.iva)
-      }
+    const updated = { ...currentPricing, [field]: formattedValue }
 
-      return { ...prev, [sku]: updated }
-    })
+    if (field === "precioFinal") {
+      updated.margen = calculateMargen(formattedValue, updated.costo, updated.iva)
+    } else {
+      updated.precioFinal = calculatePrecioFinal(updated.costo, updated.margen, updated.iva)
+    }
+
+    if (onPriceFieldChange) {
+      onPriceFieldChange(itemSku, "precio", updated)
+    }
   }
-
-  useEffect(() => {
-    if (items.length === 0) return
-
-    const initialPricing: Record<string, PricingData> = {}
-
-    items.forEach((item) => {
-      // Add pricing for standalone items with precio
-      if (item.precio) {
-        const key = item.sku || `item-${item.id}`
-        initialPricing[key] = { ...item.precio }
-      }
-
-      // Add pricing for child variants with precio
-      const children = item.variants || item.items || []
-      children.forEach((child) => {
-        if (child.precio) {
-          const childKey = child.sku || `variant-${child.id}`
-          initialPricing[childKey] = { ...child.precio }
-        }
-      })
-    })
-
-    setPricingData(initialPricing)
-  }, [items])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -163,211 +152,161 @@ export function PriceGrid({
     return fullTitle
   }
 
+  const getItemPricing = (item: Item | ItemVariant): PricingData => {
+    if (item.precio) {
+      return {
+        costo: item.precio.costo || 0,
+        margen: item.precio.margen || 0,
+        iva: item.precio.iva || 21,
+        precioFinal: item.precio.precioFinal || 0,
+      }
+    }
+    return { costo: 0, margen: 0, iva: 21, precioFinal: 0 }
+  }
+
   const renderItemRow = (item: Item, index: number, isChild = false, isLastChild = false) => {
     const isParent = !isChild && ((item.variants && item.variants.length > 0) || (item.items && item.items.length > 0))
     const children = item.variants || item.items || []
     const isExpanded = expandedItems[index]
+    const isHovered = hoveredIndex === index
 
     const itemKey = item.sku || `item-${index}`
-    const itemPricing = pricingData[itemKey] || { costo: 0, margen: 0, iva: 21, precioFinal: 0 }
+    const itemPricing = getItemPricing(item)
 
-    const getFullTitle = () => {
-      let fullTitle = item.name
-
-      if (item.atributosPrincipales && Array.isArray(item.atributosPrincipales)) {
-        const attributeValues = item.atributosPrincipales
-          .map((attr) => attr.value)
-          .filter((value) => value && value.trim() !== "")
-          .join(" ")
-
-        if (attributeValues) {
-          fullTitle = `${fullTitle} ${attributeValues}`
-        }
-      }
-
-      return fullTitle
-    }
-
-    const getRoundedClass = () => {
-      if (isChild) {
-        if (isLastChild) return "rounded-bl-sm rounded-br-sm"
-        return ""
-      }
-      if (isParent && isExpanded) return "rounded-tl-sm rounded-tr-sm"
-      return "rounded-sm"
-    }
+    const heightClass = gridSize === "sm" ? "h-[44px]" : gridSize === "md" ? "h-[60px]" : "h-[76px]"
 
     return (
-      <div key={item.sku || index} className={isChild ? "mb-0" : "mb-[2px]"}>
+      <div key={item.sku || index}>
         <div
-          className="flex items-center gap-2 bg-transparent"
-          onMouseEnter={() => setIsHovered(index)}
-          onMouseLeave={() => setIsHovered(null)}
+          className={`grid grid-cols-[4fr_2fr_1fr_1fr_2fr] gap-0 ${heightClass} items-center transition-colors border-b border-border/30 ${
+            isHovered ? "bg-accent/50" : ""
+          } ${isChild ? "bg-slate-50/50" : ""}`}
+          onMouseEnter={() => setHoveredIndex(index)}
+          onMouseLeave={() => setHoveredIndex(null)}
         >
-          {/* Left selector */}
-          <div
-            className="p-2 -m-2 cursor-pointer py-4 pl-2"
-            onClick={(e) => {
-              e.stopPropagation()
-              handleItemButtonClick(index)
-            }}
-          >
-            <button
-              className={`relative left-[-7px] h-4.5 w-4.5 transition-colors cursor-pointer flex items-center justify-center rounded-full border shadow-xs border-slate-300 ${
-                itemSelected[index] ? "bg-sky-950" : "bg-transparent"
-              } ${!isHovered && !itemSelected[index] ? "opacity-0" : "opacity-100"}`}
-            />
-          </div>
-
-          {/* Main item row */}
-          <div
-            className={`flex-1 border border-slate-200/65 shadow-md rounded-xs ${getRoundedClass()} ${gridSize === "lg" ? "h-22" : gridSize === "md" ? "h-16" : "h-10"} bg-white transition-colors grid grid-cols-26 overflow-hidden`}
-          >
-            {/* Título column */}
-            <div className="col-span-7 flex flex-col justify-center px-4 border-r border-slate-100">
-              {isParent && (
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => toggleVariantExpansion(index)}
-                    className="text-gray-600 hover:text-gray-900 cursor-pointer"
-                  >
-                    {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                  </button>
-                  <span className="text-sm font-medium text-gray-700">{item.name}</span>
-                </div>
-              )}
-              {!isParent && (
-                <div className="flex flex-col items-start px-2 border-slate-100 border-r-0">
-                  <span className="text-sm text-gray-900">{getFullTitle(item)}</span>
-                  {gridSize !== "sm" && item.sku && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        navigator.clipboard.writeText(item.sku)
-                      }}
-                      className="inline-flex items-center gap-1.5 text-xs text-muted-foreground font-mono hover:text-foreground transition-colors group w-fit"
-                    >
-                      <span>SKU: {item.sku}</span>
-                      <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Marca column */}
-            <div className="col-span-3 flex items-center justify-center px-4 border-r border-slate-100">
-              <span className="text-sm text-gray-600">{item.marca || "-"}</span>
-            </div>
-
-            {/* Categoría column */}
-            <div className="col-span-3 flex items-center justify-center px-4 border-r border-slate-100">
-              <span className="text-sm text-gray-600">{item.categoria || "-"}</span>
-            </div>
-
-            {/* Pricing columns - empty for parent items */}
-            {isParent ? (
+          <div className="flex items-center gap-2 px-4 min-w-0 border-r border-border/30 h-full">
+            {isParent && (
               <>
-                {/* Costo field */}
-                <div className="col-span-4 flex items-center justify-center border-r border-slate-100"></div>
-                {/* Margen field */}
-                <div className="col-span-3 flex items-center justify-center border-r border-slate-100"></div>
-                {/* IVA dropdown */}
-                <div className="col-span-2 flex items-center justify-center border-r border-slate-100"></div>
-                {/* Precio Final */}
-                <div className="col-span-4 flex items-center justify-center"></div>
-              </>
-            ) : (
-              <>
-                {/* Costo field */}
-                <div className="col-span-4 flex items-center justify-center px-2 border-r border-slate-100">
-                  <div className="flex items-center gap-1 w-full">
-                    <span className="text-sm text-gray-500">$</span>
-                    <input
-                      type="number"
-                      value={itemPricing.costo || ""}
-                      onChange={(e) => updatePricingField(itemKey, "costo", Number.parseFloat(e.target.value) || 0)}
-                      onFocus={() => setIsHovered(index)}
-                      onBlur={() => setIsHovered(null)}
-                      className="w-full text-sm text-gray-900 bg-transparent border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
-                      placeholder="0.00"
-                      step="0.01"
-                    />
-                  </div>
-                </div>
-
-                {/* Margen field */}
-                <div
-                  className={`col-span-3 flex items-center justify-center px-2 border-r border-slate-100 ${itemPricing.margen < 0 ? "bg-red-50" : ""}`}
+                <button
+                  onClick={() => toggleVariantExpansion(index)}
+                  className="text-gray-600 hover:text-gray-900 cursor-pointer shrink-0"
                 >
-                  <div className="flex items-center gap-1 w-full">
-                    <input
-                      type="number"
-                      value={itemPricing.margen || ""}
-                      onChange={(e) => updatePricingField(itemKey, "margen", Number.parseFloat(e.target.value) || 0)}
-                      className={`w-full text-sm bg-transparent border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 ${itemPricing.margen < 0 ? "text-red-700" : "text-gray-900"}`}
-                      placeholder="0"
-                      step="1"
-                    />
-                    <span className={`text-sm ${itemPricing.margen < 0 ? "text-red-500" : "text-gray-500"}`}>%</span>
-                  </div>
-                </div>
-
-                {/* IVA dropdown */}
-                <div className="col-span-2 flex items-center justify-center px-2 border-r border-slate-100">
-                  <select
-                    value={itemPricing.iva}
-                    onChange={(e) => updatePricingField(itemKey, "iva", Number.parseFloat(e.target.value))}
-                    className="w-full text-sm text-gray-900 bg-transparent border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
-                  >
-                    {IVA_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Precio Final - calculated, read-only */}
-                <div className="col-span-4 flex items-center justify-center px-2 bg-blue-50/50">
-                  <div className="flex items-center gap-1 w-full">
-                    <span className="text-sm text-gray-500">$</span>
-                    <input
-                      type="number"
-                      value={itemPricing.precioFinal || ""}
-                      onChange={(e) =>
-                        updatePricingField(itemKey, "precioFinal", Number.parseFloat(e.target.value) || 0)
-                      }
-                      className="w-full text-sm font-medium text-blue-900 bg-transparent border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
-                      placeholder="0.00"
-                      step="0.01"
-                      min="0"
-                    />
+                  {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                </button>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-gray-900 truncate">{item.name}</div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
+                    {item.marca && item.categoria && <span className="text-xs text-muted-foreground">·</span>}
+                    {item.categoria && <span className="text-xs text-muted-foreground">{item.categoria}</span>}
                   </div>
                 </div>
               </>
             )}
+            {!isParent && (
+              <div className="flex-1 min-w-0">
+                <div className="text-sm text-gray-900 truncate">{getFullTitle(item)}</div>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  {!isChild && item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
+                  {!isChild && item.marca && item.categoria && <span className="text-xs text-muted-foreground">·</span>}
+                  {!isChild && item.categoria && (
+                    <span className="text-xs text-muted-foreground">{item.categoria}</span>
+                  )}
+                  {!isChild && (item.marca || item.categoria) && (
+                    <span className="text-xs text-muted-foreground">·</span>
+                  )}
+                  <span className="text-xs text-muted-foreground">{item.sku}</span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      navigator.clipboard.writeText(item.sku)
+                    }}
+                    className="inline-flex items-center p-0.5 text-muted-foreground hover:text-foreground transition-colors"
+                    title="Copiar SKU"
+                  >
+                    <Copy className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* More options button */}
-          <div
-            className={`flex items-center gap-2 px-3 ${isHovered !== index ? "opacity-0" : "opacity-100"} transition-opacity`}
-          >
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="p-2 -m-2 text-gray-600 hover:text-gray-900">
-                  <MoreVertical className="w-4 h-4" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>Duplicar precios</DropdownMenuItem>
-                <DropdownMenuItem>Resetear</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          {isParent ? (
+            <>
+              <div className="border-r border-border/30 h-full" />
+              <div className="border-r border-border/30 h-full" />
+              <div className="border-r border-border/30 h-full" />
+            </>
+          ) : (
+            <>
+              <div className="flex items-center justify-center px-2 border-r border-border/30 h-full">
+                <div className="flex items-center gap-1 w-full">
+                  <span className="text-xs text-gray-500">$</span>
+                  <input
+                    type="number"
+                    value={itemPricing.costo || ""}
+                    onChange={(e) =>
+                      updatePricingField(itemKey, "costo", Number.parseFloat(e.target.value) || 0, itemPricing)
+                    }
+                    className="w-full text-sm text-gray-900 bg-transparent border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
+                    placeholder="0"
+                    step="1"
+                  />
+                </div>
+              </div>
+
+              <div
+                className={`flex items-center justify-center px-2 border-r border-border/30 h-full ${itemPricing.margen < 0 ? "bg-red-50" : ""}`}
+              >
+                <div className="flex items-center gap-0.5 w-full">
+                  <input
+                    type="number"
+                    value={itemPricing.margen || ""}
+                    onChange={(e) =>
+                      updatePricingField(itemKey, "margen", Number.parseFloat(e.target.value) || 0, itemPricing)
+                    }
+                    className={`w-full text-sm bg-transparent border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-center ${itemPricing.margen < 0 ? "text-red-700" : "text-gray-900"}`}
+                    placeholder="0.0"
+                    step="0.1"
+                  />
+                  <span className={`text-xs ${itemPricing.margen < 0 ? "text-red-500" : "text-gray-500"}`}>%</span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-center px-2 border-r border-border/30 h-full">
+                <select
+                  value={itemPricing.iva}
+                  onChange={(e) => updatePricingField(itemKey, "iva", Number.parseFloat(e.target.value), itemPricing)}
+                  className="w-full text-sm text-gray-900 bg-transparent border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-0 text-center"
+                >
+                  {IVA_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center justify-center px-2 h-full bg-blue-50/50">
+                <div className="flex items-center gap-1 w-full">
+                  <span className="text-xs text-blue-600">$</span>
+                  <input
+                    type="number"
+                    value={itemPricing.precioFinal || ""}
+                    onChange={(e) =>
+                      updatePricingField(itemKey, "precioFinal", Number.parseFloat(e.target.value) || 0, itemPricing)
+                    }
+                    className="w-full text-sm font-medium text-blue-900 bg-transparent border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
+                    placeholder="0"
+                    step="1"
+                    min="0"
+                  />
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
-        {/* Render children if expanded */}
         {isExpanded && children.length > 0 && (
           <div>
             {children.map((child, childIdx) => {
@@ -381,142 +320,120 @@ export function PriceGrid({
     )
   }
 
+  const hasActiveFilters =
+    activeFilters.tipos.length > 0 || activeFilters.categorias.length > 0 || activeFilters.marcas.length > 0
+
   return (
-    <>
-      {/* Sticky toolbar */}
-      <div className="sticky top-[0px] z-20 backdrop-blur-[2px] bg-slate-50 mt-0">
-        <div className="w-full h-2 bg-transparent" />
+    <div className="flex-1 flex flex-col bg-slate-50 overflow-hidden">
+      <div className="px-6 pt-6 pb-4">
+        <div className="bg-white border border-border/40 rounded-lg shadow-sm">
+          <div className="px-4 py-3 flex items-center justify-between gap-4">
+            <div className="relative" ref={accionRef}>
+              <Button
+                onClick={() => setShowAccionDropdown(!showAccionDropdown)}
+                variant="ghost"
+                size="sm"
+                className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer gap-1.5 shrink-0"
+              >
+                <Plus className="w-3.5 h-3.5 text-blue-600" />
+                Acción 1
+              </Button>
+            </div>
 
-        {/* Toolbar */}
-        <div className="px-4 bg-white border rounded-lg shadow-sm border-[rgba(228,230,235,0.5)] mt-2 pt-1 pb-1">
-          <div className="px-4 pt-3 pb-3 pl-0 pr-0">
-            <div className="flex items-center justify-between border-b border-gray-200 border-none pl-0 pr-0 pb-0">
-              {/* Left: Acción 1 button */}
-              <div className="flex items-center gap-2 ml-1.5 flex-shrink-0">
-                <div className="relative" ref={accionRef}>
-                  <Button
-                    onClick={() => setShowAccionDropdown(!showAccionDropdown)}
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 text-xs border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100"
-                  >
-                    <Plus className="w-3.5 h-3.5 mr-1.5 text-blue-600" />
-                    Acción 1
-                  </Button>
-                </div>
-              </div>
+            <div className="flex-1 max-w-md relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-black opacity-100 z-10" />
+              <input
+                type="text"
+                placeholder="Buscar artículos..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full h-8 pl-9 pr-9 border shadow-sm rounded-md text-xs placeholder:text-gray-600 text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 bg-white backdrop-blur-sm transition-all duration-300 border-[rgba(202,213,227,0.842391304347826)]"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors z-10"
+                  title="Limpiar búsqueda"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
 
-              {/* Center: Search */}
-              <div className="flex items-center justify-center flex-1">
-                <div className="relative mx-2">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black w-3.5 h-3.5" />
-                  <input
-                    type="text"
-                    placeholder="Buscar artículos..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-96 h-8 pl-9 pr-9 border shadow-sm rounded-md text-xs placeholder:text-gray-600 text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500/50 bg-white"
-                  />
-                  {searchTerm && (
-                    <button
-                      onClick={() => setSearchTerm("")}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Right: Ordenar and Filtro */}
-              <div className="flex items-center gap-0 flex-shrink-0">
+            <div className="flex items-center gap-0 flex-shrink-0">
+              <div className="relative mr-3" ref={orderRef}>
                 <button
                   onClick={() => setShowOrderModal(true)}
-                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 border border-gray-200/40 shadow-sm mr-[-4px]"
+                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors group cursor-pointer border border-gray-200/40 shadow-sm mr-[-4px]"
                   title="Ordenar"
                 >
-                  <ArrowUpDown className="w-4 h-4 text-gray-600" />
+                  <ArrowUpDown className="w-4 h-4 text-gray-600 group-hover:text-gray-900" />
                 </button>
+              </div>
 
+              <div className="relative" ref={filterRef}>
                 <button
                   onClick={() => setShowFilterModal(true)}
-                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 border shadow-sm mr-2 border-gray-200/40"
+                  className={`w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors group cursor-pointer border shadow-sm mr-2 ${
+                    hasActiveFilters ? "border-blue-500 bg-blue-50" : "border-gray-200/40"
+                  }`}
                   title="Filtros"
                 >
-                  <ListFilterIcon className="w-4 h-4 text-gray-600" />
+                  <ListFilterIcon
+                    className={`w-4 h-4 ${hasActiveFilters ? "text-blue-600" : "text-gray-600 group-hover:text-gray-900"}`}
+                  />
                 </button>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Tab Header */}
-        <div className="px-4 bg-transparent mt-1 pt-2 mb-0 pb-0">
-          <div className="pl-0 pr-0 w-full">
-            <div className="flex items-center ml-0 w-full">
-              {/* All selector */}
-              <div className="flex items-center justify-center h-9 bg-slate-200 border rounded-l-sm w-auto px-[13px] mr-0 ml-[-17px] border-[rgba(202,213,227,0.61)]">
-                <button
-                  onClick={handleSelectAllClick}
-                  className={`h-4.5 w-4.5 transition-colors cursor-pointer flex items-center justify-center rounded-sm bg-white border border-slate-300 ${
-                    selectAllActive
-                      ? "bg-primary border-primary hover:bg-primary/90 hover:border-primary/90"
-                      : "bg-transparent border-border hover:border-muted-foreground"
-                  }`}
-                ></button>
-              </div>
-
-              {/* Column headers */}
-              <div className="flex-1 grid grid-cols-26 h-9 bg-slate-200 border-none">
-                {/* Título */}
-                <div className="col-span-7 flex items-center justify-center px-4 border border-l-0 border-[rgba(202,213,227,0.61)]">
-                  <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Título</span>
-                </div>
-                {/* Marca */}
-                <div className="col-span-3 flex items-center justify-center px-4 border border-l-0 border-[rgba(202,213,227,0.61)]">
-                  <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Marca</span>
-                </div>
-                {/* Categoría */}
-                <div className="col-span-3 flex items-center justify-center px-4 border border-l-0 border-[rgba(202,213,227,0.61)]">
-                  <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Categoría</span>
-                </div>
-                {/* Costo ($ */}
-                <div className="col-span-4 flex items-center justify-center px-4 border border-l-0 border-[rgba(202,213,227,0.61)]">
-                  <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Costo ($)</span>
-                </div>
-                {/* Margen (%) */}
-                <div className="col-span-3 flex items-center justify-center px-4 border border-l-0 border-[rgba(202,213,227,0.61)]">
-                  <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Margen (%)</span>
-                </div>
-                {/* IVA */}
-                <div className="col-span-2 flex items-center justify-center px-4 border border-l-0 border-[rgba(202,213,227,0.61)]">
-                  <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">IVA</span>
-                </div>
-                {/* Precio Final */}
-                <div className="col-span-4 flex items-center justify-center px-4 border border-l-0 border-r-0 border-[rgba(202,213,227,0.61)] bg-blue-50/30">
-                  <span className="text-xs font-medium text-blue-700 uppercase tracking-wider">Precio Final</span>
-                </div>
-              </div>
-
-              {/* Grilla selector */}
-              <div className="relative mr-[-14px]">
+      <div className="px-6 pb-3">
+        <div className="bg-white border border-border/40 rounded-t-lg">
+          <div className="grid grid-cols-[4fr_2fr_1fr_1fr_2fr] gap-0 px-0 py-3 text-xs font-medium text-muted-foreground border-b border-border/30">
+            <div className="flex items-center px-4 border-r border-border/30">Item</div>
+            <div className="flex items-center justify-center border-r border-border/30">Costo</div>
+            <div className="flex items-center justify-center border-r border-border/30">Margen</div>
+            <div className="flex items-center justify-center border-r border-border/30">IVA</div>
+            <div className="flex items-center justify-between px-4">
+              <span>Precio Final</span>
+              <div className="relative">
                 <button
                   onClick={() => setGridSizeDropdownOpen(!gridSizeDropdownOpen)}
-                  className="flex flex-col items-center justify-center rounded-r-sm hover:bg-gray-100 min-w-[48px] h-9 bg-slate-200 border border-l-0 border-[rgba(202,213,227,0.61)] px-2.5"
+                  className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 transition-colors group cursor-pointer"
+                  title="Tamaño de grilla"
                 >
-                  <span className="text-[9px] text-gray-500 uppercase tracking-wider">Grilla</span>
-                  <span className="text-xs text-gray-900 font-medium uppercase">{gridSize}</span>
+                  <Grid3x3 className="w-3.5 h-3.5 text-gray-600 group-hover:text-gray-900" />
                 </button>
                 {gridSizeDropdownOpen && (
-                  <div className="absolute right-0 top-full mt-1 w-16 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                  <div className="absolute right-0 mt-1 bg-white border border-border/40 rounded-lg shadow-lg py-1 z-10 min-w-[80px]">
                     <button
                       onClick={() => {
                         setGridSize("sm")
                         setGridSizeDropdownOpen(false)
                       }}
-                      className="w-full px-3 py-2 text-center text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+                      className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 transition-colors ${gridSize === "sm" ? "font-medium text-blue-600" : "text-gray-700"}`}
                     >
-                      SM
+                      Pequeño
+                    </button>
+                    <button
+                      onClick={() => {
+                        setGridSize("md")
+                        setGridSizeDropdownOpen(false)
+                      }}
+                      className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 transition-colors ${gridSize === "md" ? "font-medium text-blue-600" : "text-gray-700"}`}
+                    >
+                      Mediano
+                    </button>
+                    <button
+                      onClick={() => {
+                        setGridSize("lg")
+                        setGridSizeDropdownOpen(false)
+                      }}
+                      className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 transition-colors ${gridSize === "lg" ? "font-medium text-blue-600" : "text-gray-700"}`}
+                    >
+                      Grande
                     </button>
                   </div>
                 )}
@@ -526,34 +443,40 @@ export function PriceGrid({
         </div>
       </div>
 
-      {/* Items grid */}
-      <div className="pb-4 pl-[18px] pr-2 pt-3">
-        {sortedAndFilteredItems.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-gray-500">
-            <Search className="w-12 h-12 mb-4 text-gray-300" />
-            <p className="text-lg font-medium">No se encontraron resultados</p>
-          </div>
-        ) : (
-          <div>{sortedAndFilteredItems.map((item, index) => renderItemRow(item, index))}</div>
-        )}
+      <div className="flex-1 overflow-y-auto px-6 pb-6">
+        <div className="bg-white border border-border/40 border-t-0 rounded-b-lg">
+          {sortedAndFilteredItems.length === 0 && (searchTerm || hasActiveFilters) ? (
+            <div className="flex flex-col items-center justify-center py-16 text-gray-500">
+              <Search className="w-12 h-12 mb-4 text-gray-300" />
+              <p className="text-lg font-medium">No se encontraron artículos</p>
+              <p className="text-sm mt-1">Intenta ajustar tu búsqueda o filtros</p>
+            </div>
+          ) : (
+            <div>{sortedAndFilteredItems.map((item, index) => renderItemRow(item, index))}</div>
+          )}
+        </div>
       </div>
 
-      <OrdenModal
-        isOpen={showOrderModal}
-        onClose={() => setShowOrderModal(false)}
-        onApply={() => {}}
-        initialPriorities={[{ factor: "categoria", direction: "asc" }]}
-      />
+      {showOrderModal && (
+        <OrdenModalPrecios
+          onClose={() => setShowOrderModal(false)}
+          ref={orderRef}
+          sortPriorities={sortPriorities}
+          setSortPriorities={setSortPriorities}
+        />
+      )}
 
-      <FiltrosModal
-        isOpen={showFilterModal}
-        onClose={() => setShowFilterModal(false)}
-        onApply={() => {}}
-        initialFilters={{ tipos: [], categorias: [], marcas: [], stock: [], depositos: [] }}
-        availableCategorias={availableCategorias}
-        availableMarcas={availableMarcas}
-        availableDepositos={availableDepositos}
-      />
-    </>
+      {showFilterModal && (
+        <FiltrosModalPrecios
+          onClose={() => setShowFilterModal(false)}
+          ref={filterRef}
+          activeFilters={activeFilters}
+          setActiveFilters={setActiveFilters}
+          availableCategorias={availableCategorias}
+          availableMarcas={availableMarcas}
+          availableDepositos={availableDepositos}
+        />
+      )}
+    </div>
   )
 }
