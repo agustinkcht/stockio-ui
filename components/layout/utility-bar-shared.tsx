@@ -1,29 +1,55 @@
 "use client"
 
-import { User, Undo2, Redo2, X, Check } from "lucide-react"
+import { User, Undo2, Redo2, X, Check, CheckCircle2 } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 
 interface UtilityBarProps {
   breadcrumbs: Array<{ label: string; href?: string }>
-  onUndo?: () => void
-  onRedo?: () => void
   onDeshacer?: () => void
   onGuardar?: () => void
+  hasUnsavedChanges?: boolean
   canUndo?: boolean
   canRedo?: boolean
-  hasUnsavedChanges?: boolean
+  isSaving?: boolean
 }
 
 export function UtilityBarShared({
   breadcrumbs,
-  onUndo,
-  onRedo,
   onDeshacer,
   onGuardar,
+  hasUnsavedChanges = false,
   canUndo = false,
   canRedo = false,
-  hasUnsavedChanges = false,
+  isSaving = false,
 }: UtilityBarProps) {
+  const [showSaveSuccess, setShowSaveSuccess] = useState(false)
+  const prevIsSavingRef = useRef(false)
+
+  useEffect(() => {
+    if (hasUnsavedChanges) {
+      setShowSaveSuccess(false)
+    }
+  }, [hasUnsavedChanges])
+
+  useEffect(() => {
+    if (prevIsSavingRef.current && !isSaving) {
+      setShowSaveSuccess(true)
+      prevIsSavingRef.current = false
+      const timer = setTimeout(() => {
+        setShowSaveSuccess(false)
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
+    prevIsSavingRef.current = isSaving
+  }, [isSaving])
+
+  const handleGuardar = async () => {
+    if (onGuardar) {
+      await onGuardar()
+    }
+  }
+
   return (
     <div className="relative border-b border-border h-[44px] bg-white flex-shrink-0">
       <div className="px-4 flex items-center justify-between h-full">
@@ -43,45 +69,51 @@ export function UtilityBarShared({
         </div>
 
         {/* Right: Utility Buttons */}
-        <div className="flex items-center gap-1.5">
-          <div className="flex items-center gap-0.5 px-1 py-0.5 rounded-md bg-muted/50 mr-1.5">
-            <button
-              onClick={onUndo}
-              disabled={!canUndo}
-              className="p-1.5 hover:bg-muted rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground px-7"
-              title="Deshacer último cambio"
-            >
-              <Undo2 className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={onRedo}
-              disabled={!canRedo}
-              className="p-1.5 hover:bg-muted rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground px-7"
-              title="Rehacer último cambio"
-            >
-              <Redo2 className="w-3.5 h-3.5" />
-            </button>
-          </div>
+        <div className="flex items-center gap-2 min-w-[200px] justify-end">
+          {showSaveSuccess && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md animate-in fade-in slide-in-from-right-2 duration-300">
+              <CheckCircle2 className="w-4 h-4 text-green-600" />
+              <span className="text-sm text-green-700 font-medium">Cambios Guardados</span>
+            </div>
+          )}
 
-          <div className="h-5 w-px bg-border/60" />
+          {hasUnsavedChanges && !showSaveSuccess && (
+            <>
+              <button
+                onClick={onDeshacer}
+                className="px-4 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 rounded transition-all cursor-pointer text-red-700 text-sm font-medium"
+                title="Deshacer cambios"
+              >
+                Deshacer
+              </button>
 
-          <button
-            onClick={onDeshacer}
-            disabled={!hasUnsavedChanges}
-            className="p-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground px-7"
-            title="Deshacer cambios"
-          >
-            <X className="w-4 h-4" />
-          </button>
+              <button
+                onClick={handleGuardar}
+                className="px-4 py-1.5 bg-green-50 hover:bg-green-100 border border-green-200 rounded transition-all cursor-pointer text-green-700 text-sm font-medium"
+                title="Guardar cambios"
+              >
+                Guardar
+              </button>
 
-          <button
-            onClick={onGuardar}
-            disabled={!hasUnsavedChanges}
-            className="p-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-primary px-7"
-            title="Guardar cambios"
-          >
-            <Check className="w-4 h-4" />
-          </button>
+              <div className="h-5 w-px bg-border/60" />
+
+              <button
+                onClick={onDeshacer}
+                className="p-1.5 bg-red-50 hover:bg-red-100 border border-red-200 rounded transition-all cursor-pointer text-red-700 px-7"
+                title="Deshacer cambios"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              <button
+                onClick={handleGuardar}
+                className="p-1.5 bg-green-50 hover:bg-green-100 border border-green-200 rounded transition-all cursor-pointer text-green-700 px-7"
+                title="Guardar cambios"
+              >
+                <Check className="w-4 h-4" />
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

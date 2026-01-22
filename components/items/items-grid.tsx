@@ -28,6 +28,8 @@ interface ItemsGridProps {
   isExpanded?: boolean
   handleOpenNuevoItem?: () => void
   handleOpenNuevoItemConVariantes?: () => void
+  hasSelectedItems?: boolean
+  onBatchDelete?: () => void
 }
 
 export function ItemsGrid({
@@ -49,6 +51,8 @@ export function ItemsGrid({
   isExpanded = true,
   handleOpenNuevoItem,
   handleOpenNuevoItemConVariantes,
+  hasSelectedItems,
+  onBatchDelete,
 }: ItemsGridProps) {
   const orderRef = useRef<HTMLDivElement>(null)
   const filterRef = useRef<HTMLDivElement>(null)
@@ -68,8 +72,6 @@ export function ItemsGrid({
     depositos: [],
   })
   const [sortConfig, setSortConfig] = useState<SortFactorConfig[]>([{ factor: "categoria", direction: "asc" }])
-
-  const hasSelectedItems = itemSelected.some((selected) => selected)
 
   const availableCategorias = useMemo(() => getUniqueCategorias(items), [items])
   const availableMarcas = useMemo(() => getUniqueMarcas(items), [items])
@@ -131,7 +133,7 @@ export function ItemsGrid({
                     className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5 mr-1.5 text-blue-600" />
-                    Crear Nuevo
+                    Nuevo
                   </Button>
 
                   {showCrearNuevoDropdown && (
@@ -161,6 +163,17 @@ export function ItemsGrid({
                     </div>
                   )}
                 </div>
+
+                {hasSelectedItems && (
+                  <Button
+                    onClick={onBatchDelete}
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 text-xs transition-colors border shadow-sm bg-red-50 hover:bg-red-100 border-red-200 text-red-700 cursor-pointer ml-2"
+                  >
+                    Eliminar
+                  </Button>
+                )}
               </div>
 
               {/* Center: Search Bar */}

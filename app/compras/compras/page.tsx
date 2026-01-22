@@ -8,10 +8,6 @@ import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 import { useCompras } from "@/hooks/use-compras"
 import { UserPanel } from "@/components/layout/user-panel"
 import {
-  Undo2,
-  Redo2,
-  X,
-  Check,
   Search,
   Calendar,
   ChevronDown,
@@ -25,6 +21,7 @@ import {
   Plus,
   ArrowUpDown,
   ListFilterIcon,
+  X,
 } from "lucide-react"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { getCategoryImage } from "@/lib/utils/category-images"
@@ -230,33 +227,21 @@ function ComprasContent() {
                 <UserPanel />
               </div>
 
-              <div className="flex items-center gap-1.5">
-                <div className="flex items-center gap-0.5 px-1 py-0.5 rounded-md bg-muted/50 mr-1.5">
-                  <button
-                    disabled
-                    className="p-1.5 hover:bg-muted rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground px-7"
-                  >
-                    <Undo2 className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    disabled
-                    className="p-1.5 hover:bg-muted rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground px-7"
-                  >
-                    <Redo2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <div className="h-5 w-px bg-border/60" />
+              <div className="flex items-center gap-2">
                 <button
                   disabled
-                  className="p-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground px-7"
+                  className="px-4 py-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground hover:bg-muted text-sm font-medium"
+                  title="Deshacer cambios"
                 >
-                  <X className="w-4 h-4" />
+                  Deshacer
                 </button>
+
                 <button
                   disabled
-                  className="p-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-primary px-7"
+                  className="px-4 py-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-primary hover:bg-muted text-sm font-medium"
+                  title="Guardar cambios"
                 >
-                  <Check className="w-4 h-4" />
+                  Guardar
                 </button>
               </div>
             </div>

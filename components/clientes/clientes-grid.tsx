@@ -31,6 +31,8 @@ interface ClientesGridProps {
   onOpenNuevoCliente: () => void
   onDeleteCliente: (id: string) => void
   onUpdateCliente: (id: string, updates: Partial<Cliente>) => void
+  hasSelectedClientes?: boolean
+  onBatchDelete?: () => void
 }
 
 export function ClientesGrid({
@@ -46,6 +48,8 @@ export function ClientesGrid({
   onOpenNuevoCliente,
   onDeleteCliente,
   onUpdateCliente,
+  hasSelectedClientes = false,
+  onBatchDelete,
 }: ClientesGridProps) {
   const orderRef = useRef<HTMLDivElement>(null)
   const filterRef = useRef<HTMLDivElement>(null)
@@ -143,48 +147,6 @@ export function ClientesGrid({
     return result
   }, [filteredClientes, sortPriorities])
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (orderRef.current && !orderRef.current.contains(event.target as Node)) {
-        setShowOrderModal(false)
-      }
-      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
-        setShowFilterModal(false)
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [])
-
-  const copyToClipboard = (text: string, id: string) => {
-    navigator.clipboard.writeText(text)
-    setCopiedId(id)
-    setTimeout(() => setCopiedId(null), 1500)
-  }
-
-  const handleCopyCuitDni = (cuitDni: string) => {
-    navigator.clipboard.writeText(cuitDni)
-  }
-
-  const getClienteDisplayName = (cliente: Cliente): string => {
-    if (cliente.tipo === "empresa" && cliente.razonSocial) {
-      return cliente.razonSocial
-    }
-    return `${cliente.nombre} ${cliente.apellido}`
-  }
-
-  const handleEditCliente = (cliente: Cliente) => {
-    setClienteToEdit(cliente)
-    setShowEditModal(true)
-  }
-
-  const handleSaveEdit = (id: string, updates: Partial<Cliente>) => {
-    onUpdateCliente(id, updates)
-  }
-
   const hasActiveFilters =
     activeFilters.tipos.length > 0 || activeFilters.condicionesIva.length > 0 || activeFilters.ciudades.length > 0
 
@@ -197,15 +159,29 @@ export function ClientesGrid({
       <div className="px-6 pt-6 pb-4">
         <div className="bg-white border border-border/40 rounded-lg shadow-sm">
           <div className="px-4 py-3 flex items-center justify-between gap-4">
-            <Button
-              onClick={onOpenNuevoCliente}
-              variant="ghost"
-              size="sm"
-              className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer gap-1.5 shrink-0"
-            >
-              <Plus className="w-3.5 h-3.5 text-blue-600" />
-              Nuevo Cliente
-            </Button>
+            {/* Left: Action buttons */}
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={onOpenNuevoCliente}
+                variant="ghost"
+                size="sm"
+                className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer gap-1.5 shrink-0"
+              >
+                <Plus className="w-3.5 h-3.5 text-blue-600" />
+                Nuevo Cliente
+              </Button>
+
+              {hasSelectedClientes && (
+                <Button
+                  onClick={onBatchDelete}
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-xs transition-colors border shadow-sm bg-red-50 hover:bg-red-100 border-red-200 text-red-700 cursor-pointer"
+                >
+                  Eliminar
+                </Button>
+              )}
+            </div>
 
             <div className="flex-1 max-w-md relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-black opacity-100 z-10" />
@@ -365,7 +341,10 @@ export function ClientesGrid({
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEditCliente(cliente)}>Editar</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => {
+                            setClienteToEdit(cliente)
+                            setShowEditModal(true)
+                          }}>Editar</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => onDeleteCliente(cliente.id)} className="text-destructive">
                             Eliminar
                           </DropdownMenuItem>
@@ -411,8 +390,19 @@ export function ClientesGrid({
           setClienteToEdit(null)
         }}
         cliente={clienteToEdit}
-        onSave={handleSaveEdit}
+        onSave={(id, updates) => onUpdateCliente(id, updates)}
       />
     </div>
   )
+}
+
+function getClienteDisplayName(cliente: Cliente): string {
+  if (cliente.tipo === "empresa" && cliente.razonSocial) {
+    return cliente.razonSocial
+  }
+  return `${cliente.nombre} ${cliente.apellido}`
+}
+
+function handleCopyCuitDni(cuitDni: string) {
+  navigator.clipboard.writeText(cuitDni)
 }

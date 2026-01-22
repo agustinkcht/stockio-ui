@@ -2,16 +2,21 @@
 
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { Undo2, Redo2, X, Check } from "lucide-react"
+import { ChevronRight, Package, CheckCircle2 } from "lucide-react"
+
 import { Sidebar } from "@/components/layout/sidebar"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { ItemDetailPanel } from "@/components/items/item-detail-panel"
 import { UserPanel } from "@/components/layout/user-panel"
+import { UnsavedChangesModal } from "@/components/modals/unsaved-changes-modal"
 import { useItems } from "@/hooks/use-items"
 import { useNavigation } from "@/hooks/use-navigation"
+import { useNavigationGuard } from "@/hooks/use-navigation-guard"
 import { useSidebar } from "@/hooks/use-sidebar"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 import type { Item } from "@/lib/types"
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 export default function ItemDetailPage() {
   const params = useParams()
@@ -21,6 +26,7 @@ export default function ItemDetailPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [selectedDetailTab, setSelectedDetailTab] = useState<"info" | "stock" | "precios" | "canales">("info")
   const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>({})
+  const [showSaveSuccess, setShowSaveSuccess] = useState(false)
 
   const {
     items,
@@ -28,7 +34,7 @@ export default function ItemDetailPage() {
     updateItem,
     deleteItem,
     undoDelete,
-    saveDelete,
+    saveDelete: saveDeletedItems,
     hasUnsavedDeletes,
     editField,
     undoEdit,
@@ -46,24 +52,6 @@ export default function ItemDetailPage() {
   const selectedItem =
     items.find((item) => item.sku === itemParam) ||
     items.flatMap((item) => item.variants || []).find((variant) => variant.sku === itemParam)
-
-  useEffect(() => {
-    if (!selectedItem && items.length > 0) {
-      console.log("[v0] Item not found, redirecting. itemParam:", itemParam)
-      router.push("/inventario/articulos")
-    }
-  }, [selectedItem, items, router, itemParam])
-
-  const toggleVariantExpansion = (index: number) => {
-    setExpandedItems((prev) => ({
-      ...prev,
-      [index]: !prev[index],
-    }))
-  }
-
-  const breadcrumbs = selectedItem
-    ? [{ label: "Inventario" }, { label: "Artículos", href: "/inventario/articulos" }, { label: selectedItem.name }]
-    : [{ label: "Inventario" }, { label: "Artículos", href: "/inventario/articulos" }]
 
   const handleUndo = () => {
     if (canUndoEdit) {
@@ -90,16 +78,24 @@ export default function ItemDetailPage() {
 
   const handleGuardar = async () => {
     setIsSaving(true)
+    setShowSaveSuccess(false)
     try {
       if (hasUnsavedEdits) {
+        await sleep(800)
         saveEdit()
       }
       if (hasUnsavedDeletes) {
-        await saveDelete()
+        await sleep(800)
+        await saveDeletedItems()
       }
+      
+      setShowSaveSuccess(true)
       await new Promise((resolve) => setTimeout(resolve, 500))
+    } catch (error) {
+      console.error("[v0] Error saving changes:", error)
     } finally {
       setIsSaving(false)
+      setShowSaveSuccess(false)
     }
   }
 
@@ -123,6 +119,32 @@ export default function ItemDetailPage() {
   const handleFieldChange = (itemSku: string, field: string, value: any) => {
     editField(itemSku, field, value)
   }
+
+  const hasUnsavedChanges = hasUnsavedEdits || hasUnsavedDeletes
+  const { showNavigationModal, handleSaveAndNavigate, handleDiscardAndNavigate, handleCancelNavigation } =
+    useNavigationGuard({
+      hasUnsavedChanges,
+      onSave: handleGuardar,
+      onDiscard: handleDeshacer,
+    })
+
+  useEffect(() => {
+    if (!selectedItem && items.length > 0) {
+      console.log("[v0] Item not found, redirecting. itemParam:", itemParam)
+      router.push("/inventario/articulos")
+    }
+  }, [selectedItem, items, router, itemParam])
+
+  const toggleVariantExpansion = (index: number) => {
+    setExpandedItems((prev) => ({
+      ...prev,
+      [index]: !prev[index],
+    }))
+  }
+
+  const breadcrumbs = selectedItem
+    ? [{ label: "Inventario" }, { label: "Artículos", href: "/inventario/articulos" }, { label: selectedItem.name }]
+    : [{ label: "Inventario" }, { label: "Artículos", href: "/inventario/articulos" }]
 
   if (!selectedItem) {
     return (
@@ -160,45 +182,33 @@ export default function ItemDetailPage() {
                 <UserPanel />
               </div>
 
-              <div className="flex items-center gap-1.5">
-                <div className="flex items-center gap-0.5 px-1 py-0.5 rounded-md bg-muted/50 mr-1.5">
-                  <button
-                    onClick={handleUndo}
-                    disabled={!canUndo}
-                    className="p-1.5 hover:bg-muted rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground px-7"
-                    title="Deshacer último cambio"
-                  >
-                    <Undo2 className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={handleRedo}
-                    disabled={!canRedo}
-                    className="p-1.5 hover:bg-muted rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground px-7"
-                    title="Rehacer último cambio"
-                  >
-                    <Redo2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+              <div className="flex items-center gap-2 min-w-[200px] justify-end">
+                {showSaveSuccess && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md animate-in fade-in slide-in-from-right-2 duration-300">
+                    <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    <span className="text-sm text-green-700 font-medium">Cambios Guardados</span>
+                  </div>
+                )}
 
-                <div className="h-5 w-px bg-border/60" />
+                {hasChanges && !showSaveSuccess && (
+                  <>
+                    <button
+                      onClick={handleDeshacer}
+                      className="px-4 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 rounded transition-all cursor-pointer text-red-700 text-sm font-medium"
+                      title="Deshacer cambios"
+                    >
+                      Deshacer
+                    </button>
 
-                <button
-                  onClick={handleDeshacer}
-                  disabled={!hasChanges}
-                  className="p-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground px-7"
-                  title="Deshacer cambios"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-
-                <button
-                  onClick={handleGuardar}
-                  disabled={!hasChanges}
-                  className="p-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-primary px-7"
-                  title="Guardar cambios"
-                >
-                  <Check className="w-4 h-4" />
-                </button>
+                    <button
+                      onClick={handleGuardar}
+                      className="px-4 py-1.5 bg-green-50 hover:bg-green-100 border border-green-200 rounded transition-all cursor-pointer text-green-700 text-sm font-medium"
+                      title="Guardar cambios"
+                    >
+                      Guardar
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -225,6 +235,13 @@ export default function ItemDetailPage() {
           </main>
         </div>
       </div>
+
+      <UnsavedChangesModal
+        isOpen={showNavigationModal}
+        onSave={handleSaveAndNavigate}
+        onDiscard={handleDiscardAndNavigate}
+        onCancel={handleCancelNavigation}
+      />
     </div>
   )
 }

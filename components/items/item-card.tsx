@@ -479,15 +479,6 @@ export function ItemCard({
               <DropdownMenuItem
                 onClick={(e) => {
                   e.stopPropagation()
-                  // TODO: Implement agregar a colección functionality
-                }}
-              >
-                <Layers className="w-4 h-4 mr-2" />
-                Agregar a Colección
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation()
                   onDelete?.(item)
                 }}
               >

@@ -1,25 +1,30 @@
 "use client"
 import { useState } from "react"
-import { Undo2, Redo2, X, Check } from "lucide-react"
+import { Package, Search, X, Check, AlertCircle, CheckCircle2 } from "lucide-react"
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
+import { Breadcrumb } from "@/components/layout/breadcrumb"
+import type { Item } from "@/lib/types"
 import { Sidebar } from "@/components/layout/sidebar"
 import { PriceGrid } from "@/components/prices/price-grid"
 import { NuevoItemModal } from "@/components/modals/nuevo-item-modal"
 import { NuevoItemConVariantesModal } from "@/components/modals/nuevo-item-con-variantes-modal"
 import { TemplateModal } from "@/components/modals/template-modal"
 import { UserPanel } from "@/components/layout/user-panel"
+import { UnsavedChangesModal } from "@/components/modals/unsaved-changes-modal"
 import { useItems } from "@/hooks/use-items"
 import { useItemSelection } from "@/hooks/use-item-selection"
 import { useModals } from "@/hooks/use-modals"
+import { useNavigationGuard } from "@/hooks/use-navigation-guard"
 import { useSidebar } from "@/hooks/use-sidebar"
-import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
-import { Breadcrumb } from "@/components/layout/breadcrumb"
-import type { Item } from "@/lib/types"
 
 export default function ListaDePreciosPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [itemCreated, setItemCreated] = useState(false)
   const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>({})
+  const [showSaveSuccess, setShowSaveSuccess] = useState(false)
 
   const {
     items,
@@ -30,7 +35,7 @@ export default function ListaDePreciosPage() {
     updateItem,
     deleteItem,
     undoDelete,
-    saveDelete,
+    saveDelete: saveDeletedItemsHook,
     hasUnsavedDeletes,
     deletedItems,
     isCreatingItem,
@@ -123,14 +128,23 @@ export default function ListaDePreciosPage() {
 
   const handleGuardar = async () => {
     setIsSaving(true)
+    setShowSaveSuccess(false)
     try {
       if (hasUnsavedEdits) {
+        await sleep(800)
         saveEdit()
       }
       if (hasUnsavedDeletes) {
-        await saveDelete()
+        await sleep(800)
+        await saveDeletedItemsHook()
       }
-      await new Promise((resolve) => setTimeout(resolve, 300))
+      
+      setShowSaveSuccess(true)
+      setTimeout(() => {
+        setShowSaveSuccess(false)
+      }, 3000)
+    } catch (error) {
+      console.error("[v0] Error saving changes:", error)
     } finally {
       setIsSaving(false)
     }
@@ -198,6 +212,13 @@ export default function ListaDePreciosPage() {
     setTimeout(() => setItemCreated(false), 100)
   }
 
+  const { showNavigationModal, handleSaveAndNavigate, handleDiscardAndNavigate, handleCancelNavigation } =
+    useNavigationGuard({
+      hasUnsavedChanges: hasChanges,
+      onSave: handleGuardar,
+      onDiscard: handleDeshacer,
+    })
+
   return (
     <div className="min-h-screen bg-[rgb(243,242,238)]">
       <div className="px-[6px] py-[6px] flex gap-[6px] h-screen" onClick={handleCloseDropdowns}>
@@ -227,45 +248,34 @@ export default function ListaDePreciosPage() {
               </div>
 
               {/* Right: URDG Buttons */}
-              <div className="flex items-center gap-1.5">
-                <div className="flex items-center gap-0.5 px-1 py-0.5 rounded-md bg-muted/50 mr-1.5">
-                  <button
-                    onClick={handleUndo}
-                    disabled={!canUndo}
-                    className="p-1.5 hover:bg-muted rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground px-7"
-                    title="Deshacer último cambio"
-                  >
-                    <Undo2 className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={handleRedo}
-                    disabled={!canRedo}
-                    className="p-1.5 hover:bg-muted rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground px-7"
-                    title="Rehacer último cambio"
-                  >
-                    <Redo2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+              <div className="flex items-center gap-2 min-w-[200px] justify-end">
+                {showSaveSuccess && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md animate-in fade-in slide-in-from-right-2 duration-300">
+                    <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    <span className="text-sm text-green-700 font-medium">Cambios Guardados</span>
+                  </div>
+                )}
 
-                <div className="h-5 w-px bg-border/60" />
+                {hasChanges && !showSaveSuccess && (
+                  <>
+                    <button
+                      onClick={handleDeshacer}
+                      className="px-4 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 rounded transition-all cursor-pointer text-red-700 text-sm font-medium"
+                      title="Deshacer cambios"
+                    >
+                      Deshacer
+                    </button>
 
-                <button
-                  onClick={handleDeshacer}
-                  disabled={!hasChanges}
-                  className="p-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground px-7"
-                  title="Deshacer cambios"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-
-                <button
-                  onClick={handleGuardar}
-                  disabled={!hasChanges || isSaving}
-                  className="p-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-primary px-7"
-                  title="Guardar cambios"
-                >
-                  <Check className="w-4 h-4" />
-                </button>
+                    <button
+                      onClick={handleGuardar}
+                      disabled={isSaving}
+                      className="px-4 py-1.5 bg-green-50 hover:bg-green-100 border border-green-200 rounded transition-all cursor-pointer text-green-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Guardar cambios"
+                    >
+                      Guardar
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -323,6 +333,13 @@ export default function ListaDePreciosPage() {
         setItemUbicacion={setItemUbicacion}
         handleCreateNuevoItemConVariantes={handleCreateItemConVariantesWithSuccess}
         isCreatingItem={isCreatingItem}
+      />
+
+      <UnsavedChangesModal
+        isOpen={showNavigationModal}
+        onSave={handleSaveAndNavigate}
+        onDiscard={handleDiscardAndNavigate}
+        onCancel={handleCancelNavigation}
       />
     </div>
   )

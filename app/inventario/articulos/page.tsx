@@ -1,7 +1,8 @@
 "use client"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Undo2, Redo2, X, Check } from "lucide-react"
+import { Package, Plus, Search, X, Check, CheckCircle2 } from "lucide-react"
+import { useAccount } from "@/lib/contexts/account-context"
 
 import { Sidebar } from "@/components/layout/sidebar"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
@@ -18,11 +19,17 @@ import { useChangeTracker } from "@/hooks/use-change-tracker"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 import type { Item } from "@/lib/types"
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
 export default function ArticulosPage() {
   const router = useRouter()
   const [isSaving, setIsSaving] = useState(false)
   const [itemCreated, setItemCreated] = useState(false)
   const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>({})
+  const [showSaveSuccess, setShowSaveSuccess] = useState(false) // Declare showSaveSuccess variable
+  const [itemToDelete, setItemToDelete] = useState<Item | null>(null)
+  const [showBatchDeleteModal, setShowBatchDeleteModal] = useState(false)
+  const { currentAccount } = useAccount()
 
   const {
     items,
@@ -33,13 +40,13 @@ export default function ArticulosPage() {
     updateItem,
     deleteItem,
     undoDelete,
-    saveDelete,
+    saveDelete: saveDeletedItems,
     hasUnsavedDeletes,
     deletedItems,
     isCreatingItem,
   } = useItems()
 
-  const { itemSelected, selectAllActive, hasSelectedItems, handleItemButtonClick, handleSelectAllClick } =
+  const { itemSelected, selectAllActive, hasSelectedItems, handleItemButtonClick, handleSelectAllClick, setItemSelected, setSelectAllActive } =
     useItemSelection(items.length)
 
   const {
@@ -116,24 +123,109 @@ export default function ArticulosPage() {
 
   const handleGuardar = async () => {
     setIsSaving(true)
+    setShowSaveSuccess(false)
 
     try {
-      const changes = changeTracker.saveAll()
+      await sleep(800)
 
       if (hasUnsavedDeletes) {
-        await saveDelete()
+        await saveDeletedItems()
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      changeTracker.commitAll()
+      
+      setShowSaveSuccess(true)
+      setTimeout(() => {
+        setShowSaveSuccess(false)
+      }, 3000)
+    } catch (error) {
+      console.error("[v0] Error saving changes:", error)
     } finally {
       setIsSaving(false)
     }
   }
 
   const handleDeleteWithTracking = (item: Item) => {
-    const originalIndex = items.findIndex((i) => i.sku === item.sku)
-    changeTracker.trackChange("delete", item, { originalIndex })
-    deleteItem(item)
+    setItemToDelete(item)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!itemToDelete) return
+
+    const originalIndex = items.findIndex((i) => i.sku === itemToDelete.sku)
+    changeTracker.trackChange("delete", itemToDelete, { originalIndex })
+    deleteItem(itemToDelete)
+
+    await sleep(500)
+
+    // Manually save to localStorage to ensure persistence
+    const skuToDelete = itemToDelete.sku
+    const remainingItems = items.filter((item) => item.sku !== skuToDelete)
+    
+    if (typeof window !== "undefined") {
+      const storageKey = `stockio-items-${currentAccount}`
+      localStorage.setItem(storageKey, JSON.stringify(remainingItems))
+      console.log("[v0] Saved remaining items to localStorage after individual delete:", remainingItems.length)
+    }
+
+    await saveDeletedItems()
+
+    setItemToDelete(null)
+    setShowSaveSuccess(true)
+    setTimeout(() => {
+      setShowSaveSuccess(false)
+    }, 3000)
+  }
+
+  const handleCancelDelete = () => {
+    setItemToDelete(null)
+  }
+
+  const handleBatchDeleteClick = () => {
+    setShowBatchDeleteModal(true)
+  }
+
+  const handleConfirmBatchDelete = async () => {
+    const selectedItems = items.filter((_, index) => itemSelected[index])
+    const skusToDelete = selectedItems.map((item) => item.sku)
+
+    console.log("[v0] Batch delete starting, selected items:", selectedItems.length)
+    console.log("[v0] SKUs to delete:", skusToDelete)
+
+    // Delete items from state
+    for (const item of selectedItems) {
+      deleteItem(item)
+    }
+
+    // Wait for state updates
+    await sleep(800)
+
+    // Manually filter and save to localStorage to ensure persistence
+    const remainingItems = items.filter((item) => !skusToDelete.includes(item.sku))
+    console.log("[v0] After filtering, remaining items:", remainingItems.length)
+    
+    if (typeof window !== "undefined") {
+      const storageKey = `stockio-items-${currentAccount}`
+      localStorage.setItem(storageKey, JSON.stringify(remainingItems))
+      console.log("[v0] Saved remaining items to localStorage:", remainingItems.length)
+    }
+
+    // Now save deleted items state (to clear the deletedItems array)
+    await saveDeletedItems()
+
+    // Reset selections completely - don't use handleSelectAllClick as it just toggles
+    setItemSelected([])
+    setSelectAllActive(false)
+
+    setShowBatchDeleteModal(false)
+    setShowSaveSuccess(true)
+    setTimeout(() => {
+      setShowSaveSuccess(false)
+    }, 3000)
+  }
+
+  const handleCancelBatchDelete = () => {
+    setShowBatchDeleteModal(false)
   }
 
   const handleItemClick = (item: Item) => {
@@ -208,46 +300,14 @@ export default function ArticulosPage() {
                 <UserPanel />
               </div>
 
-              {/* Right: Utility Buttons */}
-              <div className="flex items-center gap-1.5">
-                <div className="flex items-center gap-0.5 px-1 py-0.5 rounded-md bg-muted/50 mr-1.5">
-                  <button
-                    onClick={handleUndo}
-                    disabled={!changeTracker.canUndo}
-                    className="p-1.5 hover:bg-muted rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground px-7"
-                    title="Deshacer último cambio"
-                  >
-                    <Undo2 className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={handleRedo}
-                    disabled={!changeTracker.canRedo}
-                    className="p-1.5 hover:bg-muted rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground px-7"
-                    title="Rehacer último cambio"
-                  >
-                    <Redo2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-
-                <div className="h-5 w-px bg-border/60" />
-
-                <button
-                  onClick={handleDeshacer}
-                  disabled={!changeTracker.hasUnsavedChanges && !hasUnsavedDeletes}
-                  className="p-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground px-7"
-                  title="Deshacer cambios"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-
-                <button
-                  onClick={handleGuardar}
-                  disabled={!changeTracker.hasUnsavedChanges && !hasUnsavedDeletes}
-                  className="p-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-primary px-7"
-                  title="Guardar cambios"
-                >
-                  <Check className="w-4 h-4" />
-                </button>
+              {/* Right: Success Message Only */}
+              <div className="flex items-center gap-2 min-w-[200px] justify-end">
+                {showSaveSuccess && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md animate-in fade-in slide-in-from-right-2 duration-300">
+                    <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    <span className="text-sm text-green-700 font-medium">Cambios Guardados</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -259,14 +319,15 @@ export default function ArticulosPage() {
                   <ItemsGrid
                     items={items}
                     gridSize={gridSize}
-                    itemSelected={itemSelected}
+                    depositStock={depositStock}
+                    updateDepositStock={updateDepositStock}
                     expandedItems={expandedItems}
+                    setExpandedItems={setExpandedItems}
+                    onDeleteItem={handleDeleteWithTracking}
+                    itemSelected={itemSelected}
                     handleItemButtonClick={handleItemButtonClick}
                     handleItemClick={handleItemClick}
                     toggleVariantExpansion={toggleVariantExpansion}
-                    updateDepositStock={updateDepositStock}
-                    depositStock={depositStock}
-                    onDeleteItem={handleDeleteWithTracking}
                     selectAllActive={selectAllActive}
                     handleSelectAllClick={handleSelectAllClick}
                     gridSizeDropdownOpen={gridSizeDropdownOpen}
@@ -275,6 +336,8 @@ export default function ArticulosPage() {
                     isExpanded={false}
                     handleOpenNuevoItem={handleOpenNuevoItem}
                     handleOpenNuevoItemConVariantes={handleOpenNuevoItemConVariantes}
+                    hasSelectedItems={hasSelectedItems}
+                    onBatchDelete={handleBatchDeleteClick}
                   />
                 </div>
               </div>
@@ -318,6 +381,56 @@ export default function ArticulosPage() {
         handleCreateNuevoItemConVariantes={handleCreateItemConVariantesWithSuccess}
         isCreatingItem={isCreatingItem}
       />
+
+      {/* Delete Confirmation Modal */}
+      {itemToDelete && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100010]" onClick={handleCancelDelete}>
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-foreground mb-2">
+              ¿Seguro deseas eliminar el item?
+            </h3>
+            <div className="flex items-center gap-3 justify-end mt-6">
+              <button
+                onClick={handleCancelDelete}
+                className="px-4 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-md transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors cursor-pointer"
+              >
+                Aceptar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Batch Delete Confirmation Modal */}
+      {showBatchDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100010]" onClick={handleCancelBatchDelete}>
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-foreground mb-2">
+              ¿Seguro deseas eliminar los items seleccionados?
+            </h3>
+            <div className="flex items-center gap-3 justify-end mt-6">
+              <button
+                onClick={handleCancelBatchDelete}
+                className="px-4 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-md transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmBatchDelete}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors cursor-pointer"
+              >
+                Aceptar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

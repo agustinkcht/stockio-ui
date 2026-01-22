@@ -17,6 +17,17 @@ interface ProveedoresGridProps {
   onAddProveedor: (proveedor: Proveedor) => void
   onUpdateProveedor: (id: string, updates: Partial<Proveedor>) => void
   onDeleteProveedor: (id: string) => void
+  gridSize?: string
+  gridSizeDropdownOpen?: boolean
+  setGridSizeDropdownOpen?: (value: boolean) => void
+  setGridSize?: (size: string) => void
+  onOpenNuevoProveedor?: () => void
+  proveedorSelected?: boolean[]
+  handleProveedorButtonClick?: (index: number) => void
+  selectAllActive?: boolean
+  handleSelectAllClick?: () => void
+  hasSelectedProveedores?: boolean
+  onBatchDelete?: () => void
 }
 
 export function ProveedoresGrid({
@@ -24,16 +35,31 @@ export function ProveedoresGrid({
   onAddProveedor,
   onUpdateProveedor,
   onDeleteProveedor,
+  gridSize: gridSizeProp = "md",
+  gridSizeDropdownOpen: gridSizeDropdownOpenProp = false,
+  setGridSizeDropdownOpen,
+  setGridSize: setGridSizeProp,
+  onOpenNuevoProveedor,
+  proveedorSelected: proveedorSelectedProp = [],
+  handleProveedorButtonClick,
+  selectAllActive: selectAllActiveProp = false,
+  handleSelectAllClick,
+  hasSelectedProveedores = false,
+  onBatchDelete,
 }: ProveedoresGridProps) {
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedProveedores, setSelectedProveedores] = useState<string[]>([])
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
-  const [gridSize, setGridSize] = useState<"sm" | "md" | "lg">("md")
+  const [gridSize, setGridSize] = useState<"sm" | "md" | "lg">(gridSizeProp as "sm" | "md" | "lg")
   const [showNuevoModal, setShowNuevoModal] = useState(false)
   const [showOrderModal, setShowOrderModal] = useState(false)
   const [showFilterModal, setShowFilterModal] = useState(false)
   const [filtros, setFiltros] = useState<FiltrosProveedores>({})
   const [orden, setOrden] = useState<OrdenProveedores>({ factor: "nombre", direction: "asc" })
+  const [selectedProveedores, setSelectedProveedores] = useState<string[]>([])
+  
+  // Use parent's state if available, otherwise use internal
+  const proveedorSelected = proveedorSelectedProp.length > 0 ? proveedorSelectedProp : []
+  const selectAllActive = selectAllActiveProp
 
   const [showEditModal, setShowEditModal] = useState(false)
   const [proveedorToEdit, setProveedorToEdit] = useState<Proveedor | null>(null)
@@ -113,19 +139,14 @@ export function ProveedoresGrid({
   }, [])
 
   const handleSelectAll = () => {
-    if (selectedProveedores.length === sortedAndFilteredProveedores.length && sortedAndFilteredProveedores.length > 0) {
-      setSelectedProveedores([])
-    } else {
-      setSelectedProveedores(sortedAndFilteredProveedores.map((p) => p.id))
+    if (handleSelectAllClick) {
+      handleSelectAllClick()
     }
   }
 
   const handleSelectProveedor = (index: number) => {
-    const proveedor = sortedAndFilteredProveedores[index]
-    if (selectedProveedores.includes(proveedor.id)) {
-      setSelectedProveedores(selectedProveedores.filter((id) => id !== proveedor.id))
-    } else {
-      setSelectedProveedores([...selectedProveedores, proveedor.id])
+    if (handleProveedorButtonClick) {
+      handleProveedorButtonClick(index)
     }
   }
 
@@ -143,8 +164,6 @@ export function ProveedoresGrid({
   }
 
   const hasActiveFilters = Object.keys(filtros).length > 0
-  const selectAllActive =
-    selectedProveedores.length === sortedAndFilteredProveedores.length && sortedAndFilteredProveedores.length > 0
 
   const heightClass = gridSize === "sm" ? "h-[60px]" : gridSize === "md" ? "h-[80px]" : "h-[100px]"
   const textSizeClass = gridSize === "sm" ? "text-xs" : gridSize === "md" ? "text-sm" : "text-base"
@@ -155,16 +174,29 @@ export function ProveedoresGrid({
       <div className="px-6 pt-6 pb-4">
         <div className="bg-white border border-border/40 rounded-lg shadow-sm">
           <div className="px-4 py-3 flex items-center justify-between gap-4">
-            {/* Left: Nuevo Proveedor Button with Plus icon and blue accent */}
-            <Button
-              onClick={() => setShowNuevoModal(true)}
-              variant="ghost"
-              size="sm"
-              className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer gap-1.5 shrink-0"
-            >
-              <Plus className="w-3.5 h-3.5 text-blue-600" />
-              Nuevo Proveedor
-            </Button>
+            {/* Left: Action buttons */}
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={onOpenNuevoProveedor || (() => setShowNuevoModal(true))}
+                variant="ghost"
+                size="sm"
+                className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer gap-1.5 shrink-0"
+              >
+                <Plus className="w-3.5 h-3.5 text-blue-600" />
+                Nuevo Proveedor
+              </Button>
+
+              {hasSelectedProveedores && (
+                <Button
+                  onClick={onBatchDelete}
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-xs transition-colors border shadow-sm bg-red-50 hover:bg-red-100 border-red-200 text-red-700 cursor-pointer"
+                >
+                  Eliminar
+                </Button>
+              )}
+            </div>
 
             {/* Center: Search Bar */}
             <div className="flex-1 max-w-md relative">
@@ -229,19 +261,28 @@ export function ProveedoresGrid({
             <div>Historial</div>
             <div className="flex items-center justify-end gap-2">
               <button
-                onClick={() => setGridSize("sm")}
+                onClick={() => {
+                  setGridSize("sm")
+                  setGridSizeProp?.("sm")
+                }}
                 className={`text-xs ${gridSize === "sm" ? "font-bold" : "font-normal"}`}
               >
                 sm
               </button>
               <button
-                onClick={() => setGridSize("md")}
+                onClick={() => {
+                  setGridSize("md")
+                  setGridSizeProp?.("md")
+                }}
                 className={`text-xs ${gridSize === "md" ? "font-bold" : "font-normal"}`}
               >
                 md
               </button>
               <button
-                onClick={() => setGridSize("lg")}
+                onClick={() => {
+                  setGridSize("lg")
+                  setGridSizeProp?.("lg")
+                }}
                 className={`text-xs ${gridSize === "lg" ? "font-bold" : "font-normal"}`}
               >
                 lg
@@ -255,7 +296,7 @@ export function ProveedoresGrid({
         <div className="bg-white border border-border/40 border-t-0 rounded-b-lg">
           <div className="divide-y divide-border/30">
             {sortedAndFilteredProveedores.map((proveedor, index) => {
-              const isSelected = selectedProveedores.includes(proveedor.id)
+              const isSelected = proveedorSelected[index] || false
               const isHovered = hoveredIndex === index
 
               const displayName =

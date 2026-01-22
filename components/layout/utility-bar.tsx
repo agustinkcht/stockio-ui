@@ -1,6 +1,6 @@
 "use client"
 
-import { Undo2, Redo2, CheckCircle2, X, Check } from "lucide-react"
+import { CheckCircle2, Undo2, Redo2, X, Check } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { Breadcrumb } from "./breadcrumb"
 
@@ -120,9 +120,9 @@ export function UtilityBar({
 
           {showSaveSuccess && !isSaving && (
             <div className="absolute inset-0 flex items-center justify-end pr-4 animate-fade-out">
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-success/10 border border-success/20 rounded-md">
-                <CheckCircle2 className="w-3.5 h-3.5 text-success" />
-                <span className="text-xs text-success font-medium">Cambios guardados</span>
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md">
+                <CheckCircle2 className="w-4 h-4 text-green-600" />
+                <span className="text-sm text-green-700 font-medium">Cambios Guardados</span>
               </div>
             </div>
           )}
@@ -136,46 +136,22 @@ export function UtilityBar({
             </div>
           )}
 
-          {!isSaving && !showSaveSuccess && !showItemCreatedSuccess && (
-            <div className="flex items-center gap-1.5">
-              <div className="flex items-center gap-0.5 px-1 py-0.5 rounded-md bg-navbar-accent/30 mr-1.5">
-                <button
-                  onClick={onUndo}
-                  disabled={!canUndo}
-                  className="p-1.5 hover:bg-navbar-accent rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-navbar-foreground hover:scale-105"
-                  title="Deshacer último cambio"
-                >
-                  <Undo2 className="w-3.5 h-3.5" />
-                </button>
-
-                <button
-                  onClick={onRedo}
-                  disabled={!canRedo}
-                  className="p-1.5 hover:bg-navbar-accent rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-navbar-foreground hover:scale-105 mr-0"
-                  title="Rehacer último cambio"
-                >
-                  <Redo2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              <div className="h-5 w-px bg-border/60" />
-
+          {!isSaving && !showSaveSuccess && !showItemCreatedSuccess && hasUnsavedChanges && (
+            <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2 duration-200">
               <button
                 onClick={onDeshacer}
-                disabled={!hasUnsavedChanges}
-                className="p-1.5 bg-primary/10 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-navbar-foreground hover:scale-105 px-7 ml-[-6px]"
+                className="px-4 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 rounded transition-all cursor-pointer text-red-700 text-sm font-medium"
                 title="Deshacer cambios"
               >
-                <X className="w-4 h-4" />
+                Deshacer
               </button>
 
               <button
                 onClick={onGuardar}
-                disabled={!hasUnsavedChanges}
-                className="p-1.5 bg-primary/10 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-primary hover:scale-105 px-7 ml-0 mr-px"
+                className="px-4 py-1.5 bg-green-50 hover:bg-green-100 border border-green-200 rounded transition-all cursor-pointer text-green-700 text-sm font-medium"
                 title="Guardar cambios"
               >
-                <Check className="w-4 h-4 ml-0 mr-0" />
+                Guardar
               </button>
             </div>
           )}
