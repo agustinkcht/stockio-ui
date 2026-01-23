@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import type React from "react"
 import type { Item } from "@/lib/types"
-import { ChevronDown, ChevronRight, Plus, Copy, X, Minus } from "lucide-react"
+import { ChevronDown, ChevronRight, Plus, Copy, X, Minus, Check } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
 import { SAVED_ATRIBUTOS, TEMPLATES } from "@/lib/constants" // DEPOSITS import removed
@@ -140,6 +140,8 @@ export function ItemDetailPanel({
     reservado: { operation: "aumentar", value: "" },
   })
 
+  const [advancedStockEditMode, setAdvancedStockEditMode] = useState(false)
+
   const handleStockModificationAccept = (stockType: "total" | "reservado") => {
     if (!selectedItem?.sku) return
 
@@ -199,10 +201,14 @@ export function ItemDetailPanel({
     }
   }>({})
 
-  const previousVariantsRef = useRef<string>("")
+  const previousVariantsRef = useRef<string | null>(null)
 
   // State for variant input
   const [varianteInput, setVarianteInput] = useState<Record<number, string>>({})
+
+  // State for stock dropdown visibility
+  const [showTotalDropdown, setShowTotalDropdown] = useState(false)
+  const [showReservadoDropdown, setShowReservadoDropdown] = useState(false)
 
   // Compute whether item has existing attributes
   const hasExistingAttributes =
@@ -512,7 +518,13 @@ export function ItemDetailPanel({
       })
 
       const variantsKey = JSON.stringify(updatedVariants.map((v) => ({ sku: v.sku, attrs: v.atributosPrincipales })))
-      if (previousVariantsRef.current !== variantsKey) {
+      
+      // Only trigger onFieldChange if variants actually changed and this isn't the initial mount
+      if (previousVariantsRef.current === null) {
+        // First time - just set the reference, don't trigger change
+        previousVariantsRef.current = variantsKey
+      } else if (previousVariantsRef.current !== variantsKey) {
+        // Variants changed - trigger update
         previousVariantsRef.current = variantsKey
         if (onFieldChange && selectedItem.sku) {
           onFieldChange(selectedItem.sku, "variants", updatedVariants)
@@ -658,9 +670,9 @@ export function ItemDetailPanel({
       {/* <Breadcrumb dynamicContent={null} /> */}
 
       <div className="px-8 pb-6 bg-slate-50 min-h-screen pl-8 pt-0">
-        <div className="grid grid-cols-10 gap-24">
-          <div className="col-span-3 sticky top-4 z-20 rounded-xl max-h-[calc(100vh-2rem)] overflow-y-auto border flex flex-col transition-all duration-300 border-slate-100 mt-4 bg-transparent border-none shadow-none">
-            <div className="p-6 mt-0 px-8 pl-9 pr-8 bg-transparent border-none shadow-none">
+        <div className="grid grid-cols-9 gap-2">
+          <div className="col-span-3 sticky top-4 z-20 rounded-xl max-h-[calc(100vh-2rem)] border flex flex-col transition-all duration-300 border-slate-100 mt-4 bg-transparent border-none shadow-none pr-1.5 pl-0">
+            <div className="p-6 mt-0 px-8 bg-transparent border-none shadow-none pl-7 pr-11">
               {isViewingContainer && (
                 <div className="mt-2">
                   <div className="w-full h-64 bg-muted/30 rounded-lg flex items-center justify-center overflow-hidden">
@@ -676,7 +688,7 @@ export function ItemDetailPanel({
               )}
 
               {!isViewingContainer && (
-                <div className="mt-2">
+                <div className="mt-2 px-7">
                   <div className="w-full h-64 bg-muted/30 rounded-lg flex items-center justify-center overflow-hidden">
                     <Image
                       src={getCategoryImage(selectedItem.categoria) || "/placeholder.svg"}
@@ -691,151 +703,205 @@ export function ItemDetailPanel({
 
               <div className="mt-6 mb-0">
                 <h2 className="font-semibold text-foreground text-lg mb-0">{selectedItem.name}</h2>
-                <div className="border-t border-slate-200 my-4 -mx-8"></div>
+                <div className="border-t border-slate-200 my-4 px-0"></div>
 
-                <div className="flex items-center gap-2 mt-6">
-                  <p className="text-sm text-muted-foreground mt-0">
-                    {isViewingContainer ? "SKU Padre:" : "SKU:"}{" "}
-                    {editingSku ? (
-                      <input
-                        type="text"
-                        value={skuValue}
-                        onChange={(e) => setSkuValue(e.target.value)}
-                        onBlur={handleSkuBlur}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleSkuBlur()
-                        }}
-                        className="inline-block w-48 bg-secondary border border-border text-foreground px-2 py-0.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                        autoFocus
-                      />
-                    ) : (
-                      <span
-                        onClick={() => setEditingSku(true)}
-                        className="font-mono text-foreground cursor-pointer hover:underline"
-                      >
-                        {selectedItem?.sku ||
-                          selectedItem?.name
-                            .toUpperCase()
-                            .replace(/[^A-Z0-9\s]/g, "")
-                            .split(" ")
-                            .map((word: string) => word.substring(0, 3))
-                            .join("-")
-                            .substring(0, 15)}
-                      </span>
-                    )}
-                  </p>
-                  {!editingSku && (
-                    <button
-                      onClick={handleCopySku}
-                      className="text-muted-foreground hover:text-foreground transition-colors"
-                      title="Copiar SKU"
-                    >
-                      {skuCopied ? <span className="text-success text-xs">✓</span> : <Copy className="h-3.5 w-3.5" />}
-                    </button>
-                  )}
-                </div>
-
+                {/* Stock section for standalone/children items */}
                 {!isViewingContainer && (
-                  <div className="flex items-center gap-2 mt-1 mb-0">
-                    <p className="text-sm text-muted-foreground">Cód. Universal:</p>
-                    {editingCodigoUniversal ? (
-                      <input
-                        type="text"
-                        value={codigoUniversalValue}
-                        onChange={(e) => setCodigoUniversalValue(e.target.value)}
-                        onBlur={handleCodigoUniversalBlur}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleCodigoUniversalBlur()
-                        }}
-                        className="inline-block w-48 bg-secondary border border-border text-foreground px-2 py-0.5 rounded text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                        autoFocus
-                      />
-                    ) : (
-                      <span
-                        onClick={() => setEditingCodigoUniversal(true)}
-                        className="font-mono text-foreground cursor-pointer hover:underline"
-                      >
-                        {selectedItem.codigoUniversal || "N/A"}
-                      </span>
-                    )}
-                    {!editingCodigoUniversal && (
+                  <div className="mt-4">
+                    <h3 className="text-xs font-semibold text-foreground/60 uppercase tracking-wider mb-3">
+                      Stock en Depósito: Torcuato
+                    </h3>
+
+                    <div className="space-y-2">
+                      {/* Disponible - Read only */}
+                      <div className="border border-emerald-200 rounded-lg bg-emerald-50/50 overflow-hidden">
+                        <div className="flex items-center justify-between px-3 py-2.5">
+                          <div className="text-xs font-medium text-emerald-700 uppercase tracking-wide">Disponible</div>
+                          <span className="text-base font-bold text-emerald-600 tabular-nums mr-[35px]">
+                            {Number.parseInt(selectedItem?.stock?.total || "0") -
+                              Number.parseInt(selectedItem?.stock?.reservado || "0")}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Total - Editable */}
+                      <div className="border border-border/40 rounded-lg bg-white shadow-sm overflow-hidden">
+                        <div className="flex items-center justify-between px-3 py-2.5">
+                          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total</div>
+                          {!advancedStockEditMode ? (
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => {
+                                  if (selectedItem?.sku) {
+                                    const current = Number.parseInt(selectedItem?.stock?.total || "0")
+                                    updateStock(selectedItem.sku, "total", Math.max(0, current - 1))
+                                  }
+                                }}
+                                className="w-6 h-6 rounded border border-border/50 hover:bg-accent hover:border-border transition-all flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer"
+                              >
+                                <Minus className="w-3 h-3" />
+                              </button>
+                              <span className="text-sm font-semibold text-foreground min-w-[2rem] text-center tabular-nums">
+                                {Number.parseInt(selectedItem?.stock?.total || "0")}
+                              </span>
+                              <button
+                                onClick={() => {
+                                  if (selectedItem?.sku) {
+                                    const current = Number.parseInt(selectedItem?.stock?.total || "0")
+                                    updateStock(selectedItem.sku, "total", current + 1)
+                                  }
+                                }}
+                                className="w-6 h-6 rounded border border-border/50 hover:bg-accent hover:border-border transition-all flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer"
+                              >
+                                <Plus className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5">
+                              <select
+                                value={stockModification.total.operation}
+                                onChange={(e) =>
+                                  setStockModification((prev) => ({
+                                    ...prev,
+                                    total: { ...prev.total, operation: e.target.value },
+                                  }))
+                                }
+                                className="text-xs border border-border/50 rounded bg-background hover:bg-accent transition-colors focus:outline-none focus:ring-1 focus:ring-primary/20 cursor-pointer px-1 py-1"
+                              >
+                                <option value="aumentar">Aumentar</option>
+                                <option value="disminuir">Disminuir</option>
+                                <option value="reemplazar">Reemplazar</option>
+                              </select>
+                              <input
+                                type="number"
+                                placeholder="0"
+                                value={stockModification.total.value}
+                                onChange={(e) =>
+                                  setStockModification((prev) => ({
+                                    ...prev,
+                                    total: { ...prev.total, value: e.target.value },
+                                  }))
+                                }
+                                className="w-14 text-xs border border-border/50 rounded px-1.5 py-1 bg-background focus:outline-none focus:ring-1 focus:ring-primary/20 tabular-nums text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              />
+                              <span className="text-sm font-semibold text-foreground tabular-nums min-w-[2rem] text-center">
+                                {Number.parseInt(selectedItem?.stock?.total || "0")}
+                              </span>
+                              <button
+                                onClick={() => handleStockModificationAccept("total")}
+                                disabled={!stockModification.total.value}
+                                className={`w-6 h-6 rounded border flex items-center justify-center transition-all ${
+                                  stockModification.total.value
+                                    ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90 cursor-pointer"
+                                    : "bg-muted/30 text-muted-foreground/30 border-border/30 cursor-not-allowed"
+                                }`}
+                              >
+                                <Check className="w-3 h-3" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Reservado - Editable */}
+                      <div className="border border-border/40 rounded-lg bg-white shadow-sm overflow-hidden">
+                        <div className="flex items-center justify-between px-3 py-2.5">
+                          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                            Reservado
+                          </div>
+                          {!advancedStockEditMode ? (
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => {
+                                  if (selectedItem?.sku) {
+                                    const current = Number.parseInt(selectedItem?.stock?.reservado || "0")
+                                    updateStock(selectedItem.sku, "reservado", Math.max(0, current - 1))
+                                  }
+                                }}
+                                className="w-6 h-6 rounded border border-border/50 hover:bg-accent hover:border-border transition-all flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer"
+                              >
+                                <Minus className="w-3 h-3" />
+                              </button>
+                              <span className="text-sm font-semibold text-foreground min-w-[2rem] text-center tabular-nums">
+                                {Number.parseInt(selectedItem?.stock?.reservado || "0")}
+                              </span>
+                              <button
+                                onClick={() => {
+                                  if (selectedItem?.sku) {
+                                    const current = Number.parseInt(selectedItem?.stock?.reservado || "0")
+                                    updateStock(selectedItem.sku, "reservado", current + 1)
+                                  }
+                                }}
+                                className="w-6 h-6 rounded border border-border/50 hover:bg-accent hover:border-border transition-all flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer"
+                              >
+                                <Plus className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5">
+                              <select
+                                value={stockModification.reservado.operation}
+                                onChange={(e) =>
+                                  setStockModification((prev) => ({
+                                    ...prev,
+                                    reservado: { ...prev.reservado, operation: e.target.value },
+                                  }))
+                                }
+                                className="text-xs border border-border/50 rounded bg-background hover:bg-accent transition-colors focus:outline-none focus:ring-1 focus:ring-primary/20 cursor-pointer px-1 py-1"
+                              >
+                                <option value="aumentar">Aumentar</option>
+                                <option value="disminuir">Disminuir</option>
+                                <option value="reemplazar">Reemplazar</option>
+                              </select>
+                              <input
+                                type="number"
+                                placeholder="0"
+                                value={stockModification.reservado.value}
+                                onChange={(e) =>
+                                  setStockModification((prev) => ({
+                                    ...prev,
+                                    reservado: { ...prev.reservado, value: e.target.value },
+                                  }))
+                                }
+                                className="w-14 text-xs border border-border/50 rounded px-1.5 py-1 bg-background focus:outline-none focus:ring-1 focus:ring-primary/20 tabular-nums text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              />
+                              <span className="text-sm font-semibold text-foreground tabular-nums min-w-[2rem] text-center">
+                                {Number.parseInt(selectedItem?.stock?.reservado || "0")}
+                              </span>
+                              <button
+                                onClick={() => handleStockModificationAccept("reservado")}
+                                disabled={!stockModification.reservado.value}
+                                className={`w-6 h-6 rounded border flex items-center justify-center transition-all ${
+                                  stockModification.reservado.value
+                                    ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90 cursor-pointer"
+                                    : "bg-muted/30 text-muted-foreground/30 border-border/30 cursor-not-allowed"
+                                }`}
+                              >
+                                <Check className="w-3 h-3" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Edit Mode Toggle Button */}
                       <button
-                        onClick={handleCopyCodigoUniversal}
-                        className="text-muted-foreground hover:text-foreground transition-colors"
-                        title="Copiar Código Universal"
-                        disabled={!selectedItem?.codigoUniversal}
+                        onClick={() => setAdvancedStockEditMode(!advancedStockEditMode)}
+                        className="w-full mt-2 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground border border-border/40 rounded-lg hover:bg-accent transition-all cursor-pointer"
                       >
-                        {codigoUniversalCopied ? (
-                          <span className="text-success text-xs">✓</span>
-                        ) : (
-                          <Copy className="h-3.5 w-3.5" />
-                        )}
+                        Modo de edición: {advancedStockEditMode ? "Avanzado" : "Simple"}
                       </button>
-                    )}
+                    </div>
                   </div>
                 )}
               </div>
-
-              {isViewingContainer && (
-                <div className="mt-9">
-                  <div className="w-full mt-0">
-                    <h3 className="text-sm font-medium text-foreground text-left ml-3 mb-0 mt-0">Descripción</h3>
-                    {editingDescripcion ? (
-                      <textarea
-                        value={descripcionValue}
-                        onChange={(e) => setDescripcionValue(e.target.value)}
-                        onBlur={handleDescripcionBlur}
-                        className="w-full h-32 bg-transparent border-none rounded-lg p-3 text-sm text-foreground focus:outline-none focus:ring-0 resize-none"
-                        placeholder="Agregar descripción del producto..."
-                        autoFocus
-                      />
-                    ) : (
-                      <div
-                        onClick={() => setEditingDescripcion(true)}
-                        className="w-full border border-border rounded-lg p-3 text-sm text-foreground cursor-text hover:border-muted-foreground overflow-y-auto bg-transparent border-none h-24"
-                      >
-                        {descripcionValue || (
-                          <span className="text-muted-foreground">Click para agregar descripción...</span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {!isViewingContainer && (
-                <div className="mt-9">
-                  <div className="w-full mt-0">
-                    <h3 className="text-sm font-medium text-foreground text-left ml-3 mb-0 mt-0">Descripción</h3>
-                    {editingDescripcion ? (
-                      <textarea
-                        value={descripcionValue}
-                        onChange={(e) => setDescripcionValue(e.target.value)}
-                        onBlur={handleDescripcionBlur}
-                        className="w-full h-32 bg-transparent border-none rounded-lg p-3 text-sm text-foreground focus:outline-none focus:ring-0 resize-none"
-                        placeholder="Agregar descripción del producto..."
-                        autoFocus
-                      />
-                    ) : (
-                      <div
-                        onClick={() => setEditingDescripcion(true)}
-                        className="w-full border border-border rounded-lg p-3 text-sm text-foreground cursor-text hover:border-muted-foreground overflow-y-auto bg-transparent border-none h-24"
-                      >
-                        {descripcionValue || (
-                          <span className="text-muted-foreground">Click para agregar descripción...</span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
 
               {/* Rest of the content with updated light mode styling */}
             </div>
           </div>
 
           {/* Right Column - Segment Buttons + Content */}
-          <div className="col-span-7 flex flex-col">
+          <div className="col-span-6 flex flex-col">
             {/* Sticky Segment Buttons */}
             <div className="sticky top-[0px] z-20 backdrop-blur-[2px] bg-slate-50 mb-4">
               <div className="flex items-center gap-0 h-10 mt-3">
@@ -863,23 +929,13 @@ export function ItemDetailPanel({
                     </button>
                     <button
                       onClick={() => setSelectedDetailTab("variantes")}
-                      className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer ${
+                      className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer rounded-tr-md ${
                         selectedDetailTab === "variantes"
                           ? "border-primary bg-accent text-foreground"
                           : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
                       }`}
                     >
                       <span className="text-sm font-medium uppercase tracking-wider">Variantes</span>
-                    </button>
-                    <button
-                      onClick={() => setSelectedDetailTab("stock-variantes")}
-                      className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer rounded-tr-md ${
-                        selectedDetailTab === "stock-variantes"
-                          ? "border-primary bg-accent text-foreground"
-                          : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                      }`}
-                    >
-                      <span className="text-sm font-medium uppercase tracking-wider">Stock</span>
                     </button>
                   </>
                 ) : (
@@ -896,23 +952,13 @@ export function ItemDetailPanel({
                     </button>
                     <button
                       onClick={() => setSelectedDetailTab("atributos")}
-                      className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer ${
+                      className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer rounded-tr-md ${
                         selectedDetailTab === "atributos"
                           ? "border-primary bg-accent text-foreground"
                           : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
                       }`}
                     >
                       <span className="text-sm font-medium uppercase tracking-wider">Atributos</span>
-                    </button>
-                    <button
-                      onClick={() => setSelectedDetailTab("stock")}
-                      className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer rounded-tr-md ${
-                        selectedDetailTab === "stock"
-                          ? "border-primary bg-accent text-foreground"
-                          : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                      }`}
-                    >
-                      <span className="text-sm font-medium uppercase tracking-wider">Stock</span>
                     </button>
                   </>
                 )}
@@ -1612,280 +1658,6 @@ export function ItemDetailPanel({
                       )}
                     </div>
                   )}
-
-                  {selectedDetailTab === "stock-variantes" && (
-                    <div className="h-full flex flex-col py-2">
-                      {variantItems.length > 0 ? (
-                        <div className="space-y-3">
-                          {variantItems.map((variant) => {
-                            const sourceVariant = selectedItem.variants?.find((v: any) => {
-                              if (!v.atributosPrincipales) return false
-
-                              const hasMatchingAttr1 = variant.variant1
-                                ? v.atributosPrincipales.some((attr: any) => attr.value === variant.variant1)
-                                : true
-                              const hasMatchingAttr2 = variant.variant2
-                                ? v.atributosPrincipales.some((attr: any) => attr.value === variant.variant2)
-                                : true
-
-                              return hasMatchingAttr1 && hasMatchingAttr2
-                            })
-                            const variantStock = sourceVariant?.stock || { total: "0", reservado: "0", disponible: "0" }
-
-                            const totalStock = Number.parseInt(variantStock.total || "0")
-                            const totalReservado = Number.parseInt(variantStock.reservado || "0")
-                            const totalDisponible = totalStock - totalReservado
-
-                            const displaySku = sourceVariant?.sku || variant.sku
-
-                            const variantMod = variantStockModification[displaySku] || {
-                              total: { type: "aumentar", value: "" },
-                              reservado: { type: "aumentar", value: "" },
-                            }
-
-                            return (
-                              <div
-                                key={variant.sku}
-                                className="bg-background border border-border/40 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
-                              >
-                                <button
-                                  onClick={() => toggleVariantStockExpansion(variant.sku)}
-                                  className="w-full px-4 py-3 flex items-center justify-between hover:bg-accent/30 transition-colors rounded-t-lg cursor-pointer"
-                                >
-                                  <div className="flex items-center gap-3">
-                                    {expandedVariantStock[variant.sku] ? (
-                                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                                    ) : (
-                                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                                    )}
-                                    <span className="text-sm font-mono font-medium text-foreground">{displaySku}</span>
-                                  </div>
-                                  <div className="flex items-center gap-6 text-sm">
-                                    <span className="text-muted-foreground">
-                                      Total:{" "}
-                                      <span className="font-medium text-emerald-600 tabular-nums">{totalStock}</span>
-                                    </span>
-                                    <span className="text-muted-foreground">
-                                      Reservado:{" "}
-                                      <span className="font-medium tabular-nums text-foreground">{totalReservado}</span>
-                                    </span>
-                                    <span className="text-muted-foreground">
-                                      Disponible:{" "}
-                                      <span
-                                        className={`font-semibold text-base tabular-nums ${totalDisponible === 0 ? "text-red-600" : "text-emerald-600"}`}
-                                      >
-                                        {totalDisponible}
-                                      </span>
-                                    </span>
-                                  </div>
-                                </button>
-
-                                {expandedVariantStock[variant.sku] && (
-                                  <div className="border-t border-border/40 bg-accent/5 p-4 rounded-b-lg">
-                                    <div className="space-y-2">
-                                      {/* Total Row */}
-                                      <div className="grid grid-cols-[140px_180px_1fr] gap-4 items-center py-3 px-3 bg-background border border-border/40 rounded-md shadow-sm hover:shadow transition-shadow">
-                                        <div className="text-sm font-medium text-muted-foreground">Total</div>
-                                        <div className="flex items-center gap-2">
-                                          <button
-                                            onClick={() =>
-                                              updateStock(displaySku, "total", Math.max(0, totalStock - 1))
-                                            }
-                                            className="w-7 h-7 flex items-center justify-center rounded border border-border/40 hover:bg-accent hover:border-border transition-colors text-muted-foreground hover:text-foreground cursor-pointer"
-                                          >
-                                            <Minus className="w-3.5 h-3.5" />
-                                          </button>
-                                          <span className="text-base font-semibold text-emerald-600 tabular-nums min-w-[60px] text-center">
-                                            {totalStock}
-                                          </span>
-                                          <button
-                                            onClick={() => updateStock(displaySku, "total", totalStock + 1)}
-                                            className="w-7 h-7 flex items-center justify-center rounded border border-border/40 hover:bg-accent hover:border-border transition-colors text-muted-foreground hover:text-foreground cursor-pointer"
-                                          >
-                                            <Plus className="w-3.5 h-3.5" />
-                                          </button>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                          <select
-                                            value={variantMod.total.type}
-                                            onChange={(e) =>
-                                              setVariantStockModification({
-                                                ...variantStockModification,
-                                                [displaySku]: {
-                                                  ...variantMod,
-                                                  total: { ...variantMod.total, type: e.target.value },
-                                                },
-                                              })
-                                            }
-                                            className="text-xs px-2 py-1.5 bg-background border border-border/40 rounded focus:outline-none focus:ring-1 focus:ring-ring text-foreground"
-                                          >
-                                            <option value="aumentar">Aumentar</option>
-                                            <option value="disminuir">Disminuir</option>
-                                            <option value="reemplazar">Reemplazar</option>
-                                          </select>
-                                          <input
-                                            type="number"
-                                            value={variantMod.total.value}
-                                            onChange={(e) =>
-                                              setVariantStockModification({
-                                                ...variantStockModification,
-                                                [displaySku]: {
-                                                  ...variantMod,
-                                                  total: { ...variantMod.total, value: e.target.value },
-                                                },
-                                              })
-                                            }
-                                            placeholder="0"
-                                            className="w-20 text-xs px-2 py-1.5 bg-background border border-border/40 rounded focus:outline-none focus:ring-1 focus:ring-ring tabular-nums text-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                          />
-                                          {variantMod.total.value && (
-                                            <button
-                                              onClick={() => {
-                                                const value = Number.parseInt(variantMod.total.value) || 0
-                                                let newTotal = totalStock
-                                                if (variantMod.total.type === "aumentar") newTotal += value
-                                                else if (variantMod.total.type === "disminuir")
-                                                  newTotal = Math.max(0, newTotal - value)
-                                                else if (variantMod.total.type === "reemplazar") newTotal = value
-
-                                                updateStock(displaySku, "total", newTotal)
-                                                setVariantStockModification({
-                                                  ...variantStockModification,
-                                                  [displaySku]: {
-                                                    ...variantMod,
-                                                    total: { ...variantMod.total, value: "" },
-                                                  },
-                                                })
-                                              }}
-                                              className="text-xs px-3 py-1.5 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors font-medium cursor-pointer"
-                                            >
-                                              Aceptar
-                                            </button>
-                                          )}
-                                        </div>
-                                      </div>
-
-                                      {/* Reservado Row */}
-                                      <div className="grid grid-cols-[140px_180px_1fr] gap-4 items-center py-3 px-3 bg-background border border-border/40 rounded-md shadow-sm hover:shadow transition-shadow">
-                                        <div className="text-sm font-medium text-muted-foreground">Reservado</div>
-                                        <div className="flex items-center gap-2">
-                                          <button
-                                            onClick={() =>
-                                              updateStock(displaySku, "reservado", Math.max(0, totalReservado - 1))
-                                            }
-                                            className="w-7 h-7 flex items-center justify-center rounded border border-border/40 hover:bg-accent hover:border-border transition-colors text-muted-foreground hover:text-foreground cursor-pointer"
-                                          >
-                                            <Minus className="w-3.5 h-3.5" />
-                                          </button>
-                                          <span className="text-base font-medium text-foreground tabular-nums min-w-[60px] text-center">
-                                            {totalReservado}
-                                          </span>
-                                          <button
-                                            onClick={() =>
-                                              updateStock(
-                                                displaySku,
-                                                "reservado",
-                                                Math.min(totalStock, totalReservado + 1),
-                                              )
-                                            }
-                                            className="w-7 h-7 flex items-center justify-center rounded border border-border/40 hover:bg-accent hover:border-border transition-colors text-muted-foreground hover:text-foreground cursor-pointer"
-                                          >
-                                            <Plus className="w-3.5 h-3.5" />
-                                          </button>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                          <select
-                                            value={variantMod.reservado.type}
-                                            onChange={(e) =>
-                                              setVariantStockModification({
-                                                ...variantStockModification,
-                                                [displaySku]: {
-                                                  ...variantMod,
-                                                  reservado: { ...variantMod.reservado, type: e.target.value },
-                                                },
-                                              })
-                                            }
-                                            className="text-xs px-2 py-1.5 bg-background border border-border/40 rounded focus:outline-none focus:ring-1 focus:ring-ring text-foreground"
-                                          >
-                                            <option value="aumentar">Aumentar</option>
-                                            <option value="disminuir">Disminuir</option>
-                                            <option value="reemplazar">Reemplazar</option>
-                                          </select>
-                                          <input
-                                            type="number"
-                                            value={variantMod.reservado.value}
-                                            onChange={(e) =>
-                                              setVariantStockModification({
-                                                ...variantStockModification,
-                                                [displaySku]: {
-                                                  ...variantMod,
-                                                  reservado: { ...variantMod.reservado, value: e.target.value },
-                                                },
-                                              })
-                                            }
-                                            placeholder="0"
-                                            className="w-20 text-xs px-2 py-1.5 bg-background border border-border/40 rounded focus:outline-none focus:ring-1 focus:ring-ring tabular-nums text-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                          />
-                                          {variantMod.reservado.value && (
-                                            <button
-                                              onClick={() => {
-                                                const value = Number.parseInt(variantMod.reservado.value) || 0
-                                                let newReservado = totalReservado
-                                                if (variantMod.reservado.type === "aumentar")
-                                                  newReservado = Math.min(totalStock, newReservado + value)
-                                                else if (variantMod.reservado.type === "disminuir")
-                                                  newReservado = Math.max(0, newReservado - value)
-                                                else if (variantMod.reservado.type === "reemplazar")
-                                                  newReservado = Math.min(totalStock, value)
-
-                                                updateStock(displaySku, "reservado", newReservado)
-                                                setVariantStockModification({
-                                                  ...variantStockModification,
-                                                  [displaySku]: {
-                                                    ...variantMod,
-                                                    reservado: { ...variantMod.reservado, value: "" },
-                                                  },
-                                                })
-                                              }}
-                                              className="text-xs px-3 py-1.5 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors font-medium cursor-pointer"
-                                            >
-                                              Aceptar
-                                            </button>
-                                          )}
-                                        </div>
-                                      </div>
-
-                                      {/* Disponible Row (Read-only) */}
-                                      <div className="grid grid-cols-[140px_180px_1fr] gap-4 items-center py-3 px-3 bg-muted/30 border border-border/20 rounded-md">
-                                        <div className="text-sm font-medium text-muted-foreground">Disponible</div>
-                                        <div className="flex items-center justify-center">
-                                          <span
-                                            className={`text-lg font-semibold tabular-nums ${totalDisponible === 0 ? "text-red-600" : "text-emerald-600"}`}
-                                          >
-                                            {totalDisponible}
-                                          </span>
-                                        </div>
-                                        <div className="text-xs text-muted-foreground italic">
-                                          Calculado automáticamente
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            )
-                          })}
-                        </div>
-                      ) : (
-                        <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
-                          <p>
-                            Agrega atributos principales con variantes en la pestaña Atributos para ver el stock por
-                            variante
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </>
               ) : (
                 // Individual item tab content
@@ -1897,6 +1669,96 @@ export function ItemDetailPanel({
                       </h3>
 
                       <div className="space-y-3">
+                        {/* SKU and Código Universal */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="flex flex-col gap-2">
+                            <label className="text-sm font-medium text-gray-700">SKU</label>
+                            <div className="flex items-center gap-2">
+                              {editingSku ? (
+                                <input
+                                  type="text"
+                                  value={skuValue}
+                                  onChange={(e) => setSkuValue(e.target.value)}
+                                  onBlur={handleSkuBlur}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") handleSkuBlur()
+                                  }}
+                                  className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                                  autoFocus
+                                />
+                              ) : (
+                                <div
+                                  onClick={() => setEditingSku(true)}
+                                  className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 cursor-pointer hover:border-gray-400 font-mono text-sm"
+                                >
+                                  {selectedItem?.sku ||
+                                    selectedItem?.name
+                                      .toUpperCase()
+                                      .replace(/[^A-Z0-9\s]/g, "")
+                                      .split(" ")
+                                      .map((word: string) => word.substring(0, 3))
+                                      .join("-")
+                                      .substring(0, 15)}
+                                </div>
+                              )}
+                              {!editingSku && (
+                                <button
+                                  onClick={handleCopySku}
+                                  className="text-muted-foreground hover:text-foreground transition-colors p-2"
+                                  title="Copiar SKU"
+                                >
+                                  {skuCopied ? (
+                                    <span className="text-success text-xs">✓</span>
+                                  ) : (
+                                    <Copy className="h-4 w-4" />
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col gap-2">
+                            <label className="text-sm font-medium text-gray-700">Código Universal</label>
+                            <div className="flex items-center gap-2">
+                              {editingCodigoUniversal ? (
+                                <input
+                                  type="text"
+                                  value={codigoUniversalValue}
+                                  onChange={(e) => setCodigoUniversalValue(e.target.value)}
+                                  onBlur={handleCodigoUniversalBlur}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") handleCodigoUniversalBlur()
+                                  }}
+                                  className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                                  autoFocus
+                                />
+                              ) : (
+                                <div
+                                  onClick={() => setEditingCodigoUniversal(true)}
+                                  className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 cursor-pointer hover:border-gray-400 font-mono text-sm"
+                                >
+                                  {selectedItem.codigoUniversal || "N/A"}
+                                </div>
+                              )}
+                              {!editingCodigoUniversal && (
+                                <button
+                                  onClick={handleCopyCodigoUniversal}
+                                  className="text-muted-foreground hover:text-foreground transition-colors p-2"
+                                  title="Copiar Código Universal"
+                                  disabled={!selectedItem?.codigoUniversal}
+                                >
+                                  {codigoUniversalCopied ? (
+                                    <span className="text-success text-xs">✓</span>
+                                  ) : (
+                                    <Copy className="h-4 w-4" />
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Categoría and Marca */}
                         <div className="grid grid-cols-2 gap-4">
                           <div className="flex flex-col gap-2">
                             <label className="text-sm font-medium text-gray-700">Categoría</label>
@@ -2077,6 +1939,34 @@ export function ItemDetailPanel({
                               className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                               placeholder="Código del proveedor"
                             />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="border-t border-gray-200 my-4"></div>
+
+                      <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
+                        Descripción del Item
+                      </h3>
+
+                      <div className="flex flex-col gap-2">
+                        {editingDescripcion ? (
+                          <textarea
+                            value={descripcionValue}
+                            onChange={(e) => setDescripcionValue(e.target.value)}
+                            onBlur={handleDescripcionBlur}
+                            className="w-full h-28 px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm"
+                            placeholder="Agregar descripción del producto..."
+                            autoFocus
+                          />
+                        ) : (
+                          <div
+                            onClick={() => setEditingDescripcion(true)}
+                            className="w-full min-h-[70px] px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 cursor-pointer hover:border-gray-400 text-sm"
+                          >
+                            {descripcionValue || (
+                              <span className="text-gray-400">Click para agregar descripción...</span>
+                            )}
                           </div>
                         )}
                       </div>
@@ -2505,183 +2395,7 @@ export function ItemDetailPanel({
                     </div>
                   )}
 
-                  {selectedDetailTab === "stock" && (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between pb-3 border-b border-border/30">
-                        <h3 className="text-xs font-semibold text-foreground/60 uppercase tracking-wider">
-                          Stock en Depósito: Torcuato
-                        </h3>
-                      </div>
 
-                      <div className="space-y-2">
-                        <div className="border border-border/40 rounded-lg bg-white shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-                          <div className="grid grid-cols-[100px_140px_1fr] gap-3 items-center px-4 py-3">
-                            {/* Type Label */}
-                            <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                              Total
-                            </div>
-
-                            {/* Number with +/- buttons */}
-                            <div className="flex items-center justify-center gap-1.5">
-                              <button
-                                onClick={() => {
-                                  if (selectedItem?.sku) {
-                                    const current = Number.parseInt(selectedItem?.stock?.total || "0")
-                                    updateStock(selectedItem.sku, "total", Math.max(0, current - 1))
-                                  }
-                                }}
-                                className="w-7 h-7 rounded-md border border-border/50 hover:bg-accent hover:border-border transition-all flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer"
-                              >
-                                <span className="text-sm font-medium">−</span>
-                              </button>
-                              <span className="text-base font-semibold text-foreground min-w-[2.5rem] text-center tabular-nums">
-                                {Number.parseInt(selectedItem?.stock?.total || "0")}
-                              </span>
-                              <button
-                                onClick={() => {
-                                  if (selectedItem?.sku) {
-                                    const current = Number.parseInt(selectedItem?.stock?.total || "0")
-                                    updateStock(selectedItem.sku, "total", current + 1)
-                                  }
-                                }}
-                                className="w-7 h-7 rounded-md border border-border/50 hover:bg-accent hover:border-border transition-all flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer"
-                              >
-                                <span className="text-sm font-medium">+</span>
-                              </button>
-                            </div>
-
-                            {/* Stock modification area */}
-                            <div className="flex items-center gap-2">
-                              <select
-                                value={stockModification.total.operation}
-                                onChange={(e) =>
-                                  setStockModification((prev) => ({
-                                    ...prev,
-                                    total: { ...prev.total, operation: e.target.value },
-                                  }))
-                                }
-                                className="text-xs border border-border/50 rounded-md px-2.5 py-1.5 bg-background hover:bg-accent transition-colors focus:outline-none focus:ring-1 focus:ring-primary/20 cursor-pointer"
-                              >
-                                <option value="aumentar">Aumentar</option>
-                                <option value="disminuir">Disminuir</option>
-                                <option value="reemplazar">Reemplazar</option>
-                              </select>
-                              <input
-                                type="number"
-                                placeholder="0"
-                                value={stockModification.total.value}
-                                onChange={(e) =>
-                                  setStockModification((prev) => ({
-                                    ...prev,
-                                    total: { ...prev.total, value: e.target.value },
-                                  }))
-                                }
-                                className="w-16 text-xs border border-border/50 rounded-md px-2.5 py-1.5 bg-background focus:outline-none focus:ring-1 focus:ring-primary/20 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                              />
-                              {stockModification.total.value && (
-                                <button
-                                  onClick={() => handleStockModificationAccept("total")}
-                                  className="text-xs px-3 py-1.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-medium cursor-pointer"
-                                >
-                                  Aceptar
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="border border-border/40 rounded-lg bg-white shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-                          <div className="grid grid-cols-[100px_140px_1fr] gap-3 items-center px-4 py-3">
-                            <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                              Reservado
-                            </div>
-
-                            <div className="flex items-center justify-center gap-1.5">
-                              <button
-                                onClick={() => {
-                                  if (selectedItem?.sku) {
-                                    const current = Number.parseInt(selectedItem?.stock?.reservado || "0")
-                                    updateStock(selectedItem.sku, "reservado", Math.max(0, current - 1))
-                                  }
-                                }}
-                                className="w-7 h-7 rounded-md border border-border/50 hover:bg-accent hover:border-border transition-all flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer"
-                              >
-                                <span className="text-sm font-medium">−</span>
-                              </button>
-                              <span className="text-base font-semibold text-foreground min-w-[2.5rem] text-center tabular-nums">
-                                {Number.parseInt(selectedItem?.stock?.reservado || "0")}
-                              </span>
-                              <button
-                                onClick={() => {
-                                  if (selectedItem?.sku) {
-                                    const current = Number.parseInt(selectedItem?.stock?.reservado || "0")
-                                    updateStock(selectedItem.sku, "reservado", current + 1)
-                                  }
-                                }}
-                                className="w-7 h-7 rounded-md border border-border/50 hover:bg-accent hover:border-border transition-all flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer"
-                              >
-                                <span className="text-sm font-medium">+</span>
-                              </button>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                              <select
-                                value={stockModification.reservado.operation}
-                                onChange={(e) =>
-                                  setStockModification((prev) => ({
-                                    ...prev,
-                                    reservado: { ...prev.reservado, operation: e.target.value },
-                                  }))
-                                }
-                                className="text-xs border border-border/50 rounded-md px-2.5 py-1.5 bg-background hover:bg-accent transition-colors focus:outline-none focus:ring-1 focus:ring-primary/20 cursor-pointer"
-                              >
-                                <option value="aumentar">Aumentar</option>
-                                <option value="disminuir">Disminuir</option>
-                                <option value="reemplazar">Reemplazar</option>
-                              </select>
-                              <input
-                                type="number"
-                                placeholder="0"
-                                value={stockModification.reservado.value}
-                                onChange={(e) =>
-                                  setStockModification((prev) => ({
-                                    ...prev,
-                                    reservado: { ...prev.reservado, value: e.target.value },
-                                  }))
-                                }
-                                className="w-16 text-xs border border-border/50 rounded-md px-2.5 py-1.5 bg-background focus:outline-none focus:ring-1 focus:ring-primary/20 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                              />
-                              {stockModification.reservado.value && (
-                                <button
-                                  onClick={() => handleStockModificationAccept("reservado")}
-                                  className="text-xs px-3 py-1.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-medium cursor-pointer"
-                                >
-                                  Aceptar
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="border border-emerald-200 rounded-lg bg-emerald-50/50 overflow-hidden">
-                          <div className="grid grid-cols-[100px_140px_1fr] gap-3 items-center px-4 py-3">
-                            <div className="text-xs font-medium text-emerald-700 uppercase tracking-wide">
-                              Disponible
-                            </div>
-
-                            <div className="flex items-center justify-center">
-                              <span className="text-lg font-bold text-emerald-600 min-w-[2.5rem] text-center tabular-nums">
-                                {Number.parseInt(selectedItem?.stock?.total || "0") -
-                                  Number.parseInt(selectedItem?.stock?.reservado || "0")}
-                              </span>
-                            </div>
-
-                            <div className="text-xs text-emerald-600/70 italic">Calculado automáticamente</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </>
               )}
             </div>
