@@ -703,6 +703,43 @@ export function ItemDetailPanel({
 
               <div className="mt-6 mb-0">
                 <h2 className="font-semibold text-foreground text-lg mb-0">{selectedItem.name}</h2>
+                
+                {/* SKU and Código Universal for standalone/children items */}
+                {!isViewingContainer && (
+                  <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground font-mono">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-medium">SKU:</span>
+                      <span>{selectedItem.sku}</span>
+                      <button
+                        onClick={handleCopySku}
+                        className="text-muted-foreground hover:text-foreground transition-colors p-0.5"
+                        title="Copiar SKU"
+                      >
+                        {skuCopied ? (
+                          <span className="text-success text-xs">✓</span>
+                        ) : (
+                          <Copy className="h-3 w-3" />
+                        )}
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-medium">C.U.:</span>
+                      <span>{selectedItem.codigoUniversal || "N/A"}</span>
+                      <button
+                        onClick={handleCopyCodigoUniversal}
+                        className="text-muted-foreground hover:text-foreground transition-colors p-0.5"
+                        title="Copiar Código Universal"
+                      >
+                        {codigoUniversalCopied ? (
+                          <span className="text-success text-xs">✓</span>
+                        ) : (
+                          <Copy className="h-3 w-3" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="border-t border-slate-200 my-4 px-0"></div>
 
                 {/* Stock section for standalone/children items */}
@@ -1669,95 +1706,6 @@ export function ItemDetailPanel({
                       </h3>
 
                       <div className="space-y-3">
-                        {/* SKU and Código Universal */}
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="flex flex-col gap-2">
-                            <label className="text-sm font-medium text-gray-700">SKU</label>
-                            <div className="flex items-center gap-2">
-                              {editingSku ? (
-                                <input
-                                  type="text"
-                                  value={skuValue}
-                                  onChange={(e) => setSkuValue(e.target.value)}
-                                  onBlur={handleSkuBlur}
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter") handleSkuBlur()
-                                  }}
-                                  className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-                                  autoFocus
-                                />
-                              ) : (
-                                <div
-                                  onClick={() => setEditingSku(true)}
-                                  className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 cursor-pointer hover:border-gray-400 font-mono text-sm"
-                                >
-                                  {selectedItem?.sku ||
-                                    selectedItem?.name
-                                      .toUpperCase()
-                                      .replace(/[^A-Z0-9\s]/g, "")
-                                      .split(" ")
-                                      .map((word: string) => word.substring(0, 3))
-                                      .join("-")
-                                      .substring(0, 15)}
-                                </div>
-                              )}
-                              {!editingSku && (
-                                <button
-                                  onClick={handleCopySku}
-                                  className="text-muted-foreground hover:text-foreground transition-colors p-2"
-                                  title="Copiar SKU"
-                                >
-                                  {skuCopied ? (
-                                    <span className="text-success text-xs">✓</span>
-                                  ) : (
-                                    <Copy className="h-4 w-4" />
-                                  )}
-                                </button>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="flex flex-col gap-2">
-                            <label className="text-sm font-medium text-gray-700">Código Universal</label>
-                            <div className="flex items-center gap-2">
-                              {editingCodigoUniversal ? (
-                                <input
-                                  type="text"
-                                  value={codigoUniversalValue}
-                                  onChange={(e) => setCodigoUniversalValue(e.target.value)}
-                                  onBlur={handleCodigoUniversalBlur}
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter") handleCodigoUniversalBlur()
-                                  }}
-                                  className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-                                  autoFocus
-                                />
-                              ) : (
-                                <div
-                                  onClick={() => setEditingCodigoUniversal(true)}
-                                  className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 cursor-pointer hover:border-gray-400 font-mono text-sm"
-                                >
-                                  {selectedItem.codigoUniversal || "N/A"}
-                                </div>
-                              )}
-                              {!editingCodigoUniversal && (
-                                <button
-                                  onClick={handleCopyCodigoUniversal}
-                                  className="text-muted-foreground hover:text-foreground transition-colors p-2"
-                                  title="Copiar Código Universal"
-                                  disabled={!selectedItem?.codigoUniversal}
-                                >
-                                  {codigoUniversalCopied ? (
-                                    <span className="text-success text-xs">✓</span>
-                                  ) : (
-                                    <Copy className="h-4 w-4" />
-                                  )}
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
                         {/* Categoría and Marca */}
                         <div className="grid grid-cols-2 gap-4">
                           <div className="flex flex-col gap-2">
