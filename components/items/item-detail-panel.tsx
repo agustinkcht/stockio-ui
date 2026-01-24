@@ -757,7 +757,7 @@ export function ItemDetailPanel({
                         ) : (
                           <div
                             onClick={() => setEditingDescripcion(true)}
-                            className="w-full min-h-[100px] px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 cursor-pointer hover:border-gray-400 text-sm"
+                            className="w-full min-h-[100px] px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 cursor-pointer hover:border-gray-400 text-sm border-none"
                           >
                             {descripcionValue || (
                               <span className="text-gray-400">Click para agregar descripción...</span>
