@@ -426,11 +426,11 @@ export function ItemCard({
                 >
                   {gridSize === "sm" ? (
                     <div className="grid grid-cols-3 gap-x-3 w-full">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 bg-slate-50 rounded px-1">
                         <span className="text-sm text-muted-foreground shrink-0">T:</span>
                         <span className="text-sm text-foreground">{item.stock?.total || 0}</span>
                       </div>
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 bg-slate-50 rounded px-1">
                         <span className="text-sm text-muted-foreground shrink-0">R:</span>
                         <span className="text-sm text-foreground">{item.stock?.reservado || 0}</span>
                       </div>
@@ -441,11 +441,11 @@ export function ItemCard({
                     </div>
                   ) : (
                     <>
-                      <div className="flex flex-col items-center gap-0.5 flex-1">
+                      <div className="flex flex-col items-center gap-0.5 flex-1 bg-slate-50 rounded py-1">
                         <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Total</span>
                         <span className="text-sm text-foreground">{item.stock?.total || 0}</span>
                       </div>
-                      <div className="flex flex-col items-center gap-0.5 flex-1">
+                      <div className="flex flex-col items-center gap-0.5 flex-1 bg-slate-50 rounded py-1">
                         <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Reservado</span>
                         <span className="text-sm text-foreground">{item.stock?.reservado || 0}</span>
                       </div>

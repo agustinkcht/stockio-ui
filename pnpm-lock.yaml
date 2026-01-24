@@ -72,7 +72,7 @@ importers:
         specifier: 4.24.13
         version: 4.24.13(@auth/core@0.34.3(@simplewebauthn/browser@13.2.2)(@simplewebauthn/server@13.2.2)(nodemailer@7.0.12))(next@16.0.10(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(nodemailer@7.0.12)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       next-themes:
-        specifier: latest
+        specifier: 0.4.6
         version: 0.4.6(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       nodemailer:
         specifier: latest
