@@ -683,8 +683,8 @@ export function ItemDetailPanel({
       <div className="px-8 pb-6 bg-slate-50 min-h-screen pl-8 pt-0">
         <div className={`grid gap-2 ${isViewingContainer ? "grid-cols-9" : "grid-cols-10"}`}>
           {/* Left Column - Image Card */}
-          <div className="col-span-3 order-1 sticky top-4 z-20 rounded-xl max-h-[calc(100vh-2rem)] border flex flex-col transition-all duration-300 border-slate-100 mt-4 bg-transparent border-none shadow-none pr-1.5 pl-0">
-            <div className="p-6 mt-0 px-8 bg-transparent border-none shadow-none pl-7 pr-11">
+          <div className="col-span-3 order-1 z-20 rounded-xl border flex flex-col transition-all duration-300 border-slate-100 mt-4 bg-transparent border-none shadow-none pr-1.5 pl-0">
+            <div className="sticky top-4 p-6 mt-0 px-8 bg-transparent border-none shadow-none pl-7 pr-11">
               <div className="mt-2">
                 <div className="w-full h-64 bg-muted/30 rounded-lg flex items-center justify-center overflow-hidden">
                   <Image
@@ -772,33 +772,30 @@ export function ItemDetailPanel({
             </div>
           </div>
 
-          {/* Center Column - Variantes Card (only for parent items) */}
+          {/* Right Column - Variantes Card (only for parent items) */}
           {isViewingContainer && (
-            <div className="col-span-3 order-2 flex flex-col mt-4">
+            <div className="col-span-3 order-3 flex flex-col mt-4 pl-7">
               <div className="sticky top-4 p-5 bg-white border border-border/40 rounded-xl shadow-sm">
                 <h3 className="text-xs font-semibold text-foreground/60 uppercase tracking-wider mb-4">
-                  Variantes
+                  {variantItems.length} {variantItems.length === 1 ? "variante" : "variantes"}
                 </h3>
 
                 {variantItems.length > 0 ? (
-                  <div className="space-y-2">
-                    {/* Total Stock Summary */}
-                    <div className="border border-emerald-200 rounded-lg bg-emerald-50/50 overflow-hidden">
-                      <div className="flex items-center justify-between px-4 py-3">
-                        <div className="text-xs font-medium text-emerald-700 uppercase tracking-wide">Stock Total</div>
-                        <span className="text-xl font-bold text-emerald-600 tabular-nums">
-                          {selectedItem.variants?.reduce((acc: number, v: any) => {
-                            const total = Number.parseInt(v.stock?.total || "0")
-                            const reservado = Number.parseInt(v.stock?.reservado || "0")
-                            return acc + (total - reservado)
-                          }, 0) || 0}
-                        </span>
+                  <div className="bg-white border border-border/40 rounded-lg overflow-hidden">
+                    {/* Header */}
+                    <div className="grid grid-cols-[1fr_minmax(80px,1fr)_28px] bg-white border-b border-border/30">
+                      <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                        {/* Empty label for atributos column */}
                       </div>
+                      <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                        SKU
+                      </div>
+                      <div />
                     </div>
 
-                    {/* Variant List */}
-                    <div className="border border-border/40 rounded-lg bg-background overflow-hidden divide-y divide-border/30">
-                      {variantItems.slice(0, 8).map((variant) => {
+                    {/* Rows */}
+                    <div className="divide-y divide-border/30">
+                      {variantItems.map((variant) => {
                         const sourceVariant = selectedItem.variants?.find((v: any) => {
                           if (!v.atributosPrincipales) return false
                           const hasMatchingAttr1 = variant.variant1
@@ -810,18 +807,60 @@ export function ItemDetailPanel({
                           return hasMatchingAttr1 && hasMatchingAttr2
                         })
 
-                        const stockTotal = Number.parseInt(sourceVariant?.stock?.total || "0")
-                        const stockReservado = Number.parseInt(sourceVariant?.stock?.reservado || "0")
-                        const stockDisponible = stockTotal - stockReservado
+                        const displaySku = sourceVariant?.sku || variant.sku
+
+                        // Delete variant handler
+                        const handleDeleteVariant = () => {
+                          const attr1Value = variant.variant1
+                          const attr2Value = variant.variant2
+
+                          const updatedVariants = (selectedItem.variants || []).filter((v: any) => {
+                            if (!v.atributosPrincipales) return true
+                            
+                            const variantAttr1 = v.atributosPrincipales[0]?.value
+                            const variantAttr2 = v.atributosPrincipales[1]?.value
+                            
+                            if (!attr2Value) {
+                              return variantAttr1 !== attr1Value
+                            }
+                            
+                            const isExactMatch = variantAttr1 === attr1Value && variantAttr2 === attr2Value
+                            return !isExactMatch
+                          })
+
+                          const usedAttr1Values = new Set<string>()
+                          const usedAttr2Values = new Set<string>()
+
+                          updatedVariants.forEach((v: any) => {
+                            if (v.atributosPrincipales) {
+                              if (v.atributosPrincipales[0]?.value) usedAttr1Values.add(v.atributosPrincipales[0].value)
+                              if (v.atributosPrincipales[1]?.value) usedAttr2Values.add(v.atributosPrincipales[1].value)
+                            }
+                          })
+
+                          const updatedContainerAttrs = containerAtributosPrincipales.map((attr, idx) => {
+                            const usedValues = idx === 0 ? usedAttr1Values : usedAttr2Values
+                            return {
+                              ...attr,
+                              variantes: attr.variantes.filter((v) => usedValues.has(v)),
+                            }
+                          })
+
+                          setContainerAtributosPrincipales(updatedContainerAttrs)
+                          if (onFieldChange && selectedItem.sku) {
+                            onFieldChange(selectedItem.sku, "containerAtributosPrincipales", updatedContainerAttrs)
+                            onFieldChange(selectedItem.sku, "variants", updatedVariants)
+                          }
+                        }
 
                         return (
                           <div
                             key={variant.sku}
-                            className="flex items-center justify-between px-3 py-2.5 hover:bg-accent/30 transition-colors"
+                            className="group grid grid-cols-[1fr_minmax(80px,1fr)_28px] items-center hover:bg-accent/50 transition-colors"
                           >
-                            <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                            <div className="px-3 py-2 flex items-center gap-1.5">
                               {variant.variant1 && (
-                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[80px]">
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[70px]">
                                   {variant.variant1}
                                 </span>
                               )}
@@ -829,60 +868,34 @@ export function ItemDetailPanel({
                                 <span className="text-[9px] text-muted-foreground/50 font-medium">×</span>
                               )}
                               {variant.variant2 && (
-                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[80px]">
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[70px]">
                                   {variant.variant2}
                                 </span>
                               )}
                             </div>
-                            <span className={`text-sm font-semibold tabular-nums ${
-                              stockDisponible > 0 ? "text-emerald-600" : stockDisponible < 0 ? "text-red-500" : "text-muted-foreground"
-                            }`}>
-                              {stockDisponible}
-                            </span>
+
+                            <div className="px-3 py-2">
+                              <input
+                                type="text"
+                                value={displaySku}
+                                onChange={(e) => updateVariantField(variant.sku, "sku", e.target.value)}
+                                className="w-full bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-primary/50 px-0 py-0.5 text-[11px] font-mono text-foreground focus:outline-none transition-colors"
+                                placeholder="SKU..."
+                              />
+                            </div>
+
+                            <div className="px-1 py-2 flex items-center justify-center">
+                              <button
+                                onClick={handleDeleteVariant}
+                                className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all cursor-pointer"
+                                title="Eliminar variante"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
                           </div>
                         )
                       })}
-                    </div>
-
-                    {/* Show more indicator */}
-                    {variantItems.length > 8 && (
-                      <div className="text-center text-[10px] text-muted-foreground py-1">
-                        +{variantItems.length - 8} variantes más
-                      </div>
-                    )}
-
-                    {/* Quick Stats */}
-                    <div className="grid grid-cols-2 gap-2 pt-2">
-                      <div className="border border-border/40 rounded-lg p-2.5 bg-background">
-                        <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1">
-                          Variantes
-                        </div>
-                        <span className="text-base font-semibold text-foreground tabular-nums">
-                          {variantItems.length}
-                        </span>
-                      </div>
-                      <div className="border border-border/40 rounded-lg p-2.5 bg-background">
-                        <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1">
-                          Con Stock
-                        </div>
-                        <span className="text-base font-semibold text-foreground tabular-nums">
-                          {variantItems.filter((variant) => {
-                            const sourceVariant = selectedItem.variants?.find((v: any) => {
-                              if (!v.atributosPrincipales) return false
-                              const hasMatchingAttr1 = variant.variant1
-                                ? v.atributosPrincipales.some((attr: any) => attr.value === variant.variant1)
-                                : true
-                              const hasMatchingAttr2 = variant.variant2
-                                ? v.atributosPrincipales.some((attr: any) => attr.value === variant.variant2)
-                                : true
-                              return hasMatchingAttr1 && hasMatchingAttr2
-                            })
-                            const stockTotal = Number.parseInt(sourceVariant?.stock?.total || "0")
-                            const stockReservado = Number.parseInt(sourceVariant?.stock?.reservado || "0")
-                            return (stockTotal - stockReservado) > 0
-                          }).length}
-                        </span>
-                      </div>
                     </div>
                   </div>
                 ) : (
@@ -894,8 +907,8 @@ export function ItemDetailPanel({
             </div>
           )}
 
-          {/* Middle/Right Column - Segment Buttons + Content */}
-          <div className={`flex flex-col ${isViewingContainer ? "order-3 col-span-3" : "order-2 col-span-4"}`}>
+          {/* Center/Right Column - Segment Buttons + Content */}
+          <div className={`flex flex-col ${isViewingContainer ? "order-2 col-span-3" : "order-2 col-span-4"}`}>
             {/* Sticky Segment Buttons */}
             <div className="sticky top-[0px] z-20 backdrop-blur-[2px] bg-slate-50 mb-4">
               <div className="flex items-center gap-0 h-10 mt-3">
@@ -1405,146 +1418,6 @@ export function ItemDetailPanel({
                               </button>
                             )}
 
-                            {/* Variantes Grid - shown when there are variants */}
-                            {variantItems.length > 0 && (
-                              <div className="mt-4">
-                                <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
-                                  Variantes Generadas
-                                </h3>
-                                <div className="bg-white border border-border/40 rounded-lg overflow-hidden">
-                                  {/* Header */}
-                                  <div className="grid grid-cols-[1fr_minmax(100px,1fr)_minmax(100px,1fr)_32px] bg-white border-b border-border/30">
-                                    <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                                      {/* Empty label for atributos column */}
-                                    </div>
-                                    <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                                      SKU
-                                    </div>
-                                    <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                                      Código Universal
-                                    </div>
-                                    <div />
-                                  </div>
-
-                                  {/* Rows */}
-                                  <div className="divide-y divide-border/30">
-                                    {variantItems.map((variant) => {
-                                      // Find the source variant to get actual stored data
-                                      const sourceVariant = selectedItem.variants?.find((v: any) => {
-                                        if (!v.atributosPrincipales) return false
-                                        const hasMatchingAttr1 = variant.variant1
-                                          ? v.atributosPrincipales.some((attr: any) => attr.value === variant.variant1)
-                                          : true
-                                        const hasMatchingAttr2 = variant.variant2
-                                          ? v.atributosPrincipales.some((attr: any) => attr.value === variant.variant2)
-                                          : true
-                                        return hasMatchingAttr1 && hasMatchingAttr2
-                                      })
-
-                                      const displaySku = sourceVariant?.sku || variant.sku
-                                      const displayCodigoUniversal = sourceVariant?.codigoUniversal || variant.codigoUniversal || ""
-
-                                      // Delete variant handler
-                                      const handleDeleteVariant = () => {
-                                        const attr1Value = variant.variant1
-                                        const attr2Value = variant.variant2
-
-                                        const updatedVariants = (selectedItem.variants || []).filter((v: any) => {
-                                          if (!v.atributosPrincipales) return true
-                                          
-                                          const variantAttr1 = v.atributosPrincipales[0]?.value
-                                          const variantAttr2 = v.atributosPrincipales[1]?.value
-                                          
-                                          if (!attr2Value) {
-                                            return variantAttr1 !== attr1Value
-                                          }
-                                          
-                                          const isExactMatch = variantAttr1 === attr1Value && variantAttr2 === attr2Value
-                                          return !isExactMatch
-                                        })
-
-                                        const usedAttr1Values = new Set<string>()
-                                        const usedAttr2Values = new Set<string>()
-
-                                        updatedVariants.forEach((v: any) => {
-                                          if (v.atributosPrincipales) {
-                                            if (v.atributosPrincipales[0]?.value) usedAttr1Values.add(v.atributosPrincipales[0].value)
-                                            if (v.atributosPrincipales[1]?.value) usedAttr2Values.add(v.atributosPrincipales[1].value)
-                                          }
-                                        })
-
-                                        const updatedContainerAttrs = containerAtributosPrincipales.map((attr, idx) => {
-                                          const usedValues = idx === 0 ? usedAttr1Values : usedAttr2Values
-                                          return {
-                                            ...attr,
-                                            variantes: attr.variantes.filter((v) => usedValues.has(v)),
-                                          }
-                                        })
-
-                                        setContainerAtributosPrincipales(updatedContainerAttrs)
-                                        if (onFieldChange && selectedItem.sku) {
-                                          onFieldChange(selectedItem.sku, "containerAtributosPrincipales", updatedContainerAttrs)
-                                          onFieldChange(selectedItem.sku, "variants", updatedVariants)
-                                        }
-                                      }
-
-                                      return (
-                                        <div
-                                          key={variant.sku}
-                                          className="group grid grid-cols-[1fr_minmax(100px,1fr)_minmax(100px,1fr)_32px] items-center hover:bg-accent/50 transition-colors"
-                                        >
-                                          <div className="px-3 py-2 flex items-center gap-1.5">
-                                            {variant.variant1 && (
-                                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
-                                                {variant.variant1}
-                                              </span>
-                                            )}
-                                            {variant.variant1 && variant.variant2 && (
-                                              <span className="text-[10px] text-muted-foreground/50 font-medium">×</span>
-                                            )}
-                                            {variant.variant2 && (
-                                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
-                                                {variant.variant2}
-                                              </span>
-                                            )}
-                                          </div>
-
-                                          <div className="px-3 py-2">
-                                            <input
-                                              type="text"
-                                              value={displaySku}
-                                              onChange={(e) => updateVariantField(variant.sku, "sku", e.target.value)}
-                                              className="w-full bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-primary/50 px-0 py-0.5 text-xs font-mono text-foreground focus:outline-none transition-colors"
-                                              placeholder="SKU..."
-                                            />
-                                          </div>
-
-                                          <div className="px-3 py-2">
-                                            <input
-                                              type="text"
-                                              value={displayCodigoUniversal}
-                                              onChange={(e) => updateVariantField(variant.sku, "codigoUniversal", e.target.value)}
-                                              className="w-full bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-primary/50 px-0 py-0.5 text-xs font-mono text-muted-foreground focus:outline-none transition-colors"
-                                              placeholder="—"
-                                            />
-                                          </div>
-
-                                          <div className="px-1 py-2 flex items-center justify-center">
-                                            <button
-                                              onClick={handleDeleteVariant}
-                                              className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all cursor-pointer"
-                                              title="Eliminar variante"
-                                            >
-                                              <X className="h-3.5 w-3.5" />
-                                            </button>
-                                          </div>
-                                        </div>
-                                      )
-                                    })}
-                                  </div>
-                                </div>
-                              </div>
-                            )}
                           </div>
 
                           <div className="flex flex-col gap-3">
