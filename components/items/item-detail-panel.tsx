@@ -2377,7 +2377,7 @@ export function ItemDetailPanel({
 
           {/* Right Column - Stock (only for standalone/children items) */}
           {!isViewingContainer && (
-            <div className="col-span-3 order-3 flex flex-col mt-4">
+            <div className="col-span-3 order-3 flex flex-col mt-4 pl-7">
               <div className="sticky top-4 p-5 bg-white border border-border/40 rounded-xl shadow-sm">
                 <h3 className="text-xs font-semibold text-foreground/60 uppercase tracking-wider mb-4">
                   Stock en Depósito: Torcuato
