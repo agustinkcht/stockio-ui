@@ -177,8 +177,8 @@ export function ItemCard({
         <div
           className={`flex-1 relative overflow-hidden mb-0 ${gridSize === "lg" ? "h-22" : gridSize === "md" ? "h-16" : "h-10"} ${roundedClass} grid ${
             item.isAgrupador || item.hasVariants
-              ? `grid-cols-11 ${isHovered ? "bg-white/15" : "bg-white/10"} backdrop-blur-xl border border-white/20 shadow-[0_2px_12px_rgba(0,0,0,0.08)] ring-1 ring-white/10 transition-colors cursor-pointer`
-              : `grid-cols-11 ${isHovered ? "bg-white/15" : "bg-white/10"} backdrop-blur-xl border border-white/20 shadow-[0_2px_12px_rgba(0,0,0,0.08)] ring-1 ring-white/10 transition-colors`
+              ? `grid-cols-11 ${isHovered ? "bg-white/15" : "bg-white/10"} backdrop-blur-xl border border-white/20 ring-1 ring-white/10 transition-colors cursor-pointer`
+              : `grid-cols-11 ${isHovered ? "bg-white/15" : "bg-white/10"} backdrop-blur-xl border border-white/20 ring-1 ring-white/10 transition-colors`
           }`}
           onClick={(e) => {
             if (item.hasVariants || item.isAgrupador) {
