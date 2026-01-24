@@ -2384,19 +2384,8 @@ export function ItemDetailPanel({
                 </h3>
 
                 <div className="space-y-2">
-                  {/* Disponible - Read only */}
-                  <div className="border border-emerald-200 rounded-lg bg-emerald-50/50 overflow-hidden">
-                    <div className="flex items-center justify-between px-4 py-3">
-                      <div className="text-xs font-medium text-emerald-700 uppercase tracking-wide">Disponible</div>
-                      <span className="text-xl font-bold text-emerald-600 tabular-nums">
-                        {Number.parseInt(selectedItem?.stock?.total || "0") -
-                          Number.parseInt(selectedItem?.stock?.reservado || "0")}
-                      </span>
-                    </div>
-                  </div>
-
                   {/* Total Section */}
-                  <div className="border border-border/40 rounded-lg bg-background overflow-hidden">
+                  <div className="border border-border/40 rounded-lg bg-slate-50 overflow-hidden">
                     {/* Total Header - clickable to expand/collapse */}
                     <div 
                       onClick={() => setActiveStockEdit("total")}
@@ -2512,7 +2501,7 @@ export function ItemDetailPanel({
                   </div>
 
 {/* Reservado Section */}
-  <div className="border border-border/40 rounded-lg bg-background overflow-hidden">
+  <div className="border border-border/40 rounded-lg bg-slate-50 overflow-hidden">
   {/* Reservado Header - clickable to expand/collapse */}
   <div
   onClick={() => setActiveStockEdit("reservado")}
@@ -2623,6 +2612,17 @@ export function ItemDetailPanel({
                         </div>
                       </div>
                     )}
+                  </div>
+
+                  {/* Disponible - Read only */}
+                  <div className="border border-emerald-200 rounded-lg bg-emerald-50/50 overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <div className="text-xs font-medium text-emerald-700 uppercase tracking-wide">Disponible</div>
+                      <span className="text-xl font-bold text-emerald-600 tabular-nums">
+                        {Number.parseInt(selectedItem?.stock?.total || "0") -
+                          Number.parseInt(selectedItem?.stock?.reservado || "0")}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
