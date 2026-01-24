@@ -6,11 +6,11 @@
 
 The current database schema has a structural issue that prevents tracking stock for individual variants:
 
-```sql
+\`\`\`sql
 -- Current constraint on stock table:
 ALTER TABLE stock ADD CONSTRAINT stock_sku_fkey 
   FOREIGN KEY (sku) REFERENCES items(sku);
-```
+\`\`\`
 
 **This means:**
 - Stock can ONLY be added for SKUs that exist in the `items` table
@@ -30,13 +30,13 @@ This makes it impossible to track inventory for individual variants.
 
 #### **Option 1: Remove the Foreign Key Constraint (Quick Fix)**
 
-```sql
+\`\`\`sql
 -- Remove the constraint
 ALTER TABLE stock DROP CONSTRAINT IF EXISTS stock_sku_fkey;
 
 -- Now stock can reference any SKU (items or variants)
 -- But loses referential integrity protection
-```
+\`\`\`
 
 **Pros:** Quick, allows variant stock immediately  
 **Cons:** No database-level protection against invalid SKUs
@@ -45,7 +45,7 @@ ALTER TABLE stock DROP CONSTRAINT IF EXISTS stock_sku_fkey;
 
 Merge `item_variants` into `items` table:
 
-```sql
+\`\`\`sql
 -- Migrate variants into items table
 INSERT INTO items (sku, name, parent_sku, /* other fields */)
 SELECT sku, name, parent_sku, /* other fields */
@@ -56,14 +56,14 @@ DROP TABLE item_variants CASCADE;
 
 -- Now all SKUs are in items table
 -- Stock foreign key works for both parents and variants
-```
+\`\`\`
 
 **Pros:** Clean schema, proper referential integrity  
 **Cons:** Requires data migration
 
 #### **Option 3: Composite Foreign Key with CHECK Constraint**
 
-```sql
+\`\`\`sql
 -- Remove old constraint
 ALTER TABLE stock DROP CONSTRAINT IF EXISTS stock_sku_fkey;
 
@@ -74,7 +74,7 @@ CHECK (
   OR
   EXISTS (SELECT 1 FROM item_variants WHERE sku = stock.sku)
 );
-```
+\`\`\`
 
 **Pros:** Maintains separation, allows variant stock  
 **Cons:** CHECK with subqueries can be slow

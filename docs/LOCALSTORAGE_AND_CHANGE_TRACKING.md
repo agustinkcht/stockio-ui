@@ -13,7 +13,7 @@ This document explains how to implement this pattern for any module in the appli
 
 ## 🏗️ Architecture Summary
 
-```
+\`\`\`
 ┌─────────────────────────────────────────────────────────────────┐
 │                         UI LAYER                                │
 │  ┌─────────────────────────────────────────────────────────┐   │
@@ -51,7 +51,7 @@ This document explains how to implement this pattern for any module in the appli
 │  │  Value: JSON.stringify(items[])                          │   │
 │  └─────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────┘
-```
+\`\`\`
 
 ---
 
@@ -61,7 +61,7 @@ This document explains how to implement this pattern for any module in the appli
 
 A **generic, reusable hook** for tracking any type of change with undo/redo capability.
 
-```typescript
+\`\`\`typescript
 // Type definitions
 export type ChangeType = "delete" | "edit" | "add"
 
@@ -85,11 +85,11 @@ export interface Change {
   canUndo: boolean            // Whether undo is available
   canRedo: boolean            // Whether redo is available
 }
-```
+\`\`\`
 
 **Key Implementation Details:**
 
-```typescript
+\`\`\`typescript
 export function useChangeTracker() {
   const [changes, setChanges] = useState<Change[]>([])
   const [history, setHistory] = useState<Change[]>([])
@@ -124,7 +124,7 @@ export function useChangeTracker() {
 
   // ... redo, undoAll, saveAll implementations
 }
-```
+\`\`\`
 
 ---
 
@@ -134,7 +134,7 @@ The domain hook manages the actual data and uses the change tracker for history.
 
 **Key State Variables:**
 
-```typescript
+\`\`\`typescript
 // Edited item tracking
 const [editedItem, setEditedItem] = useState<EditedItemState | null>(null)
 const [lastUndoneEdit, setLastUndoneEdit] = useState<EditedItemState | null>(null)
@@ -147,14 +147,14 @@ interface EditedItemState {
   originalValues: Partial<Item>      // Original values before any edits
   currentValues: Partial<Item>       // Current values with all edits applied
 }
-```
+\`\`\`
 
 **Key Functions:**
 
 #### `editField(itemSku, field, newValue)`
 Called when a user modifies any input field.
 
-```typescript
+\`\`\`typescript
 const editField = (itemSku: string, field: string, newValue: any) => {
   // Step 1: Capture original state on FIRST edit
   if (!editedItem || editedItem.itemSku !== itemSku) {
@@ -185,12 +185,12 @@ const editField = (itemSku: string, field: string, newValue: any) => {
     )
   )
 }
-```
+\`\`\`
 
 #### `undoEdit()`
 Reverts all changes to the current item back to original values.
 
-```typescript
+\`\`\`typescript
 const undoEdit = () => {
   if (!editedItem) return
 
@@ -210,12 +210,12 @@ const undoEdit = () => {
   setEditedItem(null)
   setHasUnsavedEdits(false)
 }
-```
+\`\`\`
 
 #### `redoEdit()`
 Re-applies the last undone edit.
 
-```typescript
+\`\`\`typescript
 const redoEdit = () => {
   if (!lastUndoneEdit) return
 
@@ -232,12 +232,12 @@ const redoEdit = () => {
   setLastUndoneEdit(null)
   setHasUnsavedEdits(true)
 }
-```
+\`\`\`
 
 #### `saveEdit()`
 Persists changes to localStorage.
 
-```typescript
+\`\`\`typescript
 const saveEdit = () => {
   if (!editedItem) return
 
@@ -249,12 +249,12 @@ const saveEdit = () => {
   setLastUndoneEdit(null)
   setHasUnsavedEdits(false)
 }
-```
+\`\`\`
 
 #### `cancelEdit()`
 Discards all changes without saving.
 
-```typescript
+\`\`\`typescript
 const cancelEdit = () => {
   if (!editedItem) return
 
@@ -272,21 +272,21 @@ const cancelEdit = () => {
   setLastUndoneEdit(null)
   setHasUnsavedEdits(false)
 }
-```
+\`\`\`
 
 ---
 
 ### 3. LocalStorage Pattern
 
 #### Storage Key Convention
-```typescript
+\`\`\`typescript
 const getStorageKey = () => {
   return `stockio-items-${currentAccount}`  // e.g., "stockio-items-noire"
 }
-```
+\`\`\`
 
 #### Initial Load Pattern
-```typescript
+\`\`\`typescript
 useEffect(() => {
   const fetchItems = async () => {
     const storageKey = getStorageKey()
@@ -306,7 +306,7 @@ useEffect(() => {
 
   fetchItems()
 }, [currentAccount])
-```
+\`\`\`
 
 ---
 
@@ -314,7 +314,7 @@ useEffect(() => {
 
 ### Button Layout in Page Header
 
-```tsx
+\`\`\`tsx
 <div className="flex items-center gap-1.5">
   {/* Undo/Redo Group */}
   <div className="flex items-center gap-0.5 px-1 py-0.5 rounded-md bg-muted/50 mr-1.5">
@@ -358,11 +358,11 @@ useEffect(() => {
     <Check className="w-4 h-4" />
   </button>
 </div>
-```
+\`\`\`
 
 ### Handler Functions in Page Component
 
-```tsx
+\`\`\`tsx
 // Get state from hook
 const {
   editField,
@@ -417,7 +417,7 @@ const handleGuardar = async () => {
     setIsSaving(false)
   }
 }
-```
+\`\`\`
 
 ---
 
@@ -425,7 +425,7 @@ const handleGuardar = async () => {
 
 ### Pattern for Input Components
 
-```tsx
+\`\`\`tsx
 // In the component that renders the input
 interface Props {
   item: Item
@@ -441,11 +441,11 @@ function ItemInfoSection({ item, onFieldChange }: Props) {
     />
   )
 }
-```
+\`\`\`
 
 ### Passing Down from Page
 
-```tsx
+\`\`\`tsx
 // In page component
 const handleFieldChange = (itemSku: string, field: string, value: any) => {
   editField(itemSku, field, value)
@@ -457,11 +457,11 @@ const handleFieldChange = (itemSku: string, field: string, value: any) => {
   onFieldChange={handleFieldChange}
   // ... other props
 />
-```
+\`\`\`
 
 ### Nested Field Updates (Stock Example)
 
-```typescript
+\`\`\`typescript
 const updateStock = (itemSku: string, field: "total" | "reservado", value: number) => {
   const item = items.find((i) => i.sku === itemSku)
   if (!item) return
@@ -483,7 +483,7 @@ const updateStock = (itemSku: string, field: "total" | "reservado", value: numbe
   // Use editField for the entire stock object
   editField(itemSku, "stock", newStock)
 }
-```
+\`\`\`
 
 ---
 
@@ -491,7 +491,7 @@ const updateStock = (itemSku: string, field: "total" | "reservado", value: numbe
 
 ### Step 1: Create or Extend Domain Hook
 
-```typescript
+\`\`\`typescript
 // hooks/use-precios.ts (example for prices module)
 
 export function usePrecios() {
@@ -530,11 +530,11 @@ export function usePrecios() {
     canRedoEdit: lastUndoneEdit !== null,
   }
 }
-```
+\`\`\`
 
 ### Step 2: Add URDG Buttons to Page
 
-```tsx
+\`\`\`tsx
 // app/precios/lista-de-precios/page.tsx
 
 export default function PreciosPage() {
@@ -553,17 +553,17 @@ export default function PreciosPage() {
   // Add URDG buttons in header (copy pattern from articulos)
   // ...
 }
-```
+\`\`\`
 
 ### Step 3: Connect Input Fields
 
-```tsx
+\`\`\`tsx
 // In your price grid or detail component
 <Input
   value={precio.costo}
   onChange={(e) => onFieldChange(precio.sku, "costo", e.target.value)}
 />
-```
+\`\`\`
 
 ---
 
@@ -571,11 +571,11 @@ export default function PreciosPage() {
 
 ### Console Logs Pattern
 
-```typescript
+\`\`\`typescript
 console.log("[v0] useItems - editField called:", { itemSku, field, newValue })
 console.log("[v0] useItems - hasUnsavedEdits changed to:", hasUnsavedEdits)
 console.log("[v0] useItems - saved edits to localStorage")
-```
+\`\`\`
 
 ### Common Issues
 
@@ -590,7 +590,7 @@ console.log("[v0] useItems - saved edits to localStorage")
 
 ## 📊 State Flow Diagram
 
-```
+\`\`\`
 User types in input
         │
         ▼
@@ -635,7 +635,7 @@ lastUndone     │              ▼
    ▼           ▼              │
 Clear edit   Clear edit      ▼
 state        state         Done!
-```
+\`\`\`
 
 ---
 

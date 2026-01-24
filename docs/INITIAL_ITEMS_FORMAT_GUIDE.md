@@ -37,7 +37,7 @@ The info segment consists of three subsections with different inheritance behavi
 - Children cannot override or customize these values under any circumstance
 
 **Example:**
-```typescript
+\`\`\`typescript
 // Parent (Agrupador)
 name: "Vino Proemio",
 categoria: "Vinos",
@@ -45,7 +45,7 @@ marca: "Norton"
 
 // All children inherit these exact values, locked
 // UI shows these fields as disabled/read-only in child items
-```
+\`\`\`
 
 ---
 
@@ -60,7 +60,7 @@ marca: "Norton"
 - Children cannot change the presentation format
 
 **Example:**
-```typescript
+\`\`\`typescript
 // Parent (Agrupador)
 formatoVenta: "unidad",
 volumenActive: true,
@@ -69,7 +69,7 @@ volumenUnidad: "ml"
 
 // All children inherit these exact values, locked
 // UI shows these fields as disabled/read-only in child items
-```
+\`\`\`
 
 ---
 
@@ -81,27 +81,27 @@ volumenUnidad: "ml"
 ##### Proveedor Field - Two Cases:
 
 **Case A: Proveedor Defined in Parent (Locked Inheritance)**
-```typescript
+\`\`\`typescript
 // Parent (Agrupador)
 proveedor: "Bodega Norton"
 
 // Children
 proveedor: "Bodega Norton"     // Locked, inherited from parent (disabled in UI)
 codigoProveedor: "NORTON-001"  // Can be set individually per child (editable in UI)
-```
+\`\`\`
 **Rule:** If proveedor has a value in parent, children inherit it as a **locked field**, just like product information and presentation fields.
 
 ---
 
 **Case B: Proveedor Empty in Parent (Flexible)**
-```typescript
+\`\`\`typescript
 // Parent (Agrupador)
 proveedor: ""  // Empty string
 
 // Children
 proveedor: "Distribuidor A"    // Can be set individually per child (editable in UI)
 codigoProveedor: "DIST-A-001"  // Can be set individually per child (editable in UI)
-```
+\`\`\`
 **Rule:** If proveedor is left empty in parent, it **can be set individually in each child** (editable in UI).
 
 ---
@@ -157,7 +157,7 @@ codigoProveedor: "DIST-A-001"  // Can be set individually per child (editable in
 
   **Implementation Pattern:**
 
-  ```typescript
+  \`\`\`typescript
   // Parent (Agrupador)
   atributosInformativos: [
     // Case 1: Locked inheritance
@@ -188,7 +188,7 @@ codigoProveedor: "DIST-A-001"  // Can be set individually per child (editable in
       ]
     }
   ]
-  ```
+  \`\`\`
 
   **Merging Behavior:**
   - Variant's `atributosInformativos` merge with parent's attributes
@@ -208,7 +208,7 @@ Unlike atributos informativos, **atributos principales are strictly defined by t
 - Creates a matrix of variant combinations
 - Example: Vino Proemio, Vino Trapiche Gran Medalla
 
-```typescript
+\`\`\`typescript
 // Parent (Agrupador)
 containerAtributosPrincipales: [
   { key: "Varietal", variantes: ["Malbec", "Cabernet Sauvignon", "Syrah"] },
@@ -223,14 +223,14 @@ variants: [{
     { key: "Año", value: "2019" }           // Picks ONE from variantes
   ]
 }]
-```
+\`\`\`
 
 **Case 2: One Atributo Principal (Single Differentiator)**
 - Parent defines ONLY ONE attribute with values
 - Variants differ by only one characteristic
 - **Children CANNOT add additional atributos principales**
 
-```typescript
+\`\`\`typescript
 // Parent (Agrupador)
 containerAtributosPrincipales: [
   { key: "Varietal", variantes: ["Malbec", "Cabernet Sauvignon"] }
@@ -244,14 +244,14 @@ variants: [{
     // CANNOT add a second attribute like "Año"
   ]
 }]
-```
+\`\`\`
 
 **Case 3: Invalid/Empty Attributes (Ignored)**
 - If a `containerAtributosPrincipales` entry has an empty `variantes` array, it is **NOT VALID**
 - Children should NOT include this attribute at all
 - System should filter out attributes with empty variantes
 
-```typescript
+\`\`\`typescript
 // Parent (Agrupador)
 containerAtributosPrincipales: [
   { key: "Varietal", variantes: ["Malbec", "Cabernet"] },
@@ -265,7 +265,7 @@ variants: [{
     // "Región" is NOT included because it had empty variantes
   ]
 }]
-```
+\`\`\`
 
 **Core Rules:**
 - ❌ Children CANNOT add new atributos principales beyond what parent defines
