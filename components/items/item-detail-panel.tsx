@@ -822,7 +822,7 @@ export function ItemDetailPanel({
           </div>
 
           {/* Middle/Right Column - Segment Buttons + Content */}
-          <div className={`flex flex-col ${isViewingContainer ? "order-2 col-span-6" : "order-3 col-span-4"}`}>
+          <div className={`flex flex-col ${isViewingContainer ? "order-2 col-span-6" : "order-2 col-span-5"}`}>
             {/* Sticky Segment Buttons */}
             <div className="sticky top-[0px] z-20 backdrop-blur-[2px] bg-slate-50 mb-4">
               <div className="flex items-center gap-0 h-10 mt-3">
@@ -2304,7 +2304,7 @@ export function ItemDetailPanel({
 
           {/* Right Column - Stock (only for standalone/children items) */}
           {!isViewingContainer && (
-            <div className="col-span-3 order-2 flex flex-col mt-4">
+            <div className="col-span-3 order-3 flex flex-col mt-4">
               <div className="sticky top-4 p-5 bg-white border border-border/40 rounded-xl shadow-sm">
                 <h3 className="text-xs font-semibold text-foreground/60 uppercase tracking-wider mb-4">
                   Stock en Depósito: Torcuato
@@ -2550,6 +2550,128 @@ export function ItemDetailPanel({
                         </div>
                       </div>
                     )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Right Column - Variant Grid (only for parent items) */}
+          {isViewingContainer && (
+            <div className="col-span-3 order-3 flex flex-col mt-4">
+              <div className="sticky top-4 p-5 bg-white border border-border/40 rounded-xl shadow-sm">
+                <h3 className="text-xs font-semibold text-foreground/60 uppercase tracking-wider mb-4">
+                  Variantes
+                </h3>
+
+                <div className="space-y-2">
+                  {/* Total Stock Summary */}
+                  <div className="border border-emerald-200 rounded-lg bg-emerald-50/50 overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <div className="text-xs font-medium text-emerald-700 uppercase tracking-wide">Stock Total</div>
+                      <span className="text-xl font-bold text-emerald-600 tabular-nums">
+                        {selectedItem.variants?.reduce((acc: number, v: any) => {
+                          const total = Number.parseInt(v.stock?.total || "0")
+                          const reservado = Number.parseInt(v.stock?.reservado || "0")
+                          return acc + (total - reservado)
+                        }, 0) || 0}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Variant List */}
+                  <div className="border border-border/40 rounded-lg bg-background overflow-hidden divide-y divide-border/30">
+                    {variantItems.length > 0 ? (
+                      variantItems.slice(0, 8).map((variant) => {
+                        const sourceVariant = selectedItem.variants?.find((v: any) => {
+                          if (!v.atributosPrincipales) return false
+                          const hasMatchingAttr1 = variant.variant1
+                            ? v.atributosPrincipales.some((attr: any) => attr.value === variant.variant1)
+                            : true
+                          const hasMatchingAttr2 = variant.variant2
+                            ? v.atributosPrincipales.some((attr: any) => attr.value === variant.variant2)
+                            : true
+                          return hasMatchingAttr1 && hasMatchingAttr2
+                        })
+
+                        const stockTotal = Number.parseInt(sourceVariant?.stock?.total || "0")
+                        const stockReservado = Number.parseInt(sourceVariant?.stock?.reservado || "0")
+                        const stockDisponible = stockTotal - stockReservado
+
+                        return (
+                          <div
+                            key={variant.sku}
+                            className="flex items-center justify-between px-3 py-2.5 hover:bg-accent/30 transition-colors"
+                          >
+                            <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                              {variant.variant1 && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[80px]">
+                                  {variant.variant1}
+                                </span>
+                              )}
+                              {variant.variant1 && variant.variant2 && (
+                                <span className="text-[9px] text-muted-foreground/50 font-medium">×</span>
+                              )}
+                              {variant.variant2 && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[80px]">
+                                  {variant.variant2}
+                                </span>
+                              )}
+                            </div>
+                            <span className={`text-sm font-semibold tabular-nums ${
+                              stockDisponible > 0 ? "text-emerald-600" : stockDisponible < 0 ? "text-red-500" : "text-muted-foreground"
+                            }`}>
+                              {stockDisponible}
+                            </span>
+                          </div>
+                        )
+                      })
+                    ) : (
+                      <div className="px-4 py-6 text-center text-xs text-muted-foreground">
+                        No hay variantes configuradas
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Show more indicator */}
+                  {variantItems.length > 8 && (
+                    <div className="text-center text-[10px] text-muted-foreground py-1">
+                      +{variantItems.length - 8} variantes más
+                    </div>
+                  )}
+
+                  {/* Quick Stats */}
+                  <div className="grid grid-cols-2 gap-2 pt-2">
+                    <div className="border border-border/40 rounded-lg p-2.5 bg-background">
+                      <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1">
+                        Variantes
+                      </div>
+                      <span className="text-base font-semibold text-foreground tabular-nums">
+                        {variantItems.length}
+                      </span>
+                    </div>
+                    <div className="border border-border/40 rounded-lg p-2.5 bg-background">
+                      <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1">
+                        Con Stock
+                      </div>
+                      <span className="text-base font-semibold text-foreground tabular-nums">
+                        {variantItems.filter((variant) => {
+                          const sourceVariant = selectedItem.variants?.find((v: any) => {
+                            if (!v.atributosPrincipales) return false
+                            const hasMatchingAttr1 = variant.variant1
+                              ? v.atributosPrincipales.some((attr: any) => attr.value === variant.variant1)
+                              : true
+                            const hasMatchingAttr2 = variant.variant2
+                              ? v.atributosPrincipales.some((attr: any) => attr.value === variant.variant2)
+                              : true
+                            return hasMatchingAttr1 && hasMatchingAttr2
+                          })
+                          const stockTotal = Number.parseInt(sourceVariant?.stock?.total || "0")
+                          const stockReservado = Number.parseInt(sourceVariant?.stock?.reservado || "0")
+                          return (stockTotal - stockReservado) > 0
+                        }).length}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
