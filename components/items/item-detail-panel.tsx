@@ -908,10 +908,10 @@ export function ItemDetailPanel({
           )}
 
           {/* Center/Right Column - Segment Buttons + Content */}
-          <div className={`flex flex-col ${isViewingContainer ? "order-2 col-span-3" : "order-2 col-span-4 relative -mt-2 pt-2 pb-6 px-6 -mx-2 bg-white rounded-2xl shadow-[0_0_40px_-12px_rgba(0,0,0,0.12)] border border-slate-100/80 z-10"}`}>
+          <div className={`flex flex-col ${isViewingContainer ? "order-2 col-span-3" : "order-2 col-span-4 relative mt-[44px] pt-6 pb-8 px-8 -mx-2 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10"}`}>
             {/* Sticky Segment Buttons */}
-            <div className={`sticky top-[0px] z-20 backdrop-blur-[2px] mb-4 ${isViewingContainer ? "bg-slate-50" : "bg-white/95"}`}>
-              <div className="flex items-center gap-0 h-10 mt-3">
+            <div className={`sticky top-[0px] z-20 mb-6 ${isViewingContainer ? "bg-slate-50" : ""}`}>
+              <div className={`flex items-center gap-1 ${isViewingContainer ? "h-10 mt-3" : "h-11 p-1 bg-slate-100/80 rounded-xl"}`}>
                 {isViewingContainer ? (
                   <>
                     <button
@@ -939,23 +939,23 @@ export function ItemDetailPanel({
                   <>
                     <button
                       onClick={() => setSelectedDetailTab("info")}
-                      className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer rounded-tl-md ${
+                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
                         selectedDetailTab === "info"
-                          ? "border-primary bg-accent text-foreground"
-                          : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                          ? "bg-white text-slate-900 shadow-sm font-semibold"
+                          : "text-slate-500 hover:text-slate-700"
                       }`}
                     >
-                      <span className="text-sm font-medium uppercase tracking-wider">Info</span>
+                      <span className="text-xs font-medium uppercase tracking-widest">Info</span>
                     </button>
                     <button
                       onClick={() => setSelectedDetailTab("atributos")}
-                      className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer rounded-tr-md ${
+                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
                         selectedDetailTab === "atributos"
-                          ? "border-primary bg-accent text-foreground"
-                          : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                          ? "bg-white text-slate-900 shadow-sm font-semibold"
+                          : "text-slate-500 hover:text-slate-700"
                       }`}
                     >
-                      <span className="text-sm font-medium uppercase tracking-wider">Atributos</span>
+                      <span className="text-xs font-medium uppercase tracking-widest">Atributos</span>
                     </button>
                   </>
                 )}
@@ -1629,64 +1629,64 @@ export function ItemDetailPanel({
                 // Individual item tab content
                 <>
                   {selectedDetailTab === "info" && (
-                    <div className="h-full flex flex-col py-2">
-                      <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
+                    <div className="h-full flex flex-col">
+                      <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-4">
                         Información del Producto
                       </h3>
 
-                      <div className="space-y-3">
+                      <div className="space-y-4">
                         {/* Categoría and Marca */}
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="flex flex-col gap-2">
-                            <label className="text-sm font-medium text-gray-700">Categoría</label>
+                        <div className="grid grid-cols-2 gap-5">
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Categoría</label>
                             <input
                               type="text"
                               value={categoria}
                               onChange={(e) => handleFieldChange("categoria", e.target.value, setCategoria)}
                               disabled={shouldStrictlyInherit(fatherItem?.categoria)}
-                              className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                              className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${
                                 shouldStrictlyInherit(fatherItem?.categoria)
-                                  ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
-                                  : "bg-white border-gray-300 text-gray-900"
+                                  ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                  : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
                               }`}
                               placeholder="Ej: Vinos"
                             />
                           </div>
 
-                          <div className="flex flex-col gap-2">
-                            <label className="text-sm font-medium text-gray-700">Marca</label>
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Marca</label>
                             <input
                               type="text"
                               value={marca}
                               onChange={(e) => handleFieldChange("marca", e.target.value, setMarca)}
                               disabled={shouldStrictlyInherit(fatherItem?.marca)}
-                              className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                              className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${
                                 shouldStrictlyInherit(fatherItem?.marca)
-                                  ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
-                                  : "bg-white border-gray-300 text-gray-900"
+                                  ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                  : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
                               }`}
                               placeholder="Ej: YKK"
                             />
                           </div>
                         </div>
 
-                        <div className="border-t border-gray-200 my-4"></div>
+                        <div className="border-t border-slate-100 my-5"></div>
 
-                        <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
+                        <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-4">
                           Presentación
                         </h3>
 
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="flex flex-col gap-2">
-                            <label className="text-sm font-medium text-gray-700">Formato de venta</label>
+                        <div className="grid grid-cols-2 gap-5">
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Formato de venta</label>
                             <select
                               value={formatoVenta}
                               onChange={(e) => handleFieldChange("formatoVenta", e.target.value, setFormatoVenta)}
                               disabled={shouldStrictlyInherit(fatherItem?.formatoVenta)}
-                              className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none ${
+                              className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 appearance-none transition-all text-sm ${
                                 shouldStrictlyInherit(fatherItem?.formatoVenta)
-                                  ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
-                                  : "bg-white border-gray-300 text-gray-900 cursor-pointer"
+                                  ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                  : "bg-white border-slate-200 text-slate-800 cursor-pointer hover:border-slate-300"
                               }`}
                             >
                               <option value="unidad">Unidad</option>
@@ -1694,8 +1694,8 @@ export function ItemDetailPanel({
                             </select>
                           </div>
 
-                          <div className="flex flex-col gap-2">
-                            <label className="text-sm font-medium text-gray-700">Unidades por pack</label>
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Unidades por pack</label>
                             <input
                               type="text"
                               value={unidadesPorPack === "N.E." ? "" : unidadesPorPack}
@@ -1710,38 +1710,38 @@ export function ItemDetailPanel({
                                 // Ignore non-numeric input
                               }}
                               disabled={formatoVenta === "unidad" || isUnidadesPorPackLocked}
-                              className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                              className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${
                                 formatoVenta === "unidad" || isUnidadesPorPackLocked
-                                  ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
-                                  : "bg-white border-gray-300 text-gray-900"
+                                  ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                  : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
                               }`}
                               placeholder="N.E."
                             />
                           </div>
                         </div>
 
-                        <div className="flex flex-col gap-2">
-                          <div className="flex items-center gap-2">
-                            <label className="text-sm font-medium text-gray-700">Volumen de la unidad</label>
+                        <div className="flex flex-col gap-2 mt-3">
+                          <div className="flex items-center gap-3">
+                            <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Volumen de la unidad</label>
                             <button
                               onClick={() => handleFieldChange("volumenActive", !volumenActive, setVolumenActive)}
                               disabled={shouldStrictlyInherit(fatherItem?.volumenActive)}
-                              className={`w-10 h-5 rounded-full transition-colors relative ${
-                                volumenActive ? "bg-blue-500" : "bg-gray-300"
-                              } ${shouldStrictlyInherit(fatherItem?.volumenActive) ? "opacity-50 cursor-not-allowed" : ""}`}
+                              className={`w-9 h-5 rounded-full transition-all relative ${
+                                volumenActive ? "bg-slate-800" : "bg-slate-200"
+                              } ${shouldStrictlyInherit(fatherItem?.volumenActive) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                             >
                               <div
-                                className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${
-                                  volumenActive ? "translate-x-5" : "translate-x-0"
+                                className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${
+                                  volumenActive ? "translate-x-4" : "translate-x-0"
                                 }`}
                               />
                             </button>
                           </div>
 
                           {volumenActive && (
-                            <div className="grid grid-cols-2 gap-4 mt-2">
-                              <div className="flex flex-col gap-2">
-                                <label className="text-sm font-medium text-gray-700">Cantidad</label>
+                            <div className="grid grid-cols-2 gap-5 mt-2">
+                              <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Cantidad</label>
                                 <input
                                   type="number"
                                   value={volumenCantidad}
@@ -1749,25 +1749,25 @@ export function ItemDetailPanel({
                                     handleFieldChange("volumenCantidad", e.target.value, setVolumenCantidad)
                                   }
                                   disabled={shouldStrictlyInherit(fatherItem?.volumenCantidad)}
-                                  className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                  className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${
                                     shouldStrictlyInherit(fatherItem?.volumenCantidad)
-                                      ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
-                                      : "bg-white border-gray-300 text-gray-900"
+                                      ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                      : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
                                   }`}
                                   placeholder="0"
                                 />
                               </div>
 
-                              <div className="flex flex-col gap-2">
-                                <label className="text-sm font-medium text-gray-700">Unidad de medida</label>
+                              <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Unidad de medida</label>
                                 <select
                                   value={volumenUnidad}
                                   onChange={(e) => handleFieldChange("volumenUnidad", e.target.value, setVolumenUnidad)}
                                   disabled={shouldStrictlyInherit(fatherItem?.volumenUnidad)}
-                                  className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none ${
+                                  className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 appearance-none transition-all text-sm ${
                                     shouldStrictlyInherit(fatherItem?.volumenUnidad)
-                                      ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
-                                      : "bg-white border-gray-300 text-gray-900 cursor-pointer"
+                                      ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                      : "bg-white border-slate-200 text-slate-800 cursor-pointer hover:border-slate-300"
                                   }`}
                                 >
                                   <option value="ml">ml</option>
@@ -1784,25 +1784,25 @@ export function ItemDetailPanel({
 
                         {/* Vencimiento Section */}
                         <div className="flex flex-col gap-2 mt-4">
-                          <div className="flex items-center gap-2">
-                            <label className="text-sm font-medium text-gray-700">Vencimiento</label>
+                          <div className="flex items-center gap-3">
+                            <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Vencimiento</label>
                             <button
                               onClick={() => setVencimientoActive(!vencimientoActive)}
-                              className={`w-10 h-5 rounded-full transition-colors relative ${
-                                vencimientoActive ? "bg-blue-500" : "bg-gray-300"
+                              className={`w-9 h-5 rounded-full transition-all relative cursor-pointer ${
+                                vencimientoActive ? "bg-slate-800" : "bg-slate-200"
                               }`}
                             >
                               <div
-                                className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${
-                                  vencimientoActive ? "translate-x-5" : "translate-x-0"
+                                className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${
+                                  vencimientoActive ? "translate-x-4" : "translate-x-0"
                                 }`}
                               />
                             </button>
                           </div>
 
                           {vencimientoActive && (
-                            <div className="mt-2 p-3 border border-blue-200/60 rounded-lg bg-gradient-to-br from-blue-50/50 to-indigo-50/30">
-                              <label className="text-xs font-semibold text-blue-900/70 uppercase tracking-wider mb-2 block">
+                            <div className="mt-2 p-4 border border-slate-200 rounded-xl bg-slate-50/50">
+                              <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-2 block">
                                 Fecha de Vencimiento
                               </label>
                               <div className="relative">
@@ -1810,7 +1810,7 @@ export function ItemDetailPanel({
                                   type="date"
                                   value={fechaVencimiento}
                                   onChange={(e) => setFechaVencimiento(e.target.value)}
-                                  className="w-full px-3 py-2.5 border border-blue-300/50 rounded-lg bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 text-gray-900 text-sm font-medium transition-all shadow-sm hover:shadow-md"
+                                  className="w-full px-3 py-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-slate-300 text-slate-800 text-sm transition-all hover:border-slate-300"
                                 />
                               </div>
                             </div>
@@ -1821,13 +1821,13 @@ export function ItemDetailPanel({
                   )}
 
                   {selectedDetailTab === "atributos" && (
-                    <div className="h-full flex flex-col py-2">
+                    <div className="h-full flex flex-col">
                       {!showIndividualAtributosView ? (
-                        <div className="flex flex-col items-center justify-center h-full gap-4">
-                          <p className="text-gray-500 text-sm">No hay atributos configurados</p>
+                        <div className="flex flex-col items-center justify-center h-full gap-4 py-12">
+                          <p className="text-slate-400 text-sm">No hay atributos configurados</p>
                           <button
                             onClick={() => setShowIndividualAtributosView(true)}
-                            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg transition-colors cursor-pointer"
+                            className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-all text-sm font-medium cursor-pointer"
                           >
                             Agregar atributos
                           </button>
@@ -1836,10 +1836,10 @@ export function ItemDetailPanel({
                         <div className="flex flex-col gap-6">
                           <div className="flex flex-col gap-3">
                             <div>
-                              <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
+                              <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-2">
                                 Atributos Principales
                               </h3>
-                              <p className="text-xs text-gray-500 italic mt-1">
+                              <p className="text-[11px] text-slate-400 mt-1">
                                 Atributos que definen las características principales del producto (máximo 2)
                               </p>
                             </div>
@@ -1847,7 +1847,7 @@ export function ItemDetailPanel({
                             {atributosPrincipales.map((attr, index) => (
                               <div key={index} className="flex items-start gap-3">
                                 <div className="flex-1">
-                                  <label className="text-sm font-medium text-gray-700 mb-2 block">Atributo</label>
+                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
                                   <Popover
                                     open={!isChildItem && (attr.keyOpen || false)}
                                     onOpenChange={(open) => {
@@ -1870,8 +1870,8 @@ export function ItemDetailPanel({
                                           }
                                         }}
                                         disabled={isChildItem}
-                                        className={`w-full px-3 py-2 pr-9 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                          isChildItem ? "opacity-50 cursor-not-allowed" : ""
+                                        className={`w-full px-3 py-2.5 pr-9 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${
+                                          isChildItem ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
                                         }`}
                                         placeholder="Ej: Color"
                                       />
