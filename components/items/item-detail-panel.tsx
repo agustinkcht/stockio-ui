@@ -908,9 +908,9 @@ export function ItemDetailPanel({
           )}
 
           {/* Center/Right Column - Segment Buttons + Content */}
-          <div className={`flex flex-col ${isViewingContainer ? "order-2 col-span-3" : "order-2 col-span-4"}`}>
+          <div className={`flex flex-col ${isViewingContainer ? "order-2 col-span-3" : "order-2 col-span-4 relative -mt-2 pt-2 pb-6 px-6 -mx-2 bg-white rounded-2xl shadow-[0_0_40px_-12px_rgba(0,0,0,0.12)] border border-slate-100/80 z-10"}`}>
             {/* Sticky Segment Buttons */}
-            <div className="sticky top-[0px] z-20 backdrop-blur-[2px] bg-slate-50 mb-4">
+            <div className={`sticky top-[0px] z-20 backdrop-blur-[2px] mb-4 ${isViewingContainer ? "bg-slate-50" : "bg-white/95"}`}
               <div className="flex items-center gap-0 h-10 mt-3">
                 {isViewingContainer ? (
                   <>
