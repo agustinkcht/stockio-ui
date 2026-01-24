@@ -233,9 +233,35 @@ The **Panel wrapper** (Utility Bar + content area) is consistent. Only the inner
 ```
 
 **Item Types**:
-1. **Simple Item**: No variants, direct stock
-2. **Item with Variants**: hasVariants=true, contains variants[]
-3. **Agrupador (Container)**: isAgrupador=true, contains items[]
+1. **Simple Item (Standalone)**: No variants, direct stock management
+2. **Item with Variants (Parent/Agrupador)**: hasVariants=true, contains variants[]
+3. **Variant (Child)**: Individual variant of a parent item, has its own SKU, Código Universal, and stock
+
+### Parent Item Detail Panel - Variantes Tab
+
+The Variantes tab in parent items displays a grid with three columns:
+- **Atributos** (no header label): Shows attribute values as tags. Single-attribute items show one tag; two-attribute items show tags with "×" separator (e.g., "Negro × Maracuyá")
+- **SKU**: Editable field, synced with the variant/child item
+- **Código Universal**: Editable field, synced with the variant/child item
+
+#### Variant Deletion Behavior
+
+Each variant row has a delete (X) button that appears on hover. Deletion behavior depends on the number of atributos principales:
+
+**Single-Attribute Variants**:
+- Deleting a variant removes that specific variant
+- If the deleted variant was the ONLY one using a particular attribute value, that value is also removed from the atributo principal's variantes array
+- Example: Item with "Dosaje" attribute (Extra Brut, Brut Nature, Brut Rosé). Deleting "Brut Rosé" variant removes it and also removes "Brut Rosé" from the Dosaje variantes if no other variant uses it
+
+**Two-Attribute Variants**:
+- Deleting a variant removes ONLY that specific combination (exact match at both positions)
+- Other variants sharing one of the attributes remain intact
+- Attribute values are only removed from atributos principales if NO remaining variant uses them
+- Example: Item with "Color" (Negro, Blanco) and "Relleno" (Dulce de Leche, Frutas, Maracuyá) = 6 variants
+  - Deleting "Negro × Maracuyá" removes only that one variant (5 remain)
+  - "Negro" stays in Color values (used by other variants)
+  - "Maracuyá" stays in Relleno values (used by other variants)
+  - Only if you delete ALL variants using "Maracuyá" would it be removed from Relleno
 
 ### Deposit Stock
 ```typescript
