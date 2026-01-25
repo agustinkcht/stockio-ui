@@ -681,8 +681,9 @@ export function ItemDetailPanel({
       {/* <Breadcrumb dynamicContent={null} /> */}
 
       <div className="px-8 pb-6 bg-slate-50 min-h-screen pl-8 pt-0">
-        <div className={`grid gap-2 ${isViewingContainer ? "grid-cols-9" : "grid-cols-10"}`}>
-          {/* Left Column - Image Card */}
+        <div className={`grid gap-2 ${isViewingContainer ? "grid-cols-2 gap-6" : "grid-cols-10"}`}>
+          {/* Left Column - Image Card (only for standalone/children) */}
+          {!isViewingContainer && (
           <div className="col-span-3 order-1 z-20 rounded-xl border flex flex-col transition-all duration-300 border-slate-100 mt-4 bg-transparent border-none shadow-none pr-1.5 pl-0">
             <div className="sticky top-4 p-6 mt-0 px-8 bg-transparent border-none shadow-none pl-7 pr-11">
               <div className="mt-2">
@@ -771,12 +772,13 @@ export function ItemDetailPanel({
               </div>
             </div>
           </div>
+          )}
 
           {/* Right Column - Variantes Card (only for parent items) */}
           {isViewingContainer && (
-            <div className="col-span-3 order-3 flex flex-col mt-4 pl-7">
-              <div className="sticky top-4 p-5 bg-white border border-border/40 rounded-xl shadow-sm">
-                <h3 className="text-xs font-semibold text-foreground/60 uppercase tracking-wider mb-4">
+            <div className="col-span-1 order-2 flex flex-col mt-[44px]">
+              <div className="sticky top-4 p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
+                <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-5">
                   {variantItems.length} {variantItems.length === 1 ? "variante" : "variantes"}
                 </h3>
 
@@ -908,31 +910,51 @@ export function ItemDetailPanel({
           )}
 
           {/* Center/Right Column - Segment Buttons + Content */}
-          <div className={`flex flex-col ${isViewingContainer ? "order-2 col-span-3" : "order-2 col-span-4 relative mt-[44px] pt-6 pb-8 px-8 -mx-2 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10"}`}>
+          <div className={`flex flex-col ${isViewingContainer ? "order-1 col-span-1 mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : "order-2 col-span-4 relative mt-[44px] pt-6 pb-8 px-8 -mx-2 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10"}`}>
+            
+            {/* Thumbnail + Title Header for Parent Items */}
+            {isViewingContainer && (
+              <div className="flex items-center gap-4 mb-6 pb-5 border-b border-slate-100">
+                <div className="w-14 h-14 rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                  <Image
+                    src={getCategoryImage(selectedItem.categoria) || "/placeholder.svg"}
+                    alt={selectedItem.name}
+                    width={56}
+                    height={56}
+                    className="object-cover"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h2 className="font-semibold text-slate-900 text-base truncate">{selectedItem.name}</h2>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-wider mt-0.5">Agrupador de variantes</p>
+                </div>
+              </div>
+            )}
+
             {/* Sticky Segment Buttons */}
-            <div className={`sticky top-[0px] z-20 mb-6 ${isViewingContainer ? "bg-slate-50" : ""}`}>
-              <div className={`flex items-center gap-1 ${isViewingContainer ? "h-10 mt-3" : "h-11 p-1 bg-slate-100/80 rounded-xl"}`}>
+            <div className={`z-20 mb-6 ${isViewingContainer ? "" : "sticky top-[0px]"}`}>
+              <div className="flex items-center gap-1 h-11 p-1 bg-slate-100/80 rounded-xl">
                 {isViewingContainer ? (
                   <>
                     <button
                       onClick={() => setSelectedDetailTab("info")}
-                      className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer rounded-tl-md ${
+                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
                         selectedDetailTab === "info"
-                          ? "border-primary bg-accent text-foreground"
-                          : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                          ? "bg-white text-slate-900 shadow-sm font-semibold"
+                          : "text-slate-500 hover:text-slate-700"
                       }`}
                     >
-                      <span className="text-sm font-medium uppercase tracking-wider">Info</span>
+                      <span className="text-xs font-medium uppercase tracking-widest">Info</span>
                     </button>
                     <button
                       onClick={() => setSelectedDetailTab("atributos")}
-                      className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer rounded-tr-md ${
+                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
                         selectedDetailTab === "atributos"
-                          ? "border-primary bg-accent text-foreground"
-                          : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                          ? "bg-white text-slate-900 shadow-sm font-semibold"
+                          : "text-slate-500 hover:text-slate-700"
                       }`}
                     >
-                      <span className="text-sm font-medium uppercase tracking-wider">Atributos</span>
+                      <span className="text-xs font-medium uppercase tracking-widest">Atributos</span>
                     </button>
                   </>
                 ) : (
