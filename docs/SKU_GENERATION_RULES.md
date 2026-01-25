@@ -8,9 +8,9 @@ This document defines the **strict rules** for generating SKUs (Stock Keeping Un
 
 All SKUs must follow this format:
 
-```
+\`\`\`
 <CATEGORY>-<TITLE>-<ATTR1>-<ATTR2>
-```
+\`\`\`
 
 **Rules:**
 * All parts are **uppercase**
@@ -99,45 +99,45 @@ These represent **variant-defining attributes** (e.g., varietal, flavor, year).
 
 ### Wine Variants
 
-```
+\`\`\`
 VNO-PROICON-CABS-2019
-```
+\`\`\`
 = Vino · Proemio Ícono · Cabernet Sauvignon · 2019
 
-```
+\`\`\`
 VNO-PROICON-MALB-2019
-```
+\`\`\`
 = Vino · Proemio Ícono · Malbec · 2019
 
-```
+\`\`\`
 VNO-PROGRES-MALB-2019
-```
+\`\`\`
 = Vino · Proemio Grand Reserve · Malbec · 2019
 
-```
+\`\`\`
 VNO-TRAPGM-MALB-2014
-```
+\`\`\`
 = Vino · Trapiche Gran Medalla · Malbec · 2014
 
 ### Liqueur Variants (Standalone)
 
-```
+\`\`\`
 LICR-JGRM700-ORIG
-```
+\`\`\`
 = Licor · Jägermeister 700 ml · Original
 
-```
+\`\`\`
 LICR-SHER700-CACR
-```
+\`\`\`
 = Licor · Sheridan's 700 ml · Café & Crema
 
 ### Agrupador (Parent Item)
 
 Parent items (agrupadores) that contain variants use the same structure but without variant attributes:
 
-```
+\`\`\`
 VNO-PROICON
-```
+\`\`\`
 = Vino · Proemio Ícono (parent of all Proemio Ícono variants)
 
 ---
@@ -194,29 +194,29 @@ The goal is to create SKUs that are:
 
 ### Non-Vintage Items
 If an item doesn't have a year, use a different secondary attribute or omit ATTR2:
-```
+\`\`\`
 VNO-PROICON-MALB
-```
+\`\`\`
 
 ### Blends
 For wine blends, use the dominant varietal or create a blend code:
-```
+\`\`\`
 VNO-PROICON-BLND-2019
-```
+\`\`\`
 
 ### Pack Items
 If selling in packs, include pack size in the title acronym:
-```
+\`\`\`
 CVZA-STEL6PK-ORIG
-```
+\`\`\`
 = Cerveza · Stella Artois 6-Pack · Original
 
 ### Multiple Formats
 If the same product comes in different sizes, include size in title:
-```
+\`\`\`
 LICR-JGRM700-ORIG  (700ml)
 LICR-JGRM350-ORIG  (350ml)
-```
+\`\`\`
 
 ---
 

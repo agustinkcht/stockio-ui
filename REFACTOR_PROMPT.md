@@ -63,7 +63,7 @@ Refactor the Stockio Dashboard application from a monolithic 5000+ line `app/pag
 ## 🏗️ Proposed Architecture
 
 ### Directory Structure
-```
+\`\`\`
 app/
 ├── page.tsx                          # Orchestrator (100-200 lines max)
 ├── layout.tsx                        # Existing layout
@@ -108,7 +108,7 @@ lib/
 └── api/                             # API/data layer
     ├── items.ts                     # Items CRUD operations
     └── storage.ts                   # Data persistence logic
-```
+\`\`\`
 
 ---
 
@@ -222,7 +222,7 @@ lib/
 **Goal**: Create a clean, minimal `app/page.tsx` that composes all components
 
 **Structure**:
-```tsx
+\`\`\`tsx
 'use client'
 
 import { DashboardLayout } from '@/components/dashboard/dashboard-layout'
@@ -272,7 +272,7 @@ export default function Dashboard() {
     </DashboardLayout>
   )
 }
-```
+\`\`\`
 
 **Target**: 100-200 lines maximum, purely compositional
 

@@ -8,7 +8,7 @@ The PDV (Point of Sale) module implements a transactional system that persists s
 
 ### Data Flow on Sale Completion
 
-```
+\`\`\`
 User Presses "Cobrar"
         ↓
   handleCheckout()
@@ -20,7 +20,7 @@ User Presses "Cobrar"
     └───────────────────────────────────┘
         ↓
   Clear Cart & Reset UI
-```
+\`\`\`
 
 ### Hooks Involved
 
@@ -44,13 +44,13 @@ User Presses "Cobrar"
 
 Each item has a stock object with three properties:
 
-```typescript
+\`\`\`typescript
 stock: {
   total: string;       // Total physical units in inventory
   reservado: string;   // Units reserved (not available for sale)
   disponible: string;  // Available units = total - reservado
 }
-```
+\`\`\`
 
 ### Stock Relationship
 
@@ -72,7 +72,7 @@ stock: {
 
 Located in `hooks/use-items.ts`, this function handles stock reduction for both standalone items and variants.
 
-```typescript
+\`\`\`typescript
 const reduceStock = useCallback((itemId: string, quantity: number, variantId?: string) => {
   // 1. Read current items from localStorage
   const storedItems = localStorage.getItem(`items_${accountId}`)
@@ -113,7 +113,7 @@ const reduceStock = useCallback((itemId: string, quantity: number, variantId?: s
   // 4. Update React state
   setItems(updatedItems)
 }, [accountId, items])
-```
+\`\`\`
 
 **Key Points:**
 - Reads directly from localStorage (not state) to avoid stale data
@@ -129,7 +129,7 @@ const reduceStock = useCallback((itemId: string, quantity: number, variantId?: s
 
 ### Venta Data Structure
 
-```typescript
+\`\`\`typescript
 interface Venta {
   id: string;                    // Unique ID
   fecha: string;                 // ISO date string
@@ -153,13 +153,13 @@ interface Venta {
   metodoPago: string;
   estado: "Completada" | "Pendiente" | "Cancelada";
 }
-```
+\`\`\`
 
 ### The `createVenta()` Function
 
 Located in `hooks/use-ventas.ts`:
 
-```typescript
+\`\`\`typescript
 const createVenta = useCallback((ventaData: Omit<Venta, "id">) => {
   const newVenta: Venta = {
     id: `VTA-${Date.now()}`,
@@ -176,7 +176,7 @@ const createVenta = useCallback((ventaData: Omit<Venta, "id">) => {
 
   return newVenta
 }, [ventas, accountId])
-```
+\`\`\`
 
 ---
 
@@ -186,7 +186,7 @@ const createVenta = useCallback((ventaData: Omit<Venta, "id">) => {
 
 Located in `hooks/use-clientes.ts`:
 
-```typescript
+\`\`\`typescript
 const incrementClientTransaction = useCallback((clientId: string) => {
   const updatedClientes = clientes.map((cliente) => {
     if (cliente.id === clientId) {
@@ -204,7 +204,7 @@ const incrementClientTransaction = useCallback((clientId: string) => {
   // Update state
   setClientes(updatedClientes)
 }, [clientes, accountId])
-```
+\`\`\`
 
 ---
 
@@ -212,7 +212,7 @@ const incrementClientTransaction = useCallback((clientId: string) => {
 
 ### Implementation in `app/mi-negocio/pdv/page.tsx`
 
-```typescript
+\`\`\`typescript
 const handleCheckout = async () => {
   // 1. REDUCE STOCK FOR EACH ITEM
   for (const cartItem of cart) {
@@ -260,7 +260,7 @@ const handleCheckout = async () => {
   setDiscount(0)
   setShowSuccess(true)
 }
-```
+\`\`\`
 
 ### Step-by-Step Execution
 
@@ -335,13 +335,13 @@ The PDV interacts with these localStorage keys:
 
 ### Debug Logging Example
 
-```typescript
+\`\`\`typescript
 console.log("[v0] PDV - Starting checkout", { cartItems: cart.length })
 console.log("[v0] PDV - Reducing stock for:", cartItem.item.sku, "Qty:", cartItem.quantity)
 console.log("[v0] PDV - Stock before:", currentTotal, "Stock after:", newTotal)
 console.log("[v0] PDV - Created venta:", newVenta.id)
 console.log("[v0] PDV - Updated client transactions:", clientId)
-```
+\`\`\`
 
 ---
 

@@ -19,7 +19,7 @@
 
 ## 📁 PROJECT STRUCTURE
 
-```
+\`\`\`
 /app
   page.tsx              # Main application shell (redirects to /inventario/articulos)
   layout.tsx            # Root layout with fonts
@@ -68,7 +68,7 @@
   utils.ts              # Utility functions (cn, etc)
   /data
     initial-items.ts    # Mock data for development
-```
+\`\`\`
 
 ---
 
@@ -203,7 +203,7 @@ The **Panel wrapper** (Utility Bar + content area) is consistent. Only the inner
 ### Core Types
 
 **Item** (base)
-```typescript
+\`\`\`typescript
 {
   name: string
   sku?: string
@@ -219,10 +219,10 @@ The **Panel wrapper** (Utility Bar + content area) is consistent. Only the inner
   hasVariants?: boolean
   isAgrupador?: boolean
 }
-```
+\`\`\`
 
 **ItemVariant**
-```typescript
+\`\`\`typescript
 {
   name: string
   sku: string
@@ -230,7 +230,7 @@ The **Panel wrapper** (Utility Bar + content area) is consistent. Only the inner
   stock: { total, reservado, disponible }
   atributosPrincipales?: Atributo[]
 }
-```
+\`\`\`
 
 **Item Types**:
 1. **Simple Item (Standalone)**: No variants, direct stock management
@@ -264,7 +264,7 @@ Each variant row has a delete (X) button that appears on hover. Deletion behavio
   - Only if you delete ALL variants using "Maracuyá" would it be removed from Relleno
 
 ### Deposit Stock
-```typescript
+\`\`\`typescript
 DepositStockMap = {
   [itemSku]: {
     Ibiza: { total, reservado }
@@ -272,7 +272,7 @@ DepositStockMap = {
     Ciudadela: { total, reservado }
   }
 }
-```
+\`\`\`
 
 ---
 
@@ -347,9 +347,9 @@ DepositStockMap = {
 ## 🧪 DEBUGGING & TESTING
 
 ### Console Logs Pattern
-```typescript
+\`\`\`typescript
 console.log("[v0] ComponentName - action description:", data)
-```
+\`\`\`
 
 Examples:
 - `console.log("[v0] useItems - hasUnsavedDeletes changed to:", value)`
@@ -360,12 +360,12 @@ Examples:
 - Check before making changes: `ReadFile` the latest debug log
 
 ### Current Debug Status (Last Check)
-```
+\`\`\`
 [v0] useItems - hasUnsavedDeletes: false
 [v0] useItems - deletedItems count: 0
 [v0] useChangeTracker - changes count: 0
 [v0] useChangeTracker - hasUnsavedChanges: false
-```
+\`\`\`
 ✅ No errors, clean state
 
 ---
@@ -500,10 +500,10 @@ Examples:
 - **API Routes**: Defined but using mock mode (`USE_MOCK_DATA = true`)
 
 ### Feature Flags
-```typescript
+\`\`\`typescript
 // In hooks/use-items.ts
 const USE_MOCK_DATA = true  // Toggle for real API vs mock
-```
+\`\`\`
 
 ---
 
@@ -520,7 +520,7 @@ const USE_MOCK_DATA = true  // Toggle for real API vs mock
 - ✅ Added vertical dividers for visual hierarchy
 
 ### Layout Configuration
-```
+\`\`\`
 Navbar: Chevrons | Bookmarks | Message Bell User
          (left)      (center)       (right)
 
@@ -529,7 +529,7 @@ Utility Bar: View Name | X Check Undo Redo
 
 Sidebar: Collapsed (64px) or Expanded (264px)
          Toggle button at bottom
-```
+\`\`\`
 
 ---
 

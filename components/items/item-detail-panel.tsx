@@ -681,10 +681,11 @@ export function ItemDetailPanel({
       {/* <Breadcrumb dynamicContent={null} /> */}
 
       <div className="px-8 pb-6 bg-slate-50 min-h-screen pl-8 pt-0">
-        <div className={`grid gap-2 ${isViewingContainer ? "grid-cols-9" : "grid-cols-10"}`}>
-          {/* Left Column - Image Card */}
-          <div className="col-span-3 order-1 sticky top-4 z-20 rounded-xl max-h-[calc(100vh-2rem)] border flex flex-col transition-all duration-300 border-slate-100 mt-4 bg-transparent border-none shadow-none pr-1.5 pl-0">
-            <div className="p-6 mt-0 px-8 bg-transparent border-none shadow-none pl-7 pr-11">
+        <div className={`grid gap-2 ${isViewingContainer ? "grid-cols-2 gap-6" : "grid-cols-10"}`}>
+          {/* Left Column - Image Card (only for standalone/children) */}
+          {!isViewingContainer && (
+          <div className="col-span-3 order-1 z-20 rounded-xl border flex flex-col transition-all duration-300 border-slate-100 mt-4 bg-transparent border-none shadow-none pr-1.5 pl-0">
+            <div className="sticky top-4 p-6 mt-0 px-8 bg-transparent border-none shadow-none pl-7 pr-11">
               <div className="mt-2">
                 <div className="w-full h-64 bg-muted/30 rounded-lg flex items-center justify-center overflow-hidden">
                   <Image
@@ -757,7 +758,7 @@ export function ItemDetailPanel({
                         ) : (
                           <div
                             onClick={() => setEditingDescripcion(true)}
-                            className="w-full min-h-[100px] px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 cursor-pointer hover:border-gray-400 text-sm"
+                            className="w-full min-h-[100px] px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 cursor-pointer hover:border-gray-400 text-sm border-none"
                           >
                             {descripcionValue || (
                               <span className="text-gray-400">Click para agregar descripción...</span>
@@ -771,34 +772,32 @@ export function ItemDetailPanel({
               </div>
             </div>
           </div>
+          )}
 
-          {/* Center Column - Variantes Card (only for parent items) */}
+          {/* Right Column - Variantes Card (only for parent items) */}
           {isViewingContainer && (
-            <div className="col-span-3 order-2 flex flex-col mt-4">
-              <div className="sticky top-4 p-5 bg-white border border-border/40 rounded-xl shadow-sm">
-                <h3 className="text-xs font-semibold text-foreground/60 uppercase tracking-wider mb-4">
-                  Variantes
+            <div className="col-span-1 order-2 flex flex-col mt-[44px]">
+              <div className="sticky top-4 p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
+                <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-5">
+                  {variantItems.length} {variantItems.length === 1 ? "variante" : "variantes"}
                 </h3>
 
                 {variantItems.length > 0 ? (
-                  <div className="space-y-2">
-                    {/* Total Stock Summary */}
-                    <div className="border border-emerald-200 rounded-lg bg-emerald-50/50 overflow-hidden">
-                      <div className="flex items-center justify-between px-4 py-3">
-                        <div className="text-xs font-medium text-emerald-700 uppercase tracking-wide">Stock Total</div>
-                        <span className="text-xl font-bold text-emerald-600 tabular-nums">
-                          {selectedItem.variants?.reduce((acc: number, v: any) => {
-                            const total = Number.parseInt(v.stock?.total || "0")
-                            const reservado = Number.parseInt(v.stock?.reservado || "0")
-                            return acc + (total - reservado)
-                          }, 0) || 0}
-                        </span>
+                  <div className="bg-white border border-border/40 rounded-lg overflow-hidden">
+                    {/* Header */}
+                    <div className="grid grid-cols-[1fr_minmax(80px,1fr)_28px] bg-white border-b border-border/30">
+                      <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                        {/* Empty label for atributos column */}
                       </div>
+                      <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                        SKU
+                      </div>
+                      <div />
                     </div>
 
-                    {/* Variant List */}
-                    <div className="border border-border/40 rounded-lg bg-background overflow-hidden divide-y divide-border/30">
-                      {variantItems.slice(0, 8).map((variant) => {
+                    {/* Rows */}
+                    <div className="divide-y divide-border/30">
+                      {variantItems.map((variant) => {
                         const sourceVariant = selectedItem.variants?.find((v: any) => {
                           if (!v.atributosPrincipales) return false
                           const hasMatchingAttr1 = variant.variant1
@@ -810,18 +809,60 @@ export function ItemDetailPanel({
                           return hasMatchingAttr1 && hasMatchingAttr2
                         })
 
-                        const stockTotal = Number.parseInt(sourceVariant?.stock?.total || "0")
-                        const stockReservado = Number.parseInt(sourceVariant?.stock?.reservado || "0")
-                        const stockDisponible = stockTotal - stockReservado
+                        const displaySku = sourceVariant?.sku || variant.sku
+
+                        // Delete variant handler
+                        const handleDeleteVariant = () => {
+                          const attr1Value = variant.variant1
+                          const attr2Value = variant.variant2
+
+                          const updatedVariants = (selectedItem.variants || []).filter((v: any) => {
+                            if (!v.atributosPrincipales) return true
+                            
+                            const variantAttr1 = v.atributosPrincipales[0]?.value
+                            const variantAttr2 = v.atributosPrincipales[1]?.value
+                            
+                            if (!attr2Value) {
+                              return variantAttr1 !== attr1Value
+                            }
+                            
+                            const isExactMatch = variantAttr1 === attr1Value && variantAttr2 === attr2Value
+                            return !isExactMatch
+                          })
+
+                          const usedAttr1Values = new Set<string>()
+                          const usedAttr2Values = new Set<string>()
+
+                          updatedVariants.forEach((v: any) => {
+                            if (v.atributosPrincipales) {
+                              if (v.atributosPrincipales[0]?.value) usedAttr1Values.add(v.atributosPrincipales[0].value)
+                              if (v.atributosPrincipales[1]?.value) usedAttr2Values.add(v.atributosPrincipales[1].value)
+                            }
+                          })
+
+                          const updatedContainerAttrs = containerAtributosPrincipales.map((attr, idx) => {
+                            const usedValues = idx === 0 ? usedAttr1Values : usedAttr2Values
+                            return {
+                              ...attr,
+                              variantes: attr.variantes.filter((v) => usedValues.has(v)),
+                            }
+                          })
+
+                          setContainerAtributosPrincipales(updatedContainerAttrs)
+                          if (onFieldChange && selectedItem.sku) {
+                            onFieldChange(selectedItem.sku, "containerAtributosPrincipales", updatedContainerAttrs)
+                            onFieldChange(selectedItem.sku, "variants", updatedVariants)
+                          }
+                        }
 
                         return (
                           <div
                             key={variant.sku}
-                            className="flex items-center justify-between px-3 py-2.5 hover:bg-accent/30 transition-colors"
+                            className="group grid grid-cols-[1fr_minmax(80px,1fr)_28px] items-center hover:bg-accent/50 transition-colors"
                           >
-                            <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                            <div className="px-3 py-2 flex items-center gap-1.5">
                               {variant.variant1 && (
-                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[80px]">
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[70px]">
                                   {variant.variant1}
                                 </span>
                               )}
@@ -829,60 +870,34 @@ export function ItemDetailPanel({
                                 <span className="text-[9px] text-muted-foreground/50 font-medium">×</span>
                               )}
                               {variant.variant2 && (
-                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[80px]">
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[70px]">
                                   {variant.variant2}
                                 </span>
                               )}
                             </div>
-                            <span className={`text-sm font-semibold tabular-nums ${
-                              stockDisponible > 0 ? "text-emerald-600" : stockDisponible < 0 ? "text-red-500" : "text-muted-foreground"
-                            }`}>
-                              {stockDisponible}
-                            </span>
+
+                            <div className="px-3 py-2">
+                              <input
+                                type="text"
+                                value={displaySku}
+                                onChange={(e) => updateVariantField(variant.sku, "sku", e.target.value)}
+                                className="w-full bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-primary/50 px-0 py-0.5 text-[11px] font-mono text-foreground focus:outline-none transition-colors"
+                                placeholder="SKU..."
+                              />
+                            </div>
+
+                            <div className="px-1 py-2 flex items-center justify-center">
+                              <button
+                                onClick={handleDeleteVariant}
+                                className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all cursor-pointer"
+                                title="Eliminar variante"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
                           </div>
                         )
                       })}
-                    </div>
-
-                    {/* Show more indicator */}
-                    {variantItems.length > 8 && (
-                      <div className="text-center text-[10px] text-muted-foreground py-1">
-                        +{variantItems.length - 8} variantes más
-                      </div>
-                    )}
-
-                    {/* Quick Stats */}
-                    <div className="grid grid-cols-2 gap-2 pt-2">
-                      <div className="border border-border/40 rounded-lg p-2.5 bg-background">
-                        <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1">
-                          Variantes
-                        </div>
-                        <span className="text-base font-semibold text-foreground tabular-nums">
-                          {variantItems.length}
-                        </span>
-                      </div>
-                      <div className="border border-border/40 rounded-lg p-2.5 bg-background">
-                        <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1">
-                          Con Stock
-                        </div>
-                        <span className="text-base font-semibold text-foreground tabular-nums">
-                          {variantItems.filter((variant) => {
-                            const sourceVariant = selectedItem.variants?.find((v: any) => {
-                              if (!v.atributosPrincipales) return false
-                              const hasMatchingAttr1 = variant.variant1
-                                ? v.atributosPrincipales.some((attr: any) => attr.value === variant.variant1)
-                                : true
-                              const hasMatchingAttr2 = variant.variant2
-                                ? v.atributosPrincipales.some((attr: any) => attr.value === variant.variant2)
-                                : true
-                              return hasMatchingAttr1 && hasMatchingAttr2
-                            })
-                            const stockTotal = Number.parseInt(sourceVariant?.stock?.total || "0")
-                            const stockReservado = Number.parseInt(sourceVariant?.stock?.reservado || "0")
-                            return (stockTotal - stockReservado) > 0
-                          }).length}
-                        </span>
-                      </div>
                     </div>
                   </div>
                 ) : (
@@ -894,55 +909,75 @@ export function ItemDetailPanel({
             </div>
           )}
 
-          {/* Middle/Right Column - Segment Buttons + Content */}
-          <div className={`flex flex-col ${isViewingContainer ? "order-3 col-span-3" : "order-2 col-span-4"}`}>
+          {/* Center/Right Column - Segment Buttons + Content */}
+          <div className={`flex flex-col ${isViewingContainer ? "order-1 col-span-1 mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : "order-2 col-span-4 relative mt-[44px] pt-6 pb-8 px-8 -mx-2 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10"}`}>
+            
+            {/* Thumbnail + Title Header for Parent Items */}
+            {isViewingContainer && (
+              <div className="flex items-center gap-4 mb-6 pb-5 border-b border-slate-100">
+                <div className="w-14 h-14 rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                  <Image
+                    src={getCategoryImage(selectedItem.categoria) || "/placeholder.svg"}
+                    alt={selectedItem.name}
+                    width={56}
+                    height={56}
+                    className="object-cover"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h2 className="font-semibold text-slate-900 text-base truncate">{selectedItem.name}</h2>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-wider mt-0.5">Agrupador de variantes</p>
+                </div>
+              </div>
+            )}
+
             {/* Sticky Segment Buttons */}
-            <div className="sticky top-[0px] z-20 backdrop-blur-[2px] bg-slate-50 mb-4">
-              <div className="flex items-center gap-0 h-10 mt-3">
+            <div className={`z-20 mb-6 ${isViewingContainer ? "" : "sticky top-[0px]"}`}>
+              <div className="flex items-center gap-1 h-11 p-1 bg-slate-100/80 rounded-xl">
                 {isViewingContainer ? (
                   <>
                     <button
                       onClick={() => setSelectedDetailTab("info")}
-                      className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer rounded-tl-md ${
+                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
                         selectedDetailTab === "info"
-                          ? "border-primary bg-accent text-foreground"
-                          : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                          ? "bg-white text-slate-900 shadow-sm font-semibold"
+                          : "text-slate-500 hover:text-slate-700"
                       }`}
                     >
-                      <span className="text-sm font-medium uppercase tracking-wider">Info</span>
+                      <span className="text-xs font-medium uppercase tracking-widest">Info</span>
                     </button>
                     <button
                       onClick={() => setSelectedDetailTab("atributos")}
-                      className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer rounded-tr-md ${
+                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
                         selectedDetailTab === "atributos"
-                          ? "border-primary bg-accent text-foreground"
-                          : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                          ? "bg-white text-slate-900 shadow-sm font-semibold"
+                          : "text-slate-500 hover:text-slate-700"
                       }`}
                     >
-                      <span className="text-sm font-medium uppercase tracking-wider">Atributos</span>
+                      <span className="text-xs font-medium uppercase tracking-widest">Atributos</span>
                     </button>
                   </>
                 ) : (
                   <>
                     <button
                       onClick={() => setSelectedDetailTab("info")}
-                      className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer rounded-tl-md ${
+                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
                         selectedDetailTab === "info"
-                          ? "border-primary bg-accent text-foreground"
-                          : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                          ? "bg-white text-slate-900 shadow-sm font-semibold"
+                          : "text-slate-500 hover:text-slate-700"
                       }`}
                     >
-                      <span className="text-sm font-medium uppercase tracking-wider">Info</span>
+                      <span className="text-xs font-medium uppercase tracking-widest">Info</span>
                     </button>
                     <button
                       onClick={() => setSelectedDetailTab("atributos")}
-                      className={`flex-1 h-full flex items-center justify-center border-b-2 transition-colors cursor-pointer rounded-tr-md ${
+                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
                         selectedDetailTab === "atributos"
-                          ? "border-primary bg-accent text-foreground"
-                          : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                          ? "bg-white text-slate-900 shadow-sm font-semibold"
+                          : "text-slate-500 hover:text-slate-700"
                       }`}
                     >
-                      <span className="text-sm font-medium uppercase tracking-wider">Atributos</span>
+                      <span className="text-xs font-medium uppercase tracking-widest">Atributos</span>
                     </button>
                   </>
                 )}
@@ -1405,146 +1440,6 @@ export function ItemDetailPanel({
                               </button>
                             )}
 
-                            {/* Variantes Grid - shown when there are variants */}
-                            {variantItems.length > 0 && (
-                              <div className="mt-4">
-                                <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
-                                  Variantes Generadas
-                                </h3>
-                                <div className="bg-white border border-border/40 rounded-lg overflow-hidden">
-                                  {/* Header */}
-                                  <div className="grid grid-cols-[1fr_minmax(100px,1fr)_minmax(100px,1fr)_32px] bg-white border-b border-border/30">
-                                    <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                                      {/* Empty label for atributos column */}
-                                    </div>
-                                    <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                                      SKU
-                                    </div>
-                                    <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                                      Código Universal
-                                    </div>
-                                    <div />
-                                  </div>
-
-                                  {/* Rows */}
-                                  <div className="divide-y divide-border/30">
-                                    {variantItems.map((variant) => {
-                                      // Find the source variant to get actual stored data
-                                      const sourceVariant = selectedItem.variants?.find((v: any) => {
-                                        if (!v.atributosPrincipales) return false
-                                        const hasMatchingAttr1 = variant.variant1
-                                          ? v.atributosPrincipales.some((attr: any) => attr.value === variant.variant1)
-                                          : true
-                                        const hasMatchingAttr2 = variant.variant2
-                                          ? v.atributosPrincipales.some((attr: any) => attr.value === variant.variant2)
-                                          : true
-                                        return hasMatchingAttr1 && hasMatchingAttr2
-                                      })
-
-                                      const displaySku = sourceVariant?.sku || variant.sku
-                                      const displayCodigoUniversal = sourceVariant?.codigoUniversal || variant.codigoUniversal || ""
-
-                                      // Delete variant handler
-                                      const handleDeleteVariant = () => {
-                                        const attr1Value = variant.variant1
-                                        const attr2Value = variant.variant2
-
-                                        const updatedVariants = (selectedItem.variants || []).filter((v: any) => {
-                                          if (!v.atributosPrincipales) return true
-                                          
-                                          const variantAttr1 = v.atributosPrincipales[0]?.value
-                                          const variantAttr2 = v.atributosPrincipales[1]?.value
-                                          
-                                          if (!attr2Value) {
-                                            return variantAttr1 !== attr1Value
-                                          }
-                                          
-                                          const isExactMatch = variantAttr1 === attr1Value && variantAttr2 === attr2Value
-                                          return !isExactMatch
-                                        })
-
-                                        const usedAttr1Values = new Set<string>()
-                                        const usedAttr2Values = new Set<string>()
-
-                                        updatedVariants.forEach((v: any) => {
-                                          if (v.atributosPrincipales) {
-                                            if (v.atributosPrincipales[0]?.value) usedAttr1Values.add(v.atributosPrincipales[0].value)
-                                            if (v.atributosPrincipales[1]?.value) usedAttr2Values.add(v.atributosPrincipales[1].value)
-                                          }
-                                        })
-
-                                        const updatedContainerAttrs = containerAtributosPrincipales.map((attr, idx) => {
-                                          const usedValues = idx === 0 ? usedAttr1Values : usedAttr2Values
-                                          return {
-                                            ...attr,
-                                            variantes: attr.variantes.filter((v) => usedValues.has(v)),
-                                          }
-                                        })
-
-                                        setContainerAtributosPrincipales(updatedContainerAttrs)
-                                        if (onFieldChange && selectedItem.sku) {
-                                          onFieldChange(selectedItem.sku, "containerAtributosPrincipales", updatedContainerAttrs)
-                                          onFieldChange(selectedItem.sku, "variants", updatedVariants)
-                                        }
-                                      }
-
-                                      return (
-                                        <div
-                                          key={variant.sku}
-                                          className="group grid grid-cols-[1fr_minmax(100px,1fr)_minmax(100px,1fr)_32px] items-center hover:bg-accent/50 transition-colors"
-                                        >
-                                          <div className="px-3 py-2 flex items-center gap-1.5">
-                                            {variant.variant1 && (
-                                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
-                                                {variant.variant1}
-                                              </span>
-                                            )}
-                                            {variant.variant1 && variant.variant2 && (
-                                              <span className="text-[10px] text-muted-foreground/50 font-medium">×</span>
-                                            )}
-                                            {variant.variant2 && (
-                                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
-                                                {variant.variant2}
-                                              </span>
-                                            )}
-                                          </div>
-
-                                          <div className="px-3 py-2">
-                                            <input
-                                              type="text"
-                                              value={displaySku}
-                                              onChange={(e) => updateVariantField(variant.sku, "sku", e.target.value)}
-                                              className="w-full bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-primary/50 px-0 py-0.5 text-xs font-mono text-foreground focus:outline-none transition-colors"
-                                              placeholder="SKU..."
-                                            />
-                                          </div>
-
-                                          <div className="px-3 py-2">
-                                            <input
-                                              type="text"
-                                              value={displayCodigoUniversal}
-                                              onChange={(e) => updateVariantField(variant.sku, "codigoUniversal", e.target.value)}
-                                              className="w-full bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-primary/50 px-0 py-0.5 text-xs font-mono text-muted-foreground focus:outline-none transition-colors"
-                                              placeholder="—"
-                                            />
-                                          </div>
-
-                                          <div className="px-1 py-2 flex items-center justify-center">
-                                            <button
-                                              onClick={handleDeleteVariant}
-                                              className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all cursor-pointer"
-                                              title="Eliminar variante"
-                                            >
-                                              <X className="h-3.5 w-3.5" />
-                                            </button>
-                                          </div>
-                                        </div>
-                                      )
-                                    })}
-                                  </div>
-                                </div>
-                              </div>
-                            )}
                           </div>
 
                           <div className="flex flex-col gap-3">
@@ -1756,64 +1651,64 @@ export function ItemDetailPanel({
                 // Individual item tab content
                 <>
                   {selectedDetailTab === "info" && (
-                    <div className="h-full flex flex-col py-2">
-                      <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
+                    <div className="h-full flex flex-col">
+                      <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-4">
                         Información del Producto
                       </h3>
 
-                      <div className="space-y-3">
+                      <div className="space-y-4">
                         {/* Categoría and Marca */}
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="flex flex-col gap-2">
-                            <label className="text-sm font-medium text-gray-700">Categoría</label>
+                        <div className="grid grid-cols-2 gap-5">
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Categoría</label>
                             <input
                               type="text"
                               value={categoria}
                               onChange={(e) => handleFieldChange("categoria", e.target.value, setCategoria)}
                               disabled={shouldStrictlyInherit(fatherItem?.categoria)}
-                              className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                              className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${
                                 shouldStrictlyInherit(fatherItem?.categoria)
-                                  ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
-                                  : "bg-white border-gray-300 text-gray-900"
+                                  ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                  : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
                               }`}
                               placeholder="Ej: Vinos"
                             />
                           </div>
 
-                          <div className="flex flex-col gap-2">
-                            <label className="text-sm font-medium text-gray-700">Marca</label>
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Marca</label>
                             <input
                               type="text"
                               value={marca}
                               onChange={(e) => handleFieldChange("marca", e.target.value, setMarca)}
                               disabled={shouldStrictlyInherit(fatherItem?.marca)}
-                              className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                              className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${
                                 shouldStrictlyInherit(fatherItem?.marca)
-                                  ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
-                                  : "bg-white border-gray-300 text-gray-900"
+                                  ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                  : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
                               }`}
                               placeholder="Ej: YKK"
                             />
                           </div>
                         </div>
 
-                        <div className="border-t border-gray-200 my-4"></div>
+                        <div className="border-t border-slate-100 my-5"></div>
 
-                        <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
+                        <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-4">
                           Presentación
                         </h3>
 
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="flex flex-col gap-2">
-                            <label className="text-sm font-medium text-gray-700">Formato de venta</label>
+                        <div className="grid grid-cols-2 gap-5">
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Formato de venta</label>
                             <select
                               value={formatoVenta}
                               onChange={(e) => handleFieldChange("formatoVenta", e.target.value, setFormatoVenta)}
                               disabled={shouldStrictlyInherit(fatherItem?.formatoVenta)}
-                              className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none ${
+                              className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 appearance-none transition-all text-sm ${
                                 shouldStrictlyInherit(fatherItem?.formatoVenta)
-                                  ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
-                                  : "bg-white border-gray-300 text-gray-900 cursor-pointer"
+                                  ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                  : "bg-white border-slate-200 text-slate-800 cursor-pointer hover:border-slate-300"
                               }`}
                             >
                               <option value="unidad">Unidad</option>
@@ -1821,8 +1716,8 @@ export function ItemDetailPanel({
                             </select>
                           </div>
 
-                          <div className="flex flex-col gap-2">
-                            <label className="text-sm font-medium text-gray-700">Unidades por pack</label>
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Unidades por pack</label>
                             <input
                               type="text"
                               value={unidadesPorPack === "N.E." ? "" : unidadesPorPack}
@@ -1837,38 +1732,38 @@ export function ItemDetailPanel({
                                 // Ignore non-numeric input
                               }}
                               disabled={formatoVenta === "unidad" || isUnidadesPorPackLocked}
-                              className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                              className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${
                                 formatoVenta === "unidad" || isUnidadesPorPackLocked
-                                  ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
-                                  : "bg-white border-gray-300 text-gray-900"
+                                  ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                  : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
                               }`}
                               placeholder="N.E."
                             />
                           </div>
                         </div>
 
-                        <div className="flex flex-col gap-2">
-                          <div className="flex items-center gap-2">
-                            <label className="text-sm font-medium text-gray-700">Volumen de la unidad</label>
+                        <div className="flex flex-col gap-2 mt-3">
+                          <div className="flex items-center gap-3">
+                            <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Volumen de la unidad</label>
                             <button
                               onClick={() => handleFieldChange("volumenActive", !volumenActive, setVolumenActive)}
                               disabled={shouldStrictlyInherit(fatherItem?.volumenActive)}
-                              className={`w-10 h-5 rounded-full transition-colors relative ${
-                                volumenActive ? "bg-blue-500" : "bg-gray-300"
-                              } ${shouldStrictlyInherit(fatherItem?.volumenActive) ? "opacity-50 cursor-not-allowed" : ""}`}
+                              className={`w-9 h-5 rounded-full transition-all relative ${
+                                volumenActive ? "bg-slate-800" : "bg-slate-200"
+                              } ${shouldStrictlyInherit(fatherItem?.volumenActive) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                             >
                               <div
-                                className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${
-                                  volumenActive ? "translate-x-5" : "translate-x-0"
+                                className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${
+                                  volumenActive ? "translate-x-4" : "translate-x-0"
                                 }`}
                               />
                             </button>
                           </div>
 
                           {volumenActive && (
-                            <div className="grid grid-cols-2 gap-4 mt-2">
-                              <div className="flex flex-col gap-2">
-                                <label className="text-sm font-medium text-gray-700">Cantidad</label>
+                            <div className="grid grid-cols-2 gap-5 mt-2">
+                              <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Cantidad</label>
                                 <input
                                   type="number"
                                   value={volumenCantidad}
@@ -1876,25 +1771,25 @@ export function ItemDetailPanel({
                                     handleFieldChange("volumenCantidad", e.target.value, setVolumenCantidad)
                                   }
                                   disabled={shouldStrictlyInherit(fatherItem?.volumenCantidad)}
-                                  className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                  className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${
                                     shouldStrictlyInherit(fatherItem?.volumenCantidad)
-                                      ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
-                                      : "bg-white border-gray-300 text-gray-900"
+                                      ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                      : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
                                   }`}
                                   placeholder="0"
                                 />
                               </div>
 
-                              <div className="flex flex-col gap-2">
-                                <label className="text-sm font-medium text-gray-700">Unidad de medida</label>
+                              <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Unidad de medida</label>
                                 <select
                                   value={volumenUnidad}
                                   onChange={(e) => handleFieldChange("volumenUnidad", e.target.value, setVolumenUnidad)}
                                   disabled={shouldStrictlyInherit(fatherItem?.volumenUnidad)}
-                                  className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none ${
+                                  className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 appearance-none transition-all text-sm ${
                                     shouldStrictlyInherit(fatherItem?.volumenUnidad)
-                                      ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
-                                      : "bg-white border-gray-300 text-gray-900 cursor-pointer"
+                                      ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                      : "bg-white border-slate-200 text-slate-800 cursor-pointer hover:border-slate-300"
                                   }`}
                                 >
                                   <option value="ml">ml</option>
@@ -1911,25 +1806,25 @@ export function ItemDetailPanel({
 
                         {/* Vencimiento Section */}
                         <div className="flex flex-col gap-2 mt-4">
-                          <div className="flex items-center gap-2">
-                            <label className="text-sm font-medium text-gray-700">Vencimiento</label>
+                          <div className="flex items-center gap-3">
+                            <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Vencimiento</label>
                             <button
                               onClick={() => setVencimientoActive(!vencimientoActive)}
-                              className={`w-10 h-5 rounded-full transition-colors relative ${
-                                vencimientoActive ? "bg-blue-500" : "bg-gray-300"
+                              className={`w-9 h-5 rounded-full transition-all relative cursor-pointer ${
+                                vencimientoActive ? "bg-slate-800" : "bg-slate-200"
                               }`}
                             >
                               <div
-                                className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${
-                                  vencimientoActive ? "translate-x-5" : "translate-x-0"
+                                className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${
+                                  vencimientoActive ? "translate-x-4" : "translate-x-0"
                                 }`}
                               />
                             </button>
                           </div>
 
                           {vencimientoActive && (
-                            <div className="mt-2 p-3 border border-blue-200/60 rounded-lg bg-gradient-to-br from-blue-50/50 to-indigo-50/30">
-                              <label className="text-xs font-semibold text-blue-900/70 uppercase tracking-wider mb-2 block">
+                            <div className="mt-2 p-4 border border-slate-200 rounded-xl bg-slate-50/50">
+                              <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-2 block">
                                 Fecha de Vencimiento
                               </label>
                               <div className="relative">
@@ -1937,7 +1832,7 @@ export function ItemDetailPanel({
                                   type="date"
                                   value={fechaVencimiento}
                                   onChange={(e) => setFechaVencimiento(e.target.value)}
-                                  className="w-full px-3 py-2.5 border border-blue-300/50 rounded-lg bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 text-gray-900 text-sm font-medium transition-all shadow-sm hover:shadow-md"
+                                  className="w-full px-3 py-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-slate-300 text-slate-800 text-sm transition-all hover:border-slate-300"
                                 />
                               </div>
                             </div>
@@ -1948,13 +1843,13 @@ export function ItemDetailPanel({
                   )}
 
                   {selectedDetailTab === "atributos" && (
-                    <div className="h-full flex flex-col py-2">
+                    <div className="h-full flex flex-col">
                       {!showIndividualAtributosView ? (
-                        <div className="flex flex-col items-center justify-center h-full gap-4">
-                          <p className="text-gray-500 text-sm">No hay atributos configurados</p>
+                        <div className="flex flex-col items-center justify-center h-full gap-4 py-12">
+                          <p className="text-slate-400 text-sm">No hay atributos configurados</p>
                           <button
                             onClick={() => setShowIndividualAtributosView(true)}
-                            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg transition-colors cursor-pointer"
+                            className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-all text-sm font-medium cursor-pointer"
                           >
                             Agregar atributos
                           </button>
@@ -1963,10 +1858,10 @@ export function ItemDetailPanel({
                         <div className="flex flex-col gap-6">
                           <div className="flex flex-col gap-3">
                             <div>
-                              <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
+                              <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-2">
                                 Atributos Principales
                               </h3>
-                              <p className="text-xs text-gray-500 italic mt-1">
+                              <p className="text-[11px] text-slate-400 mt-1">
                                 Atributos que definen las características principales del producto (máximo 2)
                               </p>
                             </div>
@@ -1974,7 +1869,7 @@ export function ItemDetailPanel({
                             {atributosPrincipales.map((attr, index) => (
                               <div key={index} className="flex items-start gap-3">
                                 <div className="flex-1">
-                                  <label className="text-sm font-medium text-gray-700 mb-2 block">Atributo</label>
+                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
                                   <Popover
                                     open={!isChildItem && (attr.keyOpen || false)}
                                     onOpenChange={(open) => {
@@ -1997,8 +1892,8 @@ export function ItemDetailPanel({
                                           }
                                         }}
                                         disabled={isChildItem}
-                                        className={`w-full px-3 py-2 pr-9 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                          isChildItem ? "opacity-50 cursor-not-allowed" : ""
+                                        className={`w-full px-3 py-2.5 pr-9 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${
+                                          isChildItem ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
                                         }`}
                                         placeholder="Ej: Color"
                                       />
@@ -2384,19 +2279,8 @@ export function ItemDetailPanel({
                 </h3>
 
                 <div className="space-y-2">
-                  {/* Disponible - Read only */}
-                  <div className="border border-emerald-200 rounded-lg bg-emerald-50/50 overflow-hidden">
-                    <div className="flex items-center justify-between px-4 py-3">
-                      <div className="text-xs font-medium text-emerald-700 uppercase tracking-wide">Disponible</div>
-                      <span className="text-xl font-bold text-emerald-600 tabular-nums">
-                        {Number.parseInt(selectedItem?.stock?.total || "0") -
-                          Number.parseInt(selectedItem?.stock?.reservado || "0")}
-                      </span>
-                    </div>
-                  </div>
-
                   {/* Total Section */}
-                  <div className="border border-border/40 rounded-lg bg-background overflow-hidden">
+                  <div className="border border-border/40 rounded-lg bg-slate-50 overflow-hidden">
                     {/* Total Header - clickable to expand/collapse */}
                     <div 
                       onClick={() => setActiveStockEdit("total")}
@@ -2512,7 +2396,7 @@ export function ItemDetailPanel({
                   </div>
 
 {/* Reservado Section */}
-  <div className="border border-border/40 rounded-lg bg-background overflow-hidden">
+  <div className="border border-border/40 rounded-lg bg-slate-50 overflow-hidden">
   {/* Reservado Header - clickable to expand/collapse */}
   <div
   onClick={() => setActiveStockEdit("reservado")}
@@ -2623,6 +2507,17 @@ export function ItemDetailPanel({
                         </div>
                       </div>
                     )}
+                  </div>
+
+                  {/* Disponible - Read only */}
+                  <div className="border border-emerald-200 rounded-lg bg-emerald-50/50 overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <div className="text-xs font-medium text-emerald-700 uppercase tracking-wide">Disponible</div>
+                      <span className="text-xl font-bold text-emerald-600 tabular-nums">
+                        {Number.parseInt(selectedItem?.stock?.total || "0") -
+                          Number.parseInt(selectedItem?.stock?.reservado || "0")}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
