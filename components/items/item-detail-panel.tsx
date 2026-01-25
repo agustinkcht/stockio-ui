@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import type React from "react"
 import type { Item } from "@/lib/types"
-import { ChevronDown, ChevronRight, Plus, Copy, X, Minus, Check, ChevronLeft, ChevronsLeftRight } from "lucide-react"
+import { ChevronDown, ChevronRight, Plus, Copy, X, Minus, Check } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
 import { SAVED_ATRIBUTOS, TEMPLATES } from "@/lib/constants" // DEPOSITS import removed
@@ -220,8 +220,8 @@ export function ItemDetailPanel({
   const [showTotalDropdown, setShowTotalDropdown] = useState(false)
   const [showReservadoDropdown, setShowReservadoDropdown] = useState(false)
 
-  // Expanded span state: for parent items -> 'variantes' (default), for standalone/child -> 'stock' (default)
-  const [expandedSpan, setExpandedSpan] = useState<'center' | 'right'>('right')
+  // Section toggle: 'info' or 'stock' - default to stock expanded
+  const [expandedSection, setExpandedSection] = useState<"info" | "stock">("stock")
 
   // Compute whether item has existing attributes
   const hasExistingAttributes =
@@ -684,14 +684,10 @@ export function ItemDetailPanel({
       {/* <Breadcrumb dynamicContent={null} /> */}
 
       <div className="px-8 pb-6 bg-slate-50 min-h-screen pl-8 pt-0">
-        <div className={`grid gap-2 transition-all duration-300 ${
-          isViewingContainer 
-            ? expandedSpan === 'right' ? "grid-cols-2 gap-6" : "grid-cols-1"
-            : expandedSpan === 'right' ? "grid-cols-10" : "grid-cols-7"
-        }`}>
+        <div className={`grid gap-2 ${isViewingContainer ? "grid-cols-2 gap-6" : "grid-cols-[auto_1fr_auto_1fr]"}`}>
           {/* Left Column - Image Card (only for standalone/children) */}
           {!isViewingContainer && (
-          <div className="col-span-3 order-1 z-20 rounded-xl border flex flex-col transition-all duration-300 border-slate-100 mt-4 bg-transparent border-none shadow-none pr-1.5 pl-0">
+          <div className="w-[280px] order-1 z-20 rounded-xl border flex flex-col transition-all duration-300 border-slate-100 mt-4 bg-transparent border-none shadow-none pr-1.5 pl-0">
             <div className="sticky top-4 p-6 mt-0 px-8 bg-transparent border-none shadow-none pl-7 pr-11">
               <div className="mt-2">
                 <div className="w-full h-64 bg-muted/30 rounded-lg flex items-center justify-center overflow-hidden">
@@ -781,9 +777,9 @@ export function ItemDetailPanel({
           </div>
           )}
 
-          {/* Right Column - Variantes Card (only for parent items, shown when expandedSpan is 'right') */}
-          {isViewingContainer && expandedSpan === 'right' && (
-            <div className="col-span-1 order-2 flex flex-col mt-[44px] transition-all duration-300">
+          {/* Right Column - Variantes Card (only for parent items) */}
+          {isViewingContainer && (
+            <div className="col-span-1 order-2 flex flex-col mt-[44px]">
               <div className="sticky top-4 p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
                 <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-5">
                   {variantItems.length} {variantItems.length === 1 ? "variante" : "variantes"}
@@ -917,7 +913,7 @@ export function ItemDetailPanel({
           )}
 
           {/* Center/Right Column - Segment Buttons + Content */}
-          <div className={`flex flex-col ${isViewingContainer ? "order-1 col-span-1 mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : "order-2 col-span-4 relative mt-[44px] pt-6 pb-8 px-8 -mx-2 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10"}`}>
+          <div className={`flex flex-col transition-all duration-300 overflow-hidden ${isViewingContainer ? "order-1 col-span-1 mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : `order-2 relative mt-[44px] pt-6 pb-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10 ${expandedSection === "info" ? "px-8 min-w-[400px]" : "px-4 min-w-[180px] max-w-[180px]"}`}`}>
             
             {/* Thumbnail + Title Header for Parent Items */}
             {isViewingContainer && (
@@ -938,45 +934,80 @@ export function ItemDetailPanel({
               </div>
             )}
 
-            {/* Sticky Segment Buttons with Span Toggle */}
-            <div className={`z-20 mb-6 ${isViewingContainer ? "" : "sticky top-[0px]"}`}>
-              <div className="flex items-center gap-2">
-                {/* Tab buttons */}
-                <div className="flex items-center gap-1 h-11 p-1 bg-slate-100/80 rounded-xl flex-1">
-                  <button
-                    onClick={() => setSelectedDetailTab("info")}
-                    className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
-                      selectedDetailTab === "info"
-                        ? "bg-white text-slate-900 shadow-sm font-semibold"
-                        : "text-slate-500 hover:text-slate-700"
-                    }`}
-                  >
-                    <span className="text-xs font-medium uppercase tracking-widest">Info</span>
-                  </button>
-                  <button
-                    onClick={() => setSelectedDetailTab("atributos")}
-                    className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
-                      selectedDetailTab === "atributos"
-                        ? "bg-white text-slate-900 shadow-sm font-semibold"
-                        : "text-slate-500 hover:text-slate-700"
-                    }`}
-                  >
-                    <span className="text-xs font-medium uppercase tracking-widest">Atributos</span>
-                  </button>
+            {/* Collapsed Info State - Minimal View */}
+            {!isViewingContainer && expandedSection === "stock" && (
+              <div 
+                onClick={() => setExpandedSection("info")}
+                className="flex flex-col items-center justify-center h-full py-8 cursor-pointer group"
+              >
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center group-hover:bg-slate-200 transition-colors">
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600" />
+                  </div>
+                  <span className="text-[10px] font-medium text-slate-400 uppercase tracking-widest group-hover:text-slate-600 transition-colors" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
+                    Info
+                  </span>
                 </div>
+              </div>
+            )}
 
-                {/* Span Toggle Button */}
-                <button
-                  onClick={() => setExpandedSpan(expandedSpan === 'right' ? 'center' : 'right')}
-                  className="h-11 w-11 flex items-center justify-center bg-slate-100/80 hover:bg-slate-200/80 rounded-xl transition-all cursor-pointer group"
-                  title={expandedSpan === 'right' ? 'Ver panel central' : 'Ver panel derecho'}
-                >
-                  <ChevronsLeftRight className={`w-4 h-4 text-slate-500 group-hover:text-slate-700 transition-transform ${expandedSpan === 'center' ? 'rotate-180' : ''}`} />
-                </button>
+            {/* Sticky Segment Buttons - Only show when expanded */}
+            {(isViewingContainer || expandedSection === "info") && (
+            <div className={`z-20 mb-6 ${isViewingContainer ? "" : "sticky top-[0px]"}`}>
+              <div className="flex items-center gap-1 h-11 p-1 bg-slate-100/80 rounded-xl">
+                {isViewingContainer ? (
+                  <>
+                    <button
+                      onClick={() => setSelectedDetailTab("info")}
+                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
+                        selectedDetailTab === "info"
+                          ? "bg-white text-slate-900 shadow-sm font-semibold"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      <span className="text-xs font-medium uppercase tracking-widest">Info</span>
+                    </button>
+                    <button
+                      onClick={() => setSelectedDetailTab("atributos")}
+                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
+                        selectedDetailTab === "atributos"
+                          ? "bg-white text-slate-900 shadow-sm font-semibold"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      <span className="text-xs font-medium uppercase tracking-widest">Atributos</span>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setSelectedDetailTab("info")}
+                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
+                        selectedDetailTab === "info"
+                          ? "bg-white text-slate-900 shadow-sm font-semibold"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      <span className="text-xs font-medium uppercase tracking-widest">Info</span>
+                    </button>
+                    <button
+                      onClick={() => setSelectedDetailTab("atributos")}
+                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
+                        selectedDetailTab === "atributos"
+                          ? "bg-white text-slate-900 shadow-sm font-semibold"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      <span className="text-xs font-medium uppercase tracking-widest">Atributos</span>
+                    </button>
+                  </>
+                )}
               </div>
             </div>
+            )}
 
-            {/* Tab Content */}
+            {/* Tab Content - Only show when expanded */}
+            {(isViewingContainer || expandedSection === "info") && (
             <div className="flex-1 w-full overflow-hidden">
               {isViewingContainer ? (
                 // Container item tab content
@@ -2260,12 +2291,103 @@ export function ItemDetailPanel({
                 </>
               )}
             </div>
+            )}
           </div>
 
-          {/* Right Column - Stock (only for standalone/children items, shown when expandedSpan is 'right') */}
-          {!isViewingContainer && expandedSpan === 'right' && (
-            <div className="col-span-3 order-3 flex flex-col mt-4 pl-7 transition-all duration-300">
+          {/* Vertical Toggle - Section Switcher (only for standalone/children items) */}
+          {!isViewingContainer && (
+            <div className="order-3 col-span-1 flex flex-col items-center justify-start mt-[44px] pt-6">
+              <div className="sticky top-4 flex flex-col items-center">
+                {/* Toggle Track */}
+                <div className="relative flex flex-col items-center">
+                  {/* Vertical line */}
+                  <div className="absolute top-0 bottom-0 w-px bg-gradient-to-b from-slate-200 via-slate-300 to-slate-200" />
+                  
+                  {/* Toggle Button */}
+                  <button
+                    onClick={() => setExpandedSection(expandedSection === "info" ? "stock" : "info")}
+                    className="relative z-10 group flex flex-col items-center gap-2 py-3 px-1.5 cursor-pointer"
+                    title={expandedSection === "info" ? "Expandir Stock" : "Expandir Info"}
+                  >
+                    {/* Top indicator */}
+                    <div className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                      expandedSection === "info" 
+                        ? "bg-slate-800 scale-110" 
+                        : "bg-slate-300 group-hover:bg-slate-400"
+                    }`} />
+                    
+                    {/* Center toggle pill */}
+                    <div className="relative bg-slate-100 border border-slate-200/80 rounded-full p-1 shadow-sm group-hover:shadow-md transition-all duration-300 group-hover:border-slate-300">
+                      <div className="flex flex-col items-center gap-0.5">
+                        <ChevronRight className={`w-3 h-3 text-slate-500 transition-all duration-300 ${
+                          expandedSection === "stock" ? "rotate-180" : ""
+                        } group-hover:text-slate-700`} />
+                      </div>
+                    </div>
+                    
+                    {/* Bottom indicator */}
+                    <div className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                      expandedSection === "stock" 
+                        ? "bg-slate-800 scale-110" 
+                        : "bg-slate-300 group-hover:bg-slate-400"
+                    }`} />
+                  </button>
+                  
+                  {/* Labels */}
+                  <div className="mt-3 flex flex-col items-center gap-6">
+                    <span className={`text-[9px] font-medium uppercase tracking-[0.15em] transition-all duration-300 writing-mode-vertical ${
+                      expandedSection === "info" 
+                        ? "text-slate-700" 
+                        : "text-slate-400"
+                    }`} style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
+                      Info
+                    </span>
+                    <span className={`text-[9px] font-medium uppercase tracking-[0.15em] transition-all duration-300 ${
+                      expandedSection === "stock" 
+                        ? "text-slate-700" 
+                        : "text-slate-400"
+                    }`} style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
+                      Stock
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Right Column - Stock (only for standalone/children items) */}
+          {!isViewingContainer && (
+            <div className={`order-4 flex flex-col mt-4 pl-4 transition-all duration-300 ${expandedSection === "stock" ? "min-w-[320px] flex-1" : "min-w-[120px] max-w-[120px]"}`}>
               <div className="sticky top-4 p-5 bg-white border border-border/40 rounded-xl shadow-sm">
+                
+                {/* Collapsed Stock State - Minimal View */}
+                {expandedSection === "info" && (
+                  <div 
+                    onClick={() => setExpandedSection("stock")}
+                    className="flex flex-col items-center justify-center py-4 cursor-pointer group"
+                  >
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center group-hover:bg-slate-200 transition-colors">
+                        <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 rotate-180" />
+                      </div>
+                      <div className="flex flex-col items-center gap-2">
+                        <span className="text-[10px] font-medium text-slate-400 uppercase tracking-widest group-hover:text-slate-600 transition-colors">
+                          Stock
+                        </span>
+                        <div className="flex flex-col items-center gap-1 mt-2">
+                          <span className="text-2xl font-bold text-slate-700 tabular-nums">
+                            {Number.parseInt(selectedItem?.stock?.total || "0")}
+                          </span>
+                          <span className="text-[9px] text-slate-400 uppercase tracking-wider">Total</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Expanded Stock Content */}
+                {expandedSection === "stock" && (
+                <>
                 <h3 className="text-xs font-semibold text-foreground/60 uppercase tracking-wider mb-4">
                   Stock en Depósito: Torcuato
                 </h3>
@@ -2512,9 +2634,13 @@ export function ItemDetailPanel({
                     </div>
                   </div>
                 </div>
+                </>
+                )}
               </div>
               
-              {/* Horizontal line with proveedor dropdown button */}
+              {/* Horizontal line with proveedor dropdown button - only when expanded */}
+              {expandedSection === "stock" && (
+              <>
               <div className="relative my-4">
                 <div className="border-t border-slate-200"></div>
                 <div className="absolute left-1/2 -translate-x-1/2 -top-3 flex flex-col items-center">
@@ -2562,6 +2688,8 @@ export function ItemDetailPanel({
                     </div>
                   </div>
                 </div>
+              )}
+              </>
               )}
             </div>
           )}

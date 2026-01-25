@@ -1,6 +1,7 @@
 "use client"
 
-import { Plus, Layers, MoreHorizontal, Upload, Download } from "lucide-react"
+import { Plus, Grid3x3, Layers, MoreVertical, Upload, Download } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { useRef, useState, useEffect } from "react"
 
 interface ToolbarProps {
@@ -41,61 +42,76 @@ export function Toolbar({
 
   return (
     <div
-      className="bg-transparent z-30 transition-all duration-300"
+      className={`bg-transparent z-30 transition-all duration-300 opacity-100 translate-y-0`}
       style={{ left: isExpanded ? "256px" : "64px" }}
     >
-      <div className="px-8 pt-6 pb-2 flex justify-start">
-        <div className="h-10 relative top-[86px] bg-white/90 backdrop-blur-sm rounded-lg border border-slate-200/60 shadow-sm px-3 flex items-center gap-2 transition-all duration-300">
-          <div className="flex items-center gap-1.5">
+      <div className="px-8 pt-6 pb-2 flex justify-start bg-transparent">
+        <div className="h-12 relative top-[86px] bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50 shadow-sm px-4 flex items-center gap-3 transition-all duration-300 mb-0">
+          <div className="flex items-center gap-2 pl-5 pr-1">
             <div className="relative" ref={nuevoRef}>
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setShowNuevoDropdown(!showNuevoDropdown)}
-                className="h-7 px-3 text-xs font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-md transition-all flex items-center gap-1.5"
+                className="h-8 text-xs hover:bg-gray-100 transition-colors cursor-pointer border shadow-sm border-[rgba(228,230,235,0.6)]"
               >
-                <Plus className="w-3.5 h-3.5 text-slate-500" />
+                <Plus className="w-4 h-4 mr-1.5" />
                 Nuevo
-              </button>
+              </Button>
 
               {showNuevoDropdown && (
-                <div className="absolute left-0 top-full mt-1.5 w-44 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 animate-in fade-in-0 slide-in-from-top-1 duration-150">
-                  <button
-                    onClick={handleOpenNuevoItem}
-                    className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2.5"
-                  >
-                    <Plus className="w-4 h-4 text-slate-400" />
-                    Item
-                  </button>
-                  <button
-                    onClick={handleOpenNuevoItemConVariantes}
-                    className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2.5"
-                  >
-                    <Layers className="w-4 h-4 text-slate-400" />
-                    Con Variantes
-                  </button>
+                <div className="absolute left-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-in fade-in-0 slide-in-from-top-2 duration-200">
+                  <div className="p-1">
+                    <button
+                      onClick={handleOpenNuevoItem}
+                      className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer rounded-lg"
+                    >
+                      <Plus className="w-4 h-4 text-gray-400" />
+                      Item
+                    </button>
+                    <button
+                      onClick={handleOpenNuevoItemConVariantes}
+                      className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer rounded-lg"
+                    >
+                      <Grid3x3 className="w-4 h-4 text-gray-400" />
+                      Item con Variantes
+                    </button>
+                    <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer rounded-lg">
+                      <Layers className="w-4 h-4 text-gray-400" />
+                      Combo
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
 
-            <div className="w-px h-5 bg-slate-200" />
-
             <div className="relative" ref={moreOptionsRef}>
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setShowMoreOptionsDropdown(!showMoreOptionsDropdown)}
-                className="h-7 w-7 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-all"
+                className="h-8 text-xs hover:bg-gray-100 transition-colors cursor-pointer border shadow-sm border-[rgba(228,230,235,0.6)]"
               >
-                <MoreHorizontal className="w-4 h-4" />
-              </button>
+                <MoreVertical className="w-4 h-4 mr-1.5" />
+                Más Opciones
+              </Button>
 
               {showMoreOptionsDropdown && (
-                <div className="absolute left-0 top-full mt-1.5 w-44 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 animate-in fade-in-0 slide-in-from-top-1 duration-150">
-                  <button className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2.5">
-                    <Upload className="w-4 h-4 text-slate-400" />
-                    Importar CSV
-                  </button>
-                  <button className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2.5">
-                    <Download className="w-4 h-4 text-slate-400" />
-                    Exportar CSV
-                  </button>
+                <div className="absolute left-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-in fade-in-0 slide-in-from-top-2 duration-200">
+                  <div className="p-1">
+                    <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer rounded-lg">
+                      <Grid3x3 className="w-4 h-4 text-gray-400" />
+                      Creación Masiva
+                    </button>
+                    <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer rounded-lg">
+                      <Upload className="w-4 h-4 text-gray-400" />
+                      Importar CSV
+                    </button>
+                    <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer rounded-lg">
+                      <Download className="w-4 h-4 text-gray-400" />
+                      Exportar CSV
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
