@@ -980,7 +980,7 @@ export function ItemDetailPanel({
           )}
 
           {/* Info/Atributos Column - 6 cols when info expanded, 4 cols when both, 1 col when stock expanded */}
-          <div className={`flex flex-col transition-all duration-300 overflow-hidden ${isViewingContainer ? "order-1 col-span-1 mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : `order-3 relative mt-[44px] pt-6 pb-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10 ${expandedSection === "info" ? "col-span-6 px-8" : expandedSection === "both" ? "col-span-4 px-6" : "col-span-1 px-3"}`}`}>
+          <div className={`flex flex-col transition-all duration-300 overflow-hidden ${isViewingContainer ? "order-1 col-span-1 mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : `order-3 relative mt-[44px] pt-6 pb-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10 ${expandedSection === "info" ? "col-span-5 px-8" : expandedSection === "both" ? "col-span-3 px-6" : "col-span-1 px-3"}`}`}>
             
             {/* Thumbnail + Title Header for Parent Items */}
             {isViewingContainer && (
@@ -2363,7 +2363,7 @@ export function ItemDetailPanel({
 
           {/* Stock Column - 6 cols when stock expanded, 3 cols when both, 1 col when info expanded */}
           {!isViewingContainer && (
-            <div className={`order-4 flex flex-col mt-[44px] transition-all duration-300 ${expandedSection === "stock" ? "col-span-6 pl-4" : expandedSection === "both" ? "col-span-2 pl-3" : "col-span-1 pl-2"}`}>
+            <div className={`order-4 flex flex-col mt-[44px] transition-all duration-300 ${expandedSection === "stock" ? "col-span-5 pl-4" : expandedSection === "both" ? "col-span-3 pl-3" : "col-span-1 pl-2"}`}>
               <div className={`sticky top-4 bg-white border border-border/40 rounded-xl shadow-sm ${expandedSection === "stock" ? "p-5" : expandedSection === "both" ? "p-4" : "p-3"}`}>
                 
                 {/* Collapsed Stock State - Minimal Slider View (only when info is fully expanded) */}

@@ -15,7 +15,7 @@ A minimal, high-tech vertical toggle component for switching between two section
 
 ### Implementation
 
-```tsx
+\`\`\`tsx
 {/* Vertical Toggle - Section Switcher */}
 <div className="flex flex-col items-center justify-start pt-6">
   <div className="sticky top-4 flex flex-col items-center">
@@ -74,12 +74,12 @@ A minimal, high-tech vertical toggle component for switching between two section
     </div>
   </div>
 </div>
-```
+\`\`\`
 
 ### Required State
-```tsx
+\`\`\`tsx
 const [expandedSection, setExpandedSection] = useState<"info" | "stock">("stock")
-```
+\`\`\`
 
 ### Design Characteristics
 - **Vertical gradient line**: Creates visual connection between sections
