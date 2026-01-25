@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect, useRef, useMemo } from "react"
-import { ChevronDown, ChevronRight, MoreVertical, Layers, Trash2, Copy } from "lucide-react"
+import { ChevronDown, ChevronRight, MoreVertical, Layers, Trash2, Copy, ChevronLeft } from "lucide-react"
 import type { Item } from "@/lib/types"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { getCategoryImage } from "@/lib/utils/category-images"
@@ -68,6 +68,10 @@ export function ItemCard({
   const [showTransition, setShowTransition] = useState(false)
   const [copiedSku, setCopiedSku] = useState(false)
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  
+  // Expanded span state: 'right' for stock/variantes (default), 'center' for attributes
+  const isParent = item.isAgrupador || item.hasVariants
+  const [expandedSpan, setExpandedSpan] = useState<'center' | 'right'>('right')
 
   const variantCount = useMemo(() => {
     return item.variantCount || item.variants?.length || 0
@@ -192,7 +196,6 @@ export function ItemCard({
                 className={`col-span-5 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors border-slate-100 border-r-0`}
                 onClick={(e) => {
                   e.stopPropagation()
-                  console.log("[v0] ItemCard clicked - isChild:", isChild, "item:", item)
                   onItemClick(item)
                 }}
               >
@@ -255,21 +258,61 @@ export function ItemCard({
                 </div>
               </div>
 
+              {/* Center span - Attributes (collapsible) */}
               <div
-                className={`col-span-3 h-full flex items-center justify-center px-4 border-slate-100 border-r-0 ${
-                  item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
-                } px-4`}
-              ></div>
+                className={`${expandedSpan === 'center' ? 'col-span-3' : 'col-span-0 w-0 overflow-hidden'} h-full flex items-center px-4 transition-all duration-200 border-r border-slate-100`}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onItemClick(item)
+                }}
+              >
+                {expandedSpan === 'center' && item.atributosPrincipales && item.atributosPrincipales.length > 0 && (
+                  <div className="flex w-full">
+                    {item.atributosPrincipales.map((attr, idx) => (
+                      <div key={idx} className="flex flex-col items-center gap-0.5 flex-1 min-w-0">
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-wide truncate w-full text-center">
+                          {attr.key}
+                        </span>
+                        <span className="text-sm text-foreground truncate w-full text-center" title={attr.value || "-"}>
+                          {attr.value || "-"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Span Toggle Button */}
+              <div 
+                className="col-span-1 h-full flex items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setExpandedSpan(expandedSpan === 'right' ? 'center' : 'right')
+                }}
+              >
+                <div className="flex items-center gap-0.5 text-muted-foreground">
+                  <ChevronLeft className={`w-3 h-3 transition-transform ${expandedSpan === 'center' ? 'rotate-180' : ''}`} />
+                  <ChevronRight className={`w-3 h-3 transition-transform ${expandedSpan === 'right' ? 'rotate-180' : ''}`} />
+                </div>
+              </div>
+
+              {/* Right span - Variantes info (expanded by default for parents) */}
+              <div
+                className={`${expandedSpan === 'right' ? 'col-span-2' : 'col-span-0 w-0 overflow-hidden'} h-full flex items-center justify-center px-4 transition-all duration-200`}
+              >
+                {expandedSpan === 'right' && (
+                  <span className="text-sm text-container-item-foreground/80">
+                    {item.hasVariants ? `${variantCount} variantes` : `${itemCount} items`}
+                  </span>
+                )}
+              </div>
             </>
           ) : (
             <>
               <div
-                className={`col-span-5 flex items-center gap-3 h-full border-r border-slate-100 ${
-                  item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
-                } px-4 cursor-pointer transition-colors`}
+                className={`col-span-5 flex items-center gap-3 h-full border-r border-slate-100 px-4 cursor-pointer transition-colors`}
                 onClick={(e) => {
                   e.stopPropagation()
-                  console.log("[v0] ItemCard clicked - isChild:", isChild, "item:", item)
                   onItemClick(item)
                 }}
               >
@@ -289,9 +332,7 @@ export function ItemCard({
                       className={`${gridSize === "sm" ? "text-sm" : "text-sm"} ${
                         isChild
                           ? "text-muted-foreground"
-                          : item.hasVariants || item.isAgrupador
-                            ? "text-container-item-foreground"
-                            : "text-foreground"
+                          : "text-foreground"
                       } font-medium truncate`}
                     >
                       {item.name}
@@ -316,147 +357,98 @@ export function ItemCard({
                 </div>
               </div>
 
+              {/* Center span - Attributes (collapsible) */}
               <div
-                className={`col-span-3 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100`}
+                className={`${expandedSpan === 'center' ? 'col-span-3' : 'col-span-0 w-0 overflow-hidden'} h-full flex items-center px-4 cursor-pointer transition-all duration-200 border-r border-slate-100`}
                 onClick={(e) => {
                   e.stopPropagation()
-                  console.log("[v0] ItemCard clicked - isChild:", isChild, "item:", item)
                   onItemClick(item)
                 }}
               >
-                {item.atributosPrincipales && item.atributosPrincipales.length > 0 ? (
+                {expandedSpan === 'center' && (
                   <>
-                    {gridSize === "sm" ? (
-                      <div
-                        className={
-                          item.atributosPrincipales.length === 1 ? "w-full" : "grid grid-cols-2 gap-x-4 w-full"
-                        }
-                      >
-                        {item.atributosPrincipales.slice(0, 2).map((attr, idx) => (
-                          <div
-                            key={idx}
-                            className={
-                              item.atributosPrincipales.length === 1
-                                ? "flex items-center justify-center gap-1.5"
-                                : "flex items-center gap-1.5 min-w-0"
-                            }
-                          >
-                            <span className="text-sm text-muted-foreground shrink-0">{attr.key}:</span>
-                            <span className="text-sm text-foreground truncate" title={attr.value || "-"}>
+                    {item.atributosPrincipales && item.atributosPrincipales.length > 0 ? (
+                      <div className="flex w-full">
+                        {item.atributosPrincipales.map((attr, idx) => (
+                          <div key={idx} className="flex flex-col items-center gap-0.5 flex-1 min-w-0">
+                            <span className="text-[10px] text-muted-foreground uppercase tracking-wide truncate w-full text-center">
+                              {attr.key}
+                            </span>
+                            <span className="text-sm text-foreground truncate w-full text-center" title={attr.value || "-"}>
                               {attr.value || "-"}
                             </span>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <div
-                        className={item.atributosPrincipales.length === 1 ? "flex items-center justify-center" : "flex"}
-                        style={{ width: "100%" }}
-                      >
-                        {item.atributosPrincipales.map((attr, idx) => (
-                          <div
-                            key={idx}
-                            className={
-                              item.atributosPrincipales.length === 1
-                                ? "flex flex-col items-center gap-0.5"
-                                : "flex flex-col items-center gap-0.5 flex-1 min-w-0"
-                            }
-                          >
-                            <span className="text-[10px] text-muted-foreground uppercase tracking-wide truncate w-full text-center">
-                              {attr.key}
-                            </span>
-                            <span
-                              className="text-sm text-foreground truncate w-full text-center"
-                              title={attr.value || "-"}
-                            >
-                              {attr.value || "-"}
-                            </span>
-                          </div>
-                        ))}
+                      <div className="flex w-full">
+                        <div className="flex flex-col items-center gap-0.5 flex-1">
+                          <span className="text-sm text-muted-foreground">-</span>
+                        </div>
                       </div>
                     )}
                   </>
-                ) : (
+                )}
+              </div>
+
+              {/* Span Toggle Button */}
+              <div 
+                className="col-span-1 h-full flex items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setExpandedSpan(expandedSpan === 'right' ? 'center' : 'right')
+                }}
+              >
+                <div className="flex items-center gap-0.5 text-muted-foreground">
+                  <ChevronLeft className={`w-3 h-3 transition-transform ${expandedSpan === 'center' ? 'rotate-180' : ''}`} />
+                  <ChevronRight className={`w-3 h-3 transition-transform ${expandedSpan === 'right' ? 'rotate-180' : ''}`} />
+                </div>
+              </div>
+
+              {/* Right span - Stock info (expanded by default for standalone/child) */}
+              <div
+                className={`${expandedSpan === 'right' ? 'col-span-2' : 'col-span-0 w-0 overflow-hidden'} h-full flex items-center px-4 cursor-pointer transition-all duration-200`}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onItemClick(item)
+                }}
+              >
+                {expandedSpan === 'right' && (
                   <>
                     {gridSize === "sm" ? (
                       <div className="grid grid-cols-3 gap-x-3 w-full">
-                        <div className="flex items-center">
-                          <span className="text-sm text-muted-foreground">-</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm text-muted-foreground shrink-0">T:</span>
+                          <span className="text-sm text-foreground">{item.stock?.total || 0}</span>
                         </div>
-                        <div className="flex items-center">
-                          <span className="text-sm text-muted-foreground">-</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm text-muted-foreground shrink-0">R:</span>
+                          <span className="text-sm text-foreground">{item.stock?.reservado || 0}</span>
                         </div>
-                        <div className="flex items-center">
-                          <span className="text-sm text-muted-foreground">-</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm text-muted-foreground shrink-0">D:</span>
+                          <span className="text-sm text-foreground">{item.stock?.disponible || 0}</span>
                         </div>
                       </div>
                     ) : (
                       <>
                         <div className="flex flex-col items-center gap-0.5 flex-1">
-                          <span className="text-sm text-muted-foreground">-</span>
+                          <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Total</span>
+                          <span className="text-sm text-foreground">{item.stock?.total || 0}</span>
                         </div>
                         <div className="flex flex-col items-center gap-0.5 flex-1">
-                          <span className="text-sm text-muted-foreground">-</span>
+                          <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Reservado</span>
+                          <span className="text-sm text-foreground">{item.stock?.reservado || 0}</span>
                         </div>
                         <div className="flex flex-col items-center gap-0.5 flex-1">
-                          <span className="text-sm text-muted-foreground">-</span>
+                          <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Disponible</span>
+                          <span className="text-sm text-foreground">{item.stock?.disponible || 0}</span>
                         </div>
                       </>
                     )}
                   </>
                 )}
               </div>
-
-              {item.hasVariants ? (
-                <div className="col-span-3 h-full flex items-center justify-center px-4">
-                  <span className="text-sm text-container-item-foreground/80">{variantCount} variantes</span>
-                </div>
-              ) : item.isAgrupador ? (
-                <div className="col-span-3 h-full flex items-center justify-center px-4">
-                  <span className="text-sm text-container-item-foreground/80">{itemCount} items</span>
-                </div>
-              ) : (
-                <div
-                  className="col-span-3 h-full flex items-center px-4 cursor-pointer transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    console.log("[v0] ItemCard clicked - isChild:", isChild, "item:", item)
-                    onItemClick(item)
-                  }}
-                >
-                  {gridSize === "sm" ? (
-                    <div className="grid grid-cols-3 gap-x-3 w-full">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm text-muted-foreground shrink-0">T:</span>
-                        <span className="text-sm text-foreground">{item.stock?.total || 0}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm text-muted-foreground shrink-0">R:</span>
-                        <span className="text-sm text-foreground">{item.stock?.reservado || 0}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm text-muted-foreground shrink-0">D:</span>
-                        <span className="text-sm text-foreground">{item.stock?.disponible || 0}</span>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex flex-col items-center gap-0.5 flex-1">
-                        <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Total</span>
-                        <span className="text-sm text-foreground">{item.stock?.total || 0}</span>
-                      </div>
-                      <div className="flex flex-col items-center gap-0.5 flex-1">
-                        <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Reservado</span>
-                        <span className="text-sm text-foreground">{item.stock?.reservado || 0}</span>
-                      </div>
-                      <div className="flex flex-col items-center gap-0.5 flex-1">
-                        <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Disponible</span>
-                        <span className="text-sm text-foreground">{item.stock?.disponible || 0}</span>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
             </>
           )}
         </div>
