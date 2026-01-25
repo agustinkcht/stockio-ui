@@ -220,8 +220,8 @@ export function ItemDetailPanel({
   const [showTotalDropdown, setShowTotalDropdown] = useState(false)
   const [showReservadoDropdown, setShowReservadoDropdown] = useState(false)
 
-  // Section toggle: 'info' or 'stock' - default to stock expanded
-  const [expandedSection, setExpandedSection] = useState<"info" | "stock">("stock")
+  // Section toggle: 'info', 'both', or 'stock' - default to stock expanded
+  const [expandedSection, setExpandedSection] = useState<"info" | "both" | "stock">("stock")
 
   // Compute whether item has existing attributes
   const hasExistingAttributes =
@@ -247,7 +247,8 @@ export function ItemDetailPanel({
       (selectedItem?.atributosInformativos && selectedItem.atributosInformativos.length > 0) ||
       (selectedItem?.containerAtributosPrincipales && selectedItem.containerAtributosPrincipales.length > 0)
 
-
+    console.log("[v0] useEffect running - hasAttributes:", hasAttributes)
+    console.log("[v0] useEffect - setting showIndividualAtributosView to:", hasAttributes)
     setShowIndividualAtributosView(hasAttributes)
   }, [selectedItem])
 
@@ -683,10 +684,10 @@ export function ItemDetailPanel({
       {/* <Breadcrumb dynamicContent={null} /> */}
 
       <div className="px-8 pb-6 bg-slate-50 min-h-screen pl-8 pt-0">
-        <div className={`grid gap-2 ${isViewingContainer ? "grid-cols-2 gap-6" : "grid-cols-[280px_1fr_48px]"}`}>
-          {/* Left Column - Image Card (only for standalone/children) */}
+        <div className={`grid gap-2 ${isViewingContainer ? "grid-cols-2 gap-6" : "grid-cols-10 gap-3"}`}>
+          {/* Left Column - Image Card (only for standalone/children) - col-span-3 */}
           {!isViewingContainer && (
-          <div className="order-1 z-20 rounded-xl border flex flex-col transition-all duration-300 border-slate-100 mt-4 bg-transparent border-none shadow-none pr-1.5 pl-0">
+          <div className="col-span-3 order-1 z-20 rounded-xl border flex flex-col transition-all duration-300 border-slate-100 mt-4 bg-transparent border-none shadow-none pr-1.5 pl-0">
             <div className="sticky top-4 p-6 mt-0 px-8 bg-transparent border-none shadow-none pl-7 pr-11">
               <div className="mt-2">
                 <div className="w-full h-64 bg-muted/30 rounded-lg flex items-center justify-center overflow-hidden">
@@ -911,8 +912,8 @@ export function ItemDetailPanel({
             </div>
           )}
 
-          {/* Center Column - Content Area (Info OR Stock based on toggle) */}
-          <div className={`flex flex-col transition-all duration-300 overflow-hidden ${isViewingContainer ? "order-1 col-span-1 mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : "order-2 relative mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10"}`}>
+          {/* Info/Atributos Column - 6 cols when info expanded, 4 cols when both, 1 col when stock expanded */}
+          <div className={`flex flex-col transition-all duration-300 overflow-hidden ${isViewingContainer ? "order-1 col-span-1 mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : `order-2 relative mt-[44px] pt-6 pb-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10 ${expandedSection === "info" ? "col-span-6 px-8" : expandedSection === "both" ? "col-span-4 px-6" : "col-span-1 px-3"}`}`}>
             
             {/* Thumbnail + Title Header for Parent Items */}
             {isViewingContainer && (
@@ -933,35 +934,77 @@ export function ItemDetailPanel({
               </div>
             )}
 
+            {/* Collapsed Info State - Minimal Slider View (only when stock is fully expanded) */}
+            {!isViewingContainer && expandedSection === "stock" && (
+              <div 
+                onClick={() => setExpandedSection("both")}
+                className="flex flex-col items-center justify-start h-full py-4 cursor-pointer group"
+              >
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center group-hover:bg-slate-200 transition-colors">
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600" />
+                  </div>
+                  <span className="text-[9px] font-medium text-slate-400 uppercase tracking-[0.12em] group-hover:text-slate-600 transition-colors" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
+                    Info
+                  </span>
+                </div>
+              </div>
+            )}
 
-
-            {/* INFO SECTION - Segment Buttons + Content */}
-            {(isViewingContainer || expandedSection === "info") && (
-            <>
+            {/* Sticky Segment Buttons - Show when info or both is active */}
+            {(isViewingContainer || expandedSection === "info" || expandedSection === "both") && (
             <div className={`z-20 mb-6 ${isViewingContainer ? "" : "sticky top-[0px]"}`}>
               <div className="flex items-center gap-1 h-11 p-1 bg-slate-100/80 rounded-xl">
-                <button
-                  onClick={() => setSelectedDetailTab("info")}
-                  className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
-                    selectedDetailTab === "info"
-                      ? "bg-white text-slate-900 shadow-sm font-semibold"
-                      : "text-slate-500 hover:text-slate-700"
-                  }`}
-                >
-                  <span className="text-xs font-medium uppercase tracking-widest">Info</span>
-                </button>
-                <button
-                  onClick={() => setSelectedDetailTab("atributos")}
-                  className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
-                    selectedDetailTab === "atributos"
-                      ? "bg-white text-slate-900 shadow-sm font-semibold"
-                      : "text-slate-500 hover:text-slate-700"
-                  }`}
-                >
-                  <span className="text-xs font-medium uppercase tracking-widest">Atributos</span>
-                </button>
+                {isViewingContainer ? (
+                  <>
+                    <button
+                      onClick={() => setSelectedDetailTab("info")}
+                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
+                        selectedDetailTab === "info"
+                          ? "bg-white text-slate-900 shadow-sm font-semibold"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      <span className="text-xs font-medium uppercase tracking-widest">Info</span>
+                    </button>
+                    <button
+                      onClick={() => setSelectedDetailTab("atributos")}
+                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
+                        selectedDetailTab === "atributos"
+                          ? "bg-white text-slate-900 shadow-sm font-semibold"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      <span className="text-xs font-medium uppercase tracking-widest">Atributos</span>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setSelectedDetailTab("info")}
+                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
+                        selectedDetailTab === "info"
+                          ? "bg-white text-slate-900 shadow-sm font-semibold"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      <span className="text-xs font-medium uppercase tracking-widest">Info</span>
+                    </button>
+                    <button
+                      onClick={() => setSelectedDetailTab("atributos")}
+                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
+                        selectedDetailTab === "atributos"
+                          ? "bg-white text-slate-900 shadow-sm font-semibold"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      <span className="text-xs font-medium uppercase tracking-widest">Atributos</span>
+                    </button>
+                  </>
+                )}
               </div>
             </div>
+            )}
 
             {/* Tab Content - Only show when expanded */}
             {(isViewingContainer || expandedSection === "info") && (
@@ -2248,12 +2291,107 @@ export function ItemDetailPanel({
                 </>
               )}
             </div>
-            </>
             )}
+          </div>
 
-            {/* STOCK SECTION - Only for standalone/children when stock is expanded */}
-            {!isViewingContainer && expandedSection === "stock" && (
-              <div className="flex-1 w-full">
+          {/* Vertical Toggle - Section Switcher (only for standalone/children items) */}
+          {!isViewingContainer && (
+            <div className="order-3 col-span-1 flex flex-col items-center justify-start mt-[44px] pt-6">
+              <div className="sticky top-4 flex flex-col items-center">
+                {/* Toggle Track */}
+                <div className="relative flex flex-col items-center">
+                  {/* Vertical line */}
+                  <div className="absolute top-0 bottom-0 w-px bg-gradient-to-b from-slate-200 via-slate-300 to-slate-200" />
+                  
+                  {/* Three-way Toggle */}
+                  <div className="relative z-10 flex flex-col items-center gap-1 py-2 px-1">
+                    {/* Info indicator */}
+                    <button
+                      onClick={() => setExpandedSection("info")}
+                      className={`w-2 h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                        expandedSection === "info" 
+                          ? "bg-slate-800 scale-125" 
+                          : "bg-slate-300 hover:bg-slate-400"
+                      }`}
+                      title="Expandir Info"
+                    />
+                    
+                    {/* Both indicator */}
+                    <button
+                      onClick={() => setExpandedSection("both")}
+                      className={`w-2.5 h-2.5 rounded-full transition-all duration-300 cursor-pointer my-1 ${
+                        expandedSection === "both" 
+                          ? "bg-slate-800 scale-125" 
+                          : "bg-slate-300 hover:bg-slate-400"
+                      }`}
+                      title="Mostrar ambos"
+                    />
+                    
+                    {/* Stock indicator */}
+                    <button
+                      onClick={() => setExpandedSection("stock")}
+                      className={`w-2 h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                        expandedSection === "stock" 
+                          ? "bg-slate-800 scale-125" 
+                          : "bg-slate-300 hover:bg-slate-400"
+                      }`}
+                      title="Expandir Stock"
+                    />
+                  </div>
+                  
+                  {/* Labels */}
+                  <div className="mt-4 flex flex-col items-center gap-6">
+                    <span className={`text-[8px] font-medium uppercase tracking-[0.12em] transition-all duration-300 ${
+                      expandedSection === "info" 
+                        ? "text-slate-700" 
+                        : "text-slate-400"
+                    }`} style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
+                      Info
+                    </span>
+                    <span className={`text-[8px] font-medium uppercase tracking-[0.12em] transition-all duration-300 ${
+                      expandedSection === "stock" 
+                        ? "text-slate-700" 
+                        : "text-slate-400"
+                    }`} style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
+                      Stock
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Stock Column - 6 cols when stock expanded, 3 cols when both, 1 col when info expanded */}
+          {!isViewingContainer && (
+            <div className={`order-4 flex flex-col mt-[44px] transition-all duration-300 ${expandedSection === "stock" ? "col-span-6 pl-4" : expandedSection === "both" ? "col-span-2 pl-3" : "col-span-1 pl-2"}`}>
+              <div className={`sticky top-4 bg-white border border-border/40 rounded-xl shadow-sm ${expandedSection === "stock" ? "p-5" : expandedSection === "both" ? "p-4" : "p-3"}`}>
+                
+                {/* Collapsed Stock State - Minimal Slider View (only when info is fully expanded) */}
+                {expandedSection === "info" && (
+                  <div 
+                    onClick={() => setExpandedSection("both")}
+                    className="flex flex-col items-center justify-start py-2 cursor-pointer group"
+                  >
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center group-hover:bg-slate-200 transition-colors">
+                        <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 rotate-180" />
+                      </div>
+                      <span className="text-[9px] font-medium text-slate-400 uppercase tracking-[0.12em] group-hover:text-slate-600 transition-colors" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
+                        Stock
+                      </span>
+                      <div className="flex flex-col items-center gap-0.5 mt-2">
+                        <span className="text-lg font-bold text-slate-600 tabular-nums">
+                          {Number.parseInt(selectedItem?.stock?.total || "0")}
+                        </span>
+                        <span className="text-[8px] text-slate-400 uppercase tracking-wider">Total</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Expanded Stock Content - show when stock or both is active */}
+                {(expandedSection === "stock" || expandedSection === "both") && (
+                <>
                 <h3 className="text-xs font-semibold text-foreground/60 uppercase tracking-wider mb-4">
                   Stock en Depósito: Torcuato
                 </h3>
@@ -2323,11 +2461,11 @@ export function ItemDetailPanel({
                             }))}
                             className="text-xs border border-border/50 rounded bg-background hover:bg-accent transition-colors focus:outline-none focus:ring-1 focus:ring-primary/20 cursor-pointer px-2 py-1.5"
                           >
-                            <option value="agregar">Agregar</option>
-                            <option value="remover">Remover</option>
-                            <option value="sobreescribir">Sobreescribir</option>
-                          </select>
-                          <input
+<option value="agregar">Agregar</option>
+  <option value="remover">Remover</option>
+  <option value="sobreescribir">Sobreescribir</option>
+  </select>
+  <input
                             type="number"
                             placeholder="0"
                             value={stockModification.total.value}
@@ -2364,8 +2502,8 @@ export function ItemDetailPanel({
                             disabled={!stockModification.total.value}
                             className={`w-7 h-7 rounded border flex items-center justify-center transition-all ml-auto ${
                               stockModification.total.value
-                                ? "border-emerald-300 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 cursor-pointer"
-                                : "border-border/30 bg-muted/30 text-muted-foreground/30 cursor-not-allowed"
+                                ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90 cursor-pointer"
+                                : "bg-muted/30 text-muted-foreground/30 border-border/30 cursor-not-allowed"
                             }`}
                           >
                             <Check className="w-3.5 h-3.5" />
@@ -2375,57 +2513,59 @@ export function ItemDetailPanel({
                     )}
                   </div>
 
-                  {/* Reservado Section */}
-                  <div className="border border-amber-200 rounded-lg bg-amber-50/50 overflow-hidden">
-                    <div 
-                      onClick={() => setActiveStockEdit("reservado")}
-                      className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${
-                        activeStockEdit === "reservado" ? "bg-amber-100/50" : "hover:bg-amber-100/30"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <ChevronDown className={`w-3.5 h-3.5 text-amber-600 transition-transform ${
-                          activeStockEdit === "reservado" ? "rotate-0" : "-rotate-90"
-                        }`} />
-                        <div className="text-xs font-medium text-amber-700 uppercase tracking-wide">Reservado</div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {activeStockEdit === "reservado" && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              if (selectedItem?.sku) {
-                                const current = Number.parseInt(selectedItem?.stock?.reservado || "0")
-                                updateStock(selectedItem.sku, "reservado", Math.max(0, current - 1))
-                              }
-                            }}
-                            className="w-6 h-6 rounded border border-amber-300 hover:bg-amber-100 transition-all flex items-center justify-center text-amber-600 cursor-pointer"
-                          >
-                            <Minus className="w-3 h-3" />
-                          </button>
-                        )}
-                        <span className="text-base font-semibold text-amber-600 tabular-nums min-w-[2rem] text-center">
-                          {Number.parseInt(selectedItem?.stock?.reservado || "0")}
-                        </span>
-                        {activeStockEdit === "reservado" && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              if (selectedItem?.sku) {
-                                const current = Number.parseInt(selectedItem?.stock?.reservado || "0")
-                                updateStock(selectedItem.sku, "reservado", current + 1)
-                              }
-                            }}
-                            className="w-6 h-6 rounded border border-amber-300 hover:bg-amber-100 transition-all flex items-center justify-center text-amber-600 cursor-pointer"
-                          >
-                            <Plus className="w-3 h-3" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
+{/* Reservado Section */}
+  <div className="border border-border/40 rounded-lg bg-slate-50 overflow-hidden">
+  {/* Reservado Header - clickable to expand/collapse */}
+  <div
+  onClick={() => setActiveStockEdit("reservado")}
+  className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${
+  activeStockEdit === "reservado" ? "bg-accent/30" : "hover:bg-accent/20"
+  }`}
+  >
+  <div className="flex items-center gap-2">
+  <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${
+  activeStockEdit === "reservado" ? "rotate-0" : "-rotate-90"
+  }`} />
+  <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Reservado</div>
+  </div>
+  <div className="flex items-center gap-2">
+    {activeStockEdit === "reservado" && (
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          if (selectedItem?.sku) {
+            const current = Number.parseInt(selectedItem?.stock?.reservado || "0")
+            updateStock(selectedItem.sku, "reservado", Math.max(0, current - 1))
+          }
+        }}
+        className="w-6 h-6 rounded border border-border/50 hover:bg-accent hover:border-border transition-all flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer"
+      >
+        <Minus className="w-3 h-3" />
+      </button>
+    )}
+    <span className="text-base font-semibold text-foreground tabular-nums min-w-[2rem] text-center">
+      {Number.parseInt(selectedItem?.stock?.reservado || "0")}
+    </span>
+    {activeStockEdit === "reservado" && (
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          if (selectedItem?.sku) {
+            const current = Number.parseInt(selectedItem?.stock?.reservado || "0")
+            updateStock(selectedItem.sku, "reservado", current + 1)
+          }
+        }}
+        className="w-6 h-6 rounded border border-border/50 hover:bg-accent hover:border-border transition-all flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer"
+      >
+        <Plus className="w-3 h-3" />
+      </button>
+    )}
+  </div>
+  </div>
 
+                    {/* Reservado Edición Avanzada Panel */}
                     {activeStockEdit === "reservado" && (
-                      <div className="px-4 pb-3 pt-1 border-t border-amber-200/50 bg-amber-50/30">
+                      <div className="px-4 pb-3 pt-1 border-t border-border/30 bg-muted/10">
                         <div className="flex items-center gap-2">
                           <select
                             value={stockModification.reservado.operation}
@@ -2433,13 +2573,13 @@ export function ItemDetailPanel({
                               ...prev,
                               reservado: { ...prev.reservado, operation: e.target.value },
                             }))}
-                            className="text-xs border border-amber-200 rounded bg-white hover:bg-amber-50 transition-colors focus:outline-none focus:ring-1 focus:ring-amber-300 cursor-pointer px-2 py-1.5"
+                            className="text-xs border border-border/50 rounded bg-background hover:bg-accent transition-colors focus:outline-none focus:ring-1 focus:ring-primary/20 cursor-pointer px-2 py-1.5"
                           >
-                            <option value="agregar">Agregar</option>
-                            <option value="remover">Remover</option>
-                            <option value="sobreescribir">Sobreescribir</option>
-                          </select>
-                          <input
+<option value="agregar">Agregar</option>
+  <option value="remover">Remover</option>
+  <option value="sobreescribir">Sobreescribir</option>
+  </select>
+  <input
                             type="number"
                             placeholder="0"
                             value={stockModification.reservado.value}
@@ -2447,10 +2587,10 @@ export function ItemDetailPanel({
                               ...prev,
                               reservado: { ...prev.reservado, value: e.target.value },
                             }))}
-                            className="w-16 text-sm border border-amber-200 rounded px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-amber-300 tabular-nums text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            className="w-16 text-sm border border-border/50 rounded px-2 py-1.5 bg-background focus:outline-none focus:ring-1 focus:ring-primary/20 tabular-nums text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
-                          <span className="text-amber-400 text-sm">→</span>
-                          <span className="text-sm font-medium text-amber-500 tabular-nums min-w-[2.5rem] text-right">
+                          <span className="text-muted-foreground/50 text-sm">→</span>
+                          <span className="text-sm font-medium text-muted-foreground/60 tabular-nums min-w-[2.5rem] text-right">
                             {stockModification.reservado.value
                               ? (() => {
                                   const current = Number.parseInt(selectedItem?.stock?.reservado || "0")
@@ -2476,8 +2616,8 @@ export function ItemDetailPanel({
                             disabled={!stockModification.reservado.value}
                             className={`w-7 h-7 rounded border flex items-center justify-center transition-all ml-auto ${
                               stockModification.reservado.value
-                                ? "border-amber-400 bg-amber-100 text-amber-700 hover:bg-amber-200 cursor-pointer"
-                                : "border-amber-200/50 bg-amber-50/50 text-amber-300 cursor-not-allowed"
+                                ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90 cursor-pointer"
+                                : "bg-muted/30 text-muted-foreground/30 border-border/30 cursor-not-allowed"
                             }`}
                           >
                             <Check className="w-3.5 h-3.5" />
@@ -2498,110 +2638,65 @@ export function ItemDetailPanel({
                     </div>
                   </div>
                 </div>
-
-                {/* Proveedor Section */}
-                <div className="mt-6 pt-4 border-t border-slate-200">
+                </>
+                )}
+              </div>
+              
+              {/* Horizontal line with proveedor dropdown button - show when stock or both is active */}
+              {(expandedSection === "stock" || expandedSection === "both") && (
+              <>
+              <div className="relative my-4">
+                <div className="border-t border-slate-200"></div>
+                <div className="absolute left-1/2 -translate-x-1/2 -top-3 flex flex-col items-center">
                   <button
                     onClick={() => setProveedorDropdownOpen(!proveedorDropdownOpen)}
-                    className="w-full flex items-center justify-between py-2 text-sm text-slate-600 hover:text-slate-800 transition-colors"
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors bg-white px-2 cursor-pointer"
                   >
-                    <span className="font-medium">Proveedor</span>
-                    <ChevronDown className={`w-4 h-4 transition-transform ${proveedorDropdownOpen ? "rotate-180" : ""}`} />
+                    {proveedorDropdownOpen ? "ocultar información del proveedor" : "mostrar información del proveedor"}
                   </button>
-                  
-                  {proveedorDropdownOpen && (
-                    <div className="mt-3 space-y-3">
-                      <div className="flex flex-col gap-2">
-                        <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Proveedor</label>
-                        <input
-                          type="text"
-                          value={proveedor}
-                          onChange={(e) => handleFieldChange("proveedor", e.target.value, setProveedor)}
-                          disabled={shouldInheritField(fatherItem?.proveedor)}
-                          className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${
-                            shouldInheritField(fatherItem?.proveedor)
-                              ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
-                              : "bg-white border-gray-300 text-gray-900"
-                          }`}
-                          placeholder="Nombre del proveedor"
-                        />
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Código Proveedor</label>
-                        <input
-                          type="text"
-                          value={codigoProveedor}
-                          onChange={(e) => handleFieldChange("codigoProveedor", e.target.value, setCodigoProveedor)}
-                          className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                          placeholder="Código del proveedor"
-                        />
-                      </div>
-                    </div>
-                  )}
+                  <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${proveedorDropdownOpen ? "rotate-180" : ""}`} />
                 </div>
               </div>
-            )}
-          </div>
 
-          {/* Vertical Toggle - Section Switcher (only for standalone/children items) */}
-          {!isViewingContainer && (
-            <div className="order-3 col-span-1 flex flex-col items-center justify-start mt-[44px] pt-6">
-              <div className="sticky top-4 flex flex-col items-center">
-                {/* Toggle Track */}
-                <div className="relative flex flex-col items-center">
-                  {/* Vertical line */}
-                  <div className="absolute top-0 bottom-0 w-px bg-gradient-to-b from-slate-200 via-slate-300 to-slate-200" />
-                  
-                  {/* Toggle Button */}
-                  <button
-                    onClick={() => setExpandedSection(expandedSection === "info" ? "stock" : "info")}
-                    className="relative z-10 group flex flex-col items-center gap-2 py-3 px-1.5 cursor-pointer"
-                    title={expandedSection === "info" ? "Expandir Stock" : "Expandir Info"}
-                  >
-                    {/* Top indicator */}
-                    <div className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                      expandedSection === "info" 
-                        ? "bg-slate-800 scale-110" 
-                        : "bg-slate-300 group-hover:bg-slate-400"
-                    }`} />
-                    
-                    {/* Center toggle pill */}
-                    <div className="relative bg-slate-100 border border-slate-200/80 rounded-full p-1 shadow-sm group-hover:shadow-md transition-all duration-300 group-hover:border-slate-300">
-                      <div className="flex flex-col items-center gap-0.5">
-                        <ChevronRight className={`w-3 h-3 text-slate-500 transition-all duration-300 ${
-                          expandedSection === "stock" ? "rotate-180" : ""
-                        } group-hover:text-slate-700`} />
-                      </div>
+              {/* Proveedor dropdown content */}
+              {proveedorDropdownOpen && (
+                <div className="bg-white border border-slate-200 rounded-lg p-4 mb-4 shadow-sm">
+                  <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
+                    Información del Proveedor
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-2">
+                      <label className="text-sm font-medium text-gray-700">Proveedor</label>
+                      <input
+                        type="text"
+                        value={proveedor}
+                        onChange={(e) => handleFieldChange("proveedor", e.target.value, setProveedor)}
+                        disabled={shouldInheritField(fatherItem?.proveedor)}
+                        className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${
+                          shouldInheritField(fatherItem?.proveedor)
+                            ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
+                            : "bg-white border-gray-300 text-gray-900"
+                        }`}
+                        placeholder="Nombre del proveedor"
+                      />
                     </div>
-                    
-                    {/* Bottom indicator */}
-                    <div className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                      expandedSection === "stock" 
-                        ? "bg-slate-800 scale-110" 
-                        : "bg-slate-300 group-hover:bg-slate-400"
-                    }`} />
-                  </button>
-                  
-                  {/* Labels */}
-                  <div className="mt-3 flex flex-col items-center gap-6">
-                    <span className={`text-[9px] font-medium uppercase tracking-[0.15em] transition-all duration-300 writing-mode-vertical ${
-                      expandedSection === "info" 
-                        ? "text-slate-700" 
-                        : "text-slate-400"
-                    }`} style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
-                      Info
-                    </span>
-                    <span className={`text-[9px] font-medium uppercase tracking-[0.15em] transition-all duration-300 ${
-                      expandedSection === "stock" 
-                        ? "text-slate-700" 
-                        : "text-slate-400"
-                    }`} style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
-                      Stock
-                    </span>
+                    <div className="flex flex-col gap-2">
+                      <label className="text-sm font-medium text-gray-700">Código Proveedor</label>
+                      <input
+                        type="text"
+                        value={codigoProveedor}
+                        onChange={(e) => handleFieldChange("codigoProveedor", e.target.value, setCodigoProveedor)}
+                        className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        placeholder="Código del proveedor"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
+              </>
+              )}
             </div>
+          )}
         </div>
       </div>
     </>
