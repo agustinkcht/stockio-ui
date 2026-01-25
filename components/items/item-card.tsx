@@ -2,10 +2,9 @@
 
 import type React from "react"
 import { useState, useEffect, useRef, useMemo } from "react"
-import { ChevronDown, ChevronRight, MoreVertical, Layers, Trash2, Copy, ChevronLeft } from "lucide-react"
+import { ChevronDown, ChevronRight, MoreVertical, Trash2, Copy } from "lucide-react"
 import type { Item } from "@/lib/types"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { getCategoryImage } from "@/lib/utils/category-images"
 
 interface ItemCardProps {
   item: Item
@@ -14,40 +13,18 @@ interface ItemCardProps {
   isSelected: boolean
   isExpanded: boolean
   onSelectClick: (index: number) => void
-  onItemClick: (item: Item) => void // Simplified signature - no longer needs tab parameter
+  onItemClick: (item: Item) => void
   onToggleExpansion: (index: number) => void
   onDelete?: (item: Item) => void
-  nextItem?: Item // Added for dynamic margin calculation
-  isChild?: boolean // Added to identify child items
-  isLastChild?: boolean // Added to identify last child for rounded bottom corners
+  nextItem?: Item
+  isChild?: boolean
+  isLastChild?: boolean
 }
 
 function calculateMarginBottom(currentItem: Item, nextItem: Item | undefined, isChild: boolean): string {
-  // Children have no margin between them
-  if (isChild) {
-    return "mb-0"
-  }
-
-  // If there's no next item, no margin needed
-  if (!nextItem) {
-    return "mb-0"
-  }
-
-  const isCurrentParent = currentItem.isAgrupador || currentItem.hasVariants
-  const isNextParent = nextItem.isAgrupador || nextItem.hasVariants
-
-  // Parent → Parent or Parent → Standalone: 8px (mb-2)
-  if (isCurrentParent) {
-    return "mb-[5px]"
-  }
-
-  // Standalone → Parent: 5px
-  if (!isCurrentParent && isNextParent) {
-    return "mb-[5px]"
-  }
-
-  // Standalone → Standalone: 5px
-  return "mb-[5px]"
+  if (isChild) return "mb-0"
+  if (!nextItem) return "mb-0"
+  return "mb-px"
 }
 
 export function ItemCard({
@@ -65,13 +42,8 @@ export function ItemCard({
   isLastChild = false,
 }: ItemCardProps) {
   const [isHovered, setIsHovered] = useState(false)
-  const [showTransition, setShowTransition] = useState(false)
   const [copiedSku, setCopiedSku] = useState(false)
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  
-  // Expanded span state: 'right' for stock/variantes (default), 'center' for attributes
-  const isParent = item.isAgrupador || item.hasVariants
-  const [expandedSpan, setExpandedSpan] = useState<'center' | 'right'>('right')
 
   const variantCount = useMemo(() => {
     return item.variantCount || item.variants?.length || 0
@@ -82,33 +54,17 @@ export function ItemCard({
   }, [item.itemCount, item.items])
 
   const marginClass = calculateMarginBottom(item, nextItem, isChild)
+  const isParent = item.isAgrupador || item.hasVariants
 
   const getRoundedClass = () => {
-    const isParent = item.isAgrupador || item.hasVariants
-
     if (isChild) {
-      // Last child gets rounded bottom corners
-      if (isLastChild) {
-        return "rounded-b-sm"
-      }
-      // Other children have no rounded corners
-      return ""
+      return isLastChild ? "rounded-b" : ""
     }
-
     if (isParent) {
-      if (isExpanded) {
-        // Expanded parent: only rounded top corners
-        return "rounded-t-sm"
-      }
-      // Collapsed parent: all corners rounded
-      return "rounded-sm"
+      return isExpanded ? "rounded-t" : "rounded"
     }
-
-    // Standalone items: all corners rounded
-    return "rounded-sm"
+    return "rounded"
   }
-
-  const roundedClass = getRoundedClass()
 
   useEffect(() => {
     return () => {
@@ -118,32 +74,6 @@ export function ItemCard({
     }
   }, [])
 
-  const handleMouseEnter = () => {
-    setIsHovered(true)
-    setShowTransition(true)
-  }
-
-  const handleMouseLeave = () => {
-    setIsHovered(false)
-    setShowTransition(true)
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current)
-    }
-  }
-
-  const handleButtonMouseEnter = () => {
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current)
-    }
-    setShowTransition(false)
-  }
-
-  const handleButtonMouseLeave = () => {
-    if (!isHovered) {
-      setShowTransition(false)
-    }
-  }
-
   const handleCopySku = async (e: React.MouseEvent) => {
     e.stopPropagation()
     await navigator.clipboard.writeText(item.sku)
@@ -151,328 +81,148 @@ export function ItemCard({
     setTimeout(() => setCopiedSku(false), 2000)
   }
 
+  const rowHeight = gridSize === "lg" ? "h-16" : gridSize === "md" ? "h-12" : "h-10"
+
   return (
     <div className={marginClass}>
       <div
-        className="flex items-center gap-2 bg-transparent mb-0 mt-0"
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
+        className="flex items-center gap-0"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
+        {/* Selection checkbox */}
         <div
-          className="p-2 -m-2 cursor-pointer py-4 pl-2"
-          onMouseEnter={handleButtonMouseEnter}
-          onMouseLeave={handleButtonMouseLeave}
+          className="flex items-center justify-center w-8 flex-shrink-0 cursor-pointer"
           onClick={(e) => {
             e.stopPropagation()
             onSelectClick(index)
           }}
         >
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onSelectClick(index)
-            }}
-            className={`relative left-[-7px] h-4.5 w-4.5 transition-colors cursor-pointer flex items-center justify-center text-sidebar-accent rounded-full ml-0 border shadow-xs border-slate-300 ${
-              isSelected ? "bg-sky-950 border-primary hover:opacity-90" : "bg-transparent border-border"
-            } ${!isHovered && !isSelected ? "opacity-0" : "opacity-100"} ${showTransition ? "transition-opacity" : ""}`}
-          ></button>
+          <div
+            className={`w-3.5 h-3.5 rounded-sm border transition-all duration-150 ${
+              isSelected
+                ? "bg-slate-800 border-slate-800"
+                : isHovered
+                  ? "border-slate-400"
+                  : "border-slate-300"
+            } ${!isHovered && !isSelected ? "opacity-0" : "opacity-100"}`}
+          />
         </div>
 
+        {/* Main row content */}
         <div
-          className={`flex-1 border-solid mb-0 border-slate-200/65 shadow-md ${gridSize === "lg" ? "h-22" : gridSize === "md" ? "h-16" : "h-10"} ${roundedClass} grid ${
-            item.isAgrupador || item.hasVariants
-              ? `grid-cols-11 ${isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors cursor-pointer overflow-hidden`
-              : `grid-cols-11 ${isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors overflow-hidden`
+          className={`flex-1 ${rowHeight} ${getRoundedClass()} grid grid-cols-12 items-center bg-white border border-slate-200/80 hover:border-slate-300/80 transition-all cursor-pointer ${
+            isChild ? "bg-slate-50/50" : ""
           }`}
           onClick={(e) => {
-            if (item.hasVariants || item.isAgrupador) {
+            if (isParent) {
               onToggleExpansion(index)
+            } else {
+              onItemClick(item)
             }
           }}
         >
-          {item.isAgrupador || item.hasVariants ? (
-            <>
-              <div
-                className={`col-span-5 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors border-slate-100 border-r-0`}
+          {/* Left section - Item info (5 cols) */}
+          <div
+            className="col-span-5 flex items-center gap-3 h-full px-4 border-r border-slate-100"
+            onClick={(e) => {
+              e.stopPropagation()
+              onItemClick(item)
+            }}
+          >
+            {isParent && (
+              <button
                 onClick={(e) => {
                   e.stopPropagation()
-                  onItemClick(item)
+                  onToggleExpansion(index)
                 }}
+                className="text-slate-400 hover:text-slate-600 transition-colors flex-shrink-0"
               >
-                {/* Product Thumbnail with category-based image */}
-                <div className="w-12 h-12 flex-shrink-0 rounded-md bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden">
-                  <img
-                    src={getCategoryImage(item.categoria) || "/placeholder.svg"}
-                    alt={item.categoria || "Product"}
-                    className="w-8 h-8 object-contain opacity-60"
-                  />
-                </div>
-
-                {/* Product Info with POS styling */}
-                <div className="flex-1 min-w-0 flex items-center gap-2 mb-1">
-                  {(item.hasVariants || item.isAgrupador) && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onToggleExpansion(index)
-                      }}
-                      className={`transition-colors cursor-pointer flex-shrink-0 ${
-                        item.hasVariants || item.isAgrupador
-                          ? "text-container-item-foreground hover:text-foreground"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                    </button>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`${gridSize === "sm" ? "text-sm" : "text-sm"} text-container-item-foreground font-medium truncate`}
-                      >
-                        {item.name}
-                      </span>
-                      {(item.hasVariants || item.isAgrupador) && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground whitespace-nowrap">
-                          {item.hasVariants ? `${variantCount} var.` : `${itemCount} items`}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
-                      {item.marca && <span className="text-xs text-muted-foreground">·</span>}
-                      {item.categoria && <span className="text-xs text-muted-foreground">{item.categoria}</span>}
-                      {item.categoria && <span className="text-xs text-muted-foreground">·</span>}
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs text-muted-foreground">{item.sku}</span>
-                        <button
-                          onClick={handleCopySku}
-                          className="p-1 text-muted-foreground hover:text-foreground transition-colors"
-                          title="Copy SKU"
-                        >
-                          <Copy className="w-3 h-3" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Center span - Attributes (collapsible) */}
-              <div
-                className={`${expandedSpan === 'center' ? 'col-span-3' : 'col-span-0 w-0 overflow-hidden'} h-full flex items-center px-4 transition-all duration-200 border-r border-slate-100`}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onItemClick(item)
-                }}
-              >
-                {expandedSpan === 'center' && item.atributosPrincipales && item.atributosPrincipales.length > 0 && (
-                  <div className="flex w-full">
-                    {item.atributosPrincipales.map((attr, idx) => (
-                      <div key={idx} className="flex flex-col items-center gap-0.5 flex-1 min-w-0">
-                        <span className="text-[10px] text-muted-foreground uppercase tracking-wide truncate w-full text-center">
-                          {attr.key}
-                        </span>
-                        <span className="text-sm text-foreground truncate w-full text-center" title={attr.value || "-"}>
-                          {attr.value || "-"}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Span Toggle Button */}
-              <div 
-                className="col-span-1 h-full flex items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setExpandedSpan(expandedSpan === 'right' ? 'center' : 'right')
-                }}
-              >
-                <div className="flex items-center gap-0.5 text-muted-foreground">
-                  <ChevronLeft className={`w-3 h-3 transition-transform ${expandedSpan === 'center' ? 'rotate-180' : ''}`} />
-                  <ChevronRight className={`w-3 h-3 transition-transform ${expandedSpan === 'right' ? 'rotate-180' : ''}`} />
-                </div>
-              </div>
-
-              {/* Right span - Variantes info (expanded by default for parents) */}
-              <div
-                className={`${expandedSpan === 'right' ? 'col-span-2' : 'col-span-0 w-0 overflow-hidden'} h-full flex items-center justify-center px-4 transition-all duration-200`}
-              >
-                {expandedSpan === 'right' && (
-                  <span className="text-sm text-container-item-foreground/80">
-                    {item.hasVariants ? `${variantCount} variantes` : `${itemCount} items`}
+                {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+            )}
+            
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className={`text-sm font-medium truncate ${isChild ? "text-slate-500" : "text-slate-800"}`}>
+                  {item.name}
+                </span>
+                {isParent && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-medium">
+                    {item.hasVariants ? variantCount : itemCount}
                   </span>
                 )}
               </div>
-            </>
-          ) : (
-            <>
-              <div
-                className={`col-span-5 flex items-center gap-3 h-full border-r border-slate-100 px-4 cursor-pointer transition-colors`}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onItemClick(item)
-                }}
-              >
-                {/* Product Thumbnail with category-based image */}
-                <div className="w-12 h-12 flex-shrink-0 rounded-md bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden">
-                  <img
-                    src={getCategoryImage(item.categoria) || "/placeholder.svg"}
-                    alt={item.categoria || "Product"}
-                    className="w-8 h-8 object-contain opacity-60"
-                  />
-                </div>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="text-[11px] text-slate-400 font-mono">{item.sku}</span>
+                <button
+                  onClick={handleCopySku}
+                  className={`p-0.5 transition-colors ${copiedSku ? "text-emerald-500" : "text-slate-300 hover:text-slate-500"}`}
+                  title={copiedSku ? "Copiado" : "Copiar SKU"}
+                >
+                  <Copy className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+          </div>
 
-                {/* Product Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span
-                      className={`${gridSize === "sm" ? "text-sm" : "text-sm"} ${
-                        isChild
-                          ? "text-muted-foreground"
-                          : "text-foreground"
-                      } font-medium truncate`}
-                    >
-                      {item.name}
-                    </span>
+          {/* Center section - Attributes (4 cols) */}
+          <div className="col-span-4 flex items-center justify-center h-full px-4 border-r border-slate-100">
+            {isParent ? (
+              <span className="text-xs text-slate-400">
+                {item.hasVariants ? `${variantCount} variantes` : `${itemCount} items`}
+              </span>
+            ) : item.atributosPrincipales && item.atributosPrincipales.length > 0 ? (
+              <div className="flex items-center gap-4">
+                {item.atributosPrincipales.slice(0, 2).map((attr, idx) => (
+                  <div key={idx} className="flex flex-col items-center">
+                    <span className="text-[9px] text-slate-400 uppercase tracking-wider">{attr.key}</span>
+                    <span className="text-xs text-slate-600 font-medium">{attr.value || "-"}</span>
                   </div>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
-                    {item.marca && <span className="text-xs text-muted-foreground">·</span>}
-                    {item.categoria && <span className="text-xs text-muted-foreground">{item.categoria}</span>}
-                    {item.categoria && <span className="text-xs text-muted-foreground">·</span>}
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs text-muted-foreground">{item.sku}</span>
-                      <button
-                        onClick={handleCopySku}
-                        className="p-1 text-muted-foreground hover:text-foreground transition-colors"
-                        title="Copy SKU"
-                      >
-                        <Copy className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </div>
+                ))}
+              </div>
+            ) : (
+              <span className="text-xs text-slate-300">-</span>
+            )}
+          </div>
+
+          {/* Right section - Stock (3 cols) */}
+          <div className="col-span-3 flex items-center justify-center h-full px-4">
+            {isParent ? (
+              <span className="text-xs text-slate-300">-</span>
+            ) : (
+              <div className="flex items-center gap-6">
+                <div className="flex flex-col items-center">
+                  <span className="text-[9px] text-slate-400 uppercase tracking-wider">Total</span>
+                  <span className="text-sm text-slate-700 font-semibold tabular-nums">{item.stock?.total || 0}</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-[9px] text-slate-400 uppercase tracking-wider">Disp</span>
+                  <span className="text-sm text-slate-700 font-semibold tabular-nums">{item.stock?.disponible || 0}</span>
                 </div>
               </div>
-
-              {/* Center span - Attributes (collapsible) */}
-              <div
-                className={`${expandedSpan === 'center' ? 'col-span-3' : 'col-span-0 w-0 overflow-hidden'} h-full flex items-center px-4 cursor-pointer transition-all duration-200 border-r border-slate-100`}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onItemClick(item)
-                }}
-              >
-                {expandedSpan === 'center' && (
-                  <>
-                    {item.atributosPrincipales && item.atributosPrincipales.length > 0 ? (
-                      <div className="flex w-full">
-                        {item.atributosPrincipales.map((attr, idx) => (
-                          <div key={idx} className="flex flex-col items-center gap-0.5 flex-1 min-w-0">
-                            <span className="text-[10px] text-muted-foreground uppercase tracking-wide truncate w-full text-center">
-                              {attr.key}
-                            </span>
-                            <span className="text-sm text-foreground truncate w-full text-center" title={attr.value || "-"}>
-                              {attr.value || "-"}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="flex w-full">
-                        <div className="flex flex-col items-center gap-0.5 flex-1">
-                          <span className="text-sm text-muted-foreground">-</span>
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-
-              {/* Span Toggle Button */}
-              <div 
-                className="col-span-1 h-full flex items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setExpandedSpan(expandedSpan === 'right' ? 'center' : 'right')
-                }}
-              >
-                <div className="flex items-center gap-0.5 text-muted-foreground">
-                  <ChevronLeft className={`w-3 h-3 transition-transform ${expandedSpan === 'center' ? 'rotate-180' : ''}`} />
-                  <ChevronRight className={`w-3 h-3 transition-transform ${expandedSpan === 'right' ? 'rotate-180' : ''}`} />
-                </div>
-              </div>
-
-              {/* Right span - Stock info (expanded by default for standalone/child) */}
-              <div
-                className={`${expandedSpan === 'right' ? 'col-span-2' : 'col-span-0 w-0 overflow-hidden'} h-full flex items-center px-4 cursor-pointer transition-all duration-200`}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onItemClick(item)
-                }}
-              >
-                {expandedSpan === 'right' && (
-                  <>
-                    {gridSize === "sm" ? (
-                      <div className="grid grid-cols-3 gap-x-3 w-full">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-sm text-muted-foreground shrink-0">T:</span>
-                          <span className="text-sm text-foreground">{item.stock?.total || 0}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-sm text-muted-foreground shrink-0">R:</span>
-                          <span className="text-sm text-foreground">{item.stock?.reservado || 0}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-sm text-muted-foreground shrink-0">D:</span>
-                          <span className="text-sm text-foreground">{item.stock?.disponible || 0}</span>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="flex flex-col items-center gap-0.5 flex-1">
-                          <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Total</span>
-                          <span className="text-sm text-foreground">{item.stock?.total || 0}</span>
-                        </div>
-                        <div className="flex flex-col items-center gap-0.5 flex-1">
-                          <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Reservado</span>
-                          <span className="text-sm text-foreground">{item.stock?.reservado || 0}</span>
-                        </div>
-                        <div className="flex flex-col items-center gap-0.5 flex-1">
-                          <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Disponible</span>
-                          <span className="text-sm text-foreground">{item.stock?.disponible || 0}</span>
-                        </div>
-                      </>
-                    )}
-                  </>
-                )}
-              </div>
-            </>
-          )}
+            )}
+          </div>
         </div>
 
-        <div
-          className={`flex items-center gap-2 px-3 ${!isHovered ? "opacity-0" : "opacity-100"} transition-opacity duration-300`}
-          onMouseEnter={handleButtonMouseEnter}
-          onMouseLeave={handleButtonMouseLeave}
-        >
+        {/* Actions */}
+        <div className={`flex items-center justify-center w-10 flex-shrink-0 ${!isHovered ? "opacity-0" : "opacity-100"} transition-opacity`}>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 onClick={(e) => e.stopPropagation()}
-                className="p-2 -m-2 py-4 px-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer focus-visible:outline-none"
+                className="p-1.5 text-slate-400 hover:text-slate-600 transition-colors rounded hover:bg-slate-100"
               >
                 <MoreVertical className="w-4 h-4" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 p-1">
+            <DropdownMenuContent align="end" className="w-40">
               <DropdownMenuItem
                 onClick={(e) => {
                   e.stopPropagation()
                   onDelete?.(item)
                 }}
+                className="text-red-600 focus:text-red-600"
               >
                 <Trash2 className="w-4 h-4 mr-2" />
                 Eliminar
@@ -482,8 +232,9 @@ export function ItemCard({
         </div>
       </div>
 
+      {/* Child items */}
       {item.hasVariants && isExpanded && item.variants && (
-        <div className={gridSize === "lg" ? "mt-2" : "mt-0"}>
+        <div className="ml-8">
           {item.variants.map((variant: any, variantIndex: number) => (
             <ItemCard
               key={variantIndex}
@@ -505,7 +256,7 @@ export function ItemCard({
       )}
 
       {item.isAgrupador && isExpanded && item.items && (
-        <div className={gridSize === "lg" ? "mt-2" : "mt-0"}>
+        <div className="ml-8">
           {item.items.map((groupItem, groupItemIndex) => (
             <ItemCard
               key={groupItemIndex}
