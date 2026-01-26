@@ -1403,8 +1403,8 @@ export function ItemDetailPanel({
                             {containerAtributosPrincipales.map((attr, index) => (
                               <div key={index} className="flex items-start gap-3">
                                 <div className="flex-1">
-                                  <label className="text-sm font-medium text-gray-700 mb-2 block">Atributo</label>
-                                  <Popover
+<label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
+                                    <Popover
                                     open={attr.keyOpen || false}
                                     onOpenChange={(open) => {
                                       const updated = [...containerAtributosPrincipales]
@@ -1468,8 +1468,8 @@ export function ItemDetailPanel({
                                 </div>
 
                                 <div className="flex-1">
-                                  <label className="text-sm font-medium text-gray-700 mb-2 block">Variantes</label>
-                                  <div className="space-y-2">
+<label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Variantes</label>
+                                    <div className="space-y-2">
                                     <Popover
                                       open={attr.variantesOpen || false}
                                       onOpenChange={(open) => {
@@ -1621,7 +1621,7 @@ export function ItemDetailPanel({
                               return (
                                 <div key={index} className="flex items-start gap-3">
                                   <div className="flex-1">
-                                    <label className="text-sm font-medium text-gray-700 mb-2 block">Atributo</label>
+                                    <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
                                     <Popover
                                       open={!isAttributeLocked && (attr.keyOpen || false)}
                                       onOpenChange={(open) => {
@@ -1695,7 +1695,7 @@ export function ItemDetailPanel({
                                   </div>
 
                                   <div className="flex-1">
-                                    <label className="text-sm font-medium text-gray-700 mb-2 block">Valor</label>
+                                    <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Valor</label>
                                     <Popover
                                       open={!isValueLocked && (attr.valueOpen || false)}
                                       onOpenChange={(open) => {
@@ -2133,7 +2133,7 @@ export function ItemDetailPanel({
                                 </div>
 
                                 <div className="flex-1">
-                                  <label className="text-sm font-medium text-gray-700 mb-2 block">Dato</label>
+                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">{isChildItem ? "Variante" : "Valor"}</label>
                                   <Popover
                                     open={!isChildItem && (attr.valueOpen || false)}
                                     onOpenChange={(open) => {
@@ -2269,7 +2269,7 @@ export function ItemDetailPanel({
                               return (
                                 <div key={index} className="flex items-start gap-3">
                                   <div className="flex-1">
-                                    <label className="text-sm font-medium text-gray-700 mb-2 block">Atributo</label>
+                                    <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
                                     <Popover
                                       open={!isAttributeLocked && (attr.keyOpen || false)}
                                       onOpenChange={(open) => {
@@ -2343,7 +2343,7 @@ export function ItemDetailPanel({
                                   </div>
 
                                   <div className="flex-1">
-                                    <label className="text-sm font-medium text-gray-700 mb-2 block">Valor</label>
+                                    <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Valor</label>
                                     <Popover
                                       open={!isValueLocked && (attr.valueOpen || false)}
                                       onOpenChange={(open) => {
