@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import type React from "react"
 import type { Item } from "@/lib/types"
-import { ChevronDown, ChevronRight, Plus, Copy, X, Minus, Check } from "lucide-react"
+import { ChevronDown, ChevronRight, Plus, Copy, X, Minus, Check, ArrowDownToLine } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
 import { SAVED_ATRIBUTOS, TEMPLATES } from "@/lib/constants" // DEPOSITS import removed
@@ -71,6 +71,63 @@ export function ItemDetailPanel({
     return isChildItem && fatherItem && fieldValue !== undefined && fieldValue !== null && fieldValue !== ""
   }
 
+  // Merge parent's atributosInformativos with child's following inheritance rules:
+  // Case 1 (Locked): Parent has key+value -> inherit complete pair as read-only
+  // Case 2 (Key-only): Parent has key with empty value -> child can fill its own value
+  // Case 3 (Exclusive): Child can have additional attributes not in parent
+  const getMergedAtributosInformativos = (
+    parentAttrs: Array<{ key: string; value: string; inheritValue?: boolean }> | undefined,
+    childAttrs: Array<{ key: string; value: string; inheritValue?: boolean }> | undefined,
+  ): Array<{ key: string; value: string; keyOpen?: boolean; valueOpen?: boolean; inheritValue?: boolean }> => {
+    if (!isChildItem || !fatherItem) {
+      // Not a child item, just return child's attributes (preserving inheritValue flag)
+      return (childAttrs || []).map(attr => ({ ...attr, keyOpen: false, valueOpen: false }))
+    }
+
+    const result: Array<{ key: string; value: string; keyOpen?: boolean; valueOpen?: boolean }> = []
+    const childMap = new Map<string, { key: string; value: string }>()
+    
+    // Build a map of child's attributes by key
+    ;(childAttrs || []).forEach(attr => {
+      childMap.set(attr.key, attr)
+    })
+    
+    // First, add all parent attributes (Case 1 and Case 2)
+    ;(parentAttrs || []).forEach(parentAttr => {
+      const childAttr = childMap.get(parentAttr.key)
+      
+      // Case 2 is now determined by inheritValue flag (or empty value for backward compatibility)
+      const isCase2 = parentAttr.inheritValue || (!parentAttr.value && parentAttr.inheritValue !== false)
+      
+      if (!isCase2 && parentAttr.value) {
+        // Case 1: Parent has value filled and not marked for inherit - use parent's complete pair (locked)
+        result.push({ key: parentAttr.key, value: parentAttr.value, keyOpen: false, valueOpen: false, inheritValue: false })
+      } else if (isCase2) {
+        // Case 2: Parent marked inheritValue - child can fill value
+        result.push({ 
+          key: parentAttr.key, 
+          value: childAttr?.value || "", 
+          keyOpen: false, 
+          valueOpen: false,
+          inheritValue: true
+        })
+      } else {
+        // Parent has value - Case 1
+        result.push({ key: parentAttr.key, value: parentAttr.value || "", keyOpen: false, valueOpen: false, inheritValue: false })
+      }
+      
+      // Remove from child map so we don't duplicate
+      childMap.delete(parentAttr.key)
+    })
+    
+    // Then, add remaining child-exclusive attributes (Case 3)
+    childMap.forEach(childAttr => {
+      result.push({ ...childAttr, keyOpen: false, valueOpen: false })
+    })
+    
+    return result
+  }
+
   const isUnidadesPorPackLocked = isChildItem && fatherItem
 
   const isTitleLocked = isChildItem && fatherItem
@@ -135,8 +192,8 @@ export function ItemDetailPanel({
   >(selectedItem?.atributosPrincipales || [])
 
   const [atributosInformativos, setAtributosInformativos] = useState<
-    Array<{ key: string; value: string; keyOpen?: boolean; valueOpen?: boolean }>
-  >(selectedItem?.atributosInformativos || [])
+    Array<{ key: string; value: string; keyOpen?: boolean; valueOpen?: boolean; inheritValue?: boolean }>
+  >(() => getMergedAtributosInformativos(fatherItem?.atributosInformativos, selectedItem?.atributosInformativos))
 
   const [stockModification, setStockModification] = useState({
     total: { operation: "agregar", value: "" },
@@ -223,11 +280,13 @@ export function ItemDetailPanel({
   // Section toggle: 'info', 'both', or 'stock' - default to stock expanded
   const [expandedSection, setExpandedSection] = useState<"info" | "both" | "stock">("stock")
 
-  // Compute whether item has existing attributes
+  // Compute whether item has existing attributes (including inherited from parent)
   const hasExistingAttributes =
     (selectedItem?.atributosPrincipales && selectedItem.atributosPrincipales.length > 0) ||
     (selectedItem?.atributosInformativos && selectedItem.atributosInformativos.length > 0) ||
-    (selectedItem?.containerAtributosPrincipales && selectedItem.containerAtributosPrincipales.length > 0)
+    (selectedItem?.containerAtributosPrincipales && selectedItem.containerAtributosPrincipales.length > 0) ||
+    // Also check if parent has atributosInformativos that would be inherited
+    (isChildItem && fatherItem?.atributosInformativos && fatherItem.atributosInformativos.length > 0)
 
   // Update visibility states when item changes
   useEffect(() => {
@@ -236,7 +295,7 @@ export function ItemDetailPanel({
     } else {
       setShowIndividualAtributosView(hasExistingAttributes)
     }
-  }, [selectedItem, hasExistingAttributes, isViewingContainer])
+  }, [selectedItem, hasExistingAttributes, isViewingContainer, fatherItem, isChildItem])
 
   // State for variant input
   // const [varianteInput, setVarianteInput] = useState<Record<number, string>>({})
@@ -245,12 +304,12 @@ export function ItemDetailPanel({
     const hasAttributes =
       (selectedItem?.atributosPrincipales && selectedItem.atributosPrincipales.length > 0) ||
       (selectedItem?.atributosInformativos && selectedItem.atributosInformativos.length > 0) ||
-      (selectedItem?.containerAtributosPrincipales && selectedItem.containerAtributosPrincipales.length > 0)
+      (selectedItem?.containerAtributosPrincipales && selectedItem.containerAtributosPrincipales.length > 0) ||
+      // Also check if parent has atributosInformativos that would be inherited
+      (isChildItem && fatherItem?.atributosInformativos && fatherItem.atributosInformativos.length > 0)
 
-    console.log("[v0] useEffect running - hasAttributes:", hasAttributes)
-    console.log("[v0] useEffect - setting showIndividualAtributosView to:", hasAttributes)
     setShowIndividualAtributosView(hasAttributes)
-  }, [selectedItem])
+  }, [selectedItem, fatherItem, isChildItem])
 
   const handleFieldChange = (field: string, value: any, setter: (val: any) => void) => {
     setter(value)
@@ -300,7 +359,7 @@ export function ItemDetailPanel({
     setCodigoUniversalValue(selectedItem.codigoUniversal || "")
     setDescripcionValue(selectedItem.descripcion || "")
     setAtributosPrincipales(selectedItem?.atributosPrincipales || [])
-    setAtributosInformativos(selectedItem?.atributosInformativos || [])
+    setAtributosInformativos(getMergedAtributosInformativos(fatherItem?.atributosInformativos, selectedItem?.atributosInformativos))
     // Ensure unitsPorPack and volume state are also synced if they are part of selectedItem
     setUnidadesPorPack(() => {
       const inherited = shouldStrictlyInherit(fatherItem?.unidadesPorPack)
@@ -322,16 +381,16 @@ export function ItemDetailPanel({
     setVolumenUnidad(
       shouldStrictlyInherit(fatherItem?.volumenUnidad) ? fatherItem!.volumenUnidad : selectedItem?.volumenUnidad || "",
     )
-  }, [selectedItem])
+  }, [selectedItem, fatherItem])
 
   // Sync atributos from selectedItem when it changes (for undo)
   useEffect(() => {
     if (selectedItem) {
       setAtributosPrincipales(selectedItem.atributosPrincipales || [])
-      setAtributosInformativos(selectedItem.atributosInformativos || [])
+      setAtributosInformativos(getMergedAtributosInformativos(fatherItem?.atributosInformativos, selectedItem?.atributosInformativos))
       setContainerAtributosPrincipales(selectedItem.containerAtributosPrincipales || [])
     }
-  }, [selectedItem])
+  }, [selectedItem, fatherItem])
 
   // Removed internal history management as it's now handled by the parent via onFieldChange
   // useEffect(() => {
@@ -501,6 +560,15 @@ export function ItemDetailPanel({
       
       // If there are new combinations, add them to the variants
       if (newCombinations.length > 0) {
+        // Prepare inherited atributosInformativos for new variants
+        // For Case 1 (parent has value and not marked inheritValue): inherit complete key+value (locked)
+        // For Case 2 (parent marked inheritValue): inherit key with empty value so child can fill it
+        const inheritedAtributosInformativos = (selectedItem.atributosInformativos || []).map(attr => ({
+          key: attr.key,
+          value: attr.inheritValue ? "" : (attr.value || ""), // Empty for Case 2 (inheritValue), parent's value for Case 1
+          inheritValue: attr.inheritValue, // Preserve the flag for UI display
+        }))
+
         const newVariantObjects = newCombinations.map((combo) => ({
           sku: combo.sku,
           name: selectedItem.name,
@@ -512,6 +580,7 @@ export function ItemDetailPanel({
             combo.variant1 ? { key: containerAtributosPrincipales[0]?.key || "", value: combo.variant1 } : null,
             combo.variant2 ? { key: containerAtributosPrincipales[1]?.key || "", value: combo.variant2 } : null,
           ].filter(Boolean),
+          atributosInformativos: inheritedAtributosInformativos,
           stock: {
             total: "0",
             reservado: "0",
@@ -1545,8 +1614,10 @@ export function ItemDetailPanel({
                             {atributosInformativos.map((attr, index) => {
                               const fatherAttr = fatherItem?.atributosInformativos?.find((a) => a.key === attr.key)
                               const isAttributeLocked = isChildItem && fatherAttr !== undefined
-                              const isValueLocked = isChildItem && fatherAttr && fatherAttr.value
-
+                              // Value is locked if parent has a value AND inheritValue is NOT true (Case 1)
+                              // Value is editable if parent marked inheritValue (Case 2)
+                              const isValueLocked = isChildItem && fatherAttr && fatherAttr.value && !fatherAttr.inheritValue
+                              
                               return (
                                 <div key={index} className="flex items-start gap-3">
                                   <div className="flex-1">
@@ -1646,11 +1717,15 @@ export function ItemDetailPanel({
                                               handleAtributosInformativosChange(updated)
                                             }
                                           }}
-                                          disabled={isValueLocked}
-                                          className={`w-full px-3 py-2 pr-9 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                            isValueLocked ? "opacity-50 cursor-not-allowed" : ""
+                                          disabled={isValueLocked || (!isChildItem && attr.inheritValue)}
+                                          className={`w-full px-3 py-2 pr-9 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                                            isValueLocked 
+                                              ? "bg-white border border-gray-300 opacity-50 cursor-not-allowed" 
+                                              : (!isChildItem && attr.inheritValue)
+                                                ? "bg-slate-50 border-2 border-dashed border-slate-300 text-slate-400 cursor-not-allowed italic"
+                                                : "bg-white border border-gray-300"
                                           }`}
-                                          placeholder="Ej: Algodón"
+                                          placeholder={(!isChildItem && attr.inheritValue) ? "Variantes completarán..." : "Ej: Algodón"}
                                         />
                                         {!isValueLocked &&
                                           attr.key &&
@@ -1703,20 +1778,45 @@ export function ItemDetailPanel({
                                     </Popover>
                                   </div>
 
-                                  {!isAttributeLocked && (
-                                    <button
-                                      onClick={() => {
-                                        const updated = atributosInformativos.filter((_, i) => i !== index)
-                                        handleAtributosInformativosChange(updated)
-                                        if (fatherItem?.atributosInformativos?.length === 0 && updated.length === 0) {
-                                          setShowAtributosView(false)
-                                        }
-                                      }}
-                                      className="mt-8 text-gray-400 hover:text-red-400 transition-colors cursor-pointer"
-                                    >
-                                      <X className="w-4 h-4" />
-                                    </button>
-                                  )}
+                                  {/* Action buttons - inherit toggle (for parents only) and delete */}
+                                  <div className="flex items-center gap-1 mt-8">
+                                    {/* Inherit toggle button - only shown for parent/container items */}
+                                    {!isChildItem && isViewingContainer && (
+                                      <button
+                                        onClick={() => {
+                                          const updated = [...atributosInformativos]
+                                          updated[index].inheritValue = !updated[index].inheritValue
+                                          // Clear value when marking for inheritance
+                                          if (updated[index].inheritValue) {
+                                            updated[index].value = ""
+                                          }
+                                          handleAtributosInformativosChange(updated)
+                                        }}
+                                        className={`p-1.5 rounded-md transition-all cursor-pointer ${
+                                          attr.inheritValue 
+                                            ? "bg-slate-800 text-white" 
+                                            : "text-gray-400 hover:text-slate-600 hover:bg-slate-100"
+                                        }`}
+                                        title={attr.inheritValue ? "Valor heredable a variantes (click para desactivar)" : "Marcar para que variantes completen el valor"}
+                                      >
+                                        <ArrowDownToLine className="w-3.5 h-3.5" />
+                                      </button>
+                                    )}
+                                    {!isAttributeLocked && (
+                                      <button
+                                        onClick={() => {
+                                          const updated = atributosInformativos.filter((_, i) => i !== index)
+                                          handleAtributosInformativosChange(updated)
+                                          if (fatherItem?.atributosInformativos?.length === 0 && updated.length === 0) {
+                                            setShowAtributosView(false)
+                                          }
+                                        }}
+                                        className="p-1.5 text-gray-400 hover:text-red-400 transition-colors cursor-pointer"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </button>
+                                    )}
+                                  </div>
                                   {isAttributeLocked && <div className="mt-8 w-4"></div>}
                                 </div>
                               )
@@ -2162,8 +2262,10 @@ export function ItemDetailPanel({
                                 ? fatherItem?.atributosInformativos?.find((a) => a.key === attr.key)
                                 : undefined
                               const isAttributeLocked = isChildItem && fatherAttr !== undefined
-                              const isValueLocked = isChildItem && fatherAttr && fatherAttr.value
-
+                              // Value is locked if parent has a value AND inheritValue is NOT true (Case 1)
+                              // Value is editable if parent marked inheritValue (Case 2)
+                              const isValueLocked = isChildItem && fatherAttr && fatherAttr.value && !fatherAttr.inheritValue
+                              
                               return (
                                 <div key={index} className="flex items-start gap-3">
                                   <div className="flex-1">
