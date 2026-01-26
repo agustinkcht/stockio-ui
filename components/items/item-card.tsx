@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect, useRef, useMemo } from "react"
-import { ChevronDown, ChevronRight, MoreVertical, Layers, Trash2, Copy } from "lucide-react"
+import { ChevronDown, ChevronUp, MoreVertical, Layers, Trash2, Copy } from "lucide-react"
 import type { Item } from "@/lib/types"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { getCategoryImage } from "@/lib/utils/category-images"
@@ -189,10 +189,9 @@ export function ItemCard({
           {item.isAgrupador || item.hasVariants ? (
             <>
               <div
-                className={`col-span-5 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors border-slate-100 border-r-0`}
+                className={`col-span-8 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors border-slate-100 border-r-0`}
                 onClick={(e) => {
                   e.stopPropagation()
-                  console.log("[v0] ItemCard clicked - isChild:", isChild, "item:", item)
                   onItemClick(item)
                 }}
               >
@@ -206,79 +205,74 @@ export function ItemCard({
                 </div>
 
                 {/* Product Info with POS styling */}
-                <div className="flex-1 min-w-0 flex items-center gap-2 mb-1">
-                  {(item.hasVariants || item.isAgrupador) && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onToggleExpansion(index)
-                      }}
-                      className={`transition-colors cursor-pointer flex-shrink-0 ${
-                        item.hasVariants || item.isAgrupador
-                          ? "text-container-item-foreground hover:text-foreground"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`${gridSize === "sm" ? "text-sm" : "text-sm"} text-container-item-foreground font-medium truncate`}
                     >
-                      {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                    </button>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`${gridSize === "sm" ? "text-sm" : "text-sm"} text-container-item-foreground font-medium truncate`}
-                      >
-                        {item.name}
+                      {item.name}
+                    </span>
+                    {(item.hasVariants || item.isAgrupador) && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground whitespace-nowrap">
+                        {item.hasVariants ? `${variantCount} var.` : `${itemCount} items`}
                       </span>
-                      {(item.hasVariants || item.isAgrupador) && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground whitespace-nowrap">
-                          {item.hasVariants ? `${variantCount} var.` : `${itemCount} items`}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
-                      {item.marca && <span className="text-xs text-muted-foreground">·</span>}
-                      {item.categoria && <span className="text-xs text-muted-foreground">{item.categoria}</span>}
-                      {item.categoria && <span className="text-xs text-muted-foreground">·</span>}
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs text-muted-foreground">{item.sku}</span>
-                        <button
-                          onClick={handleCopySku}
-                          className="p-1 text-muted-foreground hover:text-foreground transition-colors"
-                          title="Copy SKU"
-                        >
-                          <Copy className="w-3 h-3" />
-                        </button>
-                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
+                    {item.marca && <span className="text-xs text-muted-foreground">·</span>}
+                    {item.categoria && <span className="text-xs text-muted-foreground">{item.categoria}</span>}
+                    {item.categoria && <span className="text-xs text-muted-foreground">·</span>}
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs text-muted-foreground">{item.sku}</span>
+                      <button
+                        onClick={handleCopySku}
+                        className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+                        title="Copy SKU"
+                      >
+                        <Copy className="w-3 h-3" />
+                      </button>
                     </div>
                   </div>
                 </div>
               </div>
 
+              {/* Chevron on the right for parent items */}
               <div
-                className={`col-span-3 h-full flex items-center justify-center px-4 border-slate-100 border-r-0 ${
-                  item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
-                } px-4`}
-              ></div>
+                className={`col-span-3 h-full flex items-center justify-end px-4 cursor-pointer`}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onToggleExpansion(index)
+                }}
+              >
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onToggleExpansion(index)
+                  }}
+                  className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer p-1"
+                >
+                  {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+              </div>
             </>
           ) : (
             <>
               <div
                 className={`col-span-5 flex items-center gap-3 h-full border-r border-slate-100 ${
                   item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
-                } px-4 cursor-pointer transition-colors`}
+                } ${isChild ? "pl-6 pr-4" : "px-4"} cursor-pointer transition-colors`}
                 onClick={(e) => {
                   e.stopPropagation()
-                  console.log("[v0] ItemCard clicked - isChild:", isChild, "item:", item)
                   onItemClick(item)
                 }}
               >
-                {/* Product Thumbnail with category-based image */}
-                <div className="w-12 h-12 flex-shrink-0 rounded-md bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden">
+                {/* Product Thumbnail with category-based image - smaller for children */}
+                <div className={`${isChild ? "w-9 h-9" : "w-12 h-12"} flex-shrink-0 rounded-md bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden`}>
                   <img
                     src={getCategoryImage(item.categoria) || "/placeholder.svg"}
                     alt={item.categoria || "Product"}
-                    className="w-8 h-8 object-contain opacity-60"
+                    className={`${isChild ? "w-6 h-6" : "w-8 h-8"} object-contain opacity-60`}
                   />
                 </div>
 
@@ -320,7 +314,6 @@ export function ItemCard({
                 className={`col-span-3 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100`}
                 onClick={(e) => {
                   e.stopPropagation()
-                  console.log("[v0] ItemCard clicked - isChild:", isChild, "item:", item)
                   onItemClick(item)
                 }}
               >
@@ -377,33 +370,9 @@ export function ItemCard({
                     )}
                   </>
                 ) : (
-                  <>
-                    {gridSize === "sm" ? (
-                      <div className="grid grid-cols-3 gap-x-3 w-full">
-                        <div className="flex items-center">
-                          <span className="text-sm text-muted-foreground">-</span>
-                        </div>
-                        <div className="flex items-center">
-                          <span className="text-sm text-muted-foreground">-</span>
-                        </div>
-                        <div className="flex items-center">
-                          <span className="text-sm text-muted-foreground">-</span>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="flex flex-col items-center gap-0.5 flex-1">
-                          <span className="text-sm text-muted-foreground">-</span>
-                        </div>
-                        <div className="flex flex-col items-center gap-0.5 flex-1">
-                          <span className="text-sm text-muted-foreground">-</span>
-                        </div>
-                        <div className="flex flex-col items-center gap-0.5 flex-1">
-                          <span className="text-sm text-muted-foreground">-</span>
-                        </div>
-                      </>
-                    )}
-                  </>
+                  <div className="flex items-center justify-center w-full">
+                    <span className="w-4 h-px bg-slate-200 rounded-full"></span>
+                  </div>
                 )}
               </div>
 
