@@ -371,7 +371,7 @@ export function ItemCard({
                   </>
                 ) : (
                   <div className="flex items-center justify-center w-full">
-                    <span className="w-full h-1 p-2 bg-slate-200 rounded-full"></span>
+                    <span className="w-8 h-px bg-slate-200 rounded-full"></span>
                   </div>
                 )}
               </div>
