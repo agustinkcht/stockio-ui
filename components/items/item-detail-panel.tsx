@@ -6,7 +6,7 @@ import type { Item } from "@/lib/types"
 import { ChevronDown, ChevronRight, Plus, Copy, X, Minus, Check, ArrowDownToLine } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
-import { SAVED_ATRIBUTOS, TEMPLATES } from "@/lib/constants" // DEPOSITS import removed
+import { TEMPLATES } from "@/lib/constants" // DEPOSITS and SAVED_ATRIBUTOS imports removed
 import { getCategoryImage } from "@/lib/utils/category-images"
 import Image from "next/image"
 // import { Breadcrumb } from "@/components/layout/breadcrumb"
@@ -1403,146 +1403,40 @@ export function ItemDetailPanel({
                             {containerAtributosPrincipales.map((attr, index) => (
                               <div key={index} className="flex items-start gap-3">
                                 <div className="flex-1">
-<label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
-                                    <Popover
-                                    open={attr.keyOpen || false}
-                                    onOpenChange={(open) => {
+                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
+                                  <input
+                                    type="text"
+                                    value={attr.key}
+                                    onChange={(e) => {
                                       const updated = [...containerAtributosPrincipales]
-                                      updated[index].keyOpen = open
+                                      updated[index].key = e.target.value
                                       handleContainerAtributosPrincipalesChange(updated)
                                     }}
-                                  >
-                                    <div className="relative">
-                                      <input
-                                        type="text"
-                                        value={attr.key}
-                                        onChange={(e) => {
-                                          const updated = [...containerAtributosPrincipales]
-                                          updated[index].key = e.target.value
-                                          handleContainerAtributosPrincipalesChange(updated)
-                                        }}
-                                        className="w-full px-3 py-2 pr-9 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        placeholder="Ej: Color"
-                                      />
-                                      {Object.keys(SAVED_ATRIBUTOS).length > 0 && (
-                                        <PopoverTrigger asChild>
-                                          <button
-                                            type="button"
-                                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded cursor-pointer"
-                                            onClick={(e) => {
-                                              e.stopPropagation()
-                                              const updated = [...containerAtributosPrincipales]
-                                              updated[index].keyOpen = !updated[index].keyOpen
-                                              handleContainerAtributosPrincipalesChange(updated)
-                                            }}
-                                          >
-                                            <ChevronDown className="w-4 h-4 text-gray-500" />
-                                          </button>
-                                        </PopoverTrigger>
-                                      )}
-                                    </div>
-                                    <PopoverContent className="w-[200px] p-0" align="start">
-                                      <Command>
-                                        <CommandList>
-                                          <CommandEmpty>No hay opciones guardadas</CommandEmpty>
-                                          <CommandGroup>
-                                            {Object.keys(SAVED_ATRIBUTOS).map((key) => (
-                                              <CommandItem
-                                                key={key}
-                                                value={key}
-                                                onSelect={() => {
-                                                  const updated = [...containerAtributosPrincipales]
-                                                  updated[index].key = key
-                                                  updated[index].keyOpen = false
-                                                  handleContainerAtributosPrincipalesChange(updated)
-                                                }}
-                                              >
-                                                {key}
-                                              </CommandItem>
-                                            ))}
-                                          </CommandGroup>
-                                        </CommandList>
-                                      </Command>
-                                    </PopoverContent>
-                                  </Popover>
+                                    className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300"
+                                    placeholder="Ej: Color"
+                                  />
                                 </div>
 
                                 <div className="flex-1">
-<label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Variantes</label>
-                                    <div className="space-y-2">
-                                    <Popover
-                                      open={attr.variantesOpen || false}
-                                      onOpenChange={(open) => {
-                                        const updated = [...containerAtributosPrincipales]
-                                        updated[index].variantesOpen = open
-                                        handleContainerAtributosPrincipalesChange(updated)
+                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Variantes</label>
+                                  <div className="space-y-2">
+                                    <input
+                                      type="text"
+                                      value={varianteInput[index] || ""}
+                                      onChange={(e) =>
+                                        setVarianteInput({ ...varianteInput, [index]: e.target.value })
+                                      }
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter" && varianteInput[index]?.trim()) {
+                                          const updated = [...containerAtributosPrincipales]
+                                          updated[index].variantes.push(varianteInput[index].trim())
+                                          handleContainerAtributosPrincipalesChange(updated)
+                                          setVarianteInput({ ...varianteInput, [index]: "" })
+                                        }
                                       }}
-                                    >
-                                      <div className="relative">
-                                        <input
-                                          type="text"
-                                          value={varianteInput[index] || ""}
-                                          onChange={(e) =>
-                                            setVarianteInput({ ...varianteInput, [index]: e.target.value })
-                                          }
-                                          onKeyDown={(e) => {
-                                            if (e.key === "Enter" && varianteInput[index]?.trim()) {
-                                              const updated = [...containerAtributosPrincipales]
-                                              updated[index].variantes.push(varianteInput[index].trim())
-                                              handleContainerAtributosPrincipalesChange(updated)
-                                              setVarianteInput({ ...varianteInput, [index]: "" })
-                                            }
-                                          }}
-                                          placeholder="Ej: Rojo"
-                                          className="w-full px-3 py-2 pr-9 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        />
-                                        {attr.key && SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS] && (
-                                          <PopoverTrigger asChild>
-                                            <button
-                                              type="button"
-                                              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded cursor-pointer"
-                                              onClick={(e) => {
-                                                e.stopPropagation()
-                                                const updated = [...containerAtributosPrincipales]
-                                                updated[index].variantesOpen = !updated[index].variantesOpen
-                                                handleContainerAtributosPrincipalesChange(updated)
-                                              }}
-                                            >
-                                              <ChevronDown className="w-4 h-4 text-gray-500" />
-                                            </button>
-                                          </PopoverTrigger>
-                                        )}
-                                      </div>
-                                      {attr.key && SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS] && (
-                                        <PopoverContent className="w-[200px] p-0" align="start">
-                                          <Command>
-                                            <CommandList>
-                                              <CommandEmpty>No hay opciones guardadas</CommandEmpty>
-                                              <CommandGroup>
-                                                {SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS].map(
-                                                  (val) => (
-                                                    <CommandItem
-                                                      key={val}
-                                                      value={val}
-                                                      onSelect={() => {
-                                                        const updated = [...containerAtributosPrincipales]
-                                                        if (!updated[index].variantes.includes(val)) {
-                                                          updated[index].variantes.push(val)
-                                                        }
-                                                        updated[index].variantesOpen = false
-                                                        handleContainerAtributosPrincipalesChange(updated)
-                                                      }}
-                                                    >
-                                                      {val}
-                                                    </CommandItem>
-                                                  ),
-                                                )}
-                                              </CommandGroup>
-                                            </CommandList>
-                                          </Command>
-                                        </PopoverContent>
-                                      )}
-                                    </Popover>
+                                      placeholder="Ej: Rojo"
+                                      className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300"
+                                    />
 
                                     <div className="flex flex-wrap gap-2">
                                       {attr.variantes.map((variante, vIndex) => (
@@ -1622,160 +1516,46 @@ export function ItemDetailPanel({
                                 <div key={index} className="flex items-start gap-3">
                                   <div className="flex-1">
                                     <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
-                                    <Popover
-                                      open={!isAttributeLocked && (attr.keyOpen || false)}
-                                      onOpenChange={(open) => {
+                                    <input
+                                      type="text"
+                                      value={attr.key}
+                                      onChange={(e) => {
                                         if (!isAttributeLocked) {
                                           const updated = [...atributosInformativos]
-                                          updated[index].keyOpen = open
+                                          updated[index].key = e.target.value
                                           handleAtributosInformativosChange(updated)
                                         }
                                       }}
-                                    >
-                                      <div className="relative">
-                                        <input
-                                          type="text"
-                                          value={attr.key}
-                                          onChange={(e) => {
-                                            if (!isAttributeLocked) {
-                                              const updated = [...atributosInformativos]
-                                              updated[index].key = e.target.value
-                                              handleAtributosInformativosChange(updated)
-                                            }
-                                          }}
-                                          disabled={isAttributeLocked}
-                                          className={`w-full px-3 py-2 pr-9 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                            isAttributeLocked ? "opacity-50 cursor-not-allowed" : ""
-                                          }`}
-                                          placeholder="Ej: Material"
-                                        />
-                                        {!isAttributeLocked && Object.keys(SAVED_ATRIBUTOS).length > 0 && (
-                                          <PopoverTrigger asChild>
-                                            <button
-                                              type="button"
-                                              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded cursor-pointer"
-                                              onClick={(e) => {
-                                                e.stopPropagation()
-                                                const updated = [...atributosInformativos]
-                                                updated[index].keyOpen = !updated[index].keyOpen
-                                                handleAtributosInformativosChange(updated)
-                                              }}
-                                            >
-                                              <ChevronDown className="w-4 h-4 text-gray-500" />
-                                            </button>
-                                          </PopoverTrigger>
-                                        )}
-                                      </div>
-                                      {!isAttributeLocked && (
-                                        <PopoverContent className="w-[200px] p-0" align="start">
-                                          <Command>
-                                            <CommandList>
-                                              <CommandEmpty>No hay opciones guardadas</CommandEmpty>
-                                              <CommandGroup>
-                                                {Object.keys(SAVED_ATRIBUTOS).map((key) => (
-                                                  <CommandItem
-                                                    key={key}
-                                                    value={key}
-                                                    onSelect={() => {
-                                                      const updated = [...atributosInformativos]
-                                                      updated[index].key = key
-                                                      updated[index].keyOpen = false
-                                                      handleAtributosInformativosChange(updated)
-                                                    }}
-                                                  >
-                                                    {key}
-                                                  </CommandItem>
-                                                ))}
-                                              </CommandGroup>
-                                            </CommandList>
-                                          </Command>
-                                        </PopoverContent>
-                                      )}
-                                    </Popover>
+                                      disabled={isAttributeLocked}
+                                      className={`w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${
+                                        isAttributeLocked ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
+                                      }`}
+                                      placeholder="Ej: Material"
+                                    />
                                   </div>
 
                                   <div className="flex-1">
                                     <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Valor</label>
-                                    <Popover
-                                      open={!isValueLocked && (attr.valueOpen || false)}
-                                      onOpenChange={(open) => {
+                                    <input
+                                      type="text"
+                                      value={attr.value}
+                                      onChange={(e) => {
                                         if (!isValueLocked) {
                                           const updated = [...atributosInformativos]
-                                          updated[index].valueOpen = open
+                                          updated[index].value = e.target.value
                                           handleAtributosInformativosChange(updated)
                                         }
                                       }}
-                                    >
-                                      <div className="relative">
-                                        <input
-                                          type="text"
-                                          value={attr.value}
-                                          onChange={(e) => {
-                                            if (!isValueLocked) {
-                                              const updated = [...atributosInformativos]
-                                              updated[index].value = e.target.value
-                                              handleAtributosInformativosChange(updated)
-                                            }
-                                          }}
-                                          disabled={isValueLocked || (!isChildItem && attr.inheritValue)}
-                                          className={`w-full px-3 py-2 pr-9 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-                                            isValueLocked 
-                                              ? "bg-white border border-gray-300 opacity-50 cursor-not-allowed" 
-                                              : (!isChildItem && attr.inheritValue)
-                                                ? "bg-slate-50 border-2 border-dashed border-slate-300 text-slate-400 cursor-not-allowed italic"
-                                                : "bg-white border border-gray-300"
-                                          }`}
-                                          placeholder={(!isChildItem && attr.inheritValue) ? "Variantes completarán..." : "Ej: Algodón"}
-                                        />
-                                        {!isValueLocked &&
-                                          attr.key &&
-                                          SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS] && (
-                                            <PopoverTrigger asChild>
-                                              <button
-                                                type="button"
-                                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded cursor-pointer"
-                                                onClick={(e) => {
-                                                  e.stopPropagation()
-                                                  const updated = [...atributosInformativos]
-                                                  updated[index].valueOpen = !updated[index].valueOpen
-                                                  handleAtributosInformativosChange(updated)
-                                                }}
-                                              >
-                                                <ChevronDown className="w-4 h-4 text-gray-500" />
-                                              </button>
-                                            </PopoverTrigger>
-                                          )}
-                                      </div>
-                                      {!isValueLocked &&
-                                        attr.key &&
-                                        SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS] && (
-                                          <PopoverContent className="w-[200px] p-0" align="start">
-                                            <Command>
-                                              <CommandList>
-                                                <CommandEmpty>No hay opciones guardadas</CommandEmpty>
-                                                <CommandGroup>
-                                                  {SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS].map(
-                                                    (val) => (
-                                                      <CommandItem
-                                                        key={val}
-                                                        value={val}
-                                                        onSelect={() => {
-                                                          const updated = [...atributosInformativos]
-                                                          updated[index].value = val
-                                                          updated[index].valueOpen = false
-                                                          handleAtributosInformativosChange(updated)
-                                                        }}
-                                                      >
-                                                        {val}
-                                                      </CommandItem>
-                                                    ),
-                                                  )}
-                                                </CommandGroup>
-                                              </CommandList>
-                                            </Command>
-                                          </PopoverContent>
-                                        )}
-                                    </Popover>
+                                      disabled={isValueLocked || (!isChildItem && attr.inheritValue)}
+                                      className={`w-full px-3 py-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${
+                                        isValueLocked 
+                                          ? "bg-slate-50 border border-slate-200 text-slate-400 cursor-not-allowed" 
+                                          : (!isChildItem && attr.inheritValue)
+                                            ? "bg-slate-50 border-2 border-dashed border-slate-300 text-slate-400 cursor-not-allowed italic"
+                                            : "bg-white border border-slate-200 text-slate-800 hover:border-slate-300"
+                                      }`}
+                                      placeholder={(!isChildItem && attr.inheritValue) ? "Variantes completarán..." : "Ej: Algodón"}
+                                    />
                                   </div>
 
                                   {/* Action buttons - inherit toggle (for parents only) and delete */}
@@ -2060,159 +1840,43 @@ export function ItemDetailPanel({
                               <div key={index} className="flex items-start gap-3">
                                 <div className="flex-1">
                                   <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
-                                  <Popover
-                                    open={!isChildItem && (attr.keyOpen || false)}
-                                    onOpenChange={(open) => {
+                                  <input
+                                    type="text"
+                                    value={attr.key}
+                                    onChange={(e) => {
                                       if (!isChildItem) {
                                         const updated = [...atributosPrincipales]
-                                        updated[index].keyOpen = open
+                                        updated[index].key = e.target.value
                                         handleAtributosPrincipalesChange(updated)
                                       }
                                     }}
-                                  >
-                                    <div className="relative">
-                                      <input
-                                        type="text"
-                                        value={attr.key}
-                                        onChange={(e) => {
-                                          if (!isChildItem) {
-                                            const updated = [...atributosPrincipales]
-                                            updated[index].key = e.target.value
-                                            handleAtributosPrincipalesChange(updated)
-                                          }
-                                        }}
-                                        disabled={isChildItem}
-                                        className={`w-full px-3 py-2.5 pr-9 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${
-                                          isChildItem ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
-                                        }`}
-                                        placeholder="Ej: Color"
-                                      />
-                                      {!isChildItem && Object.keys(SAVED_ATRIBUTOS).length > 0 && (
-                                        <PopoverTrigger asChild>
-                                          <button
-                                            type="button"
-                                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded cursor-pointer"
-                                            onClick={(e) => {
-                                              e.stopPropagation()
-                                              const updated = [...atributosPrincipales]
-                                              updated[index].keyOpen = !updated[index].keyOpen
-                                              handleAtributosPrincipalesChange(updated)
-                                            }}
-                                          >
-                                            <ChevronDown className="w-4 h-4 text-gray-500" />
-                                          </button>
-                                        </PopoverTrigger>
-                                      )}
-                                    </div>
-                                    {!isChildItem && (
-                                      <PopoverContent className="w-[200px] p-0" align="start">
-                                        <Command>
-                                          <CommandList>
-                                            <CommandEmpty>No hay opciones guardadas</CommandEmpty>
-                                            <CommandGroup>
-                                              {Object.keys(SAVED_ATRIBUTOS).map((attrKey) => (
-                                                <CommandItem
-                                                  key={attrKey}
-                                                  value={attrKey}
-                                                  onSelect={() => {
-                                                    const updated = [...atributosPrincipales]
-                                                    updated[index].key = attrKey
-                                                    updated[index].keyOpen = false
-                                                    handleAtributosPrincipalesChange(updated)
-                                                  }}
-                                                >
-                                                  {attrKey}
-                                                </CommandItem>
-                                              ))}
-                                            </CommandGroup>
-                                          </CommandList>
-                                        </Command>
-                                      </PopoverContent>
-                                    )}
-                                  </Popover>
+                                    disabled={isChildItem}
+                                    className={`w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${
+                                      isChildItem ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
+                                    }`}
+                                    placeholder="Ej: Color"
+                                  />
                                 </div>
 
                                 <div className="flex-1">
                                   <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">{isChildItem ? "Variante" : "Valor"}</label>
-                                  <Popover
-                                    open={!isChildItem && (attr.valueOpen || false)}
-                                    onOpenChange={(open) => {
+                                  <input
+                                    type="text"
+                                    value={attr.value}
+                                    onChange={(e) => {
                                       if (!isChildItem) {
                                         const updated = [...atributosPrincipales]
-                                        updated[index].valueOpen = open
+                                        updated[index].value = e.target.value
                                         handleAtributosPrincipalesChange(updated)
                                         updateProductTitle()
                                       }
                                     }}
-                                  >
-                                    <div className="relative">
-                                      <input
-                                        type="text"
-                                        value={attr.value}
-                                        onChange={(e) => {
-                                          if (!isChildItem) {
-                                            const updated = [...atributosPrincipales]
-                                            updated[index].value = e.target.value
-                                            handleAtributosPrincipalesChange(updated)
-                                            updateProductTitle()
-                                          }
-                                        }}
-                                        disabled={isChildItem}
-                                        className={`w-full px-3 py-2 pr-9 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                          isChildItem ? "opacity-50 cursor-not-allowed" : ""
-                                        }`}
-                                        placeholder="Ej: Negro"
-                                      />
-                                      {!isChildItem &&
-                                        attr.key &&
-                                        SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS] && (
-                                          <PopoverTrigger asChild>
-                                            <button
-                                              type="button"
-                                              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded cursor-pointer"
-                                              onClick={(e) => {
-                                                e.stopPropagation()
-                                                const updated = [...atributosPrincipales]
-                                                updated[index].valueOpen = !updated[index].valueOpen
-                                                handleAtributosPrincipalesChange(updated)
-                                              }}
-                                            >
-                                              <ChevronDown className="w-4 h-4 text-gray-500" />
-                                            </button>
-                                          </PopoverTrigger>
-                                        )}
-                                    </div>
-                                    {!isChildItem &&
-                                      attr.key &&
-                                      SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS] && (
-                                        <PopoverContent className="w-[200px] p-0" align="start">
-                                          <Command>
-                                            <CommandList>
-                                              <CommandEmpty>No hay opciones guardadas</CommandEmpty>
-                                              <CommandGroup>
-                                                {SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS].map(
-                                                  (val) => (
-                                                    <CommandItem
-                                                      key={val}
-                                                      value={val}
-                                                      onSelect={() => {
-                                                        const updated = [...atributosPrincipales]
-                                                        updated[index].value = val
-                                                        updated[index].valueOpen = false
-                                                        handleAtributosPrincipalesChange(updated)
-                                                        updateProductTitle()
-                                                      }}
-                                                    >
-                                                      {val}
-                                                    </CommandItem>
-                                                  ),
-                                                )}
-                                              </CommandGroup>
-                                            </CommandList>
-                                          </Command>
-                                        </PopoverContent>
-                                      )}
-                                  </Popover>
+                                    disabled={isChildItem}
+                                    className={`w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${
+                                      isChildItem ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
+                                    }`}
+                                    placeholder="Ej: Negro"
+                                  />
                                 </div>
 
                                 {!isChildItem && (
@@ -2270,156 +1934,42 @@ export function ItemDetailPanel({
                                 <div key={index} className="flex items-start gap-3">
                                   <div className="flex-1">
                                     <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
-                                    <Popover
-                                      open={!isAttributeLocked && (attr.keyOpen || false)}
-                                      onOpenChange={(open) => {
+                                    <input
+                                      type="text"
+                                      value={attr.key}
+                                      onChange={(e) => {
                                         if (!isAttributeLocked) {
                                           const updated = [...atributosInformativos]
-                                          updated[index].keyOpen = open
+                                          updated[index].key = e.target.value
                                           handleAtributosInformativosChange(updated)
                                         }
                                       }}
-                                    >
-                                      <div className="relative">
-                                        <input
-                                          type="text"
-                                          value={attr.key}
-                                          onChange={(e) => {
-                                            if (!isAttributeLocked) {
-                                              const updated = [...atributosInformativos]
-                                              updated[index].key = e.target.value
-                                              handleAtributosInformativosChange(updated)
-                                            }
-                                          }}
-                                          disabled={isAttributeLocked}
-                                          className={`w-full px-3 py-2 pr-9 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                                            isAttributeLocked ? "opacity-50 cursor-not-allowed" : ""
-                                          }`}
-                                          placeholder="Ej: Material"
-                                        />
-                                        {!isAttributeLocked && Object.keys(SAVED_ATRIBUTOS).length > 0 && (
-                                          <PopoverTrigger asChild>
-                                            <button
-                                              type="button"
-                                              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded cursor-pointer"
-                                              onClick={(e) => {
-                                                e.stopPropagation()
-                                                const updated = [...atributosInformativos]
-                                                updated[index].keyOpen = !updated[index].keyOpen
-                                                handleAtributosInformativosChange(updated)
-                                              }}
-                                            >
-                                              <ChevronDown className="w-4 h-4 text-gray-500" />
-                                            </button>
-                                          </PopoverTrigger>
-                                        )}
-                                      </div>
-                                      {!isAttributeLocked && (
-                                        <PopoverContent className="w-[200px] p-0" align="start">
-                                          <Command>
-                                            <CommandList>
-                                              <CommandEmpty>No hay opciones guardadas</CommandEmpty>
-                                              <CommandGroup>
-                                                {Object.keys(SAVED_ATRIBUTOS).map((key) => (
-                                                  <CommandItem
-                                                    key={key}
-                                                    value={key}
-                                                    onSelect={() => {
-                                                      const updated = [...atributosInformativos]
-                                                      updated[index].key = key
-                                                      updated[index].keyOpen = false
-                                                      handleAtributosInformativosChange(updated)
-                                                    }}
-                                                  >
-                                                    {key}
-                                                  </CommandItem>
-                                                ))}
-                                              </CommandGroup>
-                                            </CommandList>
-                                          </Command>
-                                        </PopoverContent>
-                                      )}
-                                    </Popover>
+                                      disabled={isAttributeLocked}
+                                      className={`w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${
+                                        isAttributeLocked ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
+                                      }`}
+                                      placeholder="Ej: Material"
+                                    />
                                   </div>
 
                                   <div className="flex-1">
                                     <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Valor</label>
-                                    <Popover
-                                      open={!isValueLocked && (attr.valueOpen || false)}
-                                      onOpenChange={(open) => {
+                                    <input
+                                      type="text"
+                                      value={attr.value}
+                                      onChange={(e) => {
                                         if (!isValueLocked) {
                                           const updated = [...atributosInformativos]
-                                          updated[index].valueOpen = open
+                                          updated[index].value = e.target.value
                                           handleAtributosInformativosChange(updated)
                                         }
                                       }}
-                                    >
-                                      <div className="relative">
-                                        <input
-                                          type="text"
-                                          value={attr.value}
-                                          onChange={(e) => {
-                                            if (!isValueLocked) {
-                                              const updated = [...atributosInformativos]
-                                              updated[index].value = e.target.value
-                                              handleAtributosInformativosChange(updated)
-                                            }
-                                          }}
-                                          disabled={isValueLocked}
-                                          className={`w-full px-3 py-2 pr-9 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                                            isValueLocked ? "opacity-50 cursor-not-allowed" : ""
-                                          }`}
-                                          placeholder="Ej: Algodón"
-                                        />
-                                        {!isValueLocked &&
-                                          attr.key &&
-                                          SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS] && (
-                                            <PopoverTrigger asChild>
-                                              <button
-                                                type="button"
-                                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded cursor-pointer"
-                                                onClick={(e) => {
-                                                  e.stopPropagation()
-                                                  const updated = [...atributosInformativos]
-                                                  updated[index].valueOpen = !updated[index].valueOpen
-                                                  handleAtributosInformativosChange(updated)
-                                                }}
-                                              >
-                                                <ChevronDown className="w-4 h-4 text-gray-500" />
-                                              </button>
-                                            </PopoverTrigger>
-                                          )}
-                                      </div>
-                                      {!isValueLocked &&
-                                        attr.key &&
-                                        SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS] && (
-                                          <PopoverContent className="w-[200px] p-0" align="start">
-                                            <Command>
-                                              <CommandList>
-                                                <CommandEmpty>No hay opciones guardadas</CommandEmpty>
-                                                <CommandGroup>
-                                                  {SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS].map(
-                                                    (val) => (
-                                                      <CommandItem
-                                                        key={val}
-                                                        value={val}
-                                                        onSelect={() => {
-                                                          const updated = [...atributosInformativos]
-                                                          updated[index].value = val
-                                                          updated[index].valueOpen = false
-                                                          handleAtributosInformativosChange(updated)
-                                                        }}
-                                                      >
-                                                        {val}
-                                                      </CommandItem>
-                                                    ),
-                                                  )}
-                                                </CommandGroup>
-                                              </CommandList>
-                                            </Command>
-                                          </PopoverContent>
-                                        )}
-                                    </Popover>
+                                      disabled={isValueLocked}
+                                      className={`w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${
+                                        isValueLocked ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
+                                      }`}
+                                      placeholder="Ej: Algodón"
+                                    />
                                   </div>
 
                                   {!isAttributeLocked && (

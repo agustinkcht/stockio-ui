@@ -1,59 +1,6 @@
 import { Store, Box, Tag, HelpCircle, Settings, Receipt, Users, Wallet } from "lucide-react"
 import type { SidebarItem, Template } from "./types"
 
-export const SAVED_ATRIBUTOS: Record<string, string[]> = {
-  Color: ["Blanco", "Negro", "Marino", "Rojo", "Azul", "Azul Marino"],
-  Varietal: ["Malbec", "Cabernet Sauvignon", "Cabernet Franc", "Merlot", "Syrah"],
-  Año: [],
-  "Tipo de Vino": ["Tinto", "Blanco", "Rosado", "Espumante"],
-  Bodega: [],
-  Origen: [],
-  Crianza: [],
-  "Tiempo en Barrica": ["6 meses", "12 meses", "18 meses"],
-  "Potencial de Guarda": [],
-  Enólogo: [],
-  Medida: [],
-  "Numero de Cadena": [],
-  "Material de Cadena": ["metal", "plástico"],
-  Deslizador: ["Standard", "Alt", "O"],
-  Grosor: ["40", "50", "60", "80/12", "90/14"],
-  Longitud: ["500m", "400m", "10m", "5m", "150cm", "20cm", "25cm", "30cm", "38mm", "32mm"],
-  Tamaño: ["12mm", "15mm", "20cm", "25cm"],
-  Material: [
-    "Poliéster",
-    "Algodón",
-    "Metal",
-    "Plástico",
-    "Poliéster/Elastano",
-    "Acero",
-    "Acero reforzado",
-    "Plástico/Metal",
-    "Cera",
-    "Fibra de Vidrio",
-    "Acero inoxidable",
-  ],
-  Cantidad: ["Pack x100", "Pack x10", "Pack x3", "Pack x4", "10 tubos"],
-  Tipo: [
-    "Universal",
-    "Jeans",
-    "Separable",
-    "No separable",
-    "Profesional",
-    "Estándar",
-    "Cabeza Plástica",
-    "Cabeza Vidrio",
-    "Tradicional",
-    "Ergonómico",
-    "Manual",
-    "Lápiz",
-    "Triangular",
-  ],
-  Ancho: ["20mm", "30mm", "18mm", "25mm"],
-  Uso: ["Tela", "Universal"],
-  Unidades: ["cm/pulgadas"],
-  Talla: ["M", "L"],
-}
-
 export const TEMPLATES: Template[] = [
   // --- VINOS ---
   {
