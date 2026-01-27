@@ -759,7 +759,7 @@ export function ItemDetailPanel({
           <div className="col-span-6 order-1 z-20 rounded-xl border flex flex-col transition-all duration-300 border-slate-100 mt-4 bg-transparent border-none shadow-none pl-0 pr-0">
             <div className="sticky top-4 p-6 mt-0 px-8 bg-transparent border-none shadow-none pl-7 pr-11">
               <div className="mt-2">
-                <div className="w-full h-64 bg-muted/30 rounded-lg flex items-center justify-center overflow-hidden">
+                <div className="w-full h-64 bg-muted/30 rounded-lg flex items-center justify-center overflow-hidden shadow-lg">
                   <Image
                     src={getCategoryImage(selectedItem.categoria) || "/placeholder.svg"}
                     alt={selectedItem.name}
