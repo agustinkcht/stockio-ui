@@ -84,7 +84,7 @@ export function BulkPriceModal({ isOpen, onClose, onApply, itemCount, title, typ
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="px-6 py-6">
+          <div className="px-6 py-6 min-h-[180px]">
             {type === "iva" ? (
               /* IVA Selector */
               <div className="relative">

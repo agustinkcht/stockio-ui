@@ -185,23 +185,54 @@ export default function ListaDePreciosPage() {
     return { isVariant: false }
   }
 
+  // Helper to calculate precio final from costo, margen, iva
+  const calculatePrecioFinal = (costo: number, margen: number, iva: number): number => {
+    return Math.round(costo * (1 + margen / 100) * (1 + iva / 100))
+  }
+
+  // Helper to calculate margen from precio final, costo, iva
+  const calculateMargen = (precioFinal: number, costo: number, iva: number): number => {
+    if (costo === 0) return 0
+    return Math.round((precioFinal / (costo * (1 + iva / 100)) - 1) * 1000) / 10
+  }
+
   // Get item pricing data by SKU
   const getItemPricingBySku = (sku: string): { costo: number; margen: number; iva: number; precioFinal: number } | null => {
     for (const item of items) {
       if (item.sku === sku) {
+        // Check if item has precio object
+        if (item.precio) {
+          return {
+            costo: item.precio.costo || 0,
+            margen: item.precio.margen || 0,
+            iva: item.precio.iva || 21,
+            precioFinal: item.precio.precioFinal || calculatePrecioFinal(item.precio.costo || 0, item.precio.margen || 0, item.precio.iva || 21)
+          }
+        }
+        // Fallback to flat fields
         const costo = item.costo || 0
         const margen = item.margen || 0
         const iva = item.iva || 21
-        const precioFinal = item.precioVenta || Math.round(costo * (1 + margen / 100) * (1 + iva / 100))
+        const precioFinal = item.precioVenta || calculatePrecioFinal(costo, margen, iva)
         return { costo, margen, iva, precioFinal }
       }
       if (item.variants) {
         const variant = item.variants.find((v: any) => v.sku === sku)
         if (variant) {
+          // Check if variant has precio object
+          if (variant.precio) {
+            return {
+              costo: variant.precio.costo || 0,
+              margen: variant.precio.margen || 0,
+              iva: variant.precio.iva || 21,
+              precioFinal: variant.precio.precioFinal || calculatePrecioFinal(variant.precio.costo || 0, variant.precio.margen || 0, variant.precio.iva || 21)
+            }
+          }
+          // Fallback to flat fields
           const costo = variant.costo || 0
           const margen = variant.margen || 0
           const iva = variant.iva || 21
-          const precioFinal = variant.precioVenta || Math.round(costo * (1 + margen / 100) * (1 + iva / 100))
+          const precioFinal = variant.precioVenta || calculatePrecioFinal(costo, margen, iva)
           return { costo, margen, iva, precioFinal }
         }
       }
@@ -209,7 +240,7 @@ export default function ListaDePreciosPage() {
     return null
   }
 
-  // Handle bulk price edit
+  // Handle bulk price edit - uses "precio" object like individual field changes
   const handleBulkEdit = (
     type: "costo" | "precioFinal" | "margen" | "iva" | null,
     operation: string,
@@ -224,76 +255,72 @@ export default function ListaDePreciosPage() {
       const pricing = getItemPricingBySku(sku)
       if (!pricing) continue
 
-      let newValue: number
+      // Create updated pricing object (same as updatePricingField in price-grid)
+      const updatedPricing = { ...pricing }
 
       switch (type) {
         case "costo": {
+          let newCosto: number
           if (operation === "aumentar") {
-            newValue = unit === "%" 
+            newCosto = unit === "%" 
               ? pricing.costo * (1 + value / 100)
               : pricing.costo + value
           } else {
-            newValue = unit === "%" 
+            newCosto = unit === "%" 
               ? pricing.costo * (1 - value / 100)
               : pricing.costo - value
           }
-          newValue = Math.max(0, Math.round(newValue * 100) / 100)
-          
-          if (isVariant && parentSku) {
-            editVariantField(parentSku, sku, "costo", newValue)
-          } else {
-            editField(sku, "costo", newValue)
-          }
+          updatedPricing.costo = Math.max(0, Math.round(newCosto))
+          // Recalculate precioFinal when costo changes
+          updatedPricing.precioFinal = calculatePrecioFinal(updatedPricing.costo, updatedPricing.margen, updatedPricing.iva)
           break
         }
 
         case "precioFinal": {
+          let newPrecioFinal: number
           if (operation === "aumentar") {
-            newValue = unit === "%" 
+            newPrecioFinal = unit === "%" 
               ? pricing.precioFinal * (1 + value / 100)
               : pricing.precioFinal + value
           } else {
-            newValue = unit === "%" 
+            newPrecioFinal = unit === "%" 
               ? pricing.precioFinal * (1 - value / 100)
               : pricing.precioFinal - value
           }
-          newValue = Math.max(0, Math.round(newValue))
-          
-          if (isVariant && parentSku) {
-            editVariantField(parentSku, sku, "precioVenta", newValue)
-          } else {
-            editField(sku, "precioVenta", newValue)
-          }
+          updatedPricing.precioFinal = Math.max(0, Math.round(newPrecioFinal))
+          // Recalculate margen when precioFinal changes
+          updatedPricing.margen = calculateMargen(updatedPricing.precioFinal, updatedPricing.costo, updatedPricing.iva)
           break
         }
 
         case "margen": {
+          let newMargen: number
           if (operation === "reemplazar") {
-            newValue = value
+            newMargen = value
           } else if (operation === "aumentar") {
-            newValue = pricing.margen + value
+            newMargen = pricing.margen + value
           } else {
-            newValue = pricing.margen - value
+            newMargen = pricing.margen - value
           }
-          newValue = Math.max(0, Math.round(newValue * 10) / 10)
-          
-          if (isVariant && parentSku) {
-            editVariantField(parentSku, sku, "margen", newValue)
-          } else {
-            editField(sku, "margen", newValue)
-          }
+          updatedPricing.margen = Math.round(newMargen * 10) / 10
+          // Recalculate precioFinal when margen changes
+          updatedPricing.precioFinal = calculatePrecioFinal(updatedPricing.costo, updatedPricing.margen, updatedPricing.iva)
           break
         }
 
         case "iva": {
-          newValue = value
-          if (isVariant && parentSku) {
-            editVariantField(parentSku, sku, "iva", newValue)
-          } else {
-            editField(sku, "iva", newValue)
-          }
+          updatedPricing.iva = value
+          // Recalculate precioFinal when iva changes
+          updatedPricing.precioFinal = calculatePrecioFinal(updatedPricing.costo, updatedPricing.margen, updatedPricing.iva)
           break
         }
+      }
+
+      // Apply the updated pricing object using "precio" field (same as individual edits)
+      if (isVariant && parentSku) {
+        editVariantField(parentSku, sku, "precio", updatedPricing)
+      } else {
+        editField(sku, "precio", updatedPricing)
       }
     }
   }
