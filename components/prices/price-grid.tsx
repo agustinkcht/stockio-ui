@@ -85,6 +85,13 @@ export function PriceGrid({
   const availableMarcas = useMemo(() => getUniqueMarcas(items), [items])
   const availableDepositos = useMemo(() => ["Torcuato", "Trujui"], [])
 
+  const searchedItems = useMemo(() => searchItems(items, searchTerm), [items, searchTerm])
+  const filteredItems = useMemo(() => filterItems(searchedItems, activeFilters), [searchedItems, activeFilters])
+  const sortedAndFilteredItems = useMemo(
+    () => sortItems(filteredItems, sortPriorities),
+    [filteredItems, sortPriorities],
+  )
+
   // Get all visible SKUs (from sorted and filtered items)
   const getVisibleSkus = useCallback((itemList: Item[]): string[] => {
     const skus: string[] = []
@@ -139,13 +146,6 @@ export function PriceGrid({
     }
     setBulkModalType(null)
   }
-
-  const searchedItems = useMemo(() => searchItems(items, searchTerm), [items, searchTerm])
-  const filteredItems = useMemo(() => filterItems(searchedItems, activeFilters), [searchedItems, activeFilters])
-  const sortedAndFilteredItems = useMemo(
-    () => sortItems(filteredItems, sortPriorities),
-    [filteredItems, sortPriorities],
-  )
 
   const calculatePrecioFinal = (costo: number, margen: number, iva: number): number => {
     return Math.round(costo * (1 + margen / 100) * (1 + iva / 100))
