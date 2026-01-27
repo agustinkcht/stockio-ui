@@ -1087,28 +1087,28 @@ export function ItemDetailPanel({
               </div>
             )}
 
-            {/* Sticky Segment Buttons - Show when info or both is active */}
+            {/* Sticky Segment Buttons - Liquid Glass Design */}
             {(isViewingContainer || expandedSection === "info" || expandedSection === "both") && (
             <div className={`z-20 mb-6 ${isViewingContainer ? "" : "sticky top-[0px]"}`}>
-              <div className="flex items-center gap-1 h-11 p-1 bg-slate-100/80 rounded-xl">
+              <div className="flex items-center gap-1.5 h-11 p-1 bg-white/40 backdrop-blur-xl rounded-2xl border border-white/60 shadow-[0_2px_20px_-4px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.8)]">
                 {isViewingContainer ? (
                   <>
                     <button
                       onClick={() => setSelectedDetailTab("info")}
-                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
+                      className={`flex-1 h-full flex items-center justify-center transition-all duration-300 cursor-pointer rounded-xl ${
                         selectedDetailTab === "info"
-                          ? "bg-white text-slate-900 shadow-sm font-semibold"
-                          : "text-slate-500 hover:text-slate-700"
+                          ? "bg-white/80 backdrop-blur-sm text-slate-800 shadow-[0_2px_12px_-2px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.9)] font-semibold"
+                          : "text-slate-500 hover:text-slate-700 hover:bg-white/30"
                       }`}
                     >
                       <span className="text-xs font-medium uppercase tracking-widest">Info</span>
                     </button>
                     <button
                       onClick={() => setSelectedDetailTab("atributos")}
-                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
+                      className={`flex-1 h-full flex items-center justify-center transition-all duration-300 cursor-pointer rounded-xl ${
                         selectedDetailTab === "atributos"
-                          ? "bg-white text-slate-900 shadow-sm font-semibold"
-                          : "text-slate-500 hover:text-slate-700"
+                          ? "bg-white/80 backdrop-blur-sm text-slate-800 shadow-[0_2px_12px_-2px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.9)] font-semibold"
+                          : "text-slate-500 hover:text-slate-700 hover:bg-white/30"
                       }`}
                     >
                       <span className="text-xs font-medium uppercase tracking-widest">Atributos</span>
@@ -1118,20 +1118,20 @@ export function ItemDetailPanel({
                   <>
                     <button
                       onClick={() => setSelectedDetailTab("info")}
-                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
+                      className={`flex-1 h-full flex items-center justify-center transition-all duration-300 cursor-pointer rounded-xl ${
                         selectedDetailTab === "info"
-                          ? "bg-white text-slate-900 shadow-sm font-semibold"
-                          : "text-slate-500 hover:text-slate-700"
+                          ? "bg-white/80 backdrop-blur-sm text-slate-800 shadow-[0_2px_12px_-2px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.9)] font-semibold"
+                          : "text-slate-500 hover:text-slate-700 hover:bg-white/30"
                       }`}
                     >
                       <span className="text-xs font-medium uppercase tracking-widest">Info</span>
                     </button>
                     <button
                       onClick={() => setSelectedDetailTab("atributos")}
-                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
+                      className={`flex-1 h-full flex items-center justify-center transition-all duration-300 cursor-pointer rounded-xl ${
                         selectedDetailTab === "atributos"
-                          ? "bg-white text-slate-900 shadow-sm font-semibold"
-                          : "text-slate-500 hover:text-slate-700"
+                          ? "bg-white/80 backdrop-blur-sm text-slate-800 shadow-[0_2px_12px_-2px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.9)] font-semibold"
+                          : "text-slate-500 hover:text-slate-700 hover:bg-white/30"
                       }`}
                     >
                       <span className="text-xs font-medium uppercase tracking-widest">Atributos</span>
@@ -2048,14 +2048,14 @@ export function ItemDetailPanel({
                   Stock en Depósito: Torcuato
                 </h3>
 
-                <div className="space-y-2">
-                  {/* Total Section */}
-                  <div className="border border-border/40 rounded-lg bg-slate-50 overflow-hidden">
+                <div className="space-y-3">
+                  {/* Total Section - Liquid Glass */}
+                  <div className="rounded-2xl bg-white/50 backdrop-blur-xl border border-white/60 shadow-[0_2px_20px_-4px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.8)] overflow-hidden">
                     {/* Total Header - clickable to expand/collapse */}
                     <div 
                       onClick={() => setActiveStockEdit("total")}
-                      className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${
-                        activeStockEdit === "total" ? "bg-accent/30" : "hover:bg-accent/20"
+                      className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-all duration-300 ${
+                        activeStockEdit === "total" ? "bg-white/40" : "hover:bg-white/30"
                       }`}
                     >
                       <div className="flex items-center gap-2">
@@ -2165,13 +2165,13 @@ export function ItemDetailPanel({
                     )}
                   </div>
 
-{/* Reservado Section */}
-  <div className="border border-border/40 rounded-lg bg-slate-50 overflow-hidden">
+{/* Reservado Section - Liquid Glass */}
+  <div className="rounded-2xl bg-white/50 backdrop-blur-xl border border-white/60 shadow-[0_2px_20px_-4px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.8)] overflow-hidden">
   {/* Reservado Header - clickable to expand/collapse */}
   <div
   onClick={() => setActiveStockEdit("reservado")}
-  className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${
-  activeStockEdit === "reservado" ? "bg-accent/30" : "hover:bg-accent/20"
+  className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-all duration-300 ${
+  activeStockEdit === "reservado" ? "bg-white/40" : "hover:bg-white/30"
   }`}
   >
   <div className="flex items-center gap-2">
