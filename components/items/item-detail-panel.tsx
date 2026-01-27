@@ -753,10 +753,10 @@ export function ItemDetailPanel({
       {/* <Breadcrumb dynamicContent={null} /> */}
 
       <div className="px-8 pb-6 bg-slate-50 min-h-screen pl-8 pt-0">
-        <div className={`grid gap-2 ${isViewingContainer ? "grid-cols-2 gap-6" : "grid-cols-10 gap-3"}`}>
-          {/* Left Column - Image Card (only for standalone/children) - col-span-3 */}
+        <div className={`grid gap-2 ${isViewingContainer ? "grid-cols-2 gap-6" : "grid-cols-20 gap-3"}`}>
+          {/* Left Column - Image Card (only for standalone/children) - col-span-6 */}
           {!isViewingContainer && (
-          <div className="col-span-3 order-1 z-20 rounded-xl border flex flex-col transition-all duration-300 border-slate-100 mt-4 bg-transparent border-none shadow-none pl-0 pr-0">
+          <div className="col-span-6 order-1 z-20 rounded-xl border flex flex-col transition-all duration-300 border-slate-100 mt-4 bg-transparent border-none shadow-none pl-0 pr-0">
             <div className="sticky top-4 p-6 mt-0 px-8 bg-transparent border-none shadow-none pl-7 pr-11">
               <div className="mt-2">
                 <div className="w-full h-64 bg-muted/30 rounded-lg flex items-center justify-center overflow-hidden">
@@ -1048,8 +1048,8 @@ export function ItemDetailPanel({
             </div>
           )}
 
-          {/* Info/Atributos Column - 6 cols when info expanded, 4 cols when both, 1 col when stock expanded */}
-          <div className={`flex flex-col transition-all duration-300 overflow-hidden ${isViewingContainer ? "order-1 col-span-1 mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : `order-3 relative mt-[44px] pt-6 pb-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10 ${expandedSection === "info" ? "col-span-5 px-8" : expandedSection === "both" ? "col-span-3 px-6" : "col-span-1 px-3"}`}`}>
+          {/* Info/Atributos Column - 11 cols when info expanded, 7 cols when both, 2 col when stock expanded */}
+          <div className={`flex flex-col transition-all duration-300 overflow-hidden ${isViewingContainer ? "order-1 col-span-1 mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : `order-3 relative mt-[44px] pt-6 pb-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10 ${expandedSection === "info" ? "col-span-11 px-8" : expandedSection === "both" ? "col-span-7 px-6" : "col-span-2 px-3"}`}`}>
             
             {/* Thumbnail + Title Header for Parent Items */}
             {isViewingContainer && (
@@ -2013,9 +2013,9 @@ export function ItemDetailPanel({
             )}
           </div>
 
-          {/* Stock Column - 6 cols when stock expanded, 3 cols when both, 1 col when info expanded */}
+{/* Stock Column - 11 cols when stock expanded, 6 cols when both, 2 col when info expanded */}
           {!isViewingContainer && (
-            <div className={`order-4 flex flex-col mt-[44px] transition-all duration-300 ${expandedSection === "stock" ? "col-span-5 pl-4" : expandedSection === "both" ? "col-span-3 pl-3" : "col-span-1 pl-2"}`}>
+          <div className={`order-4 flex flex-col mt-[44px] transition-all duration-300 ${expandedSection === "stock" ? "col-span-11 pl-4" : expandedSection === "both" ? "col-span-6 pl-3" : "col-span-2 pl-2"}`}>
               <div className={`sticky top-4 bg-white border border-border/40 rounded-xl shadow-sm ${expandedSection === "stock" ? "p-5" : expandedSection === "both" ? "p-4" : "p-3"}`}>
                 
                 {/* Collapsed Stock State - Minimal Slider View (only when info is fully expanded) */}

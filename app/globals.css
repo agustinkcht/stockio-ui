@@ -168,6 +168,9 @@
 }
 
 @theme inline {
+  /* ===== GRID ===== */
+  --grid-cols-20: repeat(20, minmax(0, 1fr));
+  
   /* ===== FONTS ===== */
   /* Updated font variables to reference Geist properly */
   --font-sans: "Geist", "Geist Fallback";
