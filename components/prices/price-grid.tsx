@@ -1,9 +1,11 @@
 "use client"
 
 import type { Item, ItemVariant, SortFactorConfig, FilterConfig } from "@/lib/types"
-import { Plus, ArrowUpDown, ListFilterIcon, Search, X, ChevronDown, ChevronRight, Copy, Grid3x3 } from "lucide-react"
+import { Plus, ArrowUpDown, ListFilterIcon, Search, X, ChevronDown, ChevronRight, Copy, Grid3x3, Minus } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { useRef, useState, useEffect, useMemo } from "react"
+import { usePriceSelection } from "@/hooks/use-price-selection"
 import { searchItems, sortItems, filterItems, getUniqueCategorias, getUniqueMarcas } from "@/lib/utils/item-utils"
 import { OrdenModalPrecios } from "@/components/modals/orden-modal-precios"
 import { FiltrosModalPrecios } from "@/components/modals/filtros-modal-precios"
@@ -18,12 +20,8 @@ interface PricingData {
 interface PriceGridProps {
   items: Item[]
   gridSize: string
-  itemSelected: boolean[]
   expandedItems: Record<number, boolean>
-  handleItemButtonClick: (index: number) => void
   toggleVariantExpansion: (index: number) => void
-  selectAllActive: boolean
-  handleSelectAllClick: () => void
   gridSizeDropdownOpen: boolean
   setGridSizeDropdownOpen: (value: boolean) => void
   setGridSize: (size: string) => void
@@ -39,17 +37,22 @@ const IVA_OPTIONS = [
 export function PriceGrid({
   items,
   gridSize,
-  itemSelected,
   expandedItems,
-  handleItemButtonClick,
   toggleVariantExpansion,
-  selectAllActive,
-  handleSelectAllClick,
   gridSizeDropdownOpen,
   setGridSizeDropdownOpen,
   setGridSize,
   onPriceFieldChange,
 }: PriceGridProps) {
+  const {
+    selectAllActive,
+    selectAllIndeterminate,
+    handleItemSelection,
+    handleSelectAll,
+    getSelectionState,
+    isParentItem: checkIsParent,
+    selectedCount,
+  } = usePriceSelection(items)
   const orderRef = useRef<HTMLDivElement>(null)
   const filterRef = useRef<HTMLDivElement>(null)
   const accionRef = useRef<HTMLDivElement>(null)
@@ -175,15 +178,37 @@ export function PriceGrid({
 
     const heightClass = gridSize === "sm" ? "h-[44px]" : gridSize === "md" ? "h-[60px]" : "h-[76px]"
 
+    const selectionState = getSelectionState(item, isChild)
+
     return (
       <div key={item.sku || index}>
         <div
-          className={`grid grid-cols-[4fr_2fr_1fr_1fr_2fr] gap-0 ${heightClass} items-center transition-colors border-b border-border/30 ${
+          className={`grid grid-cols-[40px_4fr_2fr_1fr_1fr_2fr] gap-0 ${heightClass} items-center transition-colors border-b border-border/30 ${
             isHovered ? "bg-accent/50" : ""
           } ${isChild ? "bg-slate-50/50" : ""}`}
           onMouseEnter={() => setHoveredIndex(index)}
           onMouseLeave={() => setHoveredIndex(null)}
         >
+          {/* Checkbox column */}
+          <div className={`flex items-center justify-center h-full border-r border-border/30 ${isChild ? "pl-4" : ""}`}>
+            <div className="relative flex items-center justify-center">
+              {selectionState.indeterminate ? (
+                <button
+                  onClick={() => handleItemSelection(item, isChild)}
+                  className="flex items-center justify-center w-4 h-4 border border-primary bg-primary rounded-[4px] cursor-pointer"
+                >
+                  <Minus className="w-3 h-3 text-primary-foreground" />
+                </button>
+              ) : (
+                <Checkbox
+                  checked={selectionState.checked}
+                  onCheckedChange={() => handleItemSelection(item, isChild)}
+                  className="cursor-pointer"
+                />
+              )}
+            </div>
+          </div>
+
           <div className="flex items-center gap-2 px-4 min-w-0 border-r border-border/30 h-full">
             {isParent && (
               <>
@@ -236,6 +261,7 @@ export function PriceGrid({
               <div className="border-r border-border/30 h-full" />
               <div className="border-r border-border/30 h-full" />
               <div className="border-r border-border/30 h-full" />
+              <div className="h-full" />
             </>
           ) : (
             <>
@@ -391,7 +417,25 @@ export function PriceGrid({
 
       <div className="px-6 pb-3">
         <div className="bg-white border border-border/40 rounded-t-lg">
-          <div className="grid grid-cols-[4fr_2fr_1fr_1fr_2fr] gap-0 px-0 py-3 text-xs font-medium text-muted-foreground border-b border-border/30">
+          <div className="grid grid-cols-[40px_4fr_2fr_1fr_1fr_2fr] gap-0 px-0 py-3 text-xs font-medium text-muted-foreground border-b border-border/30">
+            <div className="flex items-center justify-center border-r border-border/30">
+              <div className="relative flex items-center justify-center">
+                {selectAllIndeterminate ? (
+                  <button
+                    onClick={handleSelectAll}
+                    className="flex items-center justify-center w-4 h-4 border border-primary bg-primary rounded-[4px] cursor-pointer"
+                  >
+                    <Minus className="w-3 h-3 text-primary-foreground" />
+                  </button>
+                ) : (
+                  <Checkbox
+                    checked={selectAllActive}
+                    onCheckedChange={handleSelectAll}
+                    className="cursor-pointer"
+                  />
+                )}
+              </div>
+            </div>
             <div className="flex items-center px-4 border-r border-border/30">Item</div>
             <div className="flex items-center justify-center border-r border-border/30">Costo</div>
             <div className="flex items-center justify-center border-r border-border/30">Margen</div>

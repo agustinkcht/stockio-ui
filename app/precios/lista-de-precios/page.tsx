@@ -1,6 +1,6 @@
 "use client"
 import { useState } from "react"
-import { Package, Search, X, Check, AlertCircle, CheckCircle2 } from "lucide-react"
+import { CheckCircle2 } from "lucide-react"
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -15,7 +15,6 @@ import { TemplateModal } from "@/components/modals/template-modal"
 import { UserPanel } from "@/components/layout/user-panel"
 import { UnsavedChangesModal } from "@/components/modals/unsaved-changes-modal"
 import { useItems } from "@/hooks/use-items"
-import { useItemSelection } from "@/hooks/use-item-selection"
 import { useModals } from "@/hooks/use-modals"
 import { useNavigationGuard } from "@/hooks/use-navigation-guard"
 import { useSidebar } from "@/hooks/use-sidebar"
@@ -50,9 +49,6 @@ export default function ListaDePreciosPage() {
     canUndoEdit,
     canRedoEdit,
   } = useItems()
-
-  const { itemSelected, selectAllActive, hasSelectedItems, handleItemButtonClick, handleSelectAllClick } =
-    useItemSelection(items.length)
 
   const {
     showNuevoItemModal,
@@ -284,12 +280,8 @@ export default function ListaDePreciosPage() {
             <PriceGrid
               items={items}
               gridSize={gridSize}
-              itemSelected={itemSelected}
               expandedItems={expandedItems}
-              handleItemButtonClick={handleItemButtonClick}
               toggleVariantExpansion={toggleVariantExpansion}
-              selectAllActive={selectAllActive}
-              handleSelectAllClick={handleSelectAllClick}
               gridSizeDropdownOpen={gridSizeDropdownOpen}
               setGridSizeDropdownOpen={setGridSizeDropdownOpen}
               setGridSize={setGridSize}
