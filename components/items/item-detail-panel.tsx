@@ -3,10 +3,10 @@
 import { useState, useEffect, useRef } from "react"
 import type React from "react"
 import type { Item } from "@/lib/types"
-import { ChevronDown, ChevronRight, Plus, Copy, X, Minus, Check } from "lucide-react"
+import { ChevronDown, ChevronRight, Plus, Copy, X, Minus, Check, ArrowDownToLine } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
-import { SAVED_ATRIBUTOS, TEMPLATES } from "@/lib/constants" // DEPOSITS import removed
+import { TEMPLATES } from "@/lib/constants" // DEPOSITS and SAVED_ATRIBUTOS imports removed
 import { getCategoryImage } from "@/lib/utils/category-images"
 import Image from "next/image"
 // import { Breadcrumb } from "@/components/layout/breadcrumb"
@@ -69,6 +69,63 @@ export function ItemDetailPanel({
 
   const shouldInheritField = (fieldValue: any) => {
     return isChildItem && fatherItem && fieldValue !== undefined && fieldValue !== null && fieldValue !== ""
+  }
+
+  // Merge parent's atributosInformativos with child's following inheritance rules:
+  // Case 1 (Locked): Parent has key+value -> inherit complete pair as read-only
+  // Case 2 (Key-only): Parent has key with empty value -> child can fill its own value
+  // Case 3 (Exclusive): Child can have additional attributes not in parent
+  const getMergedAtributosInformativos = (
+    parentAttrs: Array<{ key: string; value: string; inheritValue?: boolean }> | undefined,
+    childAttrs: Array<{ key: string; value: string; inheritValue?: boolean }> | undefined,
+  ): Array<{ key: string; value: string; keyOpen?: boolean; valueOpen?: boolean; inheritValue?: boolean }> => {
+    if (!isChildItem || !fatherItem) {
+      // Not a child item, just return child's attributes (preserving inheritValue flag)
+      return (childAttrs || []).map(attr => ({ ...attr, keyOpen: false, valueOpen: false }))
+    }
+
+    const result: Array<{ key: string; value: string; keyOpen?: boolean; valueOpen?: boolean }> = []
+    const childMap = new Map<string, { key: string; value: string }>()
+    
+    // Build a map of child's attributes by key
+    ;(childAttrs || []).forEach(attr => {
+      childMap.set(attr.key, attr)
+    })
+    
+    // First, add all parent attributes (Case 1 and Case 2)
+    ;(parentAttrs || []).forEach(parentAttr => {
+      const childAttr = childMap.get(parentAttr.key)
+      
+      // Case 2 is now determined by inheritValue flag (or empty value for backward compatibility)
+      const isCase2 = parentAttr.inheritValue || (!parentAttr.value && parentAttr.inheritValue !== false)
+      
+      if (!isCase2 && parentAttr.value) {
+        // Case 1: Parent has value filled and not marked for inherit - use parent's complete pair (locked)
+        result.push({ key: parentAttr.key, value: parentAttr.value, keyOpen: false, valueOpen: false, inheritValue: false })
+      } else if (isCase2) {
+        // Case 2: Parent marked inheritValue - child can fill value
+        result.push({ 
+          key: parentAttr.key, 
+          value: childAttr?.value || "", 
+          keyOpen: false, 
+          valueOpen: false,
+          inheritValue: true
+        })
+      } else {
+        // Parent has value - Case 1
+        result.push({ key: parentAttr.key, value: parentAttr.value || "", keyOpen: false, valueOpen: false, inheritValue: false })
+      }
+      
+      // Remove from child map so we don't duplicate
+      childMap.delete(parentAttr.key)
+    })
+    
+    // Then, add remaining child-exclusive attributes (Case 3)
+    childMap.forEach(childAttr => {
+      result.push({ ...childAttr, keyOpen: false, valueOpen: false })
+    })
+    
+    return result
   }
 
   const isUnidadesPorPackLocked = isChildItem && fatherItem
@@ -135,8 +192,8 @@ export function ItemDetailPanel({
   >(selectedItem?.atributosPrincipales || [])
 
   const [atributosInformativos, setAtributosInformativos] = useState<
-    Array<{ key: string; value: string; keyOpen?: boolean; valueOpen?: boolean }>
-  >(selectedItem?.atributosInformativos || [])
+    Array<{ key: string; value: string; keyOpen?: boolean; valueOpen?: boolean; inheritValue?: boolean }>
+  >(() => getMergedAtributosInformativos(fatherItem?.atributosInformativos, selectedItem?.atributosInformativos))
 
   const [stockModification, setStockModification] = useState({
     total: { operation: "agregar", value: "" },
@@ -220,11 +277,16 @@ export function ItemDetailPanel({
   const [showTotalDropdown, setShowTotalDropdown] = useState(false)
   const [showReservadoDropdown, setShowReservadoDropdown] = useState(false)
 
-  // Compute whether item has existing attributes
+  // Section toggle: 'info', 'both', or 'stock' - default to both expanded
+  const [expandedSection, setExpandedSection] = useState<"info" | "both" | "stock">("both")
+
+  // Compute whether item has existing attributes (including inherited from parent)
   const hasExistingAttributes =
     (selectedItem?.atributosPrincipales && selectedItem.atributosPrincipales.length > 0) ||
     (selectedItem?.atributosInformativos && selectedItem.atributosInformativos.length > 0) ||
-    (selectedItem?.containerAtributosPrincipales && selectedItem.containerAtributosPrincipales.length > 0)
+    (selectedItem?.containerAtributosPrincipales && selectedItem.containerAtributosPrincipales.length > 0) ||
+    // Also check if parent has atributosInformativos that would be inherited
+    (isChildItem && fatherItem?.atributosInformativos && fatherItem.atributosInformativos.length > 0)
 
   // Update visibility states when item changes
   useEffect(() => {
@@ -233,7 +295,7 @@ export function ItemDetailPanel({
     } else {
       setShowIndividualAtributosView(hasExistingAttributes)
     }
-  }, [selectedItem, hasExistingAttributes, isViewingContainer])
+  }, [selectedItem, hasExistingAttributes, isViewingContainer, fatherItem, isChildItem])
 
   // State for variant input
   // const [varianteInput, setVarianteInput] = useState<Record<number, string>>({})
@@ -242,12 +304,12 @@ export function ItemDetailPanel({
     const hasAttributes =
       (selectedItem?.atributosPrincipales && selectedItem.atributosPrincipales.length > 0) ||
       (selectedItem?.atributosInformativos && selectedItem.atributosInformativos.length > 0) ||
-      (selectedItem?.containerAtributosPrincipales && selectedItem.containerAtributosPrincipales.length > 0)
+      (selectedItem?.containerAtributosPrincipales && selectedItem.containerAtributosPrincipales.length > 0) ||
+      // Also check if parent has atributosInformativos that would be inherited
+      (isChildItem && fatherItem?.atributosInformativos && fatherItem.atributosInformativos.length > 0)
 
-    console.log("[v0] useEffect running - hasAttributes:", hasAttributes)
-    console.log("[v0] useEffect - setting showIndividualAtributosView to:", hasAttributes)
     setShowIndividualAtributosView(hasAttributes)
-  }, [selectedItem])
+  }, [selectedItem, fatherItem, isChildItem])
 
   const handleFieldChange = (field: string, value: any, setter: (val: any) => void) => {
     setter(value)
@@ -297,7 +359,7 @@ export function ItemDetailPanel({
     setCodigoUniversalValue(selectedItem.codigoUniversal || "")
     setDescripcionValue(selectedItem.descripcion || "")
     setAtributosPrincipales(selectedItem?.atributosPrincipales || [])
-    setAtributosInformativos(selectedItem?.atributosInformativos || [])
+    setAtributosInformativos(getMergedAtributosInformativos(fatherItem?.atributosInformativos, selectedItem?.atributosInformativos))
     // Ensure unitsPorPack and volume state are also synced if they are part of selectedItem
     setUnidadesPorPack(() => {
       const inherited = shouldStrictlyInherit(fatherItem?.unidadesPorPack)
@@ -319,16 +381,16 @@ export function ItemDetailPanel({
     setVolumenUnidad(
       shouldStrictlyInherit(fatherItem?.volumenUnidad) ? fatherItem!.volumenUnidad : selectedItem?.volumenUnidad || "",
     )
-  }, [selectedItem])
+  }, [selectedItem, fatherItem])
 
   // Sync atributos from selectedItem when it changes (for undo)
   useEffect(() => {
     if (selectedItem) {
       setAtributosPrincipales(selectedItem.atributosPrincipales || [])
-      setAtributosInformativos(selectedItem.atributosInformativos || [])
+      setAtributosInformativos(getMergedAtributosInformativos(fatherItem?.atributosInformativos, selectedItem?.atributosInformativos))
       setContainerAtributosPrincipales(selectedItem.containerAtributosPrincipales || [])
     }
-  }, [selectedItem])
+  }, [selectedItem, fatherItem])
 
   // Removed internal history management as it's now handled by the parent via onFieldChange
   // useEffect(() => {
@@ -498,6 +560,15 @@ export function ItemDetailPanel({
       
       // If there are new combinations, add them to the variants
       if (newCombinations.length > 0) {
+        // Prepare inherited atributosInformativos for new variants
+        // For Case 1 (parent has value and not marked inheritValue): inherit complete key+value (locked)
+        // For Case 2 (parent marked inheritValue): inherit key with empty value so child can fill it
+        const inheritedAtributosInformativos = (selectedItem.atributosInformativos || []).map(attr => ({
+          key: attr.key,
+          value: attr.inheritValue ? "" : (attr.value || ""), // Empty for Case 2 (inheritValue), parent's value for Case 1
+          inheritValue: attr.inheritValue, // Preserve the flag for UI display
+        }))
+
         const newVariantObjects = newCombinations.map((combo) => ({
           sku: combo.sku,
           name: selectedItem.name,
@@ -509,6 +580,7 @@ export function ItemDetailPanel({
             combo.variant1 ? { key: containerAtributosPrincipales[0]?.key || "", value: combo.variant1 } : null,
             combo.variant2 ? { key: containerAtributosPrincipales[1]?.key || "", value: combo.variant2 } : null,
           ].filter(Boolean),
+          atributosInformativos: inheritedAtributosInformativos,
           stock: {
             total: "0",
             reservado: "0",
@@ -681,13 +753,13 @@ export function ItemDetailPanel({
       {/* <Breadcrumb dynamicContent={null} /> */}
 
       <div className="px-8 pb-6 bg-slate-50 min-h-screen pl-8 pt-0">
-        <div className={`grid gap-2 ${isViewingContainer ? "grid-cols-2 gap-6" : "grid-cols-10"}`}>
-          {/* Left Column - Image Card (only for standalone/children) */}
+        <div className={`grid gap-2 ${isViewingContainer ? "grid-cols-2 gap-6" : "grid-cols-20 gap-3"}`}>
+          {/* Left Column - Image Card (only for standalone/children) - col-span-6 */}
           {!isViewingContainer && (
-          <div className="col-span-3 order-1 z-20 rounded-xl border flex flex-col transition-all duration-300 border-slate-100 mt-4 bg-transparent border-none shadow-none pr-1.5 pl-0">
+          <div className="col-span-6 order-1 z-20 rounded-xl border flex flex-col transition-all duration-300 border-slate-100 mt-4 bg-transparent border-none shadow-none pl-0 pr-0">
             <div className="sticky top-4 p-6 mt-0 px-8 bg-transparent border-none shadow-none pl-7 pr-11">
               <div className="mt-2">
-                <div className="w-full h-64 bg-muted/30 rounded-lg flex items-center justify-center overflow-hidden">
+                <div className="w-full h-64 bg-muted/30 rounded-lg flex items-center justify-center overflow-hidden shadow-lg">
                   <Image
                     src={getCategoryImage(selectedItem.categoria) || "/placeholder.svg"}
                     alt={selectedItem.name}
@@ -741,7 +813,7 @@ export function ItemDetailPanel({
                 {!isViewingContainer && (
                   <>
                     <div className="border-t border-slate-200 my-4"></div>
-                    <div className="flex-1 flex flex-col">
+                    <div className="flex-1 flex flex-col border-0">
                       <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
                         Descripción
                       </h3>
@@ -909,8 +981,75 @@ export function ItemDetailPanel({
             </div>
           )}
 
-          {/* Center/Right Column - Segment Buttons + Content */}
-          <div className={`flex flex-col ${isViewingContainer ? "order-1 col-span-1 mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : "order-2 col-span-4 relative mt-[44px] pt-6 pb-8 px-8 -mx-2 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10"}`}>
+          {/* Vertical Toggle - Section Switcher (only for standalone/children items) - always left of info */}
+          {!isViewingContainer && (
+            <div className="order-2 col-span-1 flex flex-col justify-start mt-[44px] pt-6 items-start">
+              <div className="sticky top-4 flex flex-col items-center">
+                {/* Toggle Track */}
+                <div className="relative flex flex-col items-center">
+                  {/* Vertical line */}
+                  <div className="absolute top-0 bottom-0 w-px bg-gradient-to-b from-slate-200 via-slate-300 to-slate-200" />
+                  
+                  {/* Three-way Toggle */}
+                  <div className="relative z-10 flex flex-col items-center gap-1 py-2 px-1">
+                    {/* Info indicator */}
+                    <button
+                      onClick={() => setExpandedSection("info")}
+                      className={`w-2 h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                        expandedSection === "info" 
+                          ? "bg-slate-800 scale-125" 
+                          : "bg-slate-300 hover:bg-slate-400"
+                      }`}
+                      title="Expandir Info"
+                    />
+                    
+                    {/* Both indicator */}
+                    <button
+                      onClick={() => setExpandedSection("both")}
+                      className={`w-2.5 h-2.5 rounded-full transition-all duration-300 cursor-pointer my-1 ${
+                        expandedSection === "both" 
+                          ? "bg-slate-800 scale-125" 
+                          : "bg-slate-300 hover:bg-slate-400"
+                      }`}
+                      title="Mostrar ambos"
+                    />
+                    
+                    {/* Stock indicator */}
+                    <button
+                      onClick={() => setExpandedSection("stock")}
+                      className={`w-2 h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                        expandedSection === "stock" 
+                          ? "bg-slate-800 scale-125" 
+                          : "bg-slate-300 hover:bg-slate-400"
+                      }`}
+                      title="Expandir Stock"
+                    />
+                  </div>
+                  
+                  {/* Labels */}
+                  <div className="mt-4 flex flex-col items-center gap-6">
+                    <span className={`text-[8px] font-medium uppercase tracking-[0.12em] transition-all duration-300 ${
+                      expandedSection === "info" 
+                        ? "text-slate-700" 
+                        : "text-slate-400"
+                    }`} style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
+                      Info
+                    </span>
+                    <span className={`text-[8px] font-medium uppercase tracking-[0.12em] transition-all duration-300 ${
+                      expandedSection === "stock" 
+                        ? "text-slate-700" 
+                        : "text-slate-400"
+                    }`} style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
+                      Stock
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Info/Atributos Column - 11 cols when info expanded, 7 cols when both, 2 col when stock expanded */}
+          <div className={`flex flex-col transition-all duration-300 overflow-hidden ${isViewingContainer ? "order-1 col-span-1 mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : `order-3 relative mt-[44px] pt-6 pb-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10 ${expandedSection === "info" ? "col-span-11 px-8" : expandedSection === "both" ? "col-span-7 px-6" : "col-span-2 px-3"}`}`}>
             
             {/* Thumbnail + Title Header for Parent Items */}
             {isViewingContainer && (
@@ -931,7 +1070,25 @@ export function ItemDetailPanel({
               </div>
             )}
 
-            {/* Sticky Segment Buttons */}
+            {/* Collapsed Info State - Minimal Slider View (only when stock is fully expanded) */}
+            {!isViewingContainer && expandedSection === "stock" && (
+              <div 
+                onClick={() => setExpandedSection("both")}
+                className="flex flex-col items-center justify-start h-full py-4 cursor-pointer group"
+              >
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center group-hover:bg-slate-200 transition-colors">
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600" />
+                  </div>
+                  <span className="text-[9px] font-medium text-slate-400 uppercase tracking-[0.12em] group-hover:text-slate-600 transition-colors" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
+                    Info
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Sticky Segment Buttons - Show when info or both is active */}
+            {(isViewingContainer || expandedSection === "info" || expandedSection === "both") && (
             <div className={`z-20 mb-6 ${isViewingContainer ? "" : "sticky top-[0px]"}`}>
               <div className="flex items-center gap-1 h-11 p-1 bg-slate-100/80 rounded-xl">
                 {isViewingContainer ? (
@@ -983,8 +1140,10 @@ export function ItemDetailPanel({
                 )}
               </div>
             </div>
+            )}
 
-            {/* Tab Content */}
+            {/* Tab Content - Show when info or both is active */}
+            {(isViewingContainer || expandedSection === "info" || expandedSection === "both") && (
             <div className="flex-1 w-full overflow-hidden">
               {isViewingContainer ? (
                 // Container item tab content
@@ -1244,146 +1403,40 @@ export function ItemDetailPanel({
                             {containerAtributosPrincipales.map((attr, index) => (
                               <div key={index} className="flex items-start gap-3">
                                 <div className="flex-1">
-                                  <label className="text-sm font-medium text-gray-700 mb-2 block">Atributo</label>
-                                  <Popover
-                                    open={attr.keyOpen || false}
-                                    onOpenChange={(open) => {
+                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
+                                  <input
+                                    type="text"
+                                    value={attr.key}
+                                    onChange={(e) => {
                                       const updated = [...containerAtributosPrincipales]
-                                      updated[index].keyOpen = open
+                                      updated[index].key = e.target.value
                                       handleContainerAtributosPrincipalesChange(updated)
                                     }}
-                                  >
-                                    <div className="relative">
-                                      <input
-                                        type="text"
-                                        value={attr.key}
-                                        onChange={(e) => {
-                                          const updated = [...containerAtributosPrincipales]
-                                          updated[index].key = e.target.value
-                                          handleContainerAtributosPrincipalesChange(updated)
-                                        }}
-                                        className="w-full px-3 py-2 pr-9 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        placeholder="Ej: Color"
-                                      />
-                                      {Object.keys(SAVED_ATRIBUTOS).length > 0 && (
-                                        <PopoverTrigger asChild>
-                                          <button
-                                            type="button"
-                                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded cursor-pointer"
-                                            onClick={(e) => {
-                                              e.stopPropagation()
-                                              const updated = [...containerAtributosPrincipales]
-                                              updated[index].keyOpen = !updated[index].keyOpen
-                                              handleContainerAtributosPrincipalesChange(updated)
-                                            }}
-                                          >
-                                            <ChevronDown className="w-4 h-4 text-gray-500" />
-                                          </button>
-                                        </PopoverTrigger>
-                                      )}
-                                    </div>
-                                    <PopoverContent className="w-[200px] p-0" align="start">
-                                      <Command>
-                                        <CommandList>
-                                          <CommandEmpty>No hay opciones guardadas</CommandEmpty>
-                                          <CommandGroup>
-                                            {Object.keys(SAVED_ATRIBUTOS).map((key) => (
-                                              <CommandItem
-                                                key={key}
-                                                value={key}
-                                                onSelect={() => {
-                                                  const updated = [...containerAtributosPrincipales]
-                                                  updated[index].key = key
-                                                  updated[index].keyOpen = false
-                                                  handleContainerAtributosPrincipalesChange(updated)
-                                                }}
-                                              >
-                                                {key}
-                                              </CommandItem>
-                                            ))}
-                                          </CommandGroup>
-                                        </CommandList>
-                                      </Command>
-                                    </PopoverContent>
-                                  </Popover>
+                                    className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300"
+                                    placeholder="Ej: Color"
+                                  />
                                 </div>
 
                                 <div className="flex-1">
-                                  <label className="text-sm font-medium text-gray-700 mb-2 block">Variantes</label>
+                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Variantes</label>
                                   <div className="space-y-2">
-                                    <Popover
-                                      open={attr.variantesOpen || false}
-                                      onOpenChange={(open) => {
-                                        const updated = [...containerAtributosPrincipales]
-                                        updated[index].variantesOpen = open
-                                        handleContainerAtributosPrincipalesChange(updated)
+                                    <input
+                                      type="text"
+                                      value={varianteInput[index] || ""}
+                                      onChange={(e) =>
+                                        setVarianteInput({ ...varianteInput, [index]: e.target.value })
+                                      }
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter" && varianteInput[index]?.trim()) {
+                                          const updated = [...containerAtributosPrincipales]
+                                          updated[index].variantes.push(varianteInput[index].trim())
+                                          handleContainerAtributosPrincipalesChange(updated)
+                                          setVarianteInput({ ...varianteInput, [index]: "" })
+                                        }
                                       }}
-                                    >
-                                      <div className="relative">
-                                        <input
-                                          type="text"
-                                          value={varianteInput[index] || ""}
-                                          onChange={(e) =>
-                                            setVarianteInput({ ...varianteInput, [index]: e.target.value })
-                                          }
-                                          onKeyDown={(e) => {
-                                            if (e.key === "Enter" && varianteInput[index]?.trim()) {
-                                              const updated = [...containerAtributosPrincipales]
-                                              updated[index].variantes.push(varianteInput[index].trim())
-                                              handleContainerAtributosPrincipalesChange(updated)
-                                              setVarianteInput({ ...varianteInput, [index]: "" })
-                                            }
-                                          }}
-                                          placeholder="Ej: Rojo"
-                                          className="w-full px-3 py-2 pr-9 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        />
-                                        {attr.key && SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS] && (
-                                          <PopoverTrigger asChild>
-                                            <button
-                                              type="button"
-                                              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded cursor-pointer"
-                                              onClick={(e) => {
-                                                e.stopPropagation()
-                                                const updated = [...containerAtributosPrincipales]
-                                                updated[index].variantesOpen = !updated[index].variantesOpen
-                                                handleContainerAtributosPrincipalesChange(updated)
-                                              }}
-                                            >
-                                              <ChevronDown className="w-4 h-4 text-gray-500" />
-                                            </button>
-                                          </PopoverTrigger>
-                                        )}
-                                      </div>
-                                      {attr.key && SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS] && (
-                                        <PopoverContent className="w-[200px] p-0" align="start">
-                                          <Command>
-                                            <CommandList>
-                                              <CommandEmpty>No hay opciones guardadas</CommandEmpty>
-                                              <CommandGroup>
-                                                {SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS].map(
-                                                  (val) => (
-                                                    <CommandItem
-                                                      key={val}
-                                                      value={val}
-                                                      onSelect={() => {
-                                                        const updated = [...containerAtributosPrincipales]
-                                                        if (!updated[index].variantes.includes(val)) {
-                                                          updated[index].variantes.push(val)
-                                                        }
-                                                        updated[index].variantesOpen = false
-                                                        handleContainerAtributosPrincipalesChange(updated)
-                                                      }}
-                                                    >
-                                                      {val}
-                                                    </CommandItem>
-                                                  ),
-                                                )}
-                                              </CommandGroup>
-                                            </CommandList>
-                                          </Command>
-                                        </PopoverContent>
-                                      )}
-                                    </Popover>
+                                      placeholder="Ej: Rojo"
+                                      className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300"
+                                    />
 
                                     <div className="flex flex-wrap gap-2">
                                       {attr.variantes.map((variante, vIndex) => (
@@ -1455,178 +1508,95 @@ export function ItemDetailPanel({
                             {atributosInformativos.map((attr, index) => {
                               const fatherAttr = fatherItem?.atributosInformativos?.find((a) => a.key === attr.key)
                               const isAttributeLocked = isChildItem && fatherAttr !== undefined
-                              const isValueLocked = isChildItem && fatherAttr && fatherAttr.value
-
+                              // Value is locked if parent has a value AND inheritValue is NOT true (Case 1)
+                              // Value is editable if parent marked inheritValue (Case 2)
+                              const isValueLocked = isChildItem && fatherAttr && fatherAttr.value && !fatherAttr.inheritValue
+                              
                               return (
                                 <div key={index} className="flex items-start gap-3">
                                   <div className="flex-1">
-                                    <label className="text-sm font-medium text-gray-700 mb-2 block">Atributo</label>
-                                    <Popover
-                                      open={!isAttributeLocked && (attr.keyOpen || false)}
-                                      onOpenChange={(open) => {
+                                    <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
+                                    <input
+                                      type="text"
+                                      value={attr.key}
+                                      onChange={(e) => {
                                         if (!isAttributeLocked) {
                                           const updated = [...atributosInformativos]
-                                          updated[index].keyOpen = open
+                                          updated[index].key = e.target.value
                                           handleAtributosInformativosChange(updated)
                                         }
                                       }}
-                                    >
-                                      <div className="relative">
-                                        <input
-                                          type="text"
-                                          value={attr.key}
-                                          onChange={(e) => {
-                                            if (!isAttributeLocked) {
-                                              const updated = [...atributosInformativos]
-                                              updated[index].key = e.target.value
-                                              handleAtributosInformativosChange(updated)
-                                            }
-                                          }}
-                                          disabled={isAttributeLocked}
-                                          className={`w-full px-3 py-2 pr-9 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                            isAttributeLocked ? "opacity-50 cursor-not-allowed" : ""
-                                          }`}
-                                          placeholder="Ej: Material"
-                                        />
-                                        {!isAttributeLocked && Object.keys(SAVED_ATRIBUTOS).length > 0 && (
-                                          <PopoverTrigger asChild>
-                                            <button
-                                              type="button"
-                                              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded cursor-pointer"
-                                              onClick={(e) => {
-                                                e.stopPropagation()
-                                                const updated = [...atributosInformativos]
-                                                updated[index].keyOpen = !updated[index].keyOpen
-                                                handleAtributosInformativosChange(updated)
-                                              }}
-                                            >
-                                              <ChevronDown className="w-4 h-4 text-gray-500" />
-                                            </button>
-                                          </PopoverTrigger>
-                                        )}
-                                      </div>
-                                      {!isAttributeLocked && (
-                                        <PopoverContent className="w-[200px] p-0" align="start">
-                                          <Command>
-                                            <CommandList>
-                                              <CommandEmpty>No hay opciones guardadas</CommandEmpty>
-                                              <CommandGroup>
-                                                {Object.keys(SAVED_ATRIBUTOS).map((key) => (
-                                                  <CommandItem
-                                                    key={key}
-                                                    value={key}
-                                                    onSelect={() => {
-                                                      const updated = [...atributosInformativos]
-                                                      updated[index].key = key
-                                                      updated[index].keyOpen = false
-                                                      handleAtributosInformativosChange(updated)
-                                                    }}
-                                                  >
-                                                    {key}
-                                                  </CommandItem>
-                                                ))}
-                                              </CommandGroup>
-                                            </CommandList>
-                                          </Command>
-                                        </PopoverContent>
-                                      )}
-                                    </Popover>
+                                      disabled={isAttributeLocked}
+                                      className={`w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${
+                                        isAttributeLocked ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
+                                      }`}
+                                      placeholder="Ej: Material"
+                                    />
                                   </div>
 
                                   <div className="flex-1">
-                                    <label className="text-sm font-medium text-gray-700 mb-2 block">Valor</label>
-                                    <Popover
-                                      open={!isValueLocked && (attr.valueOpen || false)}
-                                      onOpenChange={(open) => {
+                                    <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Valor</label>
+                                    <input
+                                      type="text"
+                                      value={attr.value}
+                                      onChange={(e) => {
                                         if (!isValueLocked) {
                                           const updated = [...atributosInformativos]
-                                          updated[index].valueOpen = open
+                                          updated[index].value = e.target.value
                                           handleAtributosInformativosChange(updated)
                                         }
                                       }}
-                                    >
-                                      <div className="relative">
-                                        <input
-                                          type="text"
-                                          value={attr.value}
-                                          onChange={(e) => {
-                                            if (!isValueLocked) {
-                                              const updated = [...atributosInformativos]
-                                              updated[index].value = e.target.value
-                                              handleAtributosInformativosChange(updated)
-                                            }
-                                          }}
-                                          disabled={isValueLocked}
-                                          className={`w-full px-3 py-2 pr-9 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                            isValueLocked ? "opacity-50 cursor-not-allowed" : ""
-                                          }`}
-                                          placeholder="Ej: Algodón"
-                                        />
-                                        {!isValueLocked &&
-                                          attr.key &&
-                                          SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS] && (
-                                            <PopoverTrigger asChild>
-                                              <button
-                                                type="button"
-                                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded cursor-pointer"
-                                                onClick={(e) => {
-                                                  e.stopPropagation()
-                                                  const updated = [...atributosInformativos]
-                                                  updated[index].valueOpen = !updated[index].valueOpen
-                                                  handleAtributosInformativosChange(updated)
-                                                }}
-                                              >
-                                                <ChevronDown className="w-4 h-4 text-gray-500" />
-                                              </button>
-                                            </PopoverTrigger>
-                                          )}
-                                      </div>
-                                      {!isValueLocked &&
-                                        attr.key &&
-                                        SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS] && (
-                                          <PopoverContent className="w-[200px] p-0" align="start">
-                                            <Command>
-                                              <CommandList>
-                                                <CommandEmpty>No hay opciones guardadas</CommandEmpty>
-                                                <CommandGroup>
-                                                  {SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS].map(
-                                                    (val) => (
-                                                      <CommandItem
-                                                        key={val}
-                                                        value={val}
-                                                        onSelect={() => {
-                                                          const updated = [...atributosInformativos]
-                                                          updated[index].value = val
-                                                          updated[index].valueOpen = false
-                                                          handleAtributosInformativosChange(updated)
-                                                        }}
-                                                      >
-                                                        {val}
-                                                      </CommandItem>
-                                                    ),
-                                                  )}
-                                                </CommandGroup>
-                                              </CommandList>
-                                            </Command>
-                                          </PopoverContent>
-                                        )}
-                                    </Popover>
+                                      disabled={isValueLocked || (!isChildItem && attr.inheritValue)}
+                                      className={`w-full px-3 py-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${
+                                        isValueLocked 
+                                          ? "bg-slate-50 border border-slate-200 text-slate-400 cursor-not-allowed" 
+                                          : (!isChildItem && attr.inheritValue)
+                                            ? "bg-slate-50 border-2 border-dashed border-slate-300 text-slate-400 cursor-not-allowed italic"
+                                            : "bg-white border border-slate-200 text-slate-800 hover:border-slate-300"
+                                      }`}
+                                      placeholder={(!isChildItem && attr.inheritValue) ? "Variantes completarán..." : "Ej: Algodón"}
+                                    />
                                   </div>
 
-                                  {!isAttributeLocked && (
-                                    <button
-                                      onClick={() => {
-                                        const updated = atributosInformativos.filter((_, i) => i !== index)
-                                        handleAtributosInformativosChange(updated)
-                                        if (fatherItem?.atributosInformativos?.length === 0 && updated.length === 0) {
-                                          setShowAtributosView(false)
-                                        }
-                                      }}
-                                      className="mt-8 text-gray-400 hover:text-red-400 transition-colors cursor-pointer"
-                                    >
-                                      <X className="w-4 h-4" />
-                                    </button>
-                                  )}
+                                  {/* Action buttons - inherit toggle (for parents only) and delete */}
+                                  <div className="flex items-center gap-1 mt-8">
+                                    {/* Inherit toggle button - only shown for parent/container items */}
+                                    {!isChildItem && isViewingContainer && (
+                                      <button
+                                        onClick={() => {
+                                          const updated = [...atributosInformativos]
+                                          updated[index].inheritValue = !updated[index].inheritValue
+                                          // Clear value when marking for inheritance
+                                          if (updated[index].inheritValue) {
+                                            updated[index].value = ""
+                                          }
+                                          handleAtributosInformativosChange(updated)
+                                        }}
+                                        className={`p-1.5 rounded-md transition-all cursor-pointer ${
+                                          attr.inheritValue 
+                                            ? "bg-slate-800 text-white" 
+                                            : "text-gray-400 hover:text-slate-600 hover:bg-slate-100"
+                                        }`}
+                                        title={attr.inheritValue ? "Valor heredable a variantes (click para desactivar)" : "Marcar para que variantes completen el valor"}
+                                      >
+                                        <ArrowDownToLine className="w-3.5 h-3.5" />
+                                      </button>
+                                    )}
+                                    {!isAttributeLocked && (
+                                      <button
+                                        onClick={() => {
+                                          const updated = atributosInformativos.filter((_, i) => i !== index)
+                                          handleAtributosInformativosChange(updated)
+                                          if (fatherItem?.atributosInformativos?.length === 0 && updated.length === 0) {
+                                            setShowAtributosView(false)
+                                          }
+                                        }}
+                                        className="p-1.5 text-gray-400 hover:text-red-400 transition-colors cursor-pointer"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </button>
+                                    )}
+                                  </div>
                                   {isAttributeLocked && <div className="mt-8 w-4"></div>}
                                 </div>
                               )
@@ -1870,159 +1840,43 @@ export function ItemDetailPanel({
                               <div key={index} className="flex items-start gap-3">
                                 <div className="flex-1">
                                   <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
-                                  <Popover
-                                    open={!isChildItem && (attr.keyOpen || false)}
-                                    onOpenChange={(open) => {
+                                  <input
+                                    type="text"
+                                    value={attr.key}
+                                    onChange={(e) => {
                                       if (!isChildItem) {
                                         const updated = [...atributosPrincipales]
-                                        updated[index].keyOpen = open
+                                        updated[index].key = e.target.value
                                         handleAtributosPrincipalesChange(updated)
                                       }
                                     }}
-                                  >
-                                    <div className="relative">
-                                      <input
-                                        type="text"
-                                        value={attr.key}
-                                        onChange={(e) => {
-                                          if (!isChildItem) {
-                                            const updated = [...atributosPrincipales]
-                                            updated[index].key = e.target.value
-                                            handleAtributosPrincipalesChange(updated)
-                                          }
-                                        }}
-                                        disabled={isChildItem}
-                                        className={`w-full px-3 py-2.5 pr-9 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${
-                                          isChildItem ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
-                                        }`}
-                                        placeholder="Ej: Color"
-                                      />
-                                      {!isChildItem && Object.keys(SAVED_ATRIBUTOS).length > 0 && (
-                                        <PopoverTrigger asChild>
-                                          <button
-                                            type="button"
-                                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded cursor-pointer"
-                                            onClick={(e) => {
-                                              e.stopPropagation()
-                                              const updated = [...atributosPrincipales]
-                                              updated[index].keyOpen = !updated[index].keyOpen
-                                              handleAtributosPrincipalesChange(updated)
-                                            }}
-                                          >
-                                            <ChevronDown className="w-4 h-4 text-gray-500" />
-                                          </button>
-                                        </PopoverTrigger>
-                                      )}
-                                    </div>
-                                    {!isChildItem && (
-                                      <PopoverContent className="w-[200px] p-0" align="start">
-                                        <Command>
-                                          <CommandList>
-                                            <CommandEmpty>No hay opciones guardadas</CommandEmpty>
-                                            <CommandGroup>
-                                              {Object.keys(SAVED_ATRIBUTOS).map((attrKey) => (
-                                                <CommandItem
-                                                  key={attrKey}
-                                                  value={attrKey}
-                                                  onSelect={() => {
-                                                    const updated = [...atributosPrincipales]
-                                                    updated[index].key = attrKey
-                                                    updated[index].keyOpen = false
-                                                    handleAtributosPrincipalesChange(updated)
-                                                  }}
-                                                >
-                                                  {attrKey}
-                                                </CommandItem>
-                                              ))}
-                                            </CommandGroup>
-                                          </CommandList>
-                                        </Command>
-                                      </PopoverContent>
-                                    )}
-                                  </Popover>
+                                    disabled={isChildItem}
+                                    className={`w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${
+                                      isChildItem ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
+                                    }`}
+                                    placeholder="Ej: Color"
+                                  />
                                 </div>
 
                                 <div className="flex-1">
-                                  <label className="text-sm font-medium text-gray-700 mb-2 block">Dato</label>
-                                  <Popover
-                                    open={!isChildItem && (attr.valueOpen || false)}
-                                    onOpenChange={(open) => {
+                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">{isChildItem ? "Variante" : "Valor"}</label>
+                                  <input
+                                    type="text"
+                                    value={attr.value}
+                                    onChange={(e) => {
                                       if (!isChildItem) {
                                         const updated = [...atributosPrincipales]
-                                        updated[index].valueOpen = open
+                                        updated[index].value = e.target.value
                                         handleAtributosPrincipalesChange(updated)
                                         updateProductTitle()
                                       }
                                     }}
-                                  >
-                                    <div className="relative">
-                                      <input
-                                        type="text"
-                                        value={attr.value}
-                                        onChange={(e) => {
-                                          if (!isChildItem) {
-                                            const updated = [...atributosPrincipales]
-                                            updated[index].value = e.target.value
-                                            handleAtributosPrincipalesChange(updated)
-                                            updateProductTitle()
-                                          }
-                                        }}
-                                        disabled={isChildItem}
-                                        className={`w-full px-3 py-2 pr-9 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                          isChildItem ? "opacity-50 cursor-not-allowed" : ""
-                                        }`}
-                                        placeholder="Ej: Negro"
-                                      />
-                                      {!isChildItem &&
-                                        attr.key &&
-                                        SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS] && (
-                                          <PopoverTrigger asChild>
-                                            <button
-                                              type="button"
-                                              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded cursor-pointer"
-                                              onClick={(e) => {
-                                                e.stopPropagation()
-                                                const updated = [...atributosPrincipales]
-                                                updated[index].valueOpen = !updated[index].valueOpen
-                                                handleAtributosPrincipalesChange(updated)
-                                              }}
-                                            >
-                                              <ChevronDown className="w-4 h-4 text-gray-500" />
-                                            </button>
-                                          </PopoverTrigger>
-                                        )}
-                                    </div>
-                                    {!isChildItem &&
-                                      attr.key &&
-                                      SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS] && (
-                                        <PopoverContent className="w-[200px] p-0" align="start">
-                                          <Command>
-                                            <CommandList>
-                                              <CommandEmpty>No hay opciones guardadas</CommandEmpty>
-                                              <CommandGroup>
-                                                {SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS].map(
-                                                  (val) => (
-                                                    <CommandItem
-                                                      key={val}
-                                                      value={val}
-                                                      onSelect={() => {
-                                                        const updated = [...atributosPrincipales]
-                                                        updated[index].value = val
-                                                        updated[index].valueOpen = false
-                                                        handleAtributosPrincipalesChange(updated)
-                                                        updateProductTitle()
-                                                      }}
-                                                    >
-                                                      {val}
-                                                    </CommandItem>
-                                                  ),
-                                                )}
-                                              </CommandGroup>
-                                            </CommandList>
-                                          </Command>
-                                        </PopoverContent>
-                                      )}
-                                  </Popover>
+                                    disabled={isChildItem}
+                                    className={`w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${
+                                      isChildItem ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
+                                    }`}
+                                    placeholder="Ej: Negro"
+                                  />
                                 </div>
 
                                 {!isChildItem && (
@@ -2072,162 +1926,50 @@ export function ItemDetailPanel({
                                 ? fatherItem?.atributosInformativos?.find((a) => a.key === attr.key)
                                 : undefined
                               const isAttributeLocked = isChildItem && fatherAttr !== undefined
-                              const isValueLocked = isChildItem && fatherAttr && fatherAttr.value
-
+                              // Value is locked if parent has a value AND inheritValue is NOT true (Case 1)
+                              // Value is editable if parent marked inheritValue (Case 2)
+                              const isValueLocked = isChildItem && fatherAttr && fatherAttr.value && !fatherAttr.inheritValue
+                              
                               return (
                                 <div key={index} className="flex items-start gap-3">
                                   <div className="flex-1">
-                                    <label className="text-sm font-medium text-gray-700 mb-2 block">Atributo</label>
-                                    <Popover
-                                      open={!isAttributeLocked && (attr.keyOpen || false)}
-                                      onOpenChange={(open) => {
+                                    <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
+                                    <input
+                                      type="text"
+                                      value={attr.key}
+                                      onChange={(e) => {
                                         if (!isAttributeLocked) {
                                           const updated = [...atributosInformativos]
-                                          updated[index].keyOpen = open
+                                          updated[index].key = e.target.value
                                           handleAtributosInformativosChange(updated)
                                         }
                                       }}
-                                    >
-                                      <div className="relative">
-                                        <input
-                                          type="text"
-                                          value={attr.key}
-                                          onChange={(e) => {
-                                            if (!isAttributeLocked) {
-                                              const updated = [...atributosInformativos]
-                                              updated[index].key = e.target.value
-                                              handleAtributosInformativosChange(updated)
-                                            }
-                                          }}
-                                          disabled={isAttributeLocked}
-                                          className={`w-full px-3 py-2 pr-9 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                                            isAttributeLocked ? "opacity-50 cursor-not-allowed" : ""
-                                          }`}
-                                          placeholder="Ej: Material"
-                                        />
-                                        {!isAttributeLocked && Object.keys(SAVED_ATRIBUTOS).length > 0 && (
-                                          <PopoverTrigger asChild>
-                                            <button
-                                              type="button"
-                                              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded cursor-pointer"
-                                              onClick={(e) => {
-                                                e.stopPropagation()
-                                                const updated = [...atributosInformativos]
-                                                updated[index].keyOpen = !updated[index].keyOpen
-                                                handleAtributosInformativosChange(updated)
-                                              }}
-                                            >
-                                              <ChevronDown className="w-4 h-4 text-gray-500" />
-                                            </button>
-                                          </PopoverTrigger>
-                                        )}
-                                      </div>
-                                      {!isAttributeLocked && (
-                                        <PopoverContent className="w-[200px] p-0" align="start">
-                                          <Command>
-                                            <CommandList>
-                                              <CommandEmpty>No hay opciones guardadas</CommandEmpty>
-                                              <CommandGroup>
-                                                {Object.keys(SAVED_ATRIBUTOS).map((key) => (
-                                                  <CommandItem
-                                                    key={key}
-                                                    value={key}
-                                                    onSelect={() => {
-                                                      const updated = [...atributosInformativos]
-                                                      updated[index].key = key
-                                                      updated[index].keyOpen = false
-                                                      handleAtributosInformativosChange(updated)
-                                                    }}
-                                                  >
-                                                    {key}
-                                                  </CommandItem>
-                                                ))}
-                                              </CommandGroup>
-                                            </CommandList>
-                                          </Command>
-                                        </PopoverContent>
-                                      )}
-                                    </Popover>
+                                      disabled={isAttributeLocked}
+                                      className={`w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${
+                                        isAttributeLocked ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
+                                      }`}
+                                      placeholder="Ej: Material"
+                                    />
                                   </div>
 
                                   <div className="flex-1">
-                                    <label className="text-sm font-medium text-gray-700 mb-2 block">Valor</label>
-                                    <Popover
-                                      open={!isValueLocked && (attr.valueOpen || false)}
-                                      onOpenChange={(open) => {
+                                    <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Valor</label>
+                                    <input
+                                      type="text"
+                                      value={attr.value}
+                                      onChange={(e) => {
                                         if (!isValueLocked) {
                                           const updated = [...atributosInformativos]
-                                          updated[index].valueOpen = open
+                                          updated[index].value = e.target.value
                                           handleAtributosInformativosChange(updated)
                                         }
                                       }}
-                                    >
-                                      <div className="relative">
-                                        <input
-                                          type="text"
-                                          value={attr.value}
-                                          onChange={(e) => {
-                                            if (!isValueLocked) {
-                                              const updated = [...atributosInformativos]
-                                              updated[index].value = e.target.value
-                                              handleAtributosInformativosChange(updated)
-                                            }
-                                          }}
-                                          disabled={isValueLocked}
-                                          className={`w-full px-3 py-2 pr-9 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black ${
-                                            isValueLocked ? "opacity-50 cursor-not-allowed" : ""
-                                          }`}
-                                          placeholder="Ej: Algodón"
-                                        />
-                                        {!isValueLocked &&
-                                          attr.key &&
-                                          SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS] && (
-                                            <PopoverTrigger asChild>
-                                              <button
-                                                type="button"
-                                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded cursor-pointer"
-                                                onClick={(e) => {
-                                                  e.stopPropagation()
-                                                  const updated = [...atributosInformativos]
-                                                  updated[index].valueOpen = !updated[index].valueOpen
-                                                  handleAtributosInformativosChange(updated)
-                                                }}
-                                              >
-                                                <ChevronDown className="w-4 h-4 text-gray-500" />
-                                              </button>
-                                            </PopoverTrigger>
-                                          )}
-                                      </div>
-                                      {!isValueLocked &&
-                                        attr.key &&
-                                        SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS] && (
-                                          <PopoverContent className="w-[200px] p-0" align="start">
-                                            <Command>
-                                              <CommandList>
-                                                <CommandEmpty>No hay opciones guardadas</CommandEmpty>
-                                                <CommandGroup>
-                                                  {SAVED_ATRIBUTOS[attr.key as keyof typeof SAVED_ATRIBUTOS].map(
-                                                    (val) => (
-                                                      <CommandItem
-                                                        key={val}
-                                                        value={val}
-                                                        onSelect={() => {
-                                                          const updated = [...atributosInformativos]
-                                                          updated[index].value = val
-                                                          updated[index].valueOpen = false
-                                                          handleAtributosInformativosChange(updated)
-                                                        }}
-                                                      >
-                                                        {val}
-                                                      </CommandItem>
-                                                    ),
-                                                  )}
-                                                </CommandGroup>
-                                              </CommandList>
-                                            </Command>
-                                          </PopoverContent>
-                                        )}
-                                    </Popover>
+                                      disabled={isValueLocked}
+                                      className={`w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${
+                                        isValueLocked ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
+                                      }`}
+                                      placeholder="Ej: Algodón"
+                                    />
                                   </div>
 
                                   {!isAttributeLocked && (
@@ -2268,12 +2010,40 @@ export function ItemDetailPanel({
                 </>
               )}
             </div>
+            )}
           </div>
 
-          {/* Right Column - Stock (only for standalone/children items) */}
+{/* Stock Column - 11 cols when stock expanded, 6 cols when both, 2 col when info expanded */}
           {!isViewingContainer && (
-            <div className="col-span-3 order-3 flex flex-col mt-4 pl-7">
-              <div className="sticky top-4 p-5 bg-white border border-border/40 rounded-xl shadow-sm">
+          <div className={`order-4 flex flex-col mt-[44px] transition-all duration-300 ${expandedSection === "stock" ? "col-span-11 pl-4" : expandedSection === "both" ? "col-span-6 pl-3" : "col-span-2 pl-2"}`}>
+              <div className={`sticky top-4 bg-white border border-border/40 rounded-xl shadow-sm ${expandedSection === "stock" ? "p-5" : expandedSection === "both" ? "p-4" : "p-3"}`}>
+                
+                {/* Collapsed Stock State - Minimal Slider View (only when info is fully expanded) */}
+                {expandedSection === "info" && (
+                  <div 
+                    onClick={() => setExpandedSection("both")}
+                    className="flex flex-col items-center justify-start py-2 cursor-pointer group"
+                  >
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center group-hover:bg-slate-200 transition-colors">
+                        <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 rotate-180" />
+                      </div>
+                      <span className="text-[9px] font-medium text-slate-400 uppercase tracking-[0.12em] group-hover:text-slate-600 transition-colors" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
+                        Stock
+                      </span>
+                      <div className="flex flex-col items-center gap-0.5 mt-2">
+                        <span className="text-lg font-bold text-slate-600 tabular-nums">
+                          {Number.parseInt(selectedItem?.stock?.total || "0")}
+                        </span>
+                        <span className="text-[8px] text-slate-400 uppercase tracking-wider">Total</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Expanded Stock Content - show when stock or both is active */}
+                {(expandedSection === "stock" || expandedSection === "both") && (
+                <>
                 <h3 className="text-xs font-semibold text-foreground/60 uppercase tracking-wider mb-4">
                   Stock en Depósito: Torcuato
                 </h3>
@@ -2520,9 +2290,13 @@ export function ItemDetailPanel({
                     </div>
                   </div>
                 </div>
+                </>
+                )}
               </div>
               
-              {/* Horizontal line with proveedor dropdown button */}
+              {/* Horizontal line with proveedor dropdown button - show when stock or both is active */}
+              {(expandedSection === "stock" || expandedSection === "both") && (
+              <>
               <div className="relative my-4">
                 <div className="border-t border-slate-200"></div>
                 <div className="absolute left-1/2 -translate-x-1/2 -top-3 flex flex-col items-center">
@@ -2570,6 +2344,8 @@ export function ItemDetailPanel({
                     </div>
                   </div>
                 </div>
+              )}
+              </>
               )}
             </div>
           )}
