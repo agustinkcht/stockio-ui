@@ -813,7 +813,7 @@ export function ItemDetailPanel({
                 {!isViewingContainer && (
                   <>
                     <div className="border-t border-slate-200 my-4"></div>
-                    <div className="flex-1 flex flex-col">
+                    <div className="flex-1 flex flex-col border-0">
                       <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
                         Descripción
                       </h3>
