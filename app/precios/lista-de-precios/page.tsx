@@ -169,6 +169,135 @@ export default function ListaDePreciosPage() {
     }
   }
 
+  // Helper to find if SKU is a variant and get parent SKU
+  const findItemBySku = (sku: string): { isVariant: boolean; parentSku?: string } => {
+    for (const item of items) {
+      if (item.sku === sku) {
+        return { isVariant: false }
+      }
+      if (item.variants) {
+        const variant = item.variants.find((v: any) => v.sku === sku)
+        if (variant) {
+          return { isVariant: true, parentSku: item.sku }
+        }
+      }
+    }
+    return { isVariant: false }
+  }
+
+  // Get item pricing data by SKU
+  const getItemPricingBySku = (sku: string): { costo: number; margen: number; iva: number; precioFinal: number } | null => {
+    for (const item of items) {
+      if (item.sku === sku) {
+        const costo = item.costo || 0
+        const margen = item.margen || 0
+        const iva = item.iva || 21
+        const precioFinal = item.precioVenta || Math.round(costo * (1 + margen / 100) * (1 + iva / 100))
+        return { costo, margen, iva, precioFinal }
+      }
+      if (item.variants) {
+        const variant = item.variants.find((v: any) => v.sku === sku)
+        if (variant) {
+          const costo = variant.costo || 0
+          const margen = variant.margen || 0
+          const iva = variant.iva || 21
+          const precioFinal = variant.precioVenta || Math.round(costo * (1 + margen / 100) * (1 + iva / 100))
+          return { costo, margen, iva, precioFinal }
+        }
+      }
+    }
+    return null
+  }
+
+  // Handle bulk price edit
+  const handleBulkEdit = (
+    type: "costo" | "precioFinal" | "margen" | "iva" | null,
+    operation: string,
+    value: number,
+    unit: string,
+    targetSkus: string[]
+  ) => {
+    if (!type) return
+
+    for (const sku of targetSkus) {
+      const { isVariant, parentSku } = findItemBySku(sku)
+      const pricing = getItemPricingBySku(sku)
+      if (!pricing) continue
+
+      let newValue: number
+
+      switch (type) {
+        case "costo": {
+          if (operation === "aumentar") {
+            newValue = unit === "%" 
+              ? pricing.costo * (1 + value / 100)
+              : pricing.costo + value
+          } else {
+            newValue = unit === "%" 
+              ? pricing.costo * (1 - value / 100)
+              : pricing.costo - value
+          }
+          newValue = Math.max(0, Math.round(newValue * 100) / 100)
+          
+          if (isVariant && parentSku) {
+            editVariantField(parentSku, sku, "costo", newValue)
+          } else {
+            editField(sku, "costo", newValue)
+          }
+          break
+        }
+
+        case "precioFinal": {
+          if (operation === "aumentar") {
+            newValue = unit === "%" 
+              ? pricing.precioFinal * (1 + value / 100)
+              : pricing.precioFinal + value
+          } else {
+            newValue = unit === "%" 
+              ? pricing.precioFinal * (1 - value / 100)
+              : pricing.precioFinal - value
+          }
+          newValue = Math.max(0, Math.round(newValue))
+          
+          if (isVariant && parentSku) {
+            editVariantField(parentSku, sku, "precioVenta", newValue)
+          } else {
+            editField(sku, "precioVenta", newValue)
+          }
+          break
+        }
+
+        case "margen": {
+          if (operation === "reemplazar") {
+            newValue = value
+          } else if (operation === "aumentar") {
+            newValue = pricing.margen + value
+          } else {
+            newValue = pricing.margen - value
+          }
+          newValue = Math.max(0, Math.round(newValue * 10) / 10)
+          
+          if (isVariant && parentSku) {
+            editVariantField(parentSku, sku, "margen", newValue)
+          } else {
+            editField(sku, "margen", newValue)
+          }
+          break
+        }
+
+        case "iva": {
+          newValue = value
+          if (isVariant && parentSku) {
+            editVariantField(parentSku, sku, "iva", newValue)
+          } else {
+            editField(sku, "iva", newValue)
+          }
+          break
+        }
+      }
+    }
+  }
+
   const handleDeleteWithTracking = (item: Item) => {
     deleteItem(item)
   }
@@ -286,6 +415,7 @@ export default function ListaDePreciosPage() {
               setGridSizeDropdownOpen={setGridSizeDropdownOpen}
               setGridSize={setGridSize}
               onPriceFieldChange={handlePriceFieldChange}
+              onBulkEdit={handleBulkEdit}
             />
           </main>
         </div>

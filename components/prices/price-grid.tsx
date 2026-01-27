@@ -1,7 +1,7 @@
 "use client"
 
 import type { Item, ItemVariant, SortFactorConfig, FilterConfig } from "@/lib/types"
-import { Plus, ArrowUpDown, ListFilterIcon, Search, X, ChevronDown, ChevronRight, Copy, Grid3x3, Minus } from "lucide-react"
+import { Plus, ArrowUpDown, ListFilterIcon, Search, X, ChevronDown, ChevronRight, Copy, Grid3x3, Minus, MoreVertical } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useRef, useState, useEffect, useMemo } from "react"
@@ -9,6 +9,7 @@ import { usePriceSelection } from "@/hooks/use-price-selection"
 import { searchItems, sortItems, filterItems, getUniqueCategorias, getUniqueMarcas } from "@/lib/utils/item-utils"
 import { OrdenModalPrecios } from "@/components/modals/orden-modal-precios"
 import { FiltrosModalPrecios } from "@/components/modals/filtros-modal-precios"
+import { BulkPriceModal } from "@/components/modals/bulk-price-modals"
 
 interface PricingData {
   costo: number
@@ -16,6 +17,8 @@ interface PricingData {
   iva: number
   precioFinal: number
 }
+
+type BulkModalType = "costo" | "precioFinal" | "margen" | "iva" | null
 
 interface PriceGridProps {
   items: Item[]
@@ -26,6 +29,7 @@ interface PriceGridProps {
   setGridSizeDropdownOpen: (value: boolean) => void
   setGridSize: (size: string) => void
   onPriceFieldChange?: (itemSku: string, field: string, value: any) => void
+  onBulkEdit?: (type: BulkModalType, operation: string, value: number, unit: string, targetSkus: string[]) => void
 }
 
 const IVA_OPTIONS = [
@@ -43,6 +47,7 @@ export function PriceGrid({
   setGridSizeDropdownOpen,
   setGridSize,
   onPriceFieldChange,
+  onBulkEdit,
 }: PriceGridProps) {
   const {
     selectAllActive,
@@ -52,6 +57,8 @@ export function PriceGrid({
     getSelectionState,
     isParentItem: checkIsParent,
     selectedCount,
+    hasSelectedItems,
+    getSelectedSkus,
   } = usePriceSelection(items)
   const orderRef = useRef<HTMLDivElement>(null)
   const filterRef = useRef<HTMLDivElement>(null)
@@ -59,6 +66,7 @@ export function PriceGrid({
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
 
   const [showOrderModal, setShowOrderModal] = useState(false)
+  const [bulkModalType, setBulkModalType] = useState<BulkModalType>(null)
   const [showFilterModal, setShowFilterModal] = useState(false)
   const [showAccionDropdown, setShowAccionDropdown] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
@@ -76,6 +84,61 @@ export function PriceGrid({
   const availableCategorias = useMemo(() => getUniqueCategorias(items), [items])
   const availableMarcas = useMemo(() => getUniqueMarcas(items), [items])
   const availableDepositos = useMemo(() => ["Torcuato", "Trujui"], [])
+
+  // Get all visible SKUs (from sorted and filtered items)
+  const getVisibleSkus = useCallback((itemList: Item[]): string[] => {
+    const skus: string[] = []
+    for (const item of itemList) {
+      const isParent = (item.variants && item.variants.length > 0) || (item.items && item.items.length > 0)
+      if (isParent) {
+        const children = item.variants || item.items || []
+        for (const child of children) {
+          if (child.sku) skus.push(child.sku)
+        }
+      } else if (item.sku) {
+        skus.push(item.sku)
+      }
+    }
+    return skus
+  }, [])
+
+  // Get target SKUs for bulk edit (selected items take priority over visible items)
+  const getTargetSkusForBulkEdit = useCallback((): string[] => {
+    if (hasSelectedItems) {
+      return getSelectedSkus()
+    }
+    return getVisibleSkus(sortedAndFilteredItems)
+  }, [hasSelectedItems, getSelectedSkus, getVisibleSkus, sortedAndFilteredItems])
+
+  // Get count of items that will be affected by bulk edit
+  const bulkEditTargetCount = useMemo(() => {
+    return getTargetSkusForBulkEdit().length
+  }, [getTargetSkusForBulkEdit])
+
+  // Get modal title based on type
+  const getBulkModalTitle = (type: BulkModalType): string => {
+    switch (type) {
+      case "costo":
+        return "Modificar Costo de x items"
+      case "precioFinal":
+        return "Modificar Precio Final de x items"
+      case "margen":
+        return "Modificar Margen de x items"
+      case "iva":
+        return "Modificar IVA de x items"
+      default:
+        return ""
+    }
+  }
+
+  // Handle bulk edit apply
+  const handleBulkEditApply = (operation: string, value: number, unit: string) => {
+    const targetSkus = getTargetSkusForBulkEdit()
+    if (onBulkEdit && bulkModalType) {
+      onBulkEdit(bulkModalType, operation, value, unit, targetSkus)
+    }
+    setBulkModalType(null)
+  }
 
   const searchedItems = useMemo(() => searchItems(items, searchTerm), [items, searchTerm])
   const filteredItems = useMemo(() => filterItems(searchedItems, activeFilters), [searchedItems, activeFilters])
@@ -437,11 +500,45 @@ export function PriceGrid({
               </div>
             </div>
             <div className="flex items-center px-4 border-r border-border/30">Item</div>
-            <div className="flex items-center justify-center border-r border-border/30">Costo</div>
-            <div className="flex items-center justify-center border-r border-border/30">Margen</div>
-            <div className="flex items-center justify-center border-r border-border/30">IVA</div>
-            <div className="flex items-center justify-between px-4">
-              <span>Precio Final</span>
+            <div className="flex items-center justify-between px-3 border-r border-border/30">
+              <span className="flex-1 text-center">Costo</span>
+              <button
+                onClick={() => setBulkModalType("costo")}
+                className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 transition-colors group cursor-pointer"
+                title="Modificar costo en lote"
+              >
+                <MoreVertical className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-700" />
+              </button>
+            </div>
+            <div className="flex items-center justify-between px-3 border-r border-border/30">
+              <span className="flex-1 text-center">Margen</span>
+              <button
+                onClick={() => setBulkModalType("margen")}
+                className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 transition-colors group cursor-pointer"
+                title="Modificar margen en lote"
+              >
+                <MoreVertical className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-700" />
+              </button>
+            </div>
+            <div className="flex items-center justify-between px-3 border-r border-border/30">
+              <span className="flex-1 text-center">IVA</span>
+              <button
+                onClick={() => setBulkModalType("iva")}
+                className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 transition-colors group cursor-pointer"
+                title="Modificar IVA en lote"
+              >
+                <MoreVertical className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-700" />
+              </button>
+            </div>
+            <div className="flex items-center justify-between px-3">
+              <button
+                onClick={() => setBulkModalType("precioFinal")}
+                className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 transition-colors group cursor-pointer"
+                title="Modificar precio final en lote"
+              >
+                <MoreVertical className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-700" />
+              </button>
+              <span className="flex-1 text-center">Precio Final</span>
               <div className="relative">
                 <button
                   onClick={() => setGridSizeDropdownOpen(!gridSizeDropdownOpen)}
@@ -519,6 +616,17 @@ export function PriceGrid({
           availableCategorias={availableCategorias}
           availableMarcas={availableMarcas}
           availableDepositos={availableDepositos}
+        />
+      )}
+
+      {bulkModalType && (
+        <BulkPriceModal
+          isOpen={true}
+          onClose={() => setBulkModalType(null)}
+          onApply={handleBulkEditApply}
+          itemCount={bulkEditTargetCount}
+          title={getBulkModalTitle(bulkModalType)}
+          type={bulkModalType}
         />
       )}
     </div>

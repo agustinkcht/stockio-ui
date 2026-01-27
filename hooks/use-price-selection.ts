@@ -162,6 +162,13 @@ export function usePriceSelection(items: Item[]) {
     return Object.values(selectedItems).filter(Boolean).length
   }, [selectedItems])
 
+  // Get array of selected SKUs
+  const getSelectedSkus = useCallback((): string[] => {
+    return Object.entries(selectedItems)
+      .filter(([, isSelected]) => isSelected)
+      .map(([sku]) => sku)
+  }, [selectedItems])
+
   // Clear all selections
   const clearSelection = useCallback(() => {
     setSelectedItems({})
@@ -178,5 +185,6 @@ export function usePriceSelection(items: Item[]) {
     selectedCount,
     hasSelectedItems: selectedCount > 0,
     clearSelection,
+    getSelectedSkus,
   }
 }
