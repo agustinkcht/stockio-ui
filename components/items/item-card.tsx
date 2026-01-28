@@ -133,6 +133,26 @@ export function ItemCard({
     onStockChange?.(item.sku, type, newValue)
   }
 
+  // Calculate preview value based on operation and input
+  const getPreviewValue = (type: "total" | "reservado"): number => {
+    const operation = type === "total" ? stockTotalOperation : stockReservadoOperation
+    const inputStr = type === "total" ? stockTotalInput : stockReservadoInput
+    const inputValue = parseInt(inputStr)
+    const currentValue = type === "total" ? currentStockTotal : currentStockReservado
+    
+    if (isNaN(inputValue) || inputStr === "") {
+      return currentValue
+    }
+    
+    if (operation === "agregar") {
+      return currentValue + inputValue
+    } else if (operation === "disminuir") {
+      return Math.max(0, currentValue - inputValue)
+    } else {
+      return inputValue
+    }
+  }
+
   const variantCount = useMemo(() => {
     return item.variantCount || item.variants?.length || 0
   }, [item.variantCount, item.variants])
@@ -278,7 +298,7 @@ export function ItemCard({
               // Parent items in audit mode - show item info + chevron (same as normal mode)
               <>
                 <div
-                  className={`col-span-8 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors border-slate-100 border-r-0`}
+                  className={`col-span-6 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors border-slate-100 border-r-0`}
                   onClick={(e) => {
                     e.stopPropagation()
                     onItemClick(item)
@@ -315,7 +335,7 @@ export function ItemCard({
 
                 {/* Chevron on the right for parent items */}
                 <div
-                  className={`col-span-14 h-full flex items-center justify-end px-4 cursor-pointer`}
+                  className={`col-span-16 h-full flex items-center justify-end px-4 cursor-pointer`}
                   onClick={(e) => {
                     e.stopPropagation()
                     onToggleExpansion(index)
@@ -336,7 +356,7 @@ export function ItemCard({
               // Standalone and children items in audit mode - with stock modification controls
               <>
                 <div
-                  className={`col-span-8 flex items-center gap-3 h-full border-r border-slate-100/50 ${isChild ? "pl-6 pr-4" : "px-4"} cursor-pointer transition-colors`}
+                  className={`col-span-6 flex items-center gap-3 h-full border-r border-slate-100/50 ${isChild ? "pl-6 pr-4" : "px-4"} cursor-pointer transition-colors`}
                   onClick={(e) => {
                     e.stopPropagation()
                     onItemClick(item)
@@ -368,18 +388,18 @@ export function ItemCard({
                   </div>
                 </div>
 
-                {/* Stock Total - 6 cols with modification controls */}
-                <div className="col-span-6 h-full flex items-center justify-center gap-1 px-1.5 border-r border-slate-100/50">
+                {/* Stock Total - 7 cols with modification controls */}
+                <div className="col-span-7 h-full flex items-center justify-center gap-1.5 px-2 border-r border-slate-100/50">
                   {/* Operation selector */}
                   <select
                     value={stockTotalOperation}
                     onChange={(e) => setStockTotalOperation(e.target.value as "agregar" | "disminuir" | "sobreescribir")}
                     onClick={(e) => e.stopPropagation()}
-                    className="h-6 text-[10px] px-1 border border-slate-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-slate-400 cursor-pointer font-mono"
+                    className="h-6 text-[10px] px-1 border border-slate-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-slate-400 cursor-pointer"
                   >
-                    <option value="agregar">+</option>
-                    <option value="disminuir">-</option>
-                    <option value="sobreescribir">=</option>
+                    <option value="agregar">Aumentar</option>
+                    <option value="disminuir">Disminuir</option>
+                    <option value="sobreescribir">Sobreescribir</option>
                   </select>
                   {/* Input field */}
                   <input
@@ -389,8 +409,11 @@ export function ItemCard({
                     onChange={(e) => setStockTotalInput(e.target.value)}
                     onClick={(e) => e.stopPropagation()}
                     placeholder="0"
-                    className="w-10 h-6 text-xs text-center border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-slate-400 font-mono"
+                    className="w-11 h-6 text-xs text-center border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-slate-400"
                   />
+                  {/* Arrow and preview */}
+                  <span className="text-slate-300 text-xs">→</span>
+                  <span className="text-sm text-slate-400 min-w-[24px] text-center">{getPreviewValue("total")}</span>
                   {/* Check button */}
                   <button
                     onClick={(e) => {
@@ -400,25 +423,13 @@ export function ItemCard({
                     disabled={!stockTotalInput}
                     className={`p-1 rounded transition-all duration-200 ${
                       stockTotalInput 
-                        ? "bg-slate-800 text-white hover:bg-slate-700 cursor-pointer" 
+                        ? "bg-slate-200 text-slate-600 hover:bg-slate-300 cursor-pointer" 
                         : "bg-slate-100 text-slate-300 cursor-not-allowed"
                     }`}
                   >
                     <Check className="w-3 h-3" />
                   </button>
-                  {/* Decrement button */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleStockIncrement("total", -1)
-                    }}
-                    className="w-5 h-5 flex items-center justify-center rounded bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
-                  >
-                    <Minus className="w-2.5 h-2.5" />
-                  </button>
-                  {/* Stock value */}
-                  <span className="text-sm font-medium text-foreground min-w-[24px] text-center font-mono">{currentStockTotal}</span>
-                  {/* Increment button */}
+                  {/* +/- buttons around value */}
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
@@ -428,20 +439,30 @@ export function ItemCard({
                   >
                     <Plus className="w-2.5 h-2.5" />
                   </button>
+                  <span className="text-sm font-semibold text-foreground min-w-[24px] text-center">{currentStockTotal}</span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleStockIncrement("total", -1)
+                    }}
+                    className="w-5 h-5 flex items-center justify-center rounded bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+                  >
+                    <Minus className="w-2.5 h-2.5" />
+                  </button>
                 </div>
 
-                {/* Stock Reservado - 6 cols with modification controls */}
-                <div className="col-span-6 h-full flex items-center justify-center gap-1 px-1.5 border-r border-slate-100/50">
+                {/* Stock Reservado - 7 cols with modification controls */}
+                <div className="col-span-7 h-full flex items-center justify-center gap-1.5 px-2 border-r border-slate-100/50">
                   {/* Operation selector */}
                   <select
                     value={stockReservadoOperation}
                     onChange={(e) => setStockReservadoOperation(e.target.value as "agregar" | "disminuir" | "sobreescribir")}
                     onClick={(e) => e.stopPropagation()}
-                    className="h-6 text-[10px] px-1 border border-slate-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-slate-400 cursor-pointer font-mono"
+                    className="h-6 text-[10px] px-1 border border-slate-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-slate-400 cursor-pointer"
                   >
-                    <option value="agregar">+</option>
-                    <option value="disminuir">-</option>
-                    <option value="sobreescribir">=</option>
+                    <option value="agregar">Aumentar</option>
+                    <option value="disminuir">Disminuir</option>
+                    <option value="sobreescribir">Sobreescribir</option>
                   </select>
                   {/* Input field */}
                   <input
@@ -451,8 +472,11 @@ export function ItemCard({
                     onChange={(e) => setStockReservadoInput(e.target.value)}
                     onClick={(e) => e.stopPropagation()}
                     placeholder="0"
-                    className="w-10 h-6 text-xs text-center border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-slate-400 font-mono"
+                    className="w-11 h-6 text-xs text-center border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-slate-400"
                   />
+                  {/* Arrow and preview */}
+                  <span className="text-slate-300 text-xs">→</span>
+                  <span className="text-sm text-slate-400 min-w-[24px] text-center">{getPreviewValue("reservado")}</span>
                   {/* Check button */}
                   <button
                     onClick={(e) => {
@@ -462,25 +486,13 @@ export function ItemCard({
                     disabled={!stockReservadoInput}
                     className={`p-1 rounded transition-all duration-200 ${
                       stockReservadoInput 
-                        ? "bg-slate-800 text-white hover:bg-slate-700 cursor-pointer" 
+                        ? "bg-slate-200 text-slate-600 hover:bg-slate-300 cursor-pointer" 
                         : "bg-slate-100 text-slate-300 cursor-not-allowed"
                     }`}
                   >
                     <Check className="w-3 h-3" />
                   </button>
-                  {/* Decrement button */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleStockIncrement("reservado", -1)
-                    }}
-                    className="w-5 h-5 flex items-center justify-center rounded bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
-                  >
-                    <Minus className="w-2.5 h-2.5" />
-                  </button>
-                  {/* Stock value */}
-                  <span className="text-sm font-medium text-foreground min-w-[24px] text-center font-mono">{currentStockReservado}</span>
-                  {/* Increment button */}
+                  {/* +/- buttons around value */}
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
@@ -489,6 +501,16 @@ export function ItemCard({
                     className="w-5 h-5 flex items-center justify-center rounded bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
                   >
                     <Plus className="w-2.5 h-2.5" />
+                  </button>
+                  <span className="text-sm font-semibold text-foreground min-w-[24px] text-center">{currentStockReservado}</span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleStockIncrement("reservado", -1)
+                    }}
+                    className="w-5 h-5 flex items-center justify-center rounded bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+                  >
+                    <Minus className="w-2.5 h-2.5" />
                   </button>
                 </div>
 

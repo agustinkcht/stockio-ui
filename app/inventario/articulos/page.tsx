@@ -26,10 +26,14 @@ export default function ArticulosPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [itemCreated, setItemCreated] = useState(false)
   const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>({})
-  const [showSaveSuccess, setShowSaveSuccess] = useState(false) // Declare showSaveSuccess variable
+  const [showSaveSuccess, setShowSaveSuccess] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<Item | null>(null)
   const [showBatchDeleteModal, setShowBatchDeleteModal] = useState(false)
   const { currentAccount } = useAccount()
+  
+  // Audit mode state
+  const [hasAuditChanges, setHasAuditChanges] = useState(false)
+  const [auditPendingCount, setAuditPendingCount] = useState(0)
 
   const {
     items,
@@ -107,6 +111,49 @@ export default function ArticulosPage() {
   useEffect(() => {
     setGridSize("md")
   }, [setGridSize])
+
+  // Audit mode handlers
+  const handleAuditChangesUpdate = (hasChanges: boolean, pendingCount: number) => {
+    setHasAuditChanges(hasChanges)
+    setAuditPendingCount(pendingCount)
+  }
+
+  const handleAuditSave = async (changes: Record<string, { total: number; reservado: number }>) => {
+    setIsSaving(true)
+    try {
+      await sleep(600)
+      // Apply each change to the items
+      for (const [sku, stockChange] of Object.entries(changes)) {
+        updateStock(sku, "total", stockChange.total)
+        updateStock(sku, "reservado", stockChange.reservado)
+      }
+      // Force save to localStorage
+      await forceSaveItems()
+      
+      setShowSaveSuccess(true)
+      setTimeout(() => setShowSaveSuccess(false), 3000)
+    } catch (error) {
+      console.error("[v0] Error saving audit changes:", error)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleAuditDiscard = () => {
+    // Audit changes are discarded internally in ItemsGrid
+    setHasAuditChanges(false)
+    setAuditPendingCount(0)
+  }
+
+  const handleAuditGuardar = () => {
+    // Trigger save from window handler
+    ;(window as any).__auditSaveHandler?.()
+  }
+
+  const handleAuditDeshacer = () => {
+    // Trigger discard from window handler
+    ;(window as any).__auditDiscardHandler?.()
+  }
 
   const breadcrumbs = [{ label: "Inventario" }, { label: "Artículos", href: "/inventario/articulos" }]
 
@@ -334,12 +381,38 @@ export default function ArticulosPage() {
                 <UserPanel />
               </div>
 
-              {/* Right: Success Message Only */}
-              <div className="flex items-center gap-2 min-w-[200px] justify-end">
-                {showSaveSuccess && (
+              {/* Right: D-G Buttons + Success Message */}
+              <div className="flex items-center gap-2 min-w-[280px] justify-end">
+                {isSaving && (
+                  <div className="w-full max-w-[200px] h-1.5 bg-secondary/50 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-primary via-primary/80 to-primary animate-loading-bar bg-[length:200%_100%]" />
+                  </div>
+                )}
+                
+                {showSaveSuccess && !isSaving && (
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md animate-in fade-in slide-in-from-right-2 duration-300">
                     <CheckCircle2 className="w-4 h-4 text-green-600" />
                     <span className="text-sm text-green-700 font-medium">Cambios Guardados</span>
+                  </div>
+                )}
+
+                {hasAuditChanges && !showSaveSuccess && !isSaving && (
+                  <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2 duration-200">
+                    <button
+                      onClick={handleAuditDeshacer}
+                      className="px-4 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 rounded transition-all cursor-pointer text-red-700 text-sm font-medium"
+                      title="Deshacer cambios"
+                    >
+                      Deshacer
+                    </button>
+
+                    <button
+                      onClick={handleAuditGuardar}
+                      className="px-4 py-1.5 bg-green-50 hover:bg-green-100 border border-green-200 rounded transition-all cursor-pointer text-green-700 text-sm font-medium"
+                      title="Guardar cambios"
+                    >
+                      Guardar
+                    </button>
                   </div>
                 )}
               </div>
@@ -374,6 +447,9 @@ export default function ArticulosPage() {
                     onBatchDelete={handleBatchDeleteClick}
                     onUpdateStock={updateStock}
                     onSaveEdit={forceSaveItems}
+                    onAuditChangesUpdate={handleAuditChangesUpdate}
+                    onAuditSave={handleAuditSave}
+                    onAuditDiscard={handleAuditDiscard}
                   />
                 </div>
               </div>

@@ -37,7 +37,11 @@ interface ItemsGridProps {
   hasSelectedItems?: boolean
   onBatchDelete?: () => void
   onUpdateStock?: (itemSku: string, field: "total" | "reservado", value: number) => void
-  onBulkSaveStock?: (changes: Record<string, { total: number; reservado: number }>) => void
+  onSaveEdit?: () => void
+  // Audit mode callbacks to parent for D-G buttons
+  onAuditChangesUpdate?: (hasChanges: boolean, pendingCount: number) => void
+  onAuditSave?: (changes: Record<string, { total: number; reservado: number }>) => void
+  onAuditDiscard?: () => void
 }
 
 export function ItemsGrid({
@@ -63,7 +67,10 @@ export function ItemsGrid({
   hasSelectedItems,
   onBatchDelete,
   onUpdateStock,
-  onBulkSaveStock,
+  onSaveEdit,
+  onAuditChangesUpdate,
+  onAuditSave,
+  onAuditDiscard,
 }: ItemsGridProps) {
   const orderRef = useRef<HTMLDivElement>(null)
   const filterRef = useRef<HTMLDivElement>(null)
@@ -88,6 +95,12 @@ export function ItemsGrid({
   // Audit mode stock tracking
   const [auditStockChanges, setAuditStockChanges] = useState<Record<string, AuditStockChange>>({})
   const hasAuditChanges = Object.keys(auditStockChanges).length > 0
+  const pendingChangesCount = Object.keys(auditStockChanges).length
+
+  // Notify parent when audit changes update
+  useEffect(() => {
+    onAuditChangesUpdate?.(hasAuditChanges, pendingChangesCount)
+  }, [hasAuditChanges, pendingChangesCount, onAuditChangesUpdate])
 
   // Handle stock changes in audit mode
   const handleAuditStockChange = (sku: string, field: "total" | "reservado", value: number) => {
@@ -119,17 +132,28 @@ export function ItemsGrid({
     }))
   }
 
-  // Discard audit changes
+  // Discard audit changes - exposed to parent via callback
   const handleDiscardAuditChanges = () => {
+    setAuditStockChanges({})
+    onAuditDiscard?.()
+  }
+
+  // Save audit changes to localStorage - exposed to parent via callback
+  const handleSaveAuditChanges = () => {
+    onAuditSave?.(auditStockChanges)
     setAuditStockChanges({})
   }
 
-  // Save audit changes to localStorage
-  const handleSaveAuditChanges = () => {
-    // Pass all changes at once for atomic save
-    onBulkSaveStock?.(auditStockChanges)
-    setAuditStockChanges({})
-  }
+  // Expose handlers to parent by storing refs (parent can call via props)
+  useEffect(() => {
+    // Store current handlers so parent can call them
+    ;(window as any).__auditDiscardHandler = handleDiscardAuditChanges
+    ;(window as any).__auditSaveHandler = handleSaveAuditChanges
+    return () => {
+      delete (window as any).__auditDiscardHandler
+      delete (window as any).__auditSaveHandler
+    }
+  }, [auditStockChanges])
 
   const availableCategorias = useMemo(() => getUniqueCategorias(items), [items])
   const availableMarcas = useMemo(() => getUniqueMarcas(items), [items])
@@ -166,28 +190,7 @@ export function ItemsGrid({
     }
   }, [])
 
-  // Keyboard shortcuts for audit mode
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Only respond if we have audit changes and not typing in an input
-      if (!hasAuditChanges) return
-      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return
-
-      if (event.key.toLowerCase() === 'd' && !event.metaKey && !event.ctrlKey) {
-        event.preventDefault()
-        handleDiscardAuditChanges()
-      }
-      if (event.key.toLowerCase() === 'g' && !event.metaKey && !event.ctrlKey) {
-        event.preventDefault()
-        handleSaveAuditChanges()
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown)
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown)
-    }
-  }, [hasAuditChanges, auditStockChanges])
+  
 
   const hasActiveFilters =
     filterConfig.tipos.length > 0 ||
@@ -258,27 +261,11 @@ export function ItemsGrid({
                   Auditoría de Stock
                 </Button>
 
-                {/* Audit mode save/discard buttons */}
+                {/* Pending changes counter (D-G buttons are in utility bar) */}
                 {hasAuditChanges && (
-                  <div className="flex items-center gap-1.5 ml-2 pl-2 border-l border-slate-200">
-                    <span className="text-[10px] text-slate-500 font-medium px-1.5 py-0.5 bg-slate-100 rounded-full">
-                      {Object.keys(auditStockChanges).length} cambio{Object.keys(auditStockChanges).length !== 1 ? 's' : ''}
-                    </span>
-                    <button
-                      onClick={handleDiscardAuditChanges}
-                      className="h-7 px-3 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded transition-all duration-200 cursor-pointer flex items-center gap-1.5"
-                    >
-                      <span className="text-[10px] font-mono bg-slate-200 px-1 rounded">D</span>
-                      Descartar
-                    </button>
-                    <button
-                      onClick={handleSaveAuditChanges}
-                      className="h-7 px-3 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded transition-all duration-200 cursor-pointer flex items-center gap-1.5 shadow-sm"
-                    >
-                      <span className="text-[10px] font-mono bg-emerald-500 px-1 rounded">G</span>
-                      Guardar
-                    </button>
-                  </div>
+                  <span className="text-[10px] text-amber-600 font-medium px-2 py-0.5 bg-amber-100 rounded-full ml-2 border border-amber-200">
+                    {pendingChangesCount} cambio{pendingChangesCount !== 1 ? 's' : ''} pendiente{pendingChangesCount !== 1 ? 's' : ''}
+                  </span>
                 )}
 
                 {hasSelectedItems && (
@@ -374,13 +361,13 @@ export function ItemsGrid({
               {/* Tab header matching exact item card structure */}
               {isAuditMode ? (
                 <div className="flex-1 grid grid-cols-22 h-9 bg-slate-200 border border-gray-300 rounded-xs border-none">
-                  <div className="col-span-8 flex items-center px-4 py-2 justify-center border-solid pl-4 pr-4 mr-0 border border-l-0 border-[rgba(202,213,227,0.61)]">
+                  <div className="col-span-6 flex items-center px-4 py-2 justify-center border-solid pl-4 pr-4 mr-0 border border-l-0 border-[rgba(202,213,227,0.61)]">
                     <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Item</span>
                   </div>
-                  <div className="col-span-6 flex items-center justify-center py-2 border-solid border-r px-4 mx-0 ml-0 mr-px border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
+                  <div className="col-span-7 flex items-center justify-center py-2 border-solid border-r px-4 mx-0 ml-0 mr-px border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
                     <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Stock Total</span>
                   </div>
-                  <div className="col-span-6 flex items-center justify-center py-2 border-solid border-r px-4 mx-0 ml-0 mr-px border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
+                  <div className="col-span-7 flex items-center justify-center py-2 border-solid border-r px-4 mx-0 ml-0 mr-px border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
                     <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Stock Reservado</span>
                   </div>
                   <div className="col-span-2 flex items-center justify-center py-2 mx-0 ml-0 px-0 mr-0 border-b border-t border-l-0 border-r-0 border-[rgba(202,213,227,0.61)]">
