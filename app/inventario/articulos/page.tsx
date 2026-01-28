@@ -158,8 +158,8 @@ export default function ArticulosPage() {
         }
       }
       
-      // Save edits to localStorage (like precios page does)
-      saveEdit()
+      // Save all items to localStorage using forceSaveItems (not saveEdit, which only tracks single item)
+      forceSaveItems()
       
       // Clear audit changes in the grid AFTER save is complete
       ;(window as any).__auditClearHandler?.()
