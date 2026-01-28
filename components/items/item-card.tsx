@@ -23,6 +23,7 @@ interface ItemCardProps {
   isLastChild?: boolean
   handleItemSelection?: (item: Item, isChild?: boolean) => void
   getSelectionState?: (item: Item, isChild?: boolean) => { checked: boolean; indeterminate: boolean }
+  isAuditMode?: boolean
 }
 
 function calculateMarginBottom(currentItem: Item, nextItem: Item | undefined, isChild: boolean): string {
@@ -69,6 +70,7 @@ export function ItemCard({
   isLastChild = false,
   handleItemSelection,
   getSelectionState,
+  isAuditMode = false,
 }: ItemCardProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [showTransition, setShowTransition] = useState(false)
@@ -196,9 +198,11 @@ export function ItemCard({
 
         <div
           className={`flex-1 border-solid mb-0 border-slate-200/65 shadow-md ${gridSize === "lg" ? "h-22" : gridSize === "md" ? "h-16" : "h-10"} ${roundedClass} grid ${
-            item.isAgrupador || item.hasVariants
-              ? `grid-cols-11 ${isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors cursor-pointer overflow-hidden`
-              : `grid-cols-11 ${isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors overflow-hidden`
+            isAuditMode
+              ? `grid-cols-22 ${isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors ${item.isAgrupador || item.hasVariants ? "cursor-pointer" : ""} overflow-hidden`
+              : item.isAgrupador || item.hasVariants
+                ? `grid-cols-22 ${isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors cursor-pointer overflow-hidden`
+                : `grid-cols-22 ${isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors overflow-hidden`
           }`}
           onClick={(e) => {
             if (item.hasVariants || item.isAgrupador) {
@@ -206,7 +210,72 @@ export function ItemCard({
             }
           }}
         >
-          {item.isAgrupador || item.hasVariants ? (
+          {isAuditMode ? (
+            // AUDIT MODE LAYOUT: 8-6-6-2
+            <>
+              <div
+                className={`col-span-8 flex items-center gap-3 h-full border-r border-slate-100 ${isChild ? "pl-6 pr-4" : "px-4"} cursor-pointer transition-colors`}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onItemClick(item)
+                }}
+              >
+                {/* Product Thumbnail */}
+                <div className={`${isChild ? "w-9 h-9" : "w-12 h-12"} flex-shrink-0 rounded-md bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden`}>
+                  <img
+                    src={getCategoryImage(item.categoria) || "/placeholder.svg"}
+                    alt={item.categoria || "Product"}
+                    className={`${isChild ? "w-6 h-6" : "w-8 h-8"} object-contain opacity-60`}
+                  />
+                </div>
+
+                {/* Product Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-foreground font-medium truncate">
+                      {item.name}
+                    </span>
+                    {(item.hasVariants || item.isAgrupador) && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground whitespace-nowrap">
+                        {item.hasVariants ? `${variantCount} var.` : `${itemCount} items`}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
+                    {item.marca && <span className="text-xs text-muted-foreground">·</span>}
+                    {item.categoria && <span className="text-xs text-muted-foreground">{item.categoria}</span>}
+                    {item.categoria && <span className="text-xs text-muted-foreground">·</span>}
+                    <span className="text-xs text-muted-foreground">{item.sku}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stock Total - 6 cols */}
+              <div className="col-span-6 h-full flex items-center justify-center px-4 border-r border-slate-100">
+                <span className="text-sm font-medium text-foreground">{item.stock?.total || 0}</span>
+              </div>
+
+              {/* Stock Reservado - 6 cols */}
+              <div className="col-span-6 h-full flex items-center justify-center px-4 border-r border-slate-100">
+                <span className="text-sm font-medium text-foreground">{item.stock?.reservado || 0}</span>
+              </div>
+
+              {/* Stock Disponible - 2 cols */}
+              <div className="col-span-2 h-full flex items-center justify-center px-2">
+                <span className={`text-sm font-semibold ${
+                  (item.stock?.disponible || 0) > 0 
+                    ? "text-green-600" 
+                    : (item.stock?.disponible || 0) < 0 
+                      ? "text-red-600" 
+                      : "text-foreground"
+                }`}>
+                  {item.stock?.disponible || 0}
+                </span>
+              </div>
+            </>
+          ) : item.isAgrupador || item.hasVariants ? (
+            // NORMAL MODE: Parent items
             <>
               <div
                 className={`col-span-8 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors border-slate-100 border-r-0`}
@@ -259,7 +328,7 @@ export function ItemCard({
 
               {/* Chevron on the right for parent items */}
               <div
-                className={`col-span-6 h-full flex items-center justify-end px-4 cursor-pointer`}
+                className={`col-span-14 h-full flex items-center justify-end px-4 cursor-pointer`}
                 onClick={(e) => {
                   e.stopPropagation()
                   onToggleExpansion(index)
@@ -277,9 +346,10 @@ export function ItemCard({
               </div>
             </>
           ) : (
+            // NORMAL MODE: Standalone/child items
             <>
               <div
-                className={`col-span-5 flex items-center gap-3 h-full border-r border-slate-100 ${
+                className={`col-span-8 flex items-center gap-3 h-full border-r border-slate-100 ${
                   item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
                 } ${isChild ? "pl-6 pr-4" : "px-4"} cursor-pointer transition-colors`}
                 onClick={(e) => {
@@ -331,7 +401,7 @@ export function ItemCard({
               </div>
 
               <div
-                className={`col-span-3 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100`}
+                className={`col-span-7 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100`}
                 onClick={(e) => {
                   e.stopPropagation()
                   onItemClick(item)
@@ -397,16 +467,16 @@ export function ItemCard({
               </div>
 
               {item.hasVariants ? (
-                <div className="col-span-3 h-full flex items-center justify-center px-4">
+                <div className="col-span-7 h-full flex items-center justify-center px-4">
                   <span className="text-sm text-container-item-foreground/80">{variantCount} variantes</span>
                 </div>
               ) : item.isAgrupador ? (
-                <div className="col-span-3 h-full flex items-center justify-center px-4">
+                <div className="col-span-7 h-full flex items-center justify-center px-4">
                   <span className="text-sm text-container-item-foreground/80">{itemCount} items</span>
                 </div>
               ) : (
                 <div
-                  className="col-span-3 h-full flex items-center px-4 cursor-pointer transition-colors"
+                  className="col-span-7 h-full flex items-center px-4 cursor-pointer transition-colors"
                   onClick={(e) => {
                     e.stopPropagation()
                     console.log("[v0] ItemCard clicked - isChild:", isChild, "item:", item)
@@ -501,6 +571,7 @@ export function ItemCard({
                 isLastChild={variantIndex === item.variants.length - 1}
                 handleItemSelection={handleItemSelection}
                 getSelectionState={getSelectionState}
+                isAuditMode={isAuditMode}
               />
             )
           })}
@@ -529,6 +600,7 @@ export function ItemCard({
                 isLastChild={groupItemIndex === item.items.length - 1}
                 handleItemSelection={handleItemSelection}
                 getSelectionState={getSelectionState}
+                isAuditMode={isAuditMode}
               />
             )
           })}
