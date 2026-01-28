@@ -139,8 +139,13 @@ export function ItemsGrid({
   }
 
   // Save audit changes to localStorage - exposed to parent via callback
+  // Note: We don't clear auditStockChanges here - the parent will call clearAuditChanges after save completes
   const handleSaveAuditChanges = () => {
     onAuditSave?.(auditStockChanges)
+  }
+
+  // Clear audit changes - called by parent after successful save
+  const clearAuditChanges = () => {
     setAuditStockChanges({})
   }
 
@@ -149,9 +154,11 @@ export function ItemsGrid({
     // Store current handlers so parent can call them
     ;(window as any).__auditDiscardHandler = handleDiscardAuditChanges
     ;(window as any).__auditSaveHandler = handleSaveAuditChanges
+    ;(window as any).__auditClearHandler = clearAuditChanges
     return () => {
       delete (window as any).__auditDiscardHandler
       delete (window as any).__auditSaveHandler
+      delete (window as any).__auditClearHandler
     }
   }, [auditStockChanges])
 

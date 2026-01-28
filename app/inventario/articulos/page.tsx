@@ -128,7 +128,10 @@ export default function ArticulosPage() {
         updateStock(sku, "reservado", stockChange.reservado)
       }
       // Force save to localStorage
-      await forceSaveItems()
+      forceSaveItems()
+      
+      // Clear audit changes in the grid AFTER save is complete
+      ;(window as any).__auditClearHandler?.()
       
       setShowSaveSuccess(true)
       setTimeout(() => setShowSaveSuccess(false), 3000)
@@ -136,6 +139,8 @@ export default function ArticulosPage() {
       console.error("[v0] Error saving audit changes:", error)
     } finally {
       setIsSaving(false)
+      setHasAuditChanges(false)
+      setAuditPendingCount(0)
     }
   }
 
