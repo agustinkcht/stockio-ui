@@ -409,7 +409,7 @@ export function ItemCard({
                     onChange={(e) => setStockTotalInput(e.target.value)}
                     onClick={(e) => e.stopPropagation()}
                     placeholder="0"
-                    className="w-10 h-6 text-xs text-center border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-slate-400"
+                    className="w-10 h-6 text-xs text-center border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-slate-400 mr-0"
                   />
                   {/* Check button */}
                   <button
@@ -418,7 +418,7 @@ export function ItemCard({
                       handleStockModify("total")
                     }}
                     disabled={!stockTotalInput}
-                    className={`p-1 rounded transition-all duration-200 ${
+                    className={`p-1 rounded transition-all duration-200 mr-4 ${
                       stockTotalInput 
                         ? "bg-slate-200 text-slate-600 hover:bg-slate-300 cursor-pointer" 
                         : "bg-slate-100 text-slate-300 cursor-not-allowed"
@@ -478,7 +478,7 @@ export function ItemCard({
                       handleStockModify("reservado")
                     }}
                     disabled={!stockReservadoInput}
-                    className={`p-1 rounded transition-all duration-200 ${
+                    className={`p-1 rounded transition-all duration-200 mr-4 ${
                       stockReservadoInput 
                         ? "bg-slate-200 text-slate-600 hover:bg-slate-300 cursor-pointer" 
                         : "bg-slate-100 text-slate-300 cursor-not-allowed"
