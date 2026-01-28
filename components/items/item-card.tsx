@@ -197,8 +197,8 @@ export function ItemCard({
         <div
           className={`flex-1 border-solid mb-0 border-slate-200/65 shadow-md ${gridSize === "lg" ? "h-22" : gridSize === "md" ? "h-16" : "h-10"} ${roundedClass} grid ${
             item.isAgrupador || item.hasVariants
-              ? `grid-cols-22 ${isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors cursor-pointer overflow-hidden`
-              : `grid-cols-22 ${isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors overflow-hidden`
+              ? `grid-cols-11 ${isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors cursor-pointer overflow-hidden`
+              : `grid-cols-11 ${isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors overflow-hidden`
           }`}
           onClick={(e) => {
             if (item.hasVariants || item.isAgrupador) {
@@ -259,7 +259,7 @@ export function ItemCard({
 
               {/* Chevron on the right for parent items */}
               <div
-                className={`col-span-14 h-full flex items-center justify-end px-4 cursor-pointer`}
+                className={`col-span-6 h-full flex items-center justify-end px-4 cursor-pointer`}
                 onClick={(e) => {
                   e.stopPropagation()
                   onToggleExpansion(index)
@@ -279,7 +279,7 @@ export function ItemCard({
           ) : (
             <>
               <div
-                className={`col-span-8 flex items-center gap-3 h-full border-r border-slate-100 ${
+                className={`col-span-5 flex items-center gap-3 h-full border-r border-slate-100 ${
                   item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
                 } ${isChild ? "pl-6 pr-4" : "px-4"} cursor-pointer transition-colors`}
                 onClick={(e) => {
@@ -331,7 +331,7 @@ export function ItemCard({
               </div>
 
               <div
-                className={`col-span-7 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100`}
+                className={`col-span-3 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100`}
                 onClick={(e) => {
                   e.stopPropagation()
                   onItemClick(item)
@@ -397,16 +397,16 @@ export function ItemCard({
               </div>
 
               {item.hasVariants ? (
-                <div className="col-span-7 h-full flex items-center justify-center px-4">
+                <div className="col-span-3 h-full flex items-center justify-center px-4">
                   <span className="text-sm text-container-item-foreground/80">{variantCount} variantes</span>
                 </div>
               ) : item.isAgrupador ? (
-                <div className="col-span-7 h-full flex items-center justify-center px-4">
+                <div className="col-span-3 h-full flex items-center justify-center px-4">
                   <span className="text-sm text-container-item-foreground/80">{itemCount} items</span>
                 </div>
               ) : (
                 <div
-                  className="col-span-7 h-full flex items-center px-4 cursor-pointer transition-colors"
+                  className="col-span-3 h-full flex items-center px-4 cursor-pointer transition-colors"
                   onClick={(e) => {
                     e.stopPropagation()
                     console.log("[v0] ItemCard clicked - isChild:", isChild, "item:", item)
