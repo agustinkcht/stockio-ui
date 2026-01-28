@@ -298,7 +298,7 @@ export function ItemCard({
               // Parent items in audit mode - show item info + chevron (same as normal mode)
               <>
                 <div
-                  className={`col-span-6 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors border-slate-100 border-r-0`}
+                  className={`col-span-8 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors border-slate-100 border-r-0`}
                   onClick={(e) => {
                     e.stopPropagation()
                     onItemClick(item)
@@ -335,7 +335,7 @@ export function ItemCard({
 
                 {/* Chevron on the right for parent items */}
                 <div
-                  className={`col-span-16 h-full flex items-center justify-end px-4 cursor-pointer`}
+                  className={`col-span-14 h-full flex items-center justify-end px-4 cursor-pointer`}
                   onClick={(e) => {
                     e.stopPropagation()
                     onToggleExpansion(index)
@@ -356,7 +356,7 @@ export function ItemCard({
               // Standalone and children items in audit mode - with stock modification controls
               <>
                 <div
-                  className={`col-span-6 flex items-center gap-3 h-full border-r border-slate-100/50 ${isChild ? "pl-6 pr-4" : "px-4"} cursor-pointer transition-colors`}
+                  className={`col-span-8 flex items-center gap-3 h-full border-r border-slate-100/50 ${isChild ? "pl-6 pr-4" : "px-4"} cursor-pointer transition-colors`}
                   onClick={(e) => {
                     e.stopPropagation()
                     onItemClick(item)
@@ -388,8 +388,8 @@ export function ItemCard({
                   </div>
                 </div>
 
-                {/* Stock Total - 7 cols with modification controls */}
-                <div className="col-span-7 h-full flex items-center justify-center gap-1.5 px-2 border-r border-slate-100/50">
+                {/* Stock Total - 6 cols with modification controls */}
+                <div className="col-span-6 h-full flex items-center justify-center gap-1 px-1.5 border-r border-slate-100/50">
                   {/* Operation selector */}
                   <select
                     value={stockTotalOperation}
@@ -409,11 +409,8 @@ export function ItemCard({
                     onChange={(e) => setStockTotalInput(e.target.value)}
                     onClick={(e) => e.stopPropagation()}
                     placeholder="0"
-                    className="w-11 h-6 text-xs text-center border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-slate-400"
+                    className="w-10 h-6 text-xs text-center border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-slate-400"
                   />
-                  {/* Arrow and preview */}
-                  <span className="text-slate-300 text-xs">→</span>
-                  <span className="text-sm text-slate-400 min-w-[24px] text-center">{getPreviewValue("total")}</span>
                   {/* Check button */}
                   <button
                     onClick={(e) => {
@@ -451,8 +448,8 @@ export function ItemCard({
                   </button>
                 </div>
 
-                {/* Stock Reservado - 7 cols with modification controls */}
-                <div className="col-span-7 h-full flex items-center justify-center gap-1.5 px-2 border-r border-slate-100/50">
+                {/* Stock Reservado - 6 cols with modification controls */}
+                <div className="col-span-6 h-full flex items-center justify-center gap-1 px-1.5 border-r border-slate-100/50">
                   {/* Operation selector */}
                   <select
                     value={stockReservadoOperation}
@@ -472,11 +469,8 @@ export function ItemCard({
                     onChange={(e) => setStockReservadoInput(e.target.value)}
                     onClick={(e) => e.stopPropagation()}
                     placeholder="0"
-                    className="w-11 h-6 text-xs text-center border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-slate-400"
+                    className="w-10 h-6 text-xs text-center border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-slate-400"
                   />
-                  {/* Arrow and preview */}
-                  <span className="text-slate-300 text-xs">→</span>
-                  <span className="text-sm text-slate-400 min-w-[24px] text-center">{getPreviewValue("reservado")}</span>
                   {/* Check button */}
                   <button
                     onClick={(e) => {
