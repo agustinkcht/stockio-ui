@@ -7,6 +7,11 @@ import type { Item } from "@/lib/types"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { getCategoryImage } from "@/lib/utils/category-images"
 
+interface AuditStockChange {
+  total: number
+  reservado: number
+}
+
 interface ItemCardProps {
   item: Item
   index: number
@@ -25,10 +30,7 @@ interface ItemCardProps {
   getSelectionState?: (item: Item, isChild?: boolean) => { checked: boolean; indeterminate: boolean }
   isAuditMode?: boolean
   onStockChange?: (sku: string, field: "total" | "reservado", value: number) => void
-  hasAuditChanges?: boolean
-  onDiscardAuditChanges?: () => void
-  onSaveAuditChanges?: () => void
-  auditStockValues?: { [sku: string]: { total: number; reservado: number } }
+  auditStockValues?: Record<string, AuditStockChange>
 }
 
 function calculateMarginBottom(currentItem: Item, nextItem: Item | undefined, isChild: boolean): string {
@@ -77,9 +79,6 @@ export function ItemCard({
   getSelectionState,
   isAuditMode = false,
   onStockChange,
-  hasAuditChanges = false,
-  onDiscardAuditChanges,
-  onSaveAuditChanges,
   auditStockValues,
 }: ItemCardProps) {
   const [isHovered, setIsHovered] = useState(false)
@@ -94,9 +93,10 @@ export function ItemCard({
   const [stockReservadoInput, setStockReservadoInput] = useState("")
 
   // Get current stock values (use audit values if available, otherwise original)
-  const currentStockTotal = auditStockValues?.[item.sku]?.total ?? item.stock?.total ?? 0
-  const currentStockReservado = auditStockValues?.[item.sku]?.reservado ?? item.stock?.reservado ?? 0
+  const currentStockTotal = auditStockValues?.[item.sku]?.total ?? parseInt(item.stock?.total || "0")
+  const currentStockReservado = auditStockValues?.[item.sku]?.reservado ?? parseInt(item.stock?.reservado || "0")
   const currentStockDisponible = currentStockTotal - currentStockReservado
+  const hasAuditChange = auditStockValues && item.sku in auditStockValues
 
   // Handle stock modification
   const handleStockModify = (type: "total" | "reservado") => {
@@ -255,7 +255,13 @@ export function ItemCard({
         <div
           className={`flex-1 border-solid mb-0 border-slate-200/65 shadow-md ${gridSize === "lg" ? "h-22" : gridSize === "md" ? "h-16" : "h-10"} ${roundedClass} grid ${
             isAuditMode
-              ? `grid-cols-22 ${isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors ${item.isAgrupador || item.hasVariants ? "cursor-pointer" : ""} overflow-hidden`
+              ? `grid-cols-22 ${
+                  hasAuditChange 
+                    ? "bg-amber-50/50 border-amber-300/50" 
+                    : isHovered 
+                      ? "bg-gray-50" 
+                      : "bg-white"
+                } border border-border transition-colors ${item.isAgrupador || item.hasVariants ? "cursor-pointer" : ""} overflow-hidden`
               : item.isAgrupador || item.hasVariants
                 ? `grid-cols-22 ${isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors cursor-pointer overflow-hidden`
                 : `grid-cols-22 ${isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors overflow-hidden`
@@ -269,7 +275,7 @@ export function ItemCard({
           {isAuditMode ? (
             // AUDIT MODE LAYOUT
             item.isAgrupador || item.hasVariants ? (
-              // Parent items in audit mode look like normal mode (item info + chevron)
+              // Parent items in audit mode - show item info + chevron (same as normal mode)
               <>
                 <div
                   className={`col-span-8 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors border-slate-100 border-r-0`}
@@ -307,7 +313,7 @@ export function ItemCard({
                   </div>
                 </div>
 
-                {/* Chevron on the right for parent items in audit mode */}
+                {/* Chevron on the right for parent items */}
                 <div
                   className={`col-span-14 h-full flex items-center justify-end px-4 cursor-pointer`}
                   onClick={(e) => {
@@ -327,10 +333,10 @@ export function ItemCard({
                 </div>
               </>
             ) : (
-              // Standalone and children items in audit mode - with stock controls
+              // Standalone and children items in audit mode - with stock modification controls
               <>
                 <div
-                  className={`col-span-8 flex items-center gap-3 h-full border-r border-slate-100 ${isChild ? "pl-6 pr-4" : "px-4"} cursor-pointer transition-colors`}
+                  className={`col-span-8 flex items-center gap-3 h-full border-r border-slate-100/50 ${isChild ? "pl-6 pr-4" : "px-4"} cursor-pointer transition-colors`}
                   onClick={(e) => {
                     e.stopPropagation()
                     onItemClick(item)
@@ -363,12 +369,13 @@ export function ItemCard({
                 </div>
 
                 {/* Stock Total - 6 cols with modification controls */}
-                <div className="col-span-6 h-full flex items-center justify-center gap-1.5 px-2 border-r border-slate-100">
+                <div className="col-span-6 h-full flex items-center justify-center gap-1 px-1.5 border-r border-slate-100/50">
                   {/* Operation selector */}
                   <select
                     value={stockTotalOperation}
                     onChange={(e) => setStockTotalOperation(e.target.value as "agregar" | "disminuir" | "sobreescribir")}
-                    className="h-6 text-[10px] px-1 border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="h-6 text-[10px] px-1 border border-slate-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-slate-400 cursor-pointer font-mono"
                   >
                     <option value="agregar">+</option>
                     <option value="disminuir">-</option>
@@ -380,46 +387,57 @@ export function ItemCard({
                     min="0"
                     value={stockTotalInput}
                     onChange={(e) => setStockTotalInput(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
                     placeholder="0"
-                    className="w-10 h-6 text-xs text-center border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-amber-400"
+                    className="w-10 h-6 text-xs text-center border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-slate-400 font-mono"
                   />
                   {/* Check button */}
                   <button
-                    onClick={() => handleStockModify("total")}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleStockModify("total")
+                    }}
                     disabled={!stockTotalInput}
-                    className={`p-1 rounded transition-colors ${
+                    className={`p-1 rounded transition-all duration-200 ${
                       stockTotalInput 
-                        ? "bg-amber-100 text-amber-700 hover:bg-amber-200 cursor-pointer" 
-                        : "bg-gray-100 text-gray-300 cursor-not-allowed"
+                        ? "bg-slate-800 text-white hover:bg-slate-700 cursor-pointer" 
+                        : "bg-slate-100 text-slate-300 cursor-not-allowed"
                     }`}
                   >
                     <Check className="w-3 h-3" />
                   </button>
                   {/* Decrement button */}
                   <button
-                    onClick={() => handleStockIncrement("total", -1)}
-                    className="p-1 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleStockIncrement("total", -1)
+                    }}
+                    className="w-5 h-5 flex items-center justify-center rounded bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
                   >
-                    <Minus className="w-3 h-3" />
+                    <Minus className="w-2.5 h-2.5" />
                   </button>
                   {/* Stock value */}
-                  <span className="text-sm font-medium text-foreground min-w-[28px] text-center">{currentStockTotal}</span>
+                  <span className="text-sm font-medium text-foreground min-w-[24px] text-center font-mono">{currentStockTotal}</span>
                   {/* Increment button */}
                   <button
-                    onClick={() => handleStockIncrement("total", 1)}
-                    className="p-1 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleStockIncrement("total", 1)
+                    }}
+                    className="w-5 h-5 flex items-center justify-center rounded bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
                   >
-                    <Plus className="w-3 h-3" />
+                    <Plus className="w-2.5 h-2.5" />
                   </button>
                 </div>
 
                 {/* Stock Reservado - 6 cols with modification controls */}
-                <div className="col-span-6 h-full flex items-center justify-center gap-1.5 px-2 border-r border-slate-100">
+                <div className="col-span-6 h-full flex items-center justify-center gap-1 px-1.5 border-r border-slate-100/50">
                   {/* Operation selector */}
                   <select
                     value={stockReservadoOperation}
                     onChange={(e) => setStockReservadoOperation(e.target.value as "agregar" | "disminuir" | "sobreescribir")}
-                    className="h-6 text-[10px] px-1 border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="h-6 text-[10px] px-1 border border-slate-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-slate-400 cursor-pointer font-mono"
                   >
                     <option value="agregar">+</option>
                     <option value="disminuir">-</option>
@@ -431,46 +449,56 @@ export function ItemCard({
                     min="0"
                     value={stockReservadoInput}
                     onChange={(e) => setStockReservadoInput(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
                     placeholder="0"
-                    className="w-10 h-6 text-xs text-center border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-amber-400"
+                    className="w-10 h-6 text-xs text-center border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-slate-400 font-mono"
                   />
                   {/* Check button */}
                   <button
-                    onClick={() => handleStockModify("reservado")}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleStockModify("reservado")
+                    }}
                     disabled={!stockReservadoInput}
-                    className={`p-1 rounded transition-colors ${
+                    className={`p-1 rounded transition-all duration-200 ${
                       stockReservadoInput 
-                        ? "bg-amber-100 text-amber-700 hover:bg-amber-200 cursor-pointer" 
-                        : "bg-gray-100 text-gray-300 cursor-not-allowed"
+                        ? "bg-slate-800 text-white hover:bg-slate-700 cursor-pointer" 
+                        : "bg-slate-100 text-slate-300 cursor-not-allowed"
                     }`}
                   >
                     <Check className="w-3 h-3" />
                   </button>
                   {/* Decrement button */}
                   <button
-                    onClick={() => handleStockIncrement("reservado", -1)}
-                    className="p-1 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleStockIncrement("reservado", -1)
+                    }}
+                    className="w-5 h-5 flex items-center justify-center rounded bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
                   >
-                    <Minus className="w-3 h-3" />
+                    <Minus className="w-2.5 h-2.5" />
                   </button>
                   {/* Stock value */}
-                  <span className="text-sm font-medium text-foreground min-w-[28px] text-center">{currentStockReservado}</span>
+                  <span className="text-sm font-medium text-foreground min-w-[24px] text-center font-mono">{currentStockReservado}</span>
                   {/* Increment button */}
                   <button
-                    onClick={() => handleStockIncrement("reservado", 1)}
-                    className="p-1 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleStockIncrement("reservado", 1)
+                    }}
+                    className="w-5 h-5 flex items-center justify-center rounded bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
                   >
-                    <Plus className="w-3 h-3" />
+                    <Plus className="w-2.5 h-2.5" />
                   </button>
                 </div>
 
                 {/* Stock Disponible - 2 cols (read-only) */}
                 <div className="col-span-2 h-full flex items-center justify-center px-2">
-                  <span className={`text-sm font-semibold ${
+                  <span className={`text-sm font-semibold font-mono ${
                     currentStockDisponible > 0 
-                      ? "text-green-600" 
+                      ? "text-emerald-600" 
                       : currentStockDisponible < 0 
-                        ? "text-red-600" 
+                        ? "text-red-500" 
                         : "text-foreground"
                   }`}>
                     {currentStockDisponible}
@@ -776,6 +804,8 @@ export function ItemCard({
                 handleItemSelection={handleItemSelection}
                 getSelectionState={getSelectionState}
                 isAuditMode={isAuditMode}
+                onStockChange={onStockChange}
+                auditStockValues={auditStockValues}
               />
             )
           })}
@@ -805,6 +835,8 @@ export function ItemCard({
                 handleItemSelection={handleItemSelection}
                 getSelectionState={getSelectionState}
                 isAuditMode={isAuditMode}
+                onStockChange={onStockChange}
+                auditStockValues={auditStockValues}
               />
             )
           })}

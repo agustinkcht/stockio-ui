@@ -615,6 +615,67 @@ export function useItems() {
     setHasUnsavedEdits(false)
   }
 
+  // Force save current items state to localStorage (for audit mode bulk saves)
+  const forceSaveItems = () => {
+    localStorage.setItem(getStorageKey(), JSON.stringify(items))
+    console.log("[v0] useItems - forceSaveItems to localStorage, items count:", items.length)
+    setEditedItem(null)
+    setLastUndoneEdit(null)
+    setHasUnsavedEdits(false)
+  }
+
+  // Bulk save stock changes (for audit mode)
+  const bulkSaveStock = (changes: Record<string, { total: number; reservado: number }>) => {
+    console.log("[v0] useItems - bulkSaveStock called with changes:", Object.keys(changes).length)
+    
+    // Apply all changes to items
+    const updatedItems = items.map(item => {
+      // Check if this item has a change
+      if (changes[item.sku]) {
+        const { total, reservado } = changes[item.sku]
+        return {
+          ...item,
+          stock: {
+            total: total.toString(),
+            reservado: reservado.toString(),
+            disponible: (total - reservado).toString()
+          }
+        }
+      }
+      
+      // Check if any variants have changes
+      if (item.variants) {
+        const updatedVariants = item.variants.map((variant: any) => {
+          if (changes[variant.sku]) {
+            const { total, reservado } = changes[variant.sku]
+            return {
+              ...variant,
+              stock: {
+                total: total.toString(),
+                reservado: reservado.toString(),
+                disponible: (total - reservado).toString()
+              }
+            }
+          }
+          return variant
+        })
+        return { ...item, variants: updatedVariants }
+      }
+      
+      return item
+    })
+    
+    // Update state and persist to localStorage immediately
+    setItems(updatedItems)
+    localStorage.setItem(getStorageKey(), JSON.stringify(updatedItems))
+    console.log("[v0] useItems - bulkSaveStock persisted to localStorage")
+    
+    // Clear edit state
+    setEditedItem(null)
+    setLastUndoneEdit(null)
+    setHasUnsavedEdits(false)
+  }
+
   const cancelEdit = () => {
     if (!editedItem) return
 
@@ -877,6 +938,7 @@ export function useItems() {
     items,
     setItems,
     updateStock,
+    depositStock: undefined, // Placeholder for deposit-level stock tracking
     handleCreateNuevoItem,
     handleCreateNuevoItemConVariantes,
     updateItem,
@@ -893,6 +955,8 @@ export function useItems() {
     undoEdit,
     redoEdit,
     saveEdit,
+    forceSaveItems,
+    bulkSaveStock,
     cancelEdit,
     hasUnsavedEdits,
     canUndoEdit,

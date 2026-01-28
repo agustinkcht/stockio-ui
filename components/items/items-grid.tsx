@@ -2,12 +2,17 @@
 
 import type { Item, DepositStock, SortFactorConfig, FilterConfig } from "@/lib/types"
 import { ItemCard } from "./item-card"
-import { Plus, ArrowUpDown, ListFilterIcon, Search, X, Grid, Minus, ClipboardList } from "lucide-react"
+import { Plus, ArrowUpDown, ListFilterIcon, Search, X, Grid, Minus, ClipboardList, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRef, useState, useEffect, useMemo } from "react"
 import { searchItems, sortItems, filterItems, getUniqueCategorias, getUniqueMarcas } from "@/lib/utils/item-utils"
 import { OrdenModal } from "@/components/modals/orden-modal"
 import { FiltrosModal } from "@/components/modals/filtros-modal"
+
+interface AuditStockChange {
+  total: number
+  reservado: number
+}
 
 interface ItemsGridProps {
   items: Item[]
@@ -31,6 +36,8 @@ interface ItemsGridProps {
   handleOpenNuevoItemConVariantes?: () => void
   hasSelectedItems?: boolean
   onBatchDelete?: () => void
+  onUpdateStock?: (itemSku: string, field: "total" | "reservado", value: number) => void
+  onBulkSaveStock?: (changes: Record<string, { total: number; reservado: number }>) => void
 }
 
 export function ItemsGrid({
@@ -55,6 +62,8 @@ export function ItemsGrid({
   handleOpenNuevoItemConVariantes,
   hasSelectedItems,
   onBatchDelete,
+  onUpdateStock,
+  onBulkSaveStock,
 }: ItemsGridProps) {
   const orderRef = useRef<HTMLDivElement>(null)
   const filterRef = useRef<HTMLDivElement>(null)
@@ -77,51 +86,49 @@ export function ItemsGrid({
   const [isAuditMode, setIsAuditMode] = useState(false)
   
   // Audit mode stock tracking
-  const [auditStockChanges, setAuditStockChanges] = useState<{ [sku: string]: { total: number; reservado: number } }>({})
-  const [hasAuditChanges, setHasAuditChanges] = useState(false)
+  const [auditStockChanges, setAuditStockChanges] = useState<Record<string, AuditStockChange>>({})
+  const hasAuditChanges = Object.keys(auditStockChanges).length > 0
 
   // Handle stock changes in audit mode
   const handleAuditStockChange = (sku: string, field: "total" | "reservado", value: number) => {
-    setAuditStockChanges(prev => {
-      // Get current values (from previous changes or original item)
-      const item = items.find(i => i.sku === sku) || 
-                   items.flatMap(i => i.variants || []).find(v => v.sku === sku) ||
-                   items.flatMap(i => i.items || []).find(gi => gi.sku === sku)
-      
-      const currentTotal = prev[sku]?.total ?? item?.stock?.total ?? 0
-      const currentReservado = prev[sku]?.reservado ?? item?.stock?.reservado ?? 0
-      
-      return {
-        ...prev,
-        [sku]: {
-          total: field === "total" ? value : currentTotal,
-          reservado: field === "reservado" ? value : currentReservado,
+    // Find the item to get current values
+    let item = items.find(i => i.sku === sku)
+    if (!item) {
+      // Search in variants
+      for (const parent of items) {
+        if (parent.variants) {
+          const variant = parent.variants.find((v: any) => v.sku === sku)
+          if (variant) {
+            item = variant as any
+            break
+          }
         }
       }
-    })
-    setHasAuditChanges(true)
+    }
+    if (!item) return
+
+    const currentTotal = auditStockChanges[sku]?.total ?? parseInt(item.stock?.total || "0")
+    const currentReservado = auditStockChanges[sku]?.reservado ?? parseInt(item.stock?.reservado || "0")
+
+    setAuditStockChanges(prev => ({
+      ...prev,
+      [sku]: {
+        total: field === "total" ? value : currentTotal,
+        reservado: field === "reservado" ? value : currentReservado,
+      }
+    }))
   }
 
   // Discard audit changes
   const handleDiscardAuditChanges = () => {
     setAuditStockChanges({})
-    setHasAuditChanges(false)
   }
 
-  // Save audit changes
+  // Save audit changes to localStorage
   const handleSaveAuditChanges = () => {
-    // Apply changes to items through the onUpdateItem callback
-    Object.entries(auditStockChanges).forEach(([sku, stockValues]) => {
-      onUpdateItem?.(sku, {
-        stock: {
-          total: stockValues.total,
-          reservado: stockValues.reservado,
-          disponible: stockValues.total - stockValues.reservado,
-        }
-      })
-    })
+    // Pass all changes at once for atomic save
+    onBulkSaveStock?.(auditStockChanges)
     setAuditStockChanges({})
-    setHasAuditChanges(false)
   }
 
   const availableCategorias = useMemo(() => getUniqueCategorias(items), [items])
@@ -158,6 +165,29 @@ export function ItemsGrid({
       document.removeEventListener("mousedown", handleClickOutside)
     }
   }, [])
+
+  // Keyboard shortcuts for audit mode
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Only respond if we have audit changes and not typing in an input
+      if (!hasAuditChanges) return
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return
+
+      if (event.key.toLowerCase() === 'd' && !event.metaKey && !event.ctrlKey) {
+        event.preventDefault()
+        handleDiscardAuditChanges()
+      }
+      if (event.key.toLowerCase() === 'g' && !event.metaKey && !event.ctrlKey) {
+        event.preventDefault()
+        handleSaveAuditChanges()
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown)
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [hasAuditChanges, auditStockChanges])
 
   const hasActiveFilters =
     filterConfig.tipos.length > 0 ||
@@ -227,6 +257,29 @@ export function ItemsGrid({
                   <ClipboardList className={`w-3.5 h-3.5 mr-1.5 ${isAuditMode ? "text-amber-600" : "text-amber-600"}`} />
                   Auditoría de Stock
                 </Button>
+
+                {/* Audit mode save/discard buttons */}
+                {hasAuditChanges && (
+                  <div className="flex items-center gap-1.5 ml-2 pl-2 border-l border-slate-200">
+                    <span className="text-[10px] text-slate-500 font-medium px-1.5 py-0.5 bg-slate-100 rounded-full">
+                      {Object.keys(auditStockChanges).length} cambio{Object.keys(auditStockChanges).length !== 1 ? 's' : ''}
+                    </span>
+                    <button
+                      onClick={handleDiscardAuditChanges}
+                      className="h-7 px-3 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded transition-all duration-200 cursor-pointer flex items-center gap-1.5"
+                    >
+                      <span className="text-[10px] font-mono bg-slate-200 px-1 rounded">D</span>
+                      Descartar
+                    </button>
+                    <button
+                      onClick={handleSaveAuditChanges}
+                      className="h-7 px-3 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded transition-all duration-200 cursor-pointer flex items-center gap-1.5 shadow-sm"
+                    >
+                      <span className="text-[10px] font-mono bg-emerald-500 px-1 rounded">G</span>
+                      Guardar
+                    </button>
+                  </div>
+                )}
 
                 {hasSelectedItems && (
                   <Button
@@ -415,6 +468,8 @@ export function ItemsGrid({
                   handleItemSelection={handleItemSelection}
                   getSelectionState={getSelectionState}
                   isAuditMode={isAuditMode}
+                  onStockChange={handleAuditStockChange}
+                  auditStockValues={auditStockChanges}
                 />
               )
             })}

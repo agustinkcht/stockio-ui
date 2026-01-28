@@ -44,6 +44,8 @@ export default function ArticulosPage() {
     hasUnsavedDeletes,
     deletedItems,
     isCreatingItem,
+    updateStock,
+    forceSaveItems,
   } = useItems()
 
   const {
@@ -370,6 +372,8 @@ export default function ArticulosPage() {
                     handleOpenNuevoItemConVariantes={handleOpenNuevoItemConVariantes}
                     hasSelectedItems={hasSelectedItems}
                     onBatchDelete={handleBatchDeleteClick}
+                    onUpdateStock={updateStock}
+                    onSaveEdit={forceSaveItems}
                   />
                 </div>
               </div>
