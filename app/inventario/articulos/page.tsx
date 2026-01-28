@@ -50,6 +50,9 @@ export default function ArticulosPage() {
     isCreatingItem,
     updateStock,
     forceSaveItems,
+    editField,
+    editVariantField,
+    saveEdit,
   } = useItems()
 
   const {
@@ -122,13 +125,41 @@ export default function ArticulosPage() {
     setIsSaving(true)
     try {
       await sleep(600)
-      // Apply each change to the items
+      
+      // Apply each change using editField/editVariantField (like precios page does)
       for (const [sku, stockChange] of Object.entries(changes)) {
-        updateStock(sku, "total", stockChange.total)
-        updateStock(sku, "reservado", stockChange.reservado)
+        // Check if this is a variant by looking through parent items
+        let isVariant = false
+        let parentSku: string | undefined
+
+        for (const item of items) {
+          if (item.variants) {
+            const variant = item.variants.find((v: any) => v.sku === sku)
+            if (variant) {
+              isVariant = true
+              parentSku = item.sku
+              break
+            }
+          }
+        }
+
+        // Build the stock object with calculated disponible
+        const disponible = stockChange.total - stockChange.reservado
+        const stockValue = {
+          total: stockChange.total.toString(),
+          reservado: stockChange.reservado.toString(),
+          disponible: disponible.toString(),
+        }
+
+        if (isVariant && parentSku) {
+          editVariantField(parentSku, sku, "stock", stockValue)
+        } else {
+          editField(sku, "stock", stockValue)
+        }
       }
-      // Force save to localStorage
-      forceSaveItems()
+      
+      // Save edits to localStorage (like precios page does)
+      saveEdit()
       
       // Clear audit changes in the grid AFTER save is complete
       ;(window as any).__auditClearHandler?.()
