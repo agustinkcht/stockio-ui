@@ -2,12 +2,13 @@
 
 import type { Item, DepositStock, SortFactorConfig, FilterConfig } from "@/lib/types"
 import { ItemCard } from "./item-card"
-import { Plus, ArrowUpDown, ListFilterIcon, Search, X, Grid, Minus, ClipboardList, Check } from "lucide-react"
+import { Plus, ArrowUpDown, ListFilterIcon, Search, X, Grid, Minus, ClipboardList, Check, MoreVertical } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useRef, useState, useEffect, useMemo } from "react"
+import { useRef, useState, useEffect, useMemo, useCallback } from "react"
 import { searchItems, sortItems, filterItems, getUniqueCategorias, getUniqueMarcas } from "@/lib/utils/item-utils"
 import { OrdenModal } from "@/components/modals/orden-modal"
 import { FiltrosModal } from "@/components/modals/filtros-modal"
+import { BulkStockModal } from "@/components/modals/bulk-stock-modal"
 
 interface AuditStockChange {
   total: number
@@ -37,11 +38,12 @@ interface ItemsGridProps {
   hasSelectedItems?: boolean
   onBatchDelete?: () => void
   onUpdateStock?: (itemSku: string, field: "total" | "reservado", value: number) => void
-  onSaveEdit?: () => void
   // Audit mode callbacks to parent for D-G buttons
   onAuditChangesUpdate?: (hasChanges: boolean, pendingCount: number) => void
   onAuditSave?: (changes: Record<string, { total: number; reservado: number }>) => void
   onAuditDiscard?: () => void
+  // For bulk stock edit
+  getSelectedSkus?: () => string[]
 }
 
 export function ItemsGrid({
@@ -67,10 +69,10 @@ export function ItemsGrid({
   hasSelectedItems,
   onBatchDelete,
   onUpdateStock,
-  onSaveEdit,
   onAuditChangesUpdate,
   onAuditSave,
   onAuditDiscard,
+  getSelectedSkus,
 }: ItemsGridProps) {
   const orderRef = useRef<HTMLDivElement>(null)
   const filterRef = useRef<HTMLDivElement>(null)
@@ -91,6 +93,7 @@ export function ItemsGrid({
   })
   const [sortConfig, setSortConfig] = useState<SortFactorConfig[]>([{ factor: "categoria", direction: "asc" }])
   const [isAuditMode, setIsAuditMode] = useState(false)
+  const [bulkStockModalType, setBulkStockModalType] = useState<"total" | "reservado" | null>(null)
   
   // Audit mode stock tracking
   const [auditStockChanges, setAuditStockChanges] = useState<Record<string, AuditStockChange>>({})
@@ -168,10 +171,80 @@ export function ItemsGrid({
 
   const searchedItems = searchItems(items, searchQuery)
   const filteredItems = filterItems(searchedItems, filterConfig)
-  const sortedAndFilteredItems = sortItems(filteredItems, sortConfig)
+const sortedAndFilteredItems = sortItems(filteredItems, sortConfig)
 
+  // Get all visible SKUs (standalone items and children of parents)
+  const getVisibleSkus = useCallback((): string[] => {
+    const skus: string[] = []
+    for (const item of sortedAndFilteredItems) {
+      const isParent = (item.variants && item.variants.length > 0) || (item.items && item.items.length > 0)
+      if (isParent) {
+        const children = item.variants || item.items || []
+        for (const child of children) {
+          if (child.sku) skus.push(child.sku)
+        }
+      } else if (item.sku) {
+        skus.push(item.sku)
+      }
+    }
+    return skus
+  }, [sortedAndFilteredItems])
+
+  // Get target SKUs for bulk edit (selected items take priority over visible items)
+  const getTargetSkusForBulkEdit = useCallback((): string[] => {
+    if (hasSelectedItems && getSelectedSkus) {
+      return getSelectedSkus()
+    }
+    return getVisibleSkus()
+  }, [hasSelectedItems, getSelectedSkus, getVisibleSkus])
+
+  // Get count of items that will be affected by bulk edit
+  const bulkEditTargetCount = useMemo(() => {
+    return getTargetSkusForBulkEdit().length
+  }, [getTargetSkusForBulkEdit])
+
+  // Handle bulk stock edit apply
+  const handleBulkStockApply = (operation: string, value: number) => {
+    const targetSkus = getTargetSkusForBulkEdit()
+    const field = bulkStockModalType
+    if (!field) return
+
+    for (const sku of targetSkus) {
+      let item = items.find(i => i.sku === sku)
+      if (!item) {
+        for (const parent of items) {
+          if (parent.variants) {
+            const variant = parent.variants.find((v: any) => v.sku === sku)
+            if (variant) {
+              item = variant as any
+              break
+            }
+          }
+        }
+      }
+      if (!item) continue
+
+      const currentTotal = auditStockChanges[sku]?.total ?? parseInt(item.stock?.total || "0")
+      const currentReservado = auditStockChanges[sku]?.reservado ?? parseInt(item.stock?.reservado || "0")
+      const currentValue = field === "total" ? currentTotal : currentReservado
+
+      let newValue = currentValue
+      if (operation === "aumentar") {
+        newValue = currentValue + value
+      } else if (operation === "disminuir") {
+        newValue = Math.max(0, currentValue - value)
+      } else if (operation === "sobreescribir") {
+        newValue = value
+      }
+
+      handleAuditStockChange(sku, field, newValue)
+    }
+
+    setBulkStockModalType(null)
+  }
+  
   const handleApplySortConfig = (newConfig: SortFactorConfig[]) => {
-    setSortConfig(newConfig)
+  setSortConfig(newConfig)
   }
 
   const handleApplyFilters = (newFilters: FilterConfig) => {
@@ -371,11 +444,25 @@ export function ItemsGrid({
                   <div className="col-span-8 flex items-center px-4 py-2 justify-center border-solid pl-4 pr-4 mr-0 border border-l-0 border-[rgba(202,213,227,0.61)]">
                     <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Item</span>
                   </div>
-                  <div className="col-span-6 flex items-center justify-center py-2 border-solid border-r px-4 mx-0 ml-0 mr-px border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
-                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Stock Total</span>
+                  <div className="col-span-6 flex items-center justify-between py-2 border-solid border-r px-3 mx-0 ml-0 mr-px border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
+                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wider flex-1 text-center">Stock Total</span>
+                    <button
+                      onClick={() => setBulkStockModalType("total")}
+                      className="p-0.5 hover:bg-slate-300 rounded transition-colors cursor-pointer"
+                      title="Modificar stock total en masa"
+                    >
+                      <MoreVertical className="w-3.5 h-3.5 text-gray-500" />
+                    </button>
                   </div>
-                  <div className="col-span-6 flex items-center justify-center py-2 border-solid border-r px-4 mx-0 ml-0 mr-px border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
-                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Stock Reservado</span>
+                  <div className="col-span-6 flex items-center justify-between py-2 border-solid border-r px-3 mx-0 ml-0 mr-px border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
+                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wider flex-1 text-center">Stock Reservado</span>
+                    <button
+                      onClick={() => setBulkStockModalType("reservado")}
+                      className="p-0.5 hover:bg-slate-300 rounded transition-colors cursor-pointer"
+                      title="Modificar stock reservado en masa"
+                    >
+                      <MoreVertical className="w-3.5 h-3.5 text-gray-500" />
+                    </button>
                   </div>
                   <div className="col-span-2 flex items-center justify-center py-2 mx-0 ml-0 px-0 mr-0 border-b border-t border-l-0 border-r-0 border-[rgba(202,213,227,0.61)]">
                     <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Disponible</span>
@@ -486,6 +573,15 @@ export function ItemsGrid({
         availableCategorias={availableCategorias}
         availableMarcas={availableMarcas}
         availableDepositos={availableDepositos}
+      />
+
+      {/* Bulk Stock Modal */}
+      <BulkStockModal
+        isOpen={bulkStockModalType !== null}
+        onClose={() => setBulkStockModalType(null)}
+        onApply={handleBulkStockApply}
+        itemCount={bulkEditTargetCount}
+        type={bulkStockModalType || "total"}
       />
     </>
   )

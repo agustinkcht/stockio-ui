@@ -49,10 +49,7 @@ export default function ArticulosPage() {
     deletedItems,
     isCreatingItem,
     updateStock,
-    forceSaveItems,
-    editField,
-    editVariantField,
-    saveEdit,
+    bulkSaveStock,
   } = useItems()
 
   const {
@@ -126,42 +123,11 @@ export default function ArticulosPage() {
     try {
       await sleep(600)
       
-      // Apply each change using editField/editVariantField (like precios page does)
-      for (const [sku, stockChange] of Object.entries(changes)) {
-        // Check if this is a variant by looking through parent items
-        let isVariant = false
-        let parentSku: string | undefined
-
-        for (const item of items) {
-          if (item.variants) {
-            const variant = item.variants.find((v: any) => v.sku === sku)
-            if (variant) {
-              isVariant = true
-              parentSku = item.sku
-              break
-            }
-          }
-        }
-
-        // Build the stock object with calculated disponible
-        const disponible = stockChange.total - stockChange.reservado
-        const stockValue = {
-          total: stockChange.total.toString(),
-          reservado: stockChange.reservado.toString(),
-          disponible: disponible.toString(),
-        }
-
-        if (isVariant && parentSku) {
-          editVariantField(parentSku, sku, "stock", stockValue)
-        } else {
-          editField(sku, "stock", stockValue)
-        }
-      }
+      // Use bulkSaveStock - it handles both standalone and variant items atomically
+      // and persists directly to localStorage
+      bulkSaveStock(changes)
       
-      // Save all items to localStorage using forceSaveItems (not saveEdit, which only tracks single item)
-      forceSaveItems()
-      
-      // Clear audit changes in the grid AFTER save is complete
+      // Clear audit changes in the grid
       ;(window as any).__auditClearHandler?.()
       
       setShowSaveSuccess(true)
@@ -482,10 +448,10 @@ export default function ArticulosPage() {
                     hasSelectedItems={hasSelectedItems}
                     onBatchDelete={handleBatchDeleteClick}
                     onUpdateStock={updateStock}
-                    onSaveEdit={forceSaveItems}
                     onAuditChangesUpdate={handleAuditChangesUpdate}
                     onAuditSave={handleAuditSave}
                     onAuditDiscard={handleAuditDiscard}
+                    getSelectedSkus={getSelectedSkus}
                   />
                 </div>
               </div>
