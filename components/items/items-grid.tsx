@@ -94,6 +94,7 @@ export function ItemsGrid({
   const [sortConfig, setSortConfig] = useState<SortFactorConfig[]>([{ factor: "categoria", direction: "asc" }])
   const [isAuditMode, setIsAuditMode] = useState(false)
   const [bulkStockModalType, setBulkStockModalType] = useState<"total" | "reservado" | null>(null)
+  const [showOnlyPendingChanges, setShowOnlyPendingChanges] = useState(false)
   
   // Audit mode stock tracking
   const [auditStockChanges, setAuditStockChanges] = useState<Record<string, AuditStockChange>>({})
@@ -138,6 +139,7 @@ export function ItemsGrid({
   // Discard audit changes - exposed to parent via callback
   const handleDiscardAuditChanges = () => {
     setAuditStockChanges({})
+    setShowOnlyPendingChanges(false)
     onAuditDiscard?.()
   }
 
@@ -150,6 +152,7 @@ export function ItemsGrid({
   // Clear audit changes - called by parent after successful save
   const clearAuditChanges = () => {
     setAuditStockChanges({})
+    setShowOnlyPendingChanges(false)
   }
 
   // Expose handlers to parent by storing refs (parent can call via props)
@@ -171,7 +174,85 @@ export function ItemsGrid({
 
   const searchedItems = searchItems(items, searchQuery)
   const filteredItems = filterItems(searchedItems, filterConfig)
-const sortedAndFilteredItems = sortItems(filteredItems, sortConfig)
+  
+  // Filter items to show only those with pending changes (similar to searchItems pattern)
+  const filterByPendingChanges = useMemo(() => {
+    if (!showOnlyPendingChanges || Object.keys(auditStockChanges).length === 0) {
+      return filteredItems
+    }
+    
+    const pendingSkus = new Set(Object.keys(auditStockChanges))
+    const results: Item[] = []
+    
+    for (const item of filteredItems) {
+      // Check for parent items with variants
+      if (item.hasVariants && item.variants) {
+        const matchingVariants = item.variants.filter((variant: any) => pendingSkus.has(variant.sku))
+        if (matchingVariants.length > 0) {
+          results.push({
+            ...item,
+            variants: matchingVariants,
+            variantCount: matchingVariants.length,
+          })
+        }
+      }
+      // Check for agrupador items
+      else if (item.isAgrupador && item.items) {
+        const matchingSubItems: any[] = []
+        for (const subItem of item.items) {
+          if (subItem.hasVariants && subItem.variants) {
+            const matchingVariants = subItem.variants.filter((variant: any) => pendingSkus.has(variant.sku))
+            if (matchingVariants.length > 0) {
+              matchingSubItems.push({
+                ...subItem,
+                variants: matchingVariants,
+                variantCount: matchingVariants.length,
+              })
+            }
+          } else if (pendingSkus.has(subItem.sku)) {
+            matchingSubItems.push(subItem)
+          }
+        }
+        if (matchingSubItems.length > 0) {
+          results.push({
+            ...item,
+            items: matchingSubItems,
+            itemCount: matchingSubItems.length,
+          })
+        }
+      }
+      // Standalone items
+      else if (pendingSkus.has(item.sku)) {
+        results.push(item)
+      }
+    }
+    
+    return results
+  }, [filteredItems, showOnlyPendingChanges, auditStockChanges])
+  
+  const sortedAndFilteredItems = sortItems(filterByPendingChanges, sortConfig)
+  
+  // Auto-expand parents when showing only pending changes
+  useEffect(() => {
+    if (showOnlyPendingChanges && Object.keys(auditStockChanges).length > 0) {
+      // Expand all items that have children with pending changes
+      const newExpandedItems: Record<number, boolean> = {}
+      sortedAndFilteredItems.forEach((item, index) => {
+        const hasChildren = (item.variants && item.variants.length > 0) || (item.items && item.items.length > 0)
+        if (hasChildren) {
+          newExpandedItems[index] = true
+        }
+      })
+      // Only update if there are items to expand
+      if (Object.keys(newExpandedItems).length > 0) {
+        Object.keys(newExpandedItems).forEach(key => {
+          if (!expandedItems[parseInt(key)]) {
+            toggleVariantExpansion(parseInt(key))
+          }
+        })
+      }
+    }
+  }, [showOnlyPendingChanges, sortedAndFilteredItems.length])
 
   // Get all visible SKUs (standalone items and children of parents)
   const getVisibleSkus = useCallback((): string[] => {
@@ -341,11 +422,19 @@ const sortedAndFilteredItems = sortItems(filteredItems, sortConfig)
                   Auditoría de Stock
                 </Button>
 
-                {/* Pending changes counter (D-G buttons are in utility bar) */}
+{/* Pending changes counter - clickable to filter */}
                 {hasAuditChanges && (
-                  <span className="text-[10px] text-amber-600 font-medium px-2 py-0.5 bg-amber-100 rounded-full ml-2 border border-amber-200">
+                  <button
+                    onClick={() => setShowOnlyPendingChanges(!showOnlyPendingChanges)}
+                    className={`text-[10px] font-medium px-2 py-0.5 rounded-full ml-2 border transition-all cursor-pointer ${
+                      showOnlyPendingChanges
+                        ? "bg-amber-500 text-white border-amber-600 hover:bg-amber-600"
+                        : "bg-amber-100 text-amber-600 border-amber-200 hover:bg-amber-200"
+                    }`}
+                    title={showOnlyPendingChanges ? "Mostrar todos los items" : "Mostrar solo items con cambios pendientes"}
+                  >
                     {pendingChangesCount} cambio{pendingChangesCount !== 1 ? 's' : ''} pendiente{pendingChangesCount !== 1 ? 's' : ''}
-                  </span>
+                  </button>
                 )}
 
                 {hasSelectedItems && (
