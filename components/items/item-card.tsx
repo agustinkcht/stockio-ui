@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect, useRef, useMemo } from "react"
-import { ChevronDown, ChevronUp, MoreVertical, Layers, Trash2, Copy } from "lucide-react"
+import { ChevronDown, ChevronUp, MoreVertical, Layers, Trash2, Copy, Minus } from "lucide-react"
 import type { Item } from "@/lib/types"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { getCategoryImage } from "@/lib/utils/category-images"
@@ -12,14 +12,17 @@ interface ItemCardProps {
   index: number
   gridSize: string
   isSelected: boolean
+  isIndeterminate?: boolean
   isExpanded: boolean
-  onSelectClick: (index: number) => void
-  onItemClick: (item: Item) => void // Simplified signature - no longer needs tab parameter
+  onSelectClick: () => void
+  onItemClick: (item: Item) => void
   onToggleExpansion: (index: number) => void
   onDelete?: (item: Item) => void
-  nextItem?: Item // Added for dynamic margin calculation
-  isChild?: boolean // Added to identify child items
-  isLastChild?: boolean // Added to identify last child for rounded bottom corners
+  nextItem?: Item
+  isChild?: boolean
+  isLastChild?: boolean
+  handleItemSelection?: (item: Item, isChild?: boolean) => void
+  getSelectionState?: (item: Item, isChild?: boolean) => { checked: boolean; indeterminate: boolean }
 }
 
 function calculateMarginBottom(currentItem: Item, nextItem: Item | undefined, isChild: boolean): string {
@@ -55,6 +58,7 @@ export function ItemCard({
   index,
   gridSize,
   isSelected,
+  isIndeterminate = false,
   isExpanded,
   onSelectClick,
   onItemClick,
@@ -63,6 +67,8 @@ export function ItemCard({
   nextItem,
   isChild = false,
   isLastChild = false,
+  handleItemSelection,
+  getSelectionState,
 }: ItemCardProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [showTransition, setShowTransition] = useState(false)
@@ -160,18 +166,32 @@ export function ItemCard({
           onMouseLeave={handleButtonMouseLeave}
           onClick={(e) => {
             e.stopPropagation()
-            onSelectClick(index)
+            onSelectClick()
           }}
         >
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onSelectClick(index)
-            }}
-            className={`relative left-[-7px] h-4.5 w-4.5 transition-colors cursor-pointer flex items-center justify-center text-sidebar-accent rounded-full ml-0 border shadow-xs border-slate-300 ${
-              isSelected ? "bg-sky-950 border-primary hover:opacity-90" : "bg-transparent border-border"
-            } ${!isHovered && !isSelected ? "opacity-0" : "opacity-100"} ${showTransition ? "transition-opacity" : ""}`}
-          ></button>
+          {isIndeterminate ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onSelectClick()
+              }}
+              className={`relative left-[-7px] h-4.5 w-4.5 flex items-center justify-center rounded-sm bg-primary border border-primary cursor-pointer ${
+                !isHovered && !isSelected && !isIndeterminate ? "opacity-0" : "opacity-100"
+              } ${showTransition ? "transition-opacity" : ""}`}
+            >
+              <Minus className="w-3 h-3 text-primary-foreground" />
+            </button>
+          ) : (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onSelectClick()
+              }}
+              className={`relative left-[-7px] h-4.5 w-4.5 transition-colors cursor-pointer flex items-center justify-center text-sidebar-accent rounded-full ml-0 border shadow-xs border-slate-300 ${
+                isSelected ? "bg-sky-950 border-primary hover:opacity-90" : "bg-transparent border-border"
+              } ${!isHovered && !isSelected ? "opacity-0" : "opacity-100"} ${showTransition ? "transition-opacity" : ""}`}
+            ></button>
+          )}
         </div>
 
         <div
@@ -461,45 +481,57 @@ export function ItemCard({
 
       {item.hasVariants && isExpanded && item.variants && (
         <div className={gridSize === "lg" ? "mt-2" : "mt-0"}>
-          {item.variants.map((variant: any, variantIndex: number) => (
-            <ItemCard
-              key={variantIndex}
-              item={variant}
-              index={variantIndex}
-              gridSize={gridSize}
-              isSelected={false}
-              isExpanded={false}
-              onSelectClick={() => {}}
-              onItemClick={onItemClick}
-              onToggleExpansion={() => {}}
-              onDelete={onDelete}
-              nextItem={item.variants?.[variantIndex + 1]}
-              isChild={true}
-              isLastChild={variantIndex === item.variants.length - 1}
-            />
-          ))}
+          {item.variants.map((variant: any, variantIndex: number) => {
+            const childState = getSelectionState ? getSelectionState(variant, true) : { checked: false, indeterminate: false }
+            return (
+              <ItemCard
+                key={variant.sku || variantIndex}
+                item={variant}
+                index={variantIndex}
+                gridSize={gridSize}
+                isSelected={childState.checked}
+                isIndeterminate={childState.indeterminate}
+                isExpanded={false}
+                onSelectClick={() => handleItemSelection?.(variant, true)}
+                onItemClick={onItemClick}
+                onToggleExpansion={() => {}}
+                onDelete={onDelete}
+                nextItem={item.variants?.[variantIndex + 1]}
+                isChild={true}
+                isLastChild={variantIndex === item.variants.length - 1}
+                handleItemSelection={handleItemSelection}
+                getSelectionState={getSelectionState}
+              />
+            )
+          })}
         </div>
       )}
 
       {item.isAgrupador && isExpanded && item.items && (
         <div className={gridSize === "lg" ? "mt-2" : "mt-0"}>
-          {item.items.map((groupItem, groupItemIndex) => (
-            <ItemCard
-              key={groupItemIndex}
-              item={groupItem}
-              index={groupItemIndex}
-              gridSize={gridSize}
-              isSelected={false}
-              isExpanded={false}
-              onSelectClick={() => {}}
-              onItemClick={onItemClick}
-              onToggleExpansion={() => {}}
-              onDelete={onDelete}
-              nextItem={item.items?.[groupItemIndex + 1]}
-              isChild={true}
-              isLastChild={groupItemIndex === item.items.length - 1}
-            />
-          ))}
+          {item.items.map((groupItem, groupItemIndex) => {
+            const childState = getSelectionState ? getSelectionState(groupItem, true) : { checked: false, indeterminate: false }
+            return (
+              <ItemCard
+                key={groupItem.sku || groupItemIndex}
+                item={groupItem}
+                index={groupItemIndex}
+                gridSize={gridSize}
+                isSelected={childState.checked}
+                isIndeterminate={childState.indeterminate}
+                isExpanded={false}
+                onSelectClick={() => handleItemSelection?.(groupItem, true)}
+                onItemClick={onItemClick}
+                onToggleExpansion={() => {}}
+                onDelete={onDelete}
+                nextItem={item.items?.[groupItemIndex + 1]}
+                isChild={true}
+                isLastChild={groupItemIndex === item.items.length - 1}
+                handleItemSelection={handleItemSelection}
+                getSelectionState={getSelectionState}
+              />
+            )
+          })}
         </div>
       )}
     </div>

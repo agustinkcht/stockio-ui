@@ -46,8 +46,16 @@ export default function ArticulosPage() {
     isCreatingItem,
   } = useItems()
 
-  const { itemSelected, selectAllActive, hasSelectedItems, handleItemButtonClick, handleSelectAllClick, setItemSelected, setSelectAllActive } =
-    useItemSelection(items.length)
+  const {
+    selectAllActive,
+    selectAllIndeterminate,
+    hasSelectedItems,
+    handleSelectAll,
+    handleItemSelection,
+    getSelectionState,
+    getSelectedSkus,
+    clearSelection,
+  } = useItemSelection(items)
 
   const {
     showNuevoItemModal,
@@ -186,14 +194,39 @@ export default function ArticulosPage() {
   }
 
   const handleConfirmBatchDelete = async () => {
-    const selectedItems = items.filter((_, index) => itemSelected[index])
-    const skusToDelete = selectedItems.map((item) => item.sku)
+    const skusToDelete = getSelectedSkus()
 
-    console.log("[v0] Batch delete starting, selected items:", selectedItems.length)
+    console.log("[v0] Batch delete starting, selected SKUs:", skusToDelete.length)
     console.log("[v0] SKUs to delete:", skusToDelete)
 
+    // Find items to delete (including children within parents)
+    const itemsToDelete: Item[] = []
+    for (const sku of skusToDelete) {
+      // Check standalone items
+      const standaloneItem = items.find((item) => item.sku === sku)
+      if (standaloneItem) {
+        itemsToDelete.push(standaloneItem)
+        continue
+      }
+      // Check children within parents
+      for (const item of items) {
+        if (item.variants) {
+          const variant = item.variants.find((v: any) => v.sku === sku)
+          if (variant) {
+            itemsToDelete.push(variant)
+          }
+        }
+        if (item.items) {
+          const groupItem = item.items.find((i: any) => i.sku === sku)
+          if (groupItem) {
+            itemsToDelete.push(groupItem)
+          }
+        }
+      }
+    }
+
     // Delete items from state
-    for (const item of selectedItems) {
+    for (const item of itemsToDelete) {
       deleteItem(item)
     }
 
@@ -213,9 +246,8 @@ export default function ArticulosPage() {
     // Now save deleted items state (to clear the deletedItems array)
     await saveDeletedItems()
 
-    // Reset selections completely - don't use handleSelectAllClick as it just toggles
-    setItemSelected([])
-    setSelectAllActive(false)
+    // Reset selections completely
+    clearSelection()
 
     setShowBatchDeleteModal(false)
     setShowSaveSuccess(true)
@@ -322,14 +354,14 @@ export default function ArticulosPage() {
                     depositStock={depositStock}
                     updateDepositStock={updateDepositStock}
                     expandedItems={expandedItems}
-                    setExpandedItems={setExpandedItems}
                     onDeleteItem={handleDeleteWithTracking}
-                    itemSelected={itemSelected}
-                    handleItemButtonClick={handleItemButtonClick}
                     handleItemClick={handleItemClick}
                     toggleVariantExpansion={toggleVariantExpansion}
                     selectAllActive={selectAllActive}
-                    handleSelectAllClick={handleSelectAllClick}
+                    selectAllIndeterminate={selectAllIndeterminate}
+                    handleSelectAll={handleSelectAll}
+                    handleItemSelection={handleItemSelection}
+                    getSelectionState={getSelectionState}
                     gridSizeDropdownOpen={gridSizeDropdownOpen}
                     setGridSizeDropdownOpen={setGridSizeDropdownOpen}
                     setGridSize={setGridSize}

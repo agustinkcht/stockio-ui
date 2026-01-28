@@ -2,7 +2,7 @@
 
 import type { Item, DepositStock, SortFactorConfig, FilterConfig } from "@/lib/types"
 import { ItemCard } from "./item-card"
-import { Plus, ArrowUpDown, ListFilterIcon, Search, X, Grid } from "lucide-react"
+import { Plus, ArrowUpDown, ListFilterIcon, Search, X, Grid, Minus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRef, useState, useEffect, useMemo } from "react"
 import { searchItems, sortItems, filterItems, getUniqueCategorias, getUniqueMarcas } from "@/lib/utils/item-utils"
@@ -12,16 +12,17 @@ import { FiltrosModal } from "@/components/modals/filtros-modal"
 interface ItemsGridProps {
   items: Item[]
   gridSize: string
-  itemSelected: boolean[]
   expandedItems: Record<number, boolean>
-  handleItemButtonClick: (index: number) => void
-  handleItemClick: (item: Item) => void // Simplified signature
+  handleItemClick: (item: Item) => void
   toggleVariantExpansion: (index: number) => void
   updateDepositStock?: (itemSku: string, depositId: string, quantity: number) => void
   depositStock?: DepositStock[]
   onDeleteItem?: (item: Item) => void
   selectAllActive: boolean
-  handleSelectAllClick: () => void
+  selectAllIndeterminate: boolean
+  handleSelectAll: () => void
+  handleItemSelection: (item: Item, isChild?: boolean) => void
+  getSelectionState: (item: Item, isChild?: boolean) => { checked: boolean; indeterminate: boolean }
   gridSizeDropdownOpen: boolean
   setGridSizeDropdownOpen: (value: boolean) => void
   setGridSize: (size: string) => void
@@ -35,16 +36,17 @@ interface ItemsGridProps {
 export function ItemsGrid({
   items,
   gridSize,
-  itemSelected,
   expandedItems,
-  handleItemButtonClick,
   handleItemClick,
   toggleVariantExpansion,
   updateDepositStock,
   depositStock,
   onDeleteItem,
   selectAllActive,
-  handleSelectAllClick,
+  selectAllIndeterminate,
+  handleSelectAll,
+  handleItemSelection,
+  getSelectionState,
   gridSizeDropdownOpen,
   setGridSizeDropdownOpen,
   setGridSize,
@@ -235,14 +237,23 @@ export function ItemsGrid({
             <div className="flex items-center ml-0 w-full">
               {/* All selector with same left offset as item checkboxes */}
               <div className="flex items-center justify-center h-9 bg-slate-200 border rounded-xs shadow-none w-auto border-r px-[13px] rounded-l-sm mr-0 ml-[-17px] border-b border-l border-t border-[rgba(202,213,227,0.61)]">
-                <button
-                  onClick={handleSelectAllClick}
-                  className={`h-4.5 w-4.5 transition-colors cursor-pointer flex items-center justify-center rounded-sm bg-white border border-slate-300 ${
-                    selectAllActive
-                      ? "bg-primary border-primary hover:bg-primary/90 hover:border-primary/90"
-                      : "bg-transparent border-border hover:border-muted-foreground"
-                  }`}
-                ></button>
+                {selectAllIndeterminate ? (
+                  <button
+                    onClick={handleSelectAll}
+                    className="h-4.5 w-4.5 flex items-center justify-center rounded-sm bg-primary border border-primary cursor-pointer"
+                  >
+                    <Minus className="w-3 h-3 text-primary-foreground" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleSelectAll}
+                    className={`h-4.5 w-4.5 transition-colors cursor-pointer flex items-center justify-center rounded-sm bg-white border border-slate-300 ${
+                      selectAllActive
+                        ? "bg-primary border-primary hover:bg-primary/90 hover:border-primary/90"
+                        : "bg-transparent border-border hover:border-muted-foreground"
+                    }`}
+                  ></button>
+                )}
               </div>
 
               {/* Tab header matching exact item card structure */}
@@ -307,19 +318,23 @@ export function ItemsGrid({
           <div>
             {sortedAndFilteredItems.map((item, index) => {
               const nextItem = sortedAndFilteredItems[index + 1]
+              const selectionState = getSelectionState(item, false)
               return (
                 <ItemCard
-                  key={index}
+                  key={item.sku || index}
                   item={item}
                   index={index}
                   gridSize={gridSize}
-                  isSelected={itemSelected[index]}
+                  isSelected={selectionState.checked}
+                  isIndeterminate={selectionState.indeterminate}
                   isExpanded={expandedItems[index]}
-                  onSelectClick={handleItemButtonClick}
+                  onSelectClick={() => handleItemSelection(item, false)}
                   onItemClick={handleItemClick}
                   onToggleExpansion={toggleVariantExpansion}
                   onDelete={onDeleteItem}
                   nextItem={nextItem}
+                  handleItemSelection={handleItemSelection}
+                  getSelectionState={getSelectionState}
                 />
               )
             })}
