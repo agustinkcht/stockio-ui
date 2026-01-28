@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect, useRef, useMemo } from "react"
-import { ChevronDown, ChevronUp, MoreVertical, Layers, Trash2, Copy, Minus } from "lucide-react"
+import { ChevronDown, ChevronUp, MoreVertical, Layers, Trash2, Copy, Minus, Plus, Check } from "lucide-react"
 import type { Item } from "@/lib/types"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { getCategoryImage } from "@/lib/utils/category-images"
@@ -24,6 +24,11 @@ interface ItemCardProps {
   handleItemSelection?: (item: Item, isChild?: boolean) => void
   getSelectionState?: (item: Item, isChild?: boolean) => { checked: boolean; indeterminate: boolean }
   isAuditMode?: boolean
+  onStockChange?: (sku: string, field: "total" | "reservado", value: number) => void
+  hasAuditChanges?: boolean
+  onDiscardAuditChanges?: () => void
+  onSaveAuditChanges?: () => void
+  auditStockValues?: { [sku: string]: { total: number; reservado: number } }
 }
 
 function calculateMarginBottom(currentItem: Item, nextItem: Item | undefined, isChild: boolean): string {
@@ -71,11 +76,62 @@ export function ItemCard({
   handleItemSelection,
   getSelectionState,
   isAuditMode = false,
+  onStockChange,
+  hasAuditChanges = false,
+  onDiscardAuditChanges,
+  onSaveAuditChanges,
+  auditStockValues,
 }: ItemCardProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [showTransition, setShowTransition] = useState(false)
   const [copiedSku, setCopiedSku] = useState(false)
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Audit mode stock modification state
+  const [stockTotalOperation, setStockTotalOperation] = useState<"agregar" | "disminuir" | "sobreescribir">("agregar")
+  const [stockTotalInput, setStockTotalInput] = useState("")
+  const [stockReservadoOperation, setStockReservadoOperation] = useState<"agregar" | "disminuir" | "sobreescribir">("agregar")
+  const [stockReservadoInput, setStockReservadoInput] = useState("")
+
+  // Get current stock values (use audit values if available, otherwise original)
+  const currentStockTotal = auditStockValues?.[item.sku]?.total ?? item.stock?.total ?? 0
+  const currentStockReservado = auditStockValues?.[item.sku]?.reservado ?? item.stock?.reservado ?? 0
+  const currentStockDisponible = currentStockTotal - currentStockReservado
+
+  // Handle stock modification
+  const handleStockModify = (type: "total" | "reservado") => {
+    const operation = type === "total" ? stockTotalOperation : stockReservadoOperation
+    const inputValue = parseInt(type === "total" ? stockTotalInput : stockReservadoInput)
+    
+    if (isNaN(inputValue) || inputValue < 0) return
+    
+    const currentValue = type === "total" ? currentStockTotal : currentStockReservado
+    let newValue = currentValue
+    
+    if (operation === "agregar") {
+      newValue = currentValue + inputValue
+    } else if (operation === "disminuir") {
+      newValue = Math.max(0, currentValue - inputValue)
+    } else if (operation === "sobreescribir") {
+      newValue = inputValue
+    }
+    
+    onStockChange?.(item.sku, type, newValue)
+    
+    // Clear input after applying
+    if (type === "total") {
+      setStockTotalInput("")
+    } else {
+      setStockReservadoInput("")
+    }
+  }
+
+  // Handle increment/decrement buttons
+  const handleStockIncrement = (type: "total" | "reservado", delta: number) => {
+    const currentValue = type === "total" ? currentStockTotal : currentStockReservado
+    const newValue = Math.max(0, currentValue + delta)
+    onStockChange?.(item.sku, type, newValue)
+  }
 
   const variantCount = useMemo(() => {
     return item.variantCount || item.variants?.length || 0
@@ -211,69 +267,217 @@ export function ItemCard({
           }}
         >
           {isAuditMode ? (
-            // AUDIT MODE LAYOUT: 8-6-6-2
-            <>
-              <div
-                className={`col-span-8 flex items-center gap-3 h-full border-r border-slate-100 ${isChild ? "pl-6 pr-4" : "px-4"} cursor-pointer transition-colors`}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onItemClick(item)
-                }}
-              >
-                {/* Product Thumbnail */}
-                <div className={`${isChild ? "w-9 h-9" : "w-12 h-12"} flex-shrink-0 rounded-md bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden`}>
-                  <img
-                    src={getCategoryImage(item.categoria) || "/placeholder.svg"}
-                    alt={item.categoria || "Product"}
-                    className={`${isChild ? "w-6 h-6" : "w-8 h-8"} object-contain opacity-60`}
-                  />
-                </div>
+            // AUDIT MODE LAYOUT
+            item.isAgrupador || item.hasVariants ? (
+              // Parent items in audit mode look like normal mode (item info + chevron)
+              <>
+                <div
+                  className={`col-span-8 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors border-slate-100 border-r-0`}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onItemClick(item)
+                  }}
+                >
+                  {/* Product Thumbnail */}
+                  <div className="w-12 h-12 flex-shrink-0 rounded-md bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden">
+                    <img
+                      src={getCategoryImage(item.categoria) || "/placeholder.svg"}
+                      alt={item.categoria || "Product"}
+                      className="w-8 h-8 object-contain opacity-60"
+                    />
+                  </div>
 
-                {/* Product Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-foreground font-medium truncate">
-                      {item.name}
-                    </span>
-                    {(item.hasVariants || item.isAgrupador) && (
+                  {/* Product Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-foreground font-medium truncate">
+                        {item.name}
+                      </span>
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground whitespace-nowrap">
                         {item.hasVariants ? `${variantCount} var.` : `${itemCount} items`}
                       </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
-                    {item.marca && <span className="text-xs text-muted-foreground">·</span>}
-                    {item.categoria && <span className="text-xs text-muted-foreground">{item.categoria}</span>}
-                    {item.categoria && <span className="text-xs text-muted-foreground">·</span>}
-                    <span className="text-xs text-muted-foreground">{item.sku}</span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
+                      {item.marca && <span className="text-xs text-muted-foreground">·</span>}
+                      {item.categoria && <span className="text-xs text-muted-foreground">{item.categoria}</span>}
+                      {item.categoria && <span className="text-xs text-muted-foreground">·</span>}
+                      <span className="text-xs text-muted-foreground">{item.sku}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Stock Total - 6 cols */}
-              <div className="col-span-6 h-full flex items-center justify-center px-4 border-r border-slate-100">
-                <span className="text-sm font-medium text-foreground">{item.stock?.total || 0}</span>
-              </div>
+                {/* Chevron on the right for parent items in audit mode */}
+                <div
+                  className={`col-span-14 h-full flex items-center justify-end px-4 cursor-pointer`}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onToggleExpansion(index)
+                  }}
+                >
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onToggleExpansion(index)
+                    }}
+                    className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer p-1"
+                  >
+                    {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </button>
+                </div>
+              </>
+            ) : (
+              // Standalone and children items in audit mode - with stock controls
+              <>
+                <div
+                  className={`col-span-8 flex items-center gap-3 h-full border-r border-slate-100 ${isChild ? "pl-6 pr-4" : "px-4"} cursor-pointer transition-colors`}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onItemClick(item)
+                  }}
+                >
+                  {/* Product Thumbnail */}
+                  <div className={`${isChild ? "w-9 h-9" : "w-12 h-12"} flex-shrink-0 rounded-md bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden`}>
+                    <img
+                      src={getCategoryImage(item.categoria) || "/placeholder.svg"}
+                      alt={item.categoria || "Product"}
+                      className={`${isChild ? "w-6 h-6" : "w-8 h-8"} object-contain opacity-60`}
+                    />
+                  </div>
 
-              {/* Stock Reservado - 6 cols */}
-              <div className="col-span-6 h-full flex items-center justify-center px-4 border-r border-slate-100">
-                <span className="text-sm font-medium text-foreground">{item.stock?.reservado || 0}</span>
-              </div>
+                  {/* Product Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-foreground font-medium truncate">
+                        {item.name}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
+                      {item.marca && <span className="text-xs text-muted-foreground">·</span>}
+                      {item.categoria && <span className="text-xs text-muted-foreground">{item.categoria}</span>}
+                      {item.categoria && <span className="text-xs text-muted-foreground">·</span>}
+                      <span className="text-xs text-muted-foreground">{item.sku}</span>
+                    </div>
+                  </div>
+                </div>
 
-              {/* Stock Disponible - 2 cols */}
-              <div className="col-span-2 h-full flex items-center justify-center px-2">
-                <span className={`text-sm font-semibold ${
-                  (item.stock?.disponible || 0) > 0 
-                    ? "text-green-600" 
-                    : (item.stock?.disponible || 0) < 0 
-                      ? "text-red-600" 
-                      : "text-foreground"
-                }`}>
-                  {item.stock?.disponible || 0}
-                </span>
-              </div>
-            </>
+                {/* Stock Total - 6 cols with modification controls */}
+                <div className="col-span-6 h-full flex items-center justify-center gap-1.5 px-2 border-r border-slate-100">
+                  {/* Operation selector */}
+                  <select
+                    value={stockTotalOperation}
+                    onChange={(e) => setStockTotalOperation(e.target.value as "agregar" | "disminuir" | "sobreescribir")}
+                    className="h-6 text-[10px] px-1 border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer"
+                  >
+                    <option value="agregar">+</option>
+                    <option value="disminuir">-</option>
+                    <option value="sobreescribir">=</option>
+                  </select>
+                  {/* Input field */}
+                  <input
+                    type="number"
+                    min="0"
+                    value={stockTotalInput}
+                    onChange={(e) => setStockTotalInput(e.target.value)}
+                    placeholder="0"
+                    className="w-10 h-6 text-xs text-center border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-amber-400"
+                  />
+                  {/* Check button */}
+                  <button
+                    onClick={() => handleStockModify("total")}
+                    disabled={!stockTotalInput}
+                    className={`p-1 rounded transition-colors ${
+                      stockTotalInput 
+                        ? "bg-amber-100 text-amber-700 hover:bg-amber-200 cursor-pointer" 
+                        : "bg-gray-100 text-gray-300 cursor-not-allowed"
+                    }`}
+                  >
+                    <Check className="w-3 h-3" />
+                  </button>
+                  {/* Decrement button */}
+                  <button
+                    onClick={() => handleStockIncrement("total", -1)}
+                    className="p-1 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
+                  >
+                    <Minus className="w-3 h-3" />
+                  </button>
+                  {/* Stock value */}
+                  <span className="text-sm font-medium text-foreground min-w-[28px] text-center">{currentStockTotal}</span>
+                  {/* Increment button */}
+                  <button
+                    onClick={() => handleStockIncrement("total", 1)}
+                    className="p-1 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
+                  >
+                    <Plus className="w-3 h-3" />
+                  </button>
+                </div>
+
+                {/* Stock Reservado - 6 cols with modification controls */}
+                <div className="col-span-6 h-full flex items-center justify-center gap-1.5 px-2 border-r border-slate-100">
+                  {/* Operation selector */}
+                  <select
+                    value={stockReservadoOperation}
+                    onChange={(e) => setStockReservadoOperation(e.target.value as "agregar" | "disminuir" | "sobreescribir")}
+                    className="h-6 text-[10px] px-1 border border-gray-200 rounded bg-white focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer"
+                  >
+                    <option value="agregar">+</option>
+                    <option value="disminuir">-</option>
+                    <option value="sobreescribir">=</option>
+                  </select>
+                  {/* Input field */}
+                  <input
+                    type="number"
+                    min="0"
+                    value={stockReservadoInput}
+                    onChange={(e) => setStockReservadoInput(e.target.value)}
+                    placeholder="0"
+                    className="w-10 h-6 text-xs text-center border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-amber-400"
+                  />
+                  {/* Check button */}
+                  <button
+                    onClick={() => handleStockModify("reservado")}
+                    disabled={!stockReservadoInput}
+                    className={`p-1 rounded transition-colors ${
+                      stockReservadoInput 
+                        ? "bg-amber-100 text-amber-700 hover:bg-amber-200 cursor-pointer" 
+                        : "bg-gray-100 text-gray-300 cursor-not-allowed"
+                    }`}
+                  >
+                    <Check className="w-3 h-3" />
+                  </button>
+                  {/* Decrement button */}
+                  <button
+                    onClick={() => handleStockIncrement("reservado", -1)}
+                    className="p-1 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
+                  >
+                    <Minus className="w-3 h-3" />
+                  </button>
+                  {/* Stock value */}
+                  <span className="text-sm font-medium text-foreground min-w-[28px] text-center">{currentStockReservado}</span>
+                  {/* Increment button */}
+                  <button
+                    onClick={() => handleStockIncrement("reservado", 1)}
+                    className="p-1 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer"
+                  >
+                    <Plus className="w-3 h-3" />
+                  </button>
+                </div>
+
+                {/* Stock Disponible - 2 cols (read-only) */}
+                <div className="col-span-2 h-full flex items-center justify-center px-2">
+                  <span className={`text-sm font-semibold ${
+                    currentStockDisponible > 0 
+                      ? "text-green-600" 
+                      : currentStockDisponible < 0 
+                        ? "text-red-600" 
+                        : "text-foreground"
+                  }`}>
+                    {currentStockDisponible}
+                  </span>
+                </div>
+              </>
+            )
           ) : item.isAgrupador || item.hasVariants ? (
             // NORMAL MODE: Parent items
             <>

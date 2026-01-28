@@ -75,6 +75,54 @@ export function ItemsGrid({
   })
   const [sortConfig, setSortConfig] = useState<SortFactorConfig[]>([{ factor: "categoria", direction: "asc" }])
   const [isAuditMode, setIsAuditMode] = useState(false)
+  
+  // Audit mode stock tracking
+  const [auditStockChanges, setAuditStockChanges] = useState<{ [sku: string]: { total: number; reservado: number } }>({})
+  const [hasAuditChanges, setHasAuditChanges] = useState(false)
+
+  // Handle stock changes in audit mode
+  const handleAuditStockChange = (sku: string, field: "total" | "reservado", value: number) => {
+    setAuditStockChanges(prev => {
+      // Get current values (from previous changes or original item)
+      const item = items.find(i => i.sku === sku) || 
+                   items.flatMap(i => i.variants || []).find(v => v.sku === sku) ||
+                   items.flatMap(i => i.items || []).find(gi => gi.sku === sku)
+      
+      const currentTotal = prev[sku]?.total ?? item?.stock?.total ?? 0
+      const currentReservado = prev[sku]?.reservado ?? item?.stock?.reservado ?? 0
+      
+      return {
+        ...prev,
+        [sku]: {
+          total: field === "total" ? value : currentTotal,
+          reservado: field === "reservado" ? value : currentReservado,
+        }
+      }
+    })
+    setHasAuditChanges(true)
+  }
+
+  // Discard audit changes
+  const handleDiscardAuditChanges = () => {
+    setAuditStockChanges({})
+    setHasAuditChanges(false)
+  }
+
+  // Save audit changes
+  const handleSaveAuditChanges = () => {
+    // Apply changes to items through the onUpdateItem callback
+    Object.entries(auditStockChanges).forEach(([sku, stockValues]) => {
+      onUpdateItem?.(sku, {
+        stock: {
+          total: stockValues.total,
+          reservado: stockValues.reservado,
+          disponible: stockValues.total - stockValues.reservado,
+        }
+      })
+    })
+    setAuditStockChanges({})
+    setHasAuditChanges(false)
+  }
 
   const availableCategorias = useMemo(() => getUniqueCategorias(items), [items])
   const availableMarcas = useMemo(() => getUniqueMarcas(items), [items])
@@ -287,14 +335,14 @@ export function ItemsGrid({
                   </div>
                 </div>
               ) : (
-                <div className="flex-1 grid grid-cols-11 h-9 bg-slate-200 border border-gray-300 rounded-xs border-none">
-                  <div className="col-span-5 flex items-center px-4 py-2 justify-center border-solid pl-4 pr-4 mr-0 border border-l-0 border-[rgba(202,213,227,0.61)]">
+                <div className="flex-1 grid grid-cols-22 h-9 bg-slate-200 border border-gray-300 rounded-xs border-none">
+                  <div className="col-span-8 flex items-center px-4 py-2 justify-center border-solid pl-4 pr-4 mr-0 border border-l-0 border-[rgba(202,213,227,0.61)]">
                     <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Item</span>
                   </div>
-                  <div className="col-span-3 flex items-center justify-center py-2 border-solid border-r px-4 mx-1.5 ml-0 mr-px border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
+                  <div className="col-span-7 flex items-center justify-center py-2 border-solid border-r px-4 mx-0 ml-0 mr-px border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
                     <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Atributos</span>
                   </div>
-                  <div className="col-span-3 flex items-center justify-center py-2 mx-0 ml-0 px-0 mr-0 border-b border-t border-l-0 border-r-0 border-[rgba(202,213,227,0.61)]">
+                  <div className="col-span-7 flex items-center justify-center py-2 mx-0 ml-0 px-0 mr-0 border-b border-t border-l-0 border-r-0 border-[rgba(202,213,227,0.61)]">
                     <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Stock</span>
                   </div>
                 </div>
