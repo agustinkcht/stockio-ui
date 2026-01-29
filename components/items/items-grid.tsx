@@ -5,6 +5,7 @@ import { ItemCard } from "./item-card"
 import { Plus, ArrowUpDown, ListFilterIcon, Search, X, Grid, Minus, ClipboardList, Check, MoreVertical } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRef, useState, useEffect, useMemo, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import { searchItems, sortItems, filterItems, getUniqueCategorias, getUniqueMarcas } from "@/lib/utils/item-utils"
 import { OrdenModal } from "@/components/modals/orden-modal"
 import { FiltrosModal } from "@/components/modals/filtros-modal"
@@ -74,13 +75,7 @@ export function ItemsGrid({
   onAuditDiscard,
   getSelectedSkus,
 }: ItemsGridProps) {
-  const orderRef = useRef<HTMLDivElement>(null)
-  const filterRef = useRef<HTMLDivElement>(null)
-  const crearNuevoRef = useRef<HTMLDivElement>(null)
-
-  const [showOrderDropdown, setShowOrderDropdown] = useState(false)
-  const [showFilterDropdown, setShowFilterDropdown] = useState(false)
-  const [showCrearNuevoDropdown, setShowCrearNuevoDropdown] = useState(false)
+  const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
   const [showOrderModal, setShowOrderModal] = useState(false)
   const [showFilterModal, setShowFilterModal] = useState(false)
@@ -409,7 +404,7 @@ export function ItemsGrid({
                 </div>
 
                 <Button
-                  onClick={() => window.location.href = "/inventario/creador-masivo"}
+                  onClick={() => router.push("/inventario/creador-masivo")}
                   variant="ghost"
                   size="sm"
                   className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer"
