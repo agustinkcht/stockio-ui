@@ -76,9 +76,15 @@ export function ItemsGrid({
   getSelectedSkus,
 }: ItemsGridProps) {
   const router = useRouter()
+  const crearNuevoRef = useRef<HTMLDivElement>(null)
+  const filterRef = useRef<HTMLDivElement>(null)
+  const orderRef = useRef<HTMLDivElement>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [showOrderModal, setShowOrderModal] = useState(false)
   const [showFilterModal, setShowFilterModal] = useState(false)
+  const [showCrearNuevoDropdown, setShowCrearNuevoDropdown] = useState(false)
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false)
+  const [showOrderDropdown, setShowOrderDropdown] = useState(false)
   const [filterConfig, setFilterConfig] = useState<FilterConfig>({
     tipos: [],
     categorias: [],
