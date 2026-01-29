@@ -265,7 +265,7 @@ export default function CreadorMasivoPage() {
       if (expandedSections[section.id]) {
         width += getSectionWidth(section)
       } else {
-        width += 40 // Collapsed section width
+        width += 140 // Collapsed section width (wider to show title)
       }
     })
     return width
@@ -599,33 +599,29 @@ export default function CreadorMasivoPage() {
                       />
                       {SECTIONS.map((section) => {
                         const isExpanded = expandedSections[section.id]
-                        const sectionWidth = isExpanded ? getSectionWidth(section) : 40
+                        const sectionWidth = isExpanded ? getSectionWidth(section) : 140
                         const colSpan = isExpanded ? section.columns.length : 1
                         
                         return (
                           <th
                             key={section.id}
                             colSpan={colSpan}
-                            className="border-r border-b border-gray-200 bg-slate-100 px-2"
+                            className="border-r border-b border-gray-200 bg-slate-100 px-2 cursor-pointer hover:bg-slate-150 transition-colors"
                             style={{ width: sectionWidth, minWidth: sectionWidth }}
+                            onClick={() => toggleSection(section.id)}
+                            title={isExpanded ? "Colapsar sección" : "Expandir sección"}
                           >
-                            <div className="flex items-center justify-between">
-                              {isExpanded && (
-                                <span className="text-xs font-semibold text-gray-700 truncate flex-1 text-left">
-                                  {section.label}
-                                </span>
-                              )}
-                              <button
-                                onClick={() => toggleSection(section.id)}
-                                className="p-1 hover:bg-slate-200 rounded transition-colors cursor-pointer flex-shrink-0"
-                                title={isExpanded ? "Colapsar sección" : section.label}
-                              >
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-xs font-semibold text-gray-700 truncate flex-1 text-left">
+                                {section.label}
+                              </span>
+                              <div className="flex-shrink-0">
                                 {isExpanded ? (
                                   <ChevronLeft className="w-4 h-4 text-gray-500" />
                                 ) : (
                                   <ChevronRight className="w-4 h-4 text-gray-500" />
                                 )}
-                              </button>
+                              </div>
                             </div>
                           </th>
                         )
@@ -646,7 +642,7 @@ export default function CreadorMasivoPage() {
                             <th
                               key={section.id}
                               className="border-r border-b border-gray-200 bg-slate-50"
-                              style={{ width: 40, minWidth: 40 }}
+                              style={{ width: 140, minWidth: 140 }}
                             />
                           )
                         }
@@ -678,12 +674,12 @@ export default function CreadorMasivoPage() {
                       {SECTIONS.map((section) => {
                         const isExpanded = expandedSections[section.id]
                         
-                        if (!isExpanded) {
+if (!isExpanded) {
                           return (
                             <th
                               key={section.id}
-                              className="border-r border-b border-gray-300 bg-gray-50"
-                              style={{ width: 40, minWidth: 40 }}
+                              className="border-r border-b border-gray-200 bg-white"
+                              style={{ width: 140, minWidth: 140 }}
                             />
                           )
                         }
@@ -743,13 +739,13 @@ export default function CreadorMasivoPage() {
                           const isExpanded = expandedSections[section.id]
                           
                           if (!isExpanded) {
-                            return (
-                              <td
-                                key={section.id}
-                                className="border-r border-b border-gray-200 bg-gray-50"
-                                style={{ width: 40, minWidth: 40 }}
-                              />
-                            )
+return (
+                        <td
+                          key={section.id}
+                          className="border-r border-b border-gray-200 bg-gray-50"
+                          style={{ width: 140, minWidth: 140 }}
+                        />
+                      )
                           }
                           
                           return section.columns.map((colId) => {
