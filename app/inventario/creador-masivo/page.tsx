@@ -5,7 +5,9 @@ import { Sidebar } from "@/components/layout/sidebar"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { UserPanel } from "@/components/layout/user-panel"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
-import { ChevronRight, ChevronLeft, Plus, X } from "lucide-react"
+import { ChevronRight, ChevronLeft, Plus, X, Check, AlertCircle } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { useItems } from "@/hooks/use-items"
 
 // Define column widths (in pixels) for consistent alignment
 const COL_WIDTHS = {
@@ -191,11 +193,98 @@ const createEmptyRow = (): WorkableRow => ({
 })
 
 export default function CreadorMasivoPage() {
+  const { bulkCreateItems } = useItems()
   const [hoveredDropdown, setHoveredDropdown] = useState<number | null>(null)
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(
     SECTIONS.reduce((acc, section) => ({ ...acc, [section.id]: section.defaultExpanded }), {})
   )
   const [rows, setRows] = useState<WorkableRow[]>([createEmptyRow()])
+  
+  // Modal states
+  const [showErrorModal, setShowErrorModal] = useState(false)
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
+
+  // Check if at least one row has a title
+  const hasValidRows = rows.some(row => row.titulo.trim() !== "")
+  
+  // Check if all rows with any data have titles
+  const allRowsValid = rows.every(row => row.titulo.trim() !== "")
+  
+  // Count rows that will be created (rows with titles)
+  const rowsToCreateCount = rows.filter(row => row.titulo.trim() !== "").length
+
+  // Handle crear button click
+  const handleCrearClick = () => {
+    if (!allRowsValid) {
+      setShowErrorModal(true)
+      return
+    }
+    setShowConfirmModal(true)
+  }
+
+  // Handle confirmed creation
+  const handleConfirmCreate = async () => {
+    setIsCreating(true)
+    setShowConfirmModal(false)
+    
+    // Prepare items data from rows
+    const itemsToCreate = rows
+      .filter(row => row.titulo.trim() !== "")
+      .map(row => {
+        // Build atributos principales
+        const atributosPrincipales: Array<{ key: string; value: string }> = []
+        if (row.atributo1Key.trim() && row.atributo1Value.trim()) {
+          atributosPrincipales.push({ key: row.atributo1Key, value: row.atributo1Value })
+        }
+        if (row.atributo2Key.trim() && row.atributo2Value.trim()) {
+          atributosPrincipales.push({ key: row.atributo2Key, value: row.atributo2Value })
+        }
+        
+        // Build atributos informativos
+        const atributosInformativos = row.atributosInformativos
+          .filter(attr => attr.key.trim() && attr.value.trim())
+        
+        return {
+          name: row.titulo.trim(),
+          sku: row.sku.trim() || undefined,
+          codigoUniversal: row.codigoUniversal.trim() || undefined,
+          categoria: row.categoria.trim() || undefined,
+          marca: row.marca.trim() || undefined,
+          formatoVenta: row.formatoVenta,
+          unidadesPorPack: row.formatoVenta === "pack" ? parseInt(row.unidadesPorPack) || 1 : 1,
+          volumenUnidad: row.volumenCantidad.trim() ? {
+            cantidad: row.volumenCantidad,
+            unidad: row.volumenUnidad || "ml",
+          } : undefined,
+          vencimiento: row.vencimientoDia.trim() && row.vencimientoMes.trim() && row.vencimientoAnio.trim() ? {
+            dia: row.vencimientoDia,
+            mes: row.vencimientoMes,
+            anio: row.vencimientoAnio,
+          } : undefined,
+          atributosPrincipales: atributosPrincipales.length > 0 ? atributosPrincipales : undefined,
+          atributosInformativos: atributosInformativos.length > 0 ? atributosInformativos : undefined,
+          stockTotal: parseInt(row.stockTotal) || 0,
+          stockReservado: parseInt(row.stockReservado) || 0,
+          imagenUrl: row.fotoUrl.trim() || undefined,
+        }
+      })
+    
+    // Simulate a small delay for UX
+    await new Promise(resolve => setTimeout(resolve, 600))
+    
+    // Create items
+    bulkCreateItems(itemsToCreate)
+    
+    // Reset to initial state
+    setRows([createEmptyRow()])
+    setIsCreating(false)
+    
+    // Show success message
+    setShowSuccessMessage(true)
+    setTimeout(() => setShowSuccessMessage(false), 3000)
+  }
 
   const breadcrumbs = [
     { label: "Inventario", href: "/inventario" },
@@ -581,6 +670,22 @@ export default function CreadorMasivoPage() {
                     <div className="flex items-center gap-2 border-0 border-none ml-1.5 mr-0 flex-shrink-0">
                       <span className="text-sm text-gray-500">Creador Masivo de Items</span>
                     </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        onClick={handleCrearClick}
+                        disabled={!hasValidRows || isCreating}
+                        variant="ghost"
+                        size="sm"
+                        className={`h-8 text-xs transition-colors border shadow-sm cursor-pointer ${
+                          hasValidRows && !isCreating
+                            ? "border-green-300 hover:bg-green-50 text-green-700"
+                            : "border-[rgba(228,230,235,0.6)] text-gray-400 cursor-not-allowed"
+                        }`}
+                      >
+                        <Plus className={`w-3.5 h-3.5 mr-1.5 ${hasValidRows && !isCreating ? "text-green-600" : "text-gray-400"}`} />
+                        {isCreating ? "Creando..." : "Crear"}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -770,6 +875,82 @@ return (
           </div>
         </div>
       </div>
+
+      {/* Success Message */}
+      {showSuccessMessage && (
+        <div className="fixed bottom-6 right-6 z-[100020] animate-in slide-in-from-bottom-4 duration-300">
+          <div className="flex items-center gap-3 px-4 py-3 bg-green-600 text-white rounded-lg shadow-lg">
+            <Check className="w-5 h-5" />
+            <span className="text-sm font-medium">Items creados correctamente</span>
+          </div>
+        </div>
+      )}
+
+      {/* Error Modal */}
+      {showErrorModal && (
+        <div className="fixed inset-0 z-[100010] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowErrorModal(false)} />
+          <div className="relative w-full max-w-md mx-4 bg-white rounded-xl shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-red-500" />
+                <h2 className="text-lg font-semibold">Error</h2>
+              </div>
+              <button onClick={() => setShowErrorModal(false)} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+            <div className="px-6 py-6">
+              <p className="text-sm text-gray-600">
+                Todos los items deben tener título. Completá los títulos faltantes, o eliminá las filas sobrantes.
+              </p>
+            </div>
+            <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
+              <Button
+                onClick={() => setShowErrorModal(false)}
+                className="px-4 py-2 text-sm font-medium bg-gray-900 text-white rounded-lg hover:bg-gray-800 cursor-pointer"
+              >
+                Entendido
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-[100010] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowConfirmModal(false)} />
+          <div className="relative w-full max-w-md mx-4 bg-white rounded-xl shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold">Crear Items</h2>
+              <button onClick={() => setShowConfirmModal(false)} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+            <div className="px-6 py-6">
+              <p className="text-sm text-gray-600">
+                Vas a crear <span className="font-semibold text-gray-900">{rowsToCreateCount}</span> item{rowsToCreateCount !== 1 ? "s" : ""} individual{rowsToCreateCount !== 1 ? "es" : ""}.
+              </p>
+            </div>
+            <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
+              <Button
+                onClick={() => setShowConfirmModal(false)}
+                variant="ghost"
+                className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg cursor-pointer"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleConfirmCreate}
+                className="px-4 py-2 text-sm font-medium bg-gray-900 text-white rounded-lg hover:bg-gray-800 cursor-pointer"
+              >
+                Aceptar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

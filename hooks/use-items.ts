@@ -934,6 +934,94 @@ export function useItems() {
     }
   }
 
+  // Bulk create multiple standalone items at once
+  const bulkCreateItems = (newItemsData: Array<{
+    name: string
+    sku?: string
+    codigoUniversal?: string
+    categoria?: string
+    marca?: string
+    formatoVenta?: string
+    unidadesPorPack?: number
+    volumenUnidad?: { cantidad?: string; unidad?: string }
+    vencimiento?: { dia?: string; mes?: string; anio?: string }
+    atributosPrincipales?: Array<{ key: string; value: string }>
+    atributosInformativos?: Array<{ key: string; value: string }>
+    stockTotal?: number
+    stockReservado?: number
+    imagenUrl?: string
+  }>) => {
+    const existingSkus = items.map((item) => item.sku)
+    const newSkus: string[] = []
+    
+    const newItems: Item[] = newItemsData.map((data) => {
+      // Generate unique SKU if not provided
+      let sku = data.sku?.trim()
+      if (!sku) {
+        const baseSku = generateStandaloneSKU({ title: data.name })
+        sku = generateUniqueSKU(baseSku, [...existingSkus, ...newSkus])
+      } else {
+        // Ensure provided SKU is unique
+        sku = generateUniqueSKU(sku, [...existingSkus, ...newSkus])
+      }
+      newSkus.push(sku)
+      
+      // Generate codigo universal if not provided
+      const codigoUniversal = data.codigoUniversal?.trim() || 
+        (Math.floor(Math.random() * 9000000000000) + 1000000000000).toString()
+      
+      // Calculate stock disponible
+      const stockTotal = data.stockTotal ?? 0
+      const stockReservado = data.stockReservado ?? 0
+      const stockDisponible = stockTotal - stockReservado
+      
+      const newItem: Item = {
+        name: data.name,
+        sku,
+        codigoUniversal,
+        categoria: data.categoria || "",
+        marca: data.marca || "",
+        formatoVenta: data.formatoVenta || "unidad",
+        unidadesPorPack: data.unidadesPorPack || 1,
+        volumenUnidad: data.volumenUnidad?.cantidad ? {
+          cantidad: data.volumenUnidad.cantidad,
+          unidad: data.volumenUnidad.unidad || "ml",
+        } : undefined,
+        vencimiento: data.vencimiento?.dia && data.vencimiento?.mes && data.vencimiento?.anio ? {
+          dia: data.vencimiento.dia,
+          mes: data.vencimiento.mes,
+          anio: data.vencimiento.anio,
+        } : undefined,
+        stock: {
+          total: stockTotal.toString(),
+          reservado: stockReservado.toString(),
+          disponible: stockDisponible.toString(),
+        },
+        hasVariants: false,
+        isAgrupador: false,
+        atributosPrincipales: data.atributosPrincipales?.filter(a => a.key && a.value) || [],
+        atributosInformativos: data.atributosInformativos?.filter(a => a.key && a.value) || [],
+        imagenUrl: data.imagenUrl || "",
+        variantCount: 0,
+        itemCount: 0,
+      }
+      
+      return newItem
+    })
+    
+    // Add all new items at the beginning of the list
+    const updatedItems = [...newItems, ...items]
+    
+    // Persist to localStorage
+    localStorage.setItem(getStorageKey(), JSON.stringify(updatedItems))
+    console.log(`[v0] bulkCreateItems - Created ${newItems.length} items and saved to localStorage`)
+    
+    // Update state
+    setItems(updatedItems)
+    
+    return newItems
+  }
+
   return {
     items,
     setItems,
@@ -941,6 +1029,7 @@ export function useItems() {
     depositStock: undefined, // Placeholder for deposit-level stock tracking
     handleCreateNuevoItem,
     handleCreateNuevoItemConVariantes,
+    bulkCreateItems,
     updateItem,
     isLoading,
     deleteItem,
