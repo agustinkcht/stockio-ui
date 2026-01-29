@@ -1,89 +1,139 @@
 "use client"
 
-import { useState, useCallback } from "react"
-import { useRouter } from "next/navigation"
+import { useState } from "react"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { UserPanel } from "@/components/layout/user-panel"
-import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS, VOLUMEN_UNITS } from "@/lib/constants"
-import { ChevronRight, ChevronLeft, Plus, X, MoreVertical } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
+import { ChevronRight, ChevronLeft, Plus, X } from "lucide-react"
 
-// Section definitions based on the CSV structure
+// Define column widths (in pixels) for consistent alignment
+const COL_WIDTHS = {
+  rowControls: 56,
+  titulo: 200,
+  caracteres: 100,
+  sku: 140,
+  codigoUniversal: 140,
+  atributo1Key: 120,
+  atributo1Value: 120,
+  atributo2Key: 120,
+  atributo2Value: 120,
+  categoria: 130,
+  marca: 130,
+  formatoVenta: 120,
+  unidadesPorPack: 90,
+  volumenCantidad: 90,
+  volumenUnidad: 100,
+  vencimientoDia: 70,
+  vencimientoMes: 70,
+  vencimientoAnio: 80,
+  proveedor: 130,
+  codigoProveedor: 130,
+  stockTotal: 80,
+  stockReservado: 90,
+  stockDisponible: 90,
+  descripcion: 200,
+  fotoUrl: 200,
+  atributoInfoKey: 120,
+  atributoInfoValue: 120,
+  atributoInfoAdd: 50,
+}
+
+// Section definitions
 const SECTIONS = [
-  { id: "obligatorio", label: "Obligatorio", defaultExpanded: true },
-  { id: "datos-principales", label: "Datos Principales", defaultExpanded: false },
-  { id: "atributos-principales", label: "Atributos Principales", defaultExpanded: false },
-  { id: "info-comercial", label: "Información Comercial", defaultExpanded: false },
-  { id: "stock", label: "Stock", defaultExpanded: false },
-  { id: "media", label: "Media", defaultExpanded: false },
-  { id: "atributos-informativos", label: "Atributos Informativos", defaultExpanded: false },
-]
-
-// Column definitions with section grouping
-const COLUMN_GROUPS = {
-  "obligatorio": {
-    subHeader: "Título",
-    columns: [
-      { id: "titulo", label: "Título", width: "200px", placeholder: "Título" },
-      { id: "caracteres", label: "Cant. de Caracteres", width: "80px", type: "readonly" },
+  { 
+    id: "obligatorio", 
+    label: "Obligatorio", 
+    defaultExpanded: true,
+    columns: ["titulo", "caracteres"],
+    subHeaders: [{ label: "TÍTULO", cols: ["titulo", "caracteres"] }],
+  },
+  { 
+    id: "datos-principales", 
+    label: "Datos Principales", 
+    defaultExpanded: false,
+    columns: ["sku", "codigoUniversal"],
+    subHeaders: [{ label: "CÓDIGOS", cols: ["sku", "codigoUniversal"] }],
+  },
+  { 
+    id: "atributos-principales", 
+    label: "Atributos Principales", 
+    defaultExpanded: false,
+    columns: ["atributo1Key", "atributo1Value", "atributo2Key", "atributo2Value"],
+    subHeaders: [
+      { label: "ATRIBUTO 1", cols: ["atributo1Key", "atributo1Value"] },
+      { label: "ATRIBUTO 2", cols: ["atributo2Key", "atributo2Value"] },
     ],
   },
-  "datos-principales": {
-    subHeader: "Códigos",
-    columns: [
-      { id: "sku", label: "SKU", width: "140px", placeholder: "Generar Automáticamente" },
-      { id: "codigoUniversal", label: "Código Universal", width: "140px", placeholder: "N.A." },
+  { 
+    id: "info-comercial", 
+    label: "Información Comercial", 
+    defaultExpanded: false,
+    columns: ["categoria", "marca", "formatoVenta", "unidadesPorPack", "volumenCantidad", "volumenUnidad", "vencimientoDia", "vencimientoMes", "vencimientoAnio", "proveedor", "codigoProveedor"],
+    subHeaders: [
+      { label: "INFO DEL PRODUCTO", cols: ["categoria", "marca"] },
+      { label: "PRESENTACIÓN", cols: ["formatoVenta", "unidadesPorPack"] },
+      { label: "VOLUMEN DE LA UNIDAD", cols: ["volumenCantidad", "volumenUnidad"] },
+      { label: "VENCIMIENTO", cols: ["vencimientoDia", "vencimientoMes", "vencimientoAnio"] },
+      { label: "INFO DEL PROVEEDOR", cols: ["proveedor", "codigoProveedor"] },
     ],
   },
-  "atributos-principales": {
-    subHeaders: ["Atributo 1", "Atributo 2"],
-    columns: [
-      { id: "atributo1Key", label: "Atributo", width: "120px", placeholder: "Ej: Talle" },
-      { id: "atributo1Value", label: "Valor", width: "120px", placeholder: "Ej: M" },
-      { id: "atributo2Key", label: "Atributo", width: "120px", placeholder: "Ej: Color" },
-      { id: "atributo2Value", label: "Valor", width: "120px", placeholder: "Ej: Negro" },
+  { 
+    id: "stock", 
+    label: "Stock", 
+    defaultExpanded: false,
+    columns: ["stockTotal", "stockReservado", "stockDisponible"],
+    subHeaders: [{ label: "STOCK EN EL DEPÓSITO", cols: ["stockTotal", "stockReservado", "stockDisponible"] }],
+  },
+  { 
+    id: "media", 
+    label: "Media", 
+    defaultExpanded: false,
+    columns: ["descripcion", "fotoUrl"],
+    subHeaders: [
+      { label: "DESCRIPCIÓN", cols: ["descripcion"] },
+      { label: "FOTO (URL)", cols: ["fotoUrl"] },
     ],
   },
-  "info-comercial": {
-    subHeaders: ["Info del producto", "Presentación", "Volumen de la unidad", "Vencimiento", "Información del Proveedor"],
-    columns: [
-      { id: "categoria", label: "Categoría", width: "130px", placeholder: "Categoría", type: "text" },
-      { id: "marca", label: "Marca", width: "130px", placeholder: "Marca", type: "text" },
-      { id: "formatoVenta", label: "Formato de Venta", width: "120px", type: "select", options: ["unidad", "pack"], default: "unidad" },
-      { id: "unidadesPorPack", label: "U. por Pack", width: "80px", type: "number", default: "1" },
-      { id: "volumenCantidad", label: "Cantidad", width: "80px", placeholder: "Ej: 750", type: "number" },
-      { id: "volumenUnidad", label: "U. de Medida", width: "90px", type: "select", options: ["ml", "L", "cm³", "m³"] },
-      { id: "vencimientoDia", label: "Día", width: "60px", placeholder: "", type: "number" },
-      { id: "vencimientoMes", label: "Mes", width: "60px", placeholder: "", type: "number" },
-      { id: "vencimientoAnio", label: "Año", width: "70px", placeholder: "", type: "number" },
-      { id: "proveedor", label: "Proveedor", width: "130px", placeholder: "Proveedor", type: "text" },
-      { id: "codigoProveedor", label: "Código Proveedor", width: "120px", placeholder: "", type: "text" },
-    ],
-  },
-  "stock": {
-    subHeader: "Stock en el depósito",
-    columns: [
-      { id: "stockTotal", label: "Total", width: "70px", type: "number", default: "0" },
-      { id: "stockReservado", label: "Reservado", width: "70px", type: "number", default: "0" },
-      { id: "stockDisponible", label: "Disponible", width: "70px", type: "readonly" },
-    ],
-  },
-  "media": {
-    subHeaders: ["Descripción", "Foto (url)"],
-    columns: [
-      { id: "descripcion", label: "", width: "200px", placeholder: "Descripción", type: "textarea" },
-      { id: "fotoUrl", label: "", width: "200px", placeholder: "Foto (url)", type: "text" },
-    ],
-  },
-  "atributos-informativos": {
-    subHeader: "Atributo Informativo",
-    columns: [
-      { id: "atributoInfoKey", label: "Atributo", width: "120px", placeholder: "Ej: Material" },
-      { id: "atributoInfoValue", label: "Valor", width: "120px", placeholder: "Ej: Algodón" },
-    ],
+  { 
+    id: "atributos-informativos", 
+    label: "Atributos Informativos", 
+    defaultExpanded: false,
+    columns: ["atributoInfoKey", "atributoInfoValue", "atributoInfoAdd"],
+    subHeaders: [{ label: "ATRIBUTO INFORMATIVO", cols: ["atributoInfoKey", "atributoInfoValue", "atributoInfoAdd"] }],
     canAddMore: true,
   },
+]
+
+// Column labels for the third row
+const COLUMN_LABELS: Record<string, string> = {
+  titulo: "Título",
+  caracteres: "Cant. de Caracteres",
+  sku: "SKU",
+  codigoUniversal: "Código Universal",
+  atributo1Key: "Atributo",
+  atributo1Value: "Valor",
+  atributo2Key: "Atributo",
+  atributo2Value: "Valor",
+  categoria: "Categoría",
+  marca: "Marca",
+  formatoVenta: "Formato de Venta",
+  unidadesPorPack: "U. por Pack",
+  volumenCantidad: "Cantidad",
+  volumenUnidad: "U. de Medida",
+  vencimientoDia: "Día",
+  vencimientoMes: "Mes",
+  vencimientoAnio: "Año",
+  proveedor: "Proveedor",
+  codigoProveedor: "Código Proveedor",
+  stockTotal: "Total",
+  stockReservado: "Reservado",
+  stockDisponible: "Disponible",
+  descripcion: "",
+  fotoUrl: "",
+  atributoInfoKey: "Atributo",
+  atributoInfoValue: "Valor",
+  atributoInfoAdd: "",
 }
 
 interface WorkableRow {
@@ -141,7 +191,6 @@ const createEmptyRow = (): WorkableRow => ({
 })
 
 export default function CreadorMasivoPage() {
-  const router = useRouter()
   const [hoveredDropdown, setHoveredDropdown] = useState<number | null>(null)
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(
     SECTIONS.reduce((acc, section) => ({ ...acc, [section.id]: section.defaultExpanded }), {})
@@ -152,9 +201,6 @@ export default function CreadorMasivoPage() {
     { label: "Inventario", href: "/inventario" },
     { label: "Creador Masivo", href: "/inventario/creador-masivo" },
   ]
-
-  const handleDropdownMouseEnter = (index: number) => setHoveredDropdown(index)
-  const handleDropdownMouseLeave = () => setHoveredDropdown(null)
 
   const toggleSection = (sectionId: string) => {
     setExpandedSections(prev => ({ ...prev, [sectionId]: !prev[sectionId] }))
@@ -167,24 +213,18 @@ export default function CreadorMasivoPage() {
   }
 
   const removeRow = (index: number) => {
-    if (rows.length === 1) return // Keep at least one row
+    if (rows.length === 1) return
     setRows(rows.filter((_, i) => i !== index))
   }
 
   const updateRow = (rowIndex: number, field: keyof WorkableRow, value: string) => {
-    setRows(prev => prev.map((row, i) => {
-      if (i !== rowIndex) return row
-      return { ...row, [field]: value }
-    }))
+    setRows(prev => prev.map((row, i) => i !== rowIndex ? row : { ...row, [field]: value }))
   }
 
   const addAtributoInformativo = (rowIndex: number) => {
     setRows(prev => prev.map((row, i) => {
       if (i !== rowIndex) return row
-      return {
-        ...row,
-        atributosInformativos: [...row.atributosInformativos, { key: "", value: "" }],
-      }
+      return { ...row, atributosInformativos: [...row.atributosInformativos, { key: "", value: "" }] }
     }))
   }
 
@@ -197,114 +237,308 @@ export default function CreadorMasivoPage() {
     }))
   }
 
-  const getCharacterCount = (titulo: string) => titulo.length
-
-  const getDisponible = (total: string, reservado: string) => {
-    const t = parseInt(total) || 0
-    const r = parseInt(reservado) || 0
-    return Math.max(0, t - r).toString()
+  // Calculate width for a section
+  const getSectionWidth = (section: typeof SECTIONS[0]) => {
+    return section.columns.reduce((sum, col) => sum + (COL_WIDTHS[col as keyof typeof COL_WIDTHS] || 100), 0)
   }
 
-  const renderCell = (
-    row: WorkableRow,
-    rowIndex: number,
-    columnId: string,
-    column: any
-  ) => {
-    // Special handling for readonly fields
-    if (column.type === "readonly") {
-      if (columnId === "caracteres") {
-        return (
-          <div className="w-full h-full flex items-center justify-center text-xs text-gray-500 bg-gray-50">
-            {getCharacterCount(row.titulo)}
-          </div>
-        )
-      }
-      if (columnId === "stockDisponible") {
-        return (
-          <div className="w-full h-full flex items-center justify-center text-xs text-gray-500 bg-gray-50">
-            {getDisponible(row.stockTotal, row.stockReservado)}
-          </div>
-        )
-      }
-    }
+  // Calculate width for a subheader
+  const getSubHeaderWidth = (cols: string[]) => {
+    return cols.reduce((sum, col) => sum + (COL_WIDTHS[col as keyof typeof COL_WIDTHS] || 100), 0)
+  }
 
-    // Select fields
-    if (column.type === "select") {
-      const value = row[columnId as keyof WorkableRow] as string
-      const isUnidadesPorPackDisabled = columnId === "unidadesPorPack" && row.formatoVenta !== "pack"
-      
-      if (columnId === "formatoVenta" || columnId === "volumenUnidad") {
+  // Get visible columns based on expanded sections
+  const getVisibleColumns = () => {
+    const cols: string[] = []
+    SECTIONS.forEach(section => {
+      if (expandedSections[section.id]) {
+        cols.push(...section.columns)
+      }
+    })
+    return cols
+  }
+
+  // Calculate total table width
+  const getTotalWidth = () => {
+    let width = COL_WIDTHS.rowControls
+    SECTIONS.forEach(section => {
+      if (expandedSections[section.id]) {
+        width += getSectionWidth(section)
+      } else {
+        width += 40 // Collapsed section width
+      }
+    })
+    return width
+  }
+
+  const renderCell = (row: WorkableRow, rowIndex: number, colId: string) => {
+    const baseInputClass = "w-full h-full text-xs px-2 border-0 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
+    
+    switch (colId) {
+      case "caracteres":
+        return (
+          <div className="w-full h-full flex items-center justify-center text-xs text-gray-500 bg-gray-50">
+            {row.titulo.length}
+          </div>
+        )
+      case "stockDisponible":
+        const disponible = Math.max(0, (parseInt(row.stockTotal) || 0) - (parseInt(row.stockReservado) || 0))
+        return (
+          <div className="w-full h-full flex items-center justify-center text-xs text-gray-500 bg-gray-50">
+            {disponible}
+          </div>
+        )
+      case "formatoVenta":
         return (
           <select
-            value={value || column.default || ""}
-            onChange={(e) => updateRow(rowIndex, columnId as keyof WorkableRow, e.target.value)}
-            className="w-full h-full text-xs px-2 border-0 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white cursor-pointer"
+            value={row.formatoVenta}
+            onChange={(e) => updateRow(rowIndex, "formatoVenta", e.target.value)}
+            className={`${baseInputClass} cursor-pointer`}
           >
-            {columnId === "volumenUnidad" && <option value="">-</option>}
-            {column.options.map((opt: string) => (
-              <option key={opt} value={opt}>{opt}</option>
-            ))}
+            <option value="unidad">unidad</option>
+            <option value="pack">pack</option>
           </select>
         )
-      }
-      
-      if (columnId === "unidadesPorPack") {
+      case "volumenUnidad":
+        return (
+          <select
+            value={row.volumenUnidad}
+            onChange={(e) => updateRow(rowIndex, "volumenUnidad", e.target.value)}
+            className={`${baseInputClass} cursor-pointer`}
+          >
+            <option value="">-</option>
+            <option value="ml">ml</option>
+            <option value="L">L</option>
+            <option value="cm³">cm³</option>
+            <option value="m³">m³</option>
+            <option value="g">g</option>
+            <option value="kg">kg</option>
+          </select>
+        )
+      case "unidadesPorPack":
+        const isDisabled = row.formatoVenta !== "pack"
         return (
           <input
             type="number"
             min="1"
-            value={value || "1"}
-            onChange={(e) => updateRow(rowIndex, columnId as keyof WorkableRow, e.target.value)}
-            disabled={isUnidadesPorPackDisabled}
-            className={`w-full h-full text-xs px-2 text-center border-0 focus:outline-none focus:ring-1 focus:ring-blue-400 ${
-              isUnidadesPorPackDisabled ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-white"
-            }`}
+            value={row.unidadesPorPack}
+            onChange={(e) => updateRow(rowIndex, "unidadesPorPack", e.target.value)}
+            disabled={isDisabled}
+            className={`${baseInputClass} text-center ${isDisabled ? "bg-gray-100 text-gray-400 cursor-not-allowed" : ""}`}
           />
         )
-      }
+      case "titulo":
+        return (
+          <input
+            type="text"
+            value={row.titulo}
+            onChange={(e) => updateRow(rowIndex, "titulo", e.target.value)}
+            placeholder="Título"
+            className={baseInputClass}
+          />
+        )
+      case "sku":
+        return (
+          <input
+            type="text"
+            value={row.sku}
+            onChange={(e) => updateRow(rowIndex, "sku", e.target.value)}
+            placeholder="Generar Automático"
+            className={`${baseInputClass} placeholder:text-gray-300`}
+          />
+        )
+      case "codigoUniversal":
+        return (
+          <input
+            type="text"
+            value={row.codigoUniversal}
+            onChange={(e) => updateRow(rowIndex, "codigoUniversal", e.target.value)}
+            placeholder="N.A."
+            className={`${baseInputClass} placeholder:text-gray-300`}
+          />
+        )
+      case "atributo1Key":
+      case "atributo2Key":
+        const keyField = colId === "atributo1Key" ? "atributo1Key" : "atributo2Key"
+        return (
+          <input
+            type="text"
+            value={row[keyField]}
+            onChange={(e) => updateRow(rowIndex, keyField, e.target.value)}
+            placeholder="Ej: Talle"
+            className={`${baseInputClass} placeholder:text-gray-300`}
+          />
+        )
+      case "atributo1Value":
+      case "atributo2Value":
+        const valField = colId === "atributo1Value" ? "atributo1Value" : "atributo2Value"
+        return (
+          <input
+            type="text"
+            value={row[valField]}
+            onChange={(e) => updateRow(rowIndex, valField, e.target.value)}
+            placeholder="Ej: M"
+            className={`${baseInputClass} placeholder:text-gray-300`}
+          />
+        )
+      case "categoria":
+        return (
+          <input
+            type="text"
+            value={row.categoria}
+            onChange={(e) => updateRow(rowIndex, "categoria", e.target.value)}
+            placeholder="Categoría"
+            className={`${baseInputClass} placeholder:text-gray-300`}
+          />
+        )
+      case "marca":
+        return (
+          <input
+            type="text"
+            value={row.marca}
+            onChange={(e) => updateRow(rowIndex, "marca", e.target.value)}
+            placeholder="Marca"
+            className={`${baseInputClass} placeholder:text-gray-300`}
+          />
+        )
+      case "volumenCantidad":
+        return (
+          <input
+            type="number"
+            value={row.volumenCantidad}
+            onChange={(e) => updateRow(rowIndex, "volumenCantidad", e.target.value)}
+            placeholder="Ej: 750"
+            className={`${baseInputClass} text-center placeholder:text-gray-300`}
+          />
+        )
+      case "vencimientoDia":
+        return (
+          <input
+            type="number"
+            min="1"
+            max="31"
+            value={row.vencimientoDia}
+            onChange={(e) => updateRow(rowIndex, "vencimientoDia", e.target.value)}
+            placeholder="DD"
+            className={`${baseInputClass} text-center placeholder:text-gray-300`}
+          />
+        )
+      case "vencimientoMes":
+        return (
+          <input
+            type="number"
+            min="1"
+            max="12"
+            value={row.vencimientoMes}
+            onChange={(e) => updateRow(rowIndex, "vencimientoMes", e.target.value)}
+            placeholder="MM"
+            className={`${baseInputClass} text-center placeholder:text-gray-300`}
+          />
+        )
+      case "vencimientoAnio":
+        return (
+          <input
+            type="number"
+            min="2020"
+            value={row.vencimientoAnio}
+            onChange={(e) => updateRow(rowIndex, "vencimientoAnio", e.target.value)}
+            placeholder="AAAA"
+            className={`${baseInputClass} text-center placeholder:text-gray-300`}
+          />
+        )
+      case "proveedor":
+        return (
+          <input
+            type="text"
+            value={row.proveedor}
+            onChange={(e) => updateRow(rowIndex, "proveedor", e.target.value)}
+            placeholder="Proveedor"
+            className={`${baseInputClass} placeholder:text-gray-300`}
+          />
+        )
+      case "codigoProveedor":
+        return (
+          <input
+            type="text"
+            value={row.codigoProveedor}
+            onChange={(e) => updateRow(rowIndex, "codigoProveedor", e.target.value)}
+            placeholder="Código"
+            className={`${baseInputClass} placeholder:text-gray-300`}
+          />
+        )
+      case "stockTotal":
+        return (
+          <input
+            type="number"
+            min="0"
+            value={row.stockTotal}
+            onChange={(e) => updateRow(rowIndex, "stockTotal", e.target.value)}
+            className={`${baseInputClass} text-center`}
+          />
+        )
+      case "stockReservado":
+        return (
+          <input
+            type="number"
+            min="0"
+            value={row.stockReservado}
+            onChange={(e) => updateRow(rowIndex, "stockReservado", e.target.value)}
+            className={`${baseInputClass} text-center`}
+          />
+        )
+      case "descripcion":
+        return (
+          <input
+            type="text"
+            value={row.descripcion}
+            onChange={(e) => updateRow(rowIndex, "descripcion", e.target.value)}
+            placeholder="Descripción"
+            className={`${baseInputClass} placeholder:text-gray-300`}
+          />
+        )
+      case "fotoUrl":
+        return (
+          <input
+            type="text"
+            value={row.fotoUrl}
+            onChange={(e) => updateRow(rowIndex, "fotoUrl", e.target.value)}
+            placeholder="https://..."
+            className={`${baseInputClass} placeholder:text-gray-300`}
+          />
+        )
+      case "atributoInfoKey":
+        return (
+          <input
+            type="text"
+            value={row.atributosInformativos[0]?.key || ""}
+            onChange={(e) => updateAtributoInformativo(rowIndex, 0, "key", e.target.value)}
+            placeholder="Ej: Material"
+            className={`${baseInputClass} placeholder:text-gray-300`}
+          />
+        )
+      case "atributoInfoValue":
+        return (
+          <input
+            type="text"
+            value={row.atributosInformativos[0]?.value || ""}
+            onChange={(e) => updateAtributoInformativo(rowIndex, 0, "value", e.target.value)}
+            placeholder="Ej: Algodón"
+            className={`${baseInputClass} placeholder:text-gray-300`}
+          />
+        )
+      case "atributoInfoAdd":
+        return (
+          <button
+            onClick={() => addAtributoInformativo(rowIndex)}
+            className="w-full h-full flex items-center justify-center hover:bg-gray-100 transition-colors cursor-pointer"
+            title="Agregar atributo informativo"
+          >
+            <Plus className="w-4 h-4 text-gray-400" />
+          </button>
+        )
+      default:
+        return null
     }
-
-    // Number fields
-    if (column.type === "number") {
-      const value = row[columnId as keyof WorkableRow] as string
-      return (
-        <input
-          type="number"
-          min="0"
-          value={value || ""}
-          onChange={(e) => updateRow(rowIndex, columnId as keyof WorkableRow, e.target.value)}
-          placeholder={column.placeholder || ""}
-          className="w-full h-full text-xs px-2 text-center border-0 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
-        />
-      )
-    }
-
-    // Textarea fields
-    if (column.type === "textarea") {
-      const value = row[columnId as keyof WorkableRow] as string
-      return (
-        <input
-          type="text"
-          value={value || ""}
-          onChange={(e) => updateRow(rowIndex, columnId as keyof WorkableRow, e.target.value)}
-          placeholder={column.placeholder || ""}
-          className="w-full h-full text-xs px-2 border-0 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
-        />
-      )
-    }
-
-    // Default text input
-    const value = row[columnId as keyof WorkableRow] as string
-    return (
-      <input
-        type="text"
-        value={value || ""}
-        onChange={(e) => updateRow(rowIndex, columnId as keyof WorkableRow, e.target.value)}
-        placeholder={column.placeholder || ""}
-        className="w-full h-full text-xs px-2 border-0 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
-      />
-    )
   }
 
   return (
@@ -315,8 +549,8 @@ export default function CreadorMasivoPage() {
             sidebarItems={SIDEBAR_ITEMS}
             bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
             hoveredDropdown={hoveredDropdown}
-            onDropdownOpen={handleDropdownMouseEnter}
-            onDropdownClose={handleDropdownMouseLeave}
+            onDropdownOpen={setHoveredDropdown}
+            onDropdownClose={() => setHoveredDropdown(null)}
           />
         </div>
 
@@ -338,14 +572,13 @@ export default function CreadorMasivoPage() {
 
           {/* Main Content */}
           <div className="flex-1 overflow-hidden flex flex-col">
-            {/* Toolbar - empty for now */}
+            {/* Toolbar */}
             <div className="sticky top-0 z-10 backdrop-blur-[2px] bg-slate-50">
               <div className="w-full h-2 bg-transparent" />
               <div className="px-4 bg-white border rounded-lg shadow-sm border-[rgba(228,230,235,0.5)] mt-2 pt-1 pb-1 mx-4">
                 <div className="px-4 pt-3 pb-3 pl-0 pr-0">
                   <div className="flex items-center justify-between border-b border-gray-200 border-none pl-0 pr-0 pb-0">
                     <div className="flex items-center gap-2 border-0 border-none ml-1.5 mr-0 flex-shrink-0">
-                      {/* Toolbar buttons will go here */}
                       <span className="text-sm text-gray-500">Creador Masivo de Items</span>
                     </div>
                   </div>
@@ -353,232 +586,189 @@ export default function CreadorMasivoPage() {
               </div>
             </div>
 
-            {/* Excel-like Grid */}
+            {/* Excel-like Grid with horizontal scroll */}
             <div className="flex-1 overflow-auto px-4 py-4">
-              <div className="bg-white border rounded-lg shadow-sm border-[rgba(228,230,235,0.5)] overflow-hidden">
-                {/* Section Tab Header */}
-                <div className="flex h-10 bg-slate-100 border-b border-gray-200">
-                  {/* Empty cell for row controls */}
-                  <div className="w-14 flex-shrink-0 border-r border-gray-200" />
-                  
-                  {SECTIONS.map((section) => {
-                    const isExpanded = expandedSections[section.id]
-                    const sectionConfig = COLUMN_GROUPS[section.id as keyof typeof COLUMN_GROUPS]
-                    const columnCount = sectionConfig?.columns?.length || 0
-                    
-                    return (
-                      <div
-                        key={section.id}
-                        className={`flex items-center justify-between px-3 border-r border-gray-200 transition-all ${
-                          isExpanded ? "" : "w-10"
-                        }`}
-                        style={isExpanded ? { minWidth: `${columnCount * 100}px` } : {}}
-                      >
-                        {isExpanded && (
-                          <span className="text-xs font-semibold text-gray-700 truncate flex-1">
-                            {section.label}
-                          </span>
-                        )}
-                        <button
-                          onClick={() => toggleSection(section.id)}
-                          className="p-1 hover:bg-slate-200 rounded transition-colors cursor-pointer flex-shrink-0"
-                          title={isExpanded ? "Colapsar sección" : "Expandir sección"}
-                        >
-                          {isExpanded ? (
-                            <ChevronLeft className="w-4 h-4 text-gray-500" />
-                          ) : (
-                            <ChevronRight className="w-4 h-4 text-gray-500" />
-                          )}
-                        </button>
-                      </div>
-                    )
-                  })}
-                </div>
-
-                {/* Sub-headers Row (Row 2 from CSV) */}
-                <div className="flex h-8 bg-slate-50 border-b border-gray-200">
-                  <div className="w-14 flex-shrink-0 border-r border-gray-200" />
-                  
-                  {SECTIONS.map((section) => {
-                    const isExpanded = expandedSections[section.id]
-                    const sectionConfig = COLUMN_GROUPS[section.id as keyof typeof COLUMN_GROUPS]
-                    
-                    if (!isExpanded) {
-                      return <div key={section.id} className="w-10 border-r border-gray-200 flex-shrink-0" />
-                    }
-                    
-                    // Handle sections with multiple sub-headers
-                    if ('subHeaders' in sectionConfig && sectionConfig.subHeaders) {
-                      return (
-                        <div key={section.id} className="flex border-r border-gray-200">
-                          {sectionConfig.subHeaders.map((subHeader, idx) => {
-                            // Calculate width based on columns belonging to this subheader
-                            let colCount = 2 // Default for pairs
-                            if (section.id === "info-comercial") {
-                              if (idx === 0) colCount = 2 // Info del producto (categoria, marca)
-                              else if (idx === 1) colCount = 2 // Presentación (formato, unidades)
-                              else if (idx === 2) colCount = 2 // Volumen (cantidad, unidad)
-                              else if (idx === 3) colCount = 3 // Vencimiento (dia, mes, año)
-                              else if (idx === 4) colCount = 2 // Proveedor (proveedor, codigo)
-                            } else if (section.id === "media") {
-                              colCount = 1
-                            }
-                            
-                            return (
-                              <div
-                                key={subHeader}
-                                className="flex items-center justify-center px-2 text-[10px] font-medium text-gray-500 uppercase border-r border-gray-100 last:border-r-0"
-                                style={{ minWidth: `${colCount * 100}px` }}
-                              >
-                                {subHeader}
-                              </div>
-                            )
-                          })}
-                        </div>
-                      )
-                    }
-                    
-                    // Single sub-header
-                    const subHeader = 'subHeader' in sectionConfig ? sectionConfig.subHeader : ""
-                    return (
-                      <div
-                        key={section.id}
-                        className="flex items-center justify-center px-2 text-[10px] font-medium text-gray-500 uppercase border-r border-gray-200"
-                        style={{ minWidth: `${(sectionConfig?.columns?.length || 1) * 100}px` }}
-                      >
-                        {subHeader}
-                      </div>
-                    )
-                  })}
-                </div>
-
-                {/* Column Labels Row (Row 3 from CSV) */}
-                <div className="flex h-8 bg-gray-50 border-b border-gray-300">
-                  <div className="w-14 flex-shrink-0 border-r border-gray-200" />
-                  
-                  {SECTIONS.map((section) => {
-                    const isExpanded = expandedSections[section.id]
-                    const sectionConfig = COLUMN_GROUPS[section.id as keyof typeof COLUMN_GROUPS]
-                    
-                    if (!isExpanded) {
-                      return <div key={section.id} className="w-10 border-r border-gray-200 flex-shrink-0" />
-                    }
-                    
-                    return (
-                      <div key={section.id} className="flex border-r border-gray-200">
-                        {sectionConfig?.columns?.map((col, idx) => (
-                          <div
-                            key={col.id}
-                            className="flex items-center justify-center px-1 text-[10px] font-medium text-gray-600 border-r border-gray-100 last:border-r-0"
-                            style={{ width: col.width, minWidth: col.width }}
+              <div className="bg-white border rounded-lg shadow-sm border-[rgba(228,230,235,0.5)] overflow-x-auto">
+                <table className="border-collapse" style={{ minWidth: getTotalWidth() }}>
+                  {/* Row 1: Section Headers */}
+                  <thead>
+                    <tr className="h-10 bg-slate-100">
+                      <th 
+                        className="border-r border-b border-gray-200 bg-slate-100"
+                        style={{ width: COL_WIDTHS.rowControls, minWidth: COL_WIDTHS.rowControls }}
+                      />
+                      {SECTIONS.map((section) => {
+                        const isExpanded = expandedSections[section.id]
+                        const sectionWidth = isExpanded ? getSectionWidth(section) : 40
+                        const colSpan = isExpanded ? section.columns.length : 1
+                        
+                        return (
+                          <th
+                            key={section.id}
+                            colSpan={colSpan}
+                            className="border-r border-b border-gray-200 bg-slate-100 px-2"
+                            style={{ width: sectionWidth, minWidth: sectionWidth }}
                           >
-                            {col.label}
-                          </div>
-                        ))}
-                        {/* Add button cell for atributos informativos */}
-                        {section.id === "atributos-informativos" && (
-                          <div className="w-10 flex items-center justify-center border-l border-gray-100" />
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-
-                {/* Workable Rows */}
-                {rows.map((row, rowIndex) => (
-                  <div key={row.id} className="flex h-9 border-b border-gray-200 hover:bg-blue-50/30">
-                    {/* Row controls */}
-                    <div className="w-14 flex-shrink-0 border-r border-gray-200 flex items-center justify-center gap-1 bg-gray-50">
-                      <button
-                        onClick={() => addRow(rowIndex)}
-                        className="p-0.5 hover:bg-green-100 rounded transition-colors cursor-pointer"
-                        title="Agregar fila"
-                      >
-                        <Plus className="w-3.5 h-3.5 text-green-600" />
-                      </button>
-                      <button
-                        onClick={() => removeRow(rowIndex)}
-                        className={`p-0.5 rounded transition-colors ${
-                          rows.length === 1 
-                            ? "text-gray-300 cursor-not-allowed" 
-                            : "hover:bg-red-100 text-red-600 cursor-pointer"
-                        }`}
-                        title="Eliminar fila"
-                        disabled={rows.length === 1}
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-
-                    {/* Data cells */}
-                    {SECTIONS.map((section) => {
-                      const isExpanded = expandedSections[section.id]
-                      const sectionConfig = COLUMN_GROUPS[section.id as keyof typeof COLUMN_GROUPS]
-                      
-                      if (!isExpanded) {
-                        return <div key={section.id} className="w-10 border-r border-gray-200 flex-shrink-0 bg-gray-50" />
-                      }
-
-                      return (
-                        <div key={section.id} className="flex border-r border-gray-200">
-                          {section.id === "atributos-informativos" ? (
-                            <>
-                              {/* Render all atributos informativos for this row */}
-                              {row.atributosInformativos.map((attr, attrIdx) => (
-                                <div key={attrIdx} className="flex">
-                                  <div
-                                    className="border-r border-gray-100"
-                                    style={{ width: "120px", minWidth: "120px" }}
-                                  >
-                                    <input
-                                      type="text"
-                                      value={attr.key}
-                                      onChange={(e) => updateAtributoInformativo(rowIndex, attrIdx, "key", e.target.value)}
-                                      placeholder="Ej: Material"
-                                      className="w-full h-full text-xs px-2 border-0 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
-                                    />
-                                  </div>
-                                  <div
-                                    className="border-r border-gray-100"
-                                    style={{ width: "120px", minWidth: "120px" }}
-                                  >
-                                    <input
-                                      type="text"
-                                      value={attr.value}
-                                      onChange={(e) => updateAtributoInformativo(rowIndex, attrIdx, "value", e.target.value)}
-                                      placeholder="Ej: Algodón"
-                                      className="w-full h-full text-xs px-2 border-0 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
-                                    />
-                                  </div>
-                                </div>
-                              ))}
-                              {/* Add button */}
-                              <div className="w-10 flex items-center justify-center border-l border-gray-100">
-                                <button
-                                  onClick={() => addAtributoInformativo(rowIndex)}
-                                  className="p-1 hover:bg-blue-100 rounded transition-colors cursor-pointer"
-                                  title="Agregar atributo informativo"
-                                >
-                                  <Plus className="w-3 h-3 text-blue-600" />
-                                </button>
-                              </div>
-                            </>
-                          ) : (
-                            sectionConfig?.columns?.map((col) => (
-                              <div
-                                key={col.id}
-                                className="border-r border-gray-100 last:border-r-0"
-                                style={{ width: col.width, minWidth: col.width }}
+                            <div className="flex items-center justify-between">
+                              {isExpanded && (
+                                <span className="text-xs font-semibold text-gray-700 truncate flex-1 text-left">
+                                  {section.label}
+                                </span>
+                              )}
+                              <button
+                                onClick={() => toggleSection(section.id)}
+                                className="p-1 hover:bg-slate-200 rounded transition-colors cursor-pointer flex-shrink-0"
+                                title={isExpanded ? "Colapsar sección" : section.label}
                               >
-                                {renderCell(row, rowIndex, col.id, col)}
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                ))}
+                                {isExpanded ? (
+                                  <ChevronLeft className="w-4 h-4 text-gray-500" />
+                                ) : (
+                                  <ChevronRight className="w-4 h-4 text-gray-500" />
+                                )}
+                              </button>
+                            </div>
+                          </th>
+                        )
+                      })}
+                    </tr>
+
+                    {/* Row 2: Sub-headers */}
+                    <tr className="h-8 bg-slate-50">
+                      <th 
+                        className="border-r border-b border-gray-200 bg-slate-50"
+                        style={{ width: COL_WIDTHS.rowControls, minWidth: COL_WIDTHS.rowControls }}
+                      />
+                      {SECTIONS.map((section) => {
+                        const isExpanded = expandedSections[section.id]
+                        
+                        if (!isExpanded) {
+                          return (
+                            <th
+                              key={section.id}
+                              className="border-r border-b border-gray-200 bg-slate-50"
+                              style={{ width: 40, minWidth: 40 }}
+                            />
+                          )
+                        }
+                        
+                        return section.subHeaders.map((subHeader, idx) => {
+                          const subHeaderWidth = getSubHeaderWidth(subHeader.cols)
+                          return (
+                            <th
+                              key={`${section.id}-sub-${idx}`}
+                              colSpan={subHeader.cols.length}
+                              className="border-r border-b border-gray-200 bg-slate-50 px-2"
+                              style={{ width: subHeaderWidth, minWidth: subHeaderWidth }}
+                            >
+                              <span className="text-[10px] font-medium text-gray-500 uppercase">
+                                {subHeader.label}
+                              </span>
+                            </th>
+                          )
+                        })
+                      })}
+                    </tr>
+
+                    {/* Row 3: Column Labels */}
+                    <tr className="h-8 bg-gray-50">
+                      <th 
+                        className="border-r border-b border-gray-300 bg-gray-50"
+                        style={{ width: COL_WIDTHS.rowControls, minWidth: COL_WIDTHS.rowControls }}
+                      />
+                      {SECTIONS.map((section) => {
+                        const isExpanded = expandedSections[section.id]
+                        
+                        if (!isExpanded) {
+                          return (
+                            <th
+                              key={section.id}
+                              className="border-r border-b border-gray-300 bg-gray-50"
+                              style={{ width: 40, minWidth: 40 }}
+                            />
+                          )
+                        }
+                        
+                        return section.columns.map((colId) => {
+                          const width = COL_WIDTHS[colId as keyof typeof COL_WIDTHS] || 100
+                          return (
+                            <th
+                              key={colId}
+                              className="border-r border-b border-gray-300 bg-gray-50 px-2"
+                              style={{ width, minWidth: width }}
+                            >
+                              <span className="text-[10px] font-medium text-gray-600">
+                                {COLUMN_LABELS[colId] || ""}
+                              </span>
+                            </th>
+                          )
+                        })
+                      })}
+                    </tr>
+                  </thead>
+
+                  {/* Workable Rows */}
+                  <tbody>
+                    {rows.map((row, rowIndex) => (
+                      <tr key={row.id} className="h-9 hover:bg-gray-50/50">
+                        {/* Row controls */}
+                        <td 
+                          className="border-r border-b border-gray-200 bg-white"
+                          style={{ width: COL_WIDTHS.rowControls, minWidth: COL_WIDTHS.rowControls }}
+                        >
+                          <div className="flex items-center justify-center gap-1 h-full">
+                            <button
+                              onClick={() => addRow(rowIndex)}
+                              className="p-1 hover:bg-gray-100 rounded transition-colors cursor-pointer"
+                              title="Agregar fila debajo"
+                            >
+                              <Plus className="w-3.5 h-3.5 text-green-600" />
+                            </button>
+                            <button
+                              onClick={() => removeRow(rowIndex)}
+                              disabled={rows.length === 1}
+                              className={`p-1 rounded transition-colors ${
+                                rows.length === 1 
+                                  ? "text-gray-300 cursor-not-allowed" 
+                                  : "hover:bg-gray-100 text-red-500 cursor-pointer"
+                              }`}
+                              title="Eliminar fila"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                        
+                        {/* Data cells */}
+                        {SECTIONS.map((section) => {
+                          const isExpanded = expandedSections[section.id]
+                          
+                          if (!isExpanded) {
+                            return (
+                              <td
+                                key={section.id}
+                                className="border-r border-b border-gray-200 bg-gray-50"
+                                style={{ width: 40, minWidth: 40 }}
+                              />
+                            )
+                          }
+                          
+                          return section.columns.map((colId) => {
+                            const width = COL_WIDTHS[colId as keyof typeof COL_WIDTHS] || 100
+                            return (
+                              <td
+                                key={colId}
+                                className="border-r border-b border-gray-200 p-0"
+                                style={{ width, minWidth: width }}
+                              >
+                                {renderCell(row, rowIndex, colId)}
+                              </td>
+                            )
+                          })
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
