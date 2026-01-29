@@ -409,6 +409,16 @@ export function ItemsGrid({
                 </div>
 
                 <Button
+                  onClick={() => window.location.href = "/inventario/creador-masivo"}
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5 mr-1.5 text-green-600" />
+                  Creador Masivo
+                </Button>
+
+                <Button
                   onClick={() => setIsAuditMode(!isAuditMode)}
                   variant="ghost"
                   size="sm"
