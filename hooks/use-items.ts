@@ -936,20 +936,26 @@ export function useItems() {
 
   // Bulk create multiple standalone items at once
   const bulkCreateItems = (newItemsData: Array<{
-    name: string
-    sku?: string
-    codigoUniversal?: string
-    categoria?: string
-    marca?: string
-    formatoVenta?: string
-    unidadesPorPack?: number
-    volumenUnidad?: { cantidad?: string; unidad?: string }
-    vencimiento?: { dia?: string; mes?: string; anio?: string }
-    atributosPrincipales?: Array<{ key: string; value: string }>
-    atributosInformativos?: Array<{ key: string; value: string }>
-    stockTotal?: number
-    stockReservado?: number
-    imagenUrl?: string
+  name: string
+  sku?: string
+  codigoUniversal?: string
+  categoria?: string
+  marca?: string
+  formatoVenta?: string
+  unidadesPorPack?: number
+  volumenActive?: boolean
+  volumenCantidad?: number | string
+  volumenUnidad?: string
+  vencimientoActive?: boolean
+  fechaVencimiento?: string
+  proveedor?: string
+  codigoProveedor?: string
+  descripcion?: string
+  atributosPrincipales?: Array<{ key: string; value: string }>
+  atributosInformativos?: Array<{ key: string; value: string }>
+  stockTotal?: number
+  stockReservado?: number
+  imagenUrl?: string
   }>) => {
     const existingSkus = items.map((item) => item.sku)
     const newSkus: string[] = []
@@ -975,36 +981,35 @@ export function useItems() {
       const stockReservado = data.stockReservado ?? 0
       const stockDisponible = stockTotal - stockReservado
       
-      const newItem: Item = {
-        name: data.name,
-        sku,
-        codigoUniversal,
-        categoria: data.categoria || "",
-        marca: data.marca || "",
-        formatoVenta: data.formatoVenta || "unidad",
-        unidadesPorPack: data.unidadesPorPack || 1,
-        volumenUnidad: data.volumenUnidad?.cantidad ? {
-          cantidad: data.volumenUnidad.cantidad,
-          unidad: data.volumenUnidad.unidad || "ml",
-        } : undefined,
-        vencimiento: data.vencimiento?.dia && data.vencimiento?.mes && data.vencimiento?.anio ? {
-          dia: data.vencimiento.dia,
-          mes: data.vencimiento.mes,
-          anio: data.vencimiento.anio,
-        } : undefined,
-        stock: {
-          total: stockTotal.toString(),
-          reservado: stockReservado.toString(),
-          disponible: stockDisponible.toString(),
-        },
-        hasVariants: false,
-        isAgrupador: false,
-        atributosPrincipales: data.atributosPrincipales?.filter(a => a.key && a.value) || [],
-        atributosInformativos: data.atributosInformativos?.filter(a => a.key && a.value) || [],
-        imagenUrl: data.imagenUrl || "",
-        variantCount: 0,
-        itemCount: 0,
-      }
+  const newItem: Item = {
+  name: data.name,
+  sku,
+  codigoUniversal,
+  categoria: data.categoria || "",
+  marca: data.marca || "",
+  formatoVenta: data.formatoVenta || "unidad",
+  unidadesPorPack: data.unidadesPorPack || 1,
+  volumenActive: data.volumenActive || false,
+  volumenCantidad: data.volumenCantidad ? Number(data.volumenCantidad) : undefined,
+  volumenUnidad: data.volumenUnidad || undefined,
+  vencimientoActive: data.vencimientoActive || false,
+  fechaVencimiento: data.fechaVencimiento || undefined,
+  proveedor: data.proveedor || "",
+  codigoProveedor: data.codigoProveedor || "",
+  descripcion: data.descripcion || "",
+  stock: {
+  total: stockTotal.toString(),
+  reservado: stockReservado.toString(),
+  disponible: stockDisponible.toString(),
+  },
+  hasVariants: false,
+  isAgrupador: false,
+  atributosPrincipales: data.atributosPrincipales?.filter(a => a.key && a.value) || [],
+  atributosInformativos: data.atributosInformativos?.filter(a => a.key && a.value) || [],
+  imagenUrl: data.imagenUrl || "",
+  variantCount: 0,
+  itemCount: 0,
+  }
       
       return newItem
     })

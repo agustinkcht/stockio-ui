@@ -54,8 +54,16 @@ export interface Item {
   categoria?: string
   modelo?: string
   formatoVenta?: string
+  unidadesPorPack?: number
+  volumenActive?: boolean
+  volumenCantidad?: number
+  volumenUnidad?: string
+  vencimientoActive?: boolean
+  fechaVencimiento?: string
   proveedor?: string
   codigoProveedor?: string
+  descripcion?: string
+  imagenUrl?: string
   atributosPrincipales?: Atributo[]
   atributosInformativos?: Atributo[]
   variants?: ItemVariant[]
