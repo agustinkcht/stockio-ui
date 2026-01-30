@@ -886,20 +886,20 @@ export function ItemDetailPanel({
 
                     {variantItems.length > 0 ? (
                       <div className="bg-white border border-border/40 rounded-lg overflow-hidden">
-                    {/* Header */}
-                    <div className="grid grid-cols-[1fr_minmax(80px,1fr)_28px] bg-white border-b border-border/30">
-                      <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                        {/* Empty label for atributos column */}
-                      </div>
-                      <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                        SKU
-                      </div>
-                      <div />
-                    </div>
+                        {/* Header */}
+                        <div className="grid grid-cols-[1fr_minmax(80px,1fr)_28px] bg-white border-b border-border/30">
+                          <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                            {/* Empty label for atributos column */}
+                          </div>
+                          <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                            SKU
+                          </div>
+                          <div />
+                        </div>
 
-                    {/* Rows */}
-                    <div className="divide-y divide-border/30">
-                      {variantItems.map((variant) => {
+                        {/* Rows */}
+                        <div className="divide-y divide-border/30">
+                          {variantItems.map((variant) => {
                         const sourceVariant = selectedItem.variants?.find((v: any) => {
                           if (!v.atributosPrincipales) return false
                           const hasMatchingAttr1 = variant.variant1
@@ -999,17 +999,19 @@ export function ItemDetailPanel({
                             </div>
                           </div>
                         )
-                      })}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center text-xs text-muted-foreground py-8 border border-dashed border-border/60 rounded-lg">
-                    No hay variantes configuradas
-                  </div>
+                          })}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center text-xs text-muted-foreground py-8 border border-dashed border-border/60 rounded-lg">
+                        No hay variantes configuradas
+                      </div>
+                    )}
+                  </>
                 )}
-              </div>
-            </div>
-          )}
+
+                {/* Atributos content */}
+                {rightCardMode === "atributos" && (
 
 {/* Info/Atributos Column - 12 cols when info expanded, 7 cols when both, 2 col when stock expanded */}
         <div className={`flex flex-col transition-all duration-300 overflow-hidden mr-3.5 pb-0 ${isViewingContainer ? "order-1 col-span-1 mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : `order-1 relative mt-[44px] pt-6 pb-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10 ${expandedSection === "info" ? "col-span-12 px-8" : expandedSection === "both" ? "col-span-7 px-6" : "col-span-2 px-3"}`}`}>
