@@ -1012,34 +1012,64 @@ export function ItemDetailPanel({
 
                 {/* Atributos content */}
                 {rightCardMode === "atributos" && (
-
-          {/* Info/Atributos Column - 12 cols when info expanded, 7 cols when both, 2 col when stock expanded */}
-          <div className={
-            isViewingContainer 
-              ? "flex flex-col transition-all duration-300 overflow-hidden mr-3.5 pb-0 order-1 col-span-1 mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60"
-              : `flex flex-col transition-all duration-300 overflow-hidden mr-3.5 pb-0 order-1 relative mt-[44px] pt-6 pb-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10 ${expandedSection === "info" ? "col-span-12 px-8" : expandedSection === "both" ? "col-span-7 px-6" : "col-span-2 px-3"}`
-          }>
-            
-            {/* Thumbnail + Title Header for Parent Items */}
-            {isViewingContainer && (
-              <div className="flex items-center gap-4 mb-6 pb-5 border-b border-slate-100">
-                <div className="w-14 h-14 rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-                  <Image
-                    src={getCategoryImage(selectedItem.categoria) || "/placeholder.svg"}
-                    alt={selectedItem.name}
-                    width={56}
-                    height={56}
-                    className="object-cover"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h2 className="font-semibold text-slate-900 text-base truncate">{selectedItem.name}</h2>
-                  <p className="text-[10px] text-slate-400 uppercase tracking-wider mt-0.5">Agrupador de variantes</p>
-                </div>
+                  <div className="h-full flex flex-col py-2">
+                    {!showAtributosView ? (
+                      <div className="flex flex-col items-center justify-center h-full gap-4 py-8">
+                        <p className="text-gray-500 text-sm">No hay atributos configurados</p>
+                        <button
+                          onClick={() => setShowAtributosView(true)}
+                          className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg transition-colors cursor-pointer"
+                        >
+                          Agregar atributos
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-6">
+                        {/* Actual atributos content will be here */}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Collapsed Info State - Minimal Slider View (only when stock is fully expanded) */}
+          {/* Left Column - Info Card (only for parent items) */}
+          {isViewingContainer && (
+            <div className="col-span-1 order-1 flex flex-col mt-[44px]">
+              <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
+                {/* Thumbnail + Title Header for Parent Items */}
+                <div className="flex items-center gap-4 mb-6 pb-5 border-b border-slate-100">
+                  <div className="w-14 h-14 rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    <Image
+                      src={getCategoryImage(selectedItem.categoria) || "/placeholder.svg"}
+                      alt={selectedItem.name}
+                      width={56}
+                      height={56}
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h2 className="font-semibold text-slate-900 text-base truncate">{selectedItem.name}</h2>
+                    <p className="text-[10px] text-slate-400 uppercase tracking-wider mt-0.5">Agrupador de variantes</p>
+                  </div>
+                </div>
+
+                {/* Title for container items */}
+                <div className="mb-6">
+                  <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-2">
+                    Información Comercial
+                  </h3>
+                  <p className="text-xs text-slate-500 italic">
+                    Esta información se comparte entre todas las variantes hijas
+                  </p>
+                </div>
+
+                {/* Container Info Content */}
+                <div className="h-full flex flex-col py-2">
+                  <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
+                    Información del Producto
+                  </h3>
             {!isViewingContainer && expandedSection === "stock" && (
               <div 
                 onClick={() => setExpandedSection("both")}
