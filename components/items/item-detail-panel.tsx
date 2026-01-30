@@ -1977,23 +1977,11 @@ export function ItemDetailPanel({
                   )}
                   </>
                 )}
+              </div>
+            </div>
+          )}
 
-                {/* Atributos content */}
-                {rightCardMode === "atributos" && (
-                  <div className="h-full flex flex-col py-2">
-                    {!showAtributosView ? (
-                      <div className="flex flex-col items-center justify-center h-full gap-4 py-8">
-                        <p className="text-gray-500 text-sm">No hay atributos configurados</p>
-                        <button
-                          onClick={() => setShowAtributosView(true)}
-                          className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg transition-colors cursor-pointer"
-                        >
-                          Agregar atributos
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col gap-6">
-                        {/* Atributos Principales */}
+{/* Stock Column - 12 cols when stock expanded, 7 cols when both, 2 col when info expanded */}
                         <div className="flex flex-col gap-3">
                           <div>
                             <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
