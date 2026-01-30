@@ -885,7 +885,7 @@ export function ItemDetailPanel({
                     </h3>
 
                     {variantItems.length > 0 ? (
-                  <div className="bg-white border border-border/40 rounded-lg overflow-hidden">
+                      <div className="bg-white border border-border/40 rounded-lg overflow-hidden">
                     {/* Header */}
                     <div className="grid grid-cols-[1fr_minmax(80px,1fr)_28px] bg-white border-b border-border/30">
                       <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
