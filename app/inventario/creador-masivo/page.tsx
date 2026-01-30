@@ -692,14 +692,14 @@ export default function CreadorMasivoPage() {
             </div>
 
             {/* Excel-like Grid with horizontal scroll */}
-            <div className="flex-1 overflow-auto px-4 py-4">
+            <div className="border-r border-b border-gray-200 bg-gray-900">
               <div className="bg-white border rounded-lg shadow-sm border-[rgba(228,230,235,0.5)] overflow-x-auto">
                 <table className="border-collapse" style={{ minWidth: getTotalWidth() }}>
                   {/* Row 1: Section Headers */}
                   <thead>
                     <tr className="h-10 bg-slate-100">
                       <th 
-                        className="border-r border-b border-gray-200 bg-slate-100"
+                        className="border-r border-b border-gray-200 bg-cyan-950"
                         style={{ width: COL_WIDTHS.rowControls, minWidth: COL_WIDTHS.rowControls }}
                       />
                       {SECTIONS.map((section) => {
@@ -711,13 +711,13 @@ export default function CreadorMasivoPage() {
                           <th
                             key={section.id}
                             colSpan={colSpan}
-                            className="border-r border-b border-gray-200 bg-slate-100 px-2 cursor-pointer hover:bg-slate-150 transition-colors"
+                            className="border-r border-b border-gray-200 px-2 cursor-pointer hover:bg-slate-150 transition-colors bg-cyan-950"
                             style={{ width: sectionWidth, minWidth: sectionWidth }}
                             onClick={() => toggleSection(section.id)}
                             title={isExpanded ? "Colapsar sección" : "Expandir sección"}
                           >
                             <div className="flex items-center justify-between gap-2">
-                              <span className="text-xs font-semibold text-gray-700 truncate flex-1 text-left">
+                              <span className="text-xs font-semibold truncate flex-1 text-left text-slate-200">
                                 {section.label}
                               </span>
                               <div className="flex-shrink-0">
@@ -736,7 +736,7 @@ export default function CreadorMasivoPage() {
                     {/* Row 2: Sub-headers */}
                     <tr className="h-8 bg-slate-50">
                       <th 
-                        className="border-r border-b border-gray-200 bg-slate-50"
+                        className="border-r border-b border-gray-200 bg-cyan-950"
                         style={{ width: COL_WIDTHS.rowControls, minWidth: COL_WIDTHS.rowControls }}
                       />
                       {SECTIONS.map((section) => {
@@ -773,7 +773,7 @@ export default function CreadorMasivoPage() {
                     {/* Row 3: Column Labels */}
                     <tr className="h-8 bg-gray-50">
                       <th 
-                        className="border-r border-b border-gray-300 bg-gray-50"
+                        className="border-r border-b border-gray-300 bg-cyan-950"
                         style={{ width: COL_WIDTHS.rowControls, minWidth: COL_WIDTHS.rowControls }}
                       />
                       {SECTIONS.map((section) => {
