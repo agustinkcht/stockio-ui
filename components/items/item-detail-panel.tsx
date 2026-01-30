@@ -753,19 +753,23 @@ export function ItemDetailPanel({
       {/* <Breadcrumb dynamicContent={null} /> */}
 
       <div className={`px-8 pb-6 min-h-screen pl-8 pt-0 ${isViewingContainer ? "bg-slate-50" : ""}`}>
-        {/* Sophisticated gradient background for standalone/children items */}
+        {/* Sophisticated gradient background that contours the item card */}
         {!isViewingContainer && (
           <div 
             className="fixed inset-0 pointer-events-none"
             style={{
               background: `linear-gradient(to right, 
                 rgb(248 250 252) 0%, 
-                rgb(248 250 252) 28%, 
-                rgb(30 41 59) 38%, 
-                rgb(15 23 42) 45%, 
-                rgb(15 23 42) 55%, 
-                rgb(30 41 59) 62%, 
-                rgb(248 250 252) 72%, 
+                rgb(248 250 252) 25%, 
+                rgb(226 232 240) 30%,
+                rgb(100 116 139) 34%,
+                rgb(30 41 59) 36%, 
+                rgb(15 23 42) 38%, 
+                rgb(15 23 42) 62%, 
+                rgb(30 41 59) 64%, 
+                rgb(100 116 139) 66%,
+                rgb(226 232 240) 70%,
+                rgb(248 250 252) 75%, 
                 rgb(248 250 252) 100%
               )`,
               zIndex: 0
@@ -791,36 +795,36 @@ export function ItemDetailPanel({
               </div>
 
               <div className="mt-6 mb-0">
-                <h2 className="font-semibold text-foreground text-lg mb-0">{selectedItem.name}</h2>
+                <h2 className="font-semibold text-white text-lg mb-0">{selectedItem.name}</h2>
                 
                 {/* SKU and Código Universal for standalone/children items */}
                 {!isViewingContainer && (
-                  <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground font-mono">
+                  <div className="flex items-center gap-4 mt-2 text-xs text-slate-400 font-mono">
                     <div className="flex items-center gap-1.5">
-                      <span className="font-medium">SKU:</span>
+                      <span className="font-medium text-slate-300">SKU:</span>
                       <span>{selectedItem.sku}</span>
                       <button
                         onClick={handleCopySku}
-                        className="text-muted-foreground hover:text-foreground transition-colors p-0.5"
+                        className="text-slate-500 hover:text-slate-300 transition-colors p-0.5"
                         title="Copiar SKU"
                       >
                         {skuCopied ? (
-                          <span className="text-success text-xs">✓</span>
+                          <span className="text-green-400 text-xs">✓</span>
                         ) : (
                           <Copy className="h-3 w-3" />
                         )}
                       </button>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <span className="font-medium">C.U.:</span>
+                      <span className="font-medium text-slate-300">C.U.:</span>
                       <span>{selectedItem.codigoUniversal || "N/A"}</span>
                       <button
                         onClick={handleCopyCodigoUniversal}
-                        className="text-muted-foreground hover:text-foreground transition-colors p-0.5"
+                        className="text-slate-500 hover:text-slate-300 transition-colors p-0.5"
                         title="Copiar Código Universal"
                       >
                         {codigoUniversalCopied ? (
-                          <span className="text-success text-xs">✓</span>
+                          <span className="text-green-400 text-xs">✓</span>
                         ) : (
                           <Copy className="h-3 w-3" />
                         )}
@@ -832,9 +836,9 @@ export function ItemDetailPanel({
                 {/* Horizontal line and Descripción for standalone/children items */}
                 {!isViewingContainer && (
                   <>
-                    <div className="border-t border-slate-200 my-4"></div>
+                    <div className="border-t border-slate-700/50 my-4"></div>
                     <div className="flex-1 flex flex-col border-0">
-                      <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
+                      <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-3">
                         Descripción
                       </h3>
                       <div className="flex-1">
@@ -843,17 +847,17 @@ export function ItemDetailPanel({
                             value={descripcionValue}
                             onChange={(e) => setDescripcionValue(e.target.value)}
                             onBlur={handleDescripcionBlur}
-                            className="w-full h-full min-h-[100px] px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm"
+                            className="w-full h-full min-h-[100px] px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-500 resize-none text-sm placeholder:text-slate-500"
                             placeholder="Agregar descripción del producto..."
                             autoFocus
                           />
                         ) : (
                           <div
                             onClick={() => setEditingDescripcion(true)}
-                            className="w-full min-h-[100px] px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 cursor-pointer hover:border-gray-400 text-sm border-none"
+                            className="w-full min-h-[100px] px-3 py-2 bg-slate-800/30 border border-slate-700/50 rounded-lg text-slate-200 cursor-pointer hover:border-slate-600 text-sm"
                           >
                             {descripcionValue || (
-                              <span className="text-gray-400">Click para agregar descripción...</span>
+                              <span className="text-slate-500">Click para agregar descripción...</span>
                             )}
                           </div>
                         )}
