@@ -204,6 +204,7 @@ export default function CreadorMasivoPage() {
     SECTIONS.reduce((acc, section) => ({ ...acc, [section.id]: section.defaultExpanded }), {})
   )
   const [rows, setRows] = useState<WorkableRow[]>([createEmptyRow()])
+  const [gridSize, setGridSize] = useState<"sm" | "md" | "lg">("sm")
   
   // Modal states
   const [showErrorModal, setShowErrorModal] = useState(false)
@@ -470,8 +471,18 @@ export default function CreadorMasivoPage() {
     return width
   }
 
+  // Get row height based on grid size
+  const getRowHeight = () => {
+    switch (gridSize) {
+      case "sm": return "h-9"
+      case "md": return "h-12"
+      case "lg": return "h-16"
+      default: return "h-9"
+    }
+  }
+
   const renderCell = (row: WorkableRow, rowIndex: number, colId: string) => {
-    const baseInputClass = "w-full h-full text-xs px-2 border-0 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
+    const baseInputClass = "w-full h-full text-xs px-2 py-2 border-0 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
     
     switch (colId) {
       case "caracteres":
@@ -820,8 +831,42 @@ export default function CreadorMasivoPage() {
               <div className="px-4 bg-white border rounded-lg shadow-sm border-[rgba(228,230,235,0.5)] mt-2 pt-1 pb-1 mx-4">
                 <div className="px-4 pt-3 pb-3 pl-0 pr-0">
                   <div className="flex items-center justify-between border-b border-gray-200 border-none pl-0 pr-0 pb-0">
-                    <div className="flex items-center gap-2 border-0 border-none ml-1.5 mr-0 flex-shrink-0">
+                    <div className="flex items-center gap-4 border-0 border-none ml-1.5 mr-0 flex-shrink-0">
                       <span className="text-sm text-gray-500">Creador Masivo de Items</span>
+                      
+                      {/* Grid Size Selector */}
+                      <div className="flex items-center gap-1 bg-gray-100 rounded-md p-0.5">
+                        <button
+                          onClick={() => setGridSize("sm")}
+                          className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
+                            gridSize === "sm"
+                              ? "bg-white text-gray-900 shadow-sm"
+                              : "text-gray-600 hover:text-gray-900"
+                          }`}
+                        >
+                          SM
+                        </button>
+                        <button
+                          onClick={() => setGridSize("md")}
+                          className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
+                            gridSize === "md"
+                              ? "bg-white text-gray-900 shadow-sm"
+                              : "text-gray-600 hover:text-gray-900"
+                          }`}
+                        >
+                          MD
+                        </button>
+                        <button
+                          onClick={() => setGridSize("lg")}
+                          className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
+                            gridSize === "lg"
+                              ? "bg-white text-gray-900 shadow-sm"
+                              : "text-gray-600 hover:text-gray-900"
+                          }`}
+                        >
+                          LG
+                        </button>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Button
@@ -972,7 +1017,7 @@ export default function CreadorMasivoPage() {
                   {/* Workable Rows */}
                   <tbody>
                     {rows.map((row, rowIndex) => (
-                      <tr key={row.id} className="h-9 hover:bg-gray-50/50">
+                      <tr key={row.id} className={`${getRowHeight()} hover:bg-gray-50/50`}>
                         {/* Row controls */}
                         <td 
                           className="border-r border-b border-gray-200 bg-white"
