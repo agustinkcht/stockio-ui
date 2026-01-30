@@ -752,32 +752,8 @@ export function ItemDetailPanel({
     <>
       {/* <Breadcrumb dynamicContent={null} /> */}
 
-      <div className={`px-8 pb-6 min-h-screen pl-8 pt-0 ${isViewingContainer ? "bg-slate-50" : ""}`}>
-        {/* Sophisticated gradient background that contours the item card */}
-        {!isViewingContainer && (
-          <div 
-            className="fixed inset-0 pointer-events-none"
-            style={{
-              background: `linear-gradient(to right, 
-                rgb(248 250 252) 0%, 
-                rgb(248 250 252) 25%, 
-                rgb(226 232 240) 30%,
-                rgb(100 116 139) 34%,
-                rgb(30 41 59) 36%, 
-                rgb(15 23 42) 38%, 
-                rgb(15 23 42) 62%, 
-                rgb(30 41 59) 64%, 
-                rgb(100 116 139) 66%,
-                rgb(226 232 240) 70%,
-                rgb(248 250 252) 75%, 
-                rgb(248 250 252) 100%
-              )`,
-              zIndex: 0
-            }}
-          />
-        )}
-        {isViewingContainer && <div className="fixed inset-0 bg-slate-50 pointer-events-none" style={{ zIndex: 0 }} />}
-        <div className={`grid gap-2 relative z-10 ${isViewingContainer ? "grid-cols-2 gap-6" : "grid-cols-20 gap-3"}`}>
+      <div className="px-8 pb-6 bg-slate-50 min-h-screen pl-8 pt-0">
+        <div className={`grid gap-2 ${isViewingContainer ? "grid-cols-2 gap-6" : "grid-cols-20 gap-3"}`}>
           {/* Middle Column - Image Card (only for standalone/children) - col-span-6 */}
           {!isViewingContainer && (
           <div className="col-span-6 order-2 z-20 rounded-xl flex flex-col transition-all duration-300 mt-4 border-none shadow-none pl-0 pr-0">
