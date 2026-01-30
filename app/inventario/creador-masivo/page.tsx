@@ -26,9 +26,7 @@ const COL_WIDTHS = {
   unidadesPorPack: 90,
   volumenCantidad: 90,
   volumenUnidad: 100,
-  vencimientoDia: 70,
-  vencimientoMes: 70,
-  vencimientoAnio: 80,
+  vencimiento: 150,
   proveedor: 130,
   codigoProveedor: 130,
   stockTotal: 80,
@@ -71,12 +69,12 @@ const SECTIONS = [
     id: "info-comercial", 
     label: "Información Comercial", 
     defaultExpanded: false,
-    columns: ["categoria", "marca", "formatoVenta", "unidadesPorPack", "volumenCantidad", "volumenUnidad", "vencimientoDia", "vencimientoMes", "vencimientoAnio", "proveedor", "codigoProveedor"],
+    columns: ["categoria", "marca", "formatoVenta", "unidadesPorPack", "volumenCantidad", "volumenUnidad", "vencimiento", "proveedor", "codigoProveedor"],
     subHeaders: [
       { label: "INFO DEL PRODUCTO", cols: ["categoria", "marca"] },
       { label: "PRESENTACIÓN", cols: ["formatoVenta", "unidadesPorPack"] },
       { label: "VOLUMEN DE LA UNIDAD", cols: ["volumenCantidad", "volumenUnidad"] },
-      { label: "VENCIMIENTO", cols: ["vencimientoDia", "vencimientoMes", "vencimientoAnio"] },
+      { label: "VENCIMIENTO", cols: ["vencimiento"] },
       { label: "INFO DEL PROVEEDOR", cols: ["proveedor", "codigoProveedor"] },
     ],
   },
@@ -123,9 +121,7 @@ const COLUMN_LABELS: Record<string, string> = {
   unidadesPorPack: "U. por Pack",
   volumenCantidad: "Cantidad",
   volumenUnidad: "U. de Medida",
-  vencimientoDia: "Día",
-  vencimientoMes: "Mes",
-  vencimientoAnio: "Año",
+  vencimiento: "Fecha",
   proveedor: "Proveedor",
   codigoProveedor: "Código Proveedor",
   stockTotal: "Total",
@@ -153,9 +149,7 @@ interface WorkableRow {
   unidadesPorPack: string
   volumenCantidad: string
   volumenUnidad: string
-  vencimientoDia: string
-  vencimientoMes: string
-  vencimientoAnio: string
+  vencimiento: string
   proveedor: string
   codigoProveedor: string
   stockTotal: string
@@ -180,9 +174,7 @@ const createEmptyRow = (): WorkableRow => ({
   unidadesPorPack: "1",
   volumenCantidad: "",
   volumenUnidad: "",
-  vencimientoDia: "",
-  vencimientoMes: "",
-  vencimientoAnio: "",
+  vencimiento: "",
   proveedor: "",
   codigoProveedor: "",
   stockTotal: "0",
@@ -246,6 +238,12 @@ export default function CreadorMasivoPage() {
         const atributosInformativos = row.atributosInformativos
           .filter(attr => attr.key.trim() && attr.value.trim())
         
+        // Check if volumenUnidad should be included
+        const hasVolumenUnidad = row.volumenCantidad.trim() && row.volumenUnidad.trim()
+        
+        // Check if vencimiento should be included
+        const hasVencimiento = row.vencimiento.trim()
+        
         return {
           name: row.titulo.trim(),
           sku: row.sku.trim() || undefined,
@@ -254,17 +252,20 @@ export default function CreadorMasivoPage() {
           marca: row.marca.trim() || undefined,
           formatoVenta: row.formatoVenta,
           unidadesPorPack: row.formatoVenta === "pack" ? parseInt(row.unidadesPorPack) || 1 : 1,
-          volumenUnidad: row.volumenCantidad.trim() ? {
+          volumenUnidad: hasVolumenUnidad ? {
+            enabled: true,
             cantidad: row.volumenCantidad,
-            unidad: row.volumenUnidad || "ml",
-          } : undefined,
-          vencimiento: row.vencimientoDia.trim() && row.vencimientoMes.trim() && row.vencimientoAnio.trim() ? {
-            dia: row.vencimientoDia,
-            mes: row.vencimientoMes,
-            anio: row.vencimientoAnio,
-          } : undefined,
+            unidad: row.volumenUnidad,
+          } : { enabled: false },
+          vencimiento: hasVencimiento ? {
+            enabled: true,
+            fecha: row.vencimiento,
+          } : { enabled: false },
+          proveedor: row.proveedor.trim() || undefined,
+          codigoProveedor: row.codigoProveedor.trim() || undefined,
           atributosPrincipales: atributosPrincipales.length > 0 ? atributosPrincipales : undefined,
           atributosInformativos: atributosInformativos.length > 0 ? atributosInformativos : undefined,
+          descripcion: row.descripcion.trim() || undefined,
           stockTotal: parseInt(row.stockTotal) || 0,
           stockReservado: parseInt(row.stockReservado) || 0,
           imagenUrl: row.fotoUrl.trim() || undefined,
@@ -500,39 +501,13 @@ export default function CreadorMasivoPage() {
             className={`${baseInputClass} text-center placeholder:text-gray-300`}
           />
         )
-      case "vencimientoDia":
+      case "vencimiento":
         return (
           <input
-            type="number"
-            min="1"
-            max="31"
-            value={row.vencimientoDia}
-            onChange={(e) => updateRow(rowIndex, "vencimientoDia", e.target.value)}
-            placeholder="DD"
-            className={`${baseInputClass} text-center placeholder:text-gray-300`}
-          />
-        )
-      case "vencimientoMes":
-        return (
-          <input
-            type="number"
-            min="1"
-            max="12"
-            value={row.vencimientoMes}
-            onChange={(e) => updateRow(rowIndex, "vencimientoMes", e.target.value)}
-            placeholder="MM"
-            className={`${baseInputClass} text-center placeholder:text-gray-300`}
-          />
-        )
-      case "vencimientoAnio":
-        return (
-          <input
-            type="number"
-            min="2020"
-            value={row.vencimientoAnio}
-            onChange={(e) => updateRow(rowIndex, "vencimientoAnio", e.target.value)}
-            placeholder="AAAA"
-            className={`${baseInputClass} text-center placeholder:text-gray-300`}
+            type="date"
+            value={row.vencimiento}
+            onChange={(e) => updateRow(rowIndex, "vencimiento", e.target.value)}
+            className={`${baseInputClass} cursor-pointer`}
           />
         )
       case "proveedor":
