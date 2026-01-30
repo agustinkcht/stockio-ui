@@ -759,7 +759,7 @@ export function ItemDetailPanel({
           <div className="col-span-6 order-2 z-20 rounded-xl flex flex-col transition-all duration-300 mt-4 border-none shadow-none pl-0 pr-0">
             <div className="sticky top-4 p-6 px-8 pr-11 border-solid border border-black rounded-xl bg-black shadow-md pl-11 ml-0 mt-7">
               <div className="mt-2">
-                <div className="w-full h-64 bg-slate-900/50 backdrop-blur-sm rounded-lg flex items-center justify-center overflow-hidden shadow-2xl border-slate-700/30 border-none border-0">
+                <div className="w-full h-64 backdrop-blur-sm rounded-lg flex items-center justify-center overflow-hidden shadow-2xl border-slate-700/30 border-none border-0 bg-transparent shadow-none">
                   <Image
                     src={getCategoryImage(selectedItem.categoria) || "/placeholder.svg"}
                     alt={selectedItem.name}
@@ -771,7 +771,7 @@ export function ItemDetailPanel({
               </div>
 
               <div className="mt-6 mb-0">
-                <h2 className="font-semibold text-white text-lg mb-0 text-center">{selectedItem.name}</h2>
+                <h2 className="font-semibold text-white text-lg mb-0 text-center mt-[-45px]">{selectedItem.name}</h2>
                 
                 {/* SKU and Código Universal for standalone/children items */}
                 {!isViewingContainer && (
@@ -813,7 +813,7 @@ export function ItemDetailPanel({
                 {!isViewingContainer && (
                   <>
                     <div className="border-t border-slate-700/50 my-4"></div>
-                    <div className="flex-1 flex flex-col border-slate-800 rounded-md border-0">
+                    <div className="flex-1 flex flex-col border-slate-800 rounded-md border-0 mt-16">
                       <h3 className="text-sm font-medium uppercase tracking-wider mb-3 text-slate-50">
                         Descripción
                       </h3>
