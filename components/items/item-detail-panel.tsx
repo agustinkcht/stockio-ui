@@ -775,7 +775,7 @@ export function ItemDetailPanel({
                 
                 {/* SKU and Código Universal for standalone/children items */}
                 {!isViewingContainer && (
-                  <div className="flex items-center gap-4 mt-2 text-xs text-slate-400 font-mono">
+                  <div className="flex items-center gap-4 text-xs text-slate-400 font-mono mt-4">
                     <div className="flex items-center gap-1.5">
                       <span className="font-medium text-slate-200">SKU:</span>
                       <span>{selectedItem.sku}</span>
