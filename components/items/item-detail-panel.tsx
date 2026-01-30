@@ -987,6 +987,29 @@ export function ItemDetailPanel({
                         </div>
                       ))}
 
+                      {/* Generar Variantes button - visible when atributos view is open, active when at least 1 atributo has 1+ variantes */}
+                      {(() => {
+                        const hasAtLeastOneVariante = containerAtributosPrincipales.some(
+                          (attr) => attr.key.trim() !== "" && attr.variantes.length > 0
+                        )
+                        return (
+                          <button
+                            onClick={() => {
+                              // TODO: Trigger variant generation logic here
+                              console.log("[v0] Generar Variantes clicked", containerAtributosPrincipales)
+                            }}
+                            disabled={!hasAtLeastOneVariante}
+                            className={`w-full px-4 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 ${
+                              hasAtLeastOneVariante
+                                ? "bg-slate-900 text-white hover:bg-slate-800 cursor-pointer"
+                                : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                            }`}
+                          >
+                            Generar Variantes
+                          </button>
+                        )
+                      })()}
+
                       {containerAtributosPrincipales.length < 2 && (
                         <button
                           onClick={() => {
