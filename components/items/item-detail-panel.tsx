@@ -759,13 +759,13 @@ export function ItemDetailPanel({
           <div className="col-span-6 order-2 z-20 rounded-xl flex flex-col transition-all duration-300 mt-4 border-none shadow-none pl-0 pr-0">
             <div className="sticky top-4 p-6 mt-0 px-8 shadow-none pl-7 pr-11 border-solid border border-black rounded-xl bg-black">
               <div className="mt-2">
-                <div className="w-full h-64 bg-slate-900/50 backdrop-blur-sm rounded-lg flex items-center justify-center overflow-hidden shadow-2xl border border-slate-700/30">
+                <div className="w-full h-64 bg-slate-900/50 backdrop-blur-sm rounded-lg flex items-center justify-center overflow-hidden shadow-2xl border-slate-700/30 border-none border-0">
                   <Image
                     src={getCategoryImage(selectedItem.categoria) || "/placeholder.svg"}
                     alt={selectedItem.name}
                     width={200}
                     height={256}
-                    className="object-contain rounded-xl"
+                    className="object-contain rounded-xl shadow-xl"
                   />
                 </div>
               </div>
@@ -777,7 +777,7 @@ export function ItemDetailPanel({
                 {!isViewingContainer && (
                   <div className="flex items-center gap-4 mt-2 text-xs text-slate-400 font-mono">
                     <div className="flex items-center gap-1.5">
-                      <span className="font-medium text-slate-300">SKU:</span>
+                      <span className="font-medium text-slate-200">SKU:</span>
                       <span>{selectedItem.sku}</span>
                       <button
                         onClick={handleCopySku}
@@ -792,7 +792,7 @@ export function ItemDetailPanel({
                       </button>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <span className="font-medium text-slate-300">C.U.:</span>
+                      <span className="font-medium text-slate-200">C.U.:</span>
                       <span>{selectedItem.codigoUniversal || "N/A"}</span>
                       <button
                         onClick={handleCopyCodigoUniversal}
@@ -813,8 +813,8 @@ export function ItemDetailPanel({
                 {!isViewingContainer && (
                   <>
                     <div className="border-t border-slate-700/50 my-4"></div>
-                    <div className="flex-1 flex flex-col border-0">
-                      <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-3">
+                    <div className="flex-1 flex flex-col border border-slate-800 rounded-md">
+                      <h3 className="text-sm font-medium uppercase tracking-wider mb-3 text-slate-50">
                         Descripción
                       </h3>
                       <div className="flex-1">
@@ -833,7 +833,7 @@ export function ItemDetailPanel({
                             className="w-full min-h-[100px] px-3 py-2 bg-slate-800/30 border-slate-700/50 rounded-lg text-slate-200 cursor-pointer hover:border-slate-600 text-sm border-none border-0"
                           >
                             {descripcionValue || (
-                              <span className="text-slate-100">Click para agregar descripción...</span>
+                              <span className="text-slate-300">Click para agregar descripción...</span>
                             )}
                           </div>
                         )}
