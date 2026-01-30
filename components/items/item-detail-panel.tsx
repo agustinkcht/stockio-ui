@@ -166,8 +166,8 @@ export function ItemDetailPanel({
   const [volumenUnidad, setVolumenUnidad] = useState(
     shouldStrictlyInherit(fatherItem?.volumenUnidad) ? fatherItem!.volumenUnidad : selectedItem?.volumenUnidad || "",
   )
-  const [vencimientoActive, setVencimientoActive] = useState(false)
-  const [fechaVencimiento, setFechaVencimiento] = useState("")
+  const [vencimientoActive, setVencimientoActive] = useState(selectedItem?.vencimientoActive || false)
+  const [fechaVencimiento, setFechaVencimiento] = useState(selectedItem?.fechaVencimiento || "")
   const [proveedor, setProveedor] = useState(
     shouldInheritField(fatherItem?.proveedor) ? fatherItem!.proveedor : selectedItem?.proveedor || "",
   )

@@ -16,10 +16,9 @@ const COL_WIDTHS = {
   caracteres: 100,
   sku: 140,
   codigoUniversal: 140,
-  atributo1Key: 120,
-  atributo1Value: 120,
-  atributo2Key: 120,
-  atributo2Value: 120,
+  atributoPrincipalKey: 120,
+  atributoPrincipalValue: 120,
+  atributoPrincipalAdd: 50,
   categoria: 130,
   marca: 130,
   formatoVenta: 120,
@@ -55,14 +54,13 @@ const SECTIONS = [
     columns: ["sku", "codigoUniversal"],
     subHeaders: [{ label: "CÓDIGOS", cols: ["sku", "codigoUniversal"] }],
   },
-  { 
-    id: "atributos-principales", 
-    label: "Atributos Principales", 
+  {
+    id: "atributos-principales",
+    label: "Atributos Principales",
     defaultExpanded: false,
-    columns: ["atributo1Key", "atributo1Value", "atributo2Key", "atributo2Value"],
+    columns: ["atributoPrincipalKey", "atributoPrincipalValue", "atributoPrincipalAdd"],
     subHeaders: [
-      { label: "ATRIBUTO 1", cols: ["atributo1Key", "atributo1Value"] },
-      { label: "ATRIBUTO 2", cols: ["atributo2Key", "atributo2Value"] },
+      { label: "ATRIBUTO PRINCIPAL", cols: ["atributoPrincipalKey", "atributoPrincipalValue", "atributoPrincipalAdd"] },
     ],
   },
   { 
@@ -111,10 +109,9 @@ const COLUMN_LABELS: Record<string, string> = {
   caracteres: "Cant. de Caracteres",
   sku: "SKU",
   codigoUniversal: "Código Universal",
-  atributo1Key: "Atributo",
-  atributo1Value: "Valor",
-  atributo2Key: "Atributo",
-  atributo2Value: "Valor",
+  atributoPrincipalKey: "Atributo",
+  atributoPrincipalValue: "Valor",
+  atributoPrincipalAdd: "",
   categoria: "Categoría",
   marca: "Marca",
   formatoVenta: "Formato de Venta",
@@ -139,10 +136,7 @@ interface WorkableRow {
   titulo: string
   sku: string
   codigoUniversal: string
-  atributo1Key: string
-  atributo1Value: string
-  atributo2Key: string
-  atributo2Value: string
+  atributosPrincipales: Array<{ key: string; value: string }>
   categoria: string
   marca: string
   formatoVenta: string
@@ -164,10 +158,7 @@ const createEmptyRow = (): WorkableRow => ({
   titulo: "",
   sku: "",
   codigoUniversal: "",
-  atributo1Key: "",
-  atributo1Value: "",
-  atributo2Key: "",
-  atributo2Value: "",
+  atributosPrincipales: [{ key: "", value: "" }],
   categoria: "",
   marca: "",
   formatoVenta: "unidad",
@@ -226,13 +217,8 @@ export default function CreadorMasivoPage() {
       .filter(row => row.titulo.trim() !== "")
       .map(row => {
         // Build atributos principales
-        const atributosPrincipales: Array<{ key: string; value: string }> = []
-        if (row.atributo1Key.trim() && row.atributo1Value.trim()) {
-          atributosPrincipales.push({ key: row.atributo1Key, value: row.atributo1Value })
-        }
-        if (row.atributo2Key.trim() && row.atributo2Value.trim()) {
-          atributosPrincipales.push({ key: row.atributo2Key, value: row.atributo2Value })
-        }
+        const atributosPrincipales = row.atributosPrincipales
+          .filter(attr => attr.key.trim() && attr.value.trim())
         
         // Build atributos informativos
         const atributosInformativos = row.atributosInformativos
@@ -305,6 +291,22 @@ export default function CreadorMasivoPage() {
 
   const updateRow = (rowIndex: number, field: keyof WorkableRow, value: string) => {
     setRows(prev => prev.map((row, i) => i !== rowIndex ? row : { ...row, [field]: value }))
+  }
+
+  const addAtributoPrincipal = (rowIndex: number) => {
+    setRows(prev => prev.map((row, i) => {
+      if (i !== rowIndex) return row
+      return { ...row, atributosPrincipales: [...row.atributosPrincipales, { key: "", value: "" }] }
+    }))
+  }
+
+  const updateAtributoPrincipal = (rowIndex: number, attrIndex: number, field: "key" | "value", value: string) => {
+    setRows(prev => prev.map((row, i) => {
+      if (i !== rowIndex) return row
+      const newAttrs = [...row.atributosPrincipales]
+      newAttrs[attrIndex] = { ...newAttrs[attrIndex], [field]: value }
+      return { ...row, atributosPrincipales: newAttrs }
+    }))
   }
 
   const addAtributoInformativo = (rowIndex: number) => {
@@ -443,29 +445,47 @@ export default function CreadorMasivoPage() {
             className={`${baseInputClass} placeholder:text-gray-300`}
           />
         )
-      case "atributo1Key":
-      case "atributo2Key":
-        const keyField = colId === "atributo1Key" ? "atributo1Key" : "atributo2Key"
+      case "atributoPrincipalKey":
         return (
-          <input
-            type="text"
-            value={row[keyField]}
-            onChange={(e) => updateRow(rowIndex, keyField, e.target.value)}
-            placeholder="Ej: Talle"
-            className={`${baseInputClass} placeholder:text-gray-300`}
-          />
+          <div className="flex flex-col gap-1 w-full h-full py-1">
+            {row.atributosPrincipales.map((attr, idx) => (
+              <input
+                key={idx}
+                type="text"
+                value={attr.key || ""}
+                onChange={(e) => updateAtributoPrincipal(rowIndex, idx, "key", e.target.value)}
+                placeholder="Ej: Talle"
+                className={`${baseInputClass} placeholder:text-gray-300 ${idx > 0 ? 'border-t-0' : ''}`}
+              />
+            ))}
+          </div>
         )
-      case "atributo1Value":
-      case "atributo2Value":
-        const valField = colId === "atributo1Value" ? "atributo1Value" : "atributo2Value"
+      case "atributoPrincipalValue":
         return (
-          <input
-            type="text"
-            value={row[valField]}
-            onChange={(e) => updateRow(rowIndex, valField, e.target.value)}
-            placeholder="Ej: M"
-            className={`${baseInputClass} placeholder:text-gray-300`}
-          />
+          <div className="flex flex-col gap-1 w-full h-full py-1">
+            {row.atributosPrincipales.map((attr, idx) => (
+              <input
+                key={idx}
+                type="text"
+                value={attr.value || ""}
+                onChange={(e) => updateAtributoPrincipal(rowIndex, idx, "value", e.target.value)}
+                placeholder="Ej: M"
+                className={`${baseInputClass} placeholder:text-gray-300 ${idx > 0 ? 'border-t-0' : ''}`}
+              />
+            ))}
+          </div>
+        )
+      case "atributoPrincipalAdd":
+        return (
+          <div className="flex flex-col gap-1 w-full h-full py-1 items-center justify-end">
+            <button
+              onClick={() => addAtributoPrincipal(rowIndex)}
+              className="w-6 h-6 flex items-center justify-center hover:bg-gray-100 transition-colors cursor-pointer rounded"
+              title="Agregar atributo principal"
+            >
+              <Plus className="w-4 h-4 text-gray-400" />
+            </button>
+          </div>
         )
       case "categoria":
         return (
@@ -568,33 +588,45 @@ export default function CreadorMasivoPage() {
         )
       case "atributoInfoKey":
         return (
-          <input
-            type="text"
-            value={row.atributosInformativos[0]?.key || ""}
-            onChange={(e) => updateAtributoInformativo(rowIndex, 0, "key", e.target.value)}
-            placeholder="Ej: Material"
-            className={`${baseInputClass} placeholder:text-gray-300`}
-          />
+          <div className="flex flex-col gap-1 w-full h-full py-1">
+            {row.atributosInformativos.map((attr, idx) => (
+              <input
+                key={idx}
+                type="text"
+                value={attr.key || ""}
+                onChange={(e) => updateAtributoInformativo(rowIndex, idx, "key", e.target.value)}
+                placeholder="Ej: Material"
+                className={`${baseInputClass} placeholder:text-gray-300 ${idx > 0 ? 'border-t-0' : ''}`}
+              />
+            ))}
+          </div>
         )
       case "atributoInfoValue":
         return (
-          <input
-            type="text"
-            value={row.atributosInformativos[0]?.value || ""}
-            onChange={(e) => updateAtributoInformativo(rowIndex, 0, "value", e.target.value)}
-            placeholder="Ej: Algodón"
-            className={`${baseInputClass} placeholder:text-gray-300`}
-          />
+          <div className="flex flex-col gap-1 w-full h-full py-1">
+            {row.atributosInformativos.map((attr, idx) => (
+              <input
+                key={idx}
+                type="text"
+                value={attr.value || ""}
+                onChange={(e) => updateAtributoInformativo(rowIndex, idx, "value", e.target.value)}
+                placeholder="Ej: Algodón"
+                className={`${baseInputClass} placeholder:text-gray-300 ${idx > 0 ? 'border-t-0' : ''}`}
+              />
+            ))}
+          </div>
         )
       case "atributoInfoAdd":
         return (
-          <button
-            onClick={() => addAtributoInformativo(rowIndex)}
-            className="w-full h-full flex items-center justify-center hover:bg-gray-100 transition-colors cursor-pointer"
-            title="Agregar atributo informativo"
-          >
-            <Plus className="w-4 h-4 text-gray-400" />
-          </button>
+          <div className="flex flex-col gap-1 w-full h-full py-1 items-center justify-end">
+            <button
+              onClick={() => addAtributoInformativo(rowIndex)}
+              className="w-6 h-6 flex items-center justify-center hover:bg-gray-100 transition-colors cursor-pointer rounded"
+              title="Agregar atributo informativo"
+            >
+              <Plus className="w-4 h-4 text-gray-400" />
+            </button>
+          </div>
         )
       default:
         return null
