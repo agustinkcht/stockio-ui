@@ -662,7 +662,7 @@ export default function CreadorMasivoPage() {
           {/* Main Content */}
           <div className="flex-1 overflow-hidden flex flex-col">
             {/* Toolbar */}
-            <div className="sticky top-0 z-10 backdrop-blur-[2px] bg-slate-50">
+            <div className="sticky top-0 z-10 backdrop-blur-[2px] bg-transparent">
               <div className="w-full h-2 bg-transparent" />
               <div className="px-4 bg-white border rounded-lg shadow-sm border-[rgba(228,230,235,0.5)] mt-2 pt-1 pb-1 mx-4">
                 <div className="px-4 pt-3 pb-3 pl-0 pr-0">
@@ -692,7 +692,7 @@ export default function CreadorMasivoPage() {
             </div>
 
             {/* Excel-like Grid with horizontal scroll */}
-            <div className="border-r border-b border-gray-200 bg-transparent px-5 py-0">
+            <div className="border-gray-200 bg-transparent px-5 py-0 border-b-0 border-r-0">
               <div className="bg-white border rounded-lg shadow-sm border-[rgba(228,230,235,0.5)] overflow-x-auto">
                 <table className="border-collapse" style={{ minWidth: getTotalWidth() }}>
                   {/* Row 1: Section Headers */}

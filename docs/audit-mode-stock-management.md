@@ -23,32 +23,32 @@ The audit mode allows users to modify stock values (total and reservado) for mul
 
 In `items-grid.tsx`, pending changes are tracked using a local state:
 
-```typescript
+\`\`\`typescript
 interface AuditStockChange {
   total: number
   reservado: number
 }
 
 const [auditStockChanges, setAuditStockChanges] = useState<Record<string, AuditStockChange>>({})
-```
+\`\`\`
 
 - **Key**: Item SKU (string)
 - **Value**: Object with `total` and `reservado` values (numbers)
 
 Example state:
-```javascript
+\`\`\`javascript
 {
   "SKU-001": { total: 25, reservado: 5 },
   "SKU-002": { total: 100, reservado: 10 },
   "VARIANT-SKU-003": { total: 50, reservado: 0 }
 }
-```
+\`\`\`
 
 ### Tracking Changes
 
 The `handleAuditStockChange` function updates the pending changes:
 
-```typescript
+\`\`\`typescript
 const handleAuditStockChange = (itemSku: string, field: "total" | "reservado", value: number) => {
   setAuditStockChanges(prev => {
     // Find current values (from pending changes or original item)
@@ -65,7 +65,7 @@ const handleAuditStockChange = (itemSku: string, field: "total" | "reservado", v
     }
   })
 }
-```
+\`\`\`
 
 **Important**: When a change is made, BOTH `total` and `reservado` are stored together. This ensures we always have the complete stock state for each modified item.
 
@@ -90,7 +90,7 @@ Each item card in audit mode has controls for modifying stock:
 
 ### How Individual Changes Work
 
-```typescript
+\`\`\`typescript
 // Handle operation-based modification (check button)
 const handleStockModify = (type: "total" | "reservado") => {
   const operation = type === "total" ? stockTotalOperation : stockReservadoOperation
@@ -115,16 +115,16 @@ const handleStockIncrement = (type: "total" | "reservado", delta: number) => {
   const newValue = Math.max(0, currentValue + delta)
   onStockChange?.(item.sku, type, newValue)
 }
-```
+\`\`\`
 
 ### Getting Current Values
 
 The item card gets its current display values from either pending changes or the original item:
 
-```typescript
+\`\`\`typescript
 const currentStockTotal = auditStockValues?.[item.sku]?.total ?? parseInt(item.stock?.total || "0")
 const currentStockReservado = auditStockValues?.[item.sku]?.reservado ?? parseInt(item.stock?.reservado || "0")
-```
+\`\`\`
 
 This ensures:
 - If there's a pending change for this SKU, use the pending value
@@ -139,7 +139,7 @@ This ensures:
 The modal allows applying the same operation to multiple items at once.
 
 **Props:**
-```typescript
+\`\`\`typescript
 interface BulkStockModalProps {
   isOpen: boolean
   onClose: () => void
@@ -147,13 +147,13 @@ interface BulkStockModalProps {
   itemCount: number
   type: "total" | "reservado"
 }
-```
+\`\`\`
 
 ### Target Selection Logic
 
 Items affected by bulk edit are determined by:
 
-```typescript
+\`\`\`typescript
 const getTargetSkusForBulkEdit = useCallback((): string[] => {
   // Priority 1: If items are selected via checkboxes, use those
   if (hasSelectedItems && getSelectedSkus) {
@@ -162,7 +162,7 @@ const getTargetSkusForBulkEdit = useCallback((): string[] => {
   // Priority 2: Otherwise, use all visible items on screen
   return getVisibleSkus()
 }, [hasSelectedItems, getSelectedSkus, getVisibleSkus])
-```
+\`\`\`
 
 **`getVisibleSkus`** returns all SKUs of:
 - Standalone items
@@ -171,7 +171,7 @@ const getTargetSkusForBulkEdit = useCallback((): string[] => {
 
 ### Applying Bulk Changes
 
-```typescript
+\`\`\`typescript
 const handleBulkStockApply = (operation: string, value: number) => {
   const targetSkus = getTargetSkusForBulkEdit()
   const field = bulkStockModalType // "total" or "reservado"
@@ -197,7 +197,7 @@ const handleBulkStockApply = (operation: string, value: number) => {
     handleAuditStockChange(sku, field, newValue)
   }
 }
-```
+\`\`\`
 
 ---
 
@@ -212,7 +212,7 @@ const handleBulkStockApply = (operation: string, value: number) => {
 
 ### `handleAuditSave` in `articulos/page.tsx`
 
-```typescript
+\`\`\`typescript
 const handleAuditSave = async (changes: Record<string, { total: number; reservado: number }>) => {
   setIsSaving(true)
   try {
@@ -235,13 +235,13 @@ const handleAuditSave = async (changes: Record<string, { total: number; reservad
     setAuditPendingCount(0)
   }
 }
-```
+\`\`\`
 
 ### `bulkSaveStock` in `use-items.ts`
 
 This is the critical function that handles persistence:
 
-```typescript
+\`\`\`typescript
 const bulkSaveStock = (changes: Record<string, { total: number; reservado: number }>) => {
   setItems(prevItems => {
     const updatedItems = prevItems.map(item => {
@@ -288,7 +288,7 @@ const bulkSaveStock = (changes: Record<string, { total: number; reservado: numbe
     return updatedItems
   })
 }
-```
+\`\`\`
 
 **Key Points:**
 - Updates both standalone items and variant items
@@ -302,13 +302,13 @@ const bulkSaveStock = (changes: Record<string, { total: number; reservado: numbe
 
 When user clicks "Deshacer":
 
-```typescript
+\`\`\`typescript
 const handleDiscardAuditChanges = () => {
   setAuditStockChanges({})           // Clear all pending changes
   setShowOnlyPendingChanges(false)   // Clear the filter
   onAuditDiscard?.()                 // Notify parent
 }
-```
+\`\`\`
 
 The UI automatically reverts because:
 - `auditStockChanges` is now empty
@@ -322,17 +322,17 @@ The UI automatically reverts because:
 
 Items with pending changes get visual highlighting:
 
-```typescript
+\`\`\`typescript
 // In item-card.tsx
 const hasPendingChanges = auditStockValues && auditStockValues[item.sku] !== undefined
 
 // Applied as ring/border styling
 className={`... ${hasPendingChanges ? "ring-2 ring-amber-400 bg-amber-50/30" : ""}`}
-```
+\`\`\`
 
 ### Pending Changes Counter (Clickable Filter)
 
-```typescript
+\`\`\`typescript
 {hasAuditChanges && (
   <button
     onClick={() => setShowOnlyPendingChanges(!showOnlyPendingChanges)}
@@ -341,13 +341,13 @@ className={`... ${hasPendingChanges ? "ring-2 ring-amber-400 bg-amber-50/30" : "
     {pendingChangesCount} cambios pendientes
   </button>
 )}
-```
+\`\`\`
 
 ### Filtering by Pending Changes
 
 When clicked, the grid shows only items with pending changes:
 
-```typescript
+\`\`\`typescript
 const filterByPendingChanges = useMemo(() => {
   if (!showOnlyPendingChanges) return filteredItems
   
@@ -365,7 +365,7 @@ const filterByPendingChanges = useMemo(() => {
     return pendingSkus.has(item.sku)
   })
 }, [filteredItems, showOnlyPendingChanges, auditStockChanges])
-```
+\`\`\`
 
 ---
 
@@ -375,7 +375,7 @@ const filterByPendingChanges = useMemo(() => {
 
 The grid exposes handlers via `window` for the parent page to call:
 
-```typescript
+\`\`\`typescript
 // In items-grid.tsx
 useEffect(() => {
   ;(window as any).__auditDiscardHandler = handleDiscardAuditChanges
@@ -390,13 +390,13 @@ useEffect(() => {
 
 // In page.tsx - called when save completes
 ;(window as any).__auditClearHandler?.()
-```
+\`\`\`
 
 ### Callback Props Pattern
 
 The grid notifies the parent of state changes:
 
-```typescript
+\`\`\`typescript
 // In items-grid.tsx
 onAuditChangesUpdate?.(hasAuditChanges, pendingChangesCount)
 
@@ -405,7 +405,7 @@ const handleAuditChangesUpdate = (hasChanges: boolean, pendingCount: number) => 
   setHasAuditChanges(hasChanges)
   setAuditPendingCount(pendingCount)
 }
-```
+\`\`\`
 
 ---
 

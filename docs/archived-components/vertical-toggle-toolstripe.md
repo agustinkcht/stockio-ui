@@ -15,7 +15,7 @@ With vertical "Info" and "Stock" labels below.
 
 ## Original Code
 
-```tsx
+\`\`\`tsx
 {/* Vertical Toggle - Section Switcher (only for standalone/children items) - always left of info */}
 {!isViewingContainer && (
 <div className="order-3 col-span-1 flex flex-col justify-start mt-[44px] pt-6 items-start">
@@ -82,7 +82,7 @@ With vertical "Info" and "Stock" labels below.
     </div>
   </div>
 )}
-```
+\`\`\`
 
 ## Reason for Archival
 Removed to simplify the UI and give more space to the Stock column. The section switching can still be done by clicking on the collapsed Info or Stock panels.
