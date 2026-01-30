@@ -770,8 +770,8 @@ export function ItemDetailPanel({
                 </div>
               </div>
 
-              <div className="mt-6 mb-0">
-                <h2 className="font-semibold text-white text-lg mb-0 text-center mt-[-45px]">{selectedItem.name}</h2>
+              <div className="mb-0 mt-6">
+                <h2 className="font-semibold text-white text-lg mb-0 text-center mt-[-20px]">{selectedItem.name}</h2>
                 
                 {/* SKU and Código Universal for standalone/children items */}
                 {!isViewingContainer && (
