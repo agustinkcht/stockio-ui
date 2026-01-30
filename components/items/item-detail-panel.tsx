@@ -752,14 +752,34 @@ export function ItemDetailPanel({
     <>
       {/* <Breadcrumb dynamicContent={null} /> */}
 
-      <div className="px-8 pb-6 bg-slate-50 min-h-screen pl-8 pt-0">
-        <div className={`grid gap-2 ${isViewingContainer ? "grid-cols-2 gap-6" : "grid-cols-20 gap-3"}`}>
-          {/* Left Column - Image Card (only for standalone/children) - col-span-6 */}
+      <div className={`px-8 pb-6 min-h-screen pl-8 pt-0 ${isViewingContainer ? "bg-slate-50" : ""}`}>
+        {/* Sophisticated gradient background for standalone/children items */}
+        {!isViewingContainer && (
+          <div 
+            className="fixed inset-0 pointer-events-none"
+            style={{
+              background: `linear-gradient(to right, 
+                rgb(248 250 252) 0%, 
+                rgb(248 250 252) 28%, 
+                rgb(30 41 59) 38%, 
+                rgb(15 23 42) 45%, 
+                rgb(15 23 42) 55%, 
+                rgb(30 41 59) 62%, 
+                rgb(248 250 252) 72%, 
+                rgb(248 250 252) 100%
+              )`,
+              zIndex: 0
+            }}
+          />
+        )}
+        {isViewingContainer && <div className="fixed inset-0 bg-slate-50 pointer-events-none" style={{ zIndex: 0 }} />}
+        <div className={`grid gap-2 relative z-10 ${isViewingContainer ? "grid-cols-2 gap-6" : "grid-cols-20 gap-3"}`}>
+          {/* Middle Column - Image Card (only for standalone/children) - col-span-6 */}
           {!isViewingContainer && (
-          <div className="col-span-6 order-1 z-20 rounded-xl border flex flex-col transition-all duration-300 border-slate-100 mt-4 bg-transparent border-none shadow-none pl-0 pr-0">
-            <div className="sticky top-4 p-6 mt-0 px-8 bg-transparent border-none shadow-none pl-7 pr-11">
+          <div className="col-span-6 order-2 z-20 rounded-xl flex flex-col transition-all duration-300 mt-4 border-none shadow-none pl-0 pr-0">
+            <div className="sticky top-4 p-6 mt-0 px-8 border-none shadow-none pl-7 pr-11">
               <div className="mt-2">
-                <div className="w-full h-64 bg-muted/30 rounded-lg flex items-center justify-center overflow-hidden shadow-lg">
+                <div className="w-full h-64 bg-slate-900/50 backdrop-blur-sm rounded-lg flex items-center justify-center overflow-hidden shadow-2xl border border-slate-700/30">
                   <Image
                     src={getCategoryImage(selectedItem.categoria) || "/placeholder.svg"}
                     alt={selectedItem.name}
@@ -981,75 +1001,8 @@ export function ItemDetailPanel({
             </div>
           )}
 
-          {/* Vertical Toggle - Section Switcher (only for standalone/children items) - always left of info */}
-          {!isViewingContainer && (
-            <div className="order-2 col-span-1 flex flex-col justify-start mt-[44px] pt-6 items-start">
-              <div className="sticky top-4 flex flex-col items-center">
-                {/* Toggle Track */}
-                <div className="relative flex flex-col items-center">
-                  {/* Vertical line */}
-                  <div className="absolute top-0 bottom-0 w-px bg-gradient-to-b from-slate-200 via-slate-300 to-slate-200" />
-                  
-                  {/* Three-way Toggle */}
-                  <div className="relative z-10 flex flex-col items-center gap-1 py-2 px-1">
-                    {/* Info indicator */}
-                    <button
-                      onClick={() => setExpandedSection("info")}
-                      className={`w-2 h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                        expandedSection === "info" 
-                          ? "bg-slate-800 scale-125" 
-                          : "bg-slate-300 hover:bg-slate-400"
-                      }`}
-                      title="Expandir Info"
-                    />
-                    
-                    {/* Both indicator */}
-                    <button
-                      onClick={() => setExpandedSection("both")}
-                      className={`w-2.5 h-2.5 rounded-full transition-all duration-300 cursor-pointer my-1 ${
-                        expandedSection === "both" 
-                          ? "bg-slate-800 scale-125" 
-                          : "bg-slate-300 hover:bg-slate-400"
-                      }`}
-                      title="Mostrar ambos"
-                    />
-                    
-                    {/* Stock indicator */}
-                    <button
-                      onClick={() => setExpandedSection("stock")}
-                      className={`w-2 h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                        expandedSection === "stock" 
-                          ? "bg-slate-800 scale-125" 
-                          : "bg-slate-300 hover:bg-slate-400"
-                      }`}
-                      title="Expandir Stock"
-                    />
-                  </div>
-                  
-                  {/* Labels */}
-                  <div className="mt-4 flex flex-col items-center gap-6">
-                    <span className={`text-[8px] font-medium uppercase tracking-[0.12em] transition-all duration-300 ${
-                      expandedSection === "info" 
-                        ? "text-slate-700" 
-                        : "text-slate-400"
-                    }`} style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
-                      Info
-                    </span>
-                    <span className={`text-[8px] font-medium uppercase tracking-[0.12em] transition-all duration-300 ${
-                      expandedSection === "stock" 
-                        ? "text-slate-700" 
-                        : "text-slate-400"
-                    }`} style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
-                      Stock
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Info/Atributos Column - 11 cols when info expanded, 7 cols when both, 2 col when stock expanded */}
-          <div className={`flex flex-col transition-all duration-300 overflow-hidden ${isViewingContainer ? "order-1 col-span-1 mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : `order-3 relative mt-[44px] pt-6 pb-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10 ${expandedSection === "info" ? "col-span-11 px-8" : expandedSection === "both" ? "col-span-7 px-6" : "col-span-2 px-3"}`}`}>
+{/* Info/Atributos Column - 12 cols when info expanded, 7 cols when both, 2 col when stock expanded */}
+        <div className={`flex flex-col transition-all duration-300 overflow-hidden ${isViewingContainer ? "order-1 col-span-1 mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : `order-1 relative mt-[44px] pt-6 pb-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10 ${expandedSection === "info" ? "col-span-12 px-8" : expandedSection === "both" ? "col-span-7 px-6" : "col-span-2 px-3"}`}`}>
             
             {/* Thumbnail + Title Header for Parent Items */}
             {isViewingContainer && (
@@ -2013,9 +1966,9 @@ export function ItemDetailPanel({
             )}
           </div>
 
-{/* Stock Column - 11 cols when stock expanded, 6 cols when both, 2 col when info expanded */}
+{/* Stock Column - 12 cols when stock expanded, 7 cols when both, 2 col when info expanded */}
           {!isViewingContainer && (
-          <div className={`order-4 flex flex-col mt-[44px] transition-all duration-300 ${expandedSection === "stock" ? "col-span-11 pl-4" : expandedSection === "both" ? "col-span-6 pl-3" : "col-span-2 pl-2"}`}>
+          <div className={`order-3 flex flex-col mt-[44px] transition-all duration-300 ${expandedSection === "stock" ? "col-span-12 pl-4" : expandedSection === "both" ? "col-span-7 pl-3" : "col-span-2 pl-2"}`}>
               <div className={`sticky top-4 bg-white border border-border/40 rounded-xl shadow-sm ${expandedSection === "stock" ? "p-5" : expandedSection === "both" ? "p-4" : "p-3"}`}>
                 
                 {/* Collapsed Stock State - Minimal Slider View (only when info is fully expanded) */}

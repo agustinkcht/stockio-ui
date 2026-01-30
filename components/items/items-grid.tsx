@@ -77,8 +77,8 @@ export function ItemsGrid({
 }: ItemsGridProps) {
   const router = useRouter()
   const crearNuevoRef = useRef<HTMLDivElement>(null)
-  const filterRef = useRef<HTMLDivElement>(null)
   const orderRef = useRef<HTMLDivElement>(null)
+  const filterRef = useRef<HTMLDivElement>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [showOrderModal, setShowOrderModal] = useState(false)
   const [showFilterModal, setShowFilterModal] = useState(false)
