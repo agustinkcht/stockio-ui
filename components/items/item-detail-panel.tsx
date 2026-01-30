@@ -693,14 +693,13 @@ export function ItemDetailPanel({
 
       const variantsKey = JSON.stringify(updatedVariants.map((v) => ({ sku: v.sku, attrs: v.atributosPrincipales })))
       
-      if (previousVariantsRef.current === null) {
-        previousVariantsRef.current = variantsKey
-      } else if (previousVariantsRef.current !== variantsKey) {
-        previousVariantsRef.current = variantsKey
-        if (onFieldChange && selectedItem.sku) {
-          onFieldChange(selectedItem.sku, "variants", updatedVariants)
-        }
+      // Always call onFieldChange to save the variants
+      if (onFieldChange && selectedItem.sku) {
+        onFieldChange(selectedItem.sku, "variants", updatedVariants)
       }
+      
+      // Update the ref for change tracking
+      previousVariantsRef.current = variantsKey
     } else {
       console.log("[v0] No new combinations to add")
     }
