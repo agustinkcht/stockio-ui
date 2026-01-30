@@ -248,6 +248,7 @@ export function ItemDetailPanel({
 
   const [showAtributosView, setShowAtributosView] = useState(false)
   const [showIndividualAtributosView, setShowIndividualAtributosView] = useState(false)
+  const [rightCardMode, setRightCardMode] = useState<"variantes" | "atributosInformativos">("variantes")
 
   const [variantItems, setVariantItems] = useState<
     Array<{
@@ -846,135 +847,393 @@ export function ItemDetailPanel({
           </div>
           )}
 
-          {/* Right Column - Variantes Card (only for parent items) */}
+          {/* Right Column - Variantes/Atributos Card (only for parent items) */}
           {isViewingContainer && (
             <div className="col-span-1 order-2 flex flex-col mt-[44px]">
               <div className="sticky top-4 p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
-                <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-5">
-                  {variantItems.length} {variantItems.length === 1 ? "variante" : "variantes"}
-                </h3>
+                {/* Toggle Button - Variantes / Atributos Informativos */}
+                <div className="z-20 mb-5">
+                  <div className="flex items-center gap-1 h-11 p-1 bg-slate-100/80 rounded-xl">
+                    <button
+                      onClick={() => setRightCardMode("variantes")}
+                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
+                        rightCardMode === "variantes"
+                          ? "bg-white text-slate-900 shadow-sm font-semibold"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      <span className="text-xs font-medium uppercase tracking-widest">Variantes</span>
+                    </button>
+                    <button
+                      onClick={() => setRightCardMode("atributosInformativos")}
+                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
+                        rightCardMode === "atributosInformativos"
+                          ? "bg-white text-slate-900 shadow-sm font-semibold"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      <span className="text-xs font-medium uppercase tracking-widest">Atributos Informativos</span>
+                    </button>
+                  </div>
+                </div>
 
-                {variantItems.length > 0 ? (
-                  <div className="bg-white border border-border/40 rounded-lg overflow-hidden">
-                    {/* Header */}
-                    <div className="grid grid-cols-[1fr_minmax(80px,1fr)_28px] bg-white border-b border-border/30">
-                      <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                        {/* Empty label for atributos column */}
+                {/* Variantes Tab Content */}
+                {rightCardMode === "variantes" && (
+                  <div className="flex flex-col gap-6">
+                    {/* Atributos Principales Section */}
+                    <div className="flex flex-col gap-3">
+                      <div>
+                        <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
+                          Atributos Principales
+                        </h3>
+                        <p className="text-xs text-gray-500 italic">
+                          Atributos que definen las variantes del producto (máximo 2)
+                        </p>
                       </div>
-                      <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                        SKU
-                      </div>
-                      <div />
-                    </div>
 
-                    {/* Rows */}
-                    <div className="divide-y divide-border/30">
-                      {variantItems.map((variant) => {
-                        const sourceVariant = selectedItem.variants?.find((v: any) => {
-                          if (!v.atributosPrincipales) return false
-                          const hasMatchingAttr1 = variant.variant1
-                            ? v.atributosPrincipales.some((attr: any) => attr.value === variant.variant1)
-                            : true
-                          const hasMatchingAttr2 = variant.variant2
-                            ? v.atributosPrincipales.some((attr: any) => attr.value === variant.variant2)
-                            : true
-                          return hasMatchingAttr1 && hasMatchingAttr2
-                        })
+                      {containerAtributosPrincipales.map((attr, index) => (
+                        <div key={index} className="flex items-start gap-3">
+                          <div className="flex-1">
+                            <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
+                            <input
+                              type="text"
+                              value={attr.key}
+                              onChange={(e) => {
+                                const updated = [...containerAtributosPrincipales]
+                                updated[index].key = e.target.value
+                                handleContainerAtributosPrincipalesChange(updated)
+                              }}
+                              className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300"
+                              placeholder="Ej: Color"
+                            />
+                          </div>
 
-                        const displaySku = sourceVariant?.sku || variant.sku
-
-                        // Delete variant handler
-                        const handleDeleteVariant = () => {
-                          const attr1Value = variant.variant1
-                          const attr2Value = variant.variant2
-
-                          const updatedVariants = (selectedItem.variants || []).filter((v: any) => {
-                            if (!v.atributosPrincipales) return true
-                            
-                            const variantAttr1 = v.atributosPrincipales[0]?.value
-                            const variantAttr2 = v.atributosPrincipales[1]?.value
-                            
-                            if (!attr2Value) {
-                              return variantAttr1 !== attr1Value
-                            }
-                            
-                            const isExactMatch = variantAttr1 === attr1Value && variantAttr2 === attr2Value
-                            return !isExactMatch
-                          })
-
-                          const usedAttr1Values = new Set<string>()
-                          const usedAttr2Values = new Set<string>()
-
-                          updatedVariants.forEach((v: any) => {
-                            if (v.atributosPrincipales) {
-                              if (v.atributosPrincipales[0]?.value) usedAttr1Values.add(v.atributosPrincipales[0].value)
-                              if (v.atributosPrincipales[1]?.value) usedAttr2Values.add(v.atributosPrincipales[1].value)
-                            }
-                          })
-
-                          const updatedContainerAttrs = containerAtributosPrincipales.map((attr, idx) => {
-                            const usedValues = idx === 0 ? usedAttr1Values : usedAttr2Values
-                            return {
-                              ...attr,
-                              variantes: attr.variantes.filter((v) => usedValues.has(v)),
-                            }
-                          })
-
-                          setContainerAtributosPrincipales(updatedContainerAttrs)
-                          if (onFieldChange && selectedItem.sku) {
-                            onFieldChange(selectedItem.sku, "containerAtributosPrincipales", updatedContainerAttrs)
-                            onFieldChange(selectedItem.sku, "variants", updatedVariants)
-                          }
-                        }
-
-                        return (
-                          <div
-                            key={variant.sku}
-                            className="group grid grid-cols-[1fr_minmax(80px,1fr)_28px] items-center hover:bg-accent/50 transition-colors"
-                          >
-                            <div className="px-3 py-2 flex items-center gap-1.5">
-                              {variant.variant1 && (
-                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[70px]">
-                                  {variant.variant1}
-                                </span>
-                              )}
-                              {variant.variant1 && variant.variant2 && (
-                                <span className="text-[9px] text-muted-foreground/50 font-medium">×</span>
-                              )}
-                              {variant.variant2 && (
-                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[70px]">
-                                  {variant.variant2}
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="px-3 py-2">
+                          <div className="flex-1">
+                            <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Variantes</label>
+                            <div className="space-y-2">
                               <input
                                 type="text"
-                                value={displaySku}
-                                onChange={(e) => updateVariantField(variant.sku, "sku", e.target.value)}
-                                className="w-full bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-primary/50 px-0 py-0.5 text-[11px] font-mono text-foreground focus:outline-none transition-colors"
-                                placeholder="SKU..."
+                                value={varianteInput[index] || ""}
+                                onChange={(e) =>
+                                  setVarianteInput({ ...varianteInput, [index]: e.target.value })
+                                }
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" && varianteInput[index]?.trim()) {
+                                    const updated = [...containerAtributosPrincipales]
+                                    updated[index].variantes.push(varianteInput[index].trim())
+                                    handleContainerAtributosPrincipalesChange(updated)
+                                    setVarianteInput({ ...varianteInput, [index]: "" })
+                                  }
+                                }}
+                                placeholder="Ej: Rojo"
+                                className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300"
                               />
-                            </div>
 
-                            <div className="px-1 py-2 flex items-center justify-center">
-                              <button
-                                onClick={handleDeleteVariant}
-                                className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all cursor-pointer"
-                                title="Eliminar variante"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
+                              <div className="flex flex-wrap gap-2">
+                                {attr.variantes.map((variante, vIndex) => (
+                                  <span
+                                    key={vIndex}
+                                    className="px-3 py-1.5 bg-white border border-gray-300 rounded-md text-gray-900 text-sm flex items-center gap-2"
+                                  >
+                                    {variante}
+                                    <button
+                                      onClick={() => {
+                                        const updated = [...containerAtributosPrincipales]
+                                        updated[index].variantes = updated[index].variantes.filter(
+                                          (_, i) => i !== vIndex,
+                                        )
+                                        handleContainerAtributosPrincipalesChange(updated)
+                                      }}
+                                      className="text-gray-400 hover:text-gray-600 cursor-pointer"
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
                             </div>
                           </div>
-                        )
-                      })}
+
+                          <button
+                            onClick={() => {
+                              const updated = containerAtributosPrincipales.filter((_, i) => i !== index)
+                              handleContainerAtributosPrincipalesChange(updated)
+                              if (updated.length === 0 && atributosInformativos.length === 0) {
+                                setShowAtributosView(false)
+                              }
+                            }}
+                            className="mt-8 text-gray-400 hover:text-red-400 transition-colors cursor-pointer"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+
+                      {containerAtributosPrincipales.length < 2 && (
+                        <button
+                          onClick={() => {
+                            handleContainerAtributosPrincipalesChange([
+                              ...containerAtributosPrincipales,
+                              { key: "", variantes: [] },
+                            ])
+                          }}
+                          className="w-full px-3 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                          <Plus className="w-4 h-4" />
+                          <span className="text-sm">Agregar atributo</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Variant Matrix */}
+                    <div className="border-t border-slate-200 pt-5">
+                      <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-4">
+                        {variantItems.length} {variantItems.length === 1 ? "variante" : "variantes"}
+                      </h3>
+
+                      {variantItems.length > 0 ? (
+                        <div className="bg-white border border-border/40 rounded-lg overflow-hidden">
+                          {/* Header */}
+                          <div className="grid grid-cols-[1fr_minmax(80px,1fr)_28px] bg-white border-b border-border/30">
+                            <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                              {/* Empty label for atributos column */}
+                            </div>
+                            <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                              SKU
+                            </div>
+                            <div />
+                          </div>
+
+                          {/* Rows */}
+                          <div className="divide-y divide-border/30">
+                            {variantItems.map((variant) => {
+                              const sourceVariant = selectedItem.variants?.find((v: any) => {
+                                if (!v.atributosPrincipales) return false
+                                const hasMatchingAttr1 = variant.variant1
+                                  ? v.atributosPrincipales.some((attr: any) => attr.value === variant.variant1)
+                                  : true
+                                const hasMatchingAttr2 = variant.variant2
+                                  ? v.atributosPrincipales.some((attr: any) => attr.value === variant.variant2)
+                                  : true
+                                return hasMatchingAttr1 && hasMatchingAttr2
+                              })
+
+                              const displaySku = sourceVariant?.sku || variant.sku
+
+                              // Delete variant handler
+                              const handleDeleteVariant = () => {
+                                const attr1Value = variant.variant1
+                                const attr2Value = variant.variant2
+
+                                const updatedVariants = (selectedItem.variants || []).filter((v: any) => {
+                                  if (!v.atributosPrincipales) return true
+                                  
+                                  const variantAttr1 = v.atributosPrincipales[0]?.value
+                                  const variantAttr2 = v.atributosPrincipales[1]?.value
+                                  
+                                  if (!attr2Value) {
+                                    return variantAttr1 !== attr1Value
+                                  }
+                                  
+                                  const isExactMatch = variantAttr1 === attr1Value && variantAttr2 === attr2Value
+                                  return !isExactMatch
+                                })
+
+                                const usedAttr1Values = new Set<string>()
+                                const usedAttr2Values = new Set<string>()
+
+                                updatedVariants.forEach((v: any) => {
+                                  if (v.atributosPrincipales) {
+                                    if (v.atributosPrincipales[0]?.value) usedAttr1Values.add(v.atributosPrincipales[0].value)
+                                    if (v.atributosPrincipales[1]?.value) usedAttr2Values.add(v.atributosPrincipales[1].value)
+                                  }
+                                })
+
+                                const updatedContainerAttrs = containerAtributosPrincipales.map((attr, idx) => {
+                                  const usedValues = idx === 0 ? usedAttr1Values : usedAttr2Values
+                                  return {
+                                    ...attr,
+                                    variantes: attr.variantes.filter((v) => usedValues.has(v)),
+                                  }
+                                })
+
+                                setContainerAtributosPrincipales(updatedContainerAttrs)
+                                if (onFieldChange && selectedItem.sku) {
+                                  onFieldChange(selectedItem.sku, "containerAtributosPrincipales", updatedContainerAttrs)
+                                  onFieldChange(selectedItem.sku, "variants", updatedVariants)
+                                }
+                              }
+
+                              return (
+                                <div
+                                  key={variant.sku}
+                                  className="group grid grid-cols-[1fr_minmax(80px,1fr)_28px] items-center hover:bg-accent/50 transition-colors"
+                                >
+                                  <div className="px-3 py-2 flex items-center gap-1.5">
+                                    {variant.variant1 && (
+                                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[70px]">
+                                        {variant.variant1}
+                                      </span>
+                                    )}
+                                    {variant.variant1 && variant.variant2 && (
+                                      <span className="text-[9px] text-muted-foreground/50 font-medium">×</span>
+                                    )}
+                                    {variant.variant2 && (
+                                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[70px]">
+                                        {variant.variant2}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  <div className="px-3 py-2">
+                                    <input
+                                      type="text"
+                                      value={displaySku}
+                                      onChange={(e) => updateVariantField(variant.sku, "sku", e.target.value)}
+                                      className="w-full bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-primary/50 px-0 py-0.5 text-[11px] font-mono text-foreground focus:outline-none transition-colors"
+                                      placeholder="SKU..."
+                                    />
+                                  </div>
+
+                                  <div className="px-1 py-2 flex items-center justify-center">
+                                    <button
+                                      onClick={handleDeleteVariant}
+                                      className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all cursor-pointer"
+                                      title="Eliminar variante"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center text-xs text-muted-foreground py-8 border border-dashed border-border/60 rounded-lg">
+                          No hay variantes configuradas
+                        </div>
+                      )}
                     </div>
                   </div>
-                ) : (
-                  <div className="text-center text-xs text-muted-foreground py-8 border border-dashed border-border/60 rounded-lg">
-                    No hay variantes configuradas
+                )}
+
+                {/* Atributos Informativos Tab Content */}
+                {rightCardMode === "atributosInformativos" && (
+                  <div className="flex flex-col gap-3">
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
+                        Atributos Informativos
+                      </h3>
+                      <p className="text-xs text-gray-500 italic">
+                        Atributos que describen propiedades generales del producto
+                      </p>
+                    </div>
+
+                    {atributosInformativos.map((attr, index) => {
+                      const fatherAttr = fatherItem?.atributosInformativos?.find((a) => a.key === attr.key)
+                      const isAttributeLocked = isChildItem && fatherAttr !== undefined
+                      const isValueLocked = isChildItem && fatherAttr && fatherAttr.value && !fatherAttr.inheritValue
+                      
+                      return (
+                        <div key={index} className="flex items-start gap-3">
+                          <div className="flex-1">
+                            <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
+                            <input
+                              type="text"
+                              value={attr.key}
+                              onChange={(e) => {
+                                if (!isAttributeLocked) {
+                                  const updated = [...atributosInformativos]
+                                  updated[index].key = e.target.value
+                                  handleAtributosInformativosChange(updated)
+                                }
+                              }}
+                              disabled={isAttributeLocked}
+                              className={`w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${
+                                isAttributeLocked ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
+                              }`}
+                              placeholder="Ej: Material"
+                            />
+                          </div>
+
+                          <div className="flex-1">
+                            <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Valor</label>
+                            <input
+                              type="text"
+                              value={attr.value}
+                              onChange={(e) => {
+                                if (!isValueLocked) {
+                                  const updated = [...atributosInformativos]
+                                  updated[index].value = e.target.value
+                                  handleAtributosInformativosChange(updated)
+                                }
+                              }}
+                              disabled={isValueLocked || (!isChildItem && attr.inheritValue)}
+                              className={`w-full px-3 py-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${
+                                isValueLocked 
+                                  ? "bg-slate-50 border border-slate-200 text-slate-400 cursor-not-allowed" 
+                                  : (!isChildItem && attr.inheritValue)
+                                    ? "bg-slate-50 border-2 border-dashed border-slate-300 text-slate-400 cursor-not-allowed italic"
+                                    : "bg-white border border-slate-200 text-slate-800 hover:border-slate-300"
+                              }`}
+                              placeholder={(!isChildItem && attr.inheritValue) ? "Variantes completarán..." : "Ej: Algodón"}
+                            />
+                          </div>
+
+                          {/* Action buttons - inherit toggle (for parents only) and delete */}
+                          <div className="flex items-center gap-1 mt-8">
+                            {/* Inherit toggle button - only shown for parent/container items */}
+                            {!isChildItem && (
+                              <button
+                                onClick={() => {
+                                  const updated = [...atributosInformativos]
+                                  updated[index].inheritValue = !updated[index].inheritValue
+                                  if (updated[index].inheritValue) {
+                                    updated[index].value = ""
+                                  }
+                                  handleAtributosInformativosChange(updated)
+                                }}
+                                className={`p-1.5 rounded-md transition-all cursor-pointer ${
+                                  attr.inheritValue 
+                                    ? "bg-blue-100 text-blue-600 hover:bg-blue-200" 
+                                    : "bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
+                                }`}
+                                title={attr.inheritValue ? "Las variantes completarán este valor" : "Marcar para que variantes completen"}
+                              >
+                                <ArrowDownToLine className="w-4 h-4" />
+                              </button>
+                            )}
+                            {/* Delete button - not shown for locked inherited attributes */}
+                            {!isAttributeLocked && (
+                              <button
+                                onClick={() => {
+                                  const updated = atributosInformativos.filter((_, i) => i !== index)
+                                  handleAtributosInformativosChange(updated)
+                                  if (containerAtributosPrincipales.length === 0 && updated.length === 0) {
+                                    setShowAtributosView(false)
+                                  }
+                                }}
+                                className="p-1.5 text-gray-400 hover:text-red-400 transition-colors cursor-pointer"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                          {isAttributeLocked && <div className="mt-8 w-4"></div>}
+                        </div>
+                      )
+                    })}
+
+                    <button
+                      onClick={() => {
+                        handleAtributosInformativosChange([...atributosInformativos, { key: "", value: "" }])
+                      }}
+                      className="w-full px-3 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span className="text-sm">Agregar atributo</span>
+                    </button>
                   </div>
                 )}
               </div>
@@ -1020,72 +1279,50 @@ export function ItemDetailPanel({
               </div>
             )}
 
-            {/* Sticky Segment Buttons - Show when info or both is active */}
-            {(isViewingContainer || expandedSection === "info" || expandedSection === "both") && (
-            <div className={`z-20 mb-6 ${isViewingContainer ? "" : "sticky top-[0px]"}`}>
+            {/* Sticky Segment Buttons - Show when info or both is active (only for non-container items) */}
+            {!isViewingContainer && (expandedSection === "info" || expandedSection === "both") && (
+            <div className="z-20 mb-6 sticky top-[0px]">
               <div className="flex items-center gap-1 h-11 p-1 bg-slate-100/80 rounded-xl">
-                {isViewingContainer ? (
-                  <>
-                    <button
-                      onClick={() => setSelectedDetailTab("info")}
-                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
-                        selectedDetailTab === "info"
-                          ? "bg-white text-slate-900 shadow-sm font-semibold"
-                          : "text-slate-500 hover:text-slate-700"
-                      }`}
-                    >
-                      <span className="text-xs font-medium uppercase tracking-widest">Info</span>
-                    </button>
-                    <button
-                      onClick={() => setSelectedDetailTab("atributos")}
-                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
-                        selectedDetailTab === "atributos"
-                          ? "bg-white text-slate-900 shadow-sm font-semibold"
-                          : "text-slate-500 hover:text-slate-700"
-                      }`}
-                    >
-                      <span className="text-xs font-medium uppercase tracking-widest">Atributos</span>
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => setSelectedDetailTab("info")}
-                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
-                        selectedDetailTab === "info"
-                          ? "bg-white text-slate-900 shadow-sm font-semibold"
-                          : "text-slate-500 hover:text-slate-700"
-                      }`}
-                    >
-                      <span className="text-xs font-medium uppercase tracking-widest">Info</span>
-                    </button>
-                    <button
-                      onClick={() => setSelectedDetailTab("atributos")}
-                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
-                        selectedDetailTab === "atributos"
-                          ? "bg-white text-slate-900 shadow-sm font-semibold"
-                          : "text-slate-500 hover:text-slate-700"
-                      }`}
-                    >
-                      <span className="text-xs font-medium uppercase tracking-widest">Atributos</span>
-                    </button>
-                  </>
-                )}
+                <button
+                  onClick={() => setSelectedDetailTab("info")}
+                  className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
+                    selectedDetailTab === "info"
+                      ? "bg-white text-slate-900 shadow-sm font-semibold"
+                      : "text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  <span className="text-xs font-medium uppercase tracking-widest">Info</span>
+                </button>
+                <button
+                  onClick={() => setSelectedDetailTab("atributos")}
+                  className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
+                    selectedDetailTab === "atributos"
+                      ? "bg-white text-slate-900 shadow-sm font-semibold"
+                      : "text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  <span className="text-xs font-medium uppercase tracking-widest">Atributos</span>
+                </button>
               </div>
             </div>
+            )}
+            
+            {/* Title for container items - replaces toggle */}
+            {isViewingContainer && (
+              <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-5">
+                Información Comercial
+              </h3>
             )}
 
             {/* Tab Content - Show when info or both is active */}
             {(isViewingContainer || expandedSection === "info" || expandedSection === "both") && (
             <div className="flex-1 w-full overflow-hidden">
               {isViewingContainer ? (
-                // Container item tab content
-                <>
-                  {selectedDetailTab === "info" && (
-                    <div className="h-full flex flex-col py-2">
-                      <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
-                        Información del Producto
-                      </h3>
+                // Container item - always show info content (no tabs here anymore)
+                <div className="h-full flex flex-col py-2">
+                  <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
+                    Información del Producto
+                  </h3>
 
                       <div className="space-y-3">
                         <div className="grid grid-cols-2 gap-4">
@@ -1307,9 +1544,11 @@ export function ItemDetailPanel({
                         )}
                       </div>
                     </div>
-                  )}
-
-                  {selectedDetailTab === "atributos" && (
+                </>
+              ) : (
+                // Individual item tab content
+                <>
+                  {selectedDetailTab === "info" && (
                     <div className="h-full flex flex-col py-2">
                       {!showAtributosView ? (
                         <div className="flex flex-col items-center justify-center h-full gap-4">
