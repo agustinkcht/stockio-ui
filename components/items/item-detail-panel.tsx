@@ -1087,11 +1087,38 @@ export function ItemDetailPanel({
                                       {variante}
                                       <button
                                         onClick={() => {
+                                          console.log("[v0] Removing tag:", variante, "from attribute index:", index)
+                                          
+                                          // Remove the tag from atributos principales
                                           const updated = [...containerAtributosPrincipales]
                                           updated[index].variantes = updated[index].variantes.filter(
                                             (_, i) => i !== vIndex,
                                           )
                                           handleContainerAtributosPrincipalesChange(updated)
+                                          
+                                          // Also remove all variants that use this tag
+                                          const existingVariants = selectedItem?.variants || []
+                                          const updatedVariants = existingVariants.filter((v: any) => {
+                                            if (!v.atributosPrincipales) return true
+                                            
+                                            // Check if this variant uses the removed tag
+                                            if (index === 0) {
+                                              // This is the first attribute
+                                              return v.atributosPrincipales[0]?.value !== variante
+                                            } else {
+                                              // This is the second attribute
+                                              return v.atributosPrincipales[1]?.value !== variante
+                                            }
+                                          })
+                                          
+                                          console.log("[v0] Removed variants using tag:", variante)
+                                          console.log("[v0] Updated variants:", updatedVariants)
+                                          
+                                          // Update display and save
+                                          setVariantItems(convertSavedVariantsToDisplay(updatedVariants))
+                                          if (onFieldChange && selectedItem.sku) {
+                                            onFieldChange(selectedItem.sku, "variants", updatedVariants)
+                                          }
                                         }}
                                         className="text-gray-400 hover:text-gray-600 cursor-pointer"
                                       >
@@ -1186,10 +1213,12 @@ export function ItemDetailPanel({
 
                         const displaySku = sourceVariant?.sku || variant.sku
 
-                        // Delete variant handler - only removes the variant, keeps attribute tags
+                        // Delete variant handler - removes variant and cleans up unused tags
                         const handleDeleteVariant = () => {
                           const attr1Value = variant.variant1
                           const attr2Value = variant.variant2
+
+                          console.log("[v0] Deleting variant:", attr1Value, "x", attr2Value)
 
                           const updatedVariants = (selectedItem.variants || []).filter((v: any) => {
                             if (!v.atributosPrincipales) return true
@@ -1205,10 +1234,57 @@ export function ItemDetailPanel({
                             return !isExactMatch
                           })
 
-                          // Update the display (variantItems) to remove the deleted variant
-                          setVariantItems(convertSavedVariantsToDisplay(updatedVariants))
+                          console.log("[v0] Remaining variants after deletion:", updatedVariants)
 
-                          // Save the updated variants (attribute tags are NOT modified)
+                          // Check if any tags are now completely unused (not in any remaining combination)
+                          // A tag is unused if it doesn't appear in all possible combinations with the other attribute
+                          const updatedContainerAttrs = containerAtributosPrincipales.map((attr, attrIndex) => {
+                            const otherAttrIndex = attrIndex === 0 ? 1 : 0
+                            const otherAttr = containerAtributosPrincipales[otherAttrIndex]
+                            
+                            if (!otherAttr || otherAttr.variantes.length === 0) {
+                              // No other attribute - keep all tags that appear in at least one variant
+                              const usedTags = attr.variantes.filter(tag => {
+                                return updatedVariants.some((v: any) => {
+                                  if (!v.atributosPrincipales) return false
+                                  return v.atributosPrincipales[attrIndex]?.value === tag
+                                })
+                              })
+                              return { ...attr, variantes: usedTags }
+                            }
+                            
+                            // Remove tags that have ZERO combinations with the other attribute
+                            const tagsToKeep = attr.variantes.filter(tag => {
+                              // Check if this tag appears in at least ONE variant
+                              const hasAtLeastOneCombo = updatedVariants.some((v: any) => {
+                                if (!v.atributosPrincipales) return false
+                                if (attrIndex === 0) {
+                                  return v.atributosPrincipales[0]?.value === tag
+                                } else {
+                                  return v.atributosPrincipales[1]?.value === tag
+                                }
+                              })
+                              return hasAtLeastOneCombo
+                            })
+                            
+                            return { ...attr, variantes: tagsToKeep }
+                          })
+
+                          console.log("[v0] Updated atributos after cleanup:", updatedContainerAttrs)
+
+                          // Update display
+                          setVariantItems(convertSavedVariantsToDisplay(updatedVariants))
+                          
+                          // Update atributos principales if any tags were removed
+                          const tagsChanged = JSON.stringify(containerAtributosPrincipales) !== JSON.stringify(updatedContainerAttrs)
+                          if (tagsChanged) {
+                            setContainerAtributosPrincipales(updatedContainerAttrs)
+                            if (onFieldChange && selectedItem.sku) {
+                              onFieldChange(selectedItem.sku, "containerAtributosPrincipales", updatedContainerAttrs)
+                            }
+                          }
+
+                          // Save the updated variants
                           if (onFieldChange && selectedItem.sku) {
                             onFieldChange(selectedItem.sku, "variants", updatedVariants)
                           }
