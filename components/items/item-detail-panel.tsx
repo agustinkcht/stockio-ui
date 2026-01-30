@@ -757,7 +757,7 @@ export function ItemDetailPanel({
           {/* Middle Column - Image Card (only for standalone/children) - col-span-6 */}
           {!isViewingContainer && (
           <div className="col-span-6 order-2 z-20 rounded-xl flex flex-col transition-all duration-300 mt-4 border-none shadow-none pl-0 pr-0">
-            <div className="sticky top-4 p-6 mt-0 px-8 pl-7 pr-11 border-solid border border-black rounded-xl bg-black shadow-md">
+            <div className="sticky top-4 p-6 px-8 pr-11 border-solid border border-black rounded-xl bg-black shadow-md pl-11 ml-0 mt-7">
               <div className="mt-2">
                 <div className="w-full h-64 bg-slate-900/50 backdrop-blur-sm rounded-lg flex items-center justify-center overflow-hidden shadow-2xl border-slate-700/30 border-none border-0">
                   <Image
@@ -982,7 +982,7 @@ export function ItemDetailPanel({
           )}
 
 {/* Info/Atributos Column - 12 cols when info expanded, 7 cols when both, 2 col when stock expanded */}
-        <div className={`flex flex-col transition-all duration-300 overflow-hidden ${isViewingContainer ? "order-1 col-span-1 mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : `order-1 relative mt-[44px] pt-6 pb-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10 ${expandedSection === "info" ? "col-span-12 px-8" : expandedSection === "both" ? "col-span-7 px-6" : "col-span-2 px-3"}`}`}>
+        <div className={`flex flex-col transition-all duration-300 overflow-hidden mr-3.5 pb-64 ${isViewingContainer ? "order-1 col-span-1 mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : `order-1 relative mt-[44px] pt-6 pb-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10 ${expandedSection === "info" ? "col-span-12 px-8" : expandedSection === "both" ? "col-span-7 px-6" : "col-span-2 px-3"}`}`}>
             
             {/* Thumbnail + Title Header for Parent Items */}
             {isViewingContainer && (
@@ -1554,7 +1554,7 @@ export function ItemDetailPanel({
                 // Individual item tab content
                 <>
                   {selectedDetailTab === "info" && (
-                    <div className="h-full flex flex-col">
+                    <div className="h-full flex flex-col mt-5">
                       <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-4">
                         Información del Producto
                       </h3>
@@ -1595,7 +1595,7 @@ export function ItemDetailPanel({
                           </div>
                         </div>
 
-                        <div className="border-t border-slate-100 my-5"></div>
+                        <div className="my-10 border-t border-transparent mb-0"></div>
 
                         <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-4">
                           Presentación
@@ -1646,7 +1646,7 @@ export function ItemDetailPanel({
                         </div>
 
                         <div className="flex flex-col gap-2 mt-3">
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-3 mt-3.5">
                             <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Volumen de la unidad</label>
                             <button
                               onClick={() => handleFieldChange("volumenActive", !volumenActive, setVolumenActive)}
@@ -1709,7 +1709,7 @@ export function ItemDetailPanel({
 
                         {/* Vencimiento Section */}
                         <div className="flex flex-col gap-2 mt-4">
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-3 mb-0 mt-3.5">
                             <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Vencimiento</label>
                             <button
                               onClick={() => setVencimientoActive(!vencimientoActive)}
