@@ -851,11 +851,40 @@ export function ItemDetailPanel({
           {isViewingContainer && (
             <div className="col-span-1 order-2 flex flex-col mt-[44px]">
               <div className="sticky top-4 p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
-                <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-5">
-                  {variantItems.length} {variantItems.length === 1 ? "variante" : "variantes"}
-                </h3>
+                {/* Toggle button for Variantes/Atributos */}
+                <div className="mb-6">
+                  <div className="flex items-center gap-1 h-11 p-1 bg-slate-100/80 rounded-xl">
+                    <button
+                      onClick={() => setRightCardMode("variantes")}
+                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
+                        rightCardMode === "variantes"
+                          ? "bg-white text-slate-900 shadow-sm font-semibold"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      <span className="text-xs font-medium uppercase tracking-widest">Variantes</span>
+                    </button>
+                    <button
+                      onClick={() => setRightCardMode("atributos")}
+                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
+                        rightCardMode === "atributos"
+                          ? "bg-white text-slate-900 shadow-sm font-semibold"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      <span className="text-xs font-medium uppercase tracking-widest">Atributos</span>
+                    </button>
+                  </div>
+                </div>
 
-                {variantItems.length > 0 ? (
+                {/* Variantes content */}
+                {rightCardMode === "variantes" && (
+                  <>
+                    <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-5">
+                      {variantItems.length} {variantItems.length === 1 ? "variante" : "variantes"}
+                    </h3>
+
+                    {variantItems.length > 0 ? (
                   <div className="bg-white border border-border/40 rounded-lg overflow-hidden">
                     {/* Header */}
                     <div className="grid grid-cols-[1fr_minmax(80px,1fr)_28px] bg-white border-b border-border/30">
@@ -1021,8 +1050,8 @@ export function ItemDetailPanel({
               </div>
             )}
 
-            {/* Title for container items - replaces toggle */}
-            {isViewingContainer && (
+            {/* Title for container items or Sticky Segment Buttons for non-container items */}
+            {isViewingContainer ? (
               <div className="mb-6">
                 <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-2">
                   Información Comercial
@@ -1031,41 +1060,40 @@ export function ItemDetailPanel({
                   Esta información se comparte entre todas las variantes hijas
                 </p>
               </div>
-            )}
-
-            {/* Sticky Segment Buttons - Show when info or both is active (only for non-container items) */}
-            {!isViewingContainer && (expandedSection === "info" || expandedSection === "both") && (
-            <div className="z-20 mb-6 sticky top-[0px]">
-              <div className="flex items-center gap-1 h-11 p-1 bg-slate-100/80 rounded-xl">
-                <button
-                  onClick={() => setSelectedDetailTab("info")}
-                  className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
-                    selectedDetailTab === "info"
-                      ? "bg-white text-slate-900 shadow-sm font-semibold"
-                      : "text-slate-500 hover:text-slate-700"
-                  }`}
-                >
-                  <span className="text-xs font-medium uppercase tracking-widest">Info</span>
-                </button>
-                <button
-                  onClick={() => setSelectedDetailTab("atributos")}
-                  className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
-                    selectedDetailTab === "atributos"
-                      ? "bg-white text-slate-900 shadow-sm font-semibold"
-                      : "text-slate-500 hover:text-slate-700"
-                  }`}
-                >
-                  <span className="text-xs font-medium uppercase tracking-widest">Atributos</span>
-                </button>
+            ) : (
+              (expandedSection === "info" || expandedSection === "both") && (
+              <div className="z-20 mb-6 sticky top-[0px]">
+                <div className="flex items-center gap-1 h-11 p-1 bg-slate-100/80 rounded-xl">
+                  <button
+                    onClick={() => setSelectedDetailTab("info")}
+                    className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
+                      selectedDetailTab === "info"
+                        ? "bg-white text-slate-900 shadow-sm font-semibold"
+                        : "text-slate-500 hover:text-slate-700"
+                    }`}
+                  >
+                    <span className="text-xs font-medium uppercase tracking-widest">Info</span>
+                  </button>
+                  <button
+                    onClick={() => setSelectedDetailTab("atributos")}
+                    className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
+                      selectedDetailTab === "atributos"
+                        ? "bg-white text-slate-900 shadow-sm font-semibold"
+                        : "text-slate-500 hover:text-slate-700"
+                    }`}
+                  >
+                    <span className="text-xs font-medium uppercase tracking-widest">Atributos</span>
+                  </button>
+                </div>
               </div>
-            </div>
+              )
             )}
 
             {/* Tab Content - Show when info or both is active */}
             {(isViewingContainer || expandedSection === "info" || expandedSection === "both") && (
             <div className="flex-1 w-full overflow-hidden">
               {isViewingContainer ? (
-                // Container item - always show info content
+                // Container item - always show info content (no tabs)
                 <div className="h-full flex flex-col py-2">
                   <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
                     Información del Producto
@@ -1291,19 +1319,33 @@ export function ItemDetailPanel({
                         )}
                       </div>
                     </div>
+                  )}
                 </div>
               ) : (
-                // Individual item tab content
-                <>
-                  {selectedDetailTab === "info" && (
-                    <div className="h-full flex flex-col mt-5">
-                      <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-4">
-                        Información del Producto
-                      </h3>
+                    <div className="h-full flex flex-col py-2">
+                      {!showAtributosView ? (
+                        <div className="flex flex-col items-center justify-center h-full gap-4">
+                          <p className="text-gray-500 text-sm">No hay atributos configurados</p>
+                          <button
+                            onClick={() => setShowAtributosView(true)}
+                            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg transition-colors cursor-pointer"
+                          >
+                            Agregar atributos
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-6">
+                          <div className="flex flex-col gap-3">
+                            <div>
+                              <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
+                                Atributos Principales
+                              </h3>
+                              <p className="text-xs text-gray-500 italic mt-1">
+                                Atributos que definen las variantes del producto (máximo 2)
+                              </p>
+                            </div>
 
-                      <div className="space-y-4">
-                        {/* Categoría and Marca */}
-                        <div className="grid grid-cols-2 gap-5">
+                            {containerAtributosPrincipales.map((attr, index) => (
                               <div key={index} className="flex items-start gap-3">
                                 <div className="flex-1">
                                   <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
@@ -1714,30 +1756,19 @@ export function ItemDetailPanel({
                       </div>
                     </div>
                   )}
+                </div>
+              ) : (
+                // Individual item tab content
+                <>
+                  {selectedDetailTab === "info" && (
+                    <div className="h-full flex flex-col mt-5">
+                      <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-4">
+                        Información del Producto
+                      </h3>
 
-                  {selectedDetailTab === "atributos" && (
-                    <div className="h-full flex flex-col">
-                      {!showIndividualAtributosView ? (
-                        <div className="flex flex-col items-center justify-center h-full gap-4 py-12">
-                          <p className="text-slate-400 text-sm">No hay atributos configurados</p>
-                          <button
-                            onClick={() => setShowIndividualAtributosView(true)}
-                            className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-all text-sm font-medium cursor-pointer"
-                          >
-                            Agregar atributos
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col gap-6">
-                          <div className="flex flex-col gap-3">
-                            <div>
-                              <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-2">
-                                Atributos Principales
-                              </h3>
-                              <p className="text-[11px] text-slate-400 mt-1">
-                                Atributos que definen las características principales del producto (máximo 2)
-                              </p>
-                            </div>
+                      <div className="space-y-4">
+                        {/* Categoría and Marca */}
+                        <div className="grid grid-cols-2 gap-5">
 
                             {atributosPrincipales.map((attr, index) => (
                               <div key={index} className="flex items-start gap-3">
@@ -1908,13 +1939,249 @@ export function ItemDetailPanel({
                       )}
                     </div>
                   )}
+                  </>
+                )}
 
+                {/* Atributos content */}
+                {rightCardMode === "atributos" && (
+                  <div className="h-full flex flex-col py-2">
+                    {!showAtributosView ? (
+                      <div className="flex flex-col items-center justify-center h-full gap-4 py-8">
+                        <p className="text-gray-500 text-sm">No hay atributos configurados</p>
+                        <button
+                          onClick={() => setShowAtributosView(true)}
+                          className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg transition-colors cursor-pointer"
+                        >
+                          Agregar atributos
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-6">
+                        {/* Atributos Principales */}
+                        <div className="flex flex-col gap-3">
+                          <div>
+                            <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
+                              Atributos Principales
+                            </h3>
+                            <p className="text-xs text-gray-500 italic mt-1">
+                              Atributos que definen las variantes del producto (máximo 2)
+                            </p>
+                          </div>
 
-                </>
-              )}
+                          {containerAtributosPrincipales.map((attr, index) => (
+                            <div key={index} className="flex items-start gap-3">
+                              <div className="flex-1">
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
+                                <input
+                                  type="text"
+                                  value={attr.key}
+                                  onChange={(e) => {
+                                    const updated = [...containerAtributosPrincipales]
+                                    updated[index].key = e.target.value
+                                    handleContainerAtributosPrincipalesChange(updated)
+                                  }}
+                                  className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300"
+                                  placeholder="Ej: Color"
+                                />
+                              </div>
+
+                              <div className="flex-1">
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Variantes</label>
+                                <div className="space-y-2">
+                                  <input
+                                    type="text"
+                                    value={varianteInput[index] || ""}
+                                    onChange={(e) =>
+                                      setVarianteInput({ ...varianteInput, [index]: e.target.value })
+                                    }
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter" && varianteInput[index]?.trim()) {
+                                        const updated = [...containerAtributosPrincipales]
+                                        updated[index].variantes.push(varianteInput[index].trim())
+                                        handleContainerAtributosPrincipalesChange(updated)
+                                        setVarianteInput({ ...varianteInput, [index]: "" })
+                                      }
+                                    }}
+                                    placeholder="Ej: Rojo"
+                                    className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300"
+                                  />
+
+                                  <div className="flex flex-wrap gap-2">
+                                    {attr.variantes.map((variante, vIndex) => (
+                                      <span
+                                        key={vIndex}
+                                        className="px-3 py-1.5 bg-white border border-gray-300 rounded-md text-gray-900 text-sm flex items-center gap-2"
+                                      >
+                                        {variante}
+                                        <button
+                                          onClick={() => {
+                                            const updated = [...containerAtributosPrincipales]
+                                            updated[index].variantes = updated[index].variantes.filter(
+                                              (_, i) => i !== vIndex,
+                                            )
+                                            handleContainerAtributosPrincipalesChange(updated)
+                                          }}
+                                          className="text-gray-400 hover:text-gray-600 cursor-pointer"
+                                        >
+                                          <X className="w-3 h-3" />
+                                        </button>
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <button
+                                onClick={() => {
+                                  const updated = containerAtributosPrincipales.filter((_, i) => i !== index)
+                                  handleContainerAtributosPrincipalesChange(updated)
+                                  if (updated.length === 0 && atributosInformativos.length === 0) {
+                                    setShowAtributosView(false)
+                                  }
+                                }}
+                                className="mt-8 text-gray-400 hover:text-red-400 transition-colors cursor-pointer"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+
+                          {containerAtributosPrincipales.length < 2 && (
+                            <button
+                              onClick={() => {
+                                handleContainerAtributosPrincipalesChange([
+                                  ...containerAtributosPrincipales,
+                                  { key: "", variantes: [] },
+                                ])
+                              }}
+                              className="w-full px-3 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                            >
+                              <Plus className="w-4 h-4" />
+                              <span className="text-sm">Agregar atributo</span>
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Atributos Informativos */}
+                        <div className="flex flex-col gap-3">
+                          <div>
+                            <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
+                              Atributos Informativos
+                            </h3>
+                            <p className="text-xs text-gray-500 italic mt-1">
+                              Atributos que describen propiedades generales del producto
+                            </p>
+                          </div>
+
+                          {atributosInformativos.map((attr, index) => {
+                            const fatherAttr = fatherItem?.atributosInformativos?.find((a) => a.key === attr.key)
+                            const isAttributeLocked = isChildItem && fatherAttr !== undefined
+                            const isValueLocked = isChildItem && fatherAttr && fatherAttr.value && !fatherAttr.inheritValue
+                            
+                            return (
+                              <div key={index} className="flex items-start gap-3">
+                                <div className="flex-1">
+                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
+                                  <input
+                                    type="text"
+                                    value={attr.key}
+                                    onChange={(e) => {
+                                      if (!isAttributeLocked) {
+                                        const updated = [...atributosInformativos]
+                                        updated[index].key = e.target.value
+                                        handleAtributosInformativosChange(updated)
+                                      }
+                                    }}
+                                    disabled={isAttributeLocked}
+                                    className={`w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${
+                                      isAttributeLocked ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
+                                    }`}
+                                    placeholder="Ej: Material"
+                                  />
+                                </div>
+
+                                <div className="flex-1">
+                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Valor</label>
+                                  <input
+                                    type="text"
+                                    value={attr.value}
+                                    onChange={(e) => {
+                                      if (!isValueLocked) {
+                                        const updated = [...atributosInformativos]
+                                        updated[index].value = e.target.value
+                                        handleAtributosInformativosChange(updated)
+                                      }
+                                    }}
+                                    disabled={isValueLocked || (!isChildItem && attr.inheritValue)}
+                                    className={`w-full px-3 py-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${
+                                      isValueLocked 
+                                        ? "bg-slate-50 border border-slate-200 text-slate-400 cursor-not-allowed" 
+                                        : (!isChildItem && attr.inheritValue)
+                                          ? "bg-slate-50 border-2 border-dashed border-slate-300 text-slate-400 cursor-not-allowed italic"
+                                          : "bg-white border border-slate-200 text-slate-800 hover:border-slate-300"
+                                    }`}
+                                    placeholder={(!isChildItem && attr.inheritValue) ? "Variantes completarán..." : "Ej: Algodón"}
+                                  />
+                                </div>
+
+                                <div className="flex items-center gap-1 mt-8">
+                                  {!isChildItem && isViewingContainer && (
+                                    <button
+                                      onClick={() => {
+                                        const updated = [...atributosInformativos]
+                                        updated[index].inheritValue = !updated[index].inheritValue
+                                        if (updated[index].inheritValue) {
+                                          updated[index].value = ""
+                                        }
+                                        handleAtributosInformativosChange(updated)
+                                      }}
+                                      className={`p-1.5 rounded-md transition-all cursor-pointer ${
+                                        attr.inheritValue 
+                                          ? "bg-slate-800 text-white" 
+                                          : "text-gray-400 hover:text-slate-600 hover:bg-slate-100"
+                                      }`}
+                                      title={attr.inheritValue ? "Valor heredable a variantes (click para desactivar)" : "Marcar para que variantes completen el valor"}
+                                    >
+                                      <ArrowDownToLine className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                  {!isAttributeLocked && (
+                                    <button
+                                      onClick={() => {
+                                        const updated = atributosInformativos.filter((_, i) => i !== index)
+                                        handleAtributosInformativosChange(updated)
+                                        if (containerAtributosPrincipales.length === 0 && updated.length === 0) {
+                                          setShowAtributosView(false)
+                                        }
+                                      }}
+                                      className="text-gray-400 hover:text-red-400 transition-colors cursor-pointer"
+                                    >
+                                      <X className="w-4 h-4" />
+                                    </button>
+                                  )}
+                                </div>
+                                {isAttributeLocked && <div className="mt-8 w-4"></div>}
+                              </div>
+                            )
+                          })}
+
+                          <button
+                            onClick={() => {
+                              handleAtributosInformativosChange([...atributosInformativos, { key: "", value: "" }])
+                            }}
+                            className="w-full px-3 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                          >
+                            <Plus className="w-4 h-4" />
+                            <span className="text-sm">Agregar atributo</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-            )}
-          </div>
+          )}
 
 {/* Stock Column - 12 cols when stock expanded, 7 cols when both, 2 col when info expanded */}
           {!isViewingContainer && (
@@ -2247,8 +2514,6 @@ export function ItemDetailPanel({
                     </div>
                   </div>
                 </div>
-              )}
-              </>
               )}
             </div>
           )}
