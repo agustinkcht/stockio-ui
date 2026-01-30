@@ -757,7 +757,7 @@ export function ItemDetailPanel({
           {/* Middle Column - Image Card (only for standalone/children) - col-span-6 */}
           {!isViewingContainer && (
           <div className="col-span-6 order-2 z-20 rounded-xl flex flex-col transition-all duration-300 mt-4 border-none shadow-none pl-0 pr-0">
-            <div className="sticky top-4 p-6 mt-0 px-8 border-none shadow-none pl-7 pr-11">
+            <div className="sticky top-4 p-6 mt-0 px-8 shadow-none pl-7 pr-11 border-solid border border-black rounded-xl bg-black">
               <div className="mt-2">
                 <div className="w-full h-64 bg-slate-900/50 backdrop-blur-sm rounded-lg flex items-center justify-center overflow-hidden shadow-2xl border border-slate-700/30">
                   <Image
@@ -765,7 +765,7 @@ export function ItemDetailPanel({
                     alt={selectedItem.name}
                     width={200}
                     height={256}
-                    className="object-contain"
+                    className="object-contain rounded-xl"
                   />
                 </div>
               </div>
@@ -830,10 +830,10 @@ export function ItemDetailPanel({
                         ) : (
                           <div
                             onClick={() => setEditingDescripcion(true)}
-                            className="w-full min-h-[100px] px-3 py-2 bg-slate-800/30 border border-slate-700/50 rounded-lg text-slate-200 cursor-pointer hover:border-slate-600 text-sm"
+                            className="w-full min-h-[100px] px-3 py-2 bg-slate-800/30 border-slate-700/50 rounded-lg text-slate-200 cursor-pointer hover:border-slate-600 text-sm border-none border-0"
                           >
                             {descripcionValue || (
-                              <span className="text-slate-500">Click para agregar descripción...</span>
+                              <span className="text-slate-100">Click para agregar descripción...</span>
                             )}
                           </div>
                         )}
