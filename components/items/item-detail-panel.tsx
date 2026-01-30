@@ -1035,26 +1035,72 @@ export function ItemDetailPanel({
                               />
 
                               <div className="flex flex-wrap gap-2">
-                                {attr.variantes.map((variante, vIndex) => (
-                                  <span
-                                    key={vIndex}
-                                    className="px-3 py-1.5 bg-white border border-gray-300 rounded-md text-gray-900 text-sm flex items-center gap-2"
-                                  >
-                                    {variante}
-                                    <button
-                                      onClick={() => {
-                                        const updated = [...containerAtributosPrincipales]
-                                        updated[index].variantes = updated[index].variantes.filter(
-                                          (_, i) => i !== vIndex,
-                                        )
-                                        handleContainerAtributosPrincipalesChange(updated)
-                                      }}
-                                      className="text-gray-400 hover:text-gray-600 cursor-pointer"
+                                {attr.variantes.map((variante, vIndex) => {
+                                  // Calculate if this tag is "complete" or "incomplete"
+                                  // Complete = used in ALL potential combinations with the other attribute
+                                  // Incomplete = missing from at least one potential combination
+                                  const existingVariants = selectedItem?.variants || []
+                                  const otherAttrIndex = index === 0 ? 1 : 0
+                                  const otherAttr = containerAtributosPrincipales[otherAttrIndex]
+                                  
+                                  let isComplete = true
+                                  
+                                  if (existingVariants.length > 0 && otherAttr && otherAttr.variantes.length > 0) {
+                                    // Check if this value is paired with EVERY value from the other attribute
+                                    for (const otherValue of otherAttr.variantes) {
+                                      const hasCombination = existingVariants.some((v: any) => {
+                                        if (!v.atributosPrincipales) return false
+                                        const attr1Val = v.atributosPrincipales[0]?.value
+                                        const attr2Val = v.atributosPrincipales[1]?.value
+                                        
+                                        if (index === 0) {
+                                          return attr1Val === variante && attr2Val === otherValue
+                                        } else {
+                                          return attr1Val === otherValue && attr2Val === variante
+                                        }
+                                      })
+                                      if (!hasCombination) {
+                                        isComplete = false
+                                        break
+                                      }
+                                    }
+                                  } else if (existingVariants.length > 0 && containerAtributosPrincipales.length === 1) {
+                                    // Single attribute case - check if variant exists
+                                    const hasVariant = existingVariants.some((v: any) => {
+                                      if (!v.atributosPrincipales) return false
+                                      return v.atributosPrincipales[0]?.value === variante
+                                    })
+                                    isComplete = hasVariant
+                                  } else if (existingVariants.length === 0) {
+                                    // No variants generated yet - all tags are incomplete
+                                    isComplete = false
+                                  }
+                                  
+                                  return (
+                                    <span
+                                      key={vIndex}
+                                      className={`px-3 py-1.5 bg-white rounded-md text-sm flex items-center gap-2 ${
+                                        isComplete 
+                                          ? "border border-gray-300 text-gray-900" 
+                                          : "border-2 border-dashed border-gray-300 text-gray-500"
+                                      }`}
                                     >
-                                      <X className="w-3 h-3" />
-                                    </button>
-                                  </span>
-                                ))}
+                                      {variante}
+                                      <button
+                                        onClick={() => {
+                                          const updated = [...containerAtributosPrincipales]
+                                          updated[index].variantes = updated[index].variantes.filter(
+                                            (_, i) => i !== vIndex,
+                                          )
+                                          handleContainerAtributosPrincipalesChange(updated)
+                                        }}
+                                        className="text-gray-400 hover:text-gray-600 cursor-pointer"
+                                      >
+                                        <X className="w-3 h-3" />
+                                      </button>
+                                    </span>
+                                  )
+                                })}
                               </div>
                             </div>
                           </div>
@@ -1141,7 +1187,7 @@ export function ItemDetailPanel({
 
                         const displaySku = sourceVariant?.sku || variant.sku
 
-                        // Delete variant handler
+                        // Delete variant handler - only removes the variant, keeps attribute tags
                         const handleDeleteVariant = () => {
                           const attr1Value = variant.variant1
                           const attr2Value = variant.variant2
@@ -1160,27 +1206,11 @@ export function ItemDetailPanel({
                             return !isExactMatch
                           })
 
-                          const usedAttr1Values = new Set<string>()
-                          const usedAttr2Values = new Set<string>()
+                          // Update the display (variantItems) to remove the deleted variant
+                          setVariantItems(convertSavedVariantsToDisplay(updatedVariants))
 
-                          updatedVariants.forEach((v: any) => {
-                            if (v.atributosPrincipales) {
-                              if (v.atributosPrincipales[0]?.value) usedAttr1Values.add(v.atributosPrincipales[0].value)
-                              if (v.atributosPrincipales[1]?.value) usedAttr2Values.add(v.atributosPrincipales[1].value)
-                            }
-                          })
-
-                          const updatedContainerAttrs = containerAtributosPrincipales.map((attr, idx) => {
-                            const usedValues = idx === 0 ? usedAttr1Values : usedAttr2Values
-                            return {
-                              ...attr,
-                              variantes: attr.variantes.filter((v) => usedValues.has(v)),
-                            }
-                          })
-
-                          setContainerAtributosPrincipales(updatedContainerAttrs)
+                          // Save the updated variants (attribute tags are NOT modified)
                           if (onFieldChange && selectedItem.sku) {
-                            onFieldChange(selectedItem.sku, "containerAtributosPrincipales", updatedContainerAttrs)
                             onFieldChange(selectedItem.sku, "variants", updatedVariants)
                           }
                         }
