@@ -554,70 +554,157 @@ export function ItemDetailPanel({
     }))
   }
 
+  // DISABLED: Automatic variant generation - now triggered manually by "Generar Variantes" button
+  // useEffect(() => {
+  //   if (selectedItem && selectedItem.hasVariants && isViewingContainer) {
+  //     const existingVariants = selectedItem.variants || []
+  //     
+  //     // Generate only NEW combinations that don't already exist
+  //     const newCombinations = generateNewVariantCombinations(existingVariants)
+  //     
+  //     // If there are new combinations, add them to the variants
+  //     if (newCombinations.length > 0) {
+  //       // Prepare inherited atributosInformativos for new variants
+  //       // For Case 1 (parent has value and not marked inheritValue): inherit complete key+value (locked)
+  //       // For Case 2 (parent marked inheritValue): inherit key with empty value so child can fill it
+  //       const inheritedAtributosInformativos = (selectedItem.atributosInformativos || []).map(attr => ({
+  //         key: attr.key,
+  //         value: attr.inheritValue ? "" : (attr.value || ""), // Empty for Case 2 (inheritValue), parent's value for Case 1
+  //         inheritValue: attr.inheritValue, // Preserve the flag for UI display
+  //       }))
+  //
+  //       const newVariantObjects = newCombinations.map((combo) => ({
+  //         sku: combo.sku,
+  //         name: selectedItem.name,
+  //         codigoUniversal: combo.codigoUniversal || "",
+  //         descripcion: combo.descripcion || "",
+  //         foto: combo.foto || "",
+  //         categoria: selectedItem.categoria,
+  //         atributosPrincipales: [
+  //           combo.variant1 ? { key: containerAtributosPrincipales[0]?.key || "", value: combo.variant1 } : null,
+  //           combo.variant2 ? { key: containerAtributosPrincipales[1]?.key || "", value: combo.variant2 } : null,
+  //         ].filter(Boolean),
+  //         atributosInformativos: inheritedAtributosInformativos,
+  //         stock: {
+  //           total: "0",
+  //           reservado: "0",
+  //           disponible: "0",
+  //         },
+  //       }))
+  //
+  //       const updatedVariants = [...existingVariants, ...newVariantObjects]
+  //       
+  //       // Update variantItems for display (existing + new)
+  //       setVariantItems(convertSavedVariantsToDisplay(updatedVariants))
+  //
+  //       const variantsKey = JSON.stringify(updatedVariants.map((v) => ({ sku: v.sku, attrs: v.atributosPrincipales })))
+  //       
+  //       if (previousVariantsRef.current === null) {
+  //         previousVariantsRef.current = variantsKey
+  //       } else if (previousVariantsRef.current !== variantsKey) {
+  //         previousVariantsRef.current = variantsKey
+  //         if (onFieldChange && selectedItem.sku) {
+  //           onFieldChange(selectedItem.sku, "variants", updatedVariants)
+  //         }
+  //       }
+  //     } else {
+  //       // No new combinations - just display existing variants
+  //       setVariantItems(convertSavedVariantsToDisplay(existingVariants))
+  //       
+  //       // Update the ref without triggering changes
+  //       const variantsKey = JSON.stringify(existingVariants.map((v: any) => ({ sku: v.sku, attrs: v.atributosPrincipales })))
+  //       if (previousVariantsRef.current === null) {
+  //         previousVariantsRef.current = variantsKey
+  //       }
+  //     }
+  //   }
+  // }, [containerAtributosPrincipales, selectedItem, isViewingContainer])
+
+  // Display existing variants on load (no generation, just display)
   useEffect(() => {
     if (selectedItem && selectedItem.hasVariants && isViewingContainer) {
       const existingVariants = selectedItem.variants || []
       
-      // Generate only NEW combinations that don't already exist
-      const newCombinations = generateNewVariantCombinations(existingVariants)
-      
-      // If there are new combinations, add them to the variants
-      if (newCombinations.length > 0) {
-        // Prepare inherited atributosInformativos for new variants
-        // For Case 1 (parent has value and not marked inheritValue): inherit complete key+value (locked)
-        // For Case 2 (parent marked inheritValue): inherit key with empty value so child can fill it
-        const inheritedAtributosInformativos = (selectedItem.atributosInformativos || []).map(attr => ({
-          key: attr.key,
-          value: attr.inheritValue ? "" : (attr.value || ""), // Empty for Case 2 (inheritValue), parent's value for Case 1
-          inheritValue: attr.inheritValue, // Preserve the flag for UI display
-        }))
-
-        const newVariantObjects = newCombinations.map((combo) => ({
-          sku: combo.sku,
-          name: selectedItem.name,
-          codigoUniversal: combo.codigoUniversal || "",
-          descripcion: combo.descripcion || "",
-          foto: combo.foto || "",
-          categoria: selectedItem.categoria,
-          atributosPrincipales: [
-            combo.variant1 ? { key: containerAtributosPrincipales[0]?.key || "", value: combo.variant1 } : null,
-            combo.variant2 ? { key: containerAtributosPrincipales[1]?.key || "", value: combo.variant2 } : null,
-          ].filter(Boolean),
-          atributosInformativos: inheritedAtributosInformativos,
-          stock: {
-            total: "0",
-            reservado: "0",
-            disponible: "0",
-          },
-        }))
-
-        const updatedVariants = [...existingVariants, ...newVariantObjects]
-        
-        // Update variantItems for display (existing + new)
-        setVariantItems(convertSavedVariantsToDisplay(updatedVariants))
-
-        const variantsKey = JSON.stringify(updatedVariants.map((v) => ({ sku: v.sku, attrs: v.atributosPrincipales })))
-        
-        if (previousVariantsRef.current === null) {
-          previousVariantsRef.current = variantsKey
-        } else if (previousVariantsRef.current !== variantsKey) {
-          previousVariantsRef.current = variantsKey
-          if (onFieldChange && selectedItem.sku) {
-            onFieldChange(selectedItem.sku, "variants", updatedVariants)
-          }
-        }
-      } else {
-        // No new combinations - just display existing variants
+      // Just display existing variants, don't generate new ones
+      if (existingVariants.length > 0) {
         setVariantItems(convertSavedVariantsToDisplay(existingVariants))
         
-        // Update the ref without triggering changes
+        // Initialize the ref
         const variantsKey = JSON.stringify(existingVariants.map((v: any) => ({ sku: v.sku, attrs: v.atributosPrincipales })))
         if (previousVariantsRef.current === null) {
           previousVariantsRef.current = variantsKey
         }
+      } else {
+        // No existing variants - clear display
+        setVariantItems([])
       }
     }
-  }, [containerAtributosPrincipales, selectedItem, isViewingContainer])
+  }, [selectedItem, isViewingContainer])
+
+  // Manual variant generation function - triggered by "Generar Variantes" button
+  const handleGenerarVariantes = () => {
+    console.log("[v0] Generar Variantes clicked - starting manual generation")
+    
+    if (!selectedItem || !selectedItem.hasVariants || !isViewingContainer) {
+      console.log("[v0] Cannot generate variants - conditions not met")
+      return
+    }
+
+    const existingVariants = selectedItem.variants || []
+    console.log("[v0] Existing variants:", existingVariants)
+    
+    // Generate only NEW combinations that don't already exist
+    const newCombinations = generateNewVariantCombinations(existingVariants)
+    console.log("[v0] New combinations to add:", newCombinations)
+    
+    // If there are new combinations, add them to the variants
+    if (newCombinations.length > 0) {
+      // Prepare inherited atributosInformativos for new variants
+      const inheritedAtributosInformativos = (selectedItem.atributosInformativos || []).map(attr => ({
+        key: attr.key,
+        value: attr.inheritValue ? "" : (attr.value || ""),
+        inheritValue: attr.inheritValue,
+      }))
+
+      const newVariantObjects = newCombinations.map((combo) => ({
+        sku: combo.sku,
+        name: selectedItem.name,
+        codigoUniversal: combo.codigoUniversal || "",
+        descripcion: combo.descripcion || "",
+        foto: combo.foto || "",
+        categoria: selectedItem.categoria,
+        atributosPrincipales: [
+          combo.variant1 ? { key: containerAtributosPrincipales[0]?.key || "", value: combo.variant1 } : null,
+          combo.variant2 ? { key: containerAtributosPrincipales[1]?.key || "", value: combo.variant2 } : null,
+        ].filter(Boolean),
+        atributosInformativos: inheritedAtributosInformativos,
+        stock: {
+          total: "0",
+          reservado: "0",
+          disponible: "0",
+        },
+      }))
+
+      const updatedVariants = [...existingVariants, ...newVariantObjects]
+      console.log("[v0] Updated variants:", updatedVariants)
+      
+      // Update variantItems for display (existing + new)
+      setVariantItems(convertSavedVariantsToDisplay(updatedVariants))
+
+      const variantsKey = JSON.stringify(updatedVariants.map((v) => ({ sku: v.sku, attrs: v.atributosPrincipales })))
+      
+      if (previousVariantsRef.current === null) {
+        previousVariantsRef.current = variantsKey
+      } else if (previousVariantsRef.current !== variantsKey) {
+        previousVariantsRef.current = variantsKey
+        if (onFieldChange && selectedItem.sku) {
+          onFieldChange(selectedItem.sku, "variants", updatedVariants)
+        }
+      }
+    } else {
+      console.log("[v0] No new combinations to add")
+    }
+  }
 
   // The stock is now managed via onFieldChange/editField
   // useEffect(() => {
@@ -994,10 +1081,7 @@ export function ItemDetailPanel({
                         )
                         return (
                           <button
-                            onClick={() => {
-                              // TODO: Trigger variant generation logic here
-                              console.log("[v0] Generar Variantes clicked", containerAtributosPrincipales)
-                            }}
+                            onClick={handleGenerarVariantes}
                             disabled={!hasAtLeastOneVariante}
                             className={`w-full px-4 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 ${
                               hasAtLeastOneVariante
