@@ -10,15 +10,19 @@ import { Button } from "@/components/ui/button"
 import { useItems } from "@/hooks/use-items"
 
 // Define column widths (in pixels) for consistent alignment
-const COL_WIDTHS = {
+const COL_WIDTHS: Record<string, number> = {
   rowControls: 56,
   titulo: 200,
   caracteres: 100,
   sku: 140,
   codigoUniversal: 140,
-  atributoPrincipalKey: 120,
-  atributoPrincipalValue: 120,
-  atributoPrincipalAdd: 50,
+  // Atributos principales (max 2)
+  atributoPrincipal1Key: 100,
+  atributoPrincipal1Value: 100,
+  atributoPrincipal1Add: 40,
+  atributoPrincipal2Key: 100,
+  atributoPrincipal2Value: 100,
+  atributoPrincipal2Remove: 40,
   categoria: 130,
   marca: 130,
   formatoVenta: 120,
@@ -33,13 +37,40 @@ const COL_WIDTHS = {
   stockDisponible: 90,
   descripcion: 200,
   fotoUrl: 200,
-  atributoInfoKey: 120,
-  atributoInfoValue: 120,
-  atributoInfoAdd: 50,
+}
+
+// Dynamic width getter for atributos (both principales and informativos)
+const getColWidth = (colId: string): number => {
+  // Check if it's a dynamic atributo informativo column
+  if (colId.startsWith("atributoInfo")) {
+    if (colId.includes("Key")) return 100
+    if (colId.includes("Value")) return 100
+    if (colId.includes("Add")) return 40
+    if (colId.includes("Remove")) return 40
+  }
+  // Check if it's a dynamic atributo principal column  
+  if (colId.startsWith("atributoPrincipal")) {
+    if (colId.includes("Key")) return 100
+    if (colId.includes("Value")) return 100
+    if (colId.includes("Add")) return 40
+    if (colId.includes("Remove")) return 40
+  }
+  return COL_WIDTHS[colId] || 100
+}
+
+// Section type definition
+interface Section {
+  id: string
+  label: string
+  defaultExpanded: boolean
+  columns?: string[]
+  subHeaders?: Array<{ label: string; cols: string[] }>
+  isDynamic?: boolean
+  dynamicType?: "atributosPrincipales" | "atributosInformativos"
 }
 
 // Section definitions
-const SECTIONS = [
+const SECTIONS: Section[] = [
   { 
     id: "obligatorio", 
     label: "Obligatorio", 
@@ -58,10 +89,8 @@ const SECTIONS = [
     id: "atributos-principales",
     label: "Atributos Principales",
     defaultExpanded: false,
-    columns: ["atributoPrincipalKey", "atributoPrincipalValue", "atributoPrincipalAdd"],
-    subHeaders: [
-      { label: "ATRIBUTO PRINCIPAL", cols: ["atributoPrincipalKey", "atributoPrincipalValue", "atributoPrincipalAdd"] },
-    ],
+    isDynamic: true,
+    dynamicType: "atributosPrincipales",
   },
   { 
     id: "info-comercial", 
@@ -97,9 +126,8 @@ const SECTIONS = [
     id: "atributos-informativos", 
     label: "Atributos Informativos", 
     defaultExpanded: false,
-    columns: ["atributoInfoKey", "atributoInfoValue", "atributoInfoAdd"],
-    subHeaders: [{ label: "ATRIBUTO INFORMATIVO", cols: ["atributoInfoKey", "atributoInfoValue", "atributoInfoAdd"] }],
-    canAddMore: true,
+    isDynamic: true,
+    dynamicType: "atributosInformativos",
   },
 ]
 
@@ -109,9 +137,6 @@ const COLUMN_LABELS: Record<string, string> = {
   caracteres: "Cant. de Caracteres",
   sku: "SKU",
   codigoUniversal: "Código Universal",
-  atributoPrincipalKey: "Atributo",
-  atributoPrincipalValue: "Valor",
-  atributoPrincipalAdd: "",
   categoria: "Categoría",
   marca: "Marca",
   formatoVenta: "Formato de Venta",
@@ -126,9 +151,6 @@ const COLUMN_LABELS: Record<string, string> = {
   stockDisponible: "Disponible",
   descripcion: "",
   fotoUrl: "",
-  atributoInfoKey: "Atributo",
-  atributoInfoValue: "Valor",
-  atributoInfoAdd: "",
 }
 
 interface WorkableRow {
@@ -295,8 +317,15 @@ export default function CreadorMasivoPage() {
 
   const addAtributoPrincipal = (rowIndex: number) => {
     setRows(prev => prev.map((row, i) => {
-      if (i !== rowIndex) return row
+      if (i !== rowIndex || row.atributosPrincipales.length >= 2) return row
       return { ...row, atributosPrincipales: [...row.atributosPrincipales, { key: "", value: "" }] }
+    }))
+  }
+
+  const removeAtributoPrincipal = (rowIndex: number, attrIndex: number) => {
+    setRows(prev => prev.map((row, i) => {
+      if (i !== rowIndex || row.atributosPrincipales.length <= 1) return row
+      return { ...row, atributosPrincipales: row.atributosPrincipales.filter((_, idx) => idx !== attrIndex) }
     }))
   }
 
@@ -316,6 +345,13 @@ export default function CreadorMasivoPage() {
     }))
   }
 
+  const removeAtributoInformativo = (rowIndex: number, attrIndex: number) => {
+    setRows(prev => prev.map((row, i) => {
+      if (i !== rowIndex || row.atributosInformativos.length <= 1) return row
+      return { ...row, atributosInformativos: row.atributosInformativos.filter((_, idx) => idx !== attrIndex) }
+    }))
+  }
+
   const updateAtributoInformativo = (rowIndex: number, attrIndex: number, field: "key" | "value", value: string) => {
     setRows(prev => prev.map((row, i) => {
       if (i !== rowIndex) return row
@@ -325,25 +361,100 @@ export default function CreadorMasivoPage() {
     }))
   }
 
+  // Get the maximum number of atributos across all rows for a given type
+  const getMaxAtributos = (type: "atributosPrincipales" | "atributosInformativos") => {
+    return Math.max(...rows.map(row => row[type].length))
+  }
+
+  // Get dynamic columns for a section based on row data
+  const getDynamicColumns = (section: typeof SECTIONS[0]) => {
+    if (!section.isDynamic) return section.columns || []
+    
+    if (section.dynamicType === "atributosPrincipales") {
+      const maxAttrs = getMaxAtributos("atributosPrincipales")
+      const cols: string[] = []
+      for (let i = 0; i < maxAttrs; i++) {
+        cols.push(`atributoPrincipal${i + 1}Key`, `atributoPrincipal${i + 1}Value`)
+        if (i === 0 && maxAttrs === 1) {
+          cols.push(`atributoPrincipal1Add`)
+        } else if (i === 1) {
+          cols.push(`atributoPrincipal2Remove`)
+        }
+      }
+      return cols
+    }
+    
+    if (section.dynamicType === "atributosInformativos") {
+      const maxAttrs = getMaxAtributos("atributosInformativos")
+      const cols: string[] = []
+      for (let i = 0; i < maxAttrs; i++) {
+        cols.push(`atributoInfo${i}Key`, `atributoInfo${i}Value`)
+        // First one only gets + button, others get both x and + buttons
+        if (i === 0 && maxAttrs === 1) {
+          cols.push(`atributoInfo${i}Add`)
+        } else {
+          // Non-first attributes get remove button, last one also gets add button
+          cols.push(`atributoInfo${i}Remove`)
+          if (i === maxAttrs - 1) {
+            cols.push(`atributoInfo${i}Add`)
+          }
+        }
+      }
+      return cols
+    }
+    
+    return []
+  }
+
+  // Get dynamic subheaders for a section
+  const getDynamicSubHeaders = (section: typeof SECTIONS[0]) => {
+    if (!section.isDynamic) return section.subHeaders || []
+    
+    if (section.dynamicType === "atributosPrincipales") {
+      const maxAttrs = getMaxAtributos("atributosPrincipales")
+      const subHeaders: Array<{ label: string; cols: string[] }> = []
+      for (let i = 0; i < maxAttrs; i++) {
+        const cols = [`atributoPrincipal${i + 1}Key`, `atributoPrincipal${i + 1}Value`]
+        if (i === 0 && maxAttrs === 1) {
+          cols.push(`atributoPrincipal1Add`)
+        } else if (i === 1) {
+          cols.push(`atributoPrincipal2Remove`)
+        }
+        subHeaders.push({ label: `ATRIBUTO PRINCIPAL ${i + 1}`, cols })
+      }
+      return subHeaders
+    }
+    
+    if (section.dynamicType === "atributosInformativos") {
+      const maxAttrs = getMaxAtributos("atributosInformativos")
+      const subHeaders: Array<{ label: string; cols: string[] }> = []
+      for (let i = 0; i < maxAttrs; i++) {
+        const cols = [`atributoInfo${i}Key`, `atributoInfo${i}Value`]
+        if (i === 0 && maxAttrs === 1) {
+          cols.push(`atributoInfo${i}Add`)
+        } else {
+          cols.push(`atributoInfo${i}Remove`)
+          if (i === maxAttrs - 1) {
+            cols.push(`atributoInfo${i}Add`)
+          }
+        }
+        subHeaders.push({ label: "ATRIBUTO INFORMATIVO", cols })
+      }
+      return subHeaders
+    }
+    
+    return []
+  }
+
   // Calculate width for a section
   const getSectionWidth = (section: typeof SECTIONS[0]) => {
-    return section.columns.reduce((sum, col) => sum + (COL_WIDTHS[col as keyof typeof COL_WIDTHS] || 100), 0)
+    const columns = getDynamicColumns(section)
+    return columns.reduce((sum, col) => sum + getColWidth(col), 0)
   }
 
   // Calculate width for a subheader
   const getSubHeaderWidth = (cols: string[]) => {
-    return cols.reduce((sum, col) => sum + (COL_WIDTHS[col as keyof typeof COL_WIDTHS] || 100), 0)
-  }
-
-  // Get visible columns based on expanded sections
-  const getVisibleColumns = () => {
-    const cols: string[] = []
-    SECTIONS.forEach(section => {
-      if (expandedSections[section.id]) {
-        cols.push(...section.columns)
-      }
-    })
-    return cols
+    return cols.reduce((sum, col) => sum + getColWidth(col), 0)
   }
 
   // Calculate total table width
@@ -353,7 +464,7 @@ export default function CreadorMasivoPage() {
       if (expandedSections[section.id]) {
         width += getSectionWidth(section)
       } else {
-        width += 140 // Collapsed section width (wider to show title)
+        width += 140 // Collapsed section width
       }
     })
     return width
@@ -445,45 +556,68 @@ export default function CreadorMasivoPage() {
             className={`${baseInputClass} placeholder:text-gray-300`}
           />
         )
-      case "atributoPrincipalKey":
+      // Dynamic atributos principales (1 or 2)
+      case "atributoPrincipal1Key":
         return (
-          <div className="flex flex-col gap-1 w-full h-full py-1">
-            {row.atributosPrincipales.map((attr, idx) => (
-              <input
-                key={idx}
-                type="text"
-                value={attr.key || ""}
-                onChange={(e) => updateAtributoPrincipal(rowIndex, idx, "key", e.target.value)}
-                placeholder="Ej: Talle"
-                className={`${baseInputClass} placeholder:text-gray-300 ${idx > 0 ? 'border-t-0' : ''}`}
-              />
-            ))}
-          </div>
+          <input
+            type="text"
+            value={row.atributosPrincipales[0]?.key || ""}
+            onChange={(e) => updateAtributoPrincipal(rowIndex, 0, "key", e.target.value)}
+            placeholder="Ej: Talle"
+            className={`${baseInputClass} placeholder:text-gray-300`}
+          />
         )
-      case "atributoPrincipalValue":
+      case "atributoPrincipal1Value":
         return (
-          <div className="flex flex-col gap-1 w-full h-full py-1">
-            {row.atributosPrincipales.map((attr, idx) => (
-              <input
-                key={idx}
-                type="text"
-                value={attr.value || ""}
-                onChange={(e) => updateAtributoPrincipal(rowIndex, idx, "value", e.target.value)}
-                placeholder="Ej: M"
-                className={`${baseInputClass} placeholder:text-gray-300 ${idx > 0 ? 'border-t-0' : ''}`}
-              />
-            ))}
-          </div>
+          <input
+            type="text"
+            value={row.atributosPrincipales[0]?.value || ""}
+            onChange={(e) => updateAtributoPrincipal(rowIndex, 0, "value", e.target.value)}
+            placeholder="Ej: M"
+            className={`${baseInputClass} placeholder:text-gray-300`}
+          />
         )
-      case "atributoPrincipalAdd":
+      case "atributoPrincipal1Add":
         return (
-          <div className="flex flex-col gap-1 w-full h-full py-1 items-center justify-end">
+          <div className="w-full h-full flex items-center justify-center">
             <button
               onClick={() => addAtributoPrincipal(rowIndex)}
               className="w-6 h-6 flex items-center justify-center hover:bg-gray-100 transition-colors cursor-pointer rounded"
-              title="Agregar atributo principal"
+              title="Agregar atributo principal 2"
             >
               <Plus className="w-4 h-4 text-gray-400" />
+            </button>
+          </div>
+        )
+      case "atributoPrincipal2Key":
+        return (
+          <input
+            type="text"
+            value={row.atributosPrincipales[1]?.key || ""}
+            onChange={(e) => updateAtributoPrincipal(rowIndex, 1, "key", e.target.value)}
+            placeholder="Ej: Color"
+            className={`${baseInputClass} placeholder:text-gray-300`}
+          />
+        )
+      case "atributoPrincipal2Value":
+        return (
+          <input
+            type="text"
+            value={row.atributosPrincipales[1]?.value || ""}
+            onChange={(e) => updateAtributoPrincipal(rowIndex, 1, "value", e.target.value)}
+            placeholder="Ej: Rojo"
+            className={`${baseInputClass} placeholder:text-gray-300`}
+          />
+        )
+      case "atributoPrincipal2Remove":
+        return (
+          <div className="w-full h-full flex items-center justify-center">
+            <button
+              onClick={() => removeAtributoPrincipal(rowIndex, 1)}
+              className="w-6 h-6 flex items-center justify-center hover:bg-red-50 transition-colors cursor-pointer rounded"
+              title="Eliminar atributo principal 2"
+            >
+              <X className="w-4 h-4 text-red-400" />
             </button>
           </div>
         )
@@ -586,49 +720,65 @@ export default function CreadorMasivoPage() {
             className={`${baseInputClass} placeholder:text-gray-300`}
           />
         )
-      case "atributoInfoKey":
-        return (
-          <div className="flex flex-col gap-1 w-full h-full py-1">
-            {row.atributosInformativos.map((attr, idx) => (
-              <input
-                key={idx}
-                type="text"
-                value={attr.key || ""}
-                onChange={(e) => updateAtributoInformativo(rowIndex, idx, "key", e.target.value)}
-                placeholder="Ej: Material"
-                className={`${baseInputClass} placeholder:text-gray-300 ${idx > 0 ? 'border-t-0' : ''}`}
-              />
-            ))}
-          </div>
-        )
-      case "atributoInfoValue":
-        return (
-          <div className="flex flex-col gap-1 w-full h-full py-1">
-            {row.atributosInformativos.map((attr, idx) => (
-              <input
-                key={idx}
-                type="text"
-                value={attr.value || ""}
-                onChange={(e) => updateAtributoInformativo(rowIndex, idx, "value", e.target.value)}
-                placeholder="Ej: Algodón"
-                className={`${baseInputClass} placeholder:text-gray-300 ${idx > 0 ? 'border-t-0' : ''}`}
-              />
-            ))}
-          </div>
-        )
-      case "atributoInfoAdd":
-        return (
-          <div className="flex flex-col gap-1 w-full h-full py-1 items-center justify-end">
-            <button
-              onClick={() => addAtributoInformativo(rowIndex)}
-              className="w-6 h-6 flex items-center justify-center hover:bg-gray-100 transition-colors cursor-pointer rounded"
-              title="Agregar atributo informativo"
-            >
-              <Plus className="w-4 h-4 text-gray-400" />
-            </button>
-          </div>
-        )
       default:
+        // Handle dynamic atributos informativos columns
+        if (colId.startsWith("atributoInfo")) {
+          const match = colId.match(/atributoInfo(\d+)(Key|Value|Add|Remove)/)
+          if (match) {
+            const attrIndex = parseInt(match[1])
+            const fieldType = match[2]
+            const maxAttrs = row.atributosInformativos.length
+            
+            if (fieldType === "Key") {
+              return (
+                <input
+                  type="text"
+                  value={row.atributosInformativos[attrIndex]?.key || ""}
+                  onChange={(e) => updateAtributoInformativo(rowIndex, attrIndex, "key", e.target.value)}
+                  placeholder="Ej: Material"
+                  className={`${baseInputClass} placeholder:text-gray-300`}
+                />
+              )
+            }
+            if (fieldType === "Value") {
+              return (
+                <input
+                  type="text"
+                  value={row.atributosInformativos[attrIndex]?.value || ""}
+                  onChange={(e) => updateAtributoInformativo(rowIndex, attrIndex, "value", e.target.value)}
+                  placeholder="Ej: Algodón"
+                  className={`${baseInputClass} placeholder:text-gray-300`}
+                />
+              )
+            }
+            if (fieldType === "Remove") {
+              return (
+                <div className="w-full h-full flex items-center justify-center">
+                  <button
+                    onClick={() => removeAtributoInformativo(rowIndex, attrIndex)}
+                    className="w-6 h-6 flex items-center justify-center hover:bg-red-50 transition-colors cursor-pointer rounded"
+                    title="Eliminar atributo informativo"
+                  >
+                    <X className="w-4 h-4 text-red-400" />
+                  </button>
+                </div>
+              )
+            }
+            if (fieldType === "Add") {
+              return (
+                <div className="w-full h-full flex items-center justify-center">
+                  <button
+                    onClick={() => addAtributoInformativo(rowIndex)}
+                    className="w-6 h-6 flex items-center justify-center hover:bg-gray-100 transition-colors cursor-pointer rounded"
+                    title="Agregar atributo informativo"
+                  >
+                    <Plus className="w-4 h-4 text-gray-400" />
+                  </button>
+                </div>
+              )
+            }
+          }
+        }
         return null
     }
   }
@@ -707,8 +857,9 @@ export default function CreadorMasivoPage() {
                       />
                       {SECTIONS.map((section) => {
                         const isExpanded = expandedSections[section.id]
+                        const columns = getDynamicColumns(section)
                         const sectionWidth = isExpanded ? getSectionWidth(section) : 140
-                        const colSpan = isExpanded ? section.columns.length : 1
+                        const colSpan = isExpanded ? columns.length : 1
                         
                         return (
                           <th
@@ -755,7 +906,8 @@ export default function CreadorMasivoPage() {
                           )
                         }
                         
-                        return section.subHeaders.map((subHeader, idx) => {
+                        const subHeaders = getDynamicSubHeaders(section)
+                        return subHeaders.map((subHeader, idx) => {
                           const subHeaderWidth = getSubHeaderWidth(subHeader.cols)
                           return (
                             <th
@@ -782,7 +934,7 @@ export default function CreadorMasivoPage() {
                       {SECTIONS.map((section) => {
                         const isExpanded = expandedSections[section.id]
                         
-if (!isExpanded) {
+                        if (!isExpanded) {
                           return (
                             <th
                               key={section.id}
@@ -792,8 +944,15 @@ if (!isExpanded) {
                           )
                         }
                         
-                        return section.columns.map((colId) => {
-                          const width = COL_WIDTHS[colId as keyof typeof COL_WIDTHS] || 100
+                        const columns = getDynamicColumns(section)
+                        return columns.map((colId) => {
+                          const width = getColWidth(colId)
+                          // Generate label for dynamic columns
+                          let label = COLUMN_LABELS[colId] || ""
+                          if (colId.includes("Key")) label = "Atributo"
+                          if (colId.includes("Value")) label = "Valor"
+                          if (colId.includes("Add") || colId.includes("Remove")) label = ""
+                          
                           return (
                             <th
                               key={colId}
@@ -801,7 +960,7 @@ if (!isExpanded) {
                               style={{ width, minWidth: width }}
                             >
                               <span className="text-[10px] font-medium text-gray-600">
-                                {COLUMN_LABELS[colId] || ""}
+                                {label}
                               </span>
                             </th>
                           )
@@ -847,17 +1006,18 @@ if (!isExpanded) {
                           const isExpanded = expandedSections[section.id]
                           
                           if (!isExpanded) {
-return (
-                        <td
-                          key={section.id}
-                          className="border-r border-b border-gray-200 bg-gray-50"
-                          style={{ width: 140, minWidth: 140 }}
-                        />
-                      )
+                            return (
+                              <td
+                                key={section.id}
+                                className="border-r border-b border-gray-200 bg-gray-50"
+                                style={{ width: 140, minWidth: 140 }}
+                              />
+                            )
                           }
                           
-                          return section.columns.map((colId) => {
-                            const width = COL_WIDTHS[colId as keyof typeof COL_WIDTHS] || 100
+                          const columns = getDynamicColumns(section)
+                          return columns.map((colId) => {
+                            const width = getColWidth(colId)
                             return (
                               <td
                                 key={colId}
