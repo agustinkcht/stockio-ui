@@ -699,7 +699,7 @@ export default function CreadorMasivoPage() {
                   <thead>
                     <tr className="h-10 bg-slate-100">
                       <th 
-                        className="border-r border-b border-gray-200 bg-cyan-950"
+                        className="border-r border-b border-gray-200 bg-slate-200"
                         style={{ width: COL_WIDTHS.rowControls, minWidth: COL_WIDTHS.rowControls }}
                       />
                       {SECTIONS.map((section) => {
@@ -711,13 +711,13 @@ export default function CreadorMasivoPage() {
                           <th
                             key={section.id}
                             colSpan={colSpan}
-                            className="border-r border-b border-gray-200 px-2 cursor-pointer hover:bg-slate-150 transition-colors bg-cyan-950"
+                            className="border-r border-b border-gray-200 px-2 cursor-pointer hover:bg-slate-150 transition-colors bg-slate-300 text-background"
                             style={{ width: sectionWidth, minWidth: sectionWidth }}
                             onClick={() => toggleSection(section.id)}
                             title={isExpanded ? "Colapsar sección" : "Expandir sección"}
                           >
                             <div className="flex items-center justify-between gap-2">
-                              <span className="text-xs font-semibold truncate flex-1 text-left text-slate-200">
+                              <span className="text-xs font-semibold truncate flex-1 text-left text-slate-900">
                                 {section.label}
                               </span>
                               <div className="flex-shrink-0">
@@ -736,7 +736,7 @@ export default function CreadorMasivoPage() {
                     {/* Row 2: Sub-headers */}
                     <tr className="h-8 bg-slate-50">
                       <th 
-                        className="border-r border-b border-gray-200 bg-cyan-950"
+                        className="border-r border-b border-gray-200 bg-slate-100"
                         style={{ width: COL_WIDTHS.rowControls, minWidth: COL_WIDTHS.rowControls }}
                       />
                       {SECTIONS.map((section) => {
@@ -758,7 +758,7 @@ export default function CreadorMasivoPage() {
                             <th
                               key={`${section.id}-sub-${idx}`}
                               colSpan={subHeader.cols.length}
-                              className="border-r border-b border-gray-200 bg-slate-50 px-2"
+                              className="border-r border-b border-gray-200 px-2 bg-slate-200"
                               style={{ width: subHeaderWidth, minWidth: subHeaderWidth }}
                             >
                               <span className="text-[10px] font-medium text-gray-500 uppercase">
@@ -773,7 +773,7 @@ export default function CreadorMasivoPage() {
                     {/* Row 3: Column Labels */}
                     <tr className="h-8 bg-gray-50">
                       <th 
-                        className="border-r border-b border-gray-300 bg-cyan-950"
+                        className="border-r border-b border-gray-300 bg-slate-100"
                         style={{ width: COL_WIDTHS.rowControls, minWidth: COL_WIDTHS.rowControls }}
                       />
                       {SECTIONS.map((section) => {
