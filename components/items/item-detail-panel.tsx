@@ -757,7 +757,7 @@ export function ItemDetailPanel({
           {/* Middle Column - Image Card (only for standalone/children) - col-span-6 */}
           {!isViewingContainer && (
           <div className="col-span-6 order-2 z-20 rounded-xl flex flex-col transition-all duration-300 mt-4 border-none shadow-none pl-0 pr-0">
-            <div className="sticky top-4 p-6 mt-0 px-8 shadow-none pl-7 pr-11 border-solid border border-black rounded-xl bg-black">
+            <div className="sticky top-4 p-6 mt-0 px-8 pl-7 pr-11 border-solid border border-black rounded-xl bg-black shadow-md">
               <div className="mt-2">
                 <div className="w-full h-64 bg-slate-900/50 backdrop-blur-sm rounded-lg flex items-center justify-center overflow-hidden shadow-2xl border-slate-700/30 border-none border-0">
                   <Image
