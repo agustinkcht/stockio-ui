@@ -887,19 +887,29 @@ export function ItemDetailPanel({
                     </h3>
 
                     {/* Atributos Principales Section */}
-                    {showAtributosView && (
-                  <div className="mb-6">
-                    <div className="flex flex-col gap-3">
-                      <div>
-                        <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
-                          Atributos Principales
-                        </h3>
-                        <p className="text-xs text-gray-500 italic mt-1">
-                          Atributos que definen las variantes del producto (máximo 2)
-                        </p>
+                    {!showAtributosView ? (
+                      <div className="flex flex-col items-center justify-center gap-4 py-8 mb-6">
+                        <p className="text-gray-500 text-sm">No hay atributos configurados</p>
+                        <button
+                          onClick={() => setShowAtributosView(true)}
+                          className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg transition-colors cursor-pointer"
+                        >
+                          Agregar atributo
+                        </button>
                       </div>
+                    ) : (
+                      <div className="mb-6">
+                        <div className="flex flex-col gap-3">
+                          <div>
+                            <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
+                              Atributos Principales
+                            </h3>
+                            <p className="text-xs text-gray-500 italic mt-1">
+                              Atributos que definen las variantes del producto (máximo 2)
+                            </p>
+                          </div>
 
-                      {containerAtributosPrincipales.map((attr, index) => (
+                          {containerAtributosPrincipales.map((attr, index) => (
                         <div key={index} className="flex items-start gap-3">
                           <div className="flex-1">
                             <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
@@ -990,12 +1000,12 @@ export function ItemDetailPanel({
                           <Plus className="w-4 h-4" />
                           <span className="text-sm">Agregar atributo</span>
                         </button>
-                      )}
-                    </div>
-                  </div>
-                )}
+                          )}
+                        </div>
+                      </div>
+                    )}
 
-                {variantItems.length > 0 ? (
+                    {variantItems.length > 0 ? (
                   <div className="bg-white border border-border/40 rounded-lg overflow-hidden">
                     {/* Header */}
                     <div className="grid grid-cols-[1fr_minmax(80px,1fr)_28px] bg-white border-b border-border/30">
