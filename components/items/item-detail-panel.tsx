@@ -813,7 +813,7 @@ export function ItemDetailPanel({
                 {!isViewingContainer && (
                   <>
                     <div className="border-t border-slate-700/50 my-4"></div>
-                    <div className="flex-1 flex flex-col border border-slate-800 rounded-md">
+                    <div className="flex-1 flex flex-col border-slate-800 rounded-md border-0">
                       <h3 className="text-sm font-medium uppercase tracking-wider mb-3 text-slate-50">
                         Descripción
                       </h3>
@@ -830,7 +830,7 @@ export function ItemDetailPanel({
                         ) : (
                           <div
                             onClick={() => setEditingDescripcion(true)}
-                            className="w-full min-h-[100px] px-3 py-2 bg-slate-800/30 border-slate-700/50 rounded-lg text-slate-200 cursor-pointer hover:border-slate-600 text-sm border-none border-0"
+                            className="w-full min-h-[100px] px-3 py-2 bg-slate-800/30 rounded-lg text-slate-200 cursor-pointer hover:border-slate-600 text-sm border-none border-0 border-transparent"
                           >
                             {descripcionValue || (
                               <span className="text-slate-300">Click para agregar descripción...</span>
