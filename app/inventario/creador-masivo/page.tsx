@@ -692,7 +692,7 @@ export default function CreadorMasivoPage() {
             </div>
 
             {/* Excel-like Grid with horizontal scroll */}
-            <div className="border-r border-b border-gray-200 bg-transparent px-5">
+            <div className="border-r border-b border-gray-200 bg-transparent px-5 py-0">
               <div className="bg-white border rounded-lg shadow-sm border-[rgba(228,230,235,0.5)] overflow-x-auto">
                 <table className="border-collapse" style={{ minWidth: getTotalWidth() }}>
                   {/* Row 1: Section Headers */}
