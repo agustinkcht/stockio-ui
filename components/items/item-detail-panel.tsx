@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import type React from "react"
 import type { Item } from "@/lib/types"
-import { ChevronDown, ChevronRight, Plus, Copy, X, Minus, Check, ArrowDownToLine } from "lucide-react"
+import { ChevronDown, ChevronRight, Plus, Copy, X, Minus, Check, ArrowDownToLine, Lock, LockOpen } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
 import { TEMPLATES } from "@/lib/constants" // DEPOSITS and SAVED_ATRIBUTOS imports removed
@@ -186,6 +186,9 @@ export function ItemDetailPanel({
   const [containerAtributosPrincipales, setContainerAtributosPrincipales] = useState<
     Array<{ key: string; variantes: string[]; keyOpen?: boolean; variantesOpen?: boolean }>
   >(selectedItem?.containerAtributosPrincipales || [])
+
+  // Lock state for Atributos Principales section - locked by default when variants exist
+  const [isAtributosPrincipalesLocked, setIsAtributosPrincipalesLocked] = useState(true)
 
   const [atributosPrincipales, setAtributosPrincipales] = useState<
     Array<{ key: string; value: string; keyOpen?: boolean; valueOpen?: boolean }>
@@ -393,7 +396,7 @@ export function ItemDetailPanel({
       setAtributosInformativos(getMergedAtributosInformativos(fatherItem?.atributosInformativos, selectedItem?.atributosInformativos))
       setContainerAtributosPrincipales(selectedItem.containerAtributosPrincipales || [])
     }
-  }, [selectedItem, fatherItem, selectedItem?.containerAtributosPrincipales, selectedItem?.atributosPrincipales, selectedItem?.atributosInformativos])
+  }, [selectedItem, fatherItem])
 
   // Removed internal history management as it's now handled by the parent via onFieldChange
   // useEffect(() => {
@@ -985,14 +988,41 @@ export function ItemDetailPanel({
                       </div>
                     ) : (
                       <div className="mb-6">
-                        <div className="flex flex-col gap-3">
-                          <div>
-                            <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
-                              Atributos Principales
-                            </h3>
-                            <p className="text-xs text-gray-500 italic mt-1">
-                              Atributos que definen las variantes del producto (máximo 2)
-                            </p>
+                        <div className={`flex flex-col gap-3 transition-all duration-300 ${
+                          variantItems.length > 0 && isAtributosPrincipalesLocked 
+                            ? "opacity-50 pointer-events-none select-none" 
+                            : ""
+                        }`}>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
+                                Atributos Principales
+                              </h3>
+                              <p className="text-xs text-gray-500 italic">
+                                Atributos que definen las variantes del producto (máximo 2)
+                              </p>
+                            </div>
+                            {/* Lock button - only visible when variants exist */}
+                            {variantItems.length > 0 && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setIsAtributosPrincipalesLocked(!isAtributosPrincipalesLocked)
+                                }}
+                                className={`p-2 rounded-lg transition-all duration-200 pointer-events-auto ${
+                                  isAtributosPrincipalesLocked
+                                    ? "text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                                    : "text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50"
+                                }`}
+                                title={isAtributosPrincipalesLocked ? "Desbloquear edición" : "Bloquear edición"}
+                              >
+                                {isAtributosPrincipalesLocked ? (
+                                  <Lock className="w-4 h-4" />
+                                ) : (
+                                  <LockOpen className="w-4 h-4" />
+                                )}
+                              </button>
+                            )}
                           </div>
 
                           {containerAtributosPrincipales.map((attr, index) => (
@@ -1113,16 +1143,15 @@ export function ItemDetailPanel({
                                           console.log("[v0] Removed variants using tag:", variante)
                                           console.log("[v0] Updated variants:", updatedVariants)
                                           
-                                          // Save changes FIRST (before updating local state)
-                                          // This ensures editField captures the original state correctly
-                                          if (onFieldChange && selectedItem.sku) {
-                                            onFieldChange(selectedItem.sku, "variants", updatedVariants)
-                                            onFieldChange(selectedItem.sku, "containerAtributosPrincipales", updated)
-                                          }
-                                          
-                                          // THEN update local state for display
-                                          setVariantItems(convertSavedVariantsToDisplay(updatedVariants))
+                                          // Update local state
                                           setContainerAtributosPrincipales(updated)
+                                          setVariantItems(convertSavedVariantsToDisplay(updatedVariants))
+                                          
+                                          // Save both changes together (batched)
+                                          if (onFieldChange && selectedItem.sku) {
+                                            onFieldChange(selectedItem.sku, "containerAtributosPrincipales", updated)
+                                            onFieldChange(selectedItem.sku, "variants", updatedVariants)
+                                          }
                                         }}
                                         className="text-gray-400 hover:text-gray-600 cursor-pointer"
                                       >

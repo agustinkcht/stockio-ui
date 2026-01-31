@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { useAccount } from "@/lib/contexts/account-context"
 import type { Item } from "@/lib/types"
 import { TEMPLATES } from "@/lib/constants"
@@ -39,9 +39,6 @@ export function useItems() {
   const [editedItem, setEditedItem] = useState<EditedItemState | null>(null)
   const [lastUndoneEdit, setLastUndoneEdit] = useState<EditedItemState | null>(null)
   const [hasUnsavedEdits, setHasUnsavedEdits] = useState(false)
-  
-  // Ref to track editedItem synchronously (avoids React batching issues)
-  const editedItemRef = useRef<EditedItemState | null>(null)
 
   useEffect(() => {
     console.log("[v0] useItems - hasUnsavedDeletes changed to:", hasUnsavedDeletes)
@@ -447,26 +444,21 @@ export function useItems() {
     }
 
     // Regular top-level item edit
-    // Use ref to check synchronously (avoids React batching issues with multiple rapid calls)
-    if (!editedItemRef.current || editedItemRef.current.itemSku !== itemSku) {
+    if (!editedItem || editedItem.itemSku !== itemSku) {
       const originalItem = items.find((item) => item.sku === itemSku)
       if (!originalItem) return
 
-      const newEditedItem = {
+      setEditedItem({
         itemSku,
         originalValues: { ...originalItem },
         currentValues: { ...originalItem, [field]: newValue },
-      }
-      editedItemRef.current = newEditedItem
-      setEditedItem(newEditedItem)
+      })
       console.log("[v0] useItems - captured original state for:", itemSku)
     } else {
-      const updatedEditedItem = {
-        ...editedItemRef.current,
-        currentValues: { ...editedItemRef.current.currentValues, [field]: newValue },
-      }
-      editedItemRef.current = updatedEditedItem
-      setEditedItem(updatedEditedItem)
+      setEditedItem({
+        ...editedItem,
+        currentValues: { ...editedItem.currentValues, [field]: newValue },
+      })
     }
 
     setHasUnsavedEdits(true)
@@ -550,32 +542,31 @@ export function useItems() {
     )
   }
 
-const undoEdit = () => {
-  if (!editedItemRef.current) return
-  
-  console.log("[v0] useItems - undoEdit called for:", editedItemRef.current.itemSku)
-  
-  setLastUndoneEdit(editedItemRef.current)
-  
-  if (editedItemRef.current.parentSku) {
-  setItems((prevItems) =>
-  prevItems.map((item) => {
-  if (item.sku === editedItemRef.current?.parentSku && item.variants) {
-  const updatedVariants = item.variants.map((v: any) =>
-  v.sku === editedItemRef.current?.itemSku ? { ...v, ...editedItemRef.current?.originalValues } : v,
-  )
-  return { ...item, variants: updatedVariants }
-  }
-  return item
-  }),
-  )
-  } else {
-  setItems((prevItems) =>
-        prevItems.map((item) => (item.sku === editedItemRef.current?.itemSku ? { ...item, ...editedItemRef.current?.originalValues } : item)),
+  const undoEdit = () => {
+    if (!editedItem) return
+
+    console.log("[v0] useItems - undoEdit called for:", editedItem.itemSku)
+
+    setLastUndoneEdit(editedItem)
+
+    if (editedItem.parentSku) {
+      setItems((prevItems) =>
+        prevItems.map((item) => {
+          if (item.sku === editedItem.parentSku && item.variants) {
+            const updatedVariants = item.variants.map((v: any) =>
+              v.sku === editedItem.itemSku ? { ...v, ...editedItem.originalValues } : v,
+            )
+            return { ...item, variants: updatedVariants }
+          }
+          return item
+        }),
+      )
+    } else {
+      setItems((prevItems) =>
+        prevItems.map((item) => (item.sku === editedItem.itemSku ? { ...item, ...editedItem.originalValues } : item)),
       )
     }
 
-    editedItemRef.current = null
     setEditedItem(null)
     setLastUndoneEdit(null)
     setHasUnsavedEdits(false)
@@ -606,24 +597,22 @@ const undoEdit = () => {
       )
     }
 
-    editedItemRef.current = lastUndoneEdit
     setEditedItem(lastUndoneEdit)
     setLastUndoneEdit(null)
     setHasUnsavedEdits(true)
   }
 
-const saveEdit = () => {
-  if (!editedItemRef.current) return
-  
-  console.log("[v0] useItems - saveEdit called for:", editedItemRef.current.itemSku)
-  
-  localStorage.setItem(getStorageKey(), JSON.stringify(items))
-  console.log("[v0] useItems - saved edits to localStorage")
-  
-  editedItemRef.current = null
-  setEditedItem(null)
-  setLastUndoneEdit(null)
-  setHasUnsavedEdits(false)
+  const saveEdit = () => {
+    if (!editedItem) return
+
+    console.log("[v0] useItems - saveEdit called for:", editedItem.itemSku)
+
+    localStorage.setItem(getStorageKey(), JSON.stringify(items))
+    console.log("[v0] useItems - saved edits to localStorage")
+
+    setEditedItem(null)
+    setLastUndoneEdit(null)
+    setHasUnsavedEdits(false)
   }
 
   // Force save current items state to localStorage (for audit mode bulk saves)
@@ -687,19 +676,18 @@ const saveEdit = () => {
     setHasUnsavedEdits(false)
   }
 
-const cancelEdit = () => {
-  if (!editedItemRef.current) return
-  
-  console.log("[v0] useItems - cancelEdit called for:", editedItemRef.current.itemSku)
-  
-  setItems((prevItems) =>
-  prevItems.map((item) => (item.sku === editedItemRef.current?.itemSku ? { ...item, ...editedItemRef.current?.originalValues } : item)),
-  )
-  
-  editedItemRef.current = null
-  setEditedItem(null)
-  setLastUndoneEdit(null)
-  setHasUnsavedEdits(false)
+  const cancelEdit = () => {
+    if (!editedItem) return
+
+    console.log("[v0] useItems - cancelEdit called for:", editedItem.itemSku)
+
+    setItems((prevItems) =>
+      prevItems.map((item) => (item.sku === editedItem.itemSku ? { ...item, ...editedItem.originalValues } : item)),
+    )
+
+    setEditedItem(null)
+    setLastUndoneEdit(null)
+    setHasUnsavedEdits(false)
   }
 
   const canUndoEdit = editedItem !== null
