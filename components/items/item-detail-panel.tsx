@@ -1094,7 +1094,6 @@ export function ItemDetailPanel({
                                           updated[index].variantes = updated[index].variantes.filter(
                                             (_, i) => i !== vIndex,
                                           )
-                                          handleContainerAtributosPrincipalesChange(updated)
                                           
                                           // Also remove all variants that use this tag
                                           const existingVariants = selectedItem?.variants || []
@@ -1114,9 +1113,13 @@ export function ItemDetailPanel({
                                           console.log("[v0] Removed variants using tag:", variante)
                                           console.log("[v0] Updated variants:", updatedVariants)
                                           
-                                          // Update display and save
+                                          // Update local state
+                                          setContainerAtributosPrincipales(updated)
                                           setVariantItems(convertSavedVariantsToDisplay(updatedVariants))
+                                          
+                                          // Save both changes together (batched)
                                           if (onFieldChange && selectedItem.sku) {
+                                            onFieldChange(selectedItem.sku, "containerAtributosPrincipales", updated)
                                             onFieldChange(selectedItem.sku, "variants", updatedVariants)
                                           }
                                         }}
