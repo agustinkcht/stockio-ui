@@ -393,7 +393,7 @@ export function ItemDetailPanel({
       setAtributosInformativos(getMergedAtributosInformativos(fatherItem?.atributosInformativos, selectedItem?.atributosInformativos))
       setContainerAtributosPrincipales(selectedItem.containerAtributosPrincipales || [])
     }
-  }, [selectedItem, fatherItem])
+  }, [selectedItem, fatherItem, selectedItem?.containerAtributosPrincipales, selectedItem?.atributosPrincipales, selectedItem?.atributosInformativos])
 
   // Removed internal history management as it's now handled by the parent via onFieldChange
   // useEffect(() => {
