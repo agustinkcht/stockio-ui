@@ -1113,15 +1113,16 @@ export function ItemDetailPanel({
                                           console.log("[v0] Removed variants using tag:", variante)
                                           console.log("[v0] Updated variants:", updatedVariants)
                                           
-                                          // Update local state
-                                          setContainerAtributosPrincipales(updated)
-                                          setVariantItems(convertSavedVariantsToDisplay(updatedVariants))
-                                          
-                                          // Save both changes together (batched)
+                                          // Save changes FIRST (before updating local state)
+                                          // This ensures editField captures the original state correctly
                                           if (onFieldChange && selectedItem.sku) {
-                                            onFieldChange(selectedItem.sku, "containerAtributosPrincipales", updated)
                                             onFieldChange(selectedItem.sku, "variants", updatedVariants)
+                                            onFieldChange(selectedItem.sku, "containerAtributosPrincipales", updated)
                                           }
+                                          
+                                          // THEN update local state for display
+                                          setVariantItems(convertSavedVariantsToDisplay(updatedVariants))
+                                          setContainerAtributosPrincipales(updated)
                                         }}
                                         className="text-gray-400 hover:text-gray-600 cursor-pointer"
                                       >
