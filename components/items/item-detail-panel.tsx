@@ -10,6 +10,7 @@ import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@
 import { TEMPLATES } from "@/lib/constants" // DEPOSITS and SAVED_ATRIBUTOS imports removed
 import { getCategoryImage } from "@/lib/utils/category-images"
 import Image from "next/image"
+import { NuevaVarianteModal } from "@/components/modals/nueva-variante-modal"
 // import { Breadcrumb } from "@/components/layout/breadcrumb"
 
 // Single deposit for simplified stock management
@@ -191,6 +192,9 @@ export function ItemDetailPanel({
 
   // Lock state for Atributos Principales section - locked by default when variants exist
   const [isAtributosPrincipalesLocked, setIsAtributosPrincipalesLocked] = useState(true)
+  
+  // Nueva Variante modal state
+  const [isNuevaVarianteModalOpen, setIsNuevaVarianteModalOpen] = useState(false)
 
   const [atributosPrincipales, setAtributosPrincipales] = useState<
     Array<{ key: string; value: string; keyOpen?: boolean; valueOpen?: boolean }>
@@ -647,6 +651,62 @@ export function ItemDetailPanel({
   }, [selectedItem, isViewingContainer])
 
   // Manual variant generation function - triggered by "Generar Variantes" button
+  // Handler for creating a new variant manually
+  const handleNuevaVariante = (attributeValues: Record<string, string>) => {
+    console.log("[v0] Creating new variant with values:", attributeValues)
+    
+    // Check if any new tags need to be added to containerAtributosPrincipales
+    const updatedContainerAttrs = [...containerAtributosPrincipales]
+    let hasNewTags = false
+    
+    Object.entries(attributeValues).forEach(([key, value]) => {
+      const attrIndex = updatedContainerAttrs.findIndex((attr) => attr.key === key)
+      if (attrIndex !== -1) {
+        // Check if this value already exists
+        if (!updatedContainerAttrs[attrIndex].variantes.includes(value)) {
+          // Add new tag to existing attribute
+          updatedContainerAttrs[attrIndex].variantes.push(value)
+          hasNewTags = true
+        }
+      }
+    })
+    
+    // If new tags were added, update containerAtributosPrincipales
+    if (hasNewTags) {
+      console.log("[v0] New tags added to atributos principales:", updatedContainerAttrs)
+      setContainerAtributosPrincipales(updatedContainerAttrs)
+      if (onFieldChange && selectedItem.sku) {
+        onFieldChange(selectedItem.sku, "containerAtributosPrincipales", updatedContainerAttrs)
+      }
+    }
+    
+    // Create the new variant object
+    const newVariant: any = {
+      sku: "", // Will be filled by user in the matrix
+      codigoUniversal: "",
+      descripcion: "",
+      foto: selectedItem.foto || "",
+      atributosPrincipales: Object.entries(attributeValues).map(([key, value]) => ({
+        key,
+        value,
+      })),
+    }
+    
+    // Add the new variant to the existing variants array
+    const existingVariants = selectedItem?.variants || []
+    const updatedVariants = [...existingVariants, newVariant]
+    
+    console.log("[v0] Updated variants array:", updatedVariants)
+    
+    // Update display
+    setVariantItems(convertSavedVariantsToDisplay(updatedVariants))
+    
+    // Save to parent
+    if (onFieldChange && selectedItem.sku) {
+      onFieldChange(selectedItem.sku, "variants", updatedVariants)
+    }
+  }
+
   const handleGenerarVariantes = () => {
     console.log("[v0] Generar Variantes clicked - starting manual generation")
     
@@ -1230,10 +1290,7 @@ export function ItemDetailPanel({
                             Variantes
                           </h3>
                           <button
-                            onClick={() => {
-                              // Placeholder for future functionality
-                              console.log("[v0] Nueva Variante clicked")
-                            }}
+                            onClick={() => setIsNuevaVarianteModalOpen(true)}
                             className="px-3 py-1.5 border border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-colors flex items-center gap-1.5 text-xs cursor-pointer"
                           >
                             <Plus className="w-3.5 h-3.5" />
@@ -2586,6 +2643,14 @@ export function ItemDetailPanel({
           )}
         </div>
       </div>
+
+      {/* Nueva Variante Modal */}
+      <NuevaVarianteModal
+        isOpen={isNuevaVarianteModalOpen}
+        onClose={() => setIsNuevaVarianteModalOpen(false)}
+        onSubmit={handleNuevaVariante}
+        containerAtributosPrincipales={containerAtributosPrincipales}
+      />
     </>
   )
 }
