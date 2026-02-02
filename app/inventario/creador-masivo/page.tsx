@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useItems } from "@/hooks/use-items"
+import { CreadorMasivoConVariantes } from "@/components/creador-masivo/creador-masivo-con-variantes"
 
 // Define column widths (in pixels) for consistent alignment
 const COL_WIDTHS: Record<string, number> = {
@@ -916,41 +917,39 @@ export default function CreadorMasivoPage() {
                         </Popover>
                       )}
                       
-                      {/* Grid Size Selector - Only for standalone mode */}
-                      {creatorMode === "standalone" && (
-                        <div className="flex items-center gap-1 bg-gray-100 rounded-md p-0.5">
-                          <button
-                            onClick={() => setGridSize("sm")}
-                            className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
-                              gridSize === "sm"
-                                ? "bg-white text-gray-900 shadow-sm"
-                                : "text-gray-600 hover:text-gray-900"
-                            }`}
-                          >
-                            SM
-                          </button>
-                          <button
-                            onClick={() => setGridSize("md")}
-                            className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
-                              gridSize === "md"
-                                ? "bg-white text-gray-900 shadow-sm"
-                                : "text-gray-600 hover:text-gray-900"
-                            }`}
-                          >
-                            MD
-                          </button>
-                          <button
-                            onClick={() => setGridSize("lg")}
-                            className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
-                              gridSize === "lg"
-                                ? "bg-white text-gray-900 shadow-sm"
-                                : "text-gray-600 hover:text-gray-900"
-                            }`}
-                          >
-                            LG
-                          </button>
-                        </div>
-                      )}
+                      {/* Grid Size Selector - Available for both modes */}
+                      <div className="flex items-center gap-1 bg-gray-100 rounded-md p-0.5">
+                        <button
+                          onClick={() => setGridSize("sm")}
+                          className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
+                            gridSize === "sm"
+                              ? "bg-white text-gray-900 shadow-sm"
+                              : "text-gray-600 hover:text-gray-900"
+                          }`}
+                        >
+                          SM
+                        </button>
+                        <button
+                          onClick={() => setGridSize("md")}
+                          className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
+                            gridSize === "md"
+                              ? "bg-white text-gray-900 shadow-sm"
+                              : "text-gray-600 hover:text-gray-900"
+                          }`}
+                        >
+                          MD
+                        </button>
+                        <button
+                          onClick={() => setGridSize("lg")}
+                          className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
+                            gridSize === "lg"
+                              ? "bg-white text-gray-900 shadow-sm"
+                              : "text-gray-600 hover:text-gray-900"
+                          }`}
+                        >
+                          LG
+                        </button>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Button
@@ -1165,20 +1164,11 @@ export default function CreadorMasivoPage() {
                 </table>
               </div>
               ) : (
-                // Items con Variantes mode - to be designed
-                <div className="bg-white border rounded-lg shadow-sm border-[rgba(228,230,235,0.5)] p-12">
-                  <div className="flex flex-col items-center justify-center text-center space-y-4">
-                    <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">
-                      <ChevronRight className="w-8 h-8 text-slate-400" />
-                    </div>
-                    <div className="space-y-2">
-                      <h3 className="text-lg font-medium text-gray-900">Creador Masivo: Items con Variantes</h3>
-                      <p className="text-sm text-gray-500 max-w-md">
-                        Esta vista permitirá crear agrupadores (items padre) con sus variantes (items hijo) de forma masiva.
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                // Items con Variantes mode
+                <CreadorMasivoConVariantes 
+                  gridSize={gridSize} 
+                  setGridSize={setGridSize}
+                />
               )}
             </div>
           </div>
