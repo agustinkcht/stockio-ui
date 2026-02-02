@@ -5,8 +5,10 @@ import { Sidebar } from "@/components/layout/sidebar"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { UserPanel } from "@/components/layout/user-panel"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
-import { ChevronRight, ChevronLeft, Plus, X, Check, AlertCircle } from "lucide-react"
+import { ChevronRight, ChevronLeft, Plus, X, Check, AlertCircle, Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Checkbox } from "@/components/ui/checkbox"
 import { useItems } from "@/hooks/use-items"
 
 // Define column widths (in pixels) for consistent alignment
@@ -203,6 +205,9 @@ export default function CreadorMasivoPage() {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(
     SECTIONS.reduce((acc, section) => ({ ...acc, [section.id]: section.defaultExpanded }), {})
   )
+  const [visibleSections, setVisibleSections] = useState<Record<string, boolean>>(
+    SECTIONS.reduce((acc, section) => ({ ...acc, [section.id]: true }), {})
+  )
   const [rows, setRows] = useState<WorkableRow[]>([createEmptyRow()])
   const [gridSize, setGridSize] = useState<"sm" | "md" | "lg">("sm")
   
@@ -299,6 +304,12 @@ export default function CreadorMasivoPage() {
 
   const toggleSection = (sectionId: string) => {
     setExpandedSections(prev => ({ ...prev, [sectionId]: !prev[sectionId] }))
+  }
+
+  const toggleSectionVisibility = (sectionId: string) => {
+    // "obligatorio" section cannot be hidden
+    if (sectionId === "obligatorio") return
+    setVisibleSections(prev => ({ ...prev, [sectionId]: !prev[sectionId] }))
   }
 
   const addRow = (afterIndex: number) => {
@@ -462,10 +473,13 @@ export default function CreadorMasivoPage() {
   const getTotalWidth = () => {
     let width = COL_WIDTHS.rowControls
     SECTIONS.forEach(section => {
-      if (expandedSections[section.id]) {
-        width += getSectionWidth(section)
-      } else {
-        width += 140 // Collapsed section width
+      // Only count visible sections
+      if (visibleSections[section.id]) {
+        if (expandedSections[section.id]) {
+          width += getSectionWidth(section)
+        } else {
+          width += 140 // Collapsed section width
+        }
       }
     })
     return width
@@ -834,6 +848,47 @@ export default function CreadorMasivoPage() {
                     <div className="flex items-center gap-4 border-0 border-none ml-1.5 mr-0 flex-shrink-0">
                       <span className="text-sm text-gray-500">Creador Masivo de Items</span>
                       
+                      {/* Section Visibility Dropdown */}
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button className="px-3 py-1.5 text-xs font-medium rounded-md border border-gray-300 hover:bg-gray-50 transition-colors flex items-center gap-1.5">
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>Secciones</span>
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-56 p-3" align="start">
+                          <div className="space-y-2">
+                            <div className="text-xs font-semibold text-gray-700 mb-2">
+                              Mostrar/Ocultar Secciones
+                            </div>
+                            {SECTIONS.map((section) => (
+                              <div key={section.id} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`section-${section.id}`}
+                                  checked={visibleSections[section.id]}
+                                  onCheckedChange={() => toggleSectionVisibility(section.id)}
+                                  disabled={section.id === "obligatorio"}
+                                  className={section.id === "obligatorio" ? "opacity-50 cursor-not-allowed" : ""}
+                                />
+                                <label
+                                  htmlFor={`section-${section.id}`}
+                                  className={`text-xs ${
+                                    section.id === "obligatorio" 
+                                      ? "text-gray-500 cursor-not-allowed" 
+                                      : "text-gray-700 cursor-pointer"
+                                  }`}
+                                >
+                                  {section.label}
+                                  {section.id === "obligatorio" && (
+                                    <span className="ml-1 text-[10px] text-gray-400">(requerido)</span>
+                                  )}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                      
                       {/* Grid Size Selector */}
                       <div className="flex items-center gap-1 bg-gray-100 rounded-md p-0.5">
                         <button
@@ -900,7 +955,7 @@ export default function CreadorMasivoPage() {
                         className="border-r border-b border-gray-200 bg-slate-200"
                         style={{ width: COL_WIDTHS.rowControls, minWidth: COL_WIDTHS.rowControls }}
                       />
-                      {SECTIONS.map((section) => {
+                      {SECTIONS.filter(section => visibleSections[section.id]).map((section) => {
                         const isExpanded = expandedSections[section.id]
                         const columns = getDynamicColumns(section)
                         const sectionWidth = isExpanded ? getSectionWidth(section) : 140
@@ -938,7 +993,7 @@ export default function CreadorMasivoPage() {
                         className="border-r border-b border-gray-200 bg-slate-100"
                         style={{ width: COL_WIDTHS.rowControls, minWidth: COL_WIDTHS.rowControls }}
                       />
-                      {SECTIONS.map((section) => {
+                      {SECTIONS.filter(section => visibleSections[section.id]).map((section) => {
                         const isExpanded = expandedSections[section.id]
                         
                         if (!isExpanded) {
@@ -976,7 +1031,7 @@ export default function CreadorMasivoPage() {
                         className="border-r border-b border-gray-300 bg-slate-100"
                         style={{ width: COL_WIDTHS.rowControls, minWidth: COL_WIDTHS.rowControls }}
                       />
-                      {SECTIONS.map((section) => {
+                      {SECTIONS.filter(section => visibleSections[section.id]).map((section) => {
                         const isExpanded = expandedSections[section.id]
                         
                         if (!isExpanded) {
@@ -1047,7 +1102,7 @@ export default function CreadorMasivoPage() {
                         </td>
                         
                         {/* Data cells */}
-                        {SECTIONS.map((section) => {
+                        {SECTIONS.filter(section => visibleSections[section.id]).map((section) => {
                           const isExpanded = expandedSections[section.id]
                           
                           if (!isExpanded) {
