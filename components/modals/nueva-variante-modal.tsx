@@ -9,6 +9,7 @@ interface NuevaVarianteModalProps {
   onClose: () => void
   onSubmit: (attributeValues: Record<string, string>) => void
   containerAtributosPrincipales: Array<{ key: string; variantes: string[] }>
+  existingVariants: any[]
 }
 
 export function NuevaVarianteModal({
@@ -16,6 +17,7 @@ export function NuevaVarianteModal({
   onClose,
   onSubmit,
   containerAtributosPrincipales,
+  existingVariants,
 }: NuevaVarianteModalProps) {
   // Initialize state with empty values for each attribute
   const [attributeValues, setAttributeValues] = useState<Record<string, string>>(() => {
@@ -26,12 +28,15 @@ export function NuevaVarianteModal({
     return initial
   })
 
+  const [errorMessage, setErrorMessage] = useState<string>("")
+
   const resetForm = () => {
     const reset: Record<string, string> = {}
     containerAtributosPrincipales.forEach((attr) => {
       if (attr.key) reset[attr.key] = ""
     })
     setAttributeValues(reset)
+    setErrorMessage("")
   }
 
   const handleClose = () => {
@@ -41,6 +46,7 @@ export function NuevaVarianteModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    setErrorMessage("")
     
     // Validate all attributes have values
     const allFilled = containerAtributosPrincipales.every(
@@ -48,7 +54,29 @@ export function NuevaVarianteModal({
     )
     
     if (!allFilled) {
-      alert("Por favor, completa todos los atributos")
+      setErrorMessage("Por favor, completa todos los atributos")
+      return
+    }
+    
+    // Check if this combination already exists
+    const isDuplicate = existingVariants.some((variant: any) => {
+      if (!variant.atributosPrincipales) return false
+      
+      // Check if all attribute values match
+      return containerAtributosPrincipales.every((attr, index) => {
+        const existingValue = variant.atributosPrincipales[index]?.value
+        const newValue = attributeValues[attr.key]
+        return existingValue === newValue
+      })
+    })
+    
+    if (isDuplicate) {
+      const combinationStr = containerAtributosPrincipales
+        .map((attr) => `${attr.key}: ${attributeValues[attr.key]}`)
+        .join(", ")
+      setErrorMessage(
+        `Ya existe una variante con esta combinación (${combinationStr}). Por favor, cambia algún valor.`
+      )
       return
     }
     
@@ -80,6 +108,12 @@ export function NuevaVarianteModal({
 
         <form onSubmit={handleSubmit}>
           <div className="px-6 py-6 space-y-5">
+            {/* Error Message */}
+            {errorMessage && (
+              <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-700">{errorMessage}</p>
+              </div>
+            )}
             {containerAtributosPrincipales.map((attr) => {
               if (!attr.key) return null
               

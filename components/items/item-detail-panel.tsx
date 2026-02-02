@@ -680,9 +680,28 @@ export function ItemDetailPanel({
       }
     }
     
+    // Generate SKU automatically using the same logic as "Generar Variantes"
+    const skuPadre =
+      selectedItem.sku ||
+      selectedItem.name
+        .toUpperCase()
+        .replace(/[^A-Z0-9\s]/g, "")
+        .split(" ")
+        .map((word) => word.substring(0, 3))
+        .join("-")
+        .substring(0, 15)
+    
+    // Get variant values for SKU suffix
+    const variantValues = Object.values(attributeValues)
+    const variantSuffix = variantValues
+      .map((v) => v.substring(0, 3).toUpperCase())
+      .join("-")
+    
+    const generatedSku = `${skuPadre}-${variantSuffix}`
+    
     // Create the new variant object
     const newVariant: any = {
-      sku: "", // Will be filled by user in the matrix
+      sku: generatedSku,
       codigoUniversal: "",
       descripcion: "",
       foto: selectedItem.foto || "",
@@ -1242,9 +1261,10 @@ export function ItemDetailPanel({
                       ))}
 
                       {/* Button order logic: 
-                          - If only 1 atributo: "Agregar atributo" button first, then "Generar Variantes"
+                          - If 0 atributos: Show only "Agregar atributo" button
+                          - If 1 atributo: "Agregar atributo" button first, then "Generar Variantes"
                           - If 2 atributos: only "Generar Variantes" button */}
-                      {containerAtributosPrincipales.length === 1 && (
+                      {containerAtributosPrincipales.length < 2 && (
                         <button
                           onClick={() => {
                             handleContainerAtributosPrincipalesChange([
@@ -1259,8 +1279,8 @@ export function ItemDetailPanel({
                         </button>
                       )}
 
-                      {/* Generar Variantes button - visible when atributos view is open, active when at least 1 atributo has 1+ variantes */}
-                      {(() => {
+                      {/* Generar Variantes button - only visible when at least 1 atributo exists */}
+                      {containerAtributosPrincipales.length > 0 && (() => {
                         const hasAtLeastOneVariante = containerAtributosPrincipales.some(
                           (attr) => attr.key.trim() !== "" && attr.variantes.length > 0
                         )
@@ -2650,6 +2670,7 @@ export function ItemDetailPanel({
         onClose={() => setIsNuevaVarianteModalOpen(false)}
         onSubmit={handleNuevaVariante}
         containerAtributosPrincipales={containerAtributosPrincipales}
+        existingVariants={selectedItem?.variants || []}
       />
     </>
   )
