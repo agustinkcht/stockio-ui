@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { useRouter } from "next/navigation"
 import type React from "react"
 import type { Item } from "@/lib/types"
 import { ChevronDown, ChevronRight, Plus, Copy, X, Minus, Check, ArrowDownToLine, Lock, LockOpen } from "lucide-react"
@@ -53,6 +54,7 @@ export function ItemDetailPanel({
   variantChangeHandlers,
   isExpanded = true,
 }: ItemDetailPanelProps) {
+  const router = useRouter()
   const isViewingContainer = selectedItem?.isAgrupador || selectedItem?.hasVariants || false
 
   const fatherItem = !isViewingContainer
@@ -1179,6 +1181,24 @@ export function ItemDetailPanel({
                         </div>
                       ))}
 
+                      {/* Button order logic: 
+                          - If only 1 atributo: "Agregar atributo" button first, then "Generar Variantes"
+                          - If 2 atributos: only "Generar Variantes" button */}
+                      {containerAtributosPrincipales.length === 1 && (
+                        <button
+                          onClick={() => {
+                            handleContainerAtributosPrincipalesChange([
+                              ...containerAtributosPrincipales,
+                              { key: "", variantes: [] },
+                            ])
+                          }}
+                          className="w-full px-3 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                          <Plus className="w-4 h-4" />
+                          <span className="text-sm">Agregar atributo</span>
+                        </button>
+                      )}
+
                       {/* Generar Variantes button - visible when atributos view is open, active when at least 1 atributo has 1+ variantes */}
                       {(() => {
                         const hasAtLeastOneVariante = containerAtributosPrincipales.some(
@@ -1198,21 +1218,27 @@ export function ItemDetailPanel({
                           </button>
                         )
                       })()}
+                        </div>
+                      </div>
+                    )}
 
-                      {containerAtributosPrincipales.length < 2 && (
-                        <button
-                          onClick={() => {
-                            handleContainerAtributosPrincipalesChange([
-                              ...containerAtributosPrincipales,
-                              { key: "", variantes: [] },
-                            ])
-                          }}
-                          className="w-full px-3 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 transition-colors flex items-center justify-center gap-2 cursor-pointer"
-                        >
-                          <Plus className="w-4 h-4" />
-                          <span className="text-sm">Agregar atributo</span>
-                        </button>
-                          )}
+                    {/* Visual separator and Variantes section */}
+                    {variantItems.length > 0 && (
+                      <div className="mt-8 pt-6 border-t border-gray-200">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">
+                            Variantes
+                          </h3>
+                          <button
+                            onClick={() => {
+                              // Placeholder for future functionality
+                              console.log("[v0] Nueva Variante clicked")
+                            }}
+                            className="px-3 py-1.5 border border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-colors flex items-center gap-1.5 text-xs cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Nueva Variante</span>
+                          </button>
                         </div>
                       </div>
                     )}
@@ -1326,7 +1352,13 @@ export function ItemDetailPanel({
                         return (
                           <div
                             key={variant.sku}
-                            className="group grid grid-cols-[1fr_minmax(80px,1fr)_28px] items-center hover:bg-accent/50 transition-colors"
+                            onClick={() => {
+                              // Navigate to the child item when clicking on the variant row
+                              if (displaySku) {
+                                router.push(`/inventario/articulos/${displaySku}`)
+                              }
+                            }}
+                            className="group grid grid-cols-[1fr_minmax(80px,1fr)_28px] items-center hover:bg-accent/50 transition-colors cursor-pointer"
                           >
                             <div className="px-3 py-2 flex items-center gap-1.5">
                               {variant.variant1 && (
@@ -1344,7 +1376,7 @@ export function ItemDetailPanel({
                               )}
                             </div>
 
-                            <div className="px-3 py-2">
+                            <div className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
                               <input
                                 type="text"
                                 value={displaySku}
@@ -1354,7 +1386,7 @@ export function ItemDetailPanel({
                               />
                             </div>
 
-                            <div className="px-1 py-2 flex items-center justify-center">
+                            <div className="px-1 py-2 flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
                               <button
                                 onClick={handleDeleteVariant}
                                 className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all cursor-pointer"
