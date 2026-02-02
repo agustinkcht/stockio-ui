@@ -943,7 +943,7 @@ export function ItemDetailPanel({
             <div className="col-span-1 order-2 flex flex-col mt-[44px]">
               <div className="sticky top-4 p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
                 {/* Toggle button for right card mode */}
-                <div className="mb-6">
+                <div className="mb-6 text-center">
                   <div className="inline-flex rounded-lg border border-slate-200 p-1 bg-slate-50">
                     <button
                       onClick={() => setRightCardMode("principales")}
