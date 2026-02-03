@@ -306,8 +306,8 @@ export default function CreadorMasivoPage() {
     setShowConfirmModal(false)
     setIsCreating(true)
     
-    // Prepare standalone items data from rows
-    const standaloneItemsToCreate = rows
+    // Prepare standalone items data from rows (filter out completely empty rows)
+    const standaloneItemsToCreate = nonEmptyStandaloneRows
       .filter(row => row.titulo.trim() !== "")
       .map(row => {
         const atributosPrincipales = row.atributosPrincipales
@@ -341,8 +341,8 @@ export default function CreadorMasivoPage() {
         }
       })
     
-    // Prepare items con variantes data from parentRows
-    const conVariantesItemsToCreate = parentRows
+    // Prepare items con variantes data from parentRows (filter out completely empty rows)
+    const conVariantesItemsToCreate = nonEmptyConVariantesRows
       .filter(row => row.titulo.trim() !== "")
       .map(parentRow => {
         // Generate SKU padre if not provided

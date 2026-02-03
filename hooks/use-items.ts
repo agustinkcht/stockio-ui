@@ -1089,11 +1089,21 @@ export function useItems() {
         variantSku = generateUniqueSKU(variantSku, existingSkus)
         existingSkus.push(variantSku)
         
+        // Build variant name from parent name + atributos principales
+        const variantNameSuffix = variant.atributosPrincipales
+          .map(a => a.value)
+          .join(" ")
+        const variantName = variantNameSuffix ? `${data.name} ${variantNameSuffix}` : data.name
+        
         return {
           sku: variantSku,
+          name: variantName, // Add name to variant
           codigoUniversal: variant.codigoUniversal || "",
-          descripcion: variant.descripcion || "",
+          descripcion: variant.descripcion || data.descripcion || "",
+          categoria: data.categoria || "", // Inherit parent's categoria
+          marca: data.marca || "", // Inherit parent's marca
           foto: variant.foto || data.imagenUrl || "",
+          fechaVencimiento: data.fechaVencimiento || "", // Inherit parent's vencimiento
           atributosPrincipales: variant.atributosPrincipales || [],
           stock: variant.stock || { total: "0", reservado: "0", disponible: "0" },
           codigoProveedor: variant.codigoProveedor || "",
