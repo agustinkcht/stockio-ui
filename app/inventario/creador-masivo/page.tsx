@@ -315,15 +315,15 @@ export default function CreadorMasivoPage() {
             .substring(0, 15)
         }
         
-        const containerAtributosPrincipales = parentRow.atributosPrincipales
-          .filter(attr => attr.key.trim() && attr.tags.length > 0)
+        const containerAtributosPrincipales = (parentRow.atributosPrincipales || [])
+          .filter(attr => attr && attr.key && attr.key.trim() && attr.tags && attr.tags.length > 0)
           .map(attr => ({ key: attr.key, variantes: attr.tags }))
         
-        const parentAtributosInformativos = parentRow.atributosInformativos
-          .filter(attr => attr.key.trim() && (attr.value.trim() || attr.inherit))
+        const parentAtributosInformativos = (parentRow.atributosInformativos || [])
+          .filter(attr => attr && attr.key && attr.key.trim() && (attr.value?.trim() || attr.inherit))
           .map(attr => ({
             key: attr.key,
-            value: attr.inherit ? "" : attr.value,
+            value: attr.inherit ? "" : (attr.value || ""),
             inherit: attr.inherit
           }))
         
@@ -332,7 +332,8 @@ export default function CreadorMasivoPage() {
         
         // Build variants array
         const variants = parentRow.variants.map(variant => {
-          const skuSuffix = variant.atributosPrincipales
+          const skuSuffix = (variant.atributosPrincipales || [])
+            .filter(a => a && a.value)
             .map(a => a.value.substring(0, 3).toUpperCase())
             .join("-")
           
@@ -341,15 +342,15 @@ export default function CreadorMasivoPage() {
             codigoUniversal: "",
             descripcion: variant.descripcion || parentRow.descripcion,
             foto: variant.fotoUrl || parentRow.fotoUrl,
-            atributosPrincipales: variant.atributosPrincipales,
+            atributosPrincipales: (variant.atributosPrincipales || []).filter(a => a && a.key && a.value),
             stock: {
               total: variant.stockTotal || "0",
               reservado: variant.stockReservado || "0",
               disponible: (parseInt(variant.stockTotal || "0") - parseInt(variant.stockReservado || "0")).toString()
             },
             codigoProveedor: variant.codigoProveedor || undefined,
-            atributosInformativos: variant.atributosInformativos
-              .filter(attr => attr.key.trim() && attr.value.trim())
+            atributosInformativos: (variant.atributosInformativos || [])
+              .filter(attr => attr && attr.key && attr.key.trim() && attr.value && attr.value.trim())
               .map(attr => ({ key: attr.key, value: attr.value })),
           }
         })
