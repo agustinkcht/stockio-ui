@@ -214,9 +214,9 @@ export default function CreadorMasivoPage() {
   const [visibleSectionsConVariantes, setVisibleSectionsConVariantes] = useState<Record<string, boolean>>(
     SECTIONS_CON_VARIANTES.reduce((acc, section) => ({ ...acc, [section.id]: true }), {})
   )
-  // Standalone rows state
+  // Standalone rows state - start with one default row
   const [rows, setRows] = useState<WorkableRow[]>([createEmptyRow()])
-  // Con Variantes rows state (lifted from component for persistence)
+  // Con Variantes rows state (lifted from component for persistence) - start with one default row
   const [parentRows, setParentRows] = useState<ParentRow[]>([createEmptyParentRow()])
   const [gridSize, setGridSize] = useState<"sm" | "md" | "lg">("sm")
   
@@ -237,12 +237,14 @@ export default function CreadorMasivoPage() {
       !row.proveedor.trim() &&
       !row.codigoProveedor.trim() &&
       !row.descripcion.trim() &&
-      !row.stockTotal.trim() &&
-      !row.stockReservado.trim() &&
+      (row.stockTotal.trim() === "" || row.stockTotal.trim() === "0") && // Default value
+      (row.stockReservado.trim() === "" || row.stockReservado.trim() === "0") && // Default value
       !row.fotoUrl.trim() &&
       !row.volumenCantidad.trim() &&
       !row.volumenUnidad.trim() &&
       !row.vencimiento.trim() &&
+      (row.formatoVenta === "unidad") && // Default value
+      (row.unidadesPorPack === "1" || row.unidadesPorPack === "") && // Default value
       row.atributosPrincipales.every(attr => !attr.key.trim() && !attr.value.trim()) &&
       row.atributosInformativos.every(attr => !attr.key.trim() && !attr.value.trim())
     )
