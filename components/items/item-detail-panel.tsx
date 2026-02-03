@@ -1021,7 +1021,7 @@ export function ItemDetailPanel({
 
           {/* Vertical Toggle Toolstripe - Section Switcher (only for standalone/children items) - col-span-1 */}
           {!isViewingContainer && (
-          <div className="order-2 col-span-1 flex flex-col justify-start mt-[44px] pt-6 items-start">
+          <div className="order-2 col-span-1 flex flex-col justify-start mt-[44px] pt-6 items-center">
             <div className="sticky top-4 flex flex-col items-center">
               {/* Toggle Track */}
               <div className="relative flex flex-col items-center">
