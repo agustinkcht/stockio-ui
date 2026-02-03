@@ -2,7 +2,6 @@
 
 import React, { useState } from "react"
 import { ChevronRight, ChevronLeft, Plus, X, Check, Grid, Link2 } from "lucide-react"
-import { useItems } from "@/hooks/use-items"
 
 // Define column widths (in pixels) for consistent alignment
 const COL_WIDTHS: Record<string, number> = {
@@ -219,159 +218,24 @@ const createEmptyParentRow = (): ParentRow => ({
 interface CreadorMasivoConVariantesProps {
   gridSize: "sm" | "md" | "lg"
   setGridSize: (size: "sm" | "md" | "lg") => void
-  // Expose state to parent for toolbar
-  onStateChange?: (state: {
-    hasValidRows: boolean
-    allRowsValid: boolean
-    isCreating: boolean
-  }) => void
-  // Trigger from parent to create
-  triggerCreate?: boolean
-  onCreateComplete?: () => void
+  // Lifted state from parent
+  parentRows: ParentRow[]
+  setParentRows: React.Dispatch<React.SetStateAction<ParentRow[]>>
   // For sections control
-  sections: typeof SECTIONS_CON_VARIANTES
   visibleSections: Record<string, boolean>
-  toggleSectionVisibility: (sectionId: string) => void
 }
 
 export function CreadorMasivoConVariantes({ 
   gridSize, 
   setGridSize,
-  onStateChange,
-  triggerCreate,
-  onCreateComplete,
-  sections,
+  parentRows,
+  setParentRows,
   visibleSections,
-  toggleSectionVisibility,
 }: CreadorMasivoConVariantesProps) {
-  const { bulkCreateItemsConVariantes } = useItems()
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(
     SECTIONS_CON_VARIANTES.reduce((acc, section) => ({ ...acc, [section.id]: section.defaultExpanded }), {})
   )
-  const [parentRows, setParentRows] = useState<ParentRow[]>([createEmptyParentRow()])
   const [tagInputs, setTagInputs] = useState<Record<string, string>>({}) // Track tag input values
-  
-  const [isCreating, setIsCreating] = useState(false)
-  
-  // Validation: check if at least one parent row has a title
-  const hasValidRows = parentRows.some(row => row.titulo.trim() !== "")
-  
-  // Check all parent rows with any data have titles
-  const allRowsValid = parentRows.every(row => row.titulo.trim() !== "")
-  
-  // Notify parent of state changes
-  React.useEffect(() => {
-    onStateChange?.({ hasValidRows, allRowsValid, isCreating })
-  }, [hasValidRows, allRowsValid, isCreating, onStateChange])
-  
-  // Handle create trigger from parent
-  React.useEffect(() => {
-    if (triggerCreate && !isCreating) {
-      handleConfirmCreate()
-    }
-  }, [triggerCreate])
-  
-  // Handle confirmed creation (triggered by parent)
-  const handleConfirmCreate = async () => {
-    setIsCreating(true)
-    
-    // Prepare items data from rows
-    const itemsToCreate: any[] = []
-    
-    parentRows
-      .filter(row => row.titulo.trim() !== "")
-      .forEach(parentRow => {
-        // Generate SKU padre if not provided
-        let skuPadre = parentRow.skuPadre.trim()
-        if (!skuPadre) {
-          skuPadre = parentRow.titulo
-            .toUpperCase()
-            .replace(/[^A-Z0-9\s]/g, "")
-            .split(" ")
-            .map((word) => word.substring(0, 3))
-            .join("-")
-            .substring(0, 15)
-        }
-        
-        // Build containerAtributosPrincipales for parent
-        const containerAtributosPrincipales = parentRow.atributosPrincipales
-          .filter(attr => attr.key.trim() && attr.tags.length > 0)
-          .map(attr => ({ key: attr.key, variantes: attr.tags }))
-        
-        // Build atributos informativos for parent
-        // Include both fixed values and inheritable attributes (for inheritable, we store the key)
-        const parentAtributosInformativos = parentRow.atributosInformativos
-          .filter(attr => attr.key.trim() && (attr.value.trim() || attr.inherit))
-          .map(attr => ({
-            key: attr.key,
-            value: attr.inherit ? "" : attr.value,
-            inherit: attr.inherit
-          }))
-        
-        // Check volumen
-        const hasVolumenUnidad = parentRow.volumenCantidad.trim() && parentRow.volumenUnidad.trim()
-        const hasVencimiento = parentRow.vencimiento.trim()
-        
-        // Build variants array for parent
-        const variants = parentRow.variants.map(variant => {
-          const skuSuffix = variant.atributosPrincipales
-            .map(a => a.value.substring(0, 3).toUpperCase())
-            .join("-")
-          
-          return {
-            sku: `${skuPadre}-${skuSuffix}`,
-            codigoUniversal: "",
-            descripcion: variant.descripcion || parentRow.descripcion,
-            foto: variant.fotoUrl || parentRow.fotoUrl,
-            atributosPrincipales: variant.atributosPrincipales,
-            stock: {
-              total: variant.stockTotal || "0",
-              reservado: variant.stockReservado || "0",
-              disponible: (parseInt(variant.stockTotal || "0") - parseInt(variant.stockReservado || "0")).toString()
-            },
-            codigoProveedor: variant.codigoProveedor || undefined,
-            atributosInformativos: variant.atributosInformativos
-              .filter(attr => attr.key.trim() && attr.value.trim())
-              .map(attr => ({ key: attr.key, value: attr.value })),
-          }
-        })
-        
-        // Create parent item (agrupador)
-        itemsToCreate.push({
-          name: parentRow.titulo.trim(),
-          sku: skuPadre,
-          codigoUniversal: parentRow.codigoUniversal.trim() || undefined,
-          categoria: parentRow.categoria.trim() || undefined,
-          marca: parentRow.marca.trim() || undefined,
-          formatoVenta: parentRow.formatoVenta,
-          unidadesPorPack: parentRow.formatoVenta === "pack" ? parseInt(parentRow.unidadesPorPack) || 1 : 1,
-          volumenActive: !!hasVolumenUnidad,
-          volumenCantidad: hasVolumenUnidad ? parentRow.volumenCantidad : undefined,
-          volumenUnidad: hasVolumenUnidad ? parentRow.volumenUnidad : undefined,
-          vencimientoActive: !!hasVencimiento,
-          fechaVencimiento: hasVencimiento ? parentRow.vencimiento : undefined,
-          proveedor: parentRow.proveedor.trim() || undefined,
-          descripcion: parentRow.descripcion.trim() || undefined,
-          imagenUrl: parentRow.fotoUrl.trim() || undefined,
-          containerAtributosPrincipales: containerAtributosPrincipales.length > 0 ? containerAtributosPrincipales : undefined,
-          atributosInformativos: parentAtributosInformativos.length > 0 ? parentAtributosInformativos : undefined,
-          variants: variants,
-        })
-      })
-    
-    // Simulate a small delay for UX
-    await new Promise(resolve => setTimeout(resolve, 600))
-    
-    // Create items using the bulk create for items con variantes
-    bulkCreateItemsConVariantes(itemsToCreate)
-    
-    // Reset to initial state
-    setParentRows([createEmptyParentRow()])
-    setIsCreating(false)
-    
-    // Notify parent that creation is complete
-    onCreateComplete?.()
-  }
   
   const toggleSection = (sectionId: string) => {
     setExpandedSections(prev => ({ ...prev, [sectionId]: !prev[sectionId] }))
@@ -1620,5 +1484,6 @@ export function CreadorMasivoConVariantes({
   )
 }
 
-// Export sections for parent to use
-export { SECTIONS_CON_VARIANTES }
+// Export sections, types and helper for parent to use
+export { SECTIONS_CON_VARIANTES, createEmptyParentRow }
+export type { ParentRow, VariantRow }

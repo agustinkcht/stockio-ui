@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useItems } from "@/hooks/use-items"
-import { CreadorMasivoConVariantes, SECTIONS_CON_VARIANTES } from "@/components/creador-masivo/creador-masivo-con-variantes"
+import { CreadorMasivoConVariantes, SECTIONS_CON_VARIANTES, createEmptyParentRow, type ParentRow } from "@/components/creador-masivo/creador-masivo-con-variantes"
 
 // Define column widths (in pixels) for consistent alignment
 const COL_WIDTHS: Record<string, number> = {
@@ -201,7 +201,7 @@ const createEmptyRow = (): WorkableRow => ({
 })
 
 export default function CreadorMasivoPage() {
-  const { bulkCreateItems } = useItems()
+  const { bulkCreateItems, bulkCreateItemsConVariantes } = useItems()
   const [creatorMode, setCreatorMode] = useState<"standalone" | "conVariantes">("standalone")
   const [hoveredDropdown, setHoveredDropdown] = useState<number | null>(null)
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(
@@ -214,7 +214,10 @@ export default function CreadorMasivoPage() {
   const [visibleSectionsConVariantes, setVisibleSectionsConVariantes] = useState<Record<string, boolean>>(
     SECTIONS_CON_VARIANTES.reduce((acc, section) => ({ ...acc, [section.id]: true }), {})
   )
+  // Standalone rows state
   const [rows, setRows] = useState<WorkableRow[]>([createEmptyRow()])
+  // Con Variantes rows state (lifted from component for persistence)
+  const [parentRows, setParentRows] = useState<ParentRow[]>([createEmptyParentRow()])
   const [gridSize, setGridSize] = useState<"sm" | "md" | "lg">("sm")
   
   // Modal states
@@ -222,42 +225,27 @@ export default function CreadorMasivoPage() {
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [showSuccessMessage, setShowSuccessMessage] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
-  
-  // Con Variantes state from child component
-  const [conVariantesState, setConVariantesState] = useState({
-    hasValidRows: false,
-    allRowsValid: false,
-    isCreating: false,
-  })
-  const [triggerConVariantesCreate, setTriggerConVariantesCreate] = useState(false)
 
-  // Check if at least one row has a title (for standalone)
-  const hasValidRows = creatorMode === "standalone" 
-    ? rows.some(row => row.titulo.trim() !== "")
-    : conVariantesState.hasValidRows
+  // Count standalone rows that will be created (rows with titles)
+  const standaloneRowsToCreateCount = rows.filter(row => row.titulo.trim() !== "").length
   
-  // Check if all rows with any data have titles
-  const allRowsValid = creatorMode === "standalone"
-    ? rows.every(row => row.titulo.trim() !== "")
-    : conVariantesState.allRowsValid
+  // Count con variantes rows that will be created (parents with titles)
+  const conVariantesRowsToCreateCount = parentRows.filter(row => row.titulo.trim() !== "").length
   
-  // Count rows that will be created (rows with titles)
-  const rowsToCreateCount = rows.filter(row => row.titulo.trim() !== "").length
+  // Check if at least one row has a title (from either mode)
+  const hasValidRows = standaloneRowsToCreateCount > 0 || conVariantesRowsToCreateCount > 0
   
-  // Is creating for either mode
-  const isCreatingAny = creatorMode === "standalone" ? isCreating : conVariantesState.isCreating
+  // Check if all rows in standalone have titles
+  const allStandaloneRowsValid = rows.every(row => row.titulo.trim() !== "")
+  
+  // Check if all rows in con variantes have titles  
+  const allConVariantesRowsValid = parentRows.every(row => row.titulo.trim() !== "")
+  
+  // All rows valid for both modes
+  const allRowsValid = allStandaloneRowsValid && allConVariantesRowsValid
 
   // Handle crear button click
   const handleCrearClick = () => {
-    if (creatorMode === "conVariantes") {
-      if (!conVariantesState.allRowsValid) {
-        setShowErrorModal(true)
-        return
-      }
-      setShowConfirmModal(true)
-      return
-    }
-    // Standalone mode
     if (!allRowsValid) {
       setShowErrorModal(true)
       return
@@ -271,35 +259,20 @@ export default function CreadorMasivoPage() {
     setVisibleSectionsConVariantes(prev => ({ ...prev, [sectionId]: !prev[sectionId] }))
   }
 
-  // Handle confirmed creation
+  // Handle confirmed creation - creates BOTH standalone AND con variantes items
   const handleConfirmCreate = async () => {
     setShowConfirmModal(false)
-    
-    if (creatorMode === "conVariantes") {
-      // Trigger creation in the con variantes component
-      setTriggerConVariantesCreate(true)
-      return
-    }
-    
-    // Standalone mode creation
     setIsCreating(true)
     
-    // Prepare items data from rows
-    const itemsToCreate = rows
+    // Prepare standalone items data from rows
+    const standaloneItemsToCreate = rows
       .filter(row => row.titulo.trim() !== "")
       .map(row => {
-        // Build atributos principales
         const atributosPrincipales = row.atributosPrincipales
           .filter(attr => attr.key.trim() && attr.value.trim())
-        
-        // Build atributos informativos
         const atributosInformativos = row.atributosInformativos
           .filter(attr => attr.key.trim() && attr.value.trim())
-        
-        // Check if volumenUnidad should be included
         const hasVolumenUnidad = row.volumenCantidad.trim() && row.volumenUnidad.trim()
-        
-        // Check if vencimiento should be included
         const hasVencimiento = row.vencimiento.trim()
         
         return {
@@ -310,10 +283,10 @@ export default function CreadorMasivoPage() {
           marca: row.marca.trim() || undefined,
           formatoVenta: row.formatoVenta,
           unidadesPorPack: row.formatoVenta === "pack" ? parseInt(row.unidadesPorPack) || 1 : 1,
-          volumenActive: hasVolumenUnidad,
+          volumenActive: !!hasVolumenUnidad,
           volumenCantidad: hasVolumenUnidad ? row.volumenCantidad : undefined,
           volumenUnidad: hasVolumenUnidad ? row.volumenUnidad : undefined,
-          vencimientoActive: hasVencimiento,
+          vencimientoActive: !!hasVencimiento,
           fechaVencimiento: hasVencimiento ? row.vencimiento : undefined,
           proveedor: row.proveedor.trim() || undefined,
           codigoProveedor: row.codigoProveedor.trim() || undefined,
@@ -326,24 +299,102 @@ export default function CreadorMasivoPage() {
         }
       })
     
+    // Prepare items con variantes data from parentRows
+    const conVariantesItemsToCreate = parentRows
+      .filter(row => row.titulo.trim() !== "")
+      .map(parentRow => {
+        // Generate SKU padre if not provided
+        let skuPadre = parentRow.skuPadre.trim()
+        if (!skuPadre) {
+          skuPadre = parentRow.titulo
+            .toUpperCase()
+            .replace(/[^A-Z0-9\s]/g, "")
+            .split(" ")
+            .map((word) => word.substring(0, 3))
+            .join("-")
+            .substring(0, 15)
+        }
+        
+        const containerAtributosPrincipales = parentRow.atributosPrincipales
+          .filter(attr => attr.key.trim() && attr.tags.length > 0)
+          .map(attr => ({ key: attr.key, variantes: attr.tags }))
+        
+        const parentAtributosInformativos = parentRow.atributosInformativos
+          .filter(attr => attr.key.trim() && (attr.value.trim() || attr.inherit))
+          .map(attr => ({
+            key: attr.key,
+            value: attr.inherit ? "" : attr.value,
+            inherit: attr.inherit
+          }))
+        
+        const hasVolumenUnidad = parentRow.volumenCantidad.trim() && parentRow.volumenUnidad.trim()
+        const hasVencimiento = parentRow.vencimiento.trim()
+        
+        // Build variants array
+        const variants = parentRow.variants.map(variant => {
+          const skuSuffix = variant.atributosPrincipales
+            .map(a => a.value.substring(0, 3).toUpperCase())
+            .join("-")
+          
+          return {
+            sku: `${skuPadre}-${skuSuffix}`,
+            codigoUniversal: "",
+            descripcion: variant.descripcion || parentRow.descripcion,
+            foto: variant.fotoUrl || parentRow.fotoUrl,
+            atributosPrincipales: variant.atributosPrincipales,
+            stock: {
+              total: variant.stockTotal || "0",
+              reservado: variant.stockReservado || "0",
+              disponible: (parseInt(variant.stockTotal || "0") - parseInt(variant.stockReservado || "0")).toString()
+            },
+            codigoProveedor: variant.codigoProveedor || undefined,
+            atributosInformativos: variant.atributosInformativos
+              .filter(attr => attr.key.trim() && attr.value.trim())
+              .map(attr => ({ key: attr.key, value: attr.value })),
+          }
+        })
+        
+        return {
+          name: parentRow.titulo.trim(),
+          sku: skuPadre,
+          codigoUniversal: parentRow.codigoUniversal.trim() || undefined,
+          categoria: parentRow.categoria.trim() || undefined,
+          marca: parentRow.marca.trim() || undefined,
+          formatoVenta: parentRow.formatoVenta,
+          unidadesPorPack: parentRow.formatoVenta === "pack" ? parseInt(parentRow.unidadesPorPack) || 1 : 1,
+          volumenActive: !!hasVolumenUnidad,
+          volumenCantidad: hasVolumenUnidad ? parentRow.volumenCantidad : undefined,
+          volumenUnidad: hasVolumenUnidad ? parentRow.volumenUnidad : undefined,
+          vencimientoActive: !!hasVencimiento,
+          fechaVencimiento: hasVencimiento ? parentRow.vencimiento : undefined,
+          proveedor: parentRow.proveedor.trim() || undefined,
+          descripcion: parentRow.descripcion.trim() || undefined,
+          imagenUrl: parentRow.fotoUrl.trim() || undefined,
+          containerAtributosPrincipales: containerAtributosPrincipales.length > 0 ? containerAtributosPrincipales : undefined,
+          atributosInformativos: parentAtributosInformativos.length > 0 ? parentAtributosInformativos : undefined,
+          variants: variants,
+        }
+      })
+    
     // Simulate a small delay for UX
-    await new Promise(resolve => setTimeout(resolve, 600))
+    await new Promise(resolve => setTimeout(resolve, 300))
     
-    // Create items
-    bulkCreateItems(itemsToCreate)
+    // Create standalone items
+    if (standaloneItemsToCreate.length > 0) {
+      bulkCreateItems(standaloneItemsToCreate)
+    }
     
-    // Reset to initial state
+    // Create items con variantes
+    if (conVariantesItemsToCreate.length > 0) {
+      bulkCreateItemsConVariantes(conVariantesItemsToCreate)
+    }
+    
+    // Reset to initial state for both modes
     setRows([createEmptyRow()])
+    setParentRows([createEmptyParentRow()])
     setIsCreating(false)
     
     // Show success message
-    setShowSuccessMessage(true)
-    setTimeout(() => setShowSuccessMessage(false), 3000)
-  }
-  
-  // Handle con variantes create complete
-  const handleConVariantesCreateComplete = () => {
-    setTriggerConVariantesCreate(false)
     setShowSuccessMessage(true)
     setTimeout(() => setShowSuccessMessage(false), 3000)
   }
@@ -1001,17 +1052,17 @@ export default function CreadorMasivoPage() {
                     <div className="flex items-center gap-2">
                       <Button
                         onClick={handleCrearClick}
-                        disabled={!hasValidRows || isCreatingAny}
+                        disabled={!hasValidRows || isCreating}
                         variant="ghost"
                         size="sm"
                         className={`h-8 text-xs transition-colors border shadow-sm cursor-pointer ${
-                          hasValidRows && !isCreatingAny
+                          hasValidRows && !isCreating
                             ? "border-green-300 hover:bg-green-50 text-green-700"
                             : "border-[rgba(228,230,235,0.6)] text-gray-400 cursor-not-allowed"
                         }`}
                       >
-                        <Plus className={`w-3.5 h-3.5 mr-1.5 ${hasValidRows && !isCreatingAny ? "text-green-600" : "text-gray-400"}`} />
-                        {isCreatingAny ? "Creando..." : "Crear"}
+                        <Plus className={`w-3.5 h-3.5 mr-1.5 ${hasValidRows && !isCreating ? "text-green-600" : "text-gray-400"}`} />
+                        {isCreating ? "Creando..." : "Crear"}
                       </Button>
                     </div>
                   </div>
@@ -1215,12 +1266,9 @@ export default function CreadorMasivoPage() {
                 <CreadorMasivoConVariantes
                   gridSize={gridSize}
                   setGridSize={setGridSize}
-                  onStateChange={setConVariantesState}
-                  triggerCreate={triggerConVariantesCreate}
-                  onCreateComplete={handleConVariantesCreateComplete}
-                  sections={SECTIONS_CON_VARIANTES}
+                  parentRows={parentRows}
+                  setParentRows={setParentRows}
                   visibleSections={visibleSectionsConVariantes}
-                  toggleSectionVisibility={toggleSectionVisibilityConVariantes}
                 />
               )}
             </div>
@@ -1254,10 +1302,7 @@ export default function CreadorMasivoPage() {
             </div>
             <div className="px-6 py-6">
               <p className="text-sm text-gray-600">
-                {creatorMode === "standalone" 
-                  ? "Todos los items deben tener título. Completá los títulos faltantes, o eliminá las filas sobrantes."
-                  : "Todos los agrupadores deben tener título. Completá los títulos faltantes, o eliminá las filas sobrantes."
-                }
+                Todos los items deben tener título. Completá los títulos faltantes o eliminá las filas sobrantes en ambas vistas (standalone e items con variantes).
               </p>
             </div>
             <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
@@ -1283,13 +1328,17 @@ export default function CreadorMasivoPage() {
                 <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
-            <div className="px-6 py-6">
-              <p className="text-sm text-gray-600">
-                {creatorMode === "standalone" 
-                  ? <>Vas a crear <span className="font-semibold text-gray-900">{rowsToCreateCount}</span> item{rowsToCreateCount !== 1 ? "s" : ""} individual{rowsToCreateCount !== 1 ? "es" : ""}.</>
-                  : <>Vas a crear items con variantes (agrupadores). ¿Confirmar?</>
-                }
-              </p>
+            <div className="px-6 py-6 space-y-2">
+              {standaloneRowsToCreateCount > 0 && (
+                <p className="text-sm text-gray-600">
+                  Vas a crear <span className="font-semibold text-gray-900">{standaloneRowsToCreateCount}</span> item{standaloneRowsToCreateCount !== 1 ? "s" : ""} individual{standaloneRowsToCreateCount !== 1 ? "es" : ""}.
+                </p>
+              )}
+              {conVariantesRowsToCreateCount > 0 && (
+                <p className="text-sm text-gray-600">
+                  Vas a crear <span className="font-semibold text-gray-900">{conVariantesRowsToCreateCount}</span> item{conVariantesRowsToCreateCount !== 1 ? "s" : ""} con variantes.
+                </p>
+              )}
             </div>
             <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
               <Button
