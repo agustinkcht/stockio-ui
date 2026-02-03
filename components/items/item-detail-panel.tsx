@@ -929,7 +929,7 @@ export function ItemDetailPanel({
         <div className={`grid gap-2 ${isViewingContainer ? "grid-cols-2 gap-6" : "grid-cols-20 gap-3"}`}>
           {/* Middle Column - Image Card (only for standalone/children) - col-span-6 */}
           {!isViewingContainer && (
-          <div className="col-span-6 order-2 z-20 rounded-xl flex flex-col transition-all duration-300 mt-4 border-none shadow-none pl-0 pr-0">
+          <div className="col-span-6 order-1 z-20 rounded-xl flex flex-col transition-all duration-300 mt-4 border-none shadow-none pl-0 pr-0">
             <div className="sticky top-4 p-6 px-8 pr-11 border-solid border border-black rounded-xl bg-black shadow-md pl-11 ml-0 mt-7">
               <div className="mt-2">
                 <div className="w-full h-64 backdrop-blur-sm rounded-lg flex items-center justify-center overflow-hidden shadow-2xl border-slate-700/30 border-none border-0 bg-transparent shadow-none">
@@ -1621,7 +1621,7 @@ export function ItemDetailPanel({
           )}
 
 {/* Info/Atributos Column - 12 cols when info expanded, 7 cols when both, 2 col when stock expanded */}
-        <div className={`flex flex-col transition-all duration-300 overflow-hidden mr-3.5 pb-0 ${isViewingContainer ? "order-1 col-span-1 mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : `order-1 relative mt-[44px] pt-6 pb-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10 ${expandedSection === "info" ? "col-span-12 px-8" : expandedSection === "both" ? "col-span-7 px-6" : "col-span-2 px-3"}`}`}>
+        <div className={`flex flex-col transition-all duration-300 overflow-hidden mr-3.5 pb-0 ${isViewingContainer ? "order-1 col-span-1 mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : `order-2 relative mt-[44px] pt-6 pb-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10 ${expandedSection === "info" ? "col-span-12 px-8" : expandedSection === "both" ? "col-span-7 px-6" : "col-span-2 px-3"}`}`}>
             
             {/* Thumbnail + Title Header for Parent Items */}
             {isViewingContainer && (
