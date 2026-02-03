@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useItems } from "@/hooks/use-items"
-import { CreadorMasivoConVariantes } from "@/components/creador-masivo/creador-masivo-con-variantes"
+import { CreadorMasivoConVariantes, SECTIONS_CON_VARIANTES } from "@/components/creador-masivo/creador-masivo-con-variantes"
 
 // Define column widths (in pixels) for consistent alignment
 const COL_WIDTHS: Record<string, number> = {
@@ -210,6 +210,10 @@ export default function CreadorMasivoPage() {
   const [visibleSections, setVisibleSections] = useState<Record<string, boolean>>(
     SECTIONS.reduce((acc, section) => ({ ...acc, [section.id]: true }), {})
   )
+  // Con Variantes sections visibility
+  const [visibleSectionsConVariantes, setVisibleSectionsConVariantes] = useState<Record<string, boolean>>(
+    SECTIONS_CON_VARIANTES.reduce((acc, section) => ({ ...acc, [section.id]: true }), {})
+  )
   const [rows, setRows] = useState<WorkableRow[]>([createEmptyRow()])
   const [gridSize, setGridSize] = useState<"sm" | "md" | "lg">("sm")
   
@@ -218,29 +222,67 @@ export default function CreadorMasivoPage() {
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [showSuccessMessage, setShowSuccessMessage] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
+  
+  // Con Variantes state from child component
+  const [conVariantesState, setConVariantesState] = useState({
+    hasValidRows: false,
+    allRowsValid: false,
+    isCreating: false,
+  })
+  const [triggerConVariantesCreate, setTriggerConVariantesCreate] = useState(false)
 
-  // Check if at least one row has a title
-  const hasValidRows = rows.some(row => row.titulo.trim() !== "")
+  // Check if at least one row has a title (for standalone)
+  const hasValidRows = creatorMode === "standalone" 
+    ? rows.some(row => row.titulo.trim() !== "")
+    : conVariantesState.hasValidRows
   
   // Check if all rows with any data have titles
-  const allRowsValid = rows.every(row => row.titulo.trim() !== "")
+  const allRowsValid = creatorMode === "standalone"
+    ? rows.every(row => row.titulo.trim() !== "")
+    : conVariantesState.allRowsValid
   
   // Count rows that will be created (rows with titles)
   const rowsToCreateCount = rows.filter(row => row.titulo.trim() !== "").length
+  
+  // Is creating for either mode
+  const isCreatingAny = creatorMode === "standalone" ? isCreating : conVariantesState.isCreating
 
   // Handle crear button click
   const handleCrearClick = () => {
+    if (creatorMode === "conVariantes") {
+      if (!conVariantesState.allRowsValid) {
+        setShowErrorModal(true)
+        return
+      }
+      setShowConfirmModal(true)
+      return
+    }
+    // Standalone mode
     if (!allRowsValid) {
       setShowErrorModal(true)
       return
     }
     setShowConfirmModal(true)
   }
+  
+  // Toggle section visibility for con variantes
+  const toggleSectionVisibilityConVariantes = (sectionId: string) => {
+    if (sectionId === "obligatorio") return
+    setVisibleSectionsConVariantes(prev => ({ ...prev, [sectionId]: !prev[sectionId] }))
+  }
 
   // Handle confirmed creation
   const handleConfirmCreate = async () => {
-    setIsCreating(true)
     setShowConfirmModal(false)
+    
+    if (creatorMode === "conVariantes") {
+      // Trigger creation in the con variantes component
+      setTriggerConVariantesCreate(true)
+      return
+    }
+    
+    // Standalone mode creation
+    setIsCreating(true)
     
     // Prepare items data from rows
     const itemsToCreate = rows
@@ -295,6 +337,13 @@ export default function CreadorMasivoPage() {
     setIsCreating(false)
     
     // Show success message
+    setShowSuccessMessage(true)
+    setTimeout(() => setShowSuccessMessage(false), 3000)
+  }
+  
+  // Handle con variantes create complete
+  const handleConVariantesCreateComplete = () => {
+    setTriggerConVariantesCreate(false)
     setShowSuccessMessage(true)
     setTimeout(() => setShowSuccessMessage(false), 3000)
   }
@@ -874,48 +923,46 @@ export default function CreadorMasivoPage() {
                         </button>
                       </div>
                       
-                      {/* Section Visibility Dropdown - Only for standalone mode */}
-                      {creatorMode === "standalone" && (
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <button className="px-3 py-1.5 text-xs font-medium rounded-md border border-gray-300 hover:bg-gray-50 transition-colors flex items-center gap-1.5">
-                              <Eye className="w-3.5 h-3.5" />
-                              <span>Secciones</span>
-                            </button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-56 p-3" align="start">
-                            <div className="space-y-2">
-                              <div className="text-xs font-semibold text-gray-700 mb-2">
-                                Mostrar/Ocultar Secciones
-                              </div>
-                              {SECTIONS.map((section) => (
-                                <div key={section.id} className="flex items-center space-x-2">
-                                  <Checkbox
-                                    id={`section-${section.id}`}
-                                    checked={visibleSections[section.id]}
-                                    onCheckedChange={() => toggleSectionVisibility(section.id)}
-                                    disabled={section.id === "obligatorio"}
-                                    className={section.id === "obligatorio" ? "opacity-50 cursor-not-allowed" : ""}
-                                  />
-                                  <label
-                                    htmlFor={`section-${section.id}`}
-                                    className={`text-xs ${
-                                      section.id === "obligatorio" 
-                                        ? "text-gray-500 cursor-not-allowed" 
-                                        : "text-gray-700 cursor-pointer"
-                                    }`}
-                                  >
-                                    {section.label}
-                                    {section.id === "obligatorio" && (
-                                      <span className="ml-1 text-[10px] text-gray-400">(requerido)</span>
-                                    )}
-                                  </label>
-                                </div>
-                              ))}
+                      {/* Section Visibility Dropdown - Available for both modes */}
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button className="px-3 py-1.5 text-xs font-medium rounded-md border border-gray-300 hover:bg-gray-50 transition-colors flex items-center gap-1.5">
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>Secciones</span>
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-56 p-3" align="start">
+                          <div className="space-y-2">
+                            <div className="text-xs font-semibold text-gray-700 mb-2">
+                              Mostrar/Ocultar Secciones
                             </div>
-                          </PopoverContent>
-                        </Popover>
-                      )}
+                            {(creatorMode === "standalone" ? SECTIONS : SECTIONS_CON_VARIANTES).map((section) => (
+                              <div key={section.id} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`section-${section.id}`}
+                                  checked={creatorMode === "standalone" ? visibleSections[section.id] : visibleSectionsConVariantes[section.id]}
+                                  onCheckedChange={() => creatorMode === "standalone" ? toggleSectionVisibility(section.id) : toggleSectionVisibilityConVariantes(section.id)}
+                                  disabled={section.id === "obligatorio"}
+                                  className={section.id === "obligatorio" ? "opacity-50 cursor-not-allowed" : ""}
+                                />
+                                <label
+                                  htmlFor={`section-${section.id}`}
+                                  className={`text-xs ${
+                                    section.id === "obligatorio" 
+                                      ? "text-gray-500 cursor-not-allowed" 
+                                      : "text-gray-700 cursor-pointer"
+                                  }`}
+                                >
+                                  {section.label}
+                                  {section.id === "obligatorio" && (
+                                    <span className="ml-1 text-[10px] text-gray-400">(requerido)</span>
+                                  )}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
                       
                       {/* Grid Size Selector - Available for both modes */}
                       <div className="flex items-center gap-1 bg-gray-100 rounded-md p-0.5">
@@ -954,17 +1001,17 @@ export default function CreadorMasivoPage() {
                     <div className="flex items-center gap-2">
                       <Button
                         onClick={handleCrearClick}
-                        disabled={!hasValidRows || isCreating}
+                        disabled={!hasValidRows || isCreatingAny}
                         variant="ghost"
                         size="sm"
                         className={`h-8 text-xs transition-colors border shadow-sm cursor-pointer ${
-                          hasValidRows && !isCreating
+                          hasValidRows && !isCreatingAny
                             ? "border-green-300 hover:bg-green-50 text-green-700"
                             : "border-[rgba(228,230,235,0.6)] text-gray-400 cursor-not-allowed"
                         }`}
                       >
-                        <Plus className={`w-3.5 h-3.5 mr-1.5 ${hasValidRows && !isCreating ? "text-green-600" : "text-gray-400"}`} />
-                        {isCreating ? "Creando..." : "Crear"}
+                        <Plus className={`w-3.5 h-3.5 mr-1.5 ${hasValidRows && !isCreatingAny ? "text-green-600" : "text-gray-400"}`} />
+                        {isCreatingAny ? "Creando..." : "Crear"}
                       </Button>
                     </div>
                   </div>
@@ -1165,9 +1212,15 @@ export default function CreadorMasivoPage() {
               </div>
               ) : (
                 // Items con Variantes mode
-                <CreadorMasivoConVariantes 
-                  gridSize={gridSize} 
+                <CreadorMasivoConVariantes
+                  gridSize={gridSize}
                   setGridSize={setGridSize}
+                  onStateChange={setConVariantesState}
+                  triggerCreate={triggerConVariantesCreate}
+                  onCreateComplete={handleConVariantesCreateComplete}
+                  sections={SECTIONS_CON_VARIANTES}
+                  visibleSections={visibleSectionsConVariantes}
+                  toggleSectionVisibility={toggleSectionVisibilityConVariantes}
                 />
               )}
             </div>
@@ -1201,7 +1254,10 @@ export default function CreadorMasivoPage() {
             </div>
             <div className="px-6 py-6">
               <p className="text-sm text-gray-600">
-                Todos los items deben tener título. Completá los títulos faltantes, o eliminá las filas sobrantes.
+                {creatorMode === "standalone" 
+                  ? "Todos los items deben tener título. Completá los títulos faltantes, o eliminá las filas sobrantes."
+                  : "Todos los agrupadores deben tener título. Completá los títulos faltantes, o eliminá las filas sobrantes."
+                }
               </p>
             </div>
             <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
@@ -1229,7 +1285,10 @@ export default function CreadorMasivoPage() {
             </div>
             <div className="px-6 py-6">
               <p className="text-sm text-gray-600">
-                Vas a crear <span className="font-semibold text-gray-900">{rowsToCreateCount}</span> item{rowsToCreateCount !== 1 ? "s" : ""} individual{rowsToCreateCount !== 1 ? "es" : ""}.
+                {creatorMode === "standalone" 
+                  ? <>Vas a crear <span className="font-semibold text-gray-900">{rowsToCreateCount}</span> item{rowsToCreateCount !== 1 ? "s" : ""} individual{rowsToCreateCount !== 1 ? "es" : ""}.</>
+                  : <>Vas a crear items con variantes (agrupadores). ¿Confirmar?</>
+                }
               </p>
             </div>
             <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">

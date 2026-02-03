@@ -1,10 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { ChevronRight, ChevronLeft, Plus, X, Check, Grid, Link2, AlertCircle } from "lucide-react"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Button } from "@/components/ui/button"
+import React, { useState } from "react"
+import { ChevronRight, ChevronLeft, Plus, X, Check, Grid, Link2 } from "lucide-react"
 import { useItems } from "@/hooks/use-items"
 
 // Define column widths (in pixels) for consistent alignment
@@ -222,23 +219,38 @@ const createEmptyParentRow = (): ParentRow => ({
 interface CreadorMasivoConVariantesProps {
   gridSize: "sm" | "md" | "lg"
   setGridSize: (size: "sm" | "md" | "lg") => void
+  // Expose state to parent for toolbar
+  onStateChange?: (state: {
+    hasValidRows: boolean
+    allRowsValid: boolean
+    isCreating: boolean
+  }) => void
+  // Trigger from parent to create
+  triggerCreate?: boolean
+  onCreateComplete?: () => void
+  // For sections control
+  sections: typeof SECTIONS_CON_VARIANTES
+  visibleSections: Record<string, boolean>
+  toggleSectionVisibility: (sectionId: string) => void
 }
 
-export function CreadorMasivoConVariantes({ gridSize, setGridSize }: CreadorMasivoConVariantesProps) {
-  const { bulkCreateItems } = useItems()
+export function CreadorMasivoConVariantes({ 
+  gridSize, 
+  setGridSize,
+  onStateChange,
+  triggerCreate,
+  onCreateComplete,
+  sections,
+  visibleSections,
+  toggleSectionVisibility,
+}: CreadorMasivoConVariantesProps) {
+  const { bulkCreateItemsConVariantes } = useItems()
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(
     SECTIONS_CON_VARIANTES.reduce((acc, section) => ({ ...acc, [section.id]: section.defaultExpanded }), {})
-  )
-  const [visibleSections, setVisibleSections] = useState<Record<string, boolean>>(
-    SECTIONS_CON_VARIANTES.reduce((acc, section) => ({ ...acc, [section.id]: true }), {})
   )
   const [parentRows, setParentRows] = useState<ParentRow[]>([createEmptyParentRow()])
   const [tagInputs, setTagInputs] = useState<Record<string, string>>({}) // Track tag input values
   
-  // Modal states for creation
-  const [showErrorModal, setShowErrorModal] = useState(false)
-  const [showConfirmModal, setShowConfirmModal] = useState(false)
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   
   // Validation: check if at least one parent row has a title
@@ -247,30 +259,21 @@ export function CreadorMasivoConVariantes({ gridSize, setGridSize }: CreadorMasi
   // Check all parent rows with any data have titles
   const allRowsValid = parentRows.every(row => row.titulo.trim() !== "")
   
-  // Count items to create (parents with variants count as parent + variants)
-  const getItemsToCreateCount = () => {
-    let count = 0
-    parentRows.forEach(row => {
-      if (row.titulo.trim()) {
-        count += 1 + row.variants.length // Parent + its variants
-      }
-    })
-    return count
-  }
+  // Notify parent of state changes
+  React.useEffect(() => {
+    onStateChange?.({ hasValidRows, allRowsValid, isCreating })
+  }, [hasValidRows, allRowsValid, isCreating, onStateChange])
   
-  // Handle crear button click
-  const handleCrearClick = () => {
-    if (!allRowsValid) {
-      setShowErrorModal(true)
-      return
+  // Handle create trigger from parent
+  React.useEffect(() => {
+    if (triggerCreate && !isCreating) {
+      handleConfirmCreate()
     }
-    setShowConfirmModal(true)
-  }
+  }, [triggerCreate])
   
-  // Handle confirmed creation
+  // Handle confirmed creation (triggered by parent)
   const handleConfirmCreate = async () => {
     setIsCreating(true)
-    setShowConfirmModal(false)
     
     // Prepare items data from rows
     const itemsToCreate: any[] = []
@@ -295,9 +298,15 @@ export function CreadorMasivoConVariantes({ gridSize, setGridSize }: CreadorMasi
           .filter(attr => attr.key.trim() && attr.tags.length > 0)
           .map(attr => ({ key: attr.key, variantes: attr.tags }))
         
-        // Build atributos informativos for parent (non-inherit ones)
+        // Build atributos informativos for parent
+        // Include both fixed values and inheritable attributes (for inheritable, we store the key)
         const parentAtributosInformativos = parentRow.atributosInformativos
-          .filter(attr => attr.key.trim() && attr.value.trim() && !attr.inherit)
+          .filter(attr => attr.key.trim() && (attr.value.trim() || attr.inherit))
+          .map(attr => ({
+            key: attr.key,
+            value: attr.inherit ? "" : attr.value,
+            inherit: attr.inherit
+          }))
         
         // Check volumen
         const hasVolumenUnidad = parentRow.volumenCantidad.trim() && parentRow.volumenUnidad.trim()
@@ -315,11 +324,15 @@ export function CreadorMasivoConVariantes({ gridSize, setGridSize }: CreadorMasi
             descripcion: variant.descripcion || parentRow.descripcion,
             foto: variant.fotoUrl || parentRow.fotoUrl,
             atributosPrincipales: variant.atributosPrincipales,
-            stockTotal: parseInt(variant.stockTotal) || 0,
-            stockReservado: parseInt(variant.stockReservado) || 0,
+            stock: {
+              total: variant.stockTotal || "0",
+              reservado: variant.stockReservado || "0",
+              disponible: (parseInt(variant.stockTotal || "0") - parseInt(variant.stockReservado || "0")).toString()
+            },
             codigoProveedor: variant.codigoProveedor || undefined,
             atributosInformativos: variant.atributosInformativos
-              .filter(attr => attr.key.trim() && attr.value.trim()),
+              .filter(attr => attr.key.trim() && attr.value.trim())
+              .map(attr => ({ key: attr.key, value: attr.value })),
           }
         })
         
@@ -332,44 +345,36 @@ export function CreadorMasivoConVariantes({ gridSize, setGridSize }: CreadorMasi
           marca: parentRow.marca.trim() || undefined,
           formatoVenta: parentRow.formatoVenta,
           unidadesPorPack: parentRow.formatoVenta === "pack" ? parseInt(parentRow.unidadesPorPack) || 1 : 1,
-          volumenActive: hasVolumenUnidad,
+          volumenActive: !!hasVolumenUnidad,
           volumenCantidad: hasVolumenUnidad ? parentRow.volumenCantidad : undefined,
           volumenUnidad: hasVolumenUnidad ? parentRow.volumenUnidad : undefined,
-          vencimientoActive: hasVencimiento,
+          vencimientoActive: !!hasVencimiento,
           fechaVencimiento: hasVencimiento ? parentRow.vencimiento : undefined,
           proveedor: parentRow.proveedor.trim() || undefined,
           descripcion: parentRow.descripcion.trim() || undefined,
           imagenUrl: parentRow.fotoUrl.trim() || undefined,
-          isAgrupador: true,
-          hasVariants: variants.length > 0,
           containerAtributosPrincipales: containerAtributosPrincipales.length > 0 ? containerAtributosPrincipales : undefined,
           atributosInformativos: parentAtributosInformativos.length > 0 ? parentAtributosInformativos : undefined,
-          variants: variants.length > 0 ? variants : undefined,
+          variants: variants,
         })
       })
     
     // Simulate a small delay for UX
     await new Promise(resolve => setTimeout(resolve, 600))
     
-    // Create items
-    bulkCreateItems(itemsToCreate)
+    // Create items using the bulk create for items con variantes
+    bulkCreateItemsConVariantes(itemsToCreate)
     
     // Reset to initial state
     setParentRows([createEmptyParentRow()])
     setIsCreating(false)
     
-    // Show success message
-    setShowSuccessMessage(true)
-    setTimeout(() => setShowSuccessMessage(false), 3000)
+    // Notify parent that creation is complete
+    onCreateComplete?.()
   }
   
   const toggleSection = (sectionId: string) => {
     setExpandedSections(prev => ({ ...prev, [sectionId]: !prev[sectionId] }))
-  }
-
-  const toggleSectionVisibility = (sectionId: string) => {
-    if (sectionId === "obligatorio") return
-    setVisibleSections(prev => ({ ...prev, [sectionId]: !prev[sectionId] }))
   }
 
   const addParentRow = (afterIndex: number) => {
@@ -1053,25 +1058,27 @@ export function CreadorMasivoConVariantes({ gridSize, setGridSize }: CreadorMasi
             
             if (field === "Value") {
               if (!attr) return <div className={`w-full h-full ${inactiveClass}`} />
-              // Value cell with inherit button inside
+              // Value cell with inherit button inside - fixed width structure
               return (
                 <div className="w-full h-full flex items-center">
-                  {attr.inherit ? (
-                    <div className={`flex-1 h-full flex items-center px-2 text-xs text-gray-400 italic bg-blue-50/50`}>
-                      Editable en hijos
-                    </div>
-                  ) : (
-                    <input
-                      type="text"
-                      value={attr.value}
-                      onChange={(e) => updateAtributoInformativo(rowIndex, attrIndex, "value", e.target.value)}
-                      placeholder="Valor"
-                      className={`flex-1 h-full text-xs px-2 py-2 border-0 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white placeholder:text-gray-300`}
-                    />
-                  )}
+                  <div className="flex-1 h-full min-w-0">
+                    {attr.inherit ? (
+                      <div className={`w-full h-full flex items-center px-2 text-xs text-gray-400 italic bg-blue-50/50`}>
+                        Editable en hijos
+                      </div>
+                    ) : (
+                      <input
+                        type="text"
+                        value={attr.value}
+                        onChange={(e) => updateAtributoInformativo(rowIndex, attrIndex, "value", e.target.value)}
+                        placeholder="Valor"
+                        className={`w-full h-full text-xs px-2 py-2 border-0 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white placeholder:text-gray-300`}
+                      />
+                    )}
+                  </div>
                   <button
                     onClick={() => toggleAtributoInherit(rowIndex, attrIndex)}
-                    className={`h-full px-1.5 flex items-center justify-center transition-colors border-l border-gray-200 ${
+                    className={`w-7 h-full flex-shrink-0 flex items-center justify-center transition-colors border-l border-gray-200 ${
                       attr.inherit 
                         ? "text-blue-500 bg-blue-50" 
                         : "text-gray-300 hover:text-gray-500 hover:bg-gray-50"
@@ -1316,15 +1323,27 @@ export function CreadorMasivoConVariantes({ gridSize, setGridSize }: CreadorMasi
                   </div>
                 )
               }
-              // Editable value (inherit or own)
+              // Editable value when inherit is active
+              if (isInheritEditable) {
+                return (
+                  <input
+                    type="text"
+                    value={attr?.value || ""}
+                    onChange={(e) => updateVariantAtributoInformativo(parentIndex, variant.id, attrIndex, "value", e.target.value)}
+                    placeholder={`Valor para ${parentAttr.key}`}
+                    className={`${baseInputClass} placeholder:text-gray-300 bg-blue-50/30`}
+                  />
+                )
+              }
+              // Own attribute - editable
               if (!attr) return <div className={`w-full h-full ${inactiveClass}`} />
               return (
                 <input
                   type="text"
                   value={attr.value}
                   onChange={(e) => updateVariantAtributoInformativo(parentIndex, variant.id, attrIndex, "value", e.target.value)}
-                  placeholder={isInheritEditable ? `Valor para ${parentAttr.key}` : "Valor"}
-                  className={`${baseInputClass} placeholder:text-gray-300 ${isInheritEditable ? "bg-blue-50/30" : ""}`}
+                  placeholder="Valor"
+                  className={`${baseInputClass} placeholder:text-gray-300`}
                 />
               )
             }
@@ -1373,69 +1392,7 @@ export function CreadorMasivoConVariantes({ gridSize, setGridSize }: CreadorMasi
   }
 
   return (
-    <>
-      {/* Success Message */}
-      {showSuccessMessage && (
-        <div className="fixed top-4 right-4 z-50 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg shadow-lg flex items-center gap-2">
-          <Check className="w-5 h-5" />
-          <span>Items creados exitosamente</span>
-        </div>
-      )}
-      
-      {/* Error Modal - incomplete rows */}
-      {showErrorModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md mx-4 shadow-xl">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-                <AlertCircle className="w-5 h-5 text-red-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">Filas incompletas</h3>
-            </div>
-            <p className="text-gray-600 mb-6">
-              Todas las filas de agrupadores deben tener un titulo. Por favor completa o elimina las filas vacias.
-            </p>
-            <div className="flex justify-end">
-              <Button onClick={() => setShowErrorModal(false)}>
-                Entendido
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Confirmation Modal */}
-      {showConfirmModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md mx-4 shadow-xl">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Confirmar creacion</h3>
-            <p className="text-gray-600 mb-6">
-              Estas por crear <span className="font-semibold">{getItemsToCreateCount()} items</span> (agrupadores y variantes). ¿Deseas continuar?
-            </p>
-            <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setShowConfirmModal(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={handleConfirmCreate}>
-                Crear Items
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Crear Button Row */}
-      <div className="mb-4 flex justify-end">
-        <Button 
-          onClick={handleCrearClick}
-          disabled={!hasValidRows || isCreating}
-          className="px-6"
-        >
-          {isCreating ? "Creando..." : `Crear (${getItemsToCreateCount()})`}
-        </Button>
-      </div>
-    
-      <div className="bg-white border rounded-lg shadow-sm border-[rgba(228,230,235,0.5)] overflow-x-auto">
+    <div className="bg-white border rounded-lg shadow-sm border-[rgba(228,230,235,0.5)] overflow-x-auto">
         <table className="border-collapse" style={{ minWidth: getTotalWidth() }}>
         <thead>
           {/* Row 1: Section headers */}
@@ -1658,8 +1615,10 @@ export function CreadorMasivoConVariantes({ gridSize, setGridSize }: CreadorMasi
             </>
           ))}
         </tbody>
-        </table>
-      </div>
-    </>
+      </table>
+    </div>
   )
 }
+
+// Export sections for parent to use
+export { SECTIONS_CON_VARIANTES }

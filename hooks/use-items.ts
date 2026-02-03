@@ -1027,6 +1027,125 @@ export function useItems() {
     return newItems
   }
 
+  // Bulk create multiple items con variantes (agrupadores with their children)
+  const bulkCreateItemsConVariantes = (newItemsData: Array<{
+    name: string
+    sku?: string
+    codigoUniversal?: string
+    categoria?: string
+    marca?: string
+    formatoVenta?: string
+    unidadesPorPack?: number
+    volumenActive?: boolean
+    volumenCantidad?: string
+    volumenUnidad?: string
+    vencimientoActive?: boolean
+    fechaVencimiento?: string
+    proveedor?: string
+    descripcion?: string
+    imagenUrl?: string
+    containerAtributosPrincipales?: Array<{ key: string; variantes: string[] }>
+    atributosInformativos?: Array<{ key: string; value: string; inherit?: boolean }>
+    variants?: Array<{
+      sku: string
+      codigoUniversal?: string
+      descripcion?: string
+      foto?: string
+      atributosPrincipales: Array<{ key: string; value: string }>
+      stock?: { total: string; reservado: string; disponible: string }
+      codigoProveedor?: string
+      atributosInformativos?: Array<{ key: string; value: string }>
+    }>
+  }>) => {
+    const existingSkus = items.map((item) => item.sku)
+    
+    const newItems = newItemsData.map((data) => {
+      // Generate unique SKU for parent if not provided
+      let parentSku = data.sku || ""
+      if (!parentSku) {
+        const baseSku = data.name
+          .toUpperCase()
+          .replace(/[^A-Z0-9\s]/g, "")
+          .split(" ")
+          .map((word) => word.substring(0, 3))
+          .join("-")
+          .substring(0, 15)
+        parentSku = generateUniqueSKU(baseSku, existingSkus)
+      } else {
+        parentSku = generateUniqueSKU(parentSku, existingSkus)
+      }
+      existingSkus.push(parentSku)
+      
+      // Process variants
+      const processedVariants = (data.variants || []).map((variant, index) => {
+        // Generate variant SKU if not provided
+        let variantSku = variant.sku
+        if (!variantSku) {
+          const suffix = variant.atributosPrincipales
+            .map(a => a.value.substring(0, 3).toUpperCase())
+            .join("-")
+          variantSku = `${parentSku}-${suffix}`
+        }
+        variantSku = generateUniqueSKU(variantSku, existingSkus)
+        existingSkus.push(variantSku)
+        
+        return {
+          sku: variantSku,
+          codigoUniversal: variant.codigoUniversal || "",
+          descripcion: variant.descripcion || "",
+          foto: variant.foto || data.imagenUrl || "",
+          atributosPrincipales: variant.atributosPrincipales || [],
+          stock: variant.stock || { total: "0", reservado: "0", disponible: "0" },
+          codigoProveedor: variant.codigoProveedor || "",
+          atributosInformativos: variant.atributosInformativos || [],
+        }
+      })
+      
+      const newItem: Item = {
+        id: `item-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        name: data.name,
+        sku: parentSku,
+        codigoUniversal: data.codigoUniversal || "",
+        descripcion: data.descripcion || "",
+        categoria: data.categoria || "",
+        marca: data.marca || "",
+        formatoVenta: (data.formatoVenta as "unidad" | "pack") || "unidad",
+        unidadesPorPack: data.unidadesPorPack || 1,
+        volumenActive: data.volumenActive || false,
+        volumenCantidad: data.volumenCantidad ? Number(data.volumenCantidad) : undefined,
+        volumenUnidad: data.volumenUnidad || undefined,
+        vencimientoActive: data.vencimientoActive || false,
+        fechaVencimiento: data.fechaVencimiento || undefined,
+        proveedor: data.proveedor || "",
+        codigoProveedor: "",
+        stock: { total: "0", reservado: "0", disponible: "0" },
+        isAgrupador: true,
+        hasVariants: processedVariants.length > 0,
+        containerAtributosPrincipales: data.containerAtributosPrincipales || [],
+        atributosPrincipales: [],
+        atributosInformativos: data.atributosInformativos?.map(a => ({ key: a.key, value: a.value })) || [],
+        imagenUrl: data.imagenUrl || "",
+        variantCount: processedVariants.length,
+        itemCount: processedVariants.length,
+        variants: processedVariants,
+      }
+      
+      return newItem
+    })
+    
+    // Add all new items at the beginning of the list
+    const updatedItems = [...newItems, ...items]
+    
+    // Persist to localStorage
+    localStorage.setItem(getStorageKey(), JSON.stringify(updatedItems))
+    console.log(`[v0] bulkCreateItemsConVariantes - Created ${newItems.length} agrupadores with variants and saved to localStorage`)
+    
+    // Update state
+    setItems(updatedItems)
+    
+    return newItems
+  }
+
   return {
     items,
     setItems,
@@ -1035,6 +1154,7 @@ export function useItems() {
     handleCreateNuevoItem,
     handleCreateNuevoItemConVariantes,
     bulkCreateItems,
+    bulkCreateItemsConVariantes,
     updateItem,
     isLoading,
     deleteItem,
