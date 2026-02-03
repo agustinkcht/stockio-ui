@@ -1,9 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronRight, ChevronLeft, Plus, X, Check, Grid, Link2 } from "lucide-react"
+import { ChevronRight, ChevronLeft, Plus, X, Check, Grid, Link2, AlertCircle } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Button } from "@/components/ui/button"
+import { useItems } from "@/hooks/use-items"
 
 // Define column widths (in pixels) for consistent alignment
 const COL_WIDTHS: Record<string, number> = {
@@ -43,10 +45,9 @@ const COL_WIDTHS: Record<string, number> = {
 const getColWidth = (colId: string): number => {
   if (colId.startsWith("atributoInfo")) {
     if (colId.includes("Key")) return 100
-    if (colId.includes("Value")) return 100
+    if (colId.includes("Value")) return 130 // Wider to accommodate inherit button
     if (colId.includes("Add")) return 40
     if (colId.includes("Remove")) return 40
-    if (colId.includes("Inherit")) return 32
   }
   if (colId.startsWith("atributoPrincipal")) {
     if (colId.includes("Key")) return 100
@@ -224,6 +225,7 @@ interface CreadorMasivoConVariantesProps {
 }
 
 export function CreadorMasivoConVariantes({ gridSize, setGridSize }: CreadorMasivoConVariantesProps) {
+  const { bulkCreateItems } = useItems()
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(
     SECTIONS_CON_VARIANTES.reduce((acc, section) => ({ ...acc, [section.id]: section.defaultExpanded }), {})
   )
@@ -232,6 +234,134 @@ export function CreadorMasivoConVariantes({ gridSize, setGridSize }: CreadorMasi
   )
   const [parentRows, setParentRows] = useState<ParentRow[]>([createEmptyParentRow()])
   const [tagInputs, setTagInputs] = useState<Record<string, string>>({}) // Track tag input values
+  
+  // Modal states for creation
+  const [showErrorModal, setShowErrorModal] = useState(false)
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
+  
+  // Validation: check if at least one parent row has a title
+  const hasValidRows = parentRows.some(row => row.titulo.trim() !== "")
+  
+  // Check all parent rows with any data have titles
+  const allRowsValid = parentRows.every(row => row.titulo.trim() !== "")
+  
+  // Count items to create (parents with variants count as parent + variants)
+  const getItemsToCreateCount = () => {
+    let count = 0
+    parentRows.forEach(row => {
+      if (row.titulo.trim()) {
+        count += 1 + row.variants.length // Parent + its variants
+      }
+    })
+    return count
+  }
+  
+  // Handle crear button click
+  const handleCrearClick = () => {
+    if (!allRowsValid) {
+      setShowErrorModal(true)
+      return
+    }
+    setShowConfirmModal(true)
+  }
+  
+  // Handle confirmed creation
+  const handleConfirmCreate = async () => {
+    setIsCreating(true)
+    setShowConfirmModal(false)
+    
+    // Prepare items data from rows
+    const itemsToCreate: any[] = []
+    
+    parentRows
+      .filter(row => row.titulo.trim() !== "")
+      .forEach(parentRow => {
+        // Generate SKU padre if not provided
+        let skuPadre = parentRow.skuPadre.trim()
+        if (!skuPadre) {
+          skuPadre = parentRow.titulo
+            .toUpperCase()
+            .replace(/[^A-Z0-9\s]/g, "")
+            .split(" ")
+            .map((word) => word.substring(0, 3))
+            .join("-")
+            .substring(0, 15)
+        }
+        
+        // Build containerAtributosPrincipales for parent
+        const containerAtributosPrincipales = parentRow.atributosPrincipales
+          .filter(attr => attr.key.trim() && attr.tags.length > 0)
+          .map(attr => ({ key: attr.key, variantes: attr.tags }))
+        
+        // Build atributos informativos for parent (non-inherit ones)
+        const parentAtributosInformativos = parentRow.atributosInformativos
+          .filter(attr => attr.key.trim() && attr.value.trim() && !attr.inherit)
+        
+        // Check volumen
+        const hasVolumenUnidad = parentRow.volumenCantidad.trim() && parentRow.volumenUnidad.trim()
+        const hasVencimiento = parentRow.vencimiento.trim()
+        
+        // Build variants array for parent
+        const variants = parentRow.variants.map(variant => {
+          const skuSuffix = variant.atributosPrincipales
+            .map(a => a.value.substring(0, 3).toUpperCase())
+            .join("-")
+          
+          return {
+            sku: `${skuPadre}-${skuSuffix}`,
+            codigoUniversal: "",
+            descripcion: variant.descripcion || parentRow.descripcion,
+            foto: variant.fotoUrl || parentRow.fotoUrl,
+            atributosPrincipales: variant.atributosPrincipales,
+            stockTotal: parseInt(variant.stockTotal) || 0,
+            stockReservado: parseInt(variant.stockReservado) || 0,
+            codigoProveedor: variant.codigoProveedor || undefined,
+            atributosInformativos: variant.atributosInformativos
+              .filter(attr => attr.key.trim() && attr.value.trim()),
+          }
+        })
+        
+        // Create parent item (agrupador)
+        itemsToCreate.push({
+          name: parentRow.titulo.trim(),
+          sku: skuPadre,
+          codigoUniversal: parentRow.codigoUniversal.trim() || undefined,
+          categoria: parentRow.categoria.trim() || undefined,
+          marca: parentRow.marca.trim() || undefined,
+          formatoVenta: parentRow.formatoVenta,
+          unidadesPorPack: parentRow.formatoVenta === "pack" ? parseInt(parentRow.unidadesPorPack) || 1 : 1,
+          volumenActive: hasVolumenUnidad,
+          volumenCantidad: hasVolumenUnidad ? parentRow.volumenCantidad : undefined,
+          volumenUnidad: hasVolumenUnidad ? parentRow.volumenUnidad : undefined,
+          vencimientoActive: hasVencimiento,
+          fechaVencimiento: hasVencimiento ? parentRow.vencimiento : undefined,
+          proveedor: parentRow.proveedor.trim() || undefined,
+          descripcion: parentRow.descripcion.trim() || undefined,
+          imagenUrl: parentRow.fotoUrl.trim() || undefined,
+          isAgrupador: true,
+          hasVariants: variants.length > 0,
+          containerAtributosPrincipales: containerAtributosPrincipales.length > 0 ? containerAtributosPrincipales : undefined,
+          atributosInformativos: parentAtributosInformativos.length > 0 ? parentAtributosInformativos : undefined,
+          variants: variants.length > 0 ? variants : undefined,
+        })
+      })
+    
+    // Simulate a small delay for UX
+    await new Promise(resolve => setTimeout(resolve, 600))
+    
+    // Create items
+    bulkCreateItems(itemsToCreate)
+    
+    // Reset to initial state
+    setParentRows([createEmptyParentRow()])
+    setIsCreating(false)
+    
+    // Show success message
+    setShowSuccessMessage(true)
+    setTimeout(() => setShowSuccessMessage(false), 3000)
+  }
   
   const toggleSection = (sectionId: string) => {
     setExpandedSections(prev => ({ ...prev, [sectionId]: !prev[sectionId] }))
@@ -268,7 +398,12 @@ export function CreadorMasivoConVariantes({ gridSize, setGridSize }: CreadorMasi
   const removeAtributoPrincipal = (rowIndex: number, attrIndex: number) => {
     setParentRows(prev => prev.map((row, i) => {
       if (i !== rowIndex || row.atributosPrincipales.length <= 1) return row
-      return { ...row, atributosPrincipales: row.atributosPrincipales.filter((_, idx) => idx !== attrIndex) }
+      // Removing an atributo principal clears all variants
+      return { 
+        ...row, 
+        atributosPrincipales: row.atributosPrincipales.filter((_, idx) => idx !== attrIndex),
+        variants: [] 
+      }
     }))
   }
 
@@ -298,12 +433,18 @@ export function CreadorMasivoConVariantes({ gridSize, setGridSize }: CreadorMasi
   const removeTagFromAtributo = (rowIndex: number, attrIndex: number, tagIndex: number) => {
     setParentRows(prev => prev.map((row, i) => {
       if (i !== rowIndex) return row
+      const removedTag = row.atributosPrincipales[attrIndex].tags[tagIndex]
       const newAttrs = [...row.atributosPrincipales]
       newAttrs[attrIndex] = { 
         ...newAttrs[attrIndex], 
         tags: newAttrs[attrIndex].tags.filter((_, idx) => idx !== tagIndex) 
       }
-      return { ...row, atributosPrincipales: newAttrs }
+      // Remove variants that contain this tag value
+      const newVariants = row.variants.filter(variant => {
+        const variantAttr = variant.atributosPrincipales[attrIndex]
+        return !variantAttr || variantAttr.value !== removedTag
+      })
+      return { ...row, atributosPrincipales: newAttrs, variants: newVariants }
     }))
   }
 
@@ -532,9 +673,6 @@ export function CreadorMasivoConVariantes({ gridSize, setGridSize }: CreadorMasi
       const cols: string[] = []
       for (let i = 0; i < maxAttrs; i++) {
         cols.push(`atributoInfo${i}Key`)
-        if (!isChild) {
-          cols.push(`atributoInfo${i}Inherit`)
-        }
         cols.push(`atributoInfo${i}Value`)
         if (i === 0 && maxAttrs === 1) {
           cols.push(`atributoInfo${i}Add`)
@@ -585,9 +723,7 @@ export function CreadorMasivoConVariantes({ gridSize, setGridSize }: CreadorMasi
       const maxAttrs = getMaxAtributosInformativos()
       const subHeaders: Array<{ label: string; cols: string[] }> = []
       for (let i = 0; i < maxAttrs; i++) {
-        const cols = [`atributoInfo${i}Key`]
-        if (!isChild) cols.push(`atributoInfo${i}Inherit`)
-        cols.push(`atributoInfo${i}Value`)
+        const cols = [`atributoInfo${i}Key`, `atributoInfo${i}Value`]
         if (i === 0 && maxAttrs === 1) {
           cols.push(`atributoInfo${i}Add`)
         } else {
@@ -915,41 +1051,36 @@ export function CreadorMasivoConVariantes({ gridSize, setGridSize }: CreadorMasi
               )
             }
             
-            if (field === "Inherit") {
-              if (!attr) return <div className={`w-full h-full ${inactiveClass}`} />
-              return (
-                <button
-                  onClick={() => toggleAtributoInherit(rowIndex, attrIndex)}
-                  className={`w-full h-full flex items-center justify-center transition-colors ${
-                    attr.inherit 
-                      ? "text-blue-500 bg-blue-50" 
-                      : "text-gray-300 hover:text-gray-500"
-                  }`}
-                  title={attr.inherit ? "Valor heredable (editable en hijos)" : "Valor fijo (copiado a hijos)"}
-                >
-                  <Link2 className="w-3.5 h-3.5" />
-                </button>
-              )
-            }
-            
             if (field === "Value") {
               if (!attr) return <div className={`w-full h-full ${inactiveClass}`} />
-              // If inherit is active, show placeholder
-              if (attr.inherit) {
-                return (
-                  <div className={`w-full h-full flex items-center px-2 text-xs text-gray-400 italic bg-blue-50/50`}>
-                    Editable en hijos
-                  </div>
-                )
-              }
+              // Value cell with inherit button inside
               return (
-                <input
-                  type="text"
-                  value={attr.value}
-                  onChange={(e) => updateAtributoInformativo(rowIndex, attrIndex, "value", e.target.value)}
-                  placeholder="Valor"
-                  className={`${baseInputClass} placeholder:text-gray-300`}
-                />
+                <div className="w-full h-full flex items-center">
+                  {attr.inherit ? (
+                    <div className={`flex-1 h-full flex items-center px-2 text-xs text-gray-400 italic bg-blue-50/50`}>
+                      Editable en hijos
+                    </div>
+                  ) : (
+                    <input
+                      type="text"
+                      value={attr.value}
+                      onChange={(e) => updateAtributoInformativo(rowIndex, attrIndex, "value", e.target.value)}
+                      placeholder="Valor"
+                      className={`flex-1 h-full text-xs px-2 py-2 border-0 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white placeholder:text-gray-300`}
+                    />
+                  )}
+                  <button
+                    onClick={() => toggleAtributoInherit(rowIndex, attrIndex)}
+                    className={`h-full px-1.5 flex items-center justify-center transition-colors border-l border-gray-200 ${
+                      attr.inherit 
+                        ? "text-blue-500 bg-blue-50" 
+                        : "text-gray-300 hover:text-gray-500 hover:bg-gray-50"
+                    }`}
+                    title={attr.inherit ? "Valor heredable (editable en hijos)" : "Valor fijo (copiado a hijos)"}
+                  >
+                    <Link2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               )
             }
             
@@ -1089,6 +1220,7 @@ export function CreadorMasivoConVariantes({ gridSize, setGridSize }: CreadorMasi
             type="number"
             value={variant.stockTotal}
             onChange={(e) => updateVariant(parentIndex, variant.id, "stockTotal", e.target.value)}
+            onFocus={(e) => { if (e.target.value === "0") e.target.select() }}
             className={`${baseInputClass} text-center`}
           />
         )
@@ -1099,6 +1231,7 @@ export function CreadorMasivoConVariantes({ gridSize, setGridSize }: CreadorMasi
             type="number"
             value={variant.stockReservado}
             onChange={(e) => updateVariant(parentIndex, variant.id, "stockReservado", e.target.value)}
+            onFocus={(e) => { if (e.target.value === "0") e.target.select() }}
             className={`${baseInputClass} text-center`}
           />
         )
@@ -1240,8 +1373,70 @@ export function CreadorMasivoConVariantes({ gridSize, setGridSize }: CreadorMasi
   }
 
   return (
-    <div className="bg-white border rounded-lg shadow-sm border-[rgba(228,230,235,0.5)] overflow-x-auto">
-      <table className="border-collapse" style={{ minWidth: getTotalWidth() }}>
+    <>
+      {/* Success Message */}
+      {showSuccessMessage && (
+        <div className="fixed top-4 right-4 z-50 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg shadow-lg flex items-center gap-2">
+          <Check className="w-5 h-5" />
+          <span>Items creados exitosamente</span>
+        </div>
+      )}
+      
+      {/* Error Modal - incomplete rows */}
+      {showErrorModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md mx-4 shadow-xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">Filas incompletas</h3>
+            </div>
+            <p className="text-gray-600 mb-6">
+              Todas las filas de agrupadores deben tener un titulo. Por favor completa o elimina las filas vacias.
+            </p>
+            <div className="flex justify-end">
+              <Button onClick={() => setShowErrorModal(false)}>
+                Entendido
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Confirmar creacion</h3>
+            <p className="text-gray-600 mb-6">
+              Estas por crear <span className="font-semibold">{getItemsToCreateCount()} items</span> (agrupadores y variantes). ¿Deseas continuar?
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setShowConfirmModal(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleConfirmCreate}>
+                Crear Items
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Crear Button Row */}
+      <div className="mb-4 flex justify-end">
+        <Button 
+          onClick={handleCrearClick}
+          disabled={!hasValidRows || isCreating}
+          className="px-6"
+        >
+          {isCreating ? "Creando..." : `Crear (${getItemsToCreateCount()})`}
+        </Button>
+      </div>
+    
+      <div className="bg-white border rounded-lg shadow-sm border-[rgba(228,230,235,0.5)] overflow-x-auto">
+        <table className="border-collapse" style={{ minWidth: getTotalWidth() }}>
         <thead>
           {/* Row 1: Section headers */}
           <tr className={getRowHeight()}>
@@ -1463,7 +1658,8 @@ export function CreadorMasivoConVariantes({ gridSize, setGridSize }: CreadorMasi
             </>
           ))}
         </tbody>
-      </table>
-    </div>
+        </table>
+      </div>
+    </>
   )
 }
