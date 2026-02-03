@@ -1487,8 +1487,8 @@ export function CreadorMasivoConVariantes({
                   })}
                 </tr>
                   ))}
-                  </>
-                )))}
+                </>
+                ))}
                 </tbody>
       </table>
     </div>
