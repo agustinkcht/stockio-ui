@@ -1272,7 +1272,7 @@ export default function CreadorMasivoPage() {
                           })
                   })}
                   </tr>
-                  )))}
+                  ))}
                   </tbody>
                 </table>
               </div>
