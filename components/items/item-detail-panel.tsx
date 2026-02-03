@@ -1019,6 +1019,73 @@ export function ItemDetailPanel({
           </div>
           )}
 
+          {/* Vertical Toggle Toolstripe - Section Switcher (only for standalone/children items) - col-span-1 */}
+          {!isViewingContainer && (
+          <div className="order-2 col-span-1 flex flex-col justify-start mt-[44px] pt-6 items-start">
+            <div className="sticky top-4 flex flex-col items-center">
+              {/* Toggle Track */}
+              <div className="relative flex flex-col items-center">
+                {/* Vertical line */}
+                <div className="absolute top-0 bottom-0 w-px bg-gradient-to-b from-slate-200 via-slate-300 to-slate-200" />
+                
+                {/* Three-way Toggle */}
+                <div className="relative z-10 flex flex-col items-center gap-1 py-2 px-1">
+                  {/* Info indicator */}
+                  <button
+                    onClick={() => setExpandedSection("info")}
+                    className={`w-2 h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                      expandedSection === "info" 
+                        ? "bg-slate-800 scale-125" 
+                        : "bg-slate-300 hover:bg-slate-400"
+                    }`}
+                    title="Expandir Info"
+                  />
+                  
+                  {/* Both indicator */}
+                  <button
+                    onClick={() => setExpandedSection("both")}
+                    className={`w-2.5 h-2.5 rounded-full transition-all duration-300 cursor-pointer my-1 ${
+                      expandedSection === "both" 
+                        ? "bg-slate-800 scale-125" 
+                        : "bg-slate-300 hover:bg-slate-400"
+                    }`}
+                    title="Mostrar ambos"
+                  />
+                  
+                  {/* Stock indicator */}
+                  <button
+                    onClick={() => setExpandedSection("stock")}
+                    className={`w-2 h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                      expandedSection === "stock" 
+                        ? "bg-slate-800 scale-125" 
+                        : "bg-slate-300 hover:bg-slate-400"
+                    }`}
+                    title="Expandir Stock"
+                  />
+                </div>
+                
+                {/* Labels */}
+                <div className="mt-4 flex flex-col items-center gap-6">
+                  <span className={`text-[8px] font-medium uppercase tracking-[0.12em] transition-all duration-300 ${
+                    expandedSection === "info" 
+                      ? "text-slate-700" 
+                      : "text-slate-400"
+                  }`} style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
+                    Info
+                  </span>
+                  <span className={`text-[8px] font-medium uppercase tracking-[0.12em] transition-all duration-300 ${
+                    expandedSection === "stock" 
+                      ? "text-slate-700" 
+                      : "text-slate-400"
+                  }`} style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
+                    Stock
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          )}
+
           {/* Right Column - Variantes Card (only for parent items) */}
           {isViewingContainer && (
             <div className="col-span-1 order-2 flex flex-col mt-[44px]">
@@ -1621,7 +1688,7 @@ export function ItemDetailPanel({
           )}
 
 {/* Info/Atributos Column - 12 cols when info expanded, 7 cols when both, 2 col when stock expanded */}
-        <div className={`flex flex-col transition-all duration-300 overflow-hidden mr-3.5 pb-0 ${isViewingContainer ? "order-1 col-span-1 mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : `order-2 relative mt-[44px] pt-6 pb-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10 ${expandedSection === "info" ? "col-span-12 px-8" : expandedSection === "both" ? "col-span-7 px-6" : "col-span-2 px-3"}`}`}>
+        <div className={`flex flex-col transition-all duration-300 overflow-hidden mr-3.5 pb-0 ${isViewingContainer ? "order-1 col-span-1 mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : `order-3 relative mt-[44px] pt-6 pb-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10 ${expandedSection === "info" ? "col-span-11 px-8" : expandedSection === "both" ? "col-span-7 px-6" : "col-span-2 px-3"}`}`}>
             
             {/* Thumbnail + Title Header for Parent Items */}
             {isViewingContainer && (
@@ -2325,9 +2392,9 @@ export function ItemDetailPanel({
             )}
           </div>
 
-{/* Stock Column - 12 cols when stock expanded, 7 cols when both, 2 col when info expanded */}
+{/* Stock Column - 11 cols when stock expanded, 6 cols when both, 2 col when info expanded */}
           {!isViewingContainer && (
-          <div className={`order-3 flex flex-col mt-[44px] transition-all duration-300 ${expandedSection === "stock" ? "col-span-12 pl-4" : expandedSection === "both" ? "col-span-7 pl-3" : "col-span-2 pl-2"}`}>
+          <div className={`order-4 flex flex-col mt-[44px] transition-all duration-300 ${expandedSection === "stock" ? "col-span-11 pl-4" : expandedSection === "both" ? "col-span-6 pl-3" : "col-span-2 pl-2"}`}>
               <div className={`sticky top-4 bg-white border border-border/40 rounded-xl shadow-sm ${expandedSection === "stock" ? "p-5" : expandedSection === "both" ? "p-4" : "p-3"}`}>
                 
                 {/* Collapsed Stock State - Minimal Slider View (only when info is fully expanded) */}
