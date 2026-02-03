@@ -1498,3 +1498,4 @@ export function CreadorMasivoConVariantes({
 // Export sections, types and helper for parent to use
 export { SECTIONS_CON_VARIANTES, createEmptyParentRow }
 export type { ParentRow, VariantRow }
+export default CreadorMasivoConVariantes
