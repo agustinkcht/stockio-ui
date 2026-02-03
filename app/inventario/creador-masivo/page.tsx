@@ -214,10 +214,10 @@ export default function CreadorMasivoPage() {
   const [visibleSectionsConVariantes, setVisibleSectionsConVariantes] = useState<Record<string, boolean>>(
     SECTIONS_CON_VARIANTES.reduce((acc, section) => ({ ...acc, [section.id]: true }), {})
   )
-  // Standalone rows state
-  const [rows, setRows] = useState<WorkableRow[]>([createEmptyRow()])
-  // Con Variantes rows state (lifted from component for persistence)
-  const [parentRows, setParentRows] = useState<ParentRow[]>([createEmptyParentRow()])
+  // Standalone rows state - start empty
+  const [rows, setRows] = useState<WorkableRow[]>([])
+  // Con Variantes rows state (lifted from component for persistence) - start empty
+  const [parentRows, setParentRows] = useState<ParentRow[]>([])
   const [gridSize, setGridSize] = useState<"sm" | "md" | "lg">("sm")
   
   // Modal states
@@ -235,11 +235,11 @@ export default function CreadorMasivoPage() {
   // Check if at least one row has a title (from either mode)
   const hasValidRows = standaloneRowsToCreateCount > 0 || conVariantesRowsToCreateCount > 0
   
-  // Check if all rows in standalone have titles
-  const allStandaloneRowsValid = rows.every(row => row.titulo.trim() !== "")
+  // Check if all rows in standalone have titles or if empty array (valid)
+  const allStandaloneRowsValid = rows.length === 0 || rows.every(row => row.titulo.trim() !== "")
   
-  // Check if all rows in con variantes have titles  
-  const allConVariantesRowsValid = parentRows.every(row => row.titulo.trim() !== "")
+  // Check if all rows in con variantes have titles or if empty array (valid)
+  const allConVariantesRowsValid = parentRows.length === 0 || parentRows.every(row => row.titulo.trim() !== "")
   
   // All rows valid for both modes
   const allRowsValid = allStandaloneRowsValid && allConVariantesRowsValid
@@ -390,9 +390,9 @@ export default function CreadorMasivoPage() {
       bulkCreateItemsConVariantes(conVariantesItemsToCreate)
     }
     
-    // Reset to initial state for both modes
-    setRows([createEmptyRow()])
-    setParentRows([createEmptyParentRow()])
+    // Reset to initial state for both modes (empty arrays)
+    setRows([])
+    setParentRows([])
     setIsCreating(false)
     
     // Show success message
@@ -422,7 +422,6 @@ export default function CreadorMasivoPage() {
   }
 
   const removeRow = (index: number) => {
-    if (rows.length === 1) return
     setRows(rows.filter((_, i) => i !== index))
   }
 
@@ -478,6 +477,7 @@ export default function CreadorMasivoPage() {
 
   // Get the maximum number of atributos across all rows for a given type
   const getMaxAtributos = (type: "atributosPrincipales" | "atributosInformativos") => {
+    if (rows.length === 0) return 1 // Default to 1 column when no rows
     return Math.max(...rows.map(row => row[type].length))
   }
 
@@ -1199,7 +1199,21 @@ export default function CreadorMasivoPage() {
 
                   {/* Workable Rows */}
                   <tbody>
-                    {rows.map((row, rowIndex) => (
+                  {rows.length === 0 ? (
+                    <tr>
+                      <td colSpan={100} className="text-center py-12">
+                        <Button
+                          onClick={() => setRows([createEmptyRow()])}
+                          variant="outline"
+                          size="sm"
+                          className="mx-auto"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Agregar primera fila
+                        </Button>
+                      </td>
+                    </tr>
+                  ) : rows.map((row, rowIndex) => (
                       <tr key={row.id} className={`${getRowHeight()} hover:bg-gray-50/50`}>
                         {/* Row controls */}
                         <td 
@@ -1256,9 +1270,9 @@ export default function CreadorMasivoPage() {
                               </td>
                             )
                           })
-                        })}
-                      </tr>
-                    ))}
+                  })}
+                  </tr>
+                  )))}
                   </tbody>
                 </table>
               </div>

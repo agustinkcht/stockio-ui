@@ -248,7 +248,6 @@ export function CreadorMasivoConVariantes({
   }
 
   const removeParentRow = (index: number) => {
-    if (parentRows.length === 1) return
     setParentRows(parentRows.filter((_, i) => i !== index))
   }
 
@@ -488,6 +487,7 @@ export function CreadorMasivoConVariantes({
 
   // Get maximum atributos for columns calculation
   const getMaxAtributosPrincipales = () => {
+    if (parentRows.length === 0) return 1 // Default to 1 column when no rows
     return Math.max(...parentRows.map(row => row.atributosPrincipales.length), 1)
   }
 
@@ -1372,8 +1372,20 @@ export function CreadorMasivoConVariantes({
           </tr>
         </thead>
         
-        <tbody>
-          {parentRows.map((parentRow, parentIndex) => (
+                <tbody>
+                {parentRows.length === 0 ? (
+                  <tr>
+                    <td colSpan={100} className="text-center py-12">
+                      <button
+                        onClick={() => setParentRows([createEmptyParentRow()])}
+                        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md border border-gray-300 hover:bg-gray-50 transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Agregar primera fila
+                      </button>
+                    </td>
+                  </tr>
+                ) : parentRows.map((parentRow, parentIndex) => (
             <>
               {/* Parent Row */}
               <tr key={parentRow.id} className={`${getRowHeight()} group bg-slate-50/50`}>
@@ -1389,14 +1401,13 @@ export function CreadorMasivoConVariantes({
                     >
                       <Plus className="w-4 h-4" />
                     </button>
-                    <button
-                      onClick={() => removeParentRow(parentIndex)}
-                      disabled={parentRows.length === 1}
-                      className="p-1 text-gray-400 hover:text-red-500 transition-colors disabled:opacity-30"
-                      title="Eliminar agrupador"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
+                  <button
+                    onClick={() => removeParentRow(parentIndex)}
+                    className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                    title="Eliminar agrupador"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                   </div>
                 </td>
                 
@@ -1475,10 +1486,10 @@ export function CreadorMasivoConVariantes({
                     })
                   })}
                 </tr>
-              ))}
-            </>
-          ))}
-        </tbody>
+                  ))}
+                  </>
+                )))}
+                </tbody>
       </table>
     </div>
   )
