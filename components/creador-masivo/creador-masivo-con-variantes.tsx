@@ -321,7 +321,14 @@ export function CreadorMasivoConVariantes({
   const addAtributoInformativo = (rowIndex: number) => {
     setParentRows(prev => prev.map((row, i) => {
       if (i !== rowIndex) return row
-      return { ...row, atributosInformativos: [...row.atributosInformativos, { key: "", value: "", inherit: false }] }
+      // Add entry to parent
+      const newParentAttrs = [...row.atributosInformativos, { key: "", value: "", inherit: false }]
+      // Also add empty entry to all existing variants to keep indices in sync
+      const updatedVariants = row.variants.map(v => ({
+        ...v,
+        atributosInformativos: [...v.atributosInformativos, { key: "", value: "" }]
+      }))
+      return { ...row, atributosInformativos: newParentAttrs, variants: updatedVariants }
     }))
   }
 
@@ -337,7 +344,22 @@ export function CreadorMasivoConVariantes({
       if (i !== rowIndex) return row
       const newAttrs = [...row.atributosInformativos]
       newAttrs[attrIndex] = { ...newAttrs[attrIndex], [field]: value }
-      return { ...row, atributosInformativos: newAttrs }
+      
+      // If updating the key, also sync it to all variants
+      let updatedVariants = row.variants
+      if (field === "key") {
+        updatedVariants = row.variants.map(v => {
+          const variantAttrs = [...v.atributosInformativos]
+          // Ensure array has entry at attrIndex
+          while (variantAttrs.length <= attrIndex) {
+            variantAttrs.push({ key: "", value: "" })
+          }
+          variantAttrs[attrIndex] = { ...variantAttrs[attrIndex], key: value }
+          return { ...v, atributosInformativos: variantAttrs }
+        })
+      }
+      
+      return { ...row, atributosInformativos: newAttrs, variants: updatedVariants }
     }))
   }
 
@@ -345,12 +367,29 @@ export function CreadorMasivoConVariantes({
     setParentRows(prev => prev.map((row, i) => {
       if (i !== rowIndex) return row
       const newAttrs = [...row.atributosInformativos]
-      newAttrs[attrIndex] = { ...newAttrs[attrIndex], inherit: !newAttrs[attrIndex].inherit }
-      // If switching to inherit, clear the value
-      if (!newAttrs[attrIndex].inherit === true) {
+      const newInheritState = !newAttrs[attrIndex].inherit
+      newAttrs[attrIndex] = { ...newAttrs[attrIndex], inherit: newInheritState }
+      // If switching to inherit, clear the parent value
+      if (newInheritState) {
         newAttrs[attrIndex].value = ""
       }
-      return { ...row, atributosInformativos: newAttrs }
+      
+      // Sync variants' atributosInformativos to ensure they have entries for inherited attrs
+      const updatedVariants = row.variants.map(v => {
+        const variantAttrs = [...v.atributosInformativos]
+        // Ensure the variant has an entry at this index
+        while (variantAttrs.length <= attrIndex) {
+          variantAttrs.push({ key: "", value: "" })
+        }
+        // Update the key from parent
+        variantAttrs[attrIndex] = {
+          key: newAttrs[attrIndex].key,
+          value: newInheritState ? (variantAttrs[attrIndex]?.value || "") : newAttrs[attrIndex].value,
+        }
+        return { ...v, atributosInformativos: variantAttrs }
+      })
+      
+      return { ...row, atributosInformativos: newAttrs, variants: updatedVariants }
     }))
   }
 
@@ -452,19 +491,28 @@ export function CreadorMasivoConVariantes({
 
   // Update variant's own atributo informativo
   const updateVariantAtributoInformativo = (
-    parentIndex: number, 
-    variantId: string, 
-    attrIndex: number, 
-    field: "key" | "value", 
+    parentIndex: number,
+    variantId: string,
+    attrIndex: number,
+    field: "key" | "value",
     value: string
   ) => {
     setParentRows(prev => prev.map((row, i) => {
       if (i !== parentIndex) return row
+      const parentAttr = row.atributosInformativos[attrIndex]
       return {
         ...row,
         variants: row.variants.map(v => {
           if (v.id !== variantId) return v
           const newAttrs = [...v.atributosInformativos]
+          // Ensure the array has entries up to attrIndex
+          while (newAttrs.length <= attrIndex) {
+            newAttrs.push({ key: "", value: "" })
+          }
+          // If the entry doesn't exist, initialize it with parent's key
+          if (!newAttrs[attrIndex] || !newAttrs[attrIndex].key) {
+            newAttrs[attrIndex] = { key: parentAttr?.key || "", value: "" }
+          }
           newAttrs[attrIndex] = { ...newAttrs[attrIndex], [field]: value }
           return { ...v, atributosInformativos: newAttrs }
         })

@@ -1133,7 +1133,7 @@ export function useItems() {
         hasVariants: processedVariants.length > 0,
         containerAtributosPrincipales: data.containerAtributosPrincipales || [],
         atributosPrincipales: [],
-        atributosInformativos: data.atributosInformativos?.map(a => ({ key: a.key, value: a.value })) || [],
+        atributosInformativos: data.atributosInformativos?.map(a => ({ key: a.key, value: a.value, inheritValue: a.inherit })) || [],
         imagenUrl: data.imagenUrl || "",
         variantCount: processedVariants.length,
         itemCount: processedVariants.length,
