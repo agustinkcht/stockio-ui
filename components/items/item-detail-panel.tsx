@@ -1726,22 +1726,40 @@ export function ItemDetailPanel({
                       const oldSkuPadre = skuValue
                       setSkuValue(newSkuPadre)
                       
-                      // Update variant SKUs in real-time (visual only, no save until Guardar)
-                      if (variantItems.length > 0) {
-                        setVariantItems(prev => prev.map(variant => {
-                          // Replace the old SKU padre part with the new one
+                      // Track the parent SKU change
+                      if (onFieldChange && selectedItem.sku) {
+                        onFieldChange(selectedItem.sku, "sku", newSkuPadre)
+                      }
+                      
+                      // Update variant SKUs in real-time
+                      if (selectedItem.variants && selectedItem.variants.length > 0) {
+                        const updatedVariants = selectedItem.variants.map((variant: any) => {
+                          // Replace the SKU padre part with the new one
                           const skuParts = variant.sku.split('-')
-                          // The parent SKU is typically the first 1-2 segments (e.g., CZA-ISOR)
                           const oldPadreParts = oldSkuPadre.split('-')
-                          const newPadreParts = newSkuPadre.split('-')
                           
-                          // Replace the parent part of the variant SKU
+                          // Calculate the variant suffix (everything after the parent SKU)
                           if (skuParts.length > oldPadreParts.length) {
                             const variantSuffix = skuParts.slice(oldPadreParts.length).join('-')
-                            return { ...variant, sku: newSkuPadre + '-' + variantSuffix }
+                            const newSku = newSkuPadre ? `${newSkuPadre}-${variantSuffix}` : variantSuffix
+                            
+                            // Track each variant SKU change
+                            if (onFieldChange) {
+                              onFieldChange(variant.sku, "sku", newSku)
+                            }
+                            
+                            return { ...variant, sku: newSku }
                           }
                           return variant
-                        }))
+                        })
+                        
+                        // Update the parent's variants array
+                        if (onFieldChange && selectedItem.sku) {
+                          onFieldChange(selectedItem.sku, "variants", updatedVariants)
+                        }
+                        
+                        // Update variantItems for display
+                        setVariantItems(convertSavedVariantsToDisplay(updatedVariants))
                       }
                     }}
                     className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300 font-mono"
