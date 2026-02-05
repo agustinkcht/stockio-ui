@@ -1022,7 +1022,7 @@ export default function CreadorMasivoPage() {
                       {/* Section Visibility Dropdown - Available for both modes */}
                       <Popover>
                         <PopoverTrigger asChild>
-                          <button className="px-3 py-1.5 text-xs font-medium rounded-md border border-gray-300 hover:bg-gray-50 transition-colors flex items-center gap-1.5">
+                          <button type="button" className="px-3 py-1.5 text-xs font-medium rounded-md border border-gray-300 hover:bg-gray-50 transition-colors flex items-center gap-1.5">
                             <Eye className="w-3.5 h-3.5" />
                             <span>Secciones</span>
                           </button>

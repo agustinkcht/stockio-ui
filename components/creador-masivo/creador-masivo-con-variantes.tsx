@@ -1475,10 +1475,17 @@ export function CreadorMasivoConVariantes({
                     })
                   })}
                 </tr>
-              ))}
+                ))}
+              
+              {/* Spacer row between different parent items (not after the last one) */}
+              {parentIndex < parentRows.length - 1 && (
+                <tr className="h-4 bg-slate-100/30">
+                  <td colSpan={100} className="border-b border-gray-300"></td>
+                </tr>
+              )}
             </>
-          ))}
-        </tbody>
+            ))}
+          </tbody>
       </table>
     </div>
   )
