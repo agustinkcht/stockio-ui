@@ -1139,6 +1139,28 @@ export function ItemDetailPanel({
                       </div>
                     ) : (
                       <div className="mb-6">
+                        {/* SKU Padre Field */}
+                        <div className="mb-4 pb-4 border-b border-slate-200">
+                          <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">
+                            SKU Padre
+                          </label>
+                          <input
+                            type="text"
+                            value={selectedItem?.sku || ""}
+                            onChange={(e) => {
+                              const newSkuPadre = e.target.value.toUpperCase()
+                              // Update parent SKU immediately
+                              setSelectedItem({ ...selectedItem, sku: newSkuPadre })
+                              setHasUnsavedChanges(true)
+                            }}
+                            className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300 font-mono"
+                            placeholder="Ej: VNO-KNECHT"
+                          />
+                          <p className="text-xs text-slate-500 mt-1.5 italic">
+                            Este será el prefijo para todos los SKUs de las variantes
+                          </p>
+                        </div>
+                        
                         <div className={`flex flex-col gap-3 transition-all duration-300 ${
                           variantItems.length > 0 && isAtributosPrincipalesLocked 
                             ? "opacity-50 pointer-events-none select-none" 
@@ -1184,8 +1206,17 @@ export function ItemDetailPanel({
                               type="text"
                               value={attr.key}
                               onChange={(e) => {
+                                const newKey = e.target.value
                                 const updated = [...containerAtributosPrincipales]
-                                updated[index].key = e.target.value
+                                
+                                // Check for duplicate atributo principal name (excluding current)
+                                const isDuplicate = updated.some((a, i) => i !== index && a.key.toLowerCase() === newKey.toLowerCase())
+                                if (isDuplicate && newKey.trim()) {
+                                  alert("Ya existe un atributo principal con este nombre")
+                                  return
+                                }
+                                
+                                updated[index].key = newKey
                                 handleContainerAtributosPrincipalesChange(updated)
                               }}
                               className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300"
@@ -1204,8 +1235,16 @@ export function ItemDetailPanel({
                                 }
                                 onKeyDown={(e) => {
                                   if (e.key === "Enter" && varianteInput[index]?.trim()) {
+                                    const newTag = varianteInput[index].trim()
                                     const updated = [...containerAtributosPrincipales]
-                                    updated[index].variantes.push(varianteInput[index].trim())
+                                    
+                                    // Check for duplicate tag in the same atributo
+                                    if (updated[index].variantes.includes(newTag)) {
+                                      alert("Esta variante ya existe en este atributo")
+                                      return
+                                    }
+                                    
+                                    updated[index].variantes.push(newTag)
                                     handleContainerAtributosPrincipalesChange(updated)
                                     setVarianteInput({ ...varianteInput, [index]: "" })
                                   }
@@ -1317,8 +1356,19 @@ export function ItemDetailPanel({
 
                           <button
                             onClick={() => {
+                              console.log("[v0] Removing atributo principal at index:", index)
+                              
+                              // Filter out the atributo principal
                               const updated = containerAtributosPrincipales.filter((_, i) => i !== index)
                               handleContainerAtributosPrincipalesChange(updated)
+                              
+                              // Delete ALL variants when removing an atributo principal
+                              setSelectedItem({ ...selectedItem, variants: [] })
+                              setVariantItems([])
+                              setHasUnsavedChanges(true)
+                              
+                              console.log("[v0] Deleted all variants due to atributo principal removal")
+                              
                               if (updated.length === 0 && atributosInformativos.length === 0) {
                                 setShowAtributosView(false)
                               }
