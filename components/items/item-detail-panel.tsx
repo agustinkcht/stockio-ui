@@ -1713,60 +1713,16 @@ export function ItemDetailPanel({
                   </div>
                 </div>
                 
-                {/* SKU Padre field - below the header row */}
+                {/* SKU Padre field - below the header row (readonly display) */}
                 <div className="mt-4">
                   <label className="text-[9px] font-medium text-slate-400 uppercase tracking-wider block mb-1.5">
                     SKU Padre
                   </label>
-                  <input
-                    type="text"
-                    value={skuValue}
-                    onChange={(e) => {
-                      const newSkuPadre = e.target.value.toUpperCase()
-                      const oldSkuPadre = skuValue
-                      setSkuValue(newSkuPadre)
-                      
-                      // Track the parent SKU change
-                      if (onFieldChange && selectedItem.sku) {
-                        onFieldChange(selectedItem.sku, "sku", newSkuPadre)
-                      }
-                      
-                      // Update variant SKUs in real-time
-                      if (selectedItem.variants && selectedItem.variants.length > 0) {
-                        const updatedVariants = selectedItem.variants.map((variant: any) => {
-                          // Replace the SKU padre part with the new one
-                          const skuParts = variant.sku.split('-')
-                          const oldPadreParts = oldSkuPadre.split('-')
-                          
-                          // Calculate the variant suffix (everything after the parent SKU)
-                          if (skuParts.length > oldPadreParts.length) {
-                            const variantSuffix = skuParts.slice(oldPadreParts.length).join('-')
-                            const newSku = newSkuPadre ? `${newSkuPadre}-${variantSuffix}` : variantSuffix
-                            
-                            // Track each variant SKU change
-                            if (onFieldChange) {
-                              onFieldChange(variant.sku, "sku", newSku)
-                            }
-                            
-                            return { ...variant, sku: newSku }
-                          }
-                          return variant
-                        })
-                        
-                        // Update the parent's variants array
-                        if (onFieldChange && selectedItem.sku) {
-                          onFieldChange(selectedItem.sku, "variants", updatedVariants)
-                        }
-                        
-                        // Update variantItems for display
-                        setVariantItems(convertSavedVariantsToDisplay(updatedVariants))
-                      }
-                    }}
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300 font-mono"
-                    placeholder="Ej: VNO-KNECHT"
-                  />
+                  <div className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-600 text-sm font-mono">
+                    {skuValue}
+                  </div>
                   <p className="text-[9px] text-slate-400 mt-1.5 italic">
-                    Base para generar SKUs de variantes
+                    Base para generar SKUs de variantes (editable solo al crear el artículo)
                   </p>
                 </div>
               </div>
