@@ -740,56 +740,67 @@ export function ItemDetailPanel({
     const existingVariants = selectedItem.variants || []
     console.log("[v0] Existing variants:", existingVariants)
     
-    // Generate only NEW combinations that don't already exist
-    const newCombinations = generateNewVariantCombinations(existingVariants)
+    // Count how many atributos principales we currently have
+    const currentAttrCount = containerAtributosPrincipales.filter(
+      (attr) => attr.key && attr.variantes.length > 0
+    ).length
+    console.log("[v0] Current atributo count:", currentAttrCount)
+    
+    // Filter out existing variants that don't match the current atributo count
+    // (e.g., if we now have 2 atributos, remove variants with only 1 atributo)
+    const validExistingVariants = existingVariants.filter((v: any) => {
+      if (!v.atributosPrincipales) return false
+      const variantAttrCount = v.atributosPrincipales.filter((a: any) => a && a.value).length
+      return variantAttrCount === currentAttrCount
+    })
+    console.log("[v0] Valid existing variants (matching attr count):", validExistingVariants)
+    
+    // Generate only NEW combinations that don't already exist among valid variants
+    const newCombinations = generateNewVariantCombinations(validExistingVariants)
     console.log("[v0] New combinations to add:", newCombinations)
     
-    // If there are new combinations, add them to the variants
-    if (newCombinations.length > 0) {
-      // Prepare inherited atributosInformativos for new variants
-      const inheritedAtributosInformativos = (selectedItem.atributosInformativos || []).map(attr => ({
-        key: attr.key,
-        value: attr.inheritValue ? "" : (attr.value || ""),
-        inheritValue: attr.inheritValue,
-      }))
+    // Prepare inherited atributosInformativos for new variants
+    const inheritedAtributosInformativos = (selectedItem.atributosInformativos || []).map(attr => ({
+      key: attr.key,
+      value: attr.inheritValue ? "" : (attr.value || ""),
+      inheritValue: attr.inheritValue,
+    }))
 
-      const newVariantObjects = newCombinations.map((combo) => ({
-        sku: combo.sku,
-        name: selectedItem.name,
-        codigoUniversal: combo.codigoUniversal || "",
-        descripcion: combo.descripcion || "",
-        foto: combo.foto || "",
-        categoria: selectedItem.categoria,
-        atributosPrincipales: [
-          combo.variant1 ? { key: containerAtributosPrincipales[0]?.key || "", value: combo.variant1 } : null,
-          combo.variant2 ? { key: containerAtributosPrincipales[1]?.key || "", value: combo.variant2 } : null,
-        ].filter(Boolean),
-        atributosInformativos: inheritedAtributosInformativos,
-        stock: {
-          total: "0",
-          reservado: "0",
-          disponible: "0",
-        },
-      }))
+    const newVariantObjects = newCombinations.map((combo) => ({
+      sku: combo.sku,
+      name: selectedItem.name,
+      codigoUniversal: combo.codigoUniversal || "",
+      descripcion: combo.descripcion || "",
+      foto: combo.foto || "",
+      categoria: selectedItem.categoria,
+      atributosPrincipales: [
+        combo.variant1 ? { key: containerAtributosPrincipales[0]?.key || "", value: combo.variant1 } : null,
+        combo.variant2 ? { key: containerAtributosPrincipales[1]?.key || "", value: combo.variant2 } : null,
+      ].filter(Boolean),
+      atributosInformativos: inheritedAtributosInformativos,
+      stock: {
+        total: "0",
+        reservado: "0",
+        disponible: "0",
+      },
+    }))
 
-      const updatedVariants = [...existingVariants, ...newVariantObjects]
-      console.log("[v0] Updated variants:", updatedVariants)
-      
-      // Update variantItems for display (existing + new)
-      setVariantItems(convertSavedVariantsToDisplay(updatedVariants))
+    // Combine valid existing variants + new ones
+    const updatedVariants = [...validExistingVariants, ...newVariantObjects]
+    console.log("[v0] Updated variants:", updatedVariants)
+    
+    // Update variantItems for display
+    setVariantItems(convertSavedVariantsToDisplay(updatedVariants))
 
-      const variantsKey = JSON.stringify(updatedVariants.map((v) => ({ sku: v.sku, attrs: v.atributosPrincipales })))
-      
-      // Always call onFieldChange to save the variants
-      if (onFieldChange && selectedItem.sku) {
-        onFieldChange(selectedItem.sku, "variants", updatedVariants)
-      }
-      
-      // Update the ref for change tracking
-      previousVariantsRef.current = variantsKey
-    } else {
-      console.log("[v0] No new combinations to add")
+    const variantsKey = JSON.stringify(updatedVariants.map((v) => ({ sku: v.sku, attrs: v.atributosPrincipales })))
+    
+    // Always call onFieldChange to save the variants
+    if (onFieldChange && selectedItem.sku) {
+      onFieldChange(selectedItem.sku, "variants", updatedVariants)
     }
+    
+    // Update the ref for change tracking
+    previousVariantsRef.current = variantsKey
   }
 
   // The stock is now managed via onFieldChange/editField
@@ -1204,9 +1215,16 @@ export function ItemDetailPanel({
                                 }
                                 onKeyDown={(e) => {
                                   if (e.key === "Enter" && varianteInput[index]?.trim()) {
+                                    const newTag = varianteInput[index].trim()
                                     const updated = [...containerAtributosPrincipales]
-                                    updated[index].variantes.push(varianteInput[index].trim())
-                                    handleContainerAtributosPrincipalesChange(updated)
+                                    // Case-insensitive duplicate check
+                                    const isDuplicate = updated[index].variantes.some(
+                                      (existing) => existing.toLowerCase() === newTag.toLowerCase()
+                                    )
+                                    if (!isDuplicate) {
+                                      updated[index].variantes.push(newTag)
+                                      handleContainerAtributosPrincipalesChange(updated)
+                                    }
                                     setVarianteInput({ ...varianteInput, [index]: "" })
                                   }
                                 }}
@@ -1319,6 +1337,13 @@ export function ItemDetailPanel({
                             onClick={() => {
                               const updated = containerAtributosPrincipales.filter((_, i) => i !== index)
                               handleContainerAtributosPrincipalesChange(updated)
+                              
+                              // Clear all variants when removing an atributo principal
+                              setVariantItems([])
+                              if (onFieldChange && selectedItem?.sku) {
+                                onFieldChange(selectedItem.sku, "variants", [])
+                              }
+                              
                               if (updated.length === 0 && atributosInformativos.length === 0) {
                                 setShowAtributosView(false)
                               }
@@ -1723,18 +1748,32 @@ export function ItemDetailPanel({
                     value={skuValue}
                     onChange={(e) => {
                       const newSkuPadre = e.target.value.toUpperCase()
+                      const oldSkuPadre = skuValue
                       setSkuValue(newSkuPadre)
                       
-                      // The hook handles storing this as pending until save
-                      if (onFieldChange && selectedItem.sku) {
-                        onFieldChange(selectedItem.sku, "sku", newSkuPadre)
+                      // Update variant SKUs in real-time (visual only, no save until Guardar)
+                      if (variantItems.length > 0) {
+                        setVariantItems(prev => prev.map(variant => {
+                          // Replace the old SKU padre part with the new one
+                          const skuParts = variant.sku.split('-')
+                          // The parent SKU is typically the first 1-2 segments (e.g., CZA-ISOR)
+                          const oldPadreParts = oldSkuPadre.split('-')
+                          const newPadreParts = newSkuPadre.split('-')
+                          
+                          // Replace the parent part of the variant SKU
+                          if (skuParts.length > oldPadreParts.length) {
+                            const variantSuffix = skuParts.slice(oldPadreParts.length).join('-')
+                            return { ...variant, sku: newSkuPadre + '-' + variantSuffix }
+                          }
+                          return variant
+                        }))
                       }
                     }}
                     className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300 font-mono"
-                    placeholder="Ej: CZA-ISOR"
+                    placeholder="Ej: VNO-KNECHT"
                   />
                   <p className="text-[9px] text-slate-400 mt-1.5 italic">
-                    Base para generar SKUs de variantes (cambios se guardan al presionar Guardar)
+                    Base para generar SKUs de variantes
                   </p>
                 </div>
               </div>

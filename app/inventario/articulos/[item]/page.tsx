@@ -80,11 +80,9 @@ export default function ItemDetailPage() {
     setIsSaving(true)
     setShowSaveSuccess(false)
     try {
-      let newSku: string | null = null
-      
       if (hasUnsavedEdits) {
         await sleep(800)
-        newSku = saveEdit() || null // saveEdit now returns new SKU if it changed
+        saveEdit()
       }
       if (hasUnsavedDeletes) {
         await sleep(800)
@@ -93,12 +91,6 @@ export default function ItemDetailPage() {
       
       setShowSaveSuccess(true)
       await new Promise((resolve) => setTimeout(resolve, 500))
-      
-      // Navigate to new SKU if it changed
-      if (newSku) {
-        console.log("[v0] SKU changed, navigating to:", newSku)
-        router.push(`/inventario/articulos/${newSku}`)
-      }
     } catch (error) {
       console.error("[v0] Error saving changes:", error)
     } finally {

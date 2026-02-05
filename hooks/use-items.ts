@@ -18,13 +18,6 @@ interface EditedItemState {
   currentValues: Partial<Item>
 }
 
-interface PendingChanges {
-  itemSku: string
-  newSku?: string
-  originalSku: string
-  variantSkuChanges?: Array<{ oldSku: string; newSku: string }>
-}
-
 async function loadInitialItems(dataSet: string): Promise<Item[]> {
   if (dataSet === "noire") {
     const { INITIAL_ITEMS } = await import("@/lib/data/initial-items-noire")
@@ -46,9 +39,6 @@ export function useItems() {
   const [editedItem, setEditedItem] = useState<EditedItemState | null>(null)
   const [lastUndoneEdit, setLastUndoneEdit] = useState<EditedItemState | null>(null)
   const [hasUnsavedEdits, setHasUnsavedEdits] = useState(false)
-  
-  // Track pending SKU changes that shouldn't be applied until save
-  const [pendingChanges, setPendingChanges] = useState<PendingChanges | null>(null)
 
   useEffect(() => {
     console.log("[v0] useItems - hasUnsavedDeletes changed to:", hasUnsavedDeletes)
@@ -453,41 +443,7 @@ export function useItems() {
       return
     }
 
-    // Special handling for SKU changes on parent items with variants
-    if (field === "sku") {
-      const originalItem = items.find((item) => item.sku === itemSku)
-      if (originalItem && originalItem.isAgrupador && originalItem.variants) {
-        console.log("[v0] useItems - Detected SKU padre change, storing as pending")
-        
-        // Store as pending change (don't apply to items array yet)
-        setPendingChanges({
-          itemSku,
-          newSku: newValue,
-          originalSku: itemSku,
-          variantSkuChanges: []
-        })
-        
-        // Still track in editedItem for Deshacer/Guardar buttons
-        if (!editedItem || editedItem.itemSku !== itemSku) {
-          setEditedItem({
-            itemSku,
-            originalValues: { ...originalItem },
-            currentValues: { ...originalItem, [field]: newValue },
-          })
-        } else {
-          setEditedItem({
-            ...editedItem,
-            currentValues: { ...editedItem.currentValues, [field]: newValue },
-          })
-        }
-        
-        setHasUnsavedEdits(true)
-        setLastUndoneEdit(null)
-        return
-      }
-    }
-
-    // Regular top-level item edit (non-SKU or non-parent items)
+    // Regular top-level item edit
     if (!editedItem || editedItem.itemSku !== itemSku) {
       const originalItem = items.find((item) => item.sku === itemSku)
       if (!originalItem) return
@@ -614,9 +570,6 @@ export function useItems() {
     setEditedItem(null)
     setLastUndoneEdit(null)
     setHasUnsavedEdits(false)
-    
-    // Clear any pending changes
-    setPendingChanges(null)
   }
 
   const redoEdit = () => {
@@ -654,48 +607,12 @@ export function useItems() {
 
     console.log("[v0] useItems - saveEdit called for:", editedItem.itemSku)
 
-    let newSkuForNavigation: string | null = null
-
-    // Apply pending SKU changes if they exist
-    if (pendingChanges && pendingChanges.newSku) {
-      console.log("[v0] useItems - Applying pending SKU changes:", pendingChanges)
-      
-      const oldSku = pendingChanges.originalSku
-      const newSku = pendingChanges.newSku
-      
-      setItems((prevItems) =>
-        prevItems.map((item) => {
-          if (item.sku === oldSku && item.isAgrupador && item.variants) {
-            // Update parent SKU and all variant SKUs
-            const updatedVariants = item.variants.map((variant: any) => {
-              const skuParts = variant.sku.split('-')
-              const oldPadreParts = oldSku.split('-')
-              
-              if (skuParts.length > oldPadreParts.length) {
-                const variantSuffix = skuParts.slice(oldPadreParts.length).join('-')
-                return { ...variant, sku: `${newSku}-${variantSuffix}` }
-              }
-              return variant
-            })
-            
-            newSkuForNavigation = newSku
-            return { ...item, sku: newSku, variants: updatedVariants }
-          }
-          return item
-        })
-      )
-      
-      setPendingChanges(null)
-    }
-
     localStorage.setItem(getStorageKey(), JSON.stringify(items))
     console.log("[v0] useItems - saved edits to localStorage")
 
     setEditedItem(null)
     setLastUndoneEdit(null)
     setHasUnsavedEdits(false)
-    
-    return newSkuForNavigation
   }
 
   // Force save current items state to localStorage (for audit mode bulk saves)
@@ -1269,7 +1186,6 @@ export function useItems() {
     canUndoEdit,
     canRedoEdit,
     editedItem,
-    pendingChanges,
     reduceStock, // Export the new function
     increaseStock,
     updatePricing,
