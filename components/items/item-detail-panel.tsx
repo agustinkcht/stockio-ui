@@ -284,6 +284,9 @@ export function ItemDetailPanel({
 
   // State for variant input
   const [varianteInput, setVarianteInput] = useState<Record<number, string>>({})
+  
+  // State for duplicate tag errors
+  const [duplicateTagError, setDuplicateTagError] = useState<Record<number, boolean>>({})
 
   // State for stock dropdown visibility
   const [showTotalDropdown, setShowTotalDropdown] = useState(false)
@@ -1224,13 +1227,32 @@ export function ItemDetailPanel({
                                     if (!isDuplicate) {
                                       updated[index].variantes.push(newTag)
                                       handleContainerAtributosPrincipalesChange(updated)
+                                      setDuplicateTagError({ ...duplicateTagError, [index]: false })
+                                    } else {
+                                      // Show error for duplicate tag
+                                      setDuplicateTagError({ ...duplicateTagError, [index]: true })
+                                      // Auto-clear error after 2 seconds
+                                      setTimeout(() => {
+                                        setDuplicateTagError((prev) => ({ ...prev, [index]: false }))
+                                      }, 2000)
                                     }
                                     setVarianteInput({ ...varianteInput, [index]: "" })
                                   }
                                 }}
+                                onFocus={() => setDuplicateTagError({ ...duplicateTagError, [index]: false })}
                                 placeholder="Ej: Rojo"
-                                className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300"
+                                className={`w-full px-3 py-2.5 bg-white border rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 transition-all hover:border-slate-300 text-sm ${
+                                  duplicateTagError[index]
+                                    ? "border-red-400 focus:ring-red-400"
+                                    : "border-slate-200 focus:ring-slate-300"
+                                }`}
                               />
+
+                              {duplicateTagError[index] && (
+                                <p className="text-red-500 text-xs mt-1 font-medium animate-pulse">
+                                  Este tag ya existe (no se permiten duplicados, incluso con diferente capitalización)
+                                </p>
+                              )}
 
                               <div className="flex flex-wrap gap-2">
                                 {attr.variantes.map((variante, vIndex) => {
