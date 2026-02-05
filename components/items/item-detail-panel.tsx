@@ -1695,42 +1695,61 @@ export function ItemDetailPanel({
             
             {/* Thumbnail + Title Header for Parent Items */}
             {isViewingContainer && (
-              <div className="flex items-center gap-4 mb-6 pb-5 border-b border-slate-100">
-                <div className="w-14 h-14 rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-                  <Image
-                    src={getCategoryImage(selectedItem.categoria) || "/placeholder.svg"}
-                    alt={selectedItem.name}
-                    width={56}
-                    height={56}
-                    className="object-cover"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h2 className="font-semibold text-slate-900 text-base truncate">{selectedItem.name}</h2>
-                  <p className="text-[10px] text-slate-400 uppercase tracking-wider mt-0.5">Agrupador de variantes</p>
-                  
-                  {/* SKU Padre field */}
-                  <div className="mt-3">
-                    <label className="text-[9px] font-medium text-slate-400 uppercase tracking-wider block mb-1">
-                      SKU Padre
-                    </label>
-                    <input
-                      type="text"
-                      value={skuValue}
-                      onChange={(e) => {
-                        const newSkuPadre = e.target.value.toUpperCase()
-                        setSkuValue(newSkuPadre)
-                        if (onFieldChange && selectedItem.sku) {
-                          onFieldChange(selectedItem.sku, "sku", newSkuPadre)
-                        }
-                      }}
-                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-xs transition-all hover:border-slate-300 font-mono"
-                      placeholder="Ej: VNO-KNECHT"
+              <div className="mb-6 pb-5 border-b border-slate-100">
+                {/* Top row: Thumbnail + Title aligned horizontally */}
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    <Image
+                      src={getCategoryImage(selectedItem.categoria) || "/placeholder.svg"}
+                      alt={selectedItem.name}
+                      width={56}
+                      height={56}
+                      className="object-cover"
                     />
-                    <p className="text-[8px] text-slate-400 mt-1 italic">
-                      Base para generar SKUs de variantes
-                    </p>
                   </div>
+                  <div className="flex-1 min-w-0">
+                    <h2 className="font-semibold text-slate-900 text-base truncate">{selectedItem.name}</h2>
+                    <p className="text-[10px] text-slate-400 uppercase tracking-wider mt-0.5">Agrupador de variantes</p>
+                  </div>
+                </div>
+                
+                {/* SKU Padre field - below the header row */}
+                <div className="mt-4">
+                  <label className="text-[9px] font-medium text-slate-400 uppercase tracking-wider block mb-1.5">
+                    SKU Padre
+                  </label>
+                  <input
+                    type="text"
+                    value={skuValue}
+                    onChange={(e) => {
+                      const newSkuPadre = e.target.value.toUpperCase()
+                      const oldSkuPadre = skuValue
+                      setSkuValue(newSkuPadre)
+                      
+                      // Update variant SKUs in real-time (visual only, no save until Guardar)
+                      if (variantItems.length > 0) {
+                        setVariantItems(prev => prev.map(variant => {
+                          // Replace the old SKU padre part with the new one
+                          const skuParts = variant.sku.split('-')
+                          // The parent SKU is typically the first 1-2 segments (e.g., CZA-ISOR)
+                          const oldPadreParts = oldSkuPadre.split('-')
+                          const newPadreParts = newSkuPadre.split('-')
+                          
+                          // Replace the parent part of the variant SKU
+                          if (skuParts.length > oldPadreParts.length) {
+                            const variantSuffix = skuParts.slice(oldPadreParts.length).join('-')
+                            return { ...variant, sku: newSkuPadre + '-' + variantSuffix }
+                          }
+                          return variant
+                        }))
+                      }
+                    }}
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300 font-mono"
+                    placeholder="Ej: VNO-KNECHT"
+                  />
+                  <p className="text-[9px] text-slate-400 mt-1.5 italic">
+                    Base para generar SKUs de variantes
+                  </p>
                 </div>
               </div>
             )}
