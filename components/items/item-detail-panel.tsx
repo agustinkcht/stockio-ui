@@ -1139,43 +1139,41 @@ export function ItemDetailPanel({
                       </div>
                     ) : (
                       <div className="mb-6">
-                        {/* SKU Padre Field */}
-                        <div className="mb-4 pb-4 border-b border-slate-200">
-                          <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">
-                            SKU Padre
-                          </label>
-                          <input
-                            type="text"
-                            value={selectedItem?.sku || ""}
-                          onChange={(e) => {
-                            const newSkuPadre = e.target.value.toUpperCase()
-                            // Update parent SKU using the proper update function
-                            updateItem(selectedItem.sku, { sku: newSkuPadre })
-                            if (onFieldChange && selectedItem.sku) {
-                              onFieldChange(selectedItem.sku, "sku", newSkuPadre)
-                            }
-                          }}
-                            className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300 font-mono"
-                            placeholder="Ej: VNO-KNECHT"
-                          />
-                          <p className="text-xs text-slate-500 mt-1.5 italic">
-                            Este será el prefijo para todos los SKUs de las variantes
-                          </p>
-                        </div>
-                        
                         <div className={`flex flex-col gap-3 transition-all duration-300 ${
                           variantItems.length > 0 && isAtributosPrincipalesLocked 
                             ? "opacity-50 pointer-events-none select-none" 
                             : ""
                         }`}>
                           <div className="flex items-center justify-between">
-                            <div>
+                            <div className="flex-1">
                               <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
                                 Atributos Principales
                               </h3>
                               <p className="text-xs text-gray-500 italic">
                                 Atributos que definen las variantes del producto (máximo 2)
                               </p>
+                              
+                              {/* SKU Padre field */}
+                              <div className="mt-4 pt-3 border-t border-slate-100">
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">
+                                  SKU Padre
+                                </label>
+                                <input
+                                  type="text"
+                                  value={selectedItem?.sku || ""}
+                                  onChange={(e) => {
+                                    const newSkuPadre = e.target.value.toUpperCase()
+                                    if (onFieldChange && selectedItem.sku) {
+                                      onFieldChange(selectedItem.sku, "sku", newSkuPadre)
+                                    }
+                                  }}
+                                  className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300 font-mono"
+                                  placeholder="Ej: VNO-KNECHT"
+                                />
+                                <p className="text-[9px] text-slate-400 mt-1.5 italic">
+                                  Base para generar SKUs de variantes
+                                </p>
+                              </div>
                             </div>
                             {/* Lock button - only visible when variants exist */}
                             {variantItems.length > 0 && (
@@ -1208,17 +1206,8 @@ export function ItemDetailPanel({
                               type="text"
                               value={attr.key}
                               onChange={(e) => {
-                                const newKey = e.target.value
                                 const updated = [...containerAtributosPrincipales]
-                                
-                                // Check for duplicate atributo principal name (excluding current)
-                                const isDuplicate = updated.some((a, i) => i !== index && a.key.toLowerCase() === newKey.toLowerCase())
-                                if (isDuplicate && newKey.trim()) {
-                                  alert("Ya existe un atributo principal con este nombre")
-                                  return
-                                }
-                                
-                                updated[index].key = newKey
+                                updated[index].key = e.target.value
                                 handleContainerAtributosPrincipalesChange(updated)
                               }}
                               className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300"
@@ -1237,16 +1226,8 @@ export function ItemDetailPanel({
                                 }
                                 onKeyDown={(e) => {
                                   if (e.key === "Enter" && varianteInput[index]?.trim()) {
-                                    const newTag = varianteInput[index].trim()
                                     const updated = [...containerAtributosPrincipales]
-                                    
-                                    // Check for duplicate tag in the same atributo
-                                    if (updated[index].variantes.includes(newTag)) {
-                                      alert("Esta variante ya existe en este atributo")
-                                      return
-                                    }
-                                    
-                                    updated[index].variantes.push(newTag)
+                                    updated[index].variantes.push(varianteInput[index].trim())
                                     handleContainerAtributosPrincipalesChange(updated)
                                     setVarianteInput({ ...varianteInput, [index]: "" })
                                   }
@@ -1358,18 +1339,8 @@ export function ItemDetailPanel({
 
                           <button
                             onClick={() => {
-                              console.log("[v0] Removing atributo principal at index:", index)
-                              
-                              // Filter out the atributo principal
                               const updated = containerAtributosPrincipales.filter((_, i) => i !== index)
                               handleContainerAtributosPrincipalesChange(updated)
-                              
-                              // Delete ALL variants when removing an atributo principal
-                              setSelectedItem({ ...selectedItem, variants: [] })
-                              setVariantItems([])
-                              
-                              console.log("[v0] Deleted all variants due to atributo principal removal")
-                              
                               if (updated.length === 0 && atributosInformativos.length === 0) {
                                 setShowAtributosView(false)
                               }
