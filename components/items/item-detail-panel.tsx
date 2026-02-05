@@ -1708,6 +1708,29 @@ export function ItemDetailPanel({
                 <div className="flex-1 min-w-0">
                   <h2 className="font-semibold text-slate-900 text-base truncate">{selectedItem.name}</h2>
                   <p className="text-[10px] text-slate-400 uppercase tracking-wider mt-0.5">Agrupador de variantes</p>
+                  
+                  {/* SKU Padre field */}
+                  <div className="mt-3">
+                    <label className="text-[9px] font-medium text-slate-400 uppercase tracking-wider block mb-1">
+                      SKU Padre
+                    </label>
+                    <input
+                      type="text"
+                      value={skuValue}
+                      onChange={(e) => {
+                        const newSkuPadre = e.target.value.toUpperCase()
+                        setSkuValue(newSkuPadre)
+                        if (onFieldChange && selectedItem.sku) {
+                          onFieldChange(selectedItem.sku, "sku", newSkuPadre)
+                        }
+                      }}
+                      className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-xs transition-all hover:border-slate-300 font-mono"
+                      placeholder="Ej: VNO-KNECHT"
+                    />
+                    <p className="text-[8px] text-slate-400 mt-1 italic">
+                      Base para generar SKUs de variantes
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
