@@ -2,7 +2,7 @@
 
 import type { Item, DepositStock, SortFactorConfig, FilterConfig } from "@/lib/types"
 import { ItemCard } from "./item-card"
-import { Plus, ArrowUpDown, ListFilterIcon, Search, X, Grid, Minus, ClipboardList, Check, MoreVertical } from "lucide-react"
+import { Plus, ArrowUpDown, ListFilterIcon, Search, X, Grid, Minus, ClipboardList, Check, MoreVertical, Pencil } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRef, useState, useEffect, useMemo, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -408,6 +408,27 @@ export function ItemsGrid({
                     </div>
                   )}
                 </div>
+
+                <Button
+                  onClick={() => {
+                    if (!hasSelectedItems || !getSelectedSkus) return
+                    const selectedSkus = getSelectedSkus()
+                    // Store selected SKUs in sessionStorage for the editor masivo page
+                    sessionStorage.setItem("editor-masivo-skus", JSON.stringify(selectedSkus))
+                    router.push("/inventario/articulos/editor-masivo")
+                  }}
+                  disabled={!hasSelectedItems}
+                  variant="ghost"
+                  size="sm"
+                  className={`h-8 text-xs transition-colors border shadow-sm cursor-pointer ${
+                    hasSelectedItems
+                      ? "border-[rgba(228,230,235,0.6)] hover:bg-gray-100"
+                      : "border-[rgba(228,230,235,0.6)] text-gray-400 cursor-not-allowed"
+                  }`}
+                >
+                  <Pencil className={`w-3.5 h-3.5 mr-1.5 ${hasSelectedItems ? "text-blue-600" : "text-gray-400"}`} />
+                  Editor Masivo
+                </Button>
 
                 <Button
                   onClick={() => router.push("/inventario/creador-masivo")}
