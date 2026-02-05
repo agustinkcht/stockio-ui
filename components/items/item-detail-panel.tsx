@@ -1149,9 +1149,12 @@ export function ItemDetailPanel({
                             value={selectedItem?.sku || ""}
                             onChange={(e) => {
                               const newSkuPadre = e.target.value.toUpperCase()
-                              // Update parent SKU immediately
-                              setSelectedItem({ ...selectedItem, sku: newSkuPadre })
+                              // Update parent SKU using the proper update function
+                              updateItem(selectedItem.sku, { sku: newSkuPadre })
                               setHasUnsavedChanges(true)
+                              if (onFieldChange && selectedItem.sku) {
+                                onFieldChange(selectedItem.sku, "sku", newSkuPadre)
+                              }
                             }}
                             className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300 font-mono"
                             placeholder="Ej: VNO-KNECHT"
@@ -1823,10 +1826,6 @@ export function ItemDetailPanel({
                 <>
                   {selectedDetailTab === "info" && (
                     <div className="h-full flex flex-col py-2">
-                      <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
-                        Información del Producto
-                      </h3>
-
                       <div className="space-y-3">
                         <div className="grid grid-cols-2 gap-4">
                           <div className="flex flex-col gap-2">
@@ -2054,10 +2053,6 @@ export function ItemDetailPanel({
                 <>
                   {selectedDetailTab === "info" && (
                     <div className="h-full flex flex-col mt-5">
-                      <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-4">
-                        Información del Producto
-                      </h3>
-
                       <div className="space-y-4">
                         {/* Categoría and Marca */}
                         <div className="grid grid-cols-2 gap-5">
