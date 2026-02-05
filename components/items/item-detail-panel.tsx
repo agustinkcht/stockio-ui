@@ -1713,16 +1713,28 @@ export function ItemDetailPanel({
                   </div>
                 </div>
                 
-                {/* SKU Padre field - below the header row (readonly display) */}
+                {/* SKU Padre field - below the header row */}
                 <div className="mt-4">
                   <label className="text-[9px] font-medium text-slate-400 uppercase tracking-wider block mb-1.5">
                     SKU Padre
                   </label>
-                  <div className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-600 text-sm font-mono">
-                    {skuValue}
-                  </div>
+                  <input
+                    type="text"
+                    value={skuValue}
+                    onChange={(e) => {
+                      const newSkuPadre = e.target.value.toUpperCase()
+                      setSkuValue(newSkuPadre)
+                      
+                      // The hook handles storing this as pending until save
+                      if (onFieldChange && selectedItem.sku) {
+                        onFieldChange(selectedItem.sku, "sku", newSkuPadre)
+                      }
+                    }}
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300 font-mono"
+                    placeholder="Ej: CZA-ISOR"
+                  />
                   <p className="text-[9px] text-slate-400 mt-1.5 italic">
-                    Base para generar SKUs de variantes (editable solo al crear el artículo)
+                    Base para generar SKUs de variantes (cambios se guardan al presionar Guardar)
                   </p>
                 </div>
               </div>
