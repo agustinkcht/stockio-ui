@@ -79,13 +79,18 @@ export function ItemDetailPanel({
   // Case 2 (Key-only): Parent has key with empty value -> child can fill its own value
   // Case 3 (Exclusive): Child can have additional attributes not in parent
   const getMergedAtributosInformativos = (
-    parentAttrs: Array<{ key: string; value: string; inheritValue?: boolean }> | undefined,
-    childAttrs: Array<{ key: string; value: string; inheritValue?: boolean }> | undefined,
+  parentAttrs: Array<{ key: string; value: string; inheritValue?: boolean; inherit?: boolean }> | undefined,
+  childAttrs: Array<{ key: string; value: string; inheritValue?: boolean; inherit?: boolean }> | undefined,
   ): Array<{ key: string; value: string; keyOpen?: boolean; valueOpen?: boolean; inheritValue?: boolean }> => {
-    if (!isChildItem || !fatherItem) {
-      // Not a child item, just return child's attributes (preserving inheritValue flag)
-      return (childAttrs || []).map(attr => ({ ...attr, keyOpen: false, valueOpen: false }))
-    }
+  if (!isChildItem || !fatherItem) {
+  // Not a child item, just return child's attributes (normalizing inherit/inheritValue to inheritValue)
+  return (childAttrs || []).map(attr => ({ 
+    ...attr, 
+    keyOpen: false, 
+    valueOpen: false,
+    inheritValue: attr.inheritValue || attr.inherit || false 
+  }))
+  }
 
     const result: Array<{ key: string; value: string; keyOpen?: boolean; valueOpen?: boolean }> = []
     const childMap = new Map<string, { key: string; value: string }>()
@@ -95,12 +100,15 @@ export function ItemDetailPanel({
       childMap.set(attr.key, attr)
     })
     
-    // First, add all parent attributes (Case 1 and Case 2)
-    ;(parentAttrs || []).forEach(parentAttr => {
-      const childAttr = childMap.get(parentAttr.key)
-      
-      // Case 2 is now determined by inheritValue flag (or empty value for backward compatibility)
-      const isCase2 = parentAttr.inheritValue || (!parentAttr.value && parentAttr.inheritValue !== false)
+  // First, add all parent attributes (Case 1 and Case 2)
+  ;(parentAttrs || []).forEach(parentAttr => {
+  const childAttr = childMap.get(parentAttr.key)
+  
+  // Normalize inherit/inheritValue property
+  const inheritFlag = parentAttr.inheritValue || parentAttr.inherit || false
+  
+  // Case 2 is now determined by inheritValue flag (or empty value for backward compatibility)
+  const isCase2 = inheritFlag || (!parentAttr.value && inheritFlag !== false)
       
       if (!isCase2 && parentAttr.value) {
         // Case 1: Parent has value filled and not marked for inherit - use parent's complete pair (locked)

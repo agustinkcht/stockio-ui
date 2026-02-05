@@ -394,8 +394,8 @@ export default function CreadorMasivoPage() {
             },
             codigoProveedor: variant.codigoProveedor || undefined,
             atributosInformativos: (variant.atributosInformativos || [])
-              .filter(attr => attr && attr.key && attr.key.trim() && attr.value && attr.value.trim())
-              .map(attr => ({ key: attr.key, value: attr.value })),
+              .filter(attr => attr && attr.key && attr.key.trim())
+              .map(attr => ({ key: attr.key, value: attr.value || "" })),
           }
         })
         
