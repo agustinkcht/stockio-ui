@@ -1145,35 +1145,13 @@ export function ItemDetailPanel({
                             : ""
                         }`}>
                           <div className="flex items-center justify-between">
-                            <div className="flex-1">
+                            <div>
                               <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
                                 Atributos Principales
                               </h3>
                               <p className="text-xs text-gray-500 italic">
                                 Atributos que definen las variantes del producto (máximo 2)
                               </p>
-                              
-                              {/* SKU Padre field */}
-                              <div className="mt-4 pt-3 border-t border-slate-100">
-                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">
-                                  SKU Padre
-                                </label>
-                                <input
-                                  type="text"
-                                  value={selectedItem?.sku || ""}
-                                  onChange={(e) => {
-                                    const newSkuPadre = e.target.value.toUpperCase()
-                                    if (onFieldChange && selectedItem.sku) {
-                                      onFieldChange(selectedItem.sku, "sku", newSkuPadre)
-                                    }
-                                  }}
-                                  className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300 font-mono"
-                                  placeholder="Ej: VNO-KNECHT"
-                                />
-                                <p className="text-[9px] text-slate-400 mt-1.5 italic">
-                                  Base para generar SKUs de variantes
-                                </p>
-                              </div>
                             </div>
                             {/* Lock button - only visible when variants exist */}
                             {variantItems.length > 0 && (
@@ -1751,38 +1729,30 @@ export function ItemDetailPanel({
               </div>
             )}
 
-            {/* Sticky Segment Buttons - Show when info or both is active */}
-            {(isViewingContainer || expandedSection === "info" || expandedSection === "both") && (
-            <div className={`z-20 mb-6 ${isViewingContainer ? "" : "sticky top-[0px]"}`}>
+            {/* Sticky Segment Buttons - Show when info or both is active (only for non-container items) */}
+            {!isViewingContainer && (expandedSection === "info" || expandedSection === "both") && (
+            <div className="z-20 mb-6 sticky top-[0px]">
               <div className="flex items-center gap-1 h-11 p-1 bg-slate-100/80 rounded-xl">
-                {isViewingContainer ? (
-                  <div className="flex-1 h-full flex items-center justify-center bg-white text-slate-900 shadow-sm font-semibold rounded-lg">
-                    <span className="text-xs font-medium uppercase tracking-widest">Info</span>
-                  </div>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => setSelectedDetailTab("info")}
-                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
-                        selectedDetailTab === "info"
-                          ? "bg-white text-slate-900 shadow-sm font-semibold"
-                          : "text-slate-500 hover:text-slate-700"
-                      }`}
-                    >
-                      <span className="text-xs font-medium uppercase tracking-widest">Info</span>
-                    </button>
-                    <button
-                      onClick={() => setSelectedDetailTab("atributos")}
-                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
-                        selectedDetailTab === "atributos"
-                          ? "bg-white text-slate-900 shadow-sm font-semibold"
-                          : "text-slate-500 hover:text-slate-700"
-                      }`}
-                    >
-                      <span className="text-xs font-medium uppercase tracking-widest">Atributos</span>
-                    </button>
-                  </>
-                )}
+                <button
+                  onClick={() => setSelectedDetailTab("info")}
+                  className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
+                    selectedDetailTab === "info"
+                      ? "bg-white text-slate-900 shadow-sm font-semibold"
+                      : "text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  <span className="text-xs font-medium uppercase tracking-widest">Info</span>
+                </button>
+                <button
+                  onClick={() => setSelectedDetailTab("atributos")}
+                  className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
+                    selectedDetailTab === "atributos"
+                      ? "bg-white text-slate-900 shadow-sm font-semibold"
+                      : "text-slate-500 hover:text-slate-700"
+                  }`}
+                >
+                  <span className="text-xs font-medium uppercase tracking-widest">Atributos</span>
+                </button>
               </div>
             </div>
             )}
@@ -1795,6 +1765,10 @@ export function ItemDetailPanel({
                 <>
                   {selectedDetailTab === "info" && (
                     <div className="h-full flex flex-col py-2">
+                      <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
+                        Información del Producto
+                      </h3>
+
                       <div className="space-y-3">
                         <div className="grid grid-cols-2 gap-4">
                           <div className="flex flex-col gap-2">
@@ -2022,6 +1996,10 @@ export function ItemDetailPanel({
                 <>
                   {selectedDetailTab === "info" && (
                     <div className="h-full flex flex-col mt-5">
+                      <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-4">
+                        Información del Producto
+                      </h3>
+
                       <div className="space-y-4">
                         {/* Categoría and Marca */}
                         <div className="grid grid-cols-2 gap-5">
