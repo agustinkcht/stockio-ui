@@ -1147,15 +1147,14 @@ export function ItemDetailPanel({
                           <input
                             type="text"
                             value={selectedItem?.sku || ""}
-                            onChange={(e) => {
-                              const newSkuPadre = e.target.value.toUpperCase()
-                              // Update parent SKU using the proper update function
-                              updateItem(selectedItem.sku, { sku: newSkuPadre })
-                              setHasUnsavedChanges(true)
-                              if (onFieldChange && selectedItem.sku) {
-                                onFieldChange(selectedItem.sku, "sku", newSkuPadre)
-                              }
-                            }}
+                          onChange={(e) => {
+                            const newSkuPadre = e.target.value.toUpperCase()
+                            // Update parent SKU using the proper update function
+                            updateItem(selectedItem.sku, { sku: newSkuPadre })
+                            if (onFieldChange && selectedItem.sku) {
+                              onFieldChange(selectedItem.sku, "sku", newSkuPadre)
+                            }
+                          }}
                             className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300 font-mono"
                             placeholder="Ej: VNO-KNECHT"
                           />
@@ -1368,7 +1367,6 @@ export function ItemDetailPanel({
                               // Delete ALL variants when removing an atributo principal
                               setSelectedItem({ ...selectedItem, variants: [] })
                               setVariantItems([])
-                              setHasUnsavedChanges(true)
                               
                               console.log("[v0] Deleted all variants due to atributo principal removal")
                               
