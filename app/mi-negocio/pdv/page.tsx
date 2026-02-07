@@ -118,7 +118,7 @@ export default function PuntoDeVentaPage() {
       vendedor: "Admin",
     })
 
-    // 5. Register sale in Caja (if active session exists)
+    // 5. Register sale in Caja (if active session)
     if (newVenta) {
       registrarVentaEnCaja(newVenta.id, total, paymentMethod)
     }

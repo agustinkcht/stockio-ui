@@ -369,17 +369,14 @@ export function useCaja() {
     [sesiones, saveSesiones],
   )
 
-  // Register a PDV sale as a caja movement on the active session
   const registrarVentaEnCaja = useCallback(
-    (ventaId: string, total: number, medioPago: PaymentMethod) => {
-      if (!sesionActiva) return // No active session — movement stays untracked
-
-      const tipoMap: Record<PaymentMethod, CajaMovimientoTipo> = {
+    (ventaId: string, total: number, medioPago: "efectivo" | "posnet" | "transferencia") => {
+      if (!sesionActiva) return
+      const tipoMap: Record<string, CajaMovimientoTipo> = {
         efectivo: "venta_efectivo",
         posnet: "venta_posnet",
         transferencia: "venta_transferencia",
       }
-
       agregarMovimiento({
         tipo: tipoMap[medioPago],
         monto: total,

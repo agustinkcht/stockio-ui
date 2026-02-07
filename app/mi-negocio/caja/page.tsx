@@ -554,7 +554,7 @@ export default function CajaPage() {
               <div className="flex items-center">
                 <Breadcrumb items={breadcrumbs} />
               </div>
-              <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center gap-3 mt-0">
+              <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center gap-3">
                 <UserPanel />
               </div>
               <div className="flex items-center gap-2 min-w-[280px] justify-end" />
@@ -595,8 +595,8 @@ export default function CajaPage() {
                   <div className="text-center mb-6">
                     <p className="text-xs text-gray-400 mt-2">
                       Ultima sesion: <span className="font-medium text-gray-500">#{ultimaSesionCerrada.id}</span>
-                      {" "}{"\u00B7"}{" "}{fmtDate(ultimaSesionCerrada.timestampCierre || ultimaSesionCerrada.timestampApertura)}
-                      {" "}{"\u00B7"}{" "}
+                      {"\u00A0"}{"\u00B7"}{"\u00A0"}{fmtDate(ultimaSesionCerrada.timestampCierre || ultimaSesionCerrada.timestampApertura)}
+                      {"\u00A0"}{"\u00B7"}{"\u00A0"}
                       <span className="font-medium text-gray-500">{ultimaSesionCerrada.estado}</span>
                     </p>
                     <p className="text-xs text-gray-400 mt-1">
