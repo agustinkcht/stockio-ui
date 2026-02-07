@@ -119,8 +119,8 @@ function Timeline({ movimientos, showCorrectivos = false }: { movimientos: CajaM
               {(mov.nota || mov.motivo) && (
                 <p className="text-xs text-gray-400 mt-0.5 truncate">
                   {mov.usuario}
-                  {mov.nota && <> {"\u00B7"} {mov.nota}</>}
-                  {mov.motivo && <> {"\u00B7"} {mov.motivo}</>}
+                  {mov.nota && <> · {mov.nota}</>}
+                  {mov.motivo && <> · {mov.motivo}</>}
                 </p>
               )}
             </div>
@@ -170,7 +170,7 @@ function HistorialView({ sesiones, onBack, onRevisar }: { sesiones: CajaSesion[]
                     <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">cerrada</span>
                   </div>
                   <p className="text-xs text-gray-400 mt-0.5">
-                    {fmtDate(s.timestampApertura)} {fmtTime(s.timestampApertura)} - {s.timestampCierre ? fmtTime(s.timestampCierre) : ""} {"\u00B7"} {s.responsable}
+                    {fmtDate(s.timestampApertura)} {fmtTime(s.timestampApertura)} - {s.timestampCierre ? fmtTime(s.timestampCierre) : ""} · {s.responsable}
                   </p>
                 </div>
                 <div className="text-right flex-shrink-0 mr-3">
@@ -239,7 +239,7 @@ function ReviewView({ sesion, onBack, onAddCorrectivo }: { sesion: CajaSesion; o
           </button>
           <div>
             <h2 className="text-sm font-semibold text-gray-800">Sesion #{sesion.id}</h2>
-            <p className="text-xs text-gray-400">{fmtDate(sesion.timestampApertura)} {"\u00B7"} {sesion.responsable}</p>
+            <p className="text-xs text-gray-400">{fmtDate(sesion.timestampApertura)} · {sesion.responsable}</p>
           </div>
         </div>
         <Button
@@ -597,8 +597,8 @@ export default function CajaPage() {
                   <div className="text-center mb-6">
                     <p className="text-xs text-gray-400 mt-2">
                       Ultima sesion: <span className="font-medium text-gray-500">#{ultimaSesionCerrada.id}</span>
-                      {" \u00B7 "}{fmtDate(ultimaSesionCerrada.timestampCierre || ultimaSesionCerrada.timestampApertura)}
-                      {" \u00B7 "}
+                      {" · "}{fmtDate(ultimaSesionCerrada.timestampCierre || ultimaSesionCerrada.timestampApertura)}
+                      {" · "}
                       <span className="font-medium text-gray-500">{ultimaSesionCerrada.estado}</span>
                     </p>
                     <p className="text-xs text-gray-400 mt-1">
@@ -612,7 +612,7 @@ export default function CajaPage() {
                       >
                         Revisar
                       </button>
-                      <span className="text-gray-300">{"\u00B7"}</span>
+                      <span className="text-gray-300">·</span>
                       <button
                         onClick={() => setView("historial")}
                         className="text-xs text-gray-500 hover:text-gray-700 underline underline-offset-2 cursor-pointer transition-colors"
@@ -717,9 +717,9 @@ export default function CajaPage() {
                       <span className="animate-live-pulse absolute inline-flex h-full w-full rounded-full bg-green-500" />
                     </span>
                     <span className="text-xs font-medium text-gray-700">Sesion activa</span>
-                    <span className="text-xs text-gray-400">{"\u00B7"}</span>
+                    <span className="text-xs text-gray-400">·</span>
                     <span className="text-xs text-gray-400">{sesionActiva.responsable}</span>
-                    <span className="text-xs text-gray-400 ml-auto">#{sesionActiva.id} {"\u00B7"} Desde {fmtTime(sesionActiva.timestampApertura)}</span>
+                    <span className="text-xs text-gray-400 ml-auto">#{sesionActiva.id} · Desde {fmtTime(sesionActiva.timestampApertura)}</span>
                   </div>
 
                   {/* Timeline */}
