@@ -543,8 +543,8 @@ export default function CajaPage() {
         </div>
 
         {/* Content area */}
-        <div className="flex-1 flex justify-center min-h-0 p-4">
-          <div className="w-full max-w-2xl bg-white rounded-xl border border-gray-200/60 shadow-sm flex flex-col min-h-0 overflow-hidden">
+        <div className="flex-1 flex min-h-0 p-4">
+          <div className="w-full bg-white rounded-xl border border-gray-200/60 shadow-sm flex flex-col min-h-0 overflow-hidden">
 
             {/* ── HISTORIAL VIEW ─────────────────────────── */}
             {view === "historial" && (
