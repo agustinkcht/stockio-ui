@@ -118,7 +118,7 @@ function Timeline({ movimientos, showCorrectivos = false }: { movimientos: CajaM
               </div>
               {(mov.nota || mov.motivo) && (
                 <p className="text-xs text-gray-400 mt-0.5 truncate">
-                  {mov.usuario}{mov.nota ? ` \u00B7 ${mov.nota}` : ""}{mov.motivo ? ` \u00B7 ${mov.motivo}` : ""}
+                  {mov.usuario}{mov.nota ? " · " + mov.nota : ""}{mov.motivo ? " · " + mov.motivo : ""}
                 </p>
               )}
             </div>
@@ -526,7 +526,6 @@ export default function CajaPage() {
   return (
     <div className="min-h-screen bg-[rgb(243,242,238)]">
       <div className="px-[6px] py-[6px] flex gap-[6px] h-screen" onClick={handleCloseDropdowns}>
-        {/* Sidebar */}
         <div onClick={(e) => e.stopPropagation()} className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
           <Sidebar
             sidebarItems={SIDEBAR_ITEMS}
@@ -537,9 +536,7 @@ export default function CajaPage() {
           />
         </div>
 
-        {/* Main */}
         <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
-          {/* Top bar */}
           <div className="relative border-b border-border h-[44px] bg-white z-[100004]">
             <div className="px-4 flex items-center justify-between h-full">
               <div className="flex items-center">
@@ -552,11 +549,10 @@ export default function CajaPage() {
             </div>
           </div>
 
-          {/* Content area */}
           <main className="flex-1 flex bg-[rgba(250,251,253,1)] overflow-hidden">
             <div className="flex-1 flex flex-col overflow-auto">
               <div className="px-8 pb-8 pt-4">
-                <div className="rounded-xl border border-[rgba(228,230,235,0.5)] bg-white shadow-sm flex flex-col min-h-0 overflow-hidden">
+                <div className="w-full bg-white rounded-xl border border-gray-200/60 shadow-sm flex flex-col min-h-0 overflow-hidden">
 
             {/* ── HISTORIAL VIEW ─────────────────────────── */}
             {view === "historial" && (
@@ -721,7 +717,10 @@ export default function CajaPage() {
                 </div>
               </div>
             )}
-          </div>
+                </div>
+              </div>
+            </div>
+          </main>
         </div>
       </div>
 
@@ -1052,12 +1051,6 @@ export default function CajaPage() {
           </div>
         </Modal>
       )}
-                </div>
-              </div>
-            </div>
-          </main>
-        </div>
-      </div>
     </div>
   )
 }
