@@ -153,7 +153,10 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     icon: Store,
     label: "Mi Negocio",
     hasDropdown: true,
-    dropdown: [{ label: "Punto de Venta", href: "/mi-negocio/pdv" }],
+    dropdown: [
+      { label: "Punto de Venta", href: "/mi-negocio/pdv" },
+      { label: "Caja", href: "/mi-negocio/caja" },
+    ],
   },
   {
     icon: Receipt,

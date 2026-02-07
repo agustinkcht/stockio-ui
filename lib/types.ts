@@ -223,6 +223,55 @@ export interface Compra {
   observaciones?: string
 }
 
+// ===== CAJA (Cash Register) =====
+
+export interface CajaApertura {
+  saldoInicialEsperado: number
+  saldoInicialContado: number
+  diferenciaInicial: number
+}
+
+export interface CajaCierre {
+  saldoEsperadoEfectivo: number
+  saldoContadoEfectivo: number
+  diferenciaEfectivo: number
+  totalPosnet: number
+  totalTransferencia: number
+}
+
+export type CajaMovimientoTipo =
+  | "venta_efectivo"
+  | "venta_posnet"
+  | "venta_transferencia"
+  | "ingreso"
+  | "egreso"
+  | "retiro"
+  | "correctivo"
+
+export interface CajaMovimiento {
+  id: string
+  tipo: CajaMovimientoTipo
+  monto: number
+  descripcion: string
+  nota?: string
+  motivo?: string
+  timestamp: string
+  ventaId?: string
+  usuario: string
+  medioPago: PaymentMethod
+}
+
+export interface CajaSesion {
+  id: number
+  responsable: string
+  estado: "activa" | "cerrada"
+  apertura: CajaApertura
+  cierre?: CajaCierre
+  timestampApertura: string
+  timestampCierre?: string
+  movimientos: CajaMovimiento[]
+}
+
 export type SortFactor = "titulo" | "categoria" | "marca" | "fecha" | "stock" | "costo" | "margen" | "precioFinal"
 
 export type SortDirection = "asc" | "desc"

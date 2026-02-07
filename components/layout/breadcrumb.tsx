@@ -52,6 +52,11 @@ function generateBreadcrumbs(pathname: string): BreadcrumbItem[] {
     return [{ label: "Inventario" }, { label: "Depósitos", href: "/depositos" }]
   }
 
+  // Caja page
+  if (pathname === "/mi-negocio/caja") {
+    return [{ label: "Mi Negocio" }, { label: "Caja", href: "/mi-negocio/caja" }]
+  }
+
   // Default fallback
   return [{ label: "Inventario" }]
 }
