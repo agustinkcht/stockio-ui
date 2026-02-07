@@ -118,7 +118,9 @@ function Timeline({ movimientos, showCorrectivos = false }: { movimientos: CajaM
               </div>
               {(mov.nota || mov.motivo) && (
                 <p className="text-xs text-gray-400 mt-0.5 truncate">
-                  {mov.usuario}{mov.nota ? ` \u00B7 ${mov.nota}` : ""}{mov.motivo ? ` \u00B7 ${mov.motivo}` : ""}
+                  {mov.usuario}
+                  {mov.nota && <> {"\u00B7"} {mov.nota}</>}
+                  {mov.motivo && <> {"\u00B7"} {mov.motivo}</>}
                 </p>
               )}
             </div>
@@ -595,8 +597,8 @@ export default function CajaPage() {
                   <div className="text-center mb-6">
                     <p className="text-xs text-gray-400 mt-2">
                       Ultima sesion: <span className="font-medium text-gray-500">#{ultimaSesionCerrada.id}</span>
-                      {"\u00A0"}{"\u00B7"}{"\u00A0"}{fmtDate(ultimaSesionCerrada.timestampCierre || ultimaSesionCerrada.timestampApertura)}
-                      {"\u00A0"}{"\u00B7"}{"\u00A0"}
+                      {" \u00B7 "}{fmtDate(ultimaSesionCerrada.timestampCierre || ultimaSesionCerrada.timestampApertura)}
+                      {" \u00B7 "}
                       <span className="font-medium text-gray-500">{ultimaSesionCerrada.estado}</span>
                     </p>
                     <p className="text-xs text-gray-400 mt-1">
