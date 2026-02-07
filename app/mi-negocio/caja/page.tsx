@@ -118,9 +118,7 @@ function Timeline({ movimientos, showCorrectivos = false }: { movimientos: CajaM
               </div>
               {(mov.nota || mov.motivo) && (
                 <p className="text-xs text-gray-400 mt-0.5 truncate">
-                  {mov.usuario}
-                  {mov.nota && <> · {mov.nota}</>}
-                  {mov.motivo && <> · {mov.motivo}</>}
+                  {mov.usuario}{mov.nota ? ` \u00B7 ${mov.nota}` : ""}{mov.motivo ? ` \u00B7 ${mov.motivo}` : ""}
                 </p>
               )}
             </div>
@@ -170,7 +168,7 @@ function HistorialView({ sesiones, onBack, onRevisar }: { sesiones: CajaSesion[]
                     <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">cerrada</span>
                   </div>
                   <p className="text-xs text-gray-400 mt-0.5">
-                    {fmtDate(s.timestampApertura)} {fmtTime(s.timestampApertura)} - {s.timestampCierre ? fmtTime(s.timestampCierre) : ""} · {s.responsable}
+                    {fmtDate(s.timestampApertura)} {fmtTime(s.timestampApertura)} - {s.timestampCierre ? fmtTime(s.timestampCierre) : ""} &middot; {s.responsable}
                   </p>
                 </div>
                 <div className="text-right flex-shrink-0 mr-3">
@@ -197,16 +195,13 @@ function ReviewView({ sesion, onBack, onAddCorrectivo }: { sesion: CajaSesion; o
   const [correctivoMonto, setCorrectivoMonto] = useState("")
   const [correctivoDesc, setCorrectivoDesc] = useState("")
   const [correctivoNota, setCorrectivoNota] = useState("")
-  const [correctivoSign, setCorrectivoSign] = useState<"positive" | "negative" | "retiro">("positive")
+  const [correctivoSign, setCorrectivoSign] = useState<"positive" | "negative">("positive")
 
   const handleAddCorrectivo = () => {
     const m = parseFloat(correctivoMonto) || 0
     if (m === 0) return
-    const signedMonto = correctivoSign === "positive" ? m : -m
-    const desc = correctivoSign === "retiro"
-      ? correctivoDesc || "Retiro de efectivo (correctivo)"
-      : correctivoDesc || "Movimiento correctivo"
-    onAddCorrectivo(sesion.id, signedMonto, desc, correctivoNota)
+    const signedMonto = correctivoSign === "negative" ? -m : m
+    onAddCorrectivo(sesion.id, signedMonto, correctivoDesc || "Movimiento correctivo", correctivoNota)
     setShowCorrectivoModal(false)
     setCorrectivoMonto("")
     setCorrectivoDesc("")
@@ -239,7 +234,7 @@ function ReviewView({ sesion, onBack, onAddCorrectivo }: { sesion: CajaSesion; o
           </button>
           <div>
             <h2 className="text-sm font-semibold text-gray-800">Sesion #{sesion.id}</h2>
-            <p className="text-xs text-gray-400">{fmtDate(sesion.timestampApertura)} · {sesion.responsable}</p>
+            <p className="text-xs text-gray-400">{fmtDate(sesion.timestampApertura)} &middot; {sesion.responsable}</p>
           </div>
         </div>
         <Button
@@ -300,12 +295,6 @@ function ReviewView({ sesion, onBack, onAddCorrectivo }: { sesion: CajaSesion; o
                 className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer ${correctivoSign === "negative" ? "bg-red-100 text-red-600 border border-red-200" : "bg-gray-50 text-gray-500 border border-gray-200"}`}
               >
                 - Egreso
-              </button>
-              <button
-                onClick={() => setCorrectivoSign("retiro")}
-                className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer ${correctivoSign === "retiro" ? "bg-amber-100 text-amber-700 border border-amber-200" : "bg-gray-50 text-gray-500 border border-gray-200"}`}
-              >
-                - Retiro
               </button>
             </div>
 
@@ -564,7 +553,10 @@ export default function CajaPage() {
           </div>
 
           {/* Content area */}
-          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          <main className="flex-1 flex bg-[rgba(250,251,253,1)] overflow-hidden">
+            <div className="flex-1 flex flex-col overflow-auto">
+              <div className="px-8 pb-8 pt-4">
+                <div className="rounded-xl border border-[rgba(228,230,235,0.5)] bg-white shadow-sm flex flex-col min-h-0 overflow-hidden">
 
             {/* ── HISTORIAL VIEW ─────────────────────────── */}
             {view === "historial" && (
@@ -597,8 +589,8 @@ export default function CajaPage() {
                   <div className="text-center mb-6">
                     <p className="text-xs text-gray-400 mt-2">
                       Ultima sesion: <span className="font-medium text-gray-500">#{ultimaSesionCerrada.id}</span>
-                      {" · "}{fmtDate(ultimaSesionCerrada.timestampCierre || ultimaSesionCerrada.timestampApertura)}
-                      {" · "}
+                      &nbsp;&middot;&nbsp;{fmtDate(ultimaSesionCerrada.timestampCierre || ultimaSesionCerrada.timestampApertura)}
+                      &nbsp;&middot;&nbsp;
                       <span className="font-medium text-gray-500">{ultimaSesionCerrada.estado}</span>
                     </p>
                     <p className="text-xs text-gray-400 mt-1">
@@ -612,7 +604,7 @@ export default function CajaPage() {
                       >
                         Revisar
                       </button>
-                      <span className="text-gray-300">·</span>
+                      <span className="text-gray-300">&middot;</span>
                       <button
                         onClick={() => setView("historial")}
                         className="text-xs text-gray-500 hover:text-gray-700 underline underline-offset-2 cursor-pointer transition-colors"
@@ -717,9 +709,9 @@ export default function CajaPage() {
                       <span className="animate-live-pulse absolute inline-flex h-full w-full rounded-full bg-green-500" />
                     </span>
                     <span className="text-xs font-medium text-gray-700">Sesion activa</span>
-                    <span className="text-xs text-gray-400">·</span>
+                    <span className="text-xs text-gray-400">&middot;</span>
                     <span className="text-xs text-gray-400">{sesionActiva.responsable}</span>
-                    <span className="text-xs text-gray-400 ml-auto">#{sesionActiva.id} · Desde {fmtTime(sesionActiva.timestampApertura)}</span>
+                    <span className="text-xs text-gray-400 ml-auto">#{sesionActiva.id} &middot; Desde {fmtTime(sesionActiva.timestampApertura)}</span>
                   </div>
 
                   {/* Timeline */}
@@ -1060,7 +1052,11 @@ export default function CajaPage() {
           </div>
         </Modal>
       )}
-      </div>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
       </div>
     </div>
   )

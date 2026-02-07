@@ -369,25 +369,6 @@ export function useCaja() {
     [sesiones, saveSesiones],
   )
 
-  const registrarVentaEnCaja = useCallback(
-    (ventaId: string, total: number, medioPago: "efectivo" | "posnet" | "transferencia") => {
-      if (!sesionActiva) return
-      const tipoMap: Record<string, CajaMovimientoTipo> = {
-        efectivo: "venta_efectivo",
-        posnet: "venta_posnet",
-        transferencia: "venta_transferencia",
-      }
-      agregarMovimiento({
-        tipo: tipoMap[medioPago],
-        monto: total,
-        descripcion: `Venta POS #${ventaId}`,
-        ventaId,
-        medioPago,
-      })
-    },
-    [sesionActiva, agregarMovimiento],
-  )
-
   return {
     sesiones,
     sesionActiva,
@@ -399,6 +380,5 @@ export function useCaja() {
     cerrarSesion,
     agregarMovimiento,
     agregarCorrectivo,
-    registrarVentaEnCaja,
   }
 }

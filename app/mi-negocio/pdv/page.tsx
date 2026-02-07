@@ -11,7 +11,6 @@ import { useItems } from "@/hooks/use-items"
 import { usePOS } from "@/hooks/use-pos"
 import { useVentas } from "@/hooks/use-ventas"
 import { useClientes } from "@/hooks/use-clientes"
-import { useCaja } from "@/hooks/use-caja"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 import { ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
@@ -22,7 +21,6 @@ export default function PuntoDeVentaPage() {
   const { items, reduceStock } = useItems()
   const { addVenta } = useVentas()
   const { clientes, getClienteById, incrementTransactionCount } = useClientes()
-  const { registrarVentaEnCaja } = useCaja()
   const [showCheckoutSuccess, setShowCheckoutSuccess] = useState(false)
   const [isCartExpanded, setIsCartExpanded] = useState(false)
 
@@ -103,7 +101,7 @@ export default function PuntoDeVentaPage() {
     const fecha = now.toISOString().split("T")[0]
     const hora = now.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })
 
-    const newVenta = addVenta({
+    addVenta({
       fecha,
       hora,
       clienteId: selectedClientId || "CONSUMIDOR_FINAL",
@@ -118,12 +116,7 @@ export default function PuntoDeVentaPage() {
       vendedor: "Admin",
     })
 
-    // 5. Register sale in Caja (if active session)
-    if (newVenta) {
-      registrarVentaEnCaja(newVenta.id, total, paymentMethod)
-    }
-
-    // 6. Increment transaction count for the client
+    // 5. Increment transaction count for the client
     if (selectedClientId) {
       incrementTransactionCount(selectedClientId)
     }
