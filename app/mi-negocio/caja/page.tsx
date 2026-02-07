@@ -195,13 +195,16 @@ function ReviewView({ sesion, onBack, onAddCorrectivo }: { sesion: CajaSesion; o
   const [correctivoMonto, setCorrectivoMonto] = useState("")
   const [correctivoDesc, setCorrectivoDesc] = useState("")
   const [correctivoNota, setCorrectivoNota] = useState("")
-  const [correctivoSign, setCorrectivoSign] = useState<"positive" | "negative">("positive")
+  const [correctivoSign, setCorrectivoSign] = useState<"positive" | "negative" | "retiro">("positive")
 
   const handleAddCorrectivo = () => {
     const m = parseFloat(correctivoMonto) || 0
     if (m === 0) return
-    const signedMonto = correctivoSign === "negative" ? -m : m
-    onAddCorrectivo(sesion.id, signedMonto, correctivoDesc || "Movimiento correctivo", correctivoNota)
+    const signedMonto = correctivoSign === "positive" ? m : -m
+    const desc = correctivoSign === "retiro"
+      ? correctivoDesc || "Retiro de efectivo (correctivo)"
+      : correctivoDesc || "Movimiento correctivo"
+    onAddCorrectivo(sesion.id, signedMonto, desc, correctivoNota)
     setShowCorrectivoModal(false)
     setCorrectivoMonto("")
     setCorrectivoDesc("")
@@ -295,6 +298,12 @@ function ReviewView({ sesion, onBack, onAddCorrectivo }: { sesion: CajaSesion; o
                 className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer ${correctivoSign === "negative" ? "bg-red-100 text-red-600 border border-red-200" : "bg-gray-50 text-gray-500 border border-gray-200"}`}
               >
                 - Egreso
+              </button>
+              <button
+                onClick={() => setCorrectivoSign("retiro")}
+                className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer ${correctivoSign === "retiro" ? "bg-amber-100 text-amber-700 border border-amber-200" : "bg-gray-50 text-gray-500 border border-gray-200"}`}
+              >
+                - Retiro
               </button>
             </div>
 
@@ -513,38 +522,47 @@ export default function CajaPage() {
 
   if (isLoading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-background">
-        <div className="w-48 h-1 bg-gray-200 rounded-full overflow-hidden">
-          <div className="h-full w-1/2 bg-gray-400 rounded-full animate-loading-bar" />
+      <div className="min-h-screen bg-[rgb(243,242,238)]">
+        <div className="px-[6px] py-[6px] flex gap-[6px] h-screen items-center justify-center">
+          <div className="w-48 h-1 bg-gray-200 rounded-full overflow-hidden">
+            <div className="h-full w-1/2 bg-gray-400 rounded-full animate-loading-bar" />
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden" onClick={handleCloseDropdowns}>
-      {/* Sidebar */}
-      <div className="relative z-[100]">
-        <Sidebar
-          sidebarItems={SIDEBAR_ITEMS}
-          bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
-          hoveredDropdown={hoveredDropdown}
-          onDropdownOpen={handleDropdownMouseEnter}
-          onDropdownClose={handleDropdownMouseLeave}
-        />
-      </div>
-
-      {/* Main */}
-      <div className="flex-1 flex flex-col min-h-0">
-        {/* Top bar */}
-        <div className="h-12 flex items-center justify-between px-4 border-b border-border/40 flex-shrink-0 bg-white/60">
-          <Breadcrumb items={breadcrumbs} />
-          <UserPanel />
+    <div className="min-h-screen bg-[rgb(243,242,238)]">
+      <div className="px-[6px] py-[6px] flex gap-[6px] h-screen" onClick={handleCloseDropdowns}>
+        {/* Sidebar */}
+        <div onClick={(e) => e.stopPropagation()} className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
+          <Sidebar
+            sidebarItems={SIDEBAR_ITEMS}
+            bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
+            hoveredDropdown={hoveredDropdown}
+            onDropdownOpen={handleDropdownMouseEnter}
+            onDropdownClose={handleDropdownMouseLeave}
+          />
         </div>
 
-        {/* Content area */}
-        <div className="flex-1 flex min-h-0 p-4">
-          <div className="w-full bg-white rounded-xl border border-gray-200/60 shadow-sm flex flex-col min-h-0 overflow-hidden">
+        {/* Main */}
+        <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
+          {/* Top bar */}
+          <div className="relative border-b border-border h-[44px] bg-white z-[100004]">
+            <div className="px-4 flex items-center justify-between h-full">
+              <div className="flex items-center">
+                <Breadcrumb items={breadcrumbs} />
+              </div>
+              <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center gap-3 mt-0">
+                <UserPanel />
+              </div>
+              <div className="flex items-center gap-2 min-w-[280px] justify-end" />
+            </div>
+          </div>
+
+          {/* Content area */}
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
 
             {/* ── HISTORIAL VIEW ─────────────────────────── */}
             {view === "historial" && (
@@ -1040,6 +1058,8 @@ export default function CajaPage() {
           </div>
         </Modal>
       )}
+      </div>
+      </div>
     </div>
   )
 }
