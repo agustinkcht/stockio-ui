@@ -35,24 +35,21 @@ type SortDirection = "asc" | "desc"
 const FILTRO_OPTIONS = {
   metodoPago: [
     { value: "efectivo", label: "Efectivo" },
-    { value: "tarjeta", label: "Tarjeta" },
+    { value: "posnet", label: "Posnet" },
     { value: "transferencia", label: "Transferencia" },
-    { value: "cuenta_corriente", label: "Cuenta Cte." },
   ],
 }
 
 const paymentMethodLabels: Record<PaymentMethod, string> = {
   efectivo: "Efectivo",
-  tarjeta: "Tarjeta",
+  posnet: "Posnet",
   transferencia: "Transferencia",
-  cuenta_corriente: "Cuenta Cte.",
 }
 
 const paymentMethodIcons: Record<PaymentMethod, typeof Banknote> = {
   efectivo: Banknote,
-  tarjeta: CreditCard,
+  posnet: CreditCard,
   transferencia: ArrowRightLeft,
-  cuenta_corriente: Building2,
 }
 
 function VentasContent() {
