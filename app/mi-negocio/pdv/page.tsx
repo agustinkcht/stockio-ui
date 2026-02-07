@@ -11,6 +11,7 @@ import { useItems } from "@/hooks/use-items"
 import { usePOS } from "@/hooks/use-pos"
 import { useVentas } from "@/hooks/use-ventas"
 import { useClientes } from "@/hooks/use-clientes"
+import { useCaja } from "@/hooks/use-caja"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 import { ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
@@ -21,6 +22,7 @@ export default function PuntoDeVentaPage() {
   const { items, reduceStock } = useItems()
   const { addVenta } = useVentas()
   const { clientes, getClienteById, incrementTransactionCount } = useClientes()
+  const { sesionActiva, agregarMovimiento } = useCaja()
   const [showCheckoutSuccess, setShowCheckoutSuccess] = useState(false)
   const [isCartExpanded, setIsCartExpanded] = useState(false)
 
@@ -51,13 +53,7 @@ export default function PuntoDeVentaPage() {
   const handleCheckout = () => {
     if (cart.length === 0) return
 
-    console.log("[v0] Processing checkout:", {
-      cart,
-      selectedClientId,
-      paymentMethod,
-      total,
-    })
-
+    // 1. Reduce stock for each item
     cart.forEach((cartItem) => {
       const sku = cartItem.variant?.sku || cartItem.item.sku
       if (!sku) return
@@ -72,8 +68,6 @@ export default function PuntoDeVentaPage() {
         // It's a standalone item
         reduceStock(sku, cartItem.quantity)
       }
-
-      console.log(`[v0] PDV - Reduced stock for ${sku} by ${cartItem.quantity}`)
     })
 
     // 2. Create venta items
@@ -101,7 +95,7 @@ export default function PuntoDeVentaPage() {
     const fecha = now.toISOString().split("T")[0]
     const hora = now.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })
 
-    addVenta({
+    const venta = addVenta({
       fecha,
       hora,
       clienteId: selectedClientId || "CONSUMIDOR_FINAL",
@@ -116,7 +110,29 @@ export default function PuntoDeVentaPage() {
       vendedor: "Admin",
     })
 
-    // 5. Increment transaction count for the client
+    // 5. Add movimiento to caja if session is active and payment affects caja
+    if (sesionActiva && venta && paymentMethod !== "cuenta_corriente") {
+      const medioPago = paymentMethod === "tarjeta" ? "posnet" : paymentMethod
+      let tipo: "venta_efectivo" | "venta_posnet" | "venta_transferencia"
+      
+      if (medioPago === "efectivo") {
+        tipo = "venta_efectivo"
+      } else if (medioPago === "posnet") {
+        tipo = "venta_posnet"
+      } else {
+        tipo = "venta_transferencia"
+      }
+
+      agregarMovimiento({
+        tipo,
+        monto: total,
+        descripcion: `Venta POS #${venta.id}`,
+        ventaId: venta.id,
+        medioPago,
+      })
+    }
+
+    // 6. Increment transaction count for the client
     if (selectedClientId) {
       incrementTransactionCount(selectedClientId)
     }

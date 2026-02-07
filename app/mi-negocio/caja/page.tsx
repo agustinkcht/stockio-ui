@@ -683,7 +683,7 @@ export default function CajaPage() {
                     className="h-8 text-xs border border-amber-200 text-amber-700 hover:bg-amber-50 cursor-pointer"
                   >
                     <Vault className="w-3.5 h-3.5 mr-1.5" />
-                    Retirar Efectivo
+                    Retiro
                   </Button>
                   <div className="flex-1" />
                   <Button
