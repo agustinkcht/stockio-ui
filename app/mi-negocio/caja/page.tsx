@@ -35,7 +35,7 @@ function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" })
 }
 function fmtTime(iso: string) {
-  return new Date(iso).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })
+  return new Date(iso).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", hour12: false })
 }
 
 // ─── Movement timeline icon + color ────────────────────────
@@ -190,22 +190,22 @@ function HistorialView({ sesiones, onBack, onRevisar }: { sesiones: CajaSesion[]
 }
 
 // ─── Session Review View ───────────────────────────────────
-function ReviewView({ sesion, onBack, onAddCorrectivo }: { sesion: CajaSesion; onBack: () => void; onAddCorrectivo: (sesionId: number, monto: number, descripcion: string, nota: string) => void }) {
+function ReviewView({ sesion, onBack, onAddCorrectivo }: { sesion: CajaSesion; onBack: () => void; onAddCorrectivo: (sesionId: number, monto: number, descripcion: string) => void }) {
   const [showCorrectivoModal, setShowCorrectivoModal] = useState(false)
   const [correctivoMonto, setCorrectivoMonto] = useState("")
   const [correctivoDesc, setCorrectivoDesc] = useState("")
-  const [correctivoNota, setCorrectivoNota] = useState("")
-  const [correctivoSign, setCorrectivoSign] = useState<"positive" | "negative">("positive")
+  const [correctivoSign, setCorrectivoSign] = useState<"positive" | "negative" | "retiro">("positive")
 
   const handleAddCorrectivo = () => {
     const m = parseFloat(correctivoMonto) || 0
-    if (m === 0) return
-    const signedMonto = correctivoSign === "negative" ? -m : m
-    onAddCorrectivo(sesion.id, signedMonto, correctivoDesc || "Movimiento correctivo", correctivoNota)
+    let signedMonto: number
+    if (correctivoSign === "retiro") {
+      signedMonto = -m
+    } else {
+      signedMonto = correctivoSign === "positive" ? m : -m
+    }
+    onAddCorrectivo(sesion.id, signedMonto, correctivoDesc || "Movimiento correctivo")
     setShowCorrectivoModal(false)
-    setCorrectivoMonto("")
-    setCorrectivoDesc("")
-    setCorrectivoNota("")
   }
 
   // Recalculate saldos from movimientos
@@ -296,6 +296,12 @@ function ReviewView({ sesion, onBack, onAddCorrectivo }: { sesion: CajaSesion; o
               >
                 - Egreso
               </button>
+              <button
+                onClick={() => setCorrectivoSign("retiro")}
+                className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer ${correctivoSign === "retiro" ? "bg-amber-100 text-amber-700 border border-amber-200" : "bg-gray-50 text-gray-500 border border-gray-200"}`}
+              >
+                Retiro
+              </button>
             </div>
 
             <label className="block text-xs text-gray-500 mb-1">Monto</label>
@@ -311,20 +317,12 @@ function ReviewView({ sesion, onBack, onAddCorrectivo }: { sesion: CajaSesion; o
               />
             </div>
 
-            <label className="block text-xs text-gray-500 mb-1">Descripcion</label>
+            <label className="block text-xs text-gray-500 mb-1">Motivo (opcional)</label>
             <input
               value={correctivoDesc}
               onChange={(e) => setCorrectivoDesc(e.target.value)}
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-gray-300 mb-3"
-              placeholder="Motivo del correctivo"
-            />
-
-            <label className="block text-xs text-gray-500 mb-1">Nota (opcional)</label>
-            <input
-              value={correctivoNota}
-              onChange={(e) => setCorrectivoNota(e.target.value)}
               className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-gray-300 mb-5"
-              placeholder="Nota adicional"
+              placeholder="Motivo del correctivo"
             />
           </div>
           <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
@@ -375,7 +373,6 @@ export default function CajaPage() {
   const [saldoContadoInput, setSaldoContadoInput] = useState("")
   const [movMonto, setMovMonto] = useState("")
   const [movMotivo, setMovMotivo] = useState("")
-  const [movNota, setMovNota] = useState("")
   const [retiroContado, setRetiroContado] = useState("")
 
   // Computed values
@@ -446,7 +443,6 @@ export default function CajaPage() {
       monto: m,
       descripcion: "Ingreso manual",
       motivo: movMotivo || undefined,
-      nota: movNota || undefined,
       medioPago: "efectivo",
     })
     setShowIngresoModal(false)
@@ -461,7 +457,6 @@ export default function CajaPage() {
       monto: m,
       descripcion: "Egreso manual",
       motivo: movMotivo || undefined,
-      nota: movNota || undefined,
       medioPago: "efectivo",
     })
     setShowEgresoModal(false)
@@ -475,7 +470,6 @@ export default function CajaPage() {
       tipo: "retiro",
       monto: m,
       descripcion: "Retiro de efectivo",
-      nota: movNota || undefined,
       medioPago: "efectivo",
     })
     setShowRetiroModal(false)
@@ -485,8 +479,6 @@ export default function CajaPage() {
   const resetMovForm = () => {
     setMovMonto("")
     setMovMotivo("")
-    setMovNota("")
-    setRetiroContado("")
   }
 
   const handleRevisar = (s: CajaSesion) => {
@@ -494,11 +486,10 @@ export default function CajaPage() {
     setView("review")
   }
 
-  const handleAddCorrectivo = (sesionId: number, monto: number, descripcion: string, nota: string) => {
+  const handleAddCorrectivo = (sesionId: number, monto: number, descripcion: string) => {
     agregarCorrectivo(sesionId, {
       monto,
       descripcion,
-      nota: nota || undefined,
       medioPago: "efectivo",
     })
     // Refresh the review sesion
@@ -938,16 +929,8 @@ export default function CajaPage() {
             <input
               value={movMotivo}
               onChange={(e) => setMovMotivo(e.target.value)}
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-gray-300 mb-3"
-              placeholder="Ej: Cambio chico"
-            />
-
-            <label className="block text-xs text-gray-500 mb-1">Nota (opcional)</label>
-            <input
-              value={movNota}
-              onChange={(e) => setMovNota(e.target.value)}
               className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
-              placeholder="Nota adicional"
+              placeholder="Ej: Cambio chico"
             />
           </div>
           <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
@@ -980,16 +963,8 @@ export default function CajaPage() {
             <input
               value={movMotivo}
               onChange={(e) => setMovMotivo(e.target.value)}
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-gray-300 mb-3"
-              placeholder="Ej: Compra de insumos"
-            />
-
-            <label className="block text-xs text-gray-500 mb-1">Nota (opcional)</label>
-            <input
-              value={movNota}
-              onChange={(e) => setMovNota(e.target.value)}
               className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
-              placeholder="Nota adicional"
+              placeholder="Ej: Compra de insumos"
             />
           </div>
           <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
@@ -1026,7 +1001,7 @@ export default function CajaPage() {
             )}
 
             <label className="block text-xs text-gray-500 mb-1">Saldo contado (opcional)</label>
-            <div className="relative mb-3">
+            <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
               <input
                 type="number"
@@ -1036,14 +1011,6 @@ export default function CajaPage() {
                 placeholder="Cuanto queda en caja"
               />
             </div>
-
-            <label className="block text-xs text-gray-500 mb-1">Nota (opcional)</label>
-            <input
-              value={movNota}
-              onChange={(e) => setMovNota(e.target.value)}
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
-              placeholder="Ej: Guardado en caja fuerte"
-            />
           </div>
           <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
             <Button variant="ghost" size="sm" onClick={() => setShowRetiroModal(false)} className="text-xs cursor-pointer">Cancelar</Button>
