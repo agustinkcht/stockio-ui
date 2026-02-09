@@ -786,7 +786,7 @@ export default function CajaPage() {
             </div>
             {saldoContadoInput && (
               <p className={`text-xs mb-3 ${diferenciaInicial === 0 ? "text-gray-400" : diferenciaInicial > 0 ? "text-green-600" : "text-red-500"}`}>
-                Diferencia: {diferenciaInicial >= 0 ? "+" : ""}{fmt(diferenciaInicial)}
+                Diferencia: {(diferenciaInicial >= 0 ? "+" : "") + fmt(diferenciaInicial)}
               </p>
             )}
           </div>
@@ -818,7 +818,7 @@ export default function CajaPage() {
               <div className="flex justify-between text-sm border-t border-gray-100 pt-2.5">
                 <span className="text-gray-500">Diferencia inicial</span>
                 <span className={`font-semibold ${diferenciaInicial === 0 ? "text-gray-600" : diferenciaInicial > 0 ? "text-green-600" : "text-red-500"}`}>
-                  {diferenciaInicial >= 0 ? "+" : ""}{fmt(diferenciaInicial)}
+                  {(diferenciaInicial >= 0 ? "+" : "") + fmt(diferenciaInicial)}
                 </span>
               </div>
               
@@ -896,9 +896,9 @@ export default function CajaPage() {
                 />
               </div>
               {cerrarSaldoContado && (
-                <p className={`text-xs ${cerrarDiferencia === 0 ? "text-gray-400" : cerrarDiferencia > 0 ? "text-green-600" : "text-red-500"}`}>
-                  Diferencia: {cerrarDiferencia >= 0 ? "+" : ""}{fmt(cerrarDiferencia)}
-                </p>
+              <p className={`text-xs ${cerrarDiferencia === 0 ? "text-gray-400" : cerrarDiferencia > 0 ? "text-green-600" : "text-red-500"}`}>
+                Diferencia: {(cerrarDiferencia >= 0 ? "+" : "") + fmt(cerrarDiferencia)}
+              </p>
               )}
             </div>
           </div>
@@ -925,9 +925,9 @@ export default function CajaPage() {
                 <span className="font-medium text-gray-700">{fmt(cerrarSaldoContadoNum)}</span>
               </div>
               <div className="flex justify-between text-sm border-t border-gray-100 pt-2.5">
-                <span className="text-gray-500">Diferencia</span>
+                <span className="text-gray-500">Diferencia final</span>
                 <span className={`font-semibold ${cerrarDiferencia === 0 ? "text-gray-600" : cerrarDiferencia > 0 ? "text-green-600" : "text-red-500"}`}>
-                  {cerrarDiferencia >= 0 ? "+" : ""}{fmt(cerrarDiferencia)}
+                  {(cerrarDiferencia >= 0 ? "+" : "") + fmt(cerrarDiferencia)}
                 </span>
               </div>
               <div className="border-t border-gray-100 pt-2.5 space-y-2">
