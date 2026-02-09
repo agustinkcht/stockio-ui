@@ -136,22 +136,22 @@ function Timeline({ movimientos, showCorrectivos = false, sesion }: { movimiento
 
       {/* Apertura entry (always last/oldest) */}
       {sesion && (
-        <div className="flex items-start gap-4 px-5 py-3.5 bg-gray-900">
-          <span className="text-xs text-gray-500 font-mono w-12 pt-0.5 flex-shrink-0">
+        <div className="flex items-start gap-4 px-5 py-3.5 bg-gray-50/60">
+          <span className="text-xs text-gray-400 font-mono w-12 pt-0.5 flex-shrink-0">
             {fmtTime(sesion.timestampApertura)}
           </span>
-          <div className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center flex-shrink-0">
-            <Play className="w-4 h-4 text-gray-400" />
+          <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+            <Play className="w-4 h-4 text-gray-600" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-semibold text-white">Apertura de Caja</span>
-              <span className="text-xs text-gray-400">
-                Saldo inicial: <span className="font-medium text-gray-300">{fmt(sesion.apertura.saldoInicialContado)}</span>
+              <span className="text-sm font-semibold text-gray-800">Apertura de Caja</span>
+              <span className="text-xs text-gray-500">
+                Saldo inicial: <span className="font-medium text-gray-700">{fmt(sesion.apertura.saldoInicialContado)}</span>
               </span>
-              <span className="text-gray-600">·</span>
-              <span className="text-xs text-gray-400">
-                Diferencia inicial: <span className="font-medium text-gray-300">{fmt(sesion.apertura.diferenciaInicial)}</span>
+              <span className="text-gray-400">·</span>
+              <span className="text-xs text-gray-500">
+                Diferencia inicial: <span className={`font-medium ${sesion.apertura.diferenciaInicial < 0 ? "text-red-500" : "text-gray-700"}`}>{fmt(sesion.apertura.diferenciaInicial)}</span>
               </span>
             </div>
           </div>
@@ -199,9 +199,11 @@ function HistorialView({ sesiones, onBack, onRevisar }: { sesiones: CajaSesion[]
                   </p>
                 </div>
                 <div className="text-right flex-shrink-0 mr-3">
-                  <p className="text-sm font-semibold text-gray-800">{fmt(s.cierre?.saldoContadoEfectivo || 0)}</p>
-                  <p className={`text-xs ${(s.cierre?.diferenciaEfectivo || 0) === 0 ? "text-gray-400" : (s.cierre?.diferenciaEfectivo || 0) > 0 ? "text-green-600" : "text-red-500"}`}>
-                    Dif: {fmt(s.cierre?.diferenciaEfectivo || 0)}
+                  <p className="text-xs text-gray-500 mb-0.5">Saldo Final: <span className="font-semibold text-gray-800">{fmt(s.cierre?.saldoContadoEfectivo || 0)}</span></p>
+                  <p className="text-xs text-gray-500">
+                    Diferencia Final: <span className={`font-medium ${(s.cierre?.diferenciaEfectivo || 0) === 0 ? "text-gray-600" : (s.cierre?.diferenciaEfectivo || 0) > 0 ? "text-gray-600" : "text-red-500"}`}>
+                      {fmt(s.cierre?.diferenciaEfectivo || 0)}
+                    </span>
                   </p>
                 </div>
                 <button onClick={() => onRevisar(s)} className="p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
@@ -277,13 +279,19 @@ function ReviewView({ sesion, onBack, onAddCorrectivo }: { sesion: CajaSesion; o
 
       {/* Summary widgets */}
       <div className="grid grid-cols-3 gap-3 px-6 py-4 border-b border-gray-100">
-        <div className="bg-gray-50 rounded-xl p-3">
-          <p className="text-[10px] uppercase tracking-wider text-gray-400 mb-1">Efectivo</p>
-          <p className="text-base font-bold text-gray-800">{fmt(efectivo)}</p>
-          {sesion.cierre && (
-            <p className={`text-xs mt-0.5 ${sesion.cierre.diferenciaEfectivo === 0 ? "text-gray-400" : sesion.cierre.diferenciaEfectivo > 0 ? "text-green-600" : "text-red-500"}`}>
-              Contado: {fmt(sesion.cierre.saldoContadoEfectivo)} ({sesion.cierre.diferenciaEfectivo >= 0 ? "+" : ""}{fmt(sesion.cierre.diferenciaEfectivo)})
-            </p>
+        <div className={`rounded-xl p-3 ${sesion.cierre ? "bg-gray-900" : "bg-gray-50"}`}>
+          <p className={`text-[10px] uppercase tracking-wider mb-1 ${sesion.cierre ? "text-gray-400" : "text-gray-400"}`}>Efectivo</p>
+          {sesion.cierre ? (
+            <>
+              <p className="text-xs text-gray-400 mb-0.5">Saldo Final: <span className="font-bold text-white">{fmt(sesion.cierre.saldoContadoEfectivo)}</span></p>
+              <p className="text-xs text-gray-400">
+                Diferencia Final: <span className={`font-semibold ${sesion.cierre.diferenciaEfectivo === 0 ? "text-gray-300" : sesion.cierre.diferenciaEfectivo > 0 ? "text-gray-300" : "text-red-400"}`}>
+                  {fmt(sesion.cierre.diferenciaEfectivo)}
+                </span>
+              </p>
+            </>
+          ) : (
+            <p className="text-base font-bold text-gray-800">{fmt(efectivo)}</p>
           )}
         </div>
         <div className="bg-gray-50 rounded-xl p-3">
@@ -813,14 +821,42 @@ export default function CajaPage() {
                   {diferenciaInicial >= 0 ? "+" : ""}{fmt(diferenciaInicial)}
                 </span>
               </div>
+              
+              {diferenciaInicial < 0 && (
+                <div className="flex items-start gap-2 mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1 text-xs text-amber-800">
+                    <p className="font-medium">El efectivo contado no coincide con el esperado.</p>
+                    <p className="text-amber-700 mt-1">Podés iniciar la caja igual. La diferencia quedará registrada.</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-          <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
-            <Button variant="ghost" size="sm" onClick={() => { setShowIniciarConfirm(false); setShowIniciarModal(true) }} className="text-xs cursor-pointer">Revisar</Button>
-            <Button size="sm" onClick={handleIniciarConfirm} className="text-xs cursor-pointer">
-              <Play className="w-3 h-3 mr-1.5" />
-              Iniciar Caja
-            </Button>
+          <div className="flex items-center justify-between gap-2 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
+            {diferenciaInicial < 0 ? (
+              <>
+                <Button variant="ghost" size="sm" onClick={() => { setShowIniciarConfirm(false); setShowIniciarModal(true) }} className="text-xs cursor-pointer">Revisar contado</Button>
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="sm" onClick={() => { setShowIniciarConfirm(false); if (ultimaSesionCerrada) handleRevisar(ultimaSesionCerrada) }} className="text-xs cursor-pointer">Revisar sesión anterior</Button>
+                  <Button size="sm" onClick={handleIniciarConfirm} className="text-xs cursor-pointer">
+                    <Play className="w-3 h-3 mr-1.5" />
+                    Iniciar Caja
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div />
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="sm" onClick={() => { setShowIniciarConfirm(false); setShowIniciarModal(true) }} className="text-xs cursor-pointer">Revisar</Button>
+                  <Button size="sm" onClick={handleIniciarConfirm} className="text-xs cursor-pointer">
+                    <Play className="w-3 h-3 mr-1.5" />
+                    Iniciar Caja
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         </Modal>
       )}
@@ -1020,6 +1056,27 @@ export default function CajaPage() {
               />
             </div>
 
+            <label className="block text-xs text-gray-500 mb-1">Saldo contado</label>
+            <div className="relative mb-3">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+              <input
+                type="number"
+                value={retiroContado}
+                onChange={(e) => setRetiroContado(e.target.value)}
+                className="w-full pl-7 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
+                placeholder="Saldo que queda en caja"
+              />
+            </div>
+
+            <label className="block text-xs text-gray-500 mb-1">Motivo (opcional)</label>
+            <input
+              value={movMotivo}
+              onChange={(e) => setMovMotivo(e.target.value)}
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
+              placeholder="Ej: Guardado en caja fuerte"
+            />
+          </div>
+
             {movMonto && parseFloat(movMonto) > 0 && (
               <div className="flex justify-between text-sm py-2 mb-3 border-t border-gray-100">
                 <span className="text-gray-500">Saldo esperado despues del retiro</span>
@@ -1041,7 +1098,7 @@ export default function CajaPage() {
           </div>
           <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
             <Button variant="ghost" size="sm" onClick={() => setShowRetiroModal(false)} className="text-xs cursor-pointer">Cancelar</Button>
-            <Button size="sm" onClick={handleRetiro} disabled={!movMonto || parseFloat(movMonto) <= 0} className="text-xs cursor-pointer">Aceptar</Button>
+            <Button size="sm" onClick={handleRetiro} disabled={!movMonto || parseFloat(movMonto) <= 0 || !retiroContado} className="text-xs cursor-pointer">Aceptar</Button>
           </div>
         </Modal>
       )}
