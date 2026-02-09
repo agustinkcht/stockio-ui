@@ -121,7 +121,7 @@ function Timeline({ movimientos, showCorrectivos = false, sesion }: { movimiento
               </div>
               {(mov.nota || mov.motivo) && (
                 <p className="text-xs text-gray-400 mt-0.5 truncate">
-                  {mov.usuario}{mov.nota ? " · " + mov.nota : ""}{mov.motivo ? " · " + mov.motivo : ""}
+                  {mov.usuario + (mov.nota ? " · " + mov.nota : "") + (mov.motivo ? " · " + mov.motivo : "")}
                 </p>
               )}
             </div>
