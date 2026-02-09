@@ -611,8 +611,8 @@ export default function CajaPage() {
                   <div className="text-center mb-6">
                     <p className="text-xs text-gray-400 mt-2">
                       Ultima sesion: <span className="font-medium text-gray-500">#{ultimaSesionCerrada.id}</span>
-                      &nbsp;&middot;&nbsp;{fmtDate(ultimaSesionCerrada.timestampCierre || ultimaSesionCerrada.timestampApertura)}
-                      &nbsp;&middot;&nbsp;
+                      {' · '}{fmtDate(ultimaSesionCerrada.timestampCierre || ultimaSesionCerrada.timestampApertura)}
+                      {' · '}
                       <span className="font-medium text-gray-500">{ultimaSesionCerrada.estado}</span>
                     </p>
                     <p className="text-xs text-gray-400 mt-1">
