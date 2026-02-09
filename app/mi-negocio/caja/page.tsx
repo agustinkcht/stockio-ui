@@ -78,6 +78,10 @@ function Modal({ children, onClose }: { children: React.ReactNode; onClose: () =
 function Timeline({ movimientos, showCorrectivos = false, sesion }: { movimientos: CajaMovimiento[]; showCorrectivos?: boolean; sesion?: CajaSesion }) {
   // Sort descending (newest first)
   const sorted = [...movimientos].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+  
+  // Separate correctivos from regular movimientos
+  const correctivos = sorted.filter(m => m.tipo === "correctivo")
+  const regularMovs = sorted.filter(m => m.tipo !== "correctivo")
 
   if (sorted.length === 0 && !sesion) {
     return (
@@ -88,11 +92,58 @@ function Timeline({ movimientos, showCorrectivos = false, sesion }: { movimiento
     )
   }
 
+  const renderMovimiento = (mov: CajaMovimiento, i: number, total: number) => {
+    const meta = movMeta(mov)
+    const IconComp = meta.icon
+    const isNeg = mov.tipo === "egreso" || mov.tipo === "retiro"
+    const isCorrectivo = mov.tipo === "correctivo"
+
+    return (
+      <div
+        key={mov.id}
+        className={`flex items-start gap-4 px-5 py-3.5 ${i < total - 1 ? "border-b border-gray-100" : ""} ${isCorrectivo ? "bg-orange-50/40" : "hover:bg-gray-50/60"} transition-colors`}
+      >
+        {/* Time */}
+        <span className="text-xs text-gray-400 font-mono w-12 pt-0.5 flex-shrink-0">
+          {fmtTime(mov.timestamp)}
+        </span>
+
+        {/* Icon */}
+        <div className={`w-8 h-8 rounded-lg ${meta.bg} flex items-center justify-center flex-shrink-0`}>
+          <IconComp className={`w-4 h-4 ${meta.color}`} />
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-gray-800 truncate">{meta.label}</span>
+            <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${meta.tagColor}`}>
+              {meta.tagLabel}
+            </span>
+          </div>
+          {(mov.nota || mov.motivo) && (
+            <p className="text-xs text-gray-400 mt-0.5 truncate">
+              {mov.usuario + (mov.nota ? " · " + mov.nota : "") + (mov.motivo ? " · " + mov.motivo : "")}
+            </p>
+          )}
+        </div>
+
+        {/* Amount */}
+        <span className={`text-sm font-semibold tabular-nums flex-shrink-0 ${isNeg ? "text-red-500" : (mov.monto < 0 ? "text-red-500" : "text-gray-800")}`}>
+          {meta.sign}{fmt(Math.abs(mov.monto))}
+        </span>
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col">
-      {/* Cierre entry (first/newest, only for closed sessions) */}
+      {/* Movimientos correctivos (newest, above cierre) */}
+      {correctivos.map((mov, i) => renderMovimiento(mov, i, correctivos.length))}
+
+      {/* Cierre entry (snapshot from when caja was closed) */}
       {sesion?.cierre && (
-        <div className="flex items-start gap-4 px-5 py-3.5 bg-gray-50/60 border-b border-gray-100">
+        <div className={`flex items-start gap-4 px-5 py-3.5 bg-gray-50/60 ${correctivos.length > 0 || regularMovs.length > 0 ? "border-b border-gray-100" : ""}`}>
           <span className="text-xs text-gray-400 font-mono w-12 pt-0.5 flex-shrink-0">
             {fmtTime(sesion.timestampCierre || sesion.timestampApertura)}
           </span>
@@ -118,49 +169,8 @@ function Timeline({ movimientos, showCorrectivos = false, sesion }: { movimiento
         </div>
       )}
 
-      {sorted.map((mov, i) => {
-        const meta = movMeta(mov)
-        const IconComp = meta.icon
-        const isNeg = mov.tipo === "egreso" || mov.tipo === "retiro"
-        const isCorrectivo = mov.tipo === "correctivo"
-
-        return (
-          <div
-            key={mov.id}
-            className={`flex items-start gap-4 px-5 py-3.5 ${i < sorted.length - 1 ? "border-b border-gray-100" : ""} ${isCorrectivo ? "bg-orange-50/40" : "hover:bg-gray-50/60"} transition-colors`}
-          >
-            {/* Time */}
-            <span className="text-xs text-gray-400 font-mono w-12 pt-0.5 flex-shrink-0">
-              {fmtTime(mov.timestamp)}
-            </span>
-
-            {/* Icon */}
-            <div className={`w-8 h-8 rounded-lg ${meta.bg} flex items-center justify-center flex-shrink-0`}>
-              <IconComp className={`w-4 h-4 ${meta.color}`} />
-            </div>
-
-            {/* Content */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-800 truncate">{meta.label}</span>
-                <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${meta.tagColor}`}>
-                  {meta.tagLabel}
-                </span>
-              </div>
-              {(mov.nota || mov.motivo) && (
-                <p className="text-xs text-gray-400 mt-0.5 truncate">
-                  {mov.usuario}{mov.nota ? " · " + mov.nota : ""}{mov.motivo ? " · " + mov.motivo : ""}
-                </p>
-              )}
-            </div>
-
-            {/* Amount */}
-            <span className={`text-sm font-semibold tabular-nums flex-shrink-0 ${isNeg ? "text-red-500" : (mov.monto < 0 ? "text-red-500" : "text-gray-800")}`}>
-              {meta.sign}{fmt(Math.abs(mov.monto))}
-            </span>
-          </div>
-        )
-      })}
+      {/* Regular movimientos (during session) */}
+      {regularMovs.map((mov, i) => renderMovimiento(mov, i, regularMovs.length))}
 
       {/* Apertura entry (always last/oldest) */}
       {sesion && (
@@ -189,6 +199,7 @@ function Timeline({ movimientos, showCorrectivos = false, sesion }: { movimiento
           </div>
         </div>
       )}
+
     </div>
   )
 }
