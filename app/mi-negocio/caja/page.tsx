@@ -90,6 +90,34 @@ function Timeline({ movimientos, showCorrectivos = false, sesion }: { movimiento
 
   return (
     <div className="flex flex-col">
+      {/* Cierre entry (first/newest, only for closed sessions) */}
+      {sesion?.cierre && (
+        <div className="flex items-start gap-4 px-5 py-3.5 bg-gray-50/60 border-b border-gray-100">
+          <span className="text-xs text-gray-400 font-mono w-12 pt-0.5 flex-shrink-0">
+            {fmtTime(sesion.timestampCierre || sesion.timestampApertura)}
+          </span>
+          <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+            <Square className="w-4 h-4 text-gray-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm font-semibold text-gray-800">Cierre de Caja</span>
+              <span className="text-xs text-gray-500">
+                Saldo final esperado: <span className="font-medium text-gray-700">{fmt(sesion.cierre.saldoEsperadoEfectivo)}</span>
+              </span>
+              <span className="text-gray-400">·</span>
+              <span className="text-xs text-gray-500">
+                Saldo final contado: <span className="font-medium text-gray-700">{fmt(sesion.cierre.saldoContadoEfectivo)}</span>
+              </span>
+              <span className="text-gray-400">·</span>
+              <span className="text-xs text-gray-500">
+                Diferencia final: <span className={`font-medium ${sesion.cierre.diferenciaEfectivo < 0 ? "text-red-500" : "text-gray-700"}`}>{fmt(sesion.cierre.diferenciaEfectivo)}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {sorted.map((mov, i) => {
         const meta = movMeta(mov)
         const IconComp = meta.icon
@@ -136,22 +164,26 @@ function Timeline({ movimientos, showCorrectivos = false, sesion }: { movimiento
 
       {/* Apertura entry (always last/oldest) */}
       {sesion && (
-        <div className="flex items-start gap-4 px-5 py-3.5 bg-gray-900">
-          <span className="text-xs text-gray-500 font-mono w-12 pt-0.5 flex-shrink-0">
+        <div className="flex items-start gap-4 px-5 py-3.5 bg-gray-50/60">
+          <span className="text-xs text-gray-400 font-mono w-12 pt-0.5 flex-shrink-0">
             {fmtTime(sesion.timestampApertura)}
           </span>
-          <div className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center flex-shrink-0">
-            <Play className="w-4 h-4 text-gray-400" />
+          <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+            <Play className="w-4 h-4 text-gray-600" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-semibold text-white">Apertura de Caja</span>
-              <span className="text-xs text-gray-400">
-                Saldo inicial: <span className="font-medium text-gray-300">{fmt(sesion.apertura.saldoInicialContado)}</span>
+              <span className="text-sm font-semibold text-gray-800">Apertura de Caja</span>
+              <span className="text-xs text-gray-500">
+                Saldo inicial esperado: <span className="font-medium text-gray-700">{fmt(sesion.apertura.saldoInicialEsperado)}</span>
               </span>
-              <span className="text-gray-600">·</span>
-              <span className="text-xs text-gray-400">
-                Diferencia inicial: <span className="font-medium text-gray-300">{fmt(sesion.apertura.diferenciaInicial)}</span>
+              <span className="text-gray-400">·</span>
+              <span className="text-xs text-gray-500">
+                Saldo inicial contado: <span className="font-medium text-gray-700">{fmt(sesion.apertura.saldoInicialContado)}</span>
+              </span>
+              <span className="text-gray-400">·</span>
+              <span className="text-xs text-gray-500">
+                Diferencia inicial: <span className={`font-medium ${sesion.apertura.diferenciaInicial < 0 ? "text-red-500" : "text-gray-700"}`}>{fmt(sesion.apertura.diferenciaInicial)}</span>
               </span>
             </div>
           </div>
