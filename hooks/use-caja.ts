@@ -34,9 +34,9 @@ export function useCaja() {
           responsable: "admin@invino.com",
           estado: "cerrada",
           apertura: {
-            saldoInicialEsperado: 0,
-            saldoInicialContado: 0,
-            diferenciaInicial: 0,
+            saldoInicialEsperado: 5000,
+            saldoInicialContado: 4800,
+            diferenciaInicial: -200,
           },
           cierre: {
             saldoEsperadoEfectivo: 47200,

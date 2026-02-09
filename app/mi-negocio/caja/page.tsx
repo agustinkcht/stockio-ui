@@ -41,6 +41,8 @@ function fmtTime(iso: string) {
 // ─── Movement timeline icon + color ────────────────────────
 function movMeta(mov: CajaMovimiento) {
   switch (mov.tipo) {
+    case "apertura":
+      return { icon: Play, color: "text-gray-600", bg: "bg-gray-50", sign: "", label: mov.descripcion, tagLabel: "apertura", tagColor: "bg-gray-100 text-gray-600" }
     case "venta_efectivo":
       return { icon: Banknote, color: "text-green-600", bg: "bg-green-50", sign: "+", label: `Venta POS ${mov.ventaId || ""}`, tagLabel: "efectivo", tagColor: "bg-green-100 text-green-700" }
     case "venta_posnet":
@@ -73,10 +75,11 @@ function Modal({ children, onClose }: { children: React.ReactNode; onClose: () =
 }
 
 // ─── Timeline component ────────────────────────────────────
-function Timeline({ movimientos, showCorrectivos = false }: { movimientos: CajaMovimiento[]; showCorrectivos?: boolean }) {
-  const sorted = [...movimientos].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+function Timeline({ movimientos, showCorrectivos = false, sesion }: { movimientos: CajaMovimiento[]; showCorrectivos?: boolean; sesion?: CajaSesion }) {
+  // Sort descending (newest first)
+  const sorted = [...movimientos].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 
-  if (sorted.length === 0) {
+  if (sorted.length === 0 && !sesion) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-gray-400">
         <Clock className="w-8 h-8 mb-3 opacity-50" />
@@ -130,6 +133,30 @@ function Timeline({ movimientos, showCorrectivos = false }: { movimientos: CajaM
           </div>
         )
       })}
+
+      {/* Apertura entry (always last/oldest) */}
+      {sesion && (
+        <div className="flex items-start gap-4 px-5 py-3.5 bg-gray-900">
+          <span className="text-xs text-gray-500 font-mono w-12 pt-0.5 flex-shrink-0">
+            {fmtTime(sesion.timestampApertura)}
+          </span>
+          <div className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center flex-shrink-0">
+            <Play className="w-4 h-4 text-gray-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm font-semibold text-white">Apertura de Caja</span>
+              <span className="text-xs text-gray-400">
+                Saldo inicial: <span className="font-medium text-gray-300">{fmt(sesion.apertura.saldoInicialContado)}</span>
+              </span>
+              <span className="text-gray-600">·</span>
+              <span className="text-xs text-gray-400">
+                Diferencia inicial: <span className="font-medium text-gray-300">{fmt(sesion.apertura.diferenciaInicial)}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -269,9 +296,9 @@ function ReviewView({ sesion, onBack, onAddCorrectivo }: { sesion: CajaSesion; o
         </div>
       </div>
 
-      {/* Timeline */}
-      <div className="flex-1 overflow-y-auto">
-        <Timeline movimientos={sesion.movimientos} showCorrectivos />
+                {/* Timeline */}
+                <div className="flex-1 overflow-y-auto">
+                  <Timeline movimientos={sesion.movimientos} showCorrectivos sesion={sesion} />
       </div>
 
       {/* Correctivo Modal */}
@@ -701,9 +728,9 @@ export default function CajaPage() {
                     <span className="text-xs text-gray-400 ml-auto">#{sesionActiva.id} &middot; Desde {fmtTime(sesionActiva.timestampApertura)}</span>
                   </div>
 
-                  {/* Timeline */}
-                  <div className="flex-1 overflow-y-auto">
-                    <Timeline movimientos={sesionActiva.movimientos} />
+                {/* Timeline */}
+                <div className="flex-1 overflow-y-auto">
+                  <Timeline movimientos={sesionActiva.movimientos} sesion={sesionActiva} />
                   </div>
                 </div>
               </div>

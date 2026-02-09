@@ -240,6 +240,7 @@ export interface CajaCierre {
 }
 
 export type CajaMovimientoTipo =
+  | "apertura"
   | "venta_efectivo"
   | "venta_posnet"
   | "venta_transferencia"
