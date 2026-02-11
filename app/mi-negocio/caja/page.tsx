@@ -185,15 +185,7 @@ function Timeline({ movimientos, showCorrectivos = false, sesion }: { movimiento
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-sm font-semibold text-gray-800">Apertura de Caja</span>
               <span className="text-xs text-gray-500">
-                Saldo inicial esperado: <span className="font-medium text-gray-700">{fmt(sesion.apertura.saldoInicialEsperado)}</span>
-              </span>
-              <span className="text-gray-400">·</span>
-              <span className="text-xs text-gray-500">
                 Saldo inicial contado: <span className="font-medium text-gray-700">{fmt(sesion.apertura.saldoInicialContado)}</span>
-              </span>
-              <span className="text-gray-400">·</span>
-              <span className="text-xs text-gray-500">
-                Diferencia inicial: <span className={`font-medium ${sesion.apertura.diferenciaInicial < 0 ? "text-red-500" : "text-gray-700"}`}>{fmt(sesion.apertura.diferenciaInicial)}</span>
               </span>
             </div>
           </div>
@@ -811,31 +803,21 @@ export default function CajaPage() {
       {/* INICIAR CAJA - Step 1 */}
       {showIniciarModal && (
         <Modal onClose={() => setShowIniciarModal(false)}>
-          <div className="px-6 py-5">
-            <h3 className="text-base font-semibold text-gray-800 mb-4">Iniciar Caja</h3>
+          <div className="px-6 py-6">
+            <h3 className="text-base font-semibold text-gray-800 mb-6">Iniciar Caja</h3>
 
-            <div className="flex items-center justify-between py-2.5 mb-3">
-              <span className="text-sm text-gray-500">Saldo inicial esperado</span>
-              <span className="text-sm font-semibold text-gray-800">{fmt(saldoInicialEsperado)}</span>
-            </div>
-
-            <label className="block text-xs text-gray-500 mb-1">Cuanto efectivo hay en la caja?</label>
-            <div className="relative mb-1">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+            <label className="block text-base font-medium text-gray-800 mb-3">¿Cuánto efectivo hay en la caja?</label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">$</span>
               <input
                 type="number"
                 value={saldoContadoInput}
                 onChange={(e) => setSaldoContadoInput(e.target.value)}
-                className="w-full pl-7 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
-                placeholder="Saldo inicial contado"
+                className="w-full pl-10 pr-4 py-3.5 border-2 border-gray-200 rounded-lg text-lg font-medium focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+                placeholder="0"
                 autoFocus
               />
             </div>
-            {saldoContadoInput && (
-              <p className={`text-xs mb-3 ${diferenciaInicial === 0 ? "text-gray-400" : diferenciaInicial > 0 ? "text-green-600" : "text-red-500"}`}>
-                Diferencia: {diferenciaInicial >= 0 ? "+" : ""}{fmt(diferenciaInicial)}
-              </p>
-            )}
           </div>
           <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
             <Button variant="ghost" size="sm" onClick={() => setShowIniciarModal(false)} className="text-xs cursor-pointer">Cancelar</Button>
@@ -855,55 +837,17 @@ export default function CajaPage() {
                 <span className="font-semibold text-gray-800">#{nextSessionId}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Saldo inicial esperado</span>
-                <span className="font-medium text-gray-700">{fmt(saldoInicialEsperado)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Saldo inicial contado</span>
                 <span className="font-medium text-gray-700">{fmt(saldoContadoNum)}</span>
               </div>
-              <div className="flex justify-between text-sm border-t border-gray-100 pt-2.5">
-                <span className="text-gray-500">Diferencia inicial</span>
-                <span className={`font-semibold ${diferenciaInicial === 0 ? "text-gray-600" : diferenciaInicial > 0 ? "text-green-600" : "text-red-500"}`}>
-                  {(diferenciaInicial >= 0 ? "+" : "") + fmt(diferenciaInicial)}
-                </span>
-              </div>
-              
-              {diferenciaInicial < 0 && (
-                <div className="flex items-start gap-2 mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                  <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                  <div className="flex-1 text-xs text-amber-800">
-                    <p className="font-medium">El efectivo contado no coincide con el esperado.</p>
-                    <p className="text-amber-700 mt-1">Podés iniciar la caja igual. La diferencia quedará registrada.</p>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
-          <div className="flex items-center justify-between gap-2 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
-            {diferenciaInicial < 0 ? (
-              <>
-                <Button variant="ghost" size="sm" onClick={() => { setShowIniciarConfirm(false); setShowIniciarModal(true) }} className="text-xs cursor-pointer">Revisar contado</Button>
-                <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => { setShowIniciarConfirm(false); if (ultimaSesionCerrada) handleRevisar(ultimaSesionCerrada) }} className="text-xs cursor-pointer">Revisar sesión anterior</Button>
-                  <Button size="sm" onClick={handleIniciarConfirm} className="text-xs cursor-pointer">
-                    <Play className="w-3 h-3 mr-1.5" />
-                    Iniciar Caja
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <>
-                <div />
-                <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => { setShowIniciarConfirm(false); setShowIniciarModal(true) }} className="text-xs cursor-pointer">Revisar</Button>
-                  <Button size="sm" onClick={handleIniciarConfirm} className="text-xs cursor-pointer">
-                    <Play className="w-3 h-3 mr-1.5" />
-                    Iniciar Caja
-                  </Button>
-                </div>
-              </>
-            )}
+          <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
+            <Button variant="ghost" size="sm" onClick={() => { setShowIniciarConfirm(false); setShowIniciarModal(true) }} className="text-xs cursor-pointer">Revisar</Button>
+            <Button size="sm" onClick={handleIniciarConfirm} className="text-xs cursor-pointer">
+              <Play className="w-3 h-3 mr-1.5" />
+              Iniciar Caja
+            </Button>
           </div>
         </Modal>
       )}
