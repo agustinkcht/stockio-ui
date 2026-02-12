@@ -316,51 +316,17 @@ export function useCaja() {
   )
 
   // Add a corrective movement to a closed session
-  const agregarCorrectivo = useCallback(
-    (sesionId: number, mov: Omit<CajaMovimiento, "id" | "timestamp" | "usuario" | "tipo">) => {
-      const allMovIds = sesiones.flatMap((s) => s.movimientos.map((m) => {
-        const match = m.id.match(/MOV-(\d+)/)
-        return match ? parseInt(match[1], 10) : 0
-      }))
-      const maxId = Math.max(0, ...allMovIds)
-      const newId = `MOV-${String(maxId + 1).padStart(3, "0")}`
-
-      const newMov: CajaMovimiento = {
-        ...mov,
-        id: newId,
-        tipo: "correctivo",
-        timestamp: new Date().toISOString(),
-        usuario: "admin@invino.com",
-      }
-
+  const actualizarExplicacion = useCallback(
+    (sesionId: number, explicacion: string) => {
       const updated = sesiones.map((s) => {
-        if (s.id !== sesionId) return s
-        const updatedSession = { ...s, movimientos: [...s.movimientos, newMov] }
-        // Recalculate cierre if closed
-        if (updatedSession.cierre) {
-          let efectivo = updatedSession.apertura.saldoInicialContado
-          let posnet = 0
-          let transferencia = 0
-          for (const m of updatedSession.movimientos) {
-            switch (m.tipo) {
-              case "venta_efectivo": efectivo += m.monto; break
-              case "venta_posnet": posnet += m.monto; break
-              case "venta_transferencia": transferencia += m.monto; break
-              case "ingreso": efectivo += m.monto; break
-              case "egreso": efectivo -= m.monto; break
-              case "retiro": efectivo -= m.monto; break
-              case "correctivo": efectivo += m.monto; break
-            }
-          }
-          updatedSession.cierre = {
-            ...updatedSession.cierre,
-            saldoEsperadoEfectivo: efectivo,
-            diferenciaEfectivo: updatedSession.cierre.saldoContadoEfectivo - efectivo,
-            totalPosnet: posnet,
-            totalTransferencia: transferencia,
-          }
+        if (s.id !== sesionId || !s.cierre) return s
+        return {
+          ...s,
+          cierre: {
+            ...s.cierre,
+            explicacionDiferencia: explicacion,
+          },
         }
-        return updatedSession
       })
 
       setSesiones(updated)
@@ -379,6 +345,6 @@ export function useCaja() {
     iniciarSesion,
     cerrarSesion,
     agregarMovimiento,
-    agregarCorrectivo,
+    actualizarExplicacion,
   }
 }

@@ -237,6 +237,7 @@ export interface CajaCierre {
   diferenciaEfectivo: number
   totalPosnet: number
   totalTransferencia: number
+  explicacionDiferencia?: string
 }
 
 export type CajaMovimientoTipo =
@@ -247,7 +248,6 @@ export type CajaMovimientoTipo =
   | "ingreso"
   | "egreso"
   | "retiro"
-  | "correctivo"
 
 export interface CajaMovimiento {
   id: string

@@ -74,12 +74,11 @@ function movMeta(mov: CajaMovimiento) {
     case "egreso":
       return { icon: ArrowUpCircle, color: "text-red-500", bg: "bg-red-50", sign: "-", label: mov.descripcion, tagLabel: "efectivo", tagColor: "bg-red-100 text-red-600" }
     case "retiro":
-      return { icon: Vault, color: "text-amber-600", bg: "bg-amber-50", sign: "-", label: "Retiro de efectivo", tagLabel: "efectivo", tagColor: "bg-amber-100 text-amber-700" }
-    case "correctivo":
-      return { icon: AlertTriangle, color: "text-orange-600", bg: "bg-orange-50", sign: mov.monto >= 0 ? "+" : "", label: "Movimiento correctivo", tagLabel: "correctivo", tagColor: "bg-orange-100 text-orange-700" }
+      return { icon: Vault, color: "text-gray-600", bg: "bg-gray-50", sign: "-", label: "Retiro de efectivo", tagLabel: "retiro", tagColor: "bg-gray-100 text-gray-600" }
     default:
-      return { icon: Banknote, color: "text-gray-500", bg: "bg-gray-50", sign: "", label: mov.descripcion, tagLabel: "", tagColor: "" }
+      return { icon: DollarSign, color: "text-gray-400", bg: "bg-gray-50", sign: "", label: "Movimiento", tagLabel: "", tagColor: "bg-gray-100 text-gray-500" }
   }
+}
 }
 
 // ─── Modal shell ───────────────────────────────────────────
@@ -95,13 +94,9 @@ function Modal({ children, onClose }: { children: React.ReactNode; onClose: () =
 }
 
 // ─── Timeline component ────────────────────────────────────
-function Timeline({ movimientos, showCorrectivos = false, sesion }: { movimientos: CajaMovimiento[]; showCorrectivos?: boolean; sesion?: CajaSesion }) {
+function Timeline({ movimientos, sesion, onOpenExplicacion }: { movimientos: CajaMovimiento[]; sesion?: CajaSesion; onOpenExplicacion?: () => void }) {
   // Sort descending (newest first)
   const sorted = [...movimientos].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-  
-  // Separate correctivos from regular movimientos
-  const correctivos = sorted.filter(m => m.tipo === "correctivo")
-  const regularMovs = sorted.filter(m => m.tipo !== "correctivo")
 
   if (sorted.length === 0 && !sesion) {
     return (
@@ -116,12 +111,11 @@ function Timeline({ movimientos, showCorrectivos = false, sesion }: { movimiento
     const meta = movMeta(mov)
     const IconComp = meta.icon
     const isNeg = mov.tipo === "egreso" || mov.tipo === "retiro"
-    const isCorrectivo = mov.tipo === "correctivo"
 
     return (
       <div
         key={mov.id}
-        className={`flex items-start gap-4 px-5 py-3.5 ${i < total - 1 ? "border-b border-gray-100" : ""} ${isCorrectivo ? "bg-orange-50/40" : "hover:bg-gray-50/60"} transition-colors`}
+        className={`flex items-start gap-4 px-5 py-3.5 ${i < total - 1 ? "border-b border-gray-100" : ""} hover:bg-gray-50/60 transition-colors`}
       >
         {/* Time */}
         <span className="text-xs text-gray-400 font-mono w-12 pt-0.5 flex-shrink-0">
@@ -158,12 +152,9 @@ function Timeline({ movimientos, showCorrectivos = false, sesion }: { movimiento
 
   return (
     <div className="flex flex-col">
-      {/* Movimientos correctivos (newest, above cierre) */}
-      {correctivos.map((mov, i) => renderMovimiento(mov, i, correctivos.length))}
-
       {/* Cierre entry (snapshot from when caja was closed) */}
       {sesion?.cierre && (
-        <div className={`flex items-start gap-4 px-5 py-3.5 bg-gray-50/60 ${correctivos.length > 0 || regularMovs.length > 0 ? "border-b border-gray-100" : ""}`}>
+        <div className={`flex items-start gap-4 px-5 py-3.5 bg-gray-50/60 ${sorted.length > 0 ? "border-b border-gray-100" : ""}`}>
           <span className="text-xs text-gray-400 font-mono w-12 pt-0.5 flex-shrink-0">
             {fmtTime(sesion.timestampCierre || sesion.timestampApertura)}
           </span>
@@ -184,13 +175,31 @@ function Timeline({ movimientos, showCorrectivos = false, sesion }: { movimiento
               <span className="text-xs text-gray-500">
                 Diferencia final: <span className={`font-medium ${sesion.cierre.diferenciaEfectivo < 0 ? "text-red-500" : "text-gray-700"}`}>{fmt(sesion.cierre.diferenciaEfectivo)}</span>
               </span>
+              {sesion.cierre.diferenciaEfectivo !== 0 && (
+                <>
+                  <span className="text-gray-400">·</span>
+                  {sesion.cierre.explicacionDiferencia ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-green-600" />
+                      <span className="text-xs text-green-600 font-medium">Explicada</span>
+                      <button onClick={onOpenExplicacion} className="text-xs text-blue-600 hover:underline cursor-pointer">[ver explicación]</button>
+                    </>
+                  ) : (
+                    <>
+                      <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                      <span className="text-xs text-amber-600 font-medium">Pendiente de explicación</span>
+                      <button onClick={onOpenExplicacion} className="text-xs text-blue-600 hover:underline cursor-pointer">[agregar explicación]</button>
+                    </>
+                  )}
+                </>
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* Regular movimientos (during session) */}
-      {regularMovs.map((mov, i) => renderMovimiento(mov, i, regularMovs.length))}
+      {/* Movimientos (during session) */}
+      {sorted.map((mov, i) => renderMovimiento(mov, i, sorted.length))}
 
       {/* Apertura entry (always last/oldest) */}
       {sesion && (
@@ -257,11 +266,20 @@ function HistorialView({ sesiones, onBack, onRevisar }: { sesiones: CajaSesion[]
                   <p className="text-xs text-gray-500 mb-0.5">
                     Saldo Final: <span className="font-semibold text-gray-800">{fmt(s.cierre?.saldoContadoEfectivo || 0)}</span>
                   </p>
-                  <p className="text-xs text-gray-500">
-                    Diferencia Final: <span className={`font-medium ${(s.cierre?.diferenciaEfectivo || 0) < 0 ? "text-red-500" : "text-gray-600"}`}>
-                      {fmt(s.cierre?.diferenciaEfectivo || 0)}
-                    </span>
-                  </p>
+                  <div className="flex items-center justify-end gap-1.5">
+                    <p className="text-xs text-gray-500">
+                      Diferencia Final: <span className={`font-medium ${(s.cierre?.diferenciaEfectivo || 0) < 0 ? "text-red-500" : "text-gray-600"}`}>
+                        {fmt(s.cierre?.diferenciaEfectivo || 0)}
+                      </span>
+                    </p>
+                    {s.cierre && s.cierre.diferenciaEfectivo !== 0 && (
+                      s.cierre.explicacionDiferencia ? (
+                        <Check className="w-3 h-3 text-green-600" />
+                      ) : (
+                        <AlertTriangle className="w-3 h-3 text-amber-600" />
+                      )
+                    )}
+                  </div>
                 </div>
                 <button onClick={() => onRevisar(s)} className="p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
                   <Eye className="w-4 h-4 text-gray-400" />
@@ -276,22 +294,21 @@ function HistorialView({ sesiones, onBack, onRevisar }: { sesiones: CajaSesion[]
 }
 
 // ─── Session Review View ───────────────────────────────────
-function ReviewView({ sesion, onBack, onAddCorrectivo }: { sesion: CajaSesion; onBack: () => void; onAddCorrectivo: (sesionId: number, monto: number, descripcion: string) => void }) {
-  const [showCorrectivoModal, setShowCorrectivoModal] = useState(false)
-  const [correctivoMonto, setCorrectivoMonto] = useState("")
-  const [correctivoDesc, setCorrectivoDesc] = useState("")
-  const [correctivoSign, setCorrectivoSign] = useState<"positive" | "negative" | "retiro">("positive")
+function ReviewView({ sesion, onBack, onUpdateExplicacion }: { sesion: CajaSesion; onBack: () => void; onUpdateExplicacion: (sesionId: number, explicacion: string) => void }) {
+  const [showExplicacionModal, setShowExplicacionModal] = useState(false)
+  const [explicacionText, setExplicacionText] = useState(sesion.cierre?.explicacionDiferencia || "")
+  const [isEditingExplicacion, setIsEditingExplicacion] = useState(false)
 
-  const handleAddCorrectivo = () => {
-    const m = parseFloat(correctivoMonto) || 0
-    let signedMonto: number
-    if (correctivoSign === "retiro") {
-      signedMonto = -m
-    } else {
-      signedMonto = correctivoSign === "positive" ? m : -m
-    }
-    onAddCorrectivo(sesion.id, signedMonto, correctivoDesc || "Movimiento correctivo")
-    setShowCorrectivoModal(false)
+  const handleSaveExplicacion = () => {
+    onUpdateExplicacion(sesion.id, explicacionText)
+    setShowExplicacionModal(false)
+    setIsEditingExplicacion(false)
+  }
+
+  const handleOpenExplicacion = () => {
+    setExplicacionText(sesion.cierre?.explicacionDiferencia || "")
+    setIsEditingExplicacion(!sesion.cierre?.explicacionDiferencia)
+    setShowExplicacionModal(true)
   }
 
   // Recalculate saldos from movimientos
@@ -306,7 +323,6 @@ function ReviewView({ sesion, onBack, onAddCorrectivo }: { sesion: CajaSesion; o
       case "ingreso": efectivo += m.monto; break
       case "egreso": efectivo -= m.monto; break
       case "retiro": efectivo -= m.monto; break
-      case "correctivo": efectivo += m.monto; break
     }
   }
 
@@ -323,15 +339,6 @@ function ReviewView({ sesion, onBack, onAddCorrectivo }: { sesion: CajaSesion; o
             <p className="text-xs text-gray-400">{fmtDate(sesion.timestampApertura)} &middot; {sesion.responsable}</p>
           </div>
         </div>
-        <Button
-          onClick={() => setShowCorrectivoModal(true)}
-          variant="ghost"
-          size="sm"
-          className="h-8 text-xs border border-orange-200 text-orange-600 hover:bg-orange-50 cursor-pointer"
-        >
-          <Plus className="w-3.5 h-3.5 mr-1" />
-          Correctivo
-        </Button>
       </div>
 
       {/* Summary widgets */}
@@ -340,14 +347,8 @@ function ReviewView({ sesion, onBack, onAddCorrectivo }: { sesion: CajaSesion; o
           <p className={`text-[10px] uppercase tracking-wider mb-1 ${sesion.cierre ? "text-gray-400" : "text-gray-400"}`}>Efectivo</p>
           {sesion.cierre ? (
             <>
-              <p className="text-xs text-gray-400 mb-0.5">
-                Saldo Final: <span className="font-bold text-white">{fmt(sesion.cierre.saldoContadoEfectivo)}</span>
-              </p>
-              <p className="text-xs text-gray-400">
-                Diferencia Final: <span className={`font-semibold ${sesion.cierre.diferenciaEfectivo < 0 ? "text-red-400" : "text-gray-300"}`}>
-                  {fmt(sesion.cierre.diferenciaEfectivo)}
-                </span>
-              </p>
+              <p className="text-xs text-gray-400 mb-0.5">Saldo Final Contado</p>
+              <p className="text-base font-bold text-white">{fmt(sesion.cierre.saldoContadoEfectivo)}</p>
             </>
           ) : (
             <p className="text-base font-bold text-gray-800">{fmt(efectivo)}</p>
@@ -363,69 +364,41 @@ function ReviewView({ sesion, onBack, onAddCorrectivo }: { sesion: CajaSesion; o
         </div>
       </div>
 
-                {/* Timeline */}
-                <div className="flex-1 overflow-y-auto">
-                  <Timeline movimientos={sesion.movimientos} showCorrectivos sesion={sesion} />
+      {/* Timeline */}
+      <div className="flex-1 overflow-y-auto border-t border-gray-100">
+        <Timeline movimientos={sesion.movimientos} sesion={sesion} onOpenExplicacion={handleOpenExplicacion} />
       </div>
 
-      {/* Correctivo Modal */}
-      {showCorrectivoModal && (
-        <Modal onClose={() => setShowCorrectivoModal(false)}>
+      {/* Explicacion Modal */}
+      {showExplicacionModal && (
+        <Modal onClose={() => { setShowExplicacionModal(false); setIsEditingExplicacion(false) }}>
           <div className="px-6 py-5">
-            <h3 className="text-base font-semibold text-gray-800 mb-4">Movimiento Correctivo</h3>
-            <p className="text-xs text-gray-400 mb-4">
-              Se agregara como correctivo explicito a la sesion #{sesion.id}.
-            </p>
-
-            <div className="flex gap-2 mb-3">
-              <button
-                onClick={() => setCorrectivoSign("positive")}
-                className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer ${correctivoSign === "positive" ? "bg-green-100 text-green-700 border border-green-200" : "bg-gray-50 text-gray-500 border border-gray-200"}`}
-              >
-                + Ingreso
-              </button>
-              <button
-                onClick={() => setCorrectivoSign("negative")}
-                className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer ${correctivoSign === "negative" ? "bg-red-100 text-red-600 border border-red-200" : "bg-gray-50 text-gray-500 border border-gray-200"}`}
-              >
-                - Egreso
-              </button>
-              <button
-                onClick={() => setCorrectivoSign("retiro")}
-                className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer ${correctivoSign === "retiro" ? "bg-amber-100 text-amber-700 border border-amber-200" : "bg-gray-50 text-gray-500 border border-gray-200"}`}
-              >
-                Retiro
-              </button>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-semibold text-gray-800">{sesion.cierre?.explicacionDiferencia ? "Explicación de la Diferencia" : "Agregar Explicación de Diferencia"}</h3>
+              {!isEditingExplicacion && sesion.cierre?.explicacionDiferencia && (
+                <button onClick={() => setShowExplicacionModal(false)} className="p-1 hover:bg-gray-100 rounded-md transition-colors cursor-pointer">
+                  <X className="w-4 h-4 text-gray-400" />
+                </button>
+              )}
             </div>
-
-            <label className="block text-xs text-gray-500 mb-1">Monto</label>
-            <div className="relative mb-3">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
-              <input
-                type="text"
-                inputMode="numeric"
-                value={movMonto}
-                onChange={(e) => {
-                  const formatted = formatNumber(e.target.value)
-                  setMovMonto(formatted)
-                }}
-                className="w-full pl-7 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
-                placeholder="0"
-                autoFocus
-              />
-            </div>
-
-            <label className="block text-xs text-gray-500 mb-1">Motivo (opcional)</label>
-            <input
-              value={correctivoDesc}
-              onChange={(e) => setCorrectivoDesc(e.target.value)}
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-gray-300 mb-5"
-              placeholder="Motivo del correctivo"
+            
+            <textarea
+              value={explicacionText}
+              onChange={(e) => setExplicacionText(e.target.value)}
+              disabled={!isEditingExplicacion && !!sesion.cierre?.explicacionDiferencia}
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-gray-300 min-h-[120px] resize-none disabled:bg-gray-50 disabled:text-gray-600"
+              placeholder="Escribe aquí la explicación de la diferencia..."
             />
           </div>
           <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
-            <Button variant="ghost" size="sm" onClick={() => setShowCorrectivoModal(false)} className="text-xs cursor-pointer">Cancelar</Button>
-            <Button size="sm" onClick={handleAddCorrectivo} disabled={!correctivoMonto || parseFloat(correctivoMonto) === 0} className="text-xs cursor-pointer">Guardar</Button>
+            {!isEditingExplicacion && sesion.cierre?.explicacionDiferencia ? (
+              <Button size="sm" onClick={() => setIsEditingExplicacion(true)} className="text-xs cursor-pointer">Editar</Button>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" onClick={() => { setShowExplicacionModal(false); setIsEditingExplicacion(false) }} className="text-xs cursor-pointer">Cancelar</Button>
+                <Button size="sm" onClick={handleSaveExplicacion} disabled={!explicacionText.trim()} className="text-xs cursor-pointer">Guardar</Button>
+              </>
+            )}
           </div>
         </Modal>
       )}
@@ -447,7 +420,7 @@ export default function CajaPage() {
     iniciarSesion,
     cerrarSesion,
     agregarMovimiento,
-    agregarCorrectivo,
+    actualizarExplicacion,
   } = useCaja()
 
   // View state
@@ -579,15 +552,11 @@ export default function CajaPage() {
     setView("review")
   }
 
-  const handleAddCorrectivo = (sesionId: number, monto: number, descripcion: string) => {
-    agregarCorrectivo(sesionId, {
-      monto,
-      descripcion,
-      medioPago: "efectivo",
-    })
+  const handleUpdateExplicacion = (sesionId: number, explicacion: string) => {
+    actualizarExplicacion(sesionId, explicacion)
     // Refresh the review sesion
     const updated = sesiones.find((s) => s.id === sesionId)
-    if (updated) setReviewSesion({ ...updated })
+    if (updated) setReviewSesion(updated)
   }
 
   // Breadcrumbs
@@ -652,7 +621,7 @@ export default function CajaPage() {
               <ReviewView
                 sesion={sesiones.find((s) => s.id === reviewSesion.id) || reviewSesion}
                 onBack={() => { setView("historial"); setReviewSesion(null) }}
-                onAddCorrectivo={handleAddCorrectivo}
+                onUpdateExplicacion={handleUpdateExplicacion}
               />
             )}
 
