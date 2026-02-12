@@ -27,6 +27,7 @@ import {
   Plus,
   Copy,
   Check,
+  DollarSign,
 } from "lucide-react"
 
 // ─── Format helpers ─────────────────────────────────────────
