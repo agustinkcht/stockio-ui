@@ -226,8 +226,28 @@ function Timeline({ movimientos, sesion, onOpenExplicacion }: { movimientos: Caj
 }
 
 // ─── Session History View ──────────────────────────────────
-function HistorialView({ sesiones, onBack, onRevisar }: { sesiones: CajaSesion[]; onBack: () => void; onRevisar: (s: CajaSesion) => void }) {
+function HistorialView({ sesiones, onBack, onRevisar, onUpdateExplicacion }: { sesiones: CajaSesion[]; onBack: () => void; onRevisar: (s: CajaSesion) => void; onUpdateExplicacion: (sesionId: number, explicacion: string) => void }) {
   const closed = sesiones.filter((s) => s.estado === "cerrada").sort((a, b) => b.id - a.id)
+  const [showExplicacionModal, setShowExplicacionModal] = useState(false)
+  const [selectedSesion, setSelectedSesion] = useState<CajaSesion | null>(null)
+  const [explicacionText, setExplicacionText] = useState("")
+  const [isEditingExplicacion, setIsEditingExplicacion] = useState(false)
+
+  const handleOpenExplicacion = (sesion: CajaSesion) => {
+    setSelectedSesion(sesion)
+    setExplicacionText(sesion.cierre?.explicacionDiferencia || "")
+    setIsEditingExplicacion(!sesion.cierre?.explicacionDiferencia)
+    setShowExplicacionModal(true)
+  }
+
+  const handleSaveExplicacion = () => {
+    if (selectedSesion) {
+      onUpdateExplicacion(selectedSesion.id, explicacionText)
+      setShowExplicacionModal(false)
+      setIsEditingExplicacion(false)
+      setSelectedSesion(null)
+    }
+  }
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
@@ -266,20 +286,28 @@ function HistorialView({ sesiones, onBack, onRevisar }: { sesiones: CajaSesion[]
                   <p className="text-xs text-gray-500 mb-0.5">
                     Saldo Final: <span className="font-semibold text-gray-800">{fmt(s.cierre?.saldoContadoEfectivo || 0)}</span>
                   </p>
-                  <div className="flex items-center justify-end gap-1.5">
-                    <p className="text-xs text-gray-500">
-                      Diferencia Final: <span className={`font-medium ${(s.cierre?.diferenciaEfectivo || 0) < 0 ? "text-red-500" : "text-gray-600"}`}>
-                        {fmt(s.cierre?.diferenciaEfectivo || 0)}
-                      </span>
-                    </p>
-                    {s.cierre && s.cierre.diferenciaEfectivo !== 0 && (
-                      s.cierre.explicacionDiferencia ? (
-                        <Check className="w-3 h-3 text-green-600" />
+                  <p className="text-xs text-gray-500 mb-0.5">
+                    Diferencia Final: <span className={`font-medium ${(s.cierre?.diferenciaEfectivo || 0) < 0 ? "text-red-500" : "text-gray-600"}`}>
+                      {fmt(s.cierre?.diferenciaEfectivo || 0)}
+                    </span>
+                  </p>
+                  {s.cierre && s.cierre.diferenciaEfectivo !== 0 && (
+                    <div className="flex items-center justify-end gap-1.5 mt-1">
+                      {s.cierre.explicacionDiferencia ? (
+                        <>
+                          <Check className="w-3 h-3 text-green-600" />
+                          <span className="text-xs text-green-600 font-medium">Explicada</span>
+                          <button onClick={(e) => { e.stopPropagation(); handleOpenExplicacion(s) }} className="text-xs text-blue-600 hover:underline cursor-pointer">[ver explicación]</button>
+                        </>
                       ) : (
-                        <AlertTriangle className="w-3 h-3 text-amber-600" />
-                      )
-                    )}
-                  </div>
+                        <>
+                          <AlertTriangle className="w-3 h-3 text-amber-600" />
+                          <span className="text-xs text-amber-600 font-medium">Pendiente</span>
+                          <button onClick={(e) => { e.stopPropagation(); handleOpenExplicacion(s) }} className="text-xs text-blue-600 hover:underline cursor-pointer">[agregar]</button>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <button onClick={() => onRevisar(s)} className="p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
                   <Eye className="w-4 h-4 text-gray-400" />
@@ -289,6 +317,40 @@ function HistorialView({ sesiones, onBack, onRevisar }: { sesiones: CajaSesion[]
           </div>
         )}
       </div>
+
+      {/* Explicacion Modal */}
+      {showExplicacionModal && selectedSesion && (
+        <Modal onClose={() => { setShowExplicacionModal(false); setIsEditingExplicacion(false); setSelectedSesion(null) }}>
+          <div className="px-6 py-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-semibold text-gray-800">{selectedSesion.cierre?.explicacionDiferencia ? "Explicación de la Diferencia" : "Agregar Explicación de Diferencia"}</h3>
+              {!isEditingExplicacion && selectedSesion.cierre?.explicacionDiferencia && (
+                <button onClick={() => { setShowExplicacionModal(false); setIsEditingExplicacion(false); setSelectedSesion(null) }} className="p-1 hover:bg-gray-100 rounded-md transition-colors cursor-pointer">
+                  <X className="w-4 h-4 text-gray-400" />
+                </button>
+              )}
+            </div>
+            
+            <textarea
+              value={explicacionText}
+              onChange={(e) => setExplicacionText(e.target.value)}
+              disabled={!isEditingExplicacion && !!selectedSesion.cierre?.explicacionDiferencia}
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-gray-300 min-h-[120px] resize-none disabled:bg-gray-50 disabled:text-gray-600"
+              placeholder="Escribe aquí la explicación de la diferencia..."
+            />
+          </div>
+          <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
+            {!isEditingExplicacion && selectedSesion.cierre?.explicacionDiferencia ? (
+              <Button size="sm" onClick={() => setIsEditingExplicacion(true)} className="text-xs cursor-pointer">Editar</Button>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" onClick={() => { setShowExplicacionModal(false); setIsEditingExplicacion(false); setSelectedSesion(null) }} className="text-xs cursor-pointer">Cancelar</Button>
+                <Button size="sm" onClick={handleSaveExplicacion} disabled={!explicacionText.trim()} className="text-xs cursor-pointer">Guardar</Button>
+              </>
+            )}
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }
@@ -613,6 +675,7 @@ export default function CajaPage() {
                 sesiones={sesiones}
                 onBack={() => setView("main")}
                 onRevisar={handleRevisar}
+                onUpdateExplicacion={handleUpdateExplicacion}
               />
             )}
 
@@ -983,9 +1046,13 @@ export default function CajaPage() {
             <div className="relative mb-3">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
                 value={movMonto}
-                onChange={(e) => setMovMonto(e.target.value)}
+                onChange={(e) => {
+                  const formatted = formatNumber(e.target.value)
+                  setMovMonto(formatted)
+                }}
                 className="w-full pl-7 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
                 placeholder="0"
                 autoFocus
