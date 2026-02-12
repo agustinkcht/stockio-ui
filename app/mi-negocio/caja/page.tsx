@@ -644,31 +644,31 @@ export default function CajaPage() {
                 <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mb-5">
                   <Vault className="w-7 h-7 text-gray-400" />
                 </div>
-                <h2 className="text-lg font-semibold text-gray-800 mb-1">No hay caja abierta</h2>
+                <h2 className="font-semibold text-gray-800 mb-1 text-xl">No hay caja abierta</h2>
 
                 {ultimaSesionCerrada ? (
                   <div className="text-center mb-6">
-                    <p className="text-xs text-gray-400 mt-2">
+                    <p className="text-gray-400 mt-2 text-sm">
                       Ultima sesion: <span className="font-medium text-gray-500">#{ultimaSesionCerrada.id}</span>
                       &nbsp;&middot;&nbsp;{fmtDate(ultimaSesionCerrada.timestampCierre || ultimaSesionCerrada.timestampApertura)}
                       &nbsp;&middot;&nbsp;
                       <span className="font-medium text-gray-500">{ultimaSesionCerrada.estado}</span>
                     </p>
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-gray-400 mt-1 text-base">
                       Saldo final: <span className="font-medium text-gray-600">{fmt(ultimaSesionCerrada.cierre?.saldoContadoEfectivo || 0)}</span>
                     </p>
 
                     <div className="flex items-center justify-center gap-2 mt-4">
                       <button
                         onClick={() => handleRevisar(ultimaSesionCerrada)}
-                        className="text-xs text-gray-500 hover:text-gray-700 underline underline-offset-2 cursor-pointer transition-colors"
+                        className="text-gray-500 hover:text-gray-700 underline underline-offset-2 cursor-pointer transition-colors text-sm"
                       >
                         Revisar
                       </button>
                       <span className="text-gray-300">&middot;</span>
                       <button
                         onClick={() => setView("historial")}
-                        className="text-xs text-gray-500 hover:text-gray-700 underline underline-offset-2 cursor-pointer transition-colors"
+                        className="text-gray-500 hover:text-gray-700 underline underline-offset-2 cursor-pointer transition-colors text-sm"
                       >
                         Historial de sesiones
                       </button>
