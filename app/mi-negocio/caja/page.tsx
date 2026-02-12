@@ -435,7 +435,6 @@ export default function CajaPage() {
   const [showIniciarConfirm, setShowIniciarConfirm] = useState(false)
   const [showCerrarModal, setShowCerrarModal] = useState(false)
   const [showCerrarResumen, setShowCerrarResumen] = useState(false)
-  const [showCerrarFinal, setShowCerrarFinal] = useState(false)
   const [showSuccess, setShowSuccess] = useState<string | null>(null)
 
   // Ingreso / Egreso / Retiro modals
@@ -497,13 +496,8 @@ export default function CajaPage() {
   }
 
   const handleCerrarConfirm = () => {
-    setShowCerrarResumen(false)
-    setShowCerrarFinal(true)
-  }
-
-  const handleCerrarFinal = () => {
     cerrarSesion(cerrarSaldoContadoNum)
-    setShowCerrarFinal(false)
+    setShowCerrarResumen(false)
     setCerrarSaldoContado("")
     setShowSuccess("Caja cerrada con exito")
     setTimeout(() => setShowSuccess(null), 2500)
@@ -808,12 +802,12 @@ export default function CajaPage() {
 
             <label className="block text-base font-medium text-gray-800 mb-3">¿Cuánto efectivo hay en la caja?</label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
               <input
                 type="number"
                 value={saldoContadoInput}
                 onChange={(e) => setSaldoContadoInput(e.target.value)}
-                className="w-full pl-10 pr-4 py-3.5 border-2 border-gray-200 rounded-lg text-lg font-medium focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+                className="w-full pl-7 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
                 placeholder="0"
                 autoFocus
               />
@@ -855,43 +849,36 @@ export default function CajaPage() {
       {/* CERRAR CAJA - Step 1 */}
       {showCerrarModal && (
         <Modal onClose={() => setShowCerrarModal(false)}>
-          <div className="px-6 py-5">
-            <h3 className="text-base font-semibold text-gray-800 mb-4">Cerrar Caja</h3>
+          <div className="px-6 py-6">
+            <h3 className="text-base font-semibold text-gray-800 mb-6">Cerrar Caja</h3>
 
-            <div className="space-y-2 mb-4">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Saldo esperado en efectivo</span>
-                <span className="font-semibold text-gray-800">{fmt(saldos.efectivo)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Posnet</span>
-                <span className="font-medium text-gray-700">{fmt(saldos.posnet)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Transferencia</span>
-                <span className="font-medium text-gray-700">{fmt(saldos.transferencia)}</span>
-              </div>
+            <label className="block text-base font-medium text-gray-800 mb-3">¿Cuánto efectivo hay en la caja?</label>
+            <div className="relative mb-4">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+              <input
+                type="number"
+                value={cerrarSaldoContado}
+                onChange={(e) => setCerrarSaldoContado(e.target.value)}
+                className="w-full pl-7 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
+                placeholder="0"
+                autoFocus
+              />
             </div>
 
-            <div className="border-t border-gray-100 pt-4">
-              <label className="block text-xs text-gray-500 mb-1">Cuanto dinero hay en caja?</label>
-              <div className="relative mb-1">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
-                <input
-                  type="number"
-                  value={cerrarSaldoContado}
-                  onChange={(e) => setCerrarSaldoContado(e.target.value)}
-                  className="w-full pl-7 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
-                  placeholder="Saldo contado"
-                  autoFocus
-                />
+            {cerrarSaldoContado && (
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Saldo esperado en efectivo</span>
+                  <span className="font-semibold text-gray-800">{fmt(saldos.efectivo)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Diferencia</span>
+                  <span className={`font-semibold ${cerrarDiferencia === 0 ? "text-gray-600" : cerrarDiferencia > 0 ? "text-green-600" : "text-red-500"}`}>
+                    {(cerrarDiferencia >= 0 ? "+" : "") + fmt(cerrarDiferencia)}
+                  </span>
+                </div>
               </div>
-              {cerrarSaldoContado && (
-                <p className={`text-xs ${cerrarDiferencia === 0 ? "text-gray-400" : cerrarDiferencia > 0 ? "text-green-600" : "text-red-500"}`}>
-                  Diferencia: {cerrarDiferencia >= 0 ? "+" : ""}{fmt(cerrarDiferencia)}
-                </p>
-              )}
-            </div>
+            )}
           </div>
           <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
             <Button variant="ghost" size="sm" onClick={() => setShowCerrarModal(false)} className="text-xs cursor-pointer">Cancelar</Button>
@@ -900,28 +887,48 @@ export default function CajaPage() {
         </Modal>
       )}
 
-      {/* CERRAR CAJA - Step 2 Resumen */}
-      {showCerrarResumen && (
+      {/* CERRAR CAJA - Step 2 Resumen & Confirmation */}
+      {showCerrarResumen && sesionActiva && (
         <Modal onClose={() => setShowCerrarResumen(false)}>
           <div className="px-6 py-5">
-            <h3 className="text-base font-semibold text-gray-800 mb-4">Resumen de la sesion</h3>
+            <h3 className="text-base font-semibold text-gray-800 mb-4">Vas a cerrar la caja</h3>
 
-            <div className="space-y-2.5">
+            <div className="space-y-2 mb-4">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Saldo esperado en efectivo</span>
-                <span className="font-medium text-gray-700">{fmt(saldos.efectivo)}</span>
+                <span className="text-gray-500">Sesion</span>
+                <span className="font-semibold text-gray-800">#{sesionActiva.id}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Saldo contado en efectivo</span>
-                <span className="font-medium text-gray-700">{fmt(cerrarSaldoContadoNum)}</span>
+                <span className="text-gray-500">Fecha y hora de inicio</span>
+                <span className="font-medium text-gray-700">{fmtDate(sesionActiva.timestampApertura)}</span>
               </div>
-              <div className="flex justify-between text-sm border-t border-gray-100 pt-2.5">
-                <span className="text-gray-500">Diferencia</span>
-                <span className={`font-semibold ${cerrarDiferencia === 0 ? "text-gray-600" : cerrarDiferencia > 0 ? "text-green-600" : "text-red-500"}`}>
-                  {cerrarDiferencia >= 0 ? "+" : ""}{fmt(cerrarDiferencia)}
-                </span>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Fecha y hora de cierre</span>
+                <span className="font-medium text-gray-700">{fmtDate(new Date().toISOString())}</span>
               </div>
-              <div className="border-t border-gray-100 pt-2.5 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Usuario responsable</span>
+                <span className="font-medium text-gray-700">{sesionActiva.usuario}</span>
+              </div>
+            </div>
+
+            <div className="border-t border-gray-100 pt-4">
+              <h4 className="text-sm font-semibold text-gray-800 mb-3">Resumen de la sesion</h4>
+              <div className="space-y-2.5">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Saldo esperado en efectivo</span>
+                  <span className="font-medium text-gray-700">{fmt(saldos.efectivo)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Saldo contado en efectivo</span>
+                  <span className="font-medium text-gray-700">{fmt(cerrarSaldoContadoNum)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Diferencia</span>
+                  <span className={`font-semibold ${cerrarDiferencia === 0 ? "text-gray-600" : cerrarDiferencia > 0 ? "text-green-600" : "text-red-500"}`}>
+                    {(cerrarDiferencia >= 0 ? "+" : "") + fmt(cerrarDiferencia)}
+                  </span>
+                </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Posnet</span>
                   <span className="font-medium text-gray-700">{fmt(saldos.posnet)}</span>
@@ -934,28 +941,11 @@ export default function CajaPage() {
             </div>
           </div>
           <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
-            <Button variant="ghost" size="sm" onClick={() => { setShowCerrarResumen(false); setShowCerrarModal(true) }} className="text-xs cursor-pointer">Cancelar</Button>
+            <Button variant="ghost" size="sm" onClick={() => { setShowCerrarResumen(false); setShowCerrarModal(true) }} className="text-xs cursor-pointer">Revisar</Button>
             <Button size="sm" onClick={handleCerrarConfirm} className="text-xs cursor-pointer">
               <Square className="w-3 h-3 mr-1.5" />
               Cerrar Caja
             </Button>
-          </div>
-        </Modal>
-      )}
-
-      {/* CERRAR CAJA - Step 3 Final confirmation */}
-      {showCerrarFinal && (
-        <Modal onClose={() => setShowCerrarFinal(false)}>
-          <div className="px-6 py-5 text-center">
-            <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
-              <Square className="w-5 h-5 text-gray-500" />
-            </div>
-            <h3 className="text-base font-semibold text-gray-800 mb-1">Vas a cerrar la caja</h3>
-            <p className="text-sm text-gray-400">Sesion #{sesionActiva?.id}</p>
-          </div>
-          <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
-            <Button variant="ghost" size="sm" onClick={() => { setShowCerrarFinal(false); setShowCerrarResumen(true) }} className="text-xs cursor-pointer">Cancelar</Button>
-            <Button size="sm" onClick={handleCerrarFinal} className="text-xs cursor-pointer">Cerrar Caja</Button>
           </div>
         </Modal>
       )}
