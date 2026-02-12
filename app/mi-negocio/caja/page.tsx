@@ -303,7 +303,7 @@ function HistorialView({ sesiones, onBack, onRevisar, onUpdateExplicacion }: { s
                       ) : (
                         <>
                           <AlertTriangle className="w-3 h-3 text-amber-600" />
-                          <span className="text-xs text-amber-600 font-medium">Pendiente</span>
+                          <span className="text-xs text-amber-600 font-medium">Pendiente de explicación</span>
                           <button onClick={(e) => { e.stopPropagation(); handleOpenExplicacion(s) }} className="text-xs text-blue-600 hover:underline cursor-pointer">[agregar]</button>
                         </>
                       )}
