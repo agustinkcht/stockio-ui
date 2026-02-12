@@ -25,6 +25,8 @@ import {
   ChevronLeft,
   Eye,
   Plus,
+  Copy,
+  Check,
 } from "lucide-react"
 
 // ─── Format helpers ─────────────────────────────────────────
@@ -42,6 +44,18 @@ function fmtDateTime(iso: string) {
   const dateStr = date.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "2-digit" })
   const timeStr = date.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", hour12: false })
   return dateStr + " - " + timeStr
+}
+
+// Format number with thousands separator (4525 -> "4.525")
+function formatNumber(val: string): string {
+  const num = val.replace(/\D/g, "")
+  if (!num) return ""
+  return Number(num).toLocaleString("es-AR")
+}
+
+// Parse formatted number back to number ("4.525" -> 4525)
+function parseFormattedNumber(val: string): number {
+  return Number(val.replace(/\./g, ""))
 }
 
 // ─── Movement timeline icon + color ────────────────────────
@@ -388,9 +402,13 @@ function ReviewView({ sesion, onBack, onAddCorrectivo }: { sesion: CajaSesion; o
             <div className="relative mb-3">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
               <input
-                type="number"
-                value={correctivoMonto}
-                onChange={(e) => setCorrectivoMonto(e.target.value)}
+                type="text"
+                inputMode="numeric"
+                value={movMonto}
+                onChange={(e) => {
+                  const formatted = formatNumber(e.target.value)
+                  setMovMonto(formatted)
+                }}
                 className="w-full pl-7 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
                 placeholder="0"
                 autoFocus
@@ -435,6 +453,7 @@ export default function CajaPage() {
   // View state
   const [view, setView] = useState<"main" | "historial" | "review">("main")
   const [reviewSesion, setReviewSesion] = useState<CajaSesion | null>(null)
+  const [copied, setCopied] = useState(false)
 
   // Modal state
   const [showIniciarModal, setShowIniciarModal] = useState(false)
@@ -455,7 +474,7 @@ export default function CajaPage() {
   const [retiroContado, setRetiroContado] = useState("")
 
   // Computed values
-  const saldoContadoNum = parseFloat(saldoContadoInput) || 0
+  const saldoContadoNum = saldoContadoInput ? parseFormattedNumber(saldoContadoInput) : 0
   const saldoInicialEsperado = ultimaSesionCerrada?.cierre?.saldoContadoEfectivo || 0
   const diferenciaInicial = saldoContadoNum - saldoInicialEsperado
 
@@ -468,7 +487,7 @@ export default function CajaPage() {
 
   // Cerrar state
   const [cerrarSaldoContado, setCerrarSaldoContado] = useState("")
-  const cerrarSaldoContadoNum = parseFloat(cerrarSaldoContado) || 0
+  const cerrarSaldoContadoNum = cerrarSaldoContado ? parseFormattedNumber(cerrarSaldoContado) : 0
   const cerrarDiferencia = cerrarSaldoContadoNum - saldos.efectivo
 
   // ─── Handlers ──────────────────────────────────────────────
@@ -510,7 +529,7 @@ export default function CajaPage() {
   }
 
   const handleIngreso = () => {
-    const m = parseFloat(movMonto) || 0
+    const m = movMonto ? parseFormattedNumber(movMonto) : 0
     if (m <= 0) return
     agregarMovimiento({
       tipo: "ingreso",
@@ -524,7 +543,7 @@ export default function CajaPage() {
   }
 
   const handleEgreso = () => {
-    const m = parseFloat(movMonto) || 0
+    const m = movMonto ? parseFormattedNumber(movMonto) : 0
     if (m <= 0) return
     agregarMovimiento({
       tipo: "egreso",
@@ -538,7 +557,7 @@ export default function CajaPage() {
   }
 
   const handleRetiro = () => {
-    const m = parseFloat(movMonto) || 0
+    const m = movMonto ? parseFormattedNumber(movMonto) : 0
     if (m <= 0) return
     agregarMovimiento({
       tipo: "retiro",
@@ -654,9 +673,27 @@ export default function CajaPage() {
                       &nbsp;&middot;&nbsp;
                       <span className="font-medium text-gray-500">{ultimaSesionCerrada.estado}</span>
                     </p>
-                    <p className="text-gray-400 mt-1 text-base">
-                      Saldo final: <span className="font-medium text-gray-600">{fmt(ultimaSesionCerrada.cierre?.saldoContadoEfectivo || 0)}</span>
-                    </p>
+                    <div className="flex items-center justify-center gap-2 mt-1">
+                      <p className="text-gray-400 text-base">
+                        Saldo final: <span className="font-medium text-gray-600">{fmt(ultimaSesionCerrada.cierre?.saldoContadoEfectivo || 0)}</span>
+                      </p>
+                      <button
+                        onClick={() => {
+                          const valor = String(ultimaSesionCerrada.cierre?.saldoContadoEfectivo || 0)
+                          navigator.clipboard.writeText(valor)
+                          setCopied(true)
+                          setTimeout(() => setCopied(false), 2000)
+                        }}
+                        className="p-1.5 hover:bg-gray-100 rounded-md transition-colors cursor-pointer"
+                        title="Copiar saldo"
+                      >
+                        {copied ? (
+                          <Check className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <Copy className="w-4 h-4 text-gray-400" />
+                        )}
+                      </button>
+                    </div>
 
                     <div className="flex items-center justify-center gap-2 mt-4">
                       <button
@@ -810,9 +847,13 @@ export default function CajaPage() {
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
                 value={saldoContadoInput}
-                onChange={(e) => setSaldoContadoInput(e.target.value)}
+                onChange={(e) => {
+                  const formatted = formatNumber(e.target.value)
+                  setSaldoContadoInput(formatted)
+                }}
                 className="w-full pl-7 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
                 placeholder="0"
                 autoFocus
@@ -862,9 +903,13 @@ export default function CajaPage() {
             <div className="relative mb-4">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
                 value={cerrarSaldoContado}
-                onChange={(e) => setCerrarSaldoContado(e.target.value)}
+                onChange={(e) => {
+                  const formatted = formatNumber(e.target.value)
+                  setCerrarSaldoContado(formatted)
+                }}
                 className="w-full pl-7 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
                 placeholder="0"
                 autoFocus
@@ -988,7 +1033,7 @@ export default function CajaPage() {
           </div>
           <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
             <Button variant="ghost" size="sm" onClick={() => setShowIngresoModal(false)} className="text-xs cursor-pointer">Cancelar</Button>
-            <Button size="sm" onClick={handleIngreso} disabled={!movMonto || parseFloat(movMonto) <= 0} className="text-xs cursor-pointer">Guardar</Button>
+            <Button size="sm" onClick={handleIngreso} disabled={!movMonto || parseFormattedNumber(movMonto) <= 0} className="text-xs cursor-pointer">Guardar</Button>
           </div>
         </Modal>
       )}
@@ -1003,9 +1048,13 @@ export default function CajaPage() {
             <div className="relative mb-3">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
                 value={movMonto}
-                onChange={(e) => setMovMonto(e.target.value)}
+                onChange={(e) => {
+                  const formatted = formatNumber(e.target.value)
+                  setMovMonto(formatted)
+                }}
                 className="w-full pl-7 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
                 placeholder="0"
                 autoFocus
@@ -1022,7 +1071,7 @@ export default function CajaPage() {
           </div>
           <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
             <Button variant="ghost" size="sm" onClick={() => setShowEgresoModal(false)} className="text-xs cursor-pointer">Cancelar</Button>
-            <Button size="sm" onClick={handleEgreso} disabled={!movMonto || parseFloat(movMonto) <= 0} className="text-xs cursor-pointer">Guardar</Button>
+            <Button size="sm" onClick={handleEgreso} disabled={!movMonto || parseFormattedNumber(movMonto) <= 0} className="text-xs cursor-pointer">Guardar</Button>
           </div>
         </Modal>
       )}
@@ -1037,9 +1086,13 @@ export default function CajaPage() {
             <div className="relative mb-3">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
                 value={movMonto}
-                onChange={(e) => setMovMonto(e.target.value)}
+                onChange={(e) => {
+                  const formatted = formatNumber(e.target.value)
+                  setMovMonto(formatted)
+                }}
                 className="w-full pl-7 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
                 placeholder="0"
                 autoFocus
@@ -1050,9 +1103,13 @@ export default function CajaPage() {
             <div className="relative mb-3">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
                 value={retiroContado}
-                onChange={(e) => setRetiroContado(e.target.value)}
+                onChange={(e) => {
+                  const formatted = formatNumber(e.target.value)
+                  setRetiroContado(formatted)
+                }}
                 className="w-full pl-7 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
                 placeholder="Saldo que queda en caja"
               />
@@ -1068,7 +1125,7 @@ export default function CajaPage() {
           </div>
           <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
             <Button variant="ghost" size="sm" onClick={() => setShowRetiroModal(false)} className="text-xs cursor-pointer">Cancelar</Button>
-            <Button size="sm" onClick={handleRetiro} disabled={!movMonto || parseFloat(movMonto) <= 0 || !retiroContado} className="text-xs cursor-pointer">Aceptar</Button>
+            <Button size="sm" onClick={handleRetiro} disabled={!movMonto || parseFormattedNumber(movMonto) <= 0 || !retiroContado} className="text-xs cursor-pointer">Aceptar</Button>
           </div>
         </Modal>
       )}
