@@ -912,7 +912,7 @@ export default function CajaPage() {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Usuario responsable</span>
-                <span className="font-medium text-gray-700">{sesionActiva.apertura.usuario}</span>
+                <span className="font-medium text-gray-700">{sesionActiva.responsable}</span>
               </div>
             </div>
 
