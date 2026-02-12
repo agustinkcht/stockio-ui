@@ -674,7 +674,7 @@ export default function CajaPage() {
                       <span className="font-medium text-gray-500">{ultimaSesionCerrada.estado}</span>
                     </p>
                     <div className="flex items-center justify-center gap-2 mt-1">
-                      <p className="text-gray-400 text-base">
+                      <p className="text-gray-400 text-sm">
                         Saldo final: <span className="font-medium text-gray-600">{fmt(ultimaSesionCerrada.cierre?.saldoContadoEfectivo || 0)}</span>
                       </p>
                       <button
@@ -690,7 +690,7 @@ export default function CajaPage() {
                         {copied ? (
                           <Check className="w-4 h-4 text-green-600" />
                         ) : (
-                          <Copy className="w-4 h-4 text-gray-400" />
+                          <Copy className="text-gray-400 w-3 h-3" />
                         )}
                       </button>
                     </div>
