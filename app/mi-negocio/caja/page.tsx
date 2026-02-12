@@ -37,6 +37,12 @@ function fmtDate(iso: string) {
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", hour12: false })
 }
+function fmtDateTime(iso: string) {
+  const date = new Date(iso)
+  const dateStr = date.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "2-digit" })
+  const timeStr = date.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", hour12: false })
+  return dateStr + " - " + timeStr
+}
 
 // ─── Movement timeline icon + color ────────────────────────
 function movMeta(mov: CajaMovimiento) {
@@ -865,20 +871,18 @@ export default function CajaPage() {
               />
             </div>
 
-            {cerrarSaldoContado && (
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Saldo esperado en efectivo</span>
-                  <span className="font-semibold text-gray-800">{fmt(saldos.efectivo)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Diferencia</span>
-                  <span className={`font-semibold ${cerrarDiferencia === 0 ? "text-gray-600" : cerrarDiferencia > 0 ? "text-green-600" : "text-red-500"}`}>
-                    {(cerrarDiferencia >= 0 ? "+" : "") + fmt(cerrarDiferencia)}
-                  </span>
-                </div>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Saldo esperado en efectivo</span>
+                <span className="font-semibold text-gray-800">{fmt(saldos.efectivo)}</span>
               </div>
-            )}
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Diferencia</span>
+                <span className={`font-semibold ${cerrarDiferencia === 0 ? "text-gray-600" : cerrarDiferencia > 0 ? "text-green-600" : "text-red-500"}`}>
+                  {(cerrarDiferencia >= 0 ? "+" : "") + fmt(cerrarDiferencia)}
+                </span>
+              </div>
+            </div>
           </div>
           <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
             <Button variant="ghost" size="sm" onClick={() => setShowCerrarModal(false)} className="text-xs cursor-pointer">Cancelar</Button>
@@ -900,15 +904,15 @@ export default function CajaPage() {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Fecha y hora de inicio</span>
-                <span className="font-medium text-gray-700">{fmtDate(sesionActiva.timestampApertura)}</span>
+                <span className="font-medium text-gray-700">{fmtDateTime(sesionActiva.timestampApertura)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Fecha y hora de cierre</span>
-                <span className="font-medium text-gray-700">{fmtDate(new Date().toISOString())}</span>
+                <span className="font-medium text-gray-700">{fmtDateTime(new Date().toISOString())}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Usuario responsable</span>
-                <span className="font-medium text-gray-700">{sesionActiva.usuario}</span>
+                <span className="font-medium text-gray-700">{sesionActiva.apertura.usuario}</span>
               </div>
             </div>
 
@@ -929,13 +933,18 @@ export default function CajaPage() {
                     {(cerrarDiferencia >= 0 ? "+" : "") + fmt(cerrarDiferencia)}
                   </span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Posnet</span>
-                  <span className="font-medium text-gray-700">{fmt(saldos.posnet)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Transferencia</span>
-                  <span className="font-medium text-gray-700">{fmt(saldos.transferencia)}</span>
+                <div className="border-t border-gray-100 pt-2.5 mt-2.5">
+                  <p className="text-xs font-medium text-gray-600 mb-2">Otros medios de pago</p>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Posnet</span>
+                      <span className="font-medium text-gray-700">{fmt(saldos.posnet)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Transferencia</span>
+                      <span className="font-medium text-gray-700">{fmt(saldos.transferencia)}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
