@@ -392,117 +392,129 @@ function VentasContent() {
                           return (
                             <div key={venta.id} className="bg-white rounded-sm overflow-hidden">
                               <div
-                                className="flex items-center gap-4 px-4 py-3 cursor-pointer transition-colors"
+                                className="grid grid-cols-10 items-center px-4 py-3 cursor-pointer transition-colors"
                                 onClick={() => toggleExpanded(venta.id)}
                               >
-                                <button className="p-0.5 text-muted-foreground">
-                                  {isExpanded ? (
-                                    <ChevronDown className="w-4 h-4" />
-                                  ) : (
-                                    <ChevronRight className="w-4 h-4" />
-                                  )}
-                                </button>
+                                {/* Client-item part: col-span-3 */}
+                                <div className="col-span-3 flex items-center gap-3 min-w-0">
+                                  <button className="p-0.5 text-muted-foreground flex-shrink-0">
+                                    {isExpanded ? (
+                                      <ChevronDown className="w-4 h-4" />
+                                    ) : (
+                                      <ChevronRight className="w-4 h-4" />
+                                    )}
+                                  </button>
 
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-medium text-sm">{venta.clienteNombre}</span>
-                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-                                      {venta.items.length} item{venta.items.length > 1 ? "s" : ""}
+                                  <div className="min-w-0">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-medium text-sm truncate">{venta.clienteNombre}</span>
+                                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground flex-shrink-0">
+                                        {venta.items.length} item{venta.items.length > 1 ? "s" : ""}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                      <span className="text-xs text-muted-foreground">{venta.id}</span>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          copyToClipboard(venta.id, venta.id)
+                                        }}
+                                        className="p-0.5 hover:bg-muted rounded transition-colors"
+                                      >
+                                        <Copy
+                                          className={`w-3 h-3 ${copiedId === venta.id ? "text-emerald-500" : "text-muted-foreground/50"}`}
+                                        />
+                                      </button>
+                                      <span className="text-xs text-muted-foreground/50">·</span>
+                                      <span className="text-xs text-muted-foreground/70">{venta.hora}</span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Payment part: col-span-2 */}
+                                <div className="col-span-2 flex items-center gap-3 justify-end mr-3.5">
+                                  <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-muted/50">
+                                    <PaymentIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                                    <span className="text-xs text-muted-foreground">
+                                      {paymentMethodLabels[venta.metodoPago]}
                                     </span>
                                   </div>
-                                  <div className="flex items-center gap-2 mt-0.5">
-                                    <span className="text-xs text-muted-foreground">{venta.id}</span>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        copyToClipboard(venta.id, venta.id)
-                                      }}
-                                      className="p-0.5 hover:bg-muted rounded transition-colors"
-                                    >
-                                      <Copy
-                                        className={`w-3 h-3 ${copiedId === venta.id ? "text-emerald-500" : "text-muted-foreground/50"}`}
-                                      />
-                                    </button>
-                                    <span className="text-xs text-muted-foreground/50">·</span>
-                                    <span className="text-xs text-muted-foreground/70">{venta.hora}</span>
+
+                                  <div className="text-right">
+                                    <p className="font-semibold text-sm">
+                                      ${venta.total.toLocaleString("es-AR", { minimumFractionDigits: 0 })}
+                                    </p>
+                                    {venta.descuento > 0 && (
+                                      <p className="text-[10px] text-emerald-600">-{venta.descuento}% desc.</p>
+                                    )}
                                   </div>
                                 </div>
 
-                                <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-muted/50">
-                                  <PaymentIcon className="w-3.5 h-3.5 text-muted-foreground" />
-                                  <span className="text-xs text-muted-foreground">
-                                    {paymentMethodLabels[venta.metodoPago]}
-                                  </span>
-                                </div>
-
-                                <div className="text-right min-w-[100px]">
-                                  <p className="font-semibold text-sm">
-                                    ${venta.total.toLocaleString("es-AR", { minimumFractionDigits: 0 })}
-                                  </p>
-                                  {venta.descuento > 0 && (
-                                    <p className="text-[10px] text-emerald-600">-{venta.descuento}% desc.</p>
-                                  )}
-                                </div>
+                                {/* Empty space: col-span-5 (reserved for future use) */}
+                                <div className="col-span-5" />
                               </div>
 
                               {isExpanded && (
                                 <div className="border-t border-border/30 bg-muted/20">
-                                  <div className="px-4 py-2 space-y-1">
-                                    {venta.items.map((item, idx) => (
-                                      <div key={idx} className="flex items-center gap-3 py-2">
-                                        <div className="w-10 h-10 rounded bg-muted/50 overflow-hidden flex-shrink-0">
-                                          <Image
-                                            src={getCategoryImage(item.categoria) || "/placeholder.svg"}
-                                            alt={item.name}
-                                            width={40}
-                                            height={40}
-                                            className="w-full h-full object-cover"
-                                          />
-                                        </div>
+                                  <div className="grid grid-cols-10">
+                                    <div className="col-span-5 px-4 py-2 space-y-1">
+                                      {venta.items.map((item, idx) => (
+                                        <div key={idx} className="flex items-center gap-3 py-2">
+                                          <div className="w-10 h-10 rounded bg-muted/50 overflow-hidden flex-shrink-0">
+                                            <Image
+                                              src={getCategoryImage(item.categoria) || "/placeholder.svg"}
+                                              alt={item.name}
+                                              width={40}
+                                              height={40}
+                                              className="w-full h-full object-cover"
+                                            />
+                                          </div>
 
-                                        <div className="flex-1 min-w-0">
-                                          <p className="text-sm truncate">{item.name}</p>
-                                          <div className="flex items-center gap-2">
-                                            <span className="text-xs text-muted-foreground">{item.sku}</span>
-                                            {item.discount > 0 && (
-                                              <span className="text-[10px] text-emerald-600 bg-emerald-50 px-1 rounded">
-                                                -{item.discount}%
-                                              </span>
-                                            )}
+                                          <div className="flex-1 min-w-0">
+                                            <p className="text-sm truncate">{item.name}</p>
+                                            <div className="flex items-center gap-2">
+                                              <span className="text-xs text-muted-foreground">{item.sku}</span>
+                                              {item.discount > 0 && (
+                                                <span className="text-[10px] text-emerald-600 bg-emerald-50 px-1 rounded">
+                                                  -{item.discount}%
+                                                </span>
+                                              )}
+                                            </div>
+                                          </div>
+
+                                          <div className="text-right">
+                                            <p className="text-sm font-medium">
+                                              ${item.total.toLocaleString("es-AR", { minimumFractionDigits: 0 })}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                              {item.quantity} × ${item.unitPrice.toLocaleString("es-AR")}
+                                            </p>
                                           </div>
                                         </div>
+                                      ))}
 
-                                        <div className="text-right">
-                                          <p className="text-sm font-medium">
-                                            ${item.total.toLocaleString("es-AR", { minimumFractionDigits: 0 })}
-                                          </p>
-                                          <p className="text-xs text-muted-foreground">
-                                            {item.quantity} × ${item.unitPrice.toLocaleString("es-AR")}
-                                          </p>
+                                      <div className="pt-2 border-t border-border/30 flex justify-end">
+                                        <div className="text-right text-xs space-y-0.5">
+                                          <div className="flex items-center gap-4 text-muted-foreground">
+                                            <span>Subtotal</span>
+                                            <span>${venta.subtotal.toLocaleString("es-AR")}</span>
+                                          </div>
+                                          {venta.descuento > 0 && (
+                                            <div className="flex items-center gap-4 text-emerald-600">
+                                              <span>Descuento ({venta.descuento}%)</span>
+                                              <span>
+                                                -${((venta.subtotal * venta.descuento) / 100).toLocaleString("es-AR")}
+                                              </span>
+                                            </div>
+                                          )}
+                                          <div className="flex items-center gap-4 font-semibold text-sm pt-1">
+                                            <span>Total</span>
+                                            <span>${venta.total.toLocaleString("es-AR")}</span>
+                                          </div>
                                         </div>
-                                      </div>
-                                    ))}
-                                  </div>
-
-                                  <div className="px-4 py-2 border-t border-border/30 flex justify-end">
-                                    <div className="text-right text-xs space-y-0.5">
-                                      <div className="flex items-center gap-4 text-muted-foreground">
-                                        <span>Subtotal</span>
-                                        <span>${venta.subtotal.toLocaleString("es-AR")}</span>
-                                      </div>
-                                      {venta.descuento > 0 && (
-                                        <div className="flex items-center gap-4 text-emerald-600">
-                                          <span>Descuento ({venta.descuento}%)</span>
-                                          <span>
-                                            -${((venta.subtotal * venta.descuento) / 100).toLocaleString("es-AR")}
-                                          </span>
-                                        </div>
-                                      )}
-                                      <div className="flex items-center gap-4 font-semibold text-sm pt-1">
-                                        <span>Total</span>
-                                        <span>${venta.total.toLocaleString("es-AR")}</span>
                                       </div>
                                     </div>
+                                    <div className="col-span-5" />
                                   </div>
                                 </div>
                               )}

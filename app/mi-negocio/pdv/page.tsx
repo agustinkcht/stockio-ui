@@ -142,7 +142,7 @@ export default function PuntoDeVentaPage() {
     setTimeout(() => {
       setShowCheckoutSuccess(false)
       clearCart()
-    }, 2000)
+    }, 4000)
   }
 
   return (
@@ -250,16 +250,46 @@ export default function PuntoDeVentaPage() {
       {/* Checkout Success Overlay */}
       {showCheckoutSuccess && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100004]">
-          <div className="bg-white rounded-2xl p-8 text-center animate-in zoom-in-95 duration-200">
-            <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+          <div className="bg-white rounded-2xl w-[360px] animate-in zoom-in-95 duration-200 overflow-hidden">
+            <div className="p-8 text-center">
+              <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Venta Completada</h3>
+              <p className="text-muted-foreground mb-6">
+                Total: ${total.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+              </p>
+
+              <div className="text-left">
+                <p className="text-sm font-medium text-gray-700 mb-3">Imprimir Ticket de Compra</p>
+                <div className="flex gap-2">
+                  <button className="flex-1 px-3 py-2.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">
+                    Ticket Detalle
+                  </button>
+                  <button className="flex-1 px-3 py-2.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">
+                    Ticket Factura
+                  </button>
+                </div>
+              </div>
             </div>
-            <h3 className="text-xl font-semibold mb-2">Venta Completada</h3>
-            <p className="text-muted-foreground">
-              Total: ${total.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
-            </p>
+
+            {/* Reverse loading bar */}
+            <div className="h-1 bg-gray-100">
+              <div
+                className="h-full bg-emerald-500 origin-left"
+                style={{
+                  animation: "shrink-bar 4s linear forwards",
+                }}
+              />
+            </div>
+            <style>{`
+              @keyframes shrink-bar {
+                from { width: 100%; }
+                to { width: 0%; }
+              }
+            `}</style>
           </div>
         </div>
       )}
