@@ -411,11 +411,11 @@ function VentasContent() {
                           return (
                             <div key={venta.id} className="bg-white rounded-sm overflow-hidden">
                               <div
-                                className="grid grid-cols-10 items-center px-4 py-3 cursor-pointer transition-colors"
+                                className="grid grid-cols-20 items-center px-4 py-3 cursor-pointer transition-colors"
                                 onClick={() => toggleExpanded(venta.id)}
                               >
-                                {/* Client-item part: col-span-3 */}
-                                <div className="col-span-3 flex items-center gap-3 min-w-0">
+                                {/* Client-item part: col-span-8 */}
+                                <div className="col-span-8 flex items-center gap-3 min-w-0">
                                   <button className="p-0.5 text-muted-foreground flex-shrink-0">
                                     {isExpanded ? (
                                       <ChevronDown className="w-4 h-4" />
@@ -450,8 +450,27 @@ function VentasContent() {
                                   </div>
                                 </div>
 
-                                {/* Comprobantes section: col-span-4 */}
-                                <div className="col-span-4 flex items-center gap-2 px-2">
+                                {/* Payment part: col-span-4 */}
+                                <div className="col-span-4 flex items-center gap-3">
+                                  <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-muted/50">
+                                    <PaymentIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                                    <span className="text-xs text-muted-foreground">
+                                      {paymentMethodLabels[venta.metodoPago]}
+                                    </span>
+                                  </div>
+
+                                  <div className="text-right">
+                                    <p className="font-semibold text-sm">
+                                      ${venta.total.toLocaleString("es-AR", { minimumFractionDigits: 0 })}
+                                    </p>
+                                    {venta.descuento > 0 && (
+                                      <p className="text-[10px] text-emerald-600">-{venta.descuento}% desc.</p>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Comprobantes section: col-span-7 */}
+                                <div className="col-span-7 flex items-center gap-2 px-2">
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation()
@@ -486,25 +505,6 @@ function VentasContent() {
                                       <span>Emitir factura</span>
                                     </button>
                                   )}
-                                </div>
-
-                                {/* Payment part: col-span-2 */}
-                                <div className="col-span-2 flex items-center gap-3">
-                                  <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-muted/50">
-                                    <PaymentIcon className="w-3.5 h-3.5 text-muted-foreground" />
-                                    <span className="text-xs text-muted-foreground">
-                                      {paymentMethodLabels[venta.metodoPago]}
-                                    </span>
-                                  </div>
-
-                                  <div className="text-right">
-                                    <p className="font-semibold text-sm">
-                                      ${venta.total.toLocaleString("es-AR", { minimumFractionDigits: 0 })}
-                                    </p>
-                                    {venta.descuento > 0 && (
-                                      <p className="text-[10px] text-emerald-600">-{venta.descuento}% desc.</p>
-                                    )}
-                                  </div>
                                 </div>
 
                                 {/* More options: col-span-1 */}
@@ -548,8 +548,8 @@ function VentasContent() {
 
                               {isExpanded && (
                                 <div className="border-t border-border/30 bg-muted/20">
-                                  <div className="grid grid-cols-10">
-                                    <div className="col-span-5 px-4 py-2 space-y-1">
+                                  <div className="grid grid-cols-20">
+                                    <div className="col-span-8 px-4 py-2 space-y-1">
                                       {venta.items.map((item, idx) => (
                                         <div key={idx} className="flex items-center gap-3 py-2">
                                           <div className="w-10 h-10 rounded bg-muted/50 overflow-hidden flex-shrink-0">
@@ -606,7 +606,7 @@ function VentasContent() {
                                         </div>
                                       </div>
                                     </div>
-                                    <div className="col-span-5" />
+                                    <div className="col-span-12" />
                                   </div>
                                 </div>
                               )}
