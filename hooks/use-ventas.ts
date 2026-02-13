@@ -79,9 +79,23 @@ export function useVentas() {
     [ventas, saveVentas],
   )
 
+  // Update an existing venta
+  const updateVenta = useCallback(
+    (ventaId: string, updates: Partial<Venta>) => {
+      const updatedVentas = ventas.map((v) =>
+        v.id === ventaId ? { ...v, ...updates } : v
+      )
+      setVentas(updatedVentas)
+      saveVentas(updatedVentas)
+      console.log(`[v0] useVentas - Updated venta: ${ventaId}`)
+    },
+    [ventas, saveVentas],
+  )
+
   return {
     ventas,
     isLoading,
     addVenta,
+    updateVenta,
   }
 }

@@ -193,6 +193,7 @@ export interface Venta {
   estado: "completada" | "pendiente" | "cancelada"
   vendedor: string
   observaciones?: string
+  facturaEmitida?: boolean
 }
 
 export interface CompraItem {

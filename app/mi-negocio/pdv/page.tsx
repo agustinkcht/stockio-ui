@@ -20,11 +20,12 @@ import type { VentaItem } from "@/lib/types"
 export default function PuntoDeVentaPage() {
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
   const { items, reduceStock } = useItems()
-  const { addVenta } = useVentas()
+  const { addVenta, updateVenta } = useVentas()
   const { clientes, getClienteById, incrementTransactionCount } = useClientes()
   const { sesionActiva, agregarMovimiento } = useCaja()
   const [showCheckoutSuccess, setShowCheckoutSuccess] = useState(false)
   const [isCartExpanded, setIsCartExpanded] = useState(false)
+  const [currentVenta, setCurrentVenta] = useState<{ id: string; total: number } | null>(null)
 
   const {
     cart,
@@ -138,10 +139,12 @@ export default function PuntoDeVentaPage() {
     }
 
     // Show success and clear cart
+    setCurrentVenta({ id: venta.id, total })
     setShowCheckoutSuccess(true)
     setTimeout(() => {
       setShowCheckoutSuccess(false)
       clearCart()
+      setCurrentVenta(null)
     }, 4000)
   }
 
@@ -259,16 +262,31 @@ export default function PuntoDeVentaPage() {
               </div>
               <h3 className="text-xl font-semibold mb-2">Venta Completada</h3>
               <p className="text-muted-foreground mb-6">
-                Total: ${total.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                Total: ${currentVenta?.total.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
               </p>
 
               <div className="text-left">
                 <p className="text-sm font-medium text-gray-700 mb-3">Imprimir Ticket de Compra</p>
                 <div className="flex gap-2">
-                  <button className="flex-1 px-3 py-2.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">
+                  <button
+                    onClick={() => {
+                      // TODO: Handle print ticket detalle
+                      console.log("[v0] Print ticket detalle for venta:", currentVenta?.id)
+                    }}
+                    className="flex-1 px-3 py-2.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+                  >
                     Ticket Detalle
                   </button>
-                  <button className="flex-1 px-3 py-2.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">
+                  <button
+                    onClick={() => {
+                      if (currentVenta) {
+                        updateVenta(currentVenta.id, { facturaEmitida: true })
+                        console.log("[v0] Print ticket factura for venta:", currentVenta.id)
+                        // TODO: Handle print ticket factura
+                      }
+                    }}
+                    className="flex-1 px-3 py-2.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+                  >
                     Ticket Factura
                   </button>
                 </div>

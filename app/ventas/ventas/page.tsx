@@ -23,6 +23,9 @@ import {
   Plus,
   Search,
   X,
+  MoreVertical,
+  FileText,
+  File,
 } from "lucide-react"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { getCategoryImage } from "@/lib/utils/category-images"
@@ -55,7 +58,7 @@ const paymentMethodIcons: Record<PaymentMethod, typeof Banknote> = {
 function VentasContent() {
   const router = useRouter()
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
-  const { ventas, isLoading } = useVentas()
+  const { ventas, isLoading, updateVenta } = useVentas()
   const [searchQuery, setSearchQuery] = useState("")
   const [expandedSales, setExpandedSales] = useState<Set<string>>(new Set())
   const [sortConfig, setSortConfig] = useState<{ factor: SortFactor; direction: SortDirection }>({
@@ -70,6 +73,9 @@ function VentasContent() {
   const [showOrderModal, setShowOrderModal] = useState(false)
   const [showFilterModal, setShowFilterModal] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [showEmitirFacturaModal, setShowEmitirFacturaModal] = useState(false)
+  const [selectedVentaForFactura, setSelectedVentaForFactura] = useState<string | null>(null)
+  const [showOptionsMenu, setShowOptionsMenu] = useState<string | null>(null)
 
   const orderRef = useRef<HTMLDivElement>(null)
   const filterRef = useRef<HTMLDivElement>(null)
@@ -98,6 +104,19 @@ function VentasContent() {
         : [...currentValues, value as PaymentMethod]
       return { ...prev, [category]: newValues }
     })
+  }
+
+  const handleEmitirFactura = (ventaId: string) => {
+    setSelectedVentaForFactura(ventaId)
+    setShowEmitirFacturaModal(true)
+  }
+
+  const confirmEmitirFactura = () => {
+    if (selectedVentaForFactura) {
+      updateVenta(selectedVentaForFactura, { facturaEmitida: true })
+      setShowEmitirFacturaModal(false)
+      setSelectedVentaForFactura(null)
+    }
   }
 
   const hasActiveFilters = activeFilters.metodoPago.length > 0
@@ -431,8 +450,46 @@ function VentasContent() {
                                   </div>
                                 </div>
 
+                                {/* Comprobantes section: col-span-4 */}
+                                <div className="col-span-4 flex items-center gap-2 px-2">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      // TODO: Handle ver ticket detalle
+                                    }}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border/50 hover:bg-muted/50 transition-colors text-xs text-muted-foreground"
+                                  >
+                                    <Receipt className="w-3.5 h-3.5" />
+                                    <span>Ver ticket detalle</span>
+                                  </button>
+
+                                  {venta.facturaEmitida ? (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        // TODO: Handle ver factura
+                                      }}
+                                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border/50 hover:bg-muted/50 transition-colors text-xs text-muted-foreground"
+                                    >
+                                      <FileText className="w-3.5 h-3.5" />
+                                      <span>Ver factura</span>
+                                    </button>
+                                  ) : (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleEmitirFactura(venta.id)
+                                      }}
+                                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border/50 hover:bg-muted/50 transition-colors text-xs text-muted-foreground"
+                                    >
+                                      <File className="w-3.5 h-3.5" />
+                                      <span>Emitir factura</span>
+                                    </button>
+                                  )}
+                                </div>
+
                                 {/* Payment part: col-span-2 */}
-                                <div className="col-span-2 flex items-center gap-3 justify-end mr-3.5">
+                                <div className="col-span-2 flex items-center gap-3">
                                   <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-muted/50">
                                     <PaymentIcon className="w-3.5 h-3.5 text-muted-foreground" />
                                     <span className="text-xs text-muted-foreground">
@@ -450,8 +507,43 @@ function VentasContent() {
                                   </div>
                                 </div>
 
-                                {/* Empty space: col-span-5 (reserved for future use) */}
-                                <div className="col-span-5" />
+                                {/* More options: col-span-1 */}
+                                <div className="col-span-1 flex justify-center relative">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setShowOptionsMenu(showOptionsMenu === venta.id ? null : venta.id)
+                                    }}
+                                    className="p-1.5 hover:bg-muted rounded transition-colors"
+                                  >
+                                    <MoreVertical className="w-4 h-4 text-muted-foreground" />
+                                  </button>
+
+                                  {showOptionsMenu === venta.id && (
+                                    <div className="absolute right-0 top-full mt-1 bg-white border border-border rounded-md shadow-lg py-1 z-10 min-w-[180px]">
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          // TODO: Handle cancelar venta
+                                          setShowOptionsMenu(null)
+                                        }}
+                                        className="w-full px-3 py-2 text-left text-xs hover:bg-muted transition-colors text-muted-foreground"
+                                      >
+                                        Cancelar venta
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          // TODO: Handle ir a cambios y devoluciones
+                                          setShowOptionsMenu(null)
+                                        }}
+                                        className="w-full px-3 py-2 text-left text-xs hover:bg-muted transition-colors text-muted-foreground"
+                                      >
+                                        Ir a cambios y devoluciones
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
 
                               {isExpanded && (
@@ -530,6 +622,30 @@ function VentasContent() {
           </main>
         </div>
       </div>
+
+      {/* Emitir Factura Modal */}
+      {showEmitirFacturaModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]">
+          <div className="bg-white rounded-lg w-[400px] p-6">
+            <h3 className="text-lg font-semibold mb-2">Vas a emitir factura</h3>
+            <p className="text-sm text-muted-foreground mb-6">
+              Esta acción marcará la venta como facturada.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setShowEmitirFacturaModal(false)
+                  setSelectedVentaForFactura(null)
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button onClick={confirmEmitirFactura}>Aceptar</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
