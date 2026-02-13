@@ -451,7 +451,7 @@ function VentasContent() {
                                 </div>
 
                                 {/* Payment part: col-span-4 */}
-                                <div className="col-span-4 flex items-center gap-3 justify-end mr-3.5">
+                                <div className="col-span-4 flex items-center gap-3 justify-end mr-3.5.5">
                                   <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-muted/50">
                                     <PaymentIcon className="w-3.5 h-3.5 text-muted-foreground" />
                                     <span className="text-xs text-muted-foreground">
@@ -470,7 +470,7 @@ function VentasContent() {
                                 </div>
 
                                 {/* Comprobantes section: col-span-8 */}
-                                <div className="col-span-8 flex items-center gap-2 px-2">
+                                <div className="col-span-8 flex items-center gap-2 px-2 ml-0 pl-14">
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation()
