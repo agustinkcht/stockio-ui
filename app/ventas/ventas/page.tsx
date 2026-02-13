@@ -451,7 +451,7 @@ function VentasContent() {
                                 </div>
 
                                 {/* Payment part: col-span-4 */}
-                                <div className="col-span-4 flex items-center gap-3 justify-end">
+                                <div className="col-span-4 flex items-center gap-3 justify-end mr-3.5">
                                   <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-muted/50">
                                     <PaymentIcon className="w-3.5 h-3.5 text-muted-foreground" />
                                     <span className="text-xs text-muted-foreground">
@@ -581,7 +581,7 @@ function VentasContent() {
                                     {/* Item pricing section: col-span-4 (aligned with outer payment) */}
                                     <div className="col-span-4 px-4 py-2 space-y-1">
                                       {venta.items.map((item, idx) => (
-                                        <div key={idx} className="flex items-center justify-end py-2 h-[74px]">
+                                        <div key={idx} className="flex items-center py-2 h-[74px] justify-end">
                                           <div className="text-right">
                                             <p className="text-sm font-medium">
                                               {item.quantity} × ${item.unitPrice.toLocaleString("es-AR")}
