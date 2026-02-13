@@ -414,8 +414,8 @@ function VentasContent() {
                                 className="grid grid-cols-20 items-center px-4 py-3 cursor-pointer transition-colors"
                                 onClick={() => toggleExpanded(venta.id)}
                               >
-                                {/* Client-item part: col-span-8 */}
-                                <div className="col-span-8 flex items-center gap-3 min-w-0">
+                                {/* Client-item part: col-span-7 */}
+                                <div className="col-span-7 flex items-center gap-3 min-w-0">
                                   <button className="p-0.5 text-muted-foreground flex-shrink-0">
                                     {isExpanded ? (
                                       <ChevronDown className="w-4 h-4" />
@@ -451,7 +451,7 @@ function VentasContent() {
                                 </div>
 
                                 {/* Payment part: col-span-4 */}
-                                <div className="col-span-4 flex items-center gap-3 justify-end mr-3.5">
+                                <div className="col-span-4 flex items-center gap-3">
                                   <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-muted/50">
                                     <PaymentIcon className="w-3.5 h-3.5 text-muted-foreground" />
                                     <span className="text-xs text-muted-foreground">
@@ -469,8 +469,8 @@ function VentasContent() {
                                   </div>
                                 </div>
 
-                                {/* Comprobantes section: col-span-7 */}
-                                <div className="col-span-7 flex items-center gap-2 px-2">
+                                {/* Comprobantes section: col-span-8 */}
+                                <div className="col-span-8 flex items-center gap-2 px-2">
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation()
@@ -481,6 +481,16 @@ function VentasContent() {
                                     <Receipt className="w-3.5 h-3.5" />
                                     <span>Ver ticket detalle</span>
                                   </button>
+
+                                  <span
+                                    className={`text-[10px] px-2 py-0.5 rounded ${
+                                      venta.facturaEmitida
+                                        ? "bg-emerald-50 text-emerald-700"
+                                        : "bg-muted text-muted-foreground"
+                                    }`}
+                                  >
+                                    {venta.facturaEmitida ? "Facturada" : "No facturada"}
+                                  </span>
 
                                   {venta.facturaEmitida ? (
                                     <button
@@ -549,8 +559,8 @@ function VentasContent() {
                               {isExpanded && (
                                 <div className="border-t border-border/30 bg-muted/20">
                                   <div className="grid grid-cols-20">
-                                    {/* Item details section: col-span-8 */}
-                                    <div className="col-span-8 px-4 py-2 space-y-1">
+                                    {/* Item details section: col-span-7 */}
+                                    <div className="col-span-7 px-4 py-2 space-y-1">
                                       {venta.items.map((item, idx) => (
                                         <div key={idx} className="flex items-center gap-3 py-2">
                                           <div className="w-10 h-10 rounded bg-muted/50 overflow-hidden flex-shrink-0">
@@ -615,8 +625,8 @@ function VentasContent() {
                                       </div>
                                     </div>
 
-                                    {/* Remaining columns: col-span-8 */}
-                                    <div className="col-span-8" />
+                                    {/* Remaining columns: col-span-9 */}
+                                    <div className="col-span-9" />
                                   </div>
                                 </div>
                               )}
