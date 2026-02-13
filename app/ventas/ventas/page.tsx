@@ -471,17 +471,6 @@ function VentasContent() {
 
                                 {/* Comprobantes section: col-span-8 */}
                                 <div className="col-span-8 flex items-center gap-2 px-2 ml-0 pl-14">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      // TODO: Handle ver ticket detalle
-                                    }}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border/50 hover:bg-muted/50 transition-colors text-xs text-muted-foreground"
-                                  >
-                                    <Receipt className="w-3.5 h-3.5" />
-                                    <span>Ver ticket detalle</span>
-                                  </button>
-
                                   <span
                                     className={`text-[10px] px-2 py-0.5 rounded ${
                                       venta.facturaEmitida
@@ -531,6 +520,16 @@ function VentasContent() {
 
                                   {showOptionsMenu === venta.id && (
                                     <div className="absolute right-0 top-full mt-1 bg-white border border-border rounded-md shadow-lg py-1 z-10 min-w-[180px]">
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          // TODO: Handle ver ticket detalle
+                                          setShowOptionsMenu(null)
+                                        }}
+                                        className="w-full px-3 py-2 text-left text-xs hover:bg-muted transition-colors text-muted-foreground"
+                                      >
+                                        Ver Ticket Detalle
+                                      </button>
                                       <button
                                         onClick={(e) => {
                                           e.stopPropagation()
