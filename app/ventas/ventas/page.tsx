@@ -549,6 +549,7 @@ function VentasContent() {
                               {isExpanded && (
                                 <div className="border-t border-border/30 bg-muted/20">
                                   <div className="grid grid-cols-20">
+                                    {/* Item details section: col-span-8 */}
                                     <div className="col-span-8 px-4 py-2 space-y-1">
                                       {venta.items.map((item, idx) => (
                                         <div key={idx} className="flex items-center gap-3 py-2">
@@ -573,40 +574,49 @@ function VentasContent() {
                                               )}
                                             </div>
                                           </div>
+                                        </div>
+                                      ))}
+                                    </div>
 
+                                    {/* Item pricing section: col-span-4 (aligned with outer payment) */}
+                                    <div className="col-span-4 px-4 py-2 space-y-1">
+                                      {venta.items.map((item, idx) => (
+                                        <div key={idx} className="flex items-center justify-end py-2 h-[74px]">
                                           <div className="text-right">
-                                            <p className="text-xs text-muted-foreground">
+                                            <p className="text-sm font-medium">
                                               {item.quantity} × ${item.unitPrice.toLocaleString("es-AR")}
                                             </p>
-                                            <p className="text-sm font-medium">
+                                            <p className="text-xs text-muted-foreground">
                                               Subtotal: ${item.total.toLocaleString("es-AR", { minimumFractionDigits: 0 })}
                                             </p>
                                           </div>
                                         </div>
                                       ))}
 
-                                      <div className="pt-2 border-t border-border/30 flex justify-end">
+                                      <div className="pt-2 border-t border-border/30">
                                         <div className="text-right text-xs space-y-0.5">
-                                          <div className="flex items-center gap-4 text-muted-foreground">
+                                          <div className="flex items-center justify-end gap-4 text-muted-foreground">
                                             <span>Subtotal</span>
                                             <span>${venta.subtotal.toLocaleString("es-AR")}</span>
                                           </div>
                                           {venta.descuento > 0 && (
-                                            <div className="flex items-center gap-4 text-emerald-600">
+                                            <div className="flex items-center justify-end gap-4 text-emerald-600">
                                               <span>Descuento ({venta.descuento}%)</span>
                                               <span>
                                                 -${((venta.subtotal * venta.descuento) / 100).toLocaleString("es-AR")}
                                               </span>
                                             </div>
                                           )}
-                                          <div className="flex items-center gap-4 font-semibold text-sm pt-1">
+                                          <div className="flex items-center justify-end gap-4 font-semibold text-sm pt-1">
                                             <span>Total</span>
                                             <span>${venta.total.toLocaleString("es-AR")}</span>
                                           </div>
                                         </div>
                                       </div>
                                     </div>
-                                    <div className="col-span-12" />
+
+                                    {/* Remaining columns: col-span-8 */}
+                                    <div className="col-span-8" />
                                   </div>
                                 </div>
                               )}
