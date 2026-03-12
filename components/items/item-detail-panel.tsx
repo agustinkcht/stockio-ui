@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import type React from "react"
 import type { Item } from "@/lib/types"
-import { ChevronDown, ChevronRight, Plus, Copy, X, Minus, Check, ArrowDownToLine, Lock, LockOpen } from "lucide-react"
+import { ChevronDown, ChevronRight, Plus, Copy, X, Minus, Check, ArrowDownToLine, Lock, LockOpen, Pencil } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
 import { TEMPLATES } from "@/lib/constants" // DEPOSITS and SAVED_ATRIBUTOS imports removed
@@ -196,6 +196,8 @@ export function ItemDetailPanel({
 
   const [editingDescripcion, setEditingDescripcion] = useState(false)
   const [descripcionValue, setDescripcionValue] = useState(selectedItem.descripcion || "")
+  const [editingName, setEditingName] = useState(false)
+  const [nameValue, setNameValue] = useState(selectedItem.name || "")
   const [proveedorDropdownOpen, setProveedorDropdownOpen] = useState(false)
 
   const [containerAtributosPrincipales, setContainerAtributosPrincipales] = useState<
@@ -934,8 +936,20 @@ export function ItemDetailPanel({
     if (selectedItem?.sku && editingDescripcion) {
       updateItem(selectedItem.sku, { descripcion: descripcionValue })
       setEditingDescripcion(false)
-      // Notify parent of change
       onFieldChange(selectedItem.sku, "descripcion", descripcionValue)
+    }
+  }
+
+  const handleNameBlur = () => {
+    if (selectedItem?.sku && editingName) {
+      const trimmed = nameValue.trim()
+      if (trimmed && trimmed !== selectedItem.name) {
+        updateItem(selectedItem.sku, { name: trimmed })
+        onFieldChange(selectedItem.sku, "name", trimmed)
+      } else {
+        setNameValue(selectedItem.name || "")
+      }
+      setEditingName(false)
     }
   }
 
@@ -993,8 +1007,40 @@ export function ItemDetailPanel({
                   </div>
 
                   <div className="mb-0 mt-6">
-                    <div className="flex items-center justify-center gap-2 mt-[-20px] mb-0 flex-wrap">
-                      <h2 className="font-semibold text-white text-lg">{selectedItem.name}</h2>
+                    <div className="flex items-center justify-center gap-2 mt-[-20px] mb-0 flex-wrap group/title">
+                      {!isChildItem && editingName ? (
+                        <input
+                          type="text"
+                          value={nameValue}
+                          onChange={(e) => setNameValue(e.target.value)}
+                          onBlur={handleNameBlur}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") (e.target as HTMLInputElement).blur()
+                            if (e.key === "Escape") {
+                              setNameValue(selectedItem.name || "")
+                              setEditingName(false)
+                            }
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="font-semibold text-white text-lg bg-transparent border-b border-white/40 focus:border-white outline-none text-center w-full max-w-[220px]"
+                          autoFocus
+                        />
+                      ) : (
+                        <div
+                          className={`flex items-center gap-1.5 ${!isChildItem ? "cursor-pointer" : ""}`}
+                          onClick={(e) => {
+                            if (!isChildItem) {
+                              e.stopPropagation()
+                              setEditingName(true)
+                            }
+                          }}
+                        >
+                          <h2 className="font-semibold text-white text-lg">{nameValue || selectedItem.name}</h2>
+                          {!isChildItem && (
+                            <Pencil className="w-3.5 h-3.5 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity" />
+                          )}
+                        </div>
+                      )}
                       {isChildItem && selectedItem.atributosPrincipales && selectedItem.atributosPrincipales.length > 0 && (
                         <div className="flex items-center gap-1">
                           {selectedItem.atributosPrincipales.map((attr, i) => (
