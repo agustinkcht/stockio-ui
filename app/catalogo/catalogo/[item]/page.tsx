@@ -6,7 +6,7 @@ import { ChevronRight, Package, CheckCircle2 } from "lucide-react"
 
 import { Sidebar } from "@/components/layout/sidebar"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
-import { ItemDetailPanel } from "@/components/items/item-detail-panel"
+import { CatalogoItemDetailPanel } from "@/components/items/catalogo-item-detail-panel"
 import { UserPanel } from "@/components/layout/user-panel"
 import { UnsavedChangesModal } from "@/components/modals/unsaved-changes-modal"
 import { useItems } from "@/hooks/use-items"
@@ -213,7 +213,7 @@ export default function CatalogoItemDetailPage() {
           </div>
 
           <main className="flex-1 bg-[rgba(250,251,253,1)] overflow-auto">
-            <ItemDetailPanel
+            <CatalogoItemDetailPanel
               selectedItem={selectedItem}
               selectedDetailTab={selectedDetailTab}
               setSelectedDetailTab={setSelectedDetailTab}
