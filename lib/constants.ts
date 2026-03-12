@@ -162,7 +162,7 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     icon: Package,
     label: "Catálogo",
     hasDropdown: true,
-    dropdown: [{ label: "Catálogo", href: "/catalogo/catalogo" }],
+    dropdown: [{ label: "Items", href: "/catalogo/items" }],
   },
   {
     icon: Receipt,

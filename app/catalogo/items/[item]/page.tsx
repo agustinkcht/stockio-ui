@@ -101,7 +101,7 @@ export default function CatalogoItemDetailPage() {
 
   const handleDeleteWithTracking = (item: Item) => {
     deleteItem(item)
-    router.push("/catalogo/catalogo")
+    router.push("/catalogo/items")
   }
 
   const handleNavigateBack = () => {
@@ -113,7 +113,7 @@ export default function CatalogoItemDetailPage() {
   }
 
   const handleClose = () => {
-    router.push("/catalogo/catalogo")
+    router.push("/catalogo/items")
   }
 
   const handleFieldChange = (itemSku: string, field: string, value: any) => {
@@ -130,7 +130,7 @@ export default function CatalogoItemDetailPage() {
 
   useEffect(() => {
     if (!selectedItem && items.length > 0) {
-      router.push("/catalogo/catalogo")
+      router.push("/catalogo/items")
     }
   }, [selectedItem, items, router, itemParam])
 
@@ -142,8 +142,8 @@ export default function CatalogoItemDetailPage() {
   }
 
   const breadcrumbs = selectedItem
-    ? [{ label: "Catálogo" }, { label: "Catálogo", href: "/catalogo/catalogo" }, { label: selectedItem.name }]
-    : [{ label: "Catálogo" }, { label: "Catálogo", href: "/catalogo/catalogo" }]
+    ? [{ label: "Catálogo" }, { label: "Items", href: "/catalogo/items" }, { label: selectedItem.name }]
+    : [{ label: "Catálogo" }, { label: "Items", href: "/catalogo/items" }]
 
   if (!selectedItem) {
     return (

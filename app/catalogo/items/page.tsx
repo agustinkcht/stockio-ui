@@ -157,7 +157,7 @@ export default function CatalogoPage() {
     ;(window as any).__auditDiscardHandler?.()
   }
 
-  const breadcrumbs = [{ label: "Catálogo" }, { label: "Catálogo", href: "/catalogo/catalogo" }]
+  const breadcrumbs = [{ label: "Catálogo" }, { label: "Items", href: "/catalogo/items" }]
 
   const handleUndo = () => {
     const change = changeTracker.undo()
@@ -306,7 +306,7 @@ export default function CatalogoPage() {
   }
 
   const handleItemClick = (item: Item) => {
-    router.push(`/catalogo/catalogo/${item.sku}`)
+    router.push(`/catalogo/items/${item.sku}`)
   }
 
   const toggleVariantExpansion = (index: number) => {
@@ -327,7 +327,7 @@ export default function CatalogoPage() {
   const handleCreateItemWithSuccess = async (itemTitulo: string, itemTemplate: string, handleClose: () => void) => {
     const newItem = await handleCreateNuevoItem(itemTitulo, itemTemplate, handleClose)
     if (newItem) {
-      router.push(`/catalogo/catalogo/${newItem.sku}`)
+      router.push(`/catalogo/items/${newItem.sku}`)
     }
     setItemCreated(true)
     setTimeout(() => setItemCreated(false), 100)
@@ -340,7 +340,7 @@ export default function CatalogoPage() {
   ) => {
     const newItem = await handleCreateNuevoItemConVariantes(itemTitulo, itemTemplate, handleClose)
     if (newItem) {
-      router.push(`/catalogo/catalogo/${newItem.sku}`)
+      router.push(`/catalogo/items/${newItem.sku}`)
     }
     setItemCreated(true)
     setTimeout(() => setItemCreated(false), 100)

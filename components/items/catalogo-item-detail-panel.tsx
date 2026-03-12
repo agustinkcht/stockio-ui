@@ -200,11 +200,13 @@ export function CatalogoItemDetailPanel({
   const [nameValue, setNameValue] = useState(selectedItem.name || "")
   const [proveedorDropdownOpen, setProveedorDropdownOpen] = useState(false)
   
-  // Media photos state - initialize with thumbnail if exists
+  // Media photos state - initialize with category image as thumbnail/portada
   const [mediaPhotos, setMediaPhotos] = useState<string[]>(() => {
     const photos: string[] = []
-    if (selectedItem?.imagen) {
-      photos.push(selectedItem.imagen)
+    // Use category image as the default thumbnail
+    const categoryImage = getCategoryImage(selectedItem?.categoria)
+    if (categoryImage) {
+      photos.push(categoryImage)
     }
     return photos
   })
@@ -1175,19 +1177,15 @@ export function CatalogoItemDetailPanel({
                               className="w-full h-full object-cover"
                             />
                             
-                            {/* Delete button */}
+                            {/* Delete button - currently disabled/does nothing */}
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
-                                const newPhotos = mediaPhotos.filter((_, i) => i !== index)
-                                setMediaPhotos(newPhotos)
+                                // TODO: Implement delete functionality
                               }}
                               className="absolute top-1 right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-100"
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <line x1="18" y1="6" x2="6" y2="18"/>
-                                <line x1="6" y1="6" x2="18" y2="18"/>
-                              </svg>
+                              <X className="w-3 h-3 text-slate-600" />
                             </button>
                             
                             {/* Portada tag for first photo */}
