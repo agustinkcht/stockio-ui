@@ -1130,11 +1130,11 @@ export function ItemDetailPanel({
             <div className="col-span-1 order-2 flex flex-col mt-[44px]">
               <div className="sticky top-4 p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
                 {/* Toggle button for right card mode */}
-                <div className="mb-6 text-center">
-                  <div className="inline-flex rounded-lg border border-slate-200 p-1 bg-slate-50">
+                <div className="mb-6">
+                  <div className="flex rounded-lg border border-slate-200 p-1 bg-slate-50 w-full">
                     <button
                       onClick={() => setRightCardMode("principales")}
-                      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                      className={`flex-1 px-3 py-2 rounded-md text-xs font-medium transition-all ${
                         rightCardMode === "principales"
                           ? "bg-white text-slate-900 shadow-sm"
                           : "text-slate-600 hover:text-slate-900"
@@ -1144,7 +1144,7 @@ export function ItemDetailPanel({
                     </button>
                     <button
                       onClick={() => setRightCardMode("informativos")}
-                      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                      className={`flex-1 px-3 py-2 rounded-md text-xs font-medium transition-all ${
                         rightCardMode === "informativos"
                           ? "bg-white text-slate-900 shadow-sm"
                           : "text-slate-600 hover:text-slate-900"
@@ -1194,7 +1194,7 @@ export function ItemDetailPanel({
                               }}
                               className={`p-2 rounded-lg transition-all duration-200 ${
                                 isAtributosPrincipalesLocked
-                                  ? "text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                                  ? "text-amber-500 hover:text-amber-600 hover:bg-amber-50"
                                   : "text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50"
                               }`}
                               title={isAtributosPrincipalesLocked ? "Desbloquear edición" : "Bloquear edición"}
