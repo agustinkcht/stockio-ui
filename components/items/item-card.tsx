@@ -683,62 +683,83 @@ export function ItemCard({
                   onItemClick(item)
                 }}
               >
-                {item.atributosPrincipales && item.atributosPrincipales.length > 0 ? (
+                {showPrecioColumn ? (
+                  // Show Precio column: Costo (left) and Precio Final (right)
+                  <div className="w-full flex items-center justify-between gap-4">
+                    <div className="flex-1 flex flex-col items-center gap-0.5">
+                      <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Costo</span>
+                      <span className="text-sm text-foreground">
+                        ${(item.precio?.costo || 0).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                    <div className="flex-1 flex flex-col items-center gap-0.5">
+                      <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Precio Final</span>
+                      <span className="text-sm text-foreground font-medium">
+                        ${(item.precio?.precioFinal || 0).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  // Show Atributos column: original behavior
                   <>
-                    {gridSize === "sm" ? (
-                      <div
-                        className={
-                          item.atributosPrincipales.length === 1 ? "w-full" : "grid grid-cols-2 gap-x-4 w-full"
-                        }
-                      >
-                        {item.atributosPrincipales.slice(0, 2).map((attr, idx) => (
+                    {item.atributosPrincipales && item.atributosPrincipales.length > 0 ? (
+                      <>
+                        {gridSize === "sm" ? (
                           <div
-                            key={idx}
                             className={
-                              item.atributosPrincipales.length === 1
-                                ? "flex items-center justify-center gap-1.5"
-                                : "flex items-center gap-1.5 min-w-0"
+                              item.atributosPrincipales.length === 1 ? "w-full" : "grid grid-cols-2 gap-x-4 w-full"
                             }
                           >
-                            <span className="text-sm text-muted-foreground shrink-0">{attr.key}:</span>
-                            <span className="text-sm text-foreground truncate" title={attr.value || "-"}>
-                              {attr.value || "-"}
-                            </span>
+                            {item.atributosPrincipales.slice(0, 2).map((attr, idx) => (
+                              <div
+                                key={idx}
+                                className={
+                                  item.atributosPrincipales.length === 1
+                                    ? "flex items-center justify-center gap-1.5"
+                                    : "flex items-center gap-1.5 min-w-0"
+                                }
+                              >
+                                <span className="text-sm text-muted-foreground shrink-0">{attr.key}:</span>
+                                <span className="text-sm text-foreground truncate" title={attr.value || "-"}>
+                                  {attr.value || "-"}
+                                </span>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
+                        ) : (
+                          <div
+                            className={item.atributosPrincipales.length === 1 ? "flex items-center justify-center" : "flex"}
+                            style={{ width: "100%" }}
+                          >
+                            {item.atributosPrincipales.map((attr, idx) => (
+                              <div
+                                key={idx}
+                                className={
+                                  item.atributosPrincipales.length === 1
+                                    ? "flex flex-col items-center gap-0.5"
+                                    : "flex flex-col items-center gap-0.5 flex-1 min-w-0"
+                                }
+                              >
+                                <span className="text-[10px] text-muted-foreground uppercase tracking-wide truncate w-full text-center">
+                                  {attr.key}
+                                </span>
+                                <span
+                                  className="text-sm text-foreground truncate w-full text-center"
+                                  title={attr.value || "-"}
+                                >
+                                  {attr.value || "-"}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </>
                     ) : (
-                      <div
-                        className={item.atributosPrincipales.length === 1 ? "flex items-center justify-center" : "flex"}
-                        style={{ width: "100%" }}
-                      >
-                        {item.atributosPrincipales.map((attr, idx) => (
-                          <div
-                            key={idx}
-                            className={
-                              item.atributosPrincipales.length === 1
-                                ? "flex flex-col items-center gap-0.5"
-                                : "flex flex-col items-center gap-0.5 flex-1 min-w-0"
-                            }
-                          >
-                            <span className="text-[10px] text-muted-foreground uppercase tracking-wide truncate w-full text-center">
-                              {attr.key}
-                            </span>
-                            <span
-                              className="text-sm text-foreground truncate w-full text-center"
-                              title={attr.value || "-"}
-                            >
-                              {attr.value || "-"}
-                            </span>
-                          </div>
-                        ))}
+                      <div className="flex items-center justify-center w-full">
+                        <span className="w-8 h-px bg-slate-200 rounded-full"></span>
                       </div>
                     )}
                   </>
-                ) : (
-                  <div className="flex items-center justify-center w-full">
-                    <span className="w-8 h-px bg-slate-200 rounded-full"></span>
-                  </div>
                 )}
               </div>
 
