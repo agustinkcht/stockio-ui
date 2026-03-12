@@ -192,6 +192,7 @@ export function ItemDetailPanel({
   const [skuValue, setSkuValue] = useState(selectedItem.sku || "")
   const [codigoUniversalValue, setCodigoUniversalValue] = useState(selectedItem.codigoUniversal || "")
   const [imageView, setImageView] = useState<"imagen" | "descripcion">("imagen")
+  const [isCardFlipped, setIsCardFlipped] = useState(false)
 
   const [editingDescripcion, setEditingDescripcion] = useState(false)
   const [descripcionValue, setDescripcionValue] = useState(selectedItem.descripcion || "")
@@ -955,104 +956,146 @@ export function ItemDetailPanel({
           {/* Middle Column - Image Card (only for standalone/children) - col-span-6 */}
           {!isViewingContainer && (
           <div className="col-span-6 order-1 z-20 rounded-xl flex flex-col transition-all duration-300 mt-4 border-none shadow-none pl-0 pr-0">
-            <div className="sticky top-4 p-6 px-8 pr-11 border-solid border border-black rounded-xl bg-black shadow-md pl-11 ml-0 mt-7">
-              <div className="mt-2">
-                <div className="w-full h-64 backdrop-blur-sm rounded-lg flex items-center justify-center overflow-hidden shadow-2xl border-slate-700/30 border-none border-0 bg-transparent shadow-none">
-                  <Image
-                    src={getCategoryImage(selectedItem.categoria) || "/placeholder.svg"}
-                    alt={selectedItem.name}
-                    width={200}
-                    height={256}
-                    className="object-contain rounded-xl shadow-xl"
-                  />
-                </div>
-              </div>
+            {/* Flip card container */}
+            <div className="sticky top-4 mt-7" style={{ perspective: "1200px" }}>
+              <div
+                className="relative transition-transform duration-500"
+                style={{
+                  transformStyle: "preserve-3d",
+                  transform: isCardFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
+                  minHeight: "420px",
+                }}
+              >
+                {/* FRONT SIDE */}
+                <div
+                  className="absolute inset-0 p-6 px-8 pr-11 border-solid border border-black rounded-xl bg-black shadow-md pl-11 ml-0 cursor-pointer"
+                  style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
+                  onClick={() => setIsCardFlipped(true)}
+                >
+                  {/* Flip hint top-right */}
+                  <div className="absolute top-3 right-4 flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors select-none pointer-events-none">
+                    <span className="text-[10px] uppercase tracking-wider">Descripción</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                  </div>
 
-              <div className="mb-0 mt-6">
-                <div className="flex items-center justify-center gap-2 mt-[-20px] mb-0 flex-wrap">
-                  <h2 className="font-semibold text-white text-lg">{selectedItem.name}</h2>
-                  {isChildItem && selectedItem.atributosPrincipales && selectedItem.atributosPrincipales.length > 0 && (
-                    <div className="flex items-center gap-1">
-                      {selectedItem.atributosPrincipales.map((attr, i) => (
-                        <span
-                          key={i}
-                          className="text-[10px] px-1.5 py-0.5 rounded bg-white/20 text-white/80 whitespace-nowrap"
-                        >
-                          {attr.value}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                
-                {/* SKU and Código Universal for standalone/children items */}
-                {!isViewingContainer && (
-                  <div className="flex items-center gap-4 text-xs text-slate-400 font-mono mt-4">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-medium text-slate-200">SKU:</span>
-                      <span>{selectedItem.sku}</span>
-                      <button
-                        onClick={handleCopySku}
-                        className="text-slate-500 hover:text-slate-300 transition-colors p-0.5"
-                        title="Copiar SKU"
-                      >
-                        {skuCopied ? (
-                          <span className="text-green-400 text-xs">✓</span>
-                        ) : (
-                          <Copy className="h-3 w-3" />
-                        )}
-                      </button>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-medium text-slate-200">C.U.:</span>
-                      <span>{selectedItem.codigoUniversal || "N/A"}</span>
-                      <button
-                        onClick={handleCopyCodigoUniversal}
-                        className="text-slate-500 hover:text-slate-300 transition-colors p-0.5"
-                        title="Copiar Código Universal"
-                      >
-                        {codigoUniversalCopied ? (
-                          <span className="text-green-400 text-xs">✓</span>
-                        ) : (
-                          <Copy className="h-3 w-3" />
-                        )}
-                      </button>
+                  <div className="mt-2">
+                    <div className="w-full h-64 backdrop-blur-sm rounded-lg flex items-center justify-center overflow-hidden shadow-2xl border-slate-700/30 border-none border-0 bg-transparent shadow-none">
+                      <Image
+                        src={getCategoryImage(selectedItem.categoria) || "/placeholder.svg"}
+                        alt={selectedItem.name}
+                        width={200}
+                        height={256}
+                        className="object-contain rounded-xl shadow-xl"
+                      />
                     </div>
                   </div>
-                )}
-                
-                {/* Horizontal line and Descripción for standalone/children items */}
-                {!isViewingContainer && (
-                  <>
-                    <div className="border-t border-slate-700/50 my-4"></div>
-                    <div className="flex-1 flex flex-col border-slate-800 rounded-md border-0 mt-16">
-                      <h3 className="text-sm font-medium uppercase tracking-wider mb-3 text-slate-50">
-                        Descripción
-                      </h3>
-                      <div className="flex-1">
-                        {editingDescripcion ? (
-                          <textarea
-                            value={descripcionValue}
-                            onChange={(e) => setDescripcionValue(e.target.value)}
-                            onBlur={handleDescripcionBlur}
-                            className="w-full h-full min-h-[100px] px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-500 resize-none text-sm placeholder:text-slate-500"
-                            placeholder="Agregar descripción del producto..."
-                            autoFocus
-                          />
-                        ) : (
-                          <div
-                            onClick={() => setEditingDescripcion(true)}
-                            className="w-full min-h-[100px] px-3 py-2 bg-slate-800/30 rounded-lg text-slate-200 cursor-pointer hover:border-slate-600 text-sm border-none border-0 border-transparent"
-                          >
-                            {descripcionValue || (
-                              <span className="text-slate-300">Click para agregar descripción...</span>
-                            )}
-                          </div>
-                        )}
-                      </div>
+
+                  <div className="mb-0 mt-6">
+                    <div className="flex items-center justify-center gap-2 mt-[-20px] mb-0 flex-wrap">
+                      <h2 className="font-semibold text-white text-lg">{selectedItem.name}</h2>
+                      {isChildItem && selectedItem.atributosPrincipales && selectedItem.atributosPrincipales.length > 0 && (
+                        <div className="flex items-center gap-1">
+                          {selectedItem.atributosPrincipales.map((attr, i) => (
+                            <span
+                              key={i}
+                              className="text-[10px] px-1.5 py-0.5 rounded bg-white/20 text-white/80 whitespace-nowrap"
+                            >
+                              {attr.value}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  </>
-                )}
+
+                    {/* SKU and Código Universal below the line, in column */}
+                    {!isViewingContainer && (
+                      <>
+                        <div className="border-t border-slate-700/50 my-4"></div>
+                        <div className="flex flex-col gap-2 text-xs text-slate-400 font-mono">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-medium text-slate-200 w-8">SKU:</span>
+                            <span>{selectedItem.sku}</span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleCopySku() }}
+                              className="text-slate-500 hover:text-slate-300 transition-colors p-0.5"
+                              title="Copiar SKU"
+                            >
+                              {skuCopied ? (
+                                <span className="text-green-400 text-xs">✓</span>
+                              ) : (
+                                <Copy className="h-3 w-3" />
+                              )}
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-medium text-slate-200 w-8">C.U.:</span>
+                            <span>{selectedItem.codigoUniversal || "N/A"}</span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleCopyCodigoUniversal() }}
+                              className="text-slate-500 hover:text-slate-300 transition-colors p-0.5"
+                              title="Copiar Código Universal"
+                            >
+                              {codigoUniversalCopied ? (
+                                <span className="text-green-400 text-xs">✓</span>
+                              ) : (
+                                <Copy className="h-3 w-3" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* BACK SIDE */}
+                <div
+                  className="absolute inset-0 p-6 px-8 pr-11 border-solid border border-black rounded-xl bg-black shadow-md pl-11 ml-0 cursor-pointer"
+                  style={{
+                    backfaceVisibility: "hidden",
+                    WebkitBackfaceVisibility: "hidden",
+                    transform: "rotateY(180deg)",
+                  }}
+                  onClick={() => setIsCardFlipped(false)}
+                >
+                  {/* Flip back hint top-right */}
+                  <div className="absolute top-3 right-4 flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors select-none pointer-events-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M15 18l-6-6 6-6"/>
+                    </svg>
+                    <span className="text-[10px] uppercase tracking-wider">Volver</span>
+                  </div>
+
+                  <div className="flex flex-col h-full pt-2">
+                    <h3 className="text-sm font-medium uppercase tracking-wider mb-3 text-slate-50">
+                      Descripción
+                    </h3>
+                    <div className="flex-1">
+                      {editingDescripcion ? (
+                        <textarea
+                          value={descripcionValue}
+                          onChange={(e) => setDescripcionValue(e.target.value)}
+                          onBlur={handleDescripcionBlur}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-full h-full min-h-[200px] px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-500 resize-none text-sm placeholder:text-slate-500"
+                          placeholder="Agregar descripción del producto..."
+                          autoFocus
+                        />
+                      ) : (
+                        <div
+                          onClick={(e) => { e.stopPropagation(); setEditingDescripcion(true) }}
+                          className="w-full min-h-[200px] px-3 py-2 bg-slate-800/30 rounded-lg text-slate-200 cursor-text hover:bg-slate-800/50 transition-colors text-sm"
+                        >
+                          {descripcionValue || (
+                            <span className="text-slate-500">Click para agregar descripción...</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -2711,7 +2754,7 @@ export function ItemDetailPanel({
                     onClick={() => setProveedorDropdownOpen(!proveedorDropdownOpen)}
                     className="text-xs text-muted-foreground hover:text-foreground transition-colors bg-white px-2 cursor-pointer"
                   >
-                    {proveedorDropdownOpen ? "ocultar información del proveedor" : "mostrar información del proveedor"}
+                    {proveedorDropdownOpen ? "Ocultar información del proveedor" : "Información del Proveedor"}
                   </button>
                   <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${proveedorDropdownOpen ? "rotate-180" : ""}`} />
                 </div>
