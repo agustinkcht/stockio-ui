@@ -2754,7 +2754,7 @@ export function ItemDetailPanel({
                     onClick={() => setProveedorDropdownOpen(!proveedorDropdownOpen)}
                     className="text-xs text-muted-foreground hover:text-foreground transition-colors bg-white px-2 cursor-pointer"
                   >
-                    {proveedorDropdownOpen ? "Ocultar información del proveedor" : "Información del Proveedor"}
+                    Información del Proveedor
                   </button>
                   <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${proveedorDropdownOpen ? "rotate-180" : ""}`} />
                 </div>
