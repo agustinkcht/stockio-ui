@@ -1150,7 +1150,7 @@ export function ItemDetailPanel({
                           : "text-slate-600 hover:text-slate-900"
                       }`}
                     >
-                      Atributos Informativos
+                      Atributos
                     </button>
                   </div>
                 </div>
