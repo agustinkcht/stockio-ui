@@ -2862,7 +2862,7 @@ export function CatalogoItemDetailPanel({
                 <div className="border-t border-slate-200 pt-4">
                   <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl p-4 border border-emerald-200/60">
                     <div className="text-xs font-medium text-emerald-700 uppercase tracking-wide mb-1">Precio Final</div>
-                    <div className="text-3xl font-bold text-emerald-600 tabular-nums">
+                    <div className="font-bold text-emerald-600 tabular-nums text-2xl">
                       ${(selectedItem?.precio?.precioFinal || 0).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
                     </div>
                   </div>
