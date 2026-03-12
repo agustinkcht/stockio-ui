@@ -969,7 +969,21 @@ export function ItemDetailPanel({
               </div>
 
               <div className="mb-0 mt-6">
-                <h2 className="font-semibold text-white text-lg mb-0 text-center mt-[-20px]">{selectedItem.name}</h2>
+                <div className="flex items-center justify-center gap-2 mt-[-20px] mb-0 flex-wrap">
+                  <h2 className="font-semibold text-white text-lg">{selectedItem.name}</h2>
+                  {isChildItem && selectedItem.atributosPrincipales && selectedItem.atributosPrincipales.length > 0 && (
+                    <div className="flex items-center gap-1">
+                      {selectedItem.atributosPrincipales.map((attr, i) => (
+                        <span
+                          key={i}
+                          className="text-[10px] px-1.5 py-0.5 rounded bg-white/20 text-white/80 whitespace-nowrap"
+                        >
+                          {attr.value}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 
                 {/* SKU and Código Universal for standalone/children items */}
                 {!isViewingContainer && (
@@ -2304,91 +2318,6 @@ export function ItemDetailPanel({
                         </div>
                       ) : (
                         <div className="flex flex-col gap-6">
-                          <div className="flex flex-col gap-3">
-                            <div>
-                              <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-2">
-                                Atributos Principales
-                              </h3>
-                              <p className="text-[11px] text-slate-400 mt-1">
-                                Atributos que definen las características principales del producto (máximo 2)
-                              </p>
-                            </div>
-
-                            {atributosPrincipales.map((attr, index) => (
-                              <div key={index} className="flex items-start gap-3">
-                                <div className="flex-1">
-                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
-                                  <input
-                                    type="text"
-                                    value={attr.key}
-                                    onChange={(e) => {
-                                      if (!isChildItem) {
-                                        const updated = [...atributosPrincipales]
-                                        updated[index].key = e.target.value
-                                        handleAtributosPrincipalesChange(updated)
-                                      }
-                                    }}
-                                    disabled={isChildItem}
-                                    className={`w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${
-                                      isChildItem ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
-                                    }`}
-                                    placeholder="Ej: Color"
-                                  />
-                                </div>
-
-                                <div className="flex-1">
-                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">{isChildItem ? "Variante" : "Valor"}</label>
-                                  <input
-                                    type="text"
-                                    value={attr.value}
-                                    onChange={(e) => {
-                                      if (!isChildItem) {
-                                        const updated = [...atributosPrincipales]
-                                        updated[index].value = e.target.value
-                                        handleAtributosPrincipalesChange(updated)
-                                        updateProductTitle()
-                                      }
-                                    }}
-                                    disabled={isChildItem}
-                                    className={`w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${
-                                      isChildItem ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
-                                    }`}
-                                    placeholder="Ej: Negro"
-                                  />
-                                </div>
-
-                                {!isChildItem && (
-                                  <button
-                                    onClick={() => {
-                                      const updated = atributosPrincipales.filter((_, i) => i !== index)
-                                      handleAtributosPrincipalesChange(updated)
-                                      updateProductTitle()
-                                      if (updated.length === 0 && atributosInformativos.length === 0) {
-                                        setShowIndividualAtributosView(false)
-                                      }
-                                    }}
-                                    className="mt-8 text-gray-400 hover:text-red-400 transition-colors cursor-pointer"
-                                  >
-                                    <X className="w-4 h-4" />
-                                  </button>
-                                )}
-                                {isChildItem && <div className="mt-8 w-4"></div>}
-                              </div>
-                            ))}
-
-                            {!isChildItem && atributosPrincipales.length < 2 && (
-                              <button
-                                onClick={() => {
-                                  handleAtributosPrincipalesChange([...atributosPrincipales, { key: "", value: "" }])
-                                }}
-                                className="w-full px-3 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 transition-colors flex items-center justify-center gap-2 cursor-pointer"
-                              >
-                                <Plus className="w-4 h-4" />
-                                <span className="text-sm">Agregar atributo</span>
-                              </button>
-                            )}
-                          </div>
-
                           <div className="flex flex-col gap-3">
                             <div>
                               <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
