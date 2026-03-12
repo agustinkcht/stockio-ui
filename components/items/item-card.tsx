@@ -31,6 +31,7 @@ interface ItemCardProps {
   isAuditMode?: boolean
   onStockChange?: (sku: string, field: "total" | "reservado", value: number) => void
   auditStockValues?: Record<string, AuditStockChange>
+  showPrecioColumn?: boolean
 }
 
 function calculateMarginBottom(currentItem: Item, nextItem: Item | undefined, isChild: boolean): string {
@@ -80,6 +81,7 @@ export function ItemCard({
   isAuditMode = false,
   onStockChange,
   auditStockValues,
+  showPrecioColumn = false,
 }: ItemCardProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [showTransition, setShowTransition] = useState(false)

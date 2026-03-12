@@ -45,6 +45,12 @@ interface ItemsGridProps {
   onAuditDiscard?: () => void
   // For bulk stock edit
   getSelectedSkus?: () => string[]
+  // Hide buttons
+  hideNuevoButton?: boolean
+  hideCreadorMasivoButton?: boolean
+  hideAuditButton?: boolean
+  // Show precio column instead of atributos
+  showPrecioColumn?: boolean
 }
 
 export function ItemsGrid({
@@ -74,6 +80,10 @@ export function ItemsGrid({
   onAuditSave,
   onAuditDiscard,
   getSelectedSkus,
+  hideNuevoButton = false,
+  hideCreadorMasivoButton = false,
+  hideAuditButton = false,
+  showPrecioColumn = false,
 }: ItemsGridProps) {
   const router = useRouter()
   const crearNuevoRef = useRef<HTMLDivElement>(null)
@@ -371,70 +381,76 @@ export function ItemsGrid({
           <div className="px-4 pt-3 pb-3 pl-0 pr-0">
             <div className="flex items-center justify-between border-b border-gray-200 border-none pl-0 pr-0 pb-0">
               <div className="flex items-center gap-2 border-0 border-none ml-1.5 mr-0 flex-shrink-0">
-                <div className="relative" ref={crearNuevoRef}>
+                {!hideNuevoButton && (
+                  <div className="relative" ref={crearNuevoRef}>
+                    <Button
+                      onClick={() => setShowCrearNuevoDropdown(!showCrearNuevoDropdown)}
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5 mr-1.5 text-blue-600" />
+                      Nuevo
+                    </Button>
+                    {showCrearNuevoDropdown && (
+                      <div className="absolute left-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-in fade-in-0 slide-in-from-top-2 duration-200">
+                        <div className="p-1">
+                          <button
+                            onClick={() => {
+                              handleOpenNuevoItem?.()
+                              setShowCrearNuevoDropdown(false)
+                            }}
+                            className="w-full rounded-lg text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer"
+                          >
+                            <Plus className="w-4 h-4 text-gray-400" />
+                            Item Individual
+                          </button>
+                          <button
+                            onClick={() => {
+                              handleOpenNuevoItemConVariantes?.()
+                              setShowCrearNuevoDropdown(false)
+                            }}
+                            className="w-full rounded-lg text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer"
+                          >
+                            <Grid className="w-4 h-4 text-gray-400" />
+                            Item con Variantes
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {!hideCreadorMasivoButton && (
                   <Button
-                    onClick={() => setShowCrearNuevoDropdown(!showCrearNuevoDropdown)}
+                    onClick={() => router.push("/catalogo/items/creador-masivo")}
                     variant="ghost"
                     size="sm"
                     className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer"
                   >
-                    <Plus className="w-3.5 h-3.5 mr-1.5 text-blue-600" />
-                    Nuevo
+                    <Plus className="w-3.5 h-3.5 mr-1.5 text-green-600" />
+                    Creador Masivo
                   </Button>
-                  {showCrearNuevoDropdown && (
-                    <div className="absolute left-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-in fade-in-0 slide-in-from-top-2 duration-200">
-                      <div className="p-1">
-                        <button
-                          onClick={() => {
-                            handleOpenNuevoItem?.()
-                            setShowCrearNuevoDropdown(false)
-                          }}
-                          className="w-full rounded-lg text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer"
-                        >
-                          <Plus className="w-4 h-4 text-gray-400" />
-                          Item Individual
-                        </button>
-                        <button
-                          onClick={() => {
-                            handleOpenNuevoItemConVariantes?.()
-                            setShowCrearNuevoDropdown(false)
-                          }}
-                          className="w-full rounded-lg text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer"
-                        >
-                          <Grid className="w-4 h-4 text-gray-400" />
-                          Item con Variantes
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                )}
 
-                <Button
-                  onClick={() => router.push("/inventario/creador-masivo")}
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5 mr-1.5 text-green-600" />
-                  Creador Masivo
-                </Button>
-
-                <Button
-                  onClick={() => setIsAuditMode(!isAuditMode)}
-                  variant="ghost"
-                  size="sm"
-                  className={`h-8 text-xs transition-colors border shadow-sm cursor-pointer ${
-                    isAuditMode 
-                      ? "bg-amber-50 border-amber-300 hover:bg-amber-100 text-amber-700" 
-                      : "border-[rgba(228,230,235,0.6)] hover:bg-gray-100"
-                  }`}
-                >
-                  <ClipboardList className={`w-3.5 h-3.5 mr-1.5 ${isAuditMode ? "text-amber-600" : "text-amber-600"}`} />
-                  Auditoría de Stock
-                </Button>
+                {!hideAuditButton && (
+                  <Button
+                    onClick={() => setIsAuditMode(!isAuditMode)}
+                    variant="ghost"
+                    size="sm"
+                    className={`h-8 text-xs transition-colors border shadow-sm cursor-pointer ${
+                      isAuditMode 
+                        ? "bg-amber-50 border-amber-300 hover:bg-amber-100 text-amber-700" 
+                        : "border-[rgba(228,230,235,0.6)] hover:bg-gray-100"
+                    }`}
+                  >
+                    <ClipboardList className={`w-3.5 h-3.5 mr-1.5 ${isAuditMode ? "text-amber-600" : "text-amber-600"}`} />
+                    Auditoría de Stock
+                  </Button>
+                )}
 
 {/* Pending changes counter - clickable to filter */}
-                {hasAuditChanges && (
+                {!hideAuditButton && hasAuditChanges && (
                   <button
                     onClick={() => setShowOnlyPendingChanges(!showOnlyPendingChanges)}
                     className={`text-[10px] font-medium px-2 py-0.5 rounded-full ml-2 border transition-all cursor-pointer ${
@@ -573,9 +589,18 @@ export function ItemsGrid({
                   <div className="col-span-8 flex items-center px-4 py-2 justify-center border-solid pl-4 pr-4 mr-0 border border-l-0 border-[rgba(202,213,227,0.61)]">
                     <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Item</span>
                   </div>
-                  <div className="col-span-7 flex items-center justify-center py-2 border-solid border-r px-4 mx-0 ml-0 mr-px border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
-                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Atributos</span>
-                  </div>
+                  {showPrecioColumn ? (
+                    <div className="col-span-7 flex items-center justify-center py-2 border-solid border-r px-4 mx-0 ml-0 mr-px border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
+                      <div className="flex items-center gap-4 w-full">
+                        <span className="text-xs font-medium text-gray-600 uppercase tracking-wider flex-1 text-center">Costo</span>
+                        <span className="text-xs font-medium text-gray-600 uppercase tracking-wider flex-1 text-center">Precio Final</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="col-span-7 flex items-center justify-center py-2 border-solid border-r px-4 mx-0 ml-0 mr-px border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
+                      <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Atributos</span>
+                    </div>
+                  )}
                   <div className="col-span-7 flex items-center justify-center py-2 mx-0 ml-0 px-0 mr-0 border-b border-t border-l-0 border-r-0 border-[rgba(202,213,227,0.61)]">
                     <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Stock</span>
                   </div>
@@ -651,6 +676,7 @@ export function ItemsGrid({
                   isAuditMode={isAuditMode}
                   onStockChange={handleAuditStockChange}
                   auditStockValues={auditStockChanges}
+                  showPrecioColumn={showPrecioColumn}
                 />
               )
             })}

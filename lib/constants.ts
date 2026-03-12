@@ -199,8 +199,7 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     label: "Inventario",
     hasDropdown: true,
     dropdown: [
-      { label: "Artículos", href: "/inventario/articulos" },
-      { label: "Creador Masivo", href: "/inventario/creador-masivo" },
+      { label: "Stock", href: "/inventario/stock" },
     ],
   },
 ]

@@ -1,19 +1,15 @@
 "use client"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Package, Plus, Search, X, Check, CheckCircle2 } from "lucide-react"
+import { Package, Search, X, Check, CheckCircle2 } from "lucide-react"
 import { useAccount } from "@/lib/contexts/account-context"
 
 import { Sidebar } from "@/components/layout/sidebar"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { ItemsGrid } from "@/components/items/items-grid"
-import { NuevoItemModal } from "@/components/modals/nuevo-item-modal"
-import { NuevoItemConVariantesModal } from "@/components/modals/nuevo-item-con-variantes-modal"
-import { TemplateModal } from "@/components/modals/template-modal"
 import { UserPanel } from "@/components/layout/user-panel"
 import { useItems } from "@/hooks/use-items"
 import { useItemSelection } from "@/hooks/use-item-selection"
-import { useModals } from "@/hooks/use-modals"
 import { useSidebar } from "@/hooks/use-sidebar"
 import { useChangeTracker } from "@/hooks/use-change-tracker"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
@@ -21,10 +17,9 @@ import type { Item } from "@/lib/types"
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-export default function ArticulosPage() {
+export default function StockPage() {
   const router = useRouter()
   const [isSaving, setIsSaving] = useState(false)
-  const [itemCreated, setItemCreated] = useState(false)
   const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>({})
   const [showSaveSuccess, setShowSaveSuccess] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<Item | null>(null)
@@ -39,15 +34,12 @@ export default function ArticulosPage() {
     items,
     depositStock,
     updateDepositStock,
-    handleCreateNuevoItem,
-    handleCreateNuevoItemConVariantes,
     updateItem,
     deleteItem,
     undoDelete,
     saveDelete: saveDeletedItems,
     hasUnsavedDeletes,
     deletedItems,
-    isCreatingItem,
     updateStock,
     bulkSaveStock,
   } = useItems()
@@ -64,39 +56,7 @@ export default function ArticulosPage() {
   } = useItemSelection(items)
 
   const {
-    showNuevoItemModal,
-    isNuevoItemMinimized,
-    showNuevoItemConVariantesModal,
-    isNuevoItemConVariantesMinimized,
-    showTemplateModal,
-    activeNavTab,
-    minimizedTabs,
-    handleOpenNuevoItem,
-    handleCloseNuevoItem,
-    handleMinimizeNuevoItem,
-    handleRestoreNuevoItem,
-    handleOpenNuevoItemConVariantes,
-    handleCloseNuevoItemConVariantes,
-    handleMinimizeNuevoItemConVariantes,
-    setShowTemplateModal,
-    setIsNuevoItemConVariantesMinimized,
-    setActiveNavTab,
-    handleCloseTabFromNavbar,
-    itemTitulo,
-    setItemTitulo,
-    itemTemplate,
-    setItemTemplate,
-    itemUbicacion,
-    setItemUbicacion,
-    handleRestoreNuevoItemConVariantes,
-  } = useModals()
-
-  const {
     hoveredDropdown,
-    showNuevoDropdown,
-    setShowNuevoDropdown,
-    showAccionesDropdown,
-    setShowAccionesDropdown,
     gridSize,
     gridSizeDropdownOpen,
     setGridSizeDropdownOpen,
@@ -157,7 +117,7 @@ export default function ArticulosPage() {
     ;(window as any).__auditDiscardHandler?.()
   }
 
-  const breadcrumbs = [{ label: "Inventario" }, { label: "Artículos", href: "/inventario/articulos" }]
+  const breadcrumbs = [{ label: "Inventario" }, { label: "Stock", href: "/inventario/stock" }]
 
   const handleUndo = () => {
     const change = changeTracker.undo()
@@ -314,8 +274,8 @@ export default function ArticulosPage() {
   const handleItemClick = (item: Item) => {
     console.log("[v0] handleItemClick called with item:", item)
     console.log("[v0] item.sku:", item.sku)
-    console.log("[v0] Navigating to:", `/inventario/articulos/${item.sku}`)
-    router.push(`/inventario/articulos/${item.sku}`)
+    console.log("[v0] Navigating to:", `/inventario/stock/${item.sku}`)
+    router.push(`/inventario/stock/${item.sku}`)
   }
 
   const toggleVariantExpansion = (index: number) => {
@@ -323,36 +283,6 @@ export default function ArticulosPage() {
       ...prev,
       [index]: !prev[index],
     }))
-  }
-
-  const handleRestoreTab = (tabId: string) => {
-    if (tabId === "nuevo-item") {
-      handleRestoreNuevoItem()
-    } else if (tabId === "nuevo-item-variantes") {
-      handleRestoreNuevoItemConVariantes()
-    }
-  }
-
-  const handleCreateItemWithSuccess = async (itemTitulo: string, itemTemplate: string, handleClose: () => void) => {
-    const newItem = await handleCreateNuevoItem(itemTitulo, itemTemplate, handleClose)
-    if (newItem) {
-      router.push(`/inventario/articulos/${newItem.sku}`)
-    }
-    setItemCreated(true)
-    setTimeout(() => setItemCreated(false), 100)
-  }
-
-  const handleCreateItemConVariantesWithSuccess = async (
-    itemTitulo: string,
-    itemTemplate: string,
-    handleClose: () => void,
-  ) => {
-    const newItem = await handleCreateNuevoItemConVariantes(itemTitulo, itemTemplate, handleClose)
-    if (newItem) {
-      router.push(`/inventario/articulos/${newItem.sku}`)
-    }
-    setItemCreated(true)
-    setTimeout(() => setItemCreated(false), 100)
   }
 
   return (
@@ -366,9 +296,6 @@ export default function ArticulosPage() {
             onDropdownOpen={handleDropdownMouseEnter}
             onDropdownClose={handleDropdownMouseLeave}
           />
-          {(showNuevoItemModal || showNuevoItemConVariantesModal) && (
-            <div className="absolute top-0 left-0 h-full w-full bg-black/50 z-[60] pointer-events-none rounded-lg" />
-          )}
         </div>
 
         <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
@@ -443,8 +370,6 @@ export default function ArticulosPage() {
                     setGridSizeDropdownOpen={setGridSizeDropdownOpen}
                     setGridSize={setGridSize}
                     isExpanded={false}
-                    handleOpenNuevoItem={handleOpenNuevoItem}
-                    handleOpenNuevoItemConVariantes={handleOpenNuevoItemConVariantes}
                     hasSelectedItems={hasSelectedItems}
                     onBatchDelete={handleBatchDeleteClick}
                     onUpdateStock={updateStock}
@@ -452,6 +377,8 @@ export default function ArticulosPage() {
                     onAuditSave={handleAuditSave}
                     onAuditDiscard={handleAuditDiscard}
                     getSelectedSkus={getSelectedSkus}
+                    hideNuevoButton={true}
+                    hideCreadorMasivoButton={true}
                   />
                 </div>
               </div>
@@ -459,42 +386,6 @@ export default function ArticulosPage() {
           </main>
         </div>
       </div>
-
-      {/* Existing modals */}
-      <TemplateModal showTemplateModal={showTemplateModal} setShowTemplateModal={setShowTemplateModal} />
-
-      <NuevoItemModal
-        showNuevoItemModal={showNuevoItemModal}
-        isNuevoItemMinimized={isNuevoItemMinimized}
-        handleMinimizeNuevoItem={handleMinimizeNuevoItem}
-        handleCloseNuevoItem={handleCloseNuevoItem}
-        itemTitulo={itemTitulo}
-        setItemTitulo={setItemTitulo}
-        itemTemplate={itemTemplate}
-        setItemTemplate={setItemTemplate}
-        itemUbicacion={itemUbicacion}
-        setItemUbicacion={setItemUbicacion}
-        handleCreateNuevoItem={handleCreateItemWithSuccess}
-        isCreatingItem={isCreatingItem}
-      />
-
-      <NuevoItemConVariantesModal
-        showNuevoItemConVariantesModal={showNuevoItemConVariantesModal}
-        isNuevoItemConVariantesMinimized={isNuevoItemConVariantesMinimized}
-        handleMinimizeNuevoItemConVariantes={handleMinimizeNuevoItemConVariantes}
-        handleCloseNuevoItemConVariantes={handleCloseNuevoItemConVariantes}
-        setIsNuevoItemConVariantesMinimized={setIsNuevoItemConVariantesMinimized}
-        setActiveNavTab={setActiveNavTab}
-        activeNavTab={activeNavTab}
-        itemTitulo={itemTitulo}
-        setItemTitulo={setItemTitulo}
-        itemTemplate={itemTemplate}
-        setItemTemplate={setItemTemplate}
-        itemUbicacion={itemUbicacion}
-        setItemUbicacion={setItemUbicacion}
-        handleCreateNuevoItemConVariantes={handleCreateItemConVariantesWithSuccess}
-        isCreatingItem={isCreatingItem}
-      />
 
       {/* Delete Confirmation Modal */}
       {itemToDelete && (

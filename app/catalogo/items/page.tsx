@@ -30,10 +30,6 @@ export default function CatalogoPage() {
   const [itemToDelete, setItemToDelete] = useState<Item | null>(null)
   const [showBatchDeleteModal, setShowBatchDeleteModal] = useState(false)
   const { currentAccount } = useAccount()
-  
-  // Audit mode state
-  const [hasAuditChanges, setHasAuditChanges] = useState(false)
-  const [auditPendingCount, setAuditPendingCount] = useState(0)
 
   const {
     items,
@@ -49,7 +45,6 @@ export default function CatalogoPage() {
     deletedItems,
     isCreatingItem,
     updateStock,
-    bulkSaveStock,
   } = useItems()
 
   const {
@@ -111,51 +106,6 @@ export default function CatalogoPage() {
   useEffect(() => {
     setGridSize("md")
   }, [setGridSize])
-
-  // Audit mode handlers
-  const handleAuditChangesUpdate = (hasChanges: boolean, pendingCount: number) => {
-    setHasAuditChanges(hasChanges)
-    setAuditPendingCount(pendingCount)
-  }
-
-  const handleAuditSave = async (changes: Record<string, { total: number; reservado: number }>) => {
-    setIsSaving(true)
-    try {
-      await sleep(600)
-      
-      // Use bulkSaveStock - it handles both standalone and variant items atomically
-      // and persists directly to localStorage
-      bulkSaveStock(changes)
-      
-      // Clear audit changes in the grid
-      ;(window as any).__auditClearHandler?.()
-      
-      setShowSaveSuccess(true)
-      setTimeout(() => setShowSaveSuccess(false), 3000)
-    } catch (error) {
-      console.error("[v0] Error saving audit changes:", error)
-    } finally {
-      setIsSaving(false)
-      setHasAuditChanges(false)
-      setAuditPendingCount(0)
-    }
-  }
-
-  const handleAuditDiscard = () => {
-    // Audit changes are discarded internally in ItemsGrid
-    setHasAuditChanges(false)
-    setAuditPendingCount(0)
-  }
-
-  const handleAuditGuardar = () => {
-    // Trigger save from window handler
-    ;(window as any).__auditSaveHandler?.()
-  }
-
-  const handleAuditDeshacer = () => {
-    // Trigger discard from window handler
-    ;(window as any).__auditDiscardHandler?.()
-  }
 
   const breadcrumbs = [{ label: "Catálogo" }, { label: "Items", href: "/catalogo/items" }]
 
@@ -388,26 +338,6 @@ export default function CatalogoPage() {
                     <span className="text-sm text-green-700 font-medium">Cambios Guardados</span>
                   </div>
                 )}
-
-                {hasAuditChanges && !showSaveSuccess && !isSaving && (
-                  <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2 duration-200">
-                    <button
-                      onClick={handleAuditDeshacer}
-                      className="px-4 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 rounded transition-all cursor-pointer text-red-700 text-sm font-medium"
-                      title="Deshacer cambios"
-                    >
-                      Deshacer
-                    </button>
-
-                    <button
-                      onClick={handleAuditGuardar}
-                      className="px-4 py-1.5 bg-green-50 hover:bg-green-100 border border-green-200 rounded transition-all cursor-pointer text-green-700 text-sm font-medium"
-                      title="Guardar cambios"
-                    >
-                      Guardar
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -439,10 +369,9 @@ export default function CatalogoPage() {
                     hasSelectedItems={hasSelectedItems}
                     onBatchDelete={handleBatchDeleteClick}
                     onUpdateStock={updateStock}
-                    onAuditChangesUpdate={handleAuditChangesUpdate}
-                    onAuditSave={handleAuditSave}
-                    onAuditDiscard={handleAuditDiscard}
                     getSelectedSkus={getSelectedSkus}
+                    hideAuditButton={true}
+                    showPrecioColumn={true}
                   />
                 </div>
               </div>
