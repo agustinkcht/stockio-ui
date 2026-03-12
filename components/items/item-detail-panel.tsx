@@ -963,7 +963,7 @@ export function ItemDetailPanel({
                 style={{
                   transformStyle: "preserve-3d",
                   transform: isCardFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
-                  minHeight: "420px",
+                  minHeight: "800px",
                 }}
               >
                 {/* FRONT SIDE */}
