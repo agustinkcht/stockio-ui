@@ -647,7 +647,7 @@ export function ItemCard({
                         {item.atributosPrincipales.map((attr, i) => (
                           <span
                             key={i}
-                            className="text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap bg-blue-50 text-blue-900 border-blue-100 border"
+                            className="text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap bg-blue-50 text-blue-900 border-blue-100 border border-none"
                           >
                             {attr.value}
                           </span>
