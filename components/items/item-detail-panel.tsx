@@ -952,6 +952,7 @@ export function ItemDetailPanel({
       setEditingName(false)
     }
   }
+  }
 
   // Removed handleUndo, handleRedo, handleSave, handleDiscard, saveToHistory, applyState as they are replaced by onFieldChange
   // const handleUndo = () => { ... }
