@@ -377,6 +377,19 @@ export function ItemCard({
                       <span className="text-sm text-foreground font-medium truncate">
                         {item.name}
                       </span>
+                      {/* Atributos principales tags for child items in audit mode */}
+                      {isChild && item.atributosPrincipales && item.atributosPrincipales.length > 0 && (
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          {item.atributosPrincipales.map((attr, i) => (
+                            <span
+                              key={i}
+                              className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground whitespace-nowrap"
+                            >
+                              {attr.value}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
                       {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
@@ -628,6 +641,19 @@ export function ItemCard({
                     >
                       {item.name}
                     </span>
+                    {/* Atributos principales tags for child items */}
+                    {isChild && item.atributosPrincipales && item.atributosPrincipales.length > 0 && (
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        {item.atributosPrincipales.map((attr, i) => (
+                          <span
+                            key={i}
+                            className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground whitespace-nowrap"
+                          >
+                            {attr.value}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
                     {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
