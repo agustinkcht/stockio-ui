@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import type React from "react"
 import type { Item } from "@/lib/types"
-import { ChevronDown, ChevronRight, Plus, Copy, X, Minus, Check, ArrowDownToLine, Lock, LockOpen, Pencil } from "lucide-react"
+import { ChevronDown, ChevronRight, Plus, Copy, X, Minus, Check, ArrowDownToLine, Lock, LockOpen, Pencil, Upload } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
 import { TEMPLATES } from "@/lib/constants" // DEPOSITS and SAVED_ATRIBUTOS imports removed
@@ -199,6 +199,16 @@ export function CatalogoItemDetailPanel({
   const [editingName, setEditingName] = useState(false)
   const [nameValue, setNameValue] = useState(selectedItem.name || "")
   const [proveedorDropdownOpen, setProveedorDropdownOpen] = useState(false)
+  
+  // Media photos state - initialize with thumbnail if exists
+  const [mediaPhotos, setMediaPhotos] = useState<string[]>(() => {
+    const photos: string[] = []
+    if (selectedItem?.imagen) {
+      photos.push(selectedItem.imagen)
+    }
+    return photos
+  })
+  const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<number | null>(null)
 
   const [containerAtributosPrincipales, setContainerAtributosPrincipales] = useState<
     Array<{ key: string; variantes: string[]; keyOpen?: boolean; variantesOpen?: boolean }>
@@ -1114,7 +1124,87 @@ export function CatalogoItemDetailPanel({
                     <span className="text-[10px] uppercase tracking-wider">Volver</span>
                   </div>
 
-                  <div className="flex flex-col h-full pt-2">
+                  <div className="flex flex-col h-full pt-2 overflow-y-auto">
+                    {/* Media Section */}
+                    <h3 className="text-sm font-medium uppercase tracking-wider mb-3 text-slate-50">
+                      Media
+                    </h3>
+                    <div className="flex gap-3 mb-5">
+                      {/* Upload Button */}
+                      <button
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex-shrink-0 w-20 h-20 border-2 border-dashed border-blue-400/60 rounded-xl flex flex-col items-center justify-center gap-1.5 hover:border-blue-400 hover:bg-blue-500/10 transition-all cursor-pointer"
+                      >
+                        <Upload className="w-5 h-5 text-blue-400" />
+                        <span className="text-[10px] text-blue-400 font-medium">Seleccionar</span>
+                      </button>
+                      
+                      {/* Photo Thumbnails */}
+                      <div className="flex gap-3 overflow-x-auto pb-1">
+                        {mediaPhotos.map((photo, index) => (
+                          <div
+                            key={index}
+                            draggable
+                            onDragStart={(e) => {
+                              e.stopPropagation()
+                              setDraggedPhotoIndex(index)
+                            }}
+                            onDragOver={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                            }}
+                            onDrop={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              if (draggedPhotoIndex !== null && draggedPhotoIndex !== index) {
+                                const newPhotos = [...mediaPhotos]
+                                const [draggedPhoto] = newPhotos.splice(draggedPhotoIndex, 1)
+                                newPhotos.splice(index, 0, draggedPhoto)
+                                setMediaPhotos(newPhotos)
+                              }
+                              setDraggedPhotoIndex(null)
+                            }}
+                            onDragEnd={() => setDraggedPhotoIndex(null)}
+                            className={`relative flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 cursor-move group ${
+                              draggedPhotoIndex === index ? 'opacity-50 border-blue-400' : 'border-slate-600 hover:border-slate-400'
+                            }`}
+                          >
+                            <img
+                              src={photo}
+                              alt={`Product photo ${index + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                            
+                            {/* Delete button */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                const newPhotos = mediaPhotos.filter((_, i) => i !== index)
+                                setMediaPhotos(newPhotos)
+                              }}
+                              className="absolute top-1 right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-100"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"/>
+                                <line x1="6" y1="6" x2="18" y2="18"/>
+                              </svg>
+                            </button>
+                            
+                            {/* Portada tag for first photo */}
+                            {index === 0 && (
+                              <div className="absolute bottom-0 left-0 right-0 bg-black/70 py-0.5 px-1">
+                                <span className="text-[8px] font-bold text-white uppercase tracking-wider">Portada</span>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Divider */}
+                    <div className="border-t border-slate-700 mb-4"></div>
+                    
+                    {/* Descripción Section */}
                     <h3 className="text-sm font-medium uppercase tracking-wider mb-3 text-slate-50">
                       Descripción
                     </h3>
@@ -1125,14 +1215,14 @@ export function CatalogoItemDetailPanel({
                           onChange={(e) => setDescripcionValue(e.target.value)}
                           onBlur={handleDescripcionBlur}
                           onClick={(e) => e.stopPropagation()}
-                          className="w-full h-full min-h-[200px] px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-500 resize-none text-sm placeholder:text-slate-500"
+                          className="w-full h-full min-h-[120px] px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-500 resize-none text-sm placeholder:text-slate-500"
                           placeholder="Agregar descripción del producto..."
                           autoFocus
                         />
                       ) : (
                         <div
                           onClick={(e) => { e.stopPropagation(); setEditingDescripcion(true) }}
-                          className="w-full min-h-[200px] px-3 py-2 bg-slate-800/30 rounded-lg text-slate-200 cursor-text hover:bg-slate-800/50 transition-colors text-sm"
+                          className="w-full min-h-[120px] px-3 py-2 bg-slate-800/30 rounded-lg text-slate-200 cursor-text hover:bg-slate-800/50 transition-colors text-sm"
                         >
                           {descripcionValue || (
                             <span className="text-slate-500">Click para agregar descripción...</span>
@@ -2243,7 +2333,8 @@ export function CatalogoItemDetailPanel({
                           </div>
                         </div>
 
-                        <div className="my-10 border-t border-transparent mb-0"></div>
+                        {/* Horizontal divider line */}
+                        <div className="my-6 border-t border-slate-200"></div>
 
                         <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-4">
                           Presentación
@@ -2841,20 +2932,20 @@ export function CatalogoItemDetailPanel({
                     </span>
                   </div>
                   
-                  {/* Margen */}
-                  <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 rounded-lg border border-border/40">
-                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Margen</span>
-                    <span className="text-base font-semibold text-slate-700 tabular-nums">
-                      {selectedItem?.precio?.margen || 0}%
-                    </span>
-                  </div>
-                  
-                  {/* IVA */}
-                  <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 rounded-lg border border-border/40">
-                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">IVA</span>
-                    <span className="text-base font-semibold text-slate-700 tabular-nums">
-                      {selectedItem?.precio?.iva || 0}%
-                    </span>
+                  {/* Margen and IVA on same line */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 rounded-lg border border-border/40">
+                      <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Margen</span>
+                      <span className="text-base font-semibold text-slate-700 tabular-nums">
+                        {selectedItem?.precio?.margen || 0}%
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 rounded-lg border border-border/40">
+                      <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">IVA</span>
+                      <span className="text-base font-semibold text-slate-700 tabular-nums">
+                        {selectedItem?.precio?.iva || 0}%
+                      </span>
+                    </div>
                   </div>
                 </div>
                 
