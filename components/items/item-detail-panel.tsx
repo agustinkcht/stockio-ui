@@ -1126,7 +1126,7 @@ export function ItemDetailPanel({
                           : "text-slate-600 hover:text-slate-900"
                       }`}
                     >
-                      Atributos Principales y Variantes
+                      Variantes
                     </button>
                     <button
                       onClick={() => setRightCardMode("informativos")}
@@ -1161,42 +1161,44 @@ export function ItemDetailPanel({
                       </div>
                     ) : (
                       <div className="mb-6">
+                        {/* Title and description - always visible normally */}
+                        <div className="flex items-center justify-between mb-3">
+                          <div>
+                            <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
+                              Atributos de Variantes
+                            </h3>
+                            <p className="text-xs text-gray-500 italic">
+                              Atributos que definen las variantes del producto (máximo 2)
+                            </p>
+                          </div>
+                          {/* Lock button - only visible when variants exist */}
+                          {variantItems.length > 0 && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setIsAtributosPrincipalesLocked(!isAtributosPrincipalesLocked)
+                              }}
+                              className={`p-2 rounded-lg transition-all duration-200 ${
+                                isAtributosPrincipalesLocked
+                                  ? "text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                                  : "text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50"
+                              }`}
+                              title={isAtributosPrincipalesLocked ? "Desbloquear edición" : "Bloquear edición"}
+                            >
+                              {isAtributosPrincipalesLocked ? (
+                                <Lock className="w-4 h-4" />
+                              ) : (
+                                <LockOpen className="w-4 h-4" />
+                              )}
+                            </button>
+                          )}
+                        </div>
+                        {/* Atributo inputs and buttons - these get locked */}
                         <div className={`flex flex-col gap-3 transition-all duration-300 ${
                           variantItems.length > 0 && isAtributosPrincipalesLocked 
                             ? "opacity-50 pointer-events-none select-none" 
                             : ""
                         }`}>
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
-                                Atributos Principales
-                              </h3>
-                              <p className="text-xs text-gray-500 italic">
-                                Atributos que definen las variantes del producto (máximo 2)
-                              </p>
-                            </div>
-                            {/* Lock button - only visible when variants exist */}
-                            {variantItems.length > 0 && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setIsAtributosPrincipalesLocked(!isAtributosPrincipalesLocked)
-                                }}
-                                className={`p-2 rounded-lg transition-all duration-200 pointer-events-auto ${
-                                  isAtributosPrincipalesLocked
-                                    ? "text-slate-400 hover:text-slate-600 hover:bg-slate-100"
-                                    : "text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50"
-                                }`}
-                                title={isAtributosPrincipalesLocked ? "Desbloquear edición" : "Bloquear edición"}
-                              >
-                                {isAtributosPrincipalesLocked ? (
-                                  <Lock className="w-4 h-4" />
-                                ) : (
-                                  <LockOpen className="w-4 h-4" />
-                                )}
-                              </button>
-                            )}
-                          </div>
 
                           {containerAtributosPrincipales.map((attr, index) => (
                         <div key={index} className="flex items-start gap-3">
@@ -1409,12 +1411,17 @@ export function ItemDetailPanel({
                         const hasAtLeastOneVariante = containerAtributosPrincipales.some(
                           (attr) => attr.key.trim() !== "" && attr.variantes.length > 0
                         )
+                        // Check if there are potential variants not yet generated
+                        const existingVariants = selectedItem?.variants || []
+                        const potentialNewVariants = generateNewVariantCombinations(existingVariants)
+                        const hasPotentialVariants = potentialNewVariants.length > 0
+                        const isEnabled = hasAtLeastOneVariante && hasPotentialVariants
                         return (
                           <button
                             onClick={handleGenerarVariantes}
-                            disabled={!hasAtLeastOneVariante}
+                            disabled={!isEnabled}
                             className={`w-full px-4 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 ${
-                              hasAtLeastOneVariante
+                              isEnabled
                                 ? "bg-slate-900 text-white hover:bg-slate-800 cursor-pointer"
                                 : "bg-slate-100 text-slate-400 cursor-not-allowed"
                             }`}
