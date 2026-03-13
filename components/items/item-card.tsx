@@ -519,7 +519,7 @@ export function ItemCard({
                     }}
                     className="w-5 h-5 flex items-center justify-center rounded bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
                   >
-                    <Minus className="w-2.5 h-2.5" />
+                    <Plus className="w-2.5 h-2.5" />
                   </button>
                 </div>
 
