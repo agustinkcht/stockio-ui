@@ -1050,9 +1050,9 @@ export function CatalogoItemDetailPanel({
                           )}
                         </div>
                       )}
-                      {isChildItem && selectedItem.atributosPrincipales && selectedItem.atributosPrincipales.length > 0 && (
+                      {isChildItem && (selectedItem as any).atributosPrincipales && (selectedItem as any).atributosPrincipales.length > 0 && (
                         <div className="flex items-center gap-1">
-                          {selectedItem.atributosPrincipales.map((attr, i) => (
+                          {(selectedItem as any).atributosPrincipales.map((attr: any, i: number) => (
                             <span
                               key={i}
                               className="text-[10px] px-1.5 py-0.5 rounded bg-white/20 text-white/80 whitespace-nowrap"
