@@ -150,7 +150,7 @@ export const INITIAL_ITEMS: Item[] = [
     categoria: "Vinos",
     hasVariants: true,
     isAgrupador: true,
-    sku: "VNO-DVCAT-MALB",
+    sku: "VNO-DVCAT",
     marca: "Catena Zapata",
     proveedor: "Catena Zapata",
     formatoVenta: "unidad",
@@ -159,7 +159,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenUnidad: "ml",
 
     containerAtributosPrincipales: [
-      { key: "Varietal", variantes: ["Malbec", "Cabernet Sauvignon", "Syrah"] },
+      { key: "Varietal", variantes: ["Malbec", "Cabernet Sauvignon"] },
     ],
 
     atributosInformativos: [
@@ -169,10 +169,10 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Crianza", value: "" }, // per variant (e.g., oak aging)
     ],
 
-    variantCount: 3,
+    variantCount: 2,
     variants: [
 
-      // --- 2021 ---
+      // --- malbec ---
       {
         name: "DV Catena",
         sku: "VNO-DVCAT-MALB",
@@ -209,25 +209,6 @@ export const INITIAL_ITEMS: Item[] = [
         stock: { total: "46", reservado: "9", disponible: "37" },
         precio: { costo: 53000, margen: 50, iva: 21, precioFinal: 96090 },
       },
-
-      // --- 2023 ---
-      {
-        name: "DV Catena",
-        sku: "VNO-DVCAT-SYRA-2023",
-        codigoUniversal: "7799002000238",
-        codigoProveedor: "DVCAT-SYRA",
-        categoria: "Vinos",
-        marca: "Catena Zapata",
-        atributosPrincipales: [
-          { key: "Varietal", value: "Syrah" },
-        ],
-        atributosInformativos: [
-          { key: "Perfil Sensorial", value: "Frutos rojos brillantes, especias dulces y taninos equilibrados" },
-          { key: "Crianza", value: "18 meses en barrica" },
-        ],
-        stock: { total: "50", reservado: "10", disponible: "40" },
-        precio: { costo: 52000, margen: 50, iva: 21, precioFinal: 94380 },
-      },
     ],
   },
   
@@ -236,11 +217,11 @@ export const INITIAL_ITEMS: Item[] = [
     categoria: "Vinos",
     hasVariants: false,
     isAgrupador: false,
-    sku: "VNO-CHM5HIL-2021",
+    sku: "VNO-CHM5HIL",
     codigoUniversal: "7799002000001", // generated
     marca: "Chañarmuyo",
     proveedor: "Chañarmuyo Bodega",
-    codigoProveedor: "CHM-5HIL-21",
+    codigoProveedor: "CHM-5HIL-BLND",
     formatoVenta: "unidad",
     volumenActive: true,
     volumenCantidad: 750,
@@ -248,19 +229,12 @@ export const INITIAL_ITEMS: Item[] = [
     stock: { total: "18", reservado: "2", disponible: "16" },
     atributosPrincipales: [
       { key: "Varietal", value: "Blend" },
-      { key: "Año", value: "2021" },
     ],
     atributosInformativos: [
       { key: "Tipo de Vino", value: "Tinto" },
-      { key: "Línea", value: "5 Hileras" },
       { key: "Perfil Sensorial", value: "Fruta roja madura, taninos redondos y notas tostadas" },
-      { key: "Bodega", value: "Chañarmuyo" },
       { key: "Origen", value: "Valle de Chañarmuyo, La Rioja" },
       { key: "Crianza", value: "24 meses en barrica" },
-      { key: "Tipo de Barrica", value: "Roble francés" },
-      { key: "Potencial de Guarda", value: "8 años" },
-      { key: "ABV", value: "14.1%" },
-      { key: "Temperatura de Servicio", value: "16–18°C" },
       { key: "Maridaje", value: "Asados y guisos intensos" },
     ],
     precio: { costo: 18000, margen: 50, iva: 21, precioFinal: 32580 },
@@ -286,22 +260,13 @@ export const INITIAL_ITEMS: Item[] = [
     },
     atributosPrincipales: [
       { key: "Varietal", value: "Blend" },
-      { key: "Año", value: "2022" },
     ],
     atributosInformativos: [
       { key: "Tipo de Vino", value: "Tinto" },
-      { key: "Línea", value: "Corte Estrella" },
       { key: "Perfil Sensorial", value: "Cerezas y ciruelas maduras, con café, cacao y tabaco" },
-      { key: "Bodega", value: "Bodega Domiciano" },
       { key: "Origen", value: "Barrancas, Maipú, Mendoza, Argentina" },
       { key: "Crianza", value: "12 meses en barricas (2do y 3er uso)" },
-      { key: "Tipo de Barrica", value: "Roble francés" },
-      { key: "Potencial de Guarda", value: "6 años" },
-      { key: "Enólogo", value: "Equipo Enológico Domiciano" },
-      { key: "ABV", value: "14%" },
-      { key: "Temperatura de Servicio", value: "16–18°C" },
       { key: "Maridaje", value: "Carnes rojas, parrilla, pastas con salsas intensas" },
-      { key: "Estuche", value: "Sin estuche" },
     ],
     precio: { costo: 18000, margen: 50, iva: 21, precioFinal: 32580 },
   },
@@ -320,39 +285,29 @@ export const INITIAL_ITEMS: Item[] = [
 
     // Matrix: Varietal × Año
     containerAtributosPrincipales: [
-      { key: "Varietal", variantes: ["Blend", "Malbec", "Blanco Dulce", "Blend", "Chardonnay"] },
-      { key: "Año", variantes: ["2023"] },
+      { key: "Varietal", variantes: ["Blend", "Malbec", "Blanco Dulce", "Chardonnay"] },
     ],
 
     atributosInformativos: [
       { key: "Tipo de Vino", value: "" }, // per variant
-      { key: "Línea", value: "Estelar" },
       { key: "Perfil Sensorial", value: "" }, // per variant
-      { key: "Bodega", value: "Bodega Domiciano" },
       { key: "Origen", value: "Maipú, Mendoza, Argentina" },
       { key: "Crianza", value: "" }, // per variant / no especificado
-      { key: "Tipo de Barrica", value: "" }, // per variant / no especificado
-      { key: "Potencial de Guarda", value: "" }, // per variant
-      { key: "Enólogo", value: "Equipo Enológico Domiciano" },
-      { key: "ABV", value: "" }, // per variant / no especificado
-      { key: "Temperatura de Servicio", value: "Tinto 15–17°C / Blanco 8–10°C" },
       { key: "Maridaje", value: "" }, // per variant
-      { key: "Estuche", value: "Sin estuche" },
     ],
 
-    variantCount: 5,
+    variantCount: 4,
     variants: [
       // Blend (Malbec - Syrah)
       {
         name: "Domiciano Estelar",
-        sku: "VNO-DOMESTE-BLND-2023",
+        sku: "VNO-DOMESTE-BLND",
         codigoUniversal: "7799002000042",
-        codigoProveedor: "DOM-EST-BLND-MS-2023",
+        codigoProveedor: "DOM-EST-BLND-MS",
         categoria: "Vinos",
         marca: "Domiciano",
         atributosPrincipales: [
           { key: "Varietal", value: "Blend" },
-          { key: "Año", value: "2023" },
         ],
         atributosInformativos: [
           { key: "Características del Blend", value: "Malbec - Syrah" },
@@ -367,14 +322,13 @@ export const INITIAL_ITEMS: Item[] = [
       // Malbec
       {
         name: "Domiciano Estelar",
-        sku: "VNO-DOMESTE-MALB-2023",
+        sku: "VNO-DOMESTE-MALB",
         codigoUniversal: "7799002000059",
-        codigoProveedor: "DOM-EST-MALB-2023",
+        codigoProveedor: "DOM-EST-MALB",
         categoria: "Vinos",
         marca: "Domiciano",
         atributosPrincipales: [
           { key: "Varietal", value: "Malbec" },
-          { key: "Año", value: "2023" },
         ],
         atributosInformativos: [
           { key: "Tipo de Vino", value: "Tinto" },
@@ -388,14 +342,13 @@ export const INITIAL_ITEMS: Item[] = [
       // Blanco Dulce
       {
         name: "Domiciano Estelar",
-        sku: "VNO-DOMESTE-BLDL-2023",
+        sku: "VNO-DOMESTE-BLDL",
         codigoUniversal: "7799002000066",
-        codigoProveedor: "DOM-EST-BLDL-2023",
+        codigoProveedor: "DOM-EST-BLDL",
         categoria: "Vinos",
         marca: "Domiciano",
         atributosPrincipales: [
           { key: "Varietal", value: "Blanco Dulce" },
-          { key: "Año", value: "2023" },
         ],
         atributosInformativos: [
           { key: "Tipo de Vino", value: "Blanco" },
@@ -406,39 +359,16 @@ export const INITIAL_ITEMS: Item[] = [
         precio: { costo: 15000, margen: 50, iva: 21, precioFinal: 27150 },
       },
 
-      // Blend (Malbec - Cabernet Franc)
-      {
-        name: "Domiciano Estelar",
-        sku: "VNO-DOMESTE-BLND-2023-B",
-        codigoUniversal: "7799002000073",
-        codigoProveedor: "DOM-EST-BLND-MC-2023",
-        categoria: "Vinos",
-        marca: "Domiciano",
-        atributosPrincipales: [
-          { key: "Varietal", value: "Blend" },
-          { key: "Año", value: "2023" },
-        ],
-        atributosInformativos: [
-          { key: "Características del Blend", value: "Malbec - Cabernet Franc" },
-          { key: "Tipo de Vino", value: "Tinto" },
-          { key: "Perfil Sensorial", value: "Fruta roja, pimiento y violetas; final herbal fresco" },
-          { key: "Maridaje", value: "A elección (estilo relaxed)" },
-        ],
-        stock: { total: "18", reservado: "2", disponible: "16" },
-        precio: { costo: 15000, margen: 50, iva: 21, precioFinal: 27150 },
-      },
-
       // Chardonnay
       {
         name: "Domiciano Estelar",
-        sku: "VNO-DOMESTE-CHRD-2023",
+        sku: "VNO-DOMESTE-CHRD",
         codigoUniversal: "7799002000080",
-        codigoProveedor: "DOM-EST-CHRD-2023",
+        codigoProveedor: "DOM-EST-CHRD",
         categoria: "Vinos",
         marca: "Domiciano",
         atributosPrincipales: [
           { key: "Varietal", value: "Chardonnay" },
-          { key: "Año", value: "2023" },
         ],
         atributosInformativos: [
           { key: "Tipo de Vino", value: "Blanco" },
