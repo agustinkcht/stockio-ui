@@ -322,23 +322,23 @@ export function ItemCard({
                   </div>
                 </div>
 
+                {/* Marca cell */}
+                <div
+                  className="col-span-7 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+                  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+                >
+                  <span className="text-sm text-foreground truncate">{item.marca || "-"}</span>
+                </div>
+
                 {/* Categoría cell */}
                 <div
                   className="col-span-7 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
                   onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
                 >
-                  <span className="text-sm text-foreground">{item.categoria || "-"}</span>
+                  <span className="text-sm text-foreground truncate">{item.categoria || "-"}</span>
                 </div>
 
-                {/* Precio Final cell - empty for parent */}
-                <div
-                  className="col-span-7 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
-                  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
-                >
-                  <span className="w-4 h-px bg-slate-200 rounded-full block" />
-                </div>
-
-                {/* Stock cell - empty with chevron at right edge */}
+                {/* Remaining cols (14) — chevron at far right */}
                 <div
                   className="col-span-14 h-full flex items-center justify-end px-4 cursor-pointer"
                   onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
@@ -546,8 +546,8 @@ export function ItemCard({
                 }}
               >
                 {/* Container icon instead of thumbnail */}
-                <div className="flex-shrink-0 rounded-md flex items-center justify-center size-12 bg-transparent">
-                  <Layers className="size-4 text-blue-900" />
+                <div className="w-8 h-8 flex-shrink-0 rounded-md bg-slate-100 flex items-center justify-center">
+                  <Layers className="w-4 h-4 text-slate-400" />
                 </div>
 
                 {/* Product Info */}
@@ -577,23 +577,23 @@ export function ItemCard({
                 </div>
               </div>
 
+              {/* Marca cell */}
+              <div
+                className="col-span-7 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+                onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+              >
+                <span className="text-sm text-foreground truncate">{item.marca || "-"}</span>
+              </div>
+
               {/* Categoría cell */}
               <div
                 className="col-span-7 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
                 onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
               >
-                <span className="text-sm text-foreground">{item.categoria || "-"}</span>
+                <span className="text-sm text-foreground truncate">{item.categoria || "-"}</span>
               </div>
 
-              {/* Precio Final cell - empty for parent */}
-              <div
-                className="col-span-7 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
-                onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
-              >
-                <span className="w-4 h-px bg-slate-200 rounded-full block" />
-              </div>
-
-              {/* Stock cell - empty with chevron at right edge */}
+              {/* Remaining cols (14) — chevron at far right */}
               <div
                 className="col-span-14 h-full flex items-center justify-end px-4 cursor-pointer"
                 onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
@@ -676,31 +676,34 @@ export function ItemCard({
 
               {showPrecioColumn ? (
                 <>
-                  {/* Categoría cell */}
+                  {/* Marca cell */}
                   <div
-                    className="col-span-7 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100"
+                    className="col-span-7 h-full flex items-center justify-center px-4 cursor-pointer transition-colors border-r border-slate-100"
                     onClick={(e) => { e.stopPropagation(); onItemClick(item) }}
                   >
-                    <div className="w-full flex flex-col items-center gap-0.5">
-                      <span className="text-sm text-foreground truncate w-full text-center">{item.categoria || "-"}</span>
-                    </div>
+                    <span className="text-sm text-foreground truncate w-full text-center">{item.marca || "-"}</span>
+                  </div>
+                  {/* Categoría cell */}
+                  <div
+                    className="col-span-7 h-full flex items-center justify-center px-4 cursor-pointer transition-colors border-r border-slate-100"
+                    onClick={(e) => { e.stopPropagation(); onItemClick(item) }}
+                  >
+                    <span className="text-sm text-foreground truncate w-full text-center">{item.categoria || "-"}</span>
                   </div>
                   {/* Precio Final cell */}
                   <div
-                    className="col-span-7 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100"
+                    className="col-span-7 h-full flex items-center justify-center px-4 cursor-pointer transition-colors border-r border-slate-100"
                     onClick={(e) => { e.stopPropagation(); onItemClick(item) }}
                   >
-                    <div className="w-full flex flex-col items-center gap-0.5">
-                      <span className="text-sm text-foreground font-medium w-full text-center">
-                        ${(item.precio?.precioFinal || 0).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
-                      </span>
-                    </div>
+                    <span className="text-sm text-foreground font-medium w-full text-center">
+                      ${(item.precio?.precioFinal || 0).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                    </span>
                   </div>
                 </>
               ) : (
-                // Show Atributos column: original behavior
+                // Atributos fallback
                 <div
-                  className="col-span-14 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100"
+                  className="col-span-21 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100"
                   onClick={(e) => { e.stopPropagation(); onItemClick(item) }}
                 >
                   {item.atributosPrincipales && item.atributosPrincipales.length > 0 ? (
@@ -734,53 +737,19 @@ export function ItemCard({
               )}
 
               {item.hasVariants ? (
-                <div className="col-span-14 h-full flex items-center justify-center px-4">
-                  <span className="text-sm text-container-item-foreground/80">{variantCount} variantes</span>
+                <div className="col-span-7 h-full flex items-center justify-center px-4">
+                  <span className="text-sm text-container-item-foreground/80">{variantCount} var.</span>
                 </div>
               ) : item.isAgrupador ? (
-                <div className="col-span-14 h-full flex items-center justify-center px-4">
+                <div className="col-span-7 h-full flex items-center justify-center px-4">
                   <span className="text-sm text-container-item-foreground/80">{itemCount} items</span>
                 </div>
               ) : (
                 <div
-                  className="col-span-14 h-full flex items-center px-4 cursor-pointer transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    console.log("[v0] ItemCard clicked - isChild:", isChild, "item:", item)
-                    onItemClick(item)
-                  }}
+                  className="col-span-7 h-full flex items-center justify-center px-4 cursor-pointer transition-colors"
+                  onClick={(e) => { e.stopPropagation(); onItemClick(item) }}
                 >
-                  {gridSize === "sm" ? (
-                    <div className="grid grid-cols-3 gap-x-3 w-full">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm text-muted-foreground shrink-0">T:</span>
-                        <span className="text-sm text-foreground">{item.stock?.total || 0}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm text-muted-foreground shrink-0">R:</span>
-                        <span className="text-sm text-foreground">{item.stock?.reservado || 0}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm text-muted-foreground shrink-0">D:</span>
-                        <span className="text-sm text-foreground">{item.stock?.disponible || 0}</span>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex flex-col items-center gap-0.5 flex-1">
-                        <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Total</span>
-                        <span className="text-sm text-foreground">{item.stock?.total || 0}</span>
-                      </div>
-                      <div className="flex flex-col items-center gap-0.5 flex-1">
-                        <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Reservado</span>
-                        <span className="text-sm text-foreground">{item.stock?.reservado || 0}</span>
-                      </div>
-                      <div className="flex flex-col items-center gap-0.5 flex-1">
-                        <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Disponible</span>
-                        <span className="text-sm text-foreground">{item.stock?.disponible || 0}</span>
-                      </div>
-                    </>
-                  )}
+                  <span className="text-sm text-foreground">{item.stock?.disponible ?? 0}</span>
                 </div>
               )}
             </>
