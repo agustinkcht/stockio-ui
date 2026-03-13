@@ -9,7 +9,7 @@ const { readFileSync, writeFileSync } = require("fs")
 const { randomBytes } = require("crypto")
 const { resolve } = require("path")
 
-const filePath = resolve(__dirname, "../lib/data/initial-items.ts")
+const filePath = resolve("/", "lib/data/initial-items.ts")
 
 // --- ID generation ---
 const usedIds = new Set()
