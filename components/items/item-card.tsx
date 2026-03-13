@@ -546,8 +546,8 @@ export function ItemCard({
                 }}
               >
                 {/* Container icon instead of thumbnail */}
-                <div className="w-8 h-8 flex-shrink-0 rounded-md bg-slate-100 flex items-center justify-center">
-                  <Layers className="w-4 h-4 text-slate-400" />
+                <div className="flex-shrink-0 rounded-md flex items-center justify-center size-12 bg-transparent">
+                  <Layers className="text-slate-400 size-4" />
                 </div>
 
                 {/* Product Info */}
