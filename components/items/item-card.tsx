@@ -587,7 +587,7 @@ export function ItemCard({
 
               {/* Estado cell */}
               <div
-                className="col-span-7 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+                className="col-span-7 h-full flex items-center justify-center px-4 border-slate-100 cursor-pointer border-r-0"
                 onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
               >
                 <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 border-none">
