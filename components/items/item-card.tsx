@@ -285,8 +285,8 @@ export function ItemCard({
                       : "bg-white"
                 } border border-border transition-colors ${item.isAgrupador || item.hasVariants ? "cursor-pointer" : ""} overflow-hidden`
               : item.isAgrupador || item.hasVariants
-                ? `grid-cols-22 ${isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors cursor-pointer overflow-hidden`
-                : `grid-cols-22 ${isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors overflow-hidden`
+                ? `grid-cols-44 ${isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors cursor-pointer overflow-hidden`
+                : `grid-cols-44 ${isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors overflow-hidden`
           }`}
           onClick={(e) => {
             if (item.hasVariants || item.isAgrupador) {
@@ -612,7 +612,7 @@ export function ItemCard({
             // NORMAL MODE: Standalone/child items
             <>
               <div
-                className={`col-span-8 flex items-center gap-3 h-full border-r border-slate-100 ${
+                className={`col-span-16 flex items-center gap-3 h-full border-r border-slate-100 ${
                   item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
                 } ${isChild ? "pl-6 pr-4" : "px-4"} cursor-pointer transition-colors`}
                 onClick={(e) => {
@@ -676,104 +676,76 @@ export function ItemCard({
                 </div>
               </div>
 
-              <div
-                className={`col-span-7 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100`}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onItemClick(item)
-                }}
-              >
-                {showPrecioColumn ? (
-                  // Show Precio column: Costo (left) and Precio Final (right)
-                  <div className="w-full flex items-center justify-between gap-4">
-                    <div className="flex-1 flex flex-col items-center gap-0.5">
-                      <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Costo</span>
-                      <span className="text-sm text-foreground">
-                        ${(item.precio?.costo || 0).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
-                      </span>
+              {showPrecioColumn ? (
+                <>
+                  {/* Categoría cell */}
+                  <div
+                    className="col-span-7 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100"
+                    onClick={(e) => { e.stopPropagation(); onItemClick(item) }}
+                  >
+                    <div className="w-full flex flex-col items-center gap-0.5">
+                      <span className="text-sm text-foreground truncate w-full text-center">{item.categoria || "-"}</span>
                     </div>
-                    <div className="flex-1 flex flex-col items-center gap-0.5">
-                      <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Precio Final</span>
-                      <span className="text-sm text-foreground font-medium">
+                  </div>
+                  {/* Precio Final cell */}
+                  <div
+                    className="col-span-7 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100"
+                    onClick={(e) => { e.stopPropagation(); onItemClick(item) }}
+                  >
+                    <div className="w-full flex flex-col items-center gap-0.5">
+                      <span className="text-sm text-foreground font-medium w-full text-center">
                         ${(item.precio?.precioFinal || 0).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
                       </span>
                     </div>
                   </div>
-                ) : (
-                  // Show Atributos column: original behavior
-                  <>
-                    {item.atributosPrincipales && item.atributosPrincipales.length > 0 ? (
-                      <>
-                        {gridSize === "sm" ? (
-                          <div
-                            className={
-                              item.atributosPrincipales.length === 1 ? "w-full" : "grid grid-cols-2 gap-x-4 w-full"
-                            }
-                          >
-                            {item.atributosPrincipales.slice(0, 2).map((attr, idx) => (
-                              <div
-                                key={idx}
-                                className={
-                                  item.atributosPrincipales.length === 1
-                                    ? "flex items-center justify-center gap-1.5"
-                                    : "flex items-center gap-1.5 min-w-0"
-                                }
-                              >
-                                <span className="text-sm text-muted-foreground shrink-0">{attr.key}:</span>
-                                <span className="text-sm text-foreground truncate" title={attr.value || "-"}>
-                                  {attr.value || "-"}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div
-                            className={item.atributosPrincipales.length === 1 ? "flex items-center justify-center" : "flex"}
-                            style={{ width: "100%" }}
-                          >
-                            {item.atributosPrincipales.map((attr, idx) => (
-                              <div
-                                key={idx}
-                                className={
-                                  item.atributosPrincipales.length === 1
-                                    ? "flex flex-col items-center gap-0.5"
-                                    : "flex flex-col items-center gap-0.5 flex-1 min-w-0"
-                                }
-                              >
-                                <span className="text-[10px] text-muted-foreground uppercase tracking-wide truncate w-full text-center">
-                                  {attr.key}
-                                </span>
-                                <span
-                                  className="text-sm text-foreground truncate w-full text-center"
-                                  title={attr.value || "-"}
-                                >
-                                  {attr.value || "-"}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <div className="flex items-center justify-center w-full">
-                        <span className="w-8 h-px bg-slate-200 rounded-full"></span>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
+                </>
+              ) : (
+                // Show Atributos column: original behavior
+                <div
+                  className="col-span-14 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100"
+                  onClick={(e) => { e.stopPropagation(); onItemClick(item) }}
+                >
+                  {item.atributosPrincipales && item.atributosPrincipales.length > 0 ? (
+                    <>
+                      {gridSize === "sm" ? (
+                        <div className={item.atributosPrincipales.length === 1 ? "w-full" : "grid grid-cols-2 gap-x-4 w-full"}>
+                          {item.atributosPrincipales.slice(0, 2).map((attr, idx) => (
+                            <div key={idx} className={item.atributosPrincipales.length === 1 ? "flex items-center justify-center gap-1.5" : "flex items-center gap-1.5 min-w-0"}>
+                              <span className="text-sm text-muted-foreground shrink-0">{attr.key}:</span>
+                              <span className="text-sm text-foreground truncate" title={attr.value || "-"}>{attr.value || "-"}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className={item.atributosPrincipales.length === 1 ? "flex items-center justify-center" : "flex"} style={{ width: "100%" }}>
+                          {item.atributosPrincipales.map((attr, idx) => (
+                            <div key={idx} className={item.atributosPrincipales.length === 1 ? "flex flex-col items-center gap-0.5" : "flex flex-col items-center gap-0.5 flex-1 min-w-0"}>
+                              <span className="text-[10px] text-muted-foreground uppercase tracking-wide truncate w-full text-center">{attr.key}</span>
+                              <span className="text-sm text-foreground truncate w-full text-center" title={attr.value || "-"}>{attr.value || "-"}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="flex items-center justify-center w-full">
+                      <span className="w-8 h-px bg-slate-200 rounded-full"></span>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {item.hasVariants ? (
-                <div className="col-span-7 h-full flex items-center justify-center px-4">
+                <div className="col-span-14 h-full flex items-center justify-center px-4">
                   <span className="text-sm text-container-item-foreground/80">{variantCount} variantes</span>
                 </div>
               ) : item.isAgrupador ? (
-                <div className="col-span-7 h-full flex items-center justify-center px-4">
+                <div className="col-span-14 h-full flex items-center justify-center px-4">
                   <span className="text-sm text-container-item-foreground/80">{itemCount} items</span>
                 </div>
               ) : (
                 <div
-                  className="col-span-7 h-full flex items-center px-4 cursor-pointer transition-colors"
+                  className="col-span-14 h-full flex items-center px-4 cursor-pointer transition-colors"
                   onClick={(e) => {
                     e.stopPropagation()
                     console.log("[v0] ItemCard clicked - isChild:", isChild, "item:", item)
@@ -871,6 +843,7 @@ export function ItemCard({
                 isAuditMode={isAuditMode}
                 onStockChange={onStockChange}
                 auditStockValues={auditStockValues}
+                showPrecioColumn={showPrecioColumn}
               />
             )
           })}
@@ -902,6 +875,7 @@ export function ItemCard({
                 isAuditMode={isAuditMode}
                 onStockChange={onStockChange}
                 auditStockValues={auditStockValues}
+                showPrecioColumn={showPrecioColumn}
               />
             )
           })}

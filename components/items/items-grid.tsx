@@ -585,23 +585,25 @@ export function ItemsGrid({
                   </div>
                 </div>
               ) : (
-                <div className="flex-1 grid grid-cols-22 h-9 bg-slate-200 border border-gray-300 rounded-xs border-none">
-                  <div className="col-span-8 flex items-center px-4 py-2 justify-center border-solid pl-4 pr-4 mr-0 border border-l-0 border-[rgba(202,213,227,0.61)]">
+                <div className="flex-1 grid grid-cols-44 h-9 bg-slate-200 border border-gray-300 rounded-xs border-none">
+                  <div className="col-span-16 flex items-center px-4 py-2 justify-center border-solid pl-4 pr-4 mr-0 border border-l-0 border-[rgba(202,213,227,0.61)]">
                     <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Item</span>
                   </div>
                   {showPrecioColumn ? (
-                    <div className="col-span-7 flex items-center justify-center py-2 border-solid border-r px-4 mx-0 ml-0 mr-px border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
-                      <div className="flex items-center gap-4 w-full">
-                        <span className="text-xs font-medium text-gray-600 uppercase tracking-wider flex-1 text-center">Costo</span>
-                        <span className="text-xs font-medium text-gray-600 uppercase tracking-wider flex-1 text-center">Precio Final</span>
+                    <>
+                      <div className="col-span-7 flex items-center justify-center py-2 border-solid border-r px-4 mx-0 border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
+                        <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Categoría</span>
                       </div>
-                    </div>
+                      <div className="col-span-7 flex items-center justify-center py-2 border-solid border-r px-4 mx-0 border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
+                        <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Precio Final</span>
+                      </div>
+                    </>
                   ) : (
-                    <div className="col-span-7 flex items-center justify-center py-2 border-solid border-r px-4 mx-0 ml-0 mr-px border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
+                    <div className="col-span-14 flex items-center justify-center py-2 border-solid border-r px-4 mx-0 border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
                       <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Atributos</span>
                     </div>
                   )}
-                  <div className="col-span-7 flex items-center justify-center py-2 mx-0 ml-0 px-0 mr-0 border-b border-t border-l-0 border-r-0 border-[rgba(202,213,227,0.61)]">
+                  <div className="col-span-14 flex items-center justify-center py-2 mx-0 px-0 border-b border-t border-l-0 border-r-0 border-[rgba(202,213,227,0.61)]">
                     <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Stock</span>
                   </div>
                 </div>
