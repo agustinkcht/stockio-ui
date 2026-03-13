@@ -597,10 +597,9 @@ export function ItemCard({
 
               {/* Precio Final - blank for parent */}
               <div
-                className="col-span-7 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+                className="col-span-7 h-full flex items-center justify-center px-4 cursor-pointer border-r-0 border-none"
                 onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
               >
-                <span className="w-4 h-px bg-slate-200 rounded-full block" />
               </div>
 
               {/* Stock Disponible - blank for parent, chevron at right edge */}
