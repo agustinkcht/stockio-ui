@@ -595,13 +595,13 @@ export function ItemsGrid({
                         <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Categoría</span>
                       </div>
                       <div className="col-span-7 flex items-center justify-center py-2 border-solid border-r px-4 mx-0 border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
-                        <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Precio Final</span>
+                        <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Estado</span>
                       </div>
                       <div className="col-span-7 flex items-center justify-center py-2 border-solid border-r px-4 mx-0 border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
-                        <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Stock Disponible</span>
+                        <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Precio Final</span>
                       </div>
                       <div className="col-span-7 flex items-center justify-center py-2 mx-0 px-0 border-b border-t border-l-0 border-r-0 border-[rgba(202,213,227,0.61)]">
-                        <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">PDV</span>
+                        <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Stock Disponible</span>
                       </div>
                     </>
                   ) : (
