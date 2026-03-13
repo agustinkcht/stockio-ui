@@ -17,24 +17,15 @@ export const INITIAL_ITEMS: Item[] = [
     // Matrix: Varietal × Año
     containerAtributosPrincipales: [
       { key: "Varietal", variantes: ["Malbec", "Cabernet Sauvignon", "Syrah Garnacha"] },
-      { key: "Año", variantes: ["2018", "2019"] },
+      { key: "Año", variantes: ["2012", "2019"] },
     ],
 
     // Parent-level info (shared across all variants)
     atributosInformativos: [
       { key: "Tipo de Vino", value: "Tinto" },
-      { key: "Línea", value: "Grand Reserve" },
       { key: "Perfil Sensorial", value: "" }, // filled per variant
-      { key: "Bodega", value: "Proemio Wines" },
       { key: "Origen", value: "Mendoza, Argentina" },
       { key: "Crianza", value: "" }, // filled per variant
-      { key: "Tipo de Barrica", value: "Roble francés" },
-      { key: "Potencial de Guarda", value: "" }, // filled per variant
-      { key: "Enólogo", value: "Marcelo Bocardo" },
-      { key: "ABV", value: "14%" },
-      { key: "Temperatura de Servicio", value: "16–19°C" },
-      { key: "Maridaje", value: "Carnes rojas y platos especiados" },
-      { key: "Estuche", value: "" },
     ],
 
     variantCount: 8,
@@ -42,19 +33,18 @@ export const INITIAL_ITEMS: Item[] = [
       // --- MALBEC ---
       {
         name: "Proemio Grand Reserve",
-        sku: "VNO-PROGRES-MALB-2018",
+        sku: "VNO-PROGRES-MALB-2012",
         codigoUniversal: "7798123400013",
-        codigoProveedor: "PROE-GR-MALB-2018",
+        codigoProveedor: "PROE-GR-MALB-2012",
         categoria: "Vinos",
         marca: "Proemio",
         atributosPrincipales: [
           { key: "Varietal", value: "Malbec" },
-          { key: "Año", value: "2018" },
+          { key: "Año", value: "2012" },
         ],
         atributosInformativos: [
           { key: "Perfil Sensorial", value: "Fruta roja madura, especias y notas de chocolate" },
           { key: "Crianza", value: "18 meses en barrica de roble francés" },
-          { key: "Potencial de Guarda", value: "10 años" },
         ],
         stock: { total: "60", reservado: "12", disponible: "48" },
         precio: { costo: 45000, margen: 50, iva: 21, precioFinal: 81675 },
@@ -73,7 +63,6 @@ export const INITIAL_ITEMS: Item[] = [
         atributosInformativos: [
           { key: "Perfil Sensorial", value: "Fruta roja fresca, cassis y vainilla suave" },
           { key: "Crianza", value: "18 meses en barrica de roble francés" },
-          { key: "Potencial de Guarda", value: "8 años" },
         ],
         stock: { total: "54", reservado: "10", disponible: "44" },
         precio: { costo: 42000, margen: 50, iva: 21, precioFinal: 76230 },
@@ -82,19 +71,18 @@ export const INITIAL_ITEMS: Item[] = [
       // --- CABERNET SAUVIGNON ---
       {
         name: "Proemio Grand Reserve",
-        sku: "VNO-PROGRES-CABS-2018",
+        sku: "VNO-PROGRES-CABS-2012",
         codigoUniversal: "7798123400037",
-        codigoProveedor: "PROE-GR-CABS-2018",
+        codigoProveedor: "PROE-GR-CABS-2012",
         categoria: "Vinos",
         marca: "Proemio",
         atributosPrincipales: [
           { key: "Varietal", value: "Cabernet Sauvignon" },
-          { key: "Año", value: "2018" },
+          { key: "Año", value: "2012" },
         ],
         atributosInformativos: [
           { key: "Perfil Sensorial", value: "Fruta negra, especias y notas ahumadas de barrica" },
           { key: "Crianza", value: "18 meses en barrica de roble francés" },
-          { key: "Potencial de Guarda", value: "10 años" },
         ],
         stock: { total: "48", reservado: "9", disponible: "39" },
         precio: { costo: 48000, margen: 50, iva: 21, precioFinal: 87120 },
@@ -113,28 +101,26 @@ export const INITIAL_ITEMS: Item[] = [
         atributosInformativos: [
           { key: "Perfil Sensorial", value: "Cassis, pimienta negra y cacao suave" },
           { key: "Crianza", value: "18 meses en barrica de roble francés" },
-          { key: "Potencial de Guarda", value: "8 años" },
         ],
         stock: { total: "42", reservado: "8", disponible: "34" },
         precio: { costo: 46000, margen: 50, iva: 21, precioFinal: 83490 },
       },
 
-      // --- SYRAH ---
+      // --- SYRAH GARNACHA ---
       {
         name: "Proemio Grand Reserve",
-        sku: "VNO-PROGRES-SYGA-2018",
+        sku: "VNO-PROGRES-SYGA-2012",
         codigoUniversal: "7798123400051",
-        codigoProveedor: "PROE-GR-SYGA-2018",
+        codigoProveedor: "PROE-GR-SYGA-2012",
         categoria: "Vinos",
         marca: "Proemio",
         atributosPrincipales: [
           { key: "Varietal", value: "Syrah Garnacha" },
-          { key: "Año", value: "2018" },
+          { key: "Año", value: "2012" },
         ],
         atributosInformativos: [
           { key: "Perfil Sensorial", value: "Fruta negra madura, pimienta y notas tostadas" },
           { key: "Crianza", value: "18 meses en barrica de roble francés" },
-          { key: "Potencial de Guarda", value: "9 años" },
         ],
         stock: { total: "36", reservado: "6", disponible: "30" },
         precio: { costo: 44000, margen: 50, iva: 21, precioFinal: 79860 },
@@ -153,48 +139,11 @@ export const INITIAL_ITEMS: Item[] = [
         atributosInformativos: [
           { key: "Perfil Sensorial", value: "Fruta negra, especias dulces y chocolate amargo" },
           { key: "Crianza", value: "18 meses en barrica de roble francés" },
-          { key: "Potencial de Guarda", value: "8 años" },
         ],
         stock: { total: "32", reservado: "5", disponible: "27" },
         precio: { costo: 43000, margen: 50, iva: 21, precioFinal: 78045 },
       },
     ],
-  },
-  {
-    name: "Puna Gran Reserva",
-    categoria: "Vinos",
-    hasVariants: false,
-    isAgrupador: false,
-    sku: "VNO-PUNAGR-MALB-2020",
-    codigoUniversal: "7799001000035",
-    marca: "Puna",
-    proveedor: "Bodega Puna",
-    codigoProveedor: "PUNA-GR-MALB-20",
-    formatoVenta: "unidad",
-    volumenActive: true,
-    volumenCantidad: 750,
-    volumenUnidad: "ml",
-    stock: { total: "24", reservado: "3", disponible: "21" },
-    atributosPrincipales: [
-      { key: "Varietal", value: "Malbec" },
-      { key: "Año", value: "2020" },
-    ],
-    atributosInformativos: [
-      { key: "Tipo de Vino", value: "Tinto" },
-      { key: "Línea", value: "Gran Reserva" },
-      { key: "Perfil Sensorial", value: "Fruta negra concentrada, especias y notas de roble" },
-      { key: "Bodega", value: "Bodega Puna" },
-      { key: "Origen", value: "Valles Calchaquíes, Salta" },
-      { key: "Crianza", value: "18 meses en barrica" },
-      { key: "Tipo de Barrica", value: "Roble francés" },
-      { key: "Potencial de Guarda", value: "10 años" },
-      { key: "Enólogo", value: "Equipo Enológico Puna" },
-      { key: "ABV", value: "15%" },
-      { key: "Temperatura de Servicio", value: "16–18°C" },
-      { key: "Maridaje", value: "Carnes rojas y platos intensos" },
-      { key: "Estuche", value: "Caja" },
-    ],
-    precio: { costo: 35000, margen: 50, iva: 21, precioFinal: 63525 },
   },
   {
     name: "DV Catena",
@@ -416,15 +365,15 @@ export const INITIAL_ITEMS: Item[] = [
     precio: { costo: 18000, margen: 50, iva: 21, precioFinal: 32580 },
   },
   {
-    name: "Domiciano Corte Estrella",
+    name: "Domiciano Gran Reserva",
     categoria: "Vinos",
     hasVariants: false,
     isAgrupador: false,
-    sku: "VNO-DOMCES-BLND-2022",
+    sku: "VNO-DOMGRES-BLND-2022",
     codigoUniversal: "7798123401012",
     marca: "Domiciano",
     proveedor: "Bodega Domiciano",
-    codigoProveedor: "DOM-CE-BLND-2022",
+    codigoProveedor: "DOM-GRES-BLND-2022",
     formatoVenta: "unidad",
     volumenActive: true,
     volumenCantidad: 750,
@@ -454,83 +403,6 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Estuche", value: "Sin estuche" },
     ],
     precio: { costo: 18000, margen: 50, iva: 21, precioFinal: 32580 },
-  },
-
-  {
-    name: "Domiciano Gran Reserva",
-    categoria: "Vinos",
-    hasVariants: true,
-    isAgrupador: true,
-    sku: "VNO-DOMGRES",
-    marca: "Domiciano",
-    proveedor: "Bodega Domiciano",
-    formatoVenta: "unidad",
-    volumenActive: true,
-    volumenCantidad: 750,
-    volumenUnidad: "ml",
-
-    containerAtributosPrincipales: [
-      { key: "Varietal", variantes: ["Malbec", "Cabernet Franc"] },
-      { key: "Año", variantes: ["2021"] },
-    ],
-
-    atributosInformativos: [
-      { key: "Tipo de Vino", value: "Tinto" },
-      { key: "Línea", value: "Gran Reserva" },
-      { key: "Perfil Sensorial", value: "" }, // per variant
-      { key: "Bodega", value: "Bodega Domiciano" },
-      { key: "Origen", value: "Barrancas, Maipú, Mendoza, Argentina" },
-      { key: "Crianza", value: "" }, // per variant
-      { key: "Tipo de Barrica", value: "Roble francés (100%, 1er y 2do uso)" },
-      { key: "Potencial de Guarda", value: "" }, // per variant
-      { key: "Enólogo", value: "Equipo Enológico Domiciano" },
-      { key: "ABV", value: "14%" },
-      { key: "Temperatura de Servicio", value: "16–18°C" },
-      { key: "Maridaje", value: "Carnes rojas, platos intensos, quesos estacionados" },
-      { key: "Estuche", value: "Sin estuche" },
-    ],
-
-    variantCount: 2,
-    variants: [
-      {
-        name: "Domiciano Gran Reserva",
-        sku: "VNO-DOMGRES-MALB-2021",
-        codigoUniversal: "7798123401029",
-        codigoProveedor: "DOM-GR-MALB-2021",
-        categoria: "Vinos",
-        marca: "Domiciano",
-        atributosPrincipales: [
-          { key: "Varietal", value: "Malbec" },
-          { key: "Año", value: "2021" },
-        ],
-        atributosInformativos: [
-          { key: "Perfil Sensorial", value: "Cerezas y ciruelas maduras, con café, cacao y tabaco" },
-          { key: "Crianza", value: "18 meses en roble francés (1er y 2do uso) + descanso en botella" },
-          { key: "Potencial de Guarda", value: "10 años" },
-        ],
-        stock: { total: "24", reservado: "3", disponible: "21" },
-        precio: { costo: 28000, margen: 50, iva: 21, precioFinal: 50820 },
-      },
-      {
-        name: "Domiciano Gran Reserva",
-        sku: "VNO-DOMGRES-CFRN-2021",
-        codigoUniversal: "7798123401036",
-        codigoProveedor: "DOM-GR-CFRN-2021",
-        categoria: "Vinos",
-        marca: "Domiciano",
-        atributosPrincipales: [
-          { key: "Varietal", value: "Cabernet Franc" },
-          { key: "Año", value: "2021" },
-        ],
-        atributosInformativos: [
-          { key: "Perfil Sensorial", value: "Fruta negra, hierbas finas y especias; final largo" },
-          { key: "Crianza", value: "18 meses en roble francés (1er y 2do uso) + descanso en botella" },
-          { key: "Potencial de Guarda", value: "10 años" },
-        ],
-        stock: { total: "20", reservado: "2", disponible: "18" },
-        precio: { costo: 29000, margen: 50, iva: 21, precioFinal: 52605 },
-      },
-    ],
   },
   {
     name: "Domiciano Estelar",
