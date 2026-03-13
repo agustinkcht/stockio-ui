@@ -1,22 +1,14 @@
 /**
- * add-ids-to-items.mjs
+ * add-ids-to-items.js
  *
  * Reads initial-items.ts, injects a unique 8-char base36 `id` field
  * as the first property of every item object (parent, child, variant).
- *
- * Strategy: use regex to find every object opening that belongs to an item
- * (i.e. has a `name:` field as one of the first properties) and insert
- * `id: "xxxxxxxx",` right after the opening brace.
- *
- * Run with: node scripts/add-ids-to-items.mjs
  */
 
-import { readFileSync, writeFileSync } from "fs"
-import { randomBytes } from "crypto"
-import { resolve, dirname } from "path"
-import { fileURLToPath } from "url"
+const { readFileSync, writeFileSync } = require("fs")
+const { randomBytes } = require("crypto")
+const { resolve } = require("path")
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
 const filePath = resolve(__dirname, "../lib/data/initial-items.ts")
 
 // --- ID generation ---
@@ -43,10 +35,8 @@ if (/id:\s*"[0-9a-z]{8}"/.test(src)) {
 }
 
 // --- Inject IDs ---
-// We look for object-open braces followed (within a short window) by `name:`.
-// This covers parent items, child items (items: [...]), and variants (variants: [...]).
-// We replace every `{\n` + optional whitespace + `name:` with `{\n  id: "...",\n  name:`.
-
+// Find every object-open brace followed (on the next line) by `name:`.
+// This covers top-level items, children, and variants.
 let count = 0
 
 src = src.replace(
@@ -54,7 +44,6 @@ src = src.replace(
   (match, brace, whitespace, nameKey) => {
     const id = generateId()
     count++
-    // Preserve the indentation of `name:` for the new `id:` line
     return `${brace}${whitespace}id: "${id}",\n${whitespace}${nameKey}`
   }
 )
