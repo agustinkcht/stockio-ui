@@ -261,6 +261,9 @@ export const INITIAL_ITEMS: Item[] = [
       reservado: "4",
       disponible: "32",
     },
+    atributosPrincipales: [
+      { key: "Varietal", value: "Blend" },
+    ],  
     atributosInformativos: [
       { key: "Varietal", value: "Blend" },
       { key: "Tipo de Vino", value: "Tinto" },
