@@ -316,8 +316,6 @@ export function ItemCard({
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
                       {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
-                      {item.marca && <span className="text-xs text-muted-foreground">·</span>}
-                      <span className="text-xs text-muted-foreground">{item.sku}</span>
                     </div>
                   </div>
                 </div>
@@ -393,8 +391,6 @@ export function ItemCard({
                     <div className="flex items-center gap-2 mt-0.5">
                       {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
                       {item.marca && <span className="text-xs text-muted-foreground">·</span>}
-                      {item.categoria && <span className="text-xs text-muted-foreground">{item.categoria}</span>}
-                      {item.categoria && <span className="text-xs text-muted-foreground">·</span>}
                       <span className="text-xs text-muted-foreground">{item.sku}</span>
                     </div>
                   </div>
@@ -562,17 +558,6 @@ export function ItemCard({
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
                     {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
-                    {item.marca && <span className="text-xs text-muted-foreground">·</span>}
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs text-muted-foreground">{item.sku}</span>
-                      <button
-                        onClick={handleCopySku}
-                        className="p-1 text-muted-foreground hover:text-foreground transition-colors"
-                        title="Copy SKU"
-                      >
-                        <Copy className="w-3 h-3" />
-                      </button>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -667,8 +652,6 @@ export function ItemCard({
                   <div className="flex items-center gap-2 mt-0.5">
                     {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
                     {item.marca && <span className="text-xs text-muted-foreground">·</span>}
-                    {item.categoria && <span className="text-xs text-muted-foreground">{item.categoria}</span>}
-                    {item.categoria && <span className="text-xs text-muted-foreground">·</span>}
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs text-muted-foreground">{item.sku}</span>
                       <button
