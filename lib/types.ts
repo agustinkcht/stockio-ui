@@ -9,7 +9,6 @@ export interface ContainerAtributo {
 }
 
 export interface ItemVariant {
-  id: string
   name: string
   stock: {
     total: string
@@ -33,7 +32,6 @@ export interface ItemVariant {
 }
 
 export interface Item {
-  id: string
   name: string
   stock?: {
     total: string

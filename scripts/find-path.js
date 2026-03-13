@@ -1,5 +1,0 @@
-const { execSync } = require("child_process")
-const out = execSync("find /home -name 'initial-items.ts' 2>/dev/null || find / -maxdepth 6 -name 'initial-items.ts' 2>/dev/null").toString()
-console.log("Found:", out)
-console.log("cwd:", process.cwd())
-console.log("__dirname:", __dirname)
