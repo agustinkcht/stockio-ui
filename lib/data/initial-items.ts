@@ -28,7 +28,7 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Crianza", value: "" }, // filled per variant
     ],
 
-    variantCount: 8,
+    variantCount: 6,
     variants: [
       // --- MALBEC ---
       {
@@ -159,128 +159,33 @@ export const INITIAL_ITEMS: Item[] = [
     volumenUnidad: "ml",
 
     containerAtributosPrincipales: [
-      { key: "Varietal", variantes: ["Malbec"] },
-      { key: "Año", variantes: ["2014", "2016", "2018", "2019", "2021", "2022", "2023"] },
+      { key: "Varietal", variantes: ["Malbec", "Cabernet Sauvignon", "Syrah"] },
     ],
 
     atributosInformativos: [
       { key: "Tipo de Vino", value: "Tinto" },
-      { key: "Línea", value: "DV Catena" },
       { key: "Perfil Sensorial", value: "" }, // filled per variant
-      { key: "Bodega", value: "Catena Zapata" },
       { key: "Origen", value: "Mendoza, Argentina" },
       { key: "Crianza", value: "" }, // per variant (e.g., oak aging)
-      { key: "Tipo de Barrica", value: "Roble francés" },
-      { key: "Potencial de Guarda", value: "" }, // per variant
-      { key: "Enólogo", value: "Equipo Enológico Catena" },
-      { key: "ABV", value: "14%" },
-      { key: "Temperatura de Servicio", value: "16–18°C" },
-      { key: "Maridaje", value: "Carnes rojas, guisos y quesos curados" },
-      { key: "Estuche", value: "Sin estuche" },
     ],
 
-    variantCount: 7,
+    variantCount: 3,
     variants: [
-      // --- 2014 ---
-      {
-        name: "DV Catena",
-        sku: "VNO-DVCAT-MALB-2014",
-        codigoUniversal: "7799002000146",
-        codigoProveedor: "DVCAT-MALB-14",
-        categoria: "Vinos",
-        marca: "Catena Zapata",
-        atributosPrincipales: [
-          { key: "Varietal", value: "Malbec" },
-          { key: "Año", value: "2014" },
-        ],
-        atributosInformativos: [
-          { key: "Perfil Sensorial", value: "Frutos negros maduros, toques de cuero y especias dulces" },
-          { key: "Crianza", value: "18 meses en barrica de roble francés" },
-          { key: "Potencial de Guarda", value: "10 años" },
-        ],
-        stock: { total: "18", reservado: "3", disponible: "15" },
-        precio: { costo: 65000, margen: 50, iva: 21, precioFinal: 117975 },
-      },
-
-      // --- 2016 ---
-      {
-        name: "DV Catena",
-        sku: "VNO-DVCAT-MALB-2016",
-        codigoUniversal: "7799002000160",
-        codigoProveedor: "DVCAT-MALB-16",
-        categoria: "Vinos",
-        marca: "Catena Zapata",
-        atributosPrincipales: [
-          { key: "Varietal", value: "Malbec" },
-          { key: "Año", value: "2016" },
-        ],
-        atributosInformativos: [
-          { key: "Perfil Sensorial", value: "Notorio equilibrio fruta-roble, taninos sedosos y notas de ciruela" },
-          { key: "Crianza", value: "18 meses en barrica" },
-          { key: "Potencial de Guarda", value: "8 años" },
-        ],
-        stock: { total: "22", reservado: "4", disponible: "18" },
-        precio: { costo: 62000, margen: 50, iva: 21, precioFinal: 112530 },
-      },
-
-      // --- 2018 ---
-      {
-        name: "DV Catena",
-        sku: "VNO-DVCAT-MALB-2018",
-        codigoUniversal: "7799002000184",
-        codigoProveedor: "DVCAT-MALB-18",
-        categoria: "Vinos",
-        marca: "Catena Zapata",
-        atributosPrincipales: [
-          { key: "Varietal", value: "Malbec" },
-          { key: "Año", value: "2018" },
-        ],
-        atributosInformativos: [
-          { key: "Perfil Sensorial", value: "Fruta negra intensa y chocolate con final especiado" },
-          { key: "Crianza", value: "18 meses en roble francés" },
-          { key: "Potencial de Guarda", value: "9 años" },
-        ],
-        stock: { total: "30", reservado: "6", disponible: "24" },
-        precio: { costo: 58000, margen: 50, iva: 21, precioFinal: 105190 },
-      },
-
-      // --- 2019 ---
-      {
-        name: "DV Catena",
-        sku: "VNO-DVCAT-MALB-2019",
-        codigoUniversal: "7799002000191",
-        codigoProveedor: "DVCAT-MALB-19",
-        categoria: "Vinos",
-        marca: "Catena Zapata",
-        atributosPrincipales: [
-          { key: "Varietal", value: "Malbec" },
-          { key: "Año", value: "2019" },
-        ],
-        atributosInformativos: [
-          { key: "Perfil Sensorial", value: "Frutos negros y rojos, pimienta y chocolate, taninos firmes" },
-          { key: "Crianza", value: "18 meses en barrica de roble francés" },
-          { key: "Potencial de Guarda", value: "8 años" },
-        ],
-        stock: { total: "42", reservado: "7", disponible: "35" },
-        precio: { costo: 56000, margen: 50, iva: 21, precioFinal: 101640 },
-      },
 
       // --- 2021 ---
       {
         name: "DV Catena",
-        sku: "VNO-DVCAT-MALB-2021",
+        sku: "VNO-DVCAT-MALB",
         codigoUniversal: "7799002000214",
-        codigoProveedor: "DVCAT-MALB-21",
+        codigoProveedor: "DVCAT-MALB",
         categoria: "Vinos",
         marca: "Catena Zapata",
         atributosPrincipales: [
           { key: "Varietal", value: "Malbec" },
-          { key: "Año", value: "2021" },
         ],
         atributosInformativos: [
           { key: "Perfil Sensorial", value: "Intenso rojo oscuro con notas florales y especiadas" },
           { key: "Crianza", value: "18 meses en barrica" },
-          { key: "Potencial de Guarda", value: "8 años" },
         ],
         stock: { total: "38", reservado: "6", disponible: "32" },
         precio: { costo: 54000, margen: 50, iva: 21, precioFinal: 97860 },
@@ -289,19 +194,17 @@ export const INITIAL_ITEMS: Item[] = [
       // --- 2022 ---
       {
         name: "DV Catena",
-        sku: "VNO-DVCAT-MALB-2022",
+        sku: "VNO-DVCAT-CABS",
         codigoUniversal: "7799002000221",
-        codigoProveedor: "DVCAT-MALB-22",
+        codigoProveedor: "DVCAT-CABS",
         categoria: "Vinos",
         marca: "Catena Zapata",
         atributosPrincipales: [
-          { key: "Varietal", value: "Malbec" },
-          { key: "Año", value: "2022" },
+          { key: "Varietal", value: "Cabernet Sauvignon" },
         ],
         atributosInformativos: [
           { key: "Perfil Sensorial", value: "Fruta madura, taninos suaves y notas de vainilla" },
           { key: "Crianza", value: "18 meses en barrica" },
-          { key: "Potencial de Guarda", value: "8 años" },
         ],
         stock: { total: "46", reservado: "9", disponible: "37" },
         precio: { costo: 53000, margen: 50, iva: 21, precioFinal: 96090 },
@@ -310,19 +213,17 @@ export const INITIAL_ITEMS: Item[] = [
       // --- 2023 ---
       {
         name: "DV Catena",
-        sku: "VNO-DVCAT-MALB-2023",
+        sku: "VNO-DVCAT-SYRA-2023",
         codigoUniversal: "7799002000238",
-        codigoProveedor: "DVCAT-MALB-23",
+        codigoProveedor: "DVCAT-SYRA",
         categoria: "Vinos",
         marca: "Catena Zapata",
         atributosPrincipales: [
-          { key: "Varietal", value: "Malbec" },
-          { key: "Año", value: "2023" },
+          { key: "Varietal", value: "Syrah" },
         ],
         atributosInformativos: [
           { key: "Perfil Sensorial", value: "Frutos rojos brillantes, especias dulces y taninos equilibrados" },
           { key: "Crianza", value: "18 meses en barrica" },
-          { key: "Potencial de Guarda", value: "8 años" },
         ],
         stock: { total: "50", reservado: "10", disponible: "40" },
         precio: { costo: 52000, margen: 50, iva: 21, precioFinal: 94380 },
