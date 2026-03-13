@@ -1068,7 +1068,7 @@ export const INITIAL_ITEMS: Item[] = [
     categoria: "Licores",
     hasVariants: false,
     isAgrupador: false,
-    sku: "LICR-JGRM700-ORIG",
+    sku: "LICR-JGRM700",
     codigoUniversal: "4067700013019",
     marca: "Jägermeister",
     proveedor: "Mast-Jägermeister SE",
@@ -1082,7 +1082,6 @@ export const INITIAL_ITEMS: Item[] = [
       reservado: "6",
       disponible: "42",
     },
-    atributosPrincipales: [{ key: "Sabor", value: "Original" }],
     atributosInformativos: [
       { key: "Tipo de Licor", value: "Licor herbal amargo" },
       { key: "Origen", value: "Alemania" },
@@ -1096,11 +1095,11 @@ export const INITIAL_ITEMS: Item[] = [
     categoria: "Licores",
     hasVariants: false,
     isAgrupador: false,
-    sku: "LICR-SHER700-CACR",
+    sku: "LICR-SHEROR",
     codigoUniversal: "5060049029993",
     marca: "Sheridan's",
     proveedor: "Diageo",
-    codigoProveedor: "DIA-SHER-700",
+    codigoProveedor: "DIA-SHEROR",
     formatoVenta: "unidad",
     volumenActive: true,
     volumenCantidad: 700,
@@ -1110,7 +1109,6 @@ export const INITIAL_ITEMS: Item[] = [
       reservado: "5",
       disponible: "31",
     },
-    atributosPrincipales: [{ key: "Sabor", value: "Café y crema" }],
     atributosInformativos: [
       { key: "Tipo de Licor", value: "Licor de crema y café" },
       { key: "Origen", value: "Irlanda" },
@@ -1126,7 +1124,7 @@ export const INITIAL_ITEMS: Item[] = [
     categoria: "Licores",
     hasVariants: false,
     isAgrupador: false,
-    sku: "LICR-FIRB750-CANE",
+    sku: "LICR-FIRB750",
     codigoUniversal: "088004009303",
     marca: "Fireball",
     proveedor: "Sazerac Company",
@@ -1138,7 +1136,6 @@ export const INITIAL_ITEMS: Item[] = [
 
     stock: { total: "24", reservado: "3", disponible: "21" },
 
-    atributosPrincipales: [{ key: "Sabor", value: "Canela" }],
     atributosInformativos: [
       { key: "Tipo de Licor", value: "Licor de whisky y canela" },
       { key: "Origen", value: "Canadá" },
@@ -1154,7 +1151,7 @@ export const INITIAL_ITEMS: Item[] = [
     categoria: "Licores",
     hasVariants: false,
     isAgrupador: false,
-    sku: "LICR-COIN700-ORIG",
+    sku: "LICR-COIN700",
     codigoUniversal: "07035542004202",
     marca: "Cointreau",
     proveedor: "Rémy Cointreau",
@@ -1163,10 +1160,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 700,
     volumenUnidad: "ml",
-
     stock: { total: "18", reservado: "2", disponible: "16" },
-
-    atributosPrincipales: [{ key: "Sabor", value: "Original" }],
     atributosInformativos: [
       { key: "Tipo de Licor", value: "Triple sec (licor de naranja)" },
       { key: "Origen", value: "Francia" },
