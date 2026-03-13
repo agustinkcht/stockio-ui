@@ -213,11 +213,11 @@ export const INITIAL_ITEMS: Item[] = [
   },
   
   {
-    name: "Chañarmuyo 5 Hileras",
+    name: "Chañarmuyo 5 Hileras Blend",
     categoria: "Vinos",
     hasVariants: false,
     isAgrupador: false,
-    sku: "VNO-CHM5HIL",
+    sku: "VNO-CHM5HIL-BLND",
     codigoUniversal: "7799002000001", // generated
     marca: "Chañarmuyo",
     proveedor: "Chañarmuyo Bodega",
@@ -227,10 +227,9 @@ export const INITIAL_ITEMS: Item[] = [
     volumenCantidad: 750,
     volumenUnidad: "ml",
     stock: { total: "18", reservado: "2", disponible: "16" },
-    atributosPrincipales: [
-      { key: "Varietal", value: "Blend" },
-    ],
+
     atributosInformativos: [
+      { key: "Varietal", value: "Blend" },
       { key: "Tipo de Vino", value: "Tinto" },
       { key: "Perfil Sensorial", value: "Fruta roja madura, taninos redondos y notas tostadas" },
       { key: "Origen", value: "Valle de Chañarmuyo, La Rioja" },
