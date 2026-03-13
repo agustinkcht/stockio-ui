@@ -406,7 +406,7 @@ export const INITIAL_ITEMS: Item[] = [
     },
     atributosPrincipales: [],  
     atributosInformativos: [
-      { key: "Dosaje", value: "Brut Nature" }
+      { key: "Dosaje", value: "Brut Nature" },
       { key: "Varietal", value: "Blend" },
       { key: "Línea", value: "Estelar" },
       { key: "Perfil Sensorial", value: "Dulce, frutado y floral, con burbuja suave" },
@@ -563,7 +563,7 @@ export const INITIAL_ITEMS: Item[] = [
     stock: { total: "30", reservado: "4", disponible: "26" },
     atributosPrincipales: [],  
     atributosInformativos: [
-      { key: "Dosaje", value: "Extra Brut" }],
+      { key: "Dosaje", value: "Extra Brut" },
       { key: "Varietal", value: "Chardonnay 80% - Pinot Noir 20%" },
       { key: "Línea", value: "Extra Brut" },
       { key: "Perfil Sensorial", value: "Fresco, cítrico y frutal, con burbuja fina" },
