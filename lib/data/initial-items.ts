@@ -240,15 +240,15 @@ export const INITIAL_ITEMS: Item[] = [
     precio: { costo: 18000, margen: 50, iva: 21, precioFinal: 32580 },
   },
   {
-    name: "Domiciano Gran Reserva",
+    name: "Domiciano Gran Reserva Blend",
     categoria: "Vinos",
     hasVariants: false,
     isAgrupador: false,
-    sku: "VNO-DOMGRES-BLND-2022",
+    sku: "VNO-DOMGRES-BLND",
     codigoUniversal: "7798123401012",
     marca: "Domiciano",
     proveedor: "Bodega Domiciano",
-    codigoProveedor: "DOM-GRES-BLND-2022",
+    codigoProveedor: "DOM-GRES-BLND",
     formatoVenta: "unidad",
     volumenActive: true,
     volumenCantidad: 750,
@@ -258,10 +258,8 @@ export const INITIAL_ITEMS: Item[] = [
       reservado: "4",
       disponible: "32",
     },
-    atributosPrincipales: [
-      { key: "Varietal", value: "Blend" },
-    ],
     atributosInformativos: [
+      { key: "Varietal", value: "Blend" },
       { key: "Tipo de Vino", value: "Tinto" },
       { key: "Perfil Sensorial", value: "Cerezas y ciruelas maduras, con café, cacao y tabaco" },
       { key: "Origen", value: "Barrancas, Maipú, Mendoza, Argentina" },
@@ -381,13 +379,13 @@ export const INITIAL_ITEMS: Item[] = [
     ],
   },
   {
-    name: "Domiciano Estelar",
+    name: "Domiciano Estelar Brut Nature",
     categoria: "Espumantes",
     hasVariants: false,
     isAgrupador: false,
-    sku: "ESP-DOMES-DLNA",
+    sku: "ESP-DOMES-BRNA",
     codigoUniversal: "7798123490329",
-    codigoProveedor: "DOM-EST-DN-750",
+    codigoProveedor: "DOM-EST-BN-750",
     marca: "Domiciano",
     proveedor: "Bodega Domiciano",
     formatoVenta: "unidad",
@@ -400,10 +398,8 @@ export const INITIAL_ITEMS: Item[] = [
       reservado: "2",
       disponible: "16",
     },
-
-    atributosPrincipales: [{ key: "Dosaje", value: "Dulce Natural" }],
-
     atributosInformativos: [
+      { key: "Dosaje", value: "Brut Nature" }
       { key: "Varietal", value: "Blend" },
       { key: "Línea", value: "Estelar" },
       { key: "Perfil Sensorial", value: "Dulce, frutado y floral, con burbuja suave" },
@@ -423,7 +419,7 @@ export const INITIAL_ITEMS: Item[] = [
     categoria: "Licores",
     hasVariants: false,
     isAgrupador: false,
-    sku: "LICR-DOMMIS-MOST",
+    sku: "LICR-DOMIMST",
     codigoUniversal: "7798123490305",
     codigoProveedor: "DOM-MIST-750",
     marca: "Domiciano",
@@ -438,9 +434,6 @@ export const INITIAL_ITEMS: Item[] = [
       reservado: "2",
       disponible: "22",
     },
-
-    atributosPrincipales: [{ key: "Sabor", value: "Dulce" }],
-
     atributosInformativos: [
       { key: "Tipo de Licor", value: "Espirituoso a base de mosto de uva" },
       { key: "Varietal", value: "Blend" },
@@ -545,7 +538,7 @@ export const INITIAL_ITEMS: Item[] = [
     ],
   },
   {
-    name: "Navarro Correas",
+    name: "Navarro Correas Extra Brut",
     categoria: "Espumantes",
     hasVariants: false,
     isAgrupador: false,
@@ -561,9 +554,8 @@ export const INITIAL_ITEMS: Item[] = [
 
     stock: { total: "30", reservado: "4", disponible: "26" },
 
-    atributosPrincipales: [{ key: "Dosaje", value: "Extra Brut" }],
-
     atributosInformativos: [
+      { key: "Dosaje", value: "Extra Brut" }],
       { key: "Varietal", value: "Chardonnay 80% - Pinot Noir 20%" },
       { key: "Línea", value: "Extra Brut" },
       { key: "Perfil Sensorial", value: "Fresco, cítrico y frutal, con burbuja fina" },
@@ -583,7 +575,7 @@ export const INITIAL_ITEMS: Item[] = [
     categoria: "Gin",
     hasVariants: false,
     isAgrupador: false,
-    sku: "GIN-BOMBAY-ORIG",
+    sku: "GIN-BOMSAPH",
     codigoUniversal: "7640175740373",
     marca: "Bombay Sapphire",
     proveedor: "Bacardi",
@@ -594,7 +586,6 @@ export const INITIAL_ITEMS: Item[] = [
 
     stock: { total: "30", reservado: "4", disponible: "26" },
 
-    atributosPrincipales: [{ key: "Sabor", value: "Botánicos" }],
     atributosInformativos: [
       { key: "Estilo", value: "London Dry" },
       { key: "Origen", value: "Reino Unido" },
@@ -605,11 +596,11 @@ export const INITIAL_ITEMS: Item[] = [
   },
 
   {
-    name: "Myrica",
+    name: "Myrica Botánicos",
     categoria: "Gin",
     hasVariants: false,
     isAgrupador: false,
-    sku: "GIN-MYRICA-ORIG",
+    sku: "GIN-MYRBOT",
     codigoUniversal: "7799988776655",
     marca: "Myrica",
     proveedor: "Destilería Myrica",
@@ -620,7 +611,6 @@ export const INITIAL_ITEMS: Item[] = [
 
     stock: { total: "14", reservado: "1", disponible: "13" },
 
-    atributosPrincipales: [{ key: "Sabor", value: "Botánicos" }],
     atributosInformativos: [
       { key: "Estilo", value: "Artesanal" },
       { key: "Origen", value: "Argentina" },
@@ -697,14 +687,15 @@ export const INITIAL_ITEMS: Item[] = [
   // ACONCAGUA (STANDALONE)
   // =====================
   {
-    name: "Aconcagua",
+    name: "Aconcagua Original",
     categoria: "Gin",
     hasVariants: false,
     isAgrupador: false,
-    sku: "GIN-ACONCAG-ORIG",
+    sku: "GIN-ACCGOR",
     codigoUniversal: "7798765432109",
     marca: "Aconcagua",
     proveedor: "Destilería Andina",
+    codigoProveedor: "ACONCAGUA-ORIGINAL",
     formatoVenta: "unidad",
     volumenActive: true,
     volumenCantidad: 700,
@@ -712,7 +703,6 @@ export const INITIAL_ITEMS: Item[] = [
 
     stock: { total: "16", reservado: "2", disponible: "14" },
 
-    atributosPrincipales: [{ key: "Sabor", value: "Original" }],
     atributosInformativos: [
       { key: "Estilo", value: "London Dry" },
       { key: "Origen", value: "Argentina" },
@@ -796,11 +786,11 @@ export const INITIAL_ITEMS: Item[] = [
     ],
   },
   {
-    name: "Cîroc",
+    name: "Cîroc Original",
     categoria: "Vodka",
     hasVariants: false,
     isAgrupador: false,
-    sku: "VDKA-CIRO-ORIG",
+    sku: "VDKA-CRCOR",
     codigoUniversal: "088076168505",
     codigoProveedor: "CIROC-FR-750",
     marca: "Cîroc",
@@ -811,8 +801,6 @@ export const INITIAL_ITEMS: Item[] = [
     volumenUnidad: "ml",
 
     stock: { total: "20", reservado: "2", disponible: "18" },
-
-    atributosPrincipales: [{ key: "Sabor", value: "Original" }],
 
     atributosInformativos: [
       { key: "Origen", value: "Francia" },
@@ -827,7 +815,7 @@ export const INITIAL_ITEMS: Item[] = [
     categoria: "Ron",
     hasVariants: false,
     isAgrupador: false,
-    sku: "RON-MALIBU-COCO",
+    sku: "RON-MALIBU",
     codigoUniversal: "7799002001201",
     marca: "Malibu",
     proveedor: "Pernod Ricard",
@@ -838,8 +826,6 @@ export const INITIAL_ITEMS: Item[] = [
     volumenUnidad: "ml",
 
     stock: { total: "28", reservado: "4", disponible: "24" },
-
-    atributosPrincipales: [{ key: "Tipo", value: "Saborizado" }],
     atributosInformativos: [
       { key: "Origen", value: "Barbados" },
       { key: "Añejamiento", value: "No aplica" },
@@ -858,7 +844,7 @@ export const INITIAL_ITEMS: Item[] = [
     categoria: "Tequila",
     hasVariants: false,
     isAgrupador: false,
-    sku: "TEQ-PATRON-SILV",
+    sku: "TEQ-PATSLVR",
     codigoUniversal: "7799002001401",
     marca: "Patrón",
     proveedor: "Bacardi",
@@ -869,8 +855,6 @@ export const INITIAL_ITEMS: Item[] = [
     volumenUnidad: "ml",
 
     stock: { total: "12", reservado: "2", disponible: "10" },
-
-    atributosPrincipales: [{ key: "Tipo", value: "Silver" }],
     atributosInformativos: [
       { key: "Origen", value: "México" },
       { key: "Añejamiento", value: "Sin añejamiento" },
@@ -980,18 +964,17 @@ export const INITIAL_ITEMS: Item[] = [
     categoria: "Whiskies",
     hasVariants: false,
     isAgrupador: false,
-    sku: "WHKY-JD-OLD7",
+    sku: "WHKY-JDOLD7",
     codigoUniversal: "5099873001338",
     marca: "Jack Daniel’s",
     proveedor: "Brown-Forman",
+    codigoProveedor: "JDO7",
     formatoVenta: "unidad",
     volumenActive: true,
     volumenCantidad: 750,
     volumenUnidad: "ml",
 
     stock: { total: "40", reservado: "5", disponible: "35" },
-
-    atributosPrincipales: [{ key: "Línea", value: "Old No.7" }],
     atributosInformativos: [
       { key: "Tipo de Whisky", value: "Tennessee" },
       { key: "Método de Elaboración", value: "Filtrado por carbón" },
@@ -1009,10 +992,11 @@ export const INITIAL_ITEMS: Item[] = [
     categoria: "Whiskies",
     hasVariants: false,
     isAgrupador: false,
-    sku: "WHKY-JMS-ORIG",
+    sku: "WHKY-JMSOR",
     codigoUniversal: "5011007003005",
     marca: "Jameson",
     proveedor: "Pernod Ricard",
+    codigoProveedor: "JMSN-OR",
     formatoVenta: "unidad",
     volumenActive: true,
     volumenCantidad: 750,
@@ -1020,7 +1004,6 @@ export const INITIAL_ITEMS: Item[] = [
 
     stock: { total: "34", reservado: "4", disponible: "30" },
 
-    atributosPrincipales: [{ key: "Línea", value: "Original" }],
     atributosInformativos: [
       { key: "Tipo de Whisky", value: "Irish" },
       { key: "Método de Elaboración", value: "Triple destilado" },
@@ -1038,18 +1021,17 @@ export const INITIAL_ITEMS: Item[] = [
     categoria: "Whiskies",
     hasVariants: false,
     isAgrupador: false,
-    sku: "WHKY-JMS-BBLK",
+    sku: "WHKY-JMSBB",
     codigoUniversal: "5011007024369",
     marca: "Jameson",
     proveedor: "Pernod Ricard",
+    codigoProveedor: "JMSN-BB",
     formatoVenta: "unidad",
     volumenActive: true,
     volumenCantidad: 750,
     volumenUnidad: "ml",
 
     stock: { total: "22", reservado: "3", disponible: "19" },
-
-    atributosPrincipales: [{ key: "Línea", value: "Black Barrel" }],
     atributosInformativos: [
       { key: "Tipo de Whisky", value: "Irish" },
       { key: "Método de Elaboración", value: "Triple destilado" },
