@@ -2959,8 +2959,8 @@ export function CatalogoItemDetailPanel({
                 )}
               </div>
             </div>
-            )}
-          </div>
+          )}
+        </div>
 
       {/* Nueva Variante Modal */}
       <NuevaVarianteModal
