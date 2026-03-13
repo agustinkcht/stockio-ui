@@ -299,28 +299,17 @@ export function ItemCard({
             item.isAgrupador || item.hasVariants ? (
               // Parent items in audit mode - show item info + chevron (same as normal mode)
               <>
+                {/* Item cell - col-span-16, container icon */}
                 <div
-                  className={`col-span-8 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors border-slate-100 border-r-0`}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onItemClick(item)
-                  }}
+                  className={`col-span-16 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors border-r border-slate-100`}
+                  onClick={(e) => { e.stopPropagation(); onItemClick(item) }}
                 >
-                  {/* Product Thumbnail */}
-                  <div className="w-12 h-12 flex-shrink-0 rounded-md bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden">
-                    <img
-                      src={getCategoryImage(item.categoria) || "/placeholder.svg"}
-                      alt={item.categoria || "Product"}
-                      className="w-8 h-8 object-contain opacity-60"
-                    />
+                  <div className="w-8 h-8 flex-shrink-0 rounded-md bg-slate-100 flex items-center justify-center">
+                    <Layers className="w-4 h-4 text-slate-400" />
                   </div>
-
-                  {/* Product Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-foreground font-medium truncate">
-                        {item.name}
-                      </span>
+                      <span className="text-sm text-foreground font-medium truncate">{item.name}</span>
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground whitespace-nowrap">
                         {item.hasVariants ? `${variantCount} var.` : `${itemCount} items`}
                       </span>
@@ -328,26 +317,34 @@ export function ItemCard({
                     <div className="flex items-center gap-2 mt-0.5">
                       {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
                       {item.marca && <span className="text-xs text-muted-foreground">·</span>}
-                      {item.categoria && <span className="text-xs text-muted-foreground">{item.categoria}</span>}
-                      {item.categoria && <span className="text-xs text-muted-foreground">·</span>}
                       <span className="text-xs text-muted-foreground">{item.sku}</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Chevron on the right for parent items */}
+                {/* Categoría cell */}
                 <div
-                  className={`col-span-14 h-full flex items-center justify-end px-4 cursor-pointer`}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onToggleExpansion(index)
-                  }}
+                  className="col-span-7 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+                  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+                >
+                  <span className="text-sm text-foreground">{item.categoria || "-"}</span>
+                </div>
+
+                {/* Precio Final cell - empty for parent */}
+                <div
+                  className="col-span-7 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+                  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+                >
+                  <span className="w-4 h-px bg-slate-200 rounded-full block" />
+                </div>
+
+                {/* Stock cell - empty with chevron at right edge */}
+                <div
+                  className="col-span-14 h-full flex items-center justify-end px-4 cursor-pointer"
+                  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
                 >
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onToggleExpansion(index)
-                    }}
+                    onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
                     className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer p-1"
                   >
                     {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -540,41 +537,32 @@ export function ItemCard({
           ) : item.isAgrupador || item.hasVariants ? (
             // NORMAL MODE: Parent items
             <>
+              {/* Item cell - col-span-16, no thumbnail, container icon instead */}
               <div
-                className={`col-span-8 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors border-slate-100 border-r-0`}
+                className={`col-span-16 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors border-r border-slate-100`}
                 onClick={(e) => {
                   e.stopPropagation()
                   onItemClick(item)
                 }}
               >
-                {/* Product Thumbnail with category-based image */}
-                <div className="w-12 h-12 flex-shrink-0 rounded-md bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden">
-                  <img
-                    src={getCategoryImage(item.categoria) || "/placeholder.svg"}
-                    alt={item.categoria || "Product"}
-                    className="w-8 h-8 object-contain opacity-60"
-                  />
+                {/* Container icon instead of thumbnail */}
+                <div className="w-8 h-8 flex-shrink-0 rounded-md bg-slate-100 flex items-center justify-center">
+                  <Layers className="w-4 h-4 text-slate-400" />
                 </div>
 
-                {/* Product Info with POS styling */}
+                {/* Product Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span
-                      className={`${gridSize === "sm" ? "text-sm" : "text-sm"} text-container-item-foreground font-medium truncate`}
-                    >
+                    <span className="text-sm text-container-item-foreground font-medium truncate">
                       {item.name}
                     </span>
-                    {(item.hasVariants || item.isAgrupador) && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground whitespace-nowrap">
-                        {item.hasVariants ? `${variantCount} var.` : `${itemCount} items`}
-                      </span>
-                    )}
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground whitespace-nowrap">
+                      {item.hasVariants ? `${variantCount} var.` : `${itemCount} items`}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
                     {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
                     {item.marca && <span className="text-xs text-muted-foreground">·</span>}
-                    {item.categoria && <span className="text-xs text-muted-foreground">{item.categoria}</span>}
-                    {item.categoria && <span className="text-xs text-muted-foreground">·</span>}
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs text-muted-foreground">{item.sku}</span>
                       <button
@@ -589,19 +577,29 @@ export function ItemCard({
                 </div>
               </div>
 
-              {/* Chevron on the right for parent items */}
+              {/* Categoría cell */}
               <div
-                className={`col-span-14 h-full flex items-center justify-end px-4 cursor-pointer`}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onToggleExpansion(index)
-                }}
+                className="col-span-7 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+                onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+              >
+                <span className="text-sm text-foreground">{item.categoria || "-"}</span>
+              </div>
+
+              {/* Precio Final cell - empty for parent */}
+              <div
+                className="col-span-7 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+                onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+              >
+                <span className="w-4 h-px bg-slate-200 rounded-full block" />
+              </div>
+
+              {/* Stock cell - empty with chevron at right edge */}
+              <div
+                className="col-span-14 h-full flex items-center justify-end px-4 cursor-pointer"
+                onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
               >
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onToggleExpansion(index)
-                  }}
+                  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
                   className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer p-1"
                 >
                   {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
