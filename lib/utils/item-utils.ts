@@ -87,13 +87,6 @@ export function searchItems(items: Item[], searchQuery: string): Item[] {
     if ("modelo" in item && item.modelo) fields.push(item.modelo)
     if ("proveedor" in item && item.proveedor) fields.push(item.proveedor)
 
-    if (item.atributosPrincipales) {
-      item.atributosPrincipales.forEach((attr) => {
-        fields.push(attr.key)
-        fields.push(attr.value)
-      })
-    }
-
     if ("atributosInformativos" in item && item.atributosInformativos) {
       item.atributosInformativos.forEach((attr) => {
         fields.push(attr.key)

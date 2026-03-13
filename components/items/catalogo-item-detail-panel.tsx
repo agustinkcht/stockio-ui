@@ -224,7 +224,7 @@ export function CatalogoItemDetailPanel({
 
   const [atributosPrincipales, setAtributosPrincipales] = useState<
     Array<{ key: string; value: string; keyOpen?: boolean; valueOpen?: boolean }>
-  >(selectedItem?.atributosPrincipales || [])
+  >((selectedItem as any)?.atributosPrincipales || [])
 
   const [atributosInformativos, setAtributosInformativos] = useState<
     Array<{ key: string; value: string; keyOpen?: boolean; valueOpen?: boolean; inheritValue?: boolean }>
@@ -323,7 +323,6 @@ export function CatalogoItemDetailPanel({
 
   // Compute whether item has existing attributes (including inherited from parent)
   const hasExistingAttributes =
-    (selectedItem?.atributosPrincipales && selectedItem.atributosPrincipales.length > 0) ||
     (selectedItem?.atributosInformativos && selectedItem.atributosInformativos.length > 0) ||
     (selectedItem?.containerAtributosPrincipales && selectedItem.containerAtributosPrincipales.length > 0) ||
     // Also check if parent has atributosInformativos that would be inherited
@@ -343,7 +342,6 @@ export function CatalogoItemDetailPanel({
 
   useEffect(() => {
     const hasAttributes =
-      (selectedItem?.atributosPrincipales && selectedItem.atributosPrincipales.length > 0) ||
       (selectedItem?.atributosInformativos && selectedItem.atributosInformativos.length > 0) ||
       (selectedItem?.containerAtributosPrincipales && selectedItem.containerAtributosPrincipales.length > 0) ||
       // Also check if parent has atributosInformativos that would be inherited
@@ -399,7 +397,7 @@ export function CatalogoItemDetailPanel({
     setSkuValue(selectedItem.sku || "")
     setCodigoUniversalValue(selectedItem.codigoUniversal || "")
     setDescripcionValue(selectedItem.descripcion || "")
-    setAtributosPrincipales(selectedItem?.atributosPrincipales || [])
+    setAtributosPrincipales((selectedItem as any)?.atributosPrincipales || [])
     setAtributosInformativos(getMergedAtributosInformativos(fatherItem?.atributosInformativos, selectedItem?.atributosInformativos))
     // Ensure unitsPorPack and volume state are also synced if they are part of selectedItem
     setUnidadesPorPack(() => {
@@ -427,7 +425,7 @@ export function CatalogoItemDetailPanel({
   // Sync atributos from selectedItem when it changes (for undo)
   useEffect(() => {
     if (selectedItem) {
-      setAtributosPrincipales(selectedItem.atributosPrincipales || [])
+      setAtributosPrincipales((selectedItem as any).atributosPrincipales || [])
       setAtributosInformativos(getMergedAtributosInformativos(fatherItem?.atributosInformativos, selectedItem?.atributosInformativos))
       setContainerAtributosPrincipales(selectedItem.containerAtributosPrincipales || [])
     }
@@ -912,7 +910,6 @@ export function CatalogoItemDetailPanel({
       setAtributosInformativos(template.atributosInformativos)
       setShowAtributosView(true)
     } else {
-      setAtributosPrincipales(template.atributosPrincipales)
       setAtributosInformativos(template.atributosInformativos)
       setShowIndividualAtributosView(true)
     }
@@ -2596,9 +2593,9 @@ export function CatalogoItemDetailPanel({
                                       onClick={() => {
                                         const updated = atributosInformativos.filter((_, i) => i !== index)
                                         handleAtributosInformativosChange(updated)
-                                        if (atributosPrincipales.length === 0 && updated.length === 0) {
-                                          setShowIndividualAtributosView(false)
-                                        }
+                        if (updated.length === 0) {
+                          setShowIndividualAtributosView(false)
+                        }
                                       }}
                                       className="mt-8 text-gray-400 hover:text-red-400 transition-colors cursor-pointer"
                                     >

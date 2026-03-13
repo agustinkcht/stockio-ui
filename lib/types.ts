@@ -64,7 +64,6 @@ export interface Item {
   codigoProveedor?: string
   descripcion?: string
   imagenUrl?: string
-  atributosPrincipales?: Atributo[]
   atributosInformativos?: Atributo[]
   variants?: ItemVariant[]
   items?: (Item | ItemWithVariants)[]
