@@ -2635,7 +2635,8 @@ export function CatalogoItemDetailPanel({
 {/* Stock Column - 11 cols when stock expanded, 6 cols when both, 2 col when info expanded */}
           {!isViewingContainer && (
           <div className={`order-4 flex flex-col mt-[44px] transition-all duration-300 ${expandedSection === "stock" ? "col-span-11 pl-4" : expandedSection === "both" ? "col-span-6 pl-3" : "col-span-2 pl-2"}`}>
-              {/* Precio Card - Now First */}
+
+              {/* Precio Card - Above Stock Card */}
               {(expandedSection === "stock" || expandedSection === "both") && (
               <div className={`mb-4 bg-white border border-border/40 rounded-xl shadow-sm ${expandedSection === "stock" ? "p-5" : "p-4"}`}>
                 <h3 className="text-xs font-semibold text-foreground/60 uppercase tracking-wider mb-4">
@@ -2961,6 +2962,7 @@ export function CatalogoItemDetailPanel({
             </div>
           )}
         </div>
+      </div>
 
       {/* Nueva Variante Modal */}
       <NuevaVarianteModal
