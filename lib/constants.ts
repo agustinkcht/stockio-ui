@@ -1,4 +1,4 @@
-import { Store, Box, Tag, HelpCircle, Settings, Receipt, Users, Wallet, Package } from "lucide-react"
+import { Store, Box, Tag, HelpCircle, Settings, Receipt, Users, Wallet, Package, LayoutList } from "lucide-react"
 import type { SidebarItem, Template } from "./types"
 
 export const TEMPLATES: Template[] = [
@@ -159,7 +159,7 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     ],
   },
   {
-    icon: Package,
+    icon: LayoutList,
     label: "Catálogo",
     hasDropdown: true,
     dropdown: [{ label: "Items", href: "/catalogo/items" }],

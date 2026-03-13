@@ -441,17 +441,7 @@ export function ItemCard({
                   >
                     <Check className="w-3 h-3" />
                   </button>
-                  {/* +/- buttons around value */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleStockIncrement("total", 1)
-                    }}
-                    className="w-5 h-5 flex items-center justify-center rounded bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
-                  >
-                    <Plus className="w-2.5 h-2.5" />
-                  </button>
-                  <span className="text-sm font-semibold text-foreground min-w-[24px] text-center">{currentStockTotal}</span>
+                  {/* -/+ buttons around value */}
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
@@ -460,6 +450,16 @@ export function ItemCard({
                     className="w-5 h-5 flex items-center justify-center rounded bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
                   >
                     <Minus className="w-2.5 h-2.5" />
+                  </button>
+                  <span className="text-sm font-semibold text-foreground min-w-[24px] text-center">{currentStockTotal}</span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleStockIncrement("total", 1)
+                    }}
+                    className="w-5 h-5 flex items-center justify-center rounded bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+                  >
+                    <Plus className="w-2.5 h-2.5" />
                   </button>
                 </div>
 
@@ -501,21 +501,21 @@ export function ItemCard({
                   >
                     <Check className="w-3 h-3" />
                   </button>
-                  {/* +/- buttons around value */}
+                  {/* -/+ buttons around value */}
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
-                      handleStockIncrement("reservado", 1)
+                      handleStockIncrement("reservado", -1)
                     }}
                     className="w-5 h-5 flex items-center justify-center rounded bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
                   >
-                    <Plus className="w-2.5 h-2.5" />
+                    <Minus className="w-2.5 h-2.5" />
                   </button>
                   <span className="text-sm font-semibold text-foreground min-w-[24px] text-center">{currentStockReservado}</span>
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
-                      handleStockIncrement("reservado", -1)
+                      handleStockIncrement("reservado", 1)
                     }}
                     className="w-5 h-5 flex items-center justify-center rounded bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
                   >

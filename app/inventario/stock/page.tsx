@@ -1,6 +1,5 @@
 "use client"
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import { Package, Search, X, Check, CheckCircle2 } from "lucide-react"
 import { useAccount } from "@/lib/contexts/account-context"
 
@@ -18,7 +17,6 @@ import type { Item } from "@/lib/types"
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 export default function StockPage() {
-  const router = useRouter()
   const [isSaving, setIsSaving] = useState(false)
   const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>({})
   const [showSaveSuccess, setShowSaveSuccess] = useState(false)
@@ -271,11 +269,8 @@ export default function StockPage() {
     setShowBatchDeleteModal(false)
   }
 
-  const handleItemClick = (item: Item) => {
-    console.log("[v0] handleItemClick called with item:", item)
-    console.log("[v0] item.sku:", item.sku)
-    console.log("[v0] Navigating to:", `/inventario/stock/${item.sku}`)
-    router.push(`/inventario/stock/${item.sku}`)
+  const handleItemClick = (_item: Item) => {
+    // Item detail is disabled in stock view
   }
 
   const toggleVariantExpansion = (index: number) => {
