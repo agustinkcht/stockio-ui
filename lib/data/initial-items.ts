@@ -404,6 +404,7 @@ export const INITIAL_ITEMS: Item[] = [
       reservado: "2",
       disponible: "16",
     },
+    atributosPrincipales: [],  
     atributosInformativos: [
       { key: "Dosaje", value: "Brut Nature" }
       { key: "Varietal", value: "Blend" },
