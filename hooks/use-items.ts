@@ -75,12 +75,10 @@ export function useItems() {
             )
             setItems(parsedItems)
           } else {
-            let INITIAL_ITEMS
-            if (currentAccount === "noire") {
-              INITIAL_ITEMS = await import("@/lib/data/initial-items-noire")
-            } else {
-              INITIAL_ITEMS = await import("@/lib/data/initial-items-invino")
-            }
+            const INITIAL_ITEMS =
+              currentAccount === "noire"
+                ? await import("@/lib/data/initial-items-noire")
+                : await import("@/lib/data/initial-items-invino")
             console.log(
               `[v0] useItems - Loading ${INITIAL_ITEMS.INITIAL_ITEMS.length} initial items for dataSet: ${currentAccount}`,
             )
