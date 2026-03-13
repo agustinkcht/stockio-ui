@@ -75,14 +75,12 @@ export function useItems() {
             )
             setItems(parsedItems)
           } else {
-            console.log("[v0] About to import initial items for account:", currentAccount)
             let INITIAL_ITEMS
             if (currentAccount === "noire") {
               INITIAL_ITEMS = await import("@/lib/data/initial-items-noire")
             } else {
               INITIAL_ITEMS = await import("@/lib/data/initial-items-invino")
             }
-            console.log("[v0] Import completed successfully")
             console.log(
               `[v0] useItems - Loading ${INITIAL_ITEMS.INITIAL_ITEMS.length} initial items for dataSet: ${currentAccount}`,
             )
@@ -187,11 +185,13 @@ export function useItems() {
       return Math.floor(Math.random() * 9000000000000) + 1000000000000
     }
 
+    let atributosPrincipalesFromTemplate: Array<{ key: string; value: string }> = []
     let atributosInformativosFromTemplate: Array<{ key: string; value: string }> = []
 
     if (itemTemplate) {
       const template = TEMPLATES.find((t: any) => t.name === itemTemplate)
       if (template) {
+        atributosPrincipalesFromTemplate = template.atributosPrincipales.map((attr: any) => ({ ...attr }))
         atributosInformativosFromTemplate = template.atributosInformativos.map((attr: any) => ({ ...attr }))
       }
     }
@@ -212,6 +212,7 @@ export function useItems() {
       formatoVenta: "unidad",
       proveedor: "",
       codigoProveedor: "",
+      atributosPrincipales: atributosPrincipalesFromTemplate,
       atributosInformativos: atributosInformativosFromTemplate,
       variantCount: 0,
       itemCount: 0,
@@ -952,6 +953,7 @@ export function useItems() {
   proveedor?: string
   codigoProveedor?: string
   descripcion?: string
+  atributosPrincipales?: Array<{ key: string; value: string }>
   atributosInformativos?: Array<{ key: string; value: string }>
   stockTotal?: number
   stockReservado?: number
@@ -1002,9 +1004,10 @@ export function useItems() {
   reservado: stockReservado.toString(),
   disponible: stockDisponible.toString(),
   },
-      hasVariants: false,
-      isAgrupador: false,
-      atributosInformativos: data.atributosInformativos?.filter(a => a.key && a.value) || [],
+  hasVariants: false,
+  isAgrupador: false,
+  atributosPrincipales: data.atributosPrincipales?.filter(a => a.key && a.value) || [],
+  atributosInformativos: data.atributosInformativos?.filter(a => a.key && a.value) || [],
   imagenUrl: data.imagenUrl || "",
   variantCount: 0,
   itemCount: 0,
