@@ -1070,7 +1070,7 @@ export function CatalogoItemDetailPanel({
                     {/* SKU and Código Universal below the line, in column */}
                     {!isViewingContainer && (
                       <>
-                        <div className="border-t border-slate-700/50 my-4"></div>
+                        
                         <div className="flex flex-col gap-2 text-xs text-slate-400 font-mono">
                           <div className="flex items-center gap-1.5">
                             <span className="font-medium text-slate-200 w-8">SKU:</span>
