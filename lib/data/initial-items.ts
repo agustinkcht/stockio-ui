@@ -2,6 +2,7 @@ import type { Item } from "../types"
 
 export const INITIAL_ITEMS: Item[] = [
   {
+    id: "8F2KQ7M1",
     name: "Proemio Grand Reserve",
     categoria: "Vinos",
     hasVariants: true,
@@ -32,6 +33,7 @@ export const INITIAL_ITEMS: Item[] = [
     variants: [
       // --- MALBEC ---
       {
+        id: "X4N9T2BZ",
         name: "Proemio Grand Reserve",
         sku: "VNO-PROGRES-MALB-2012",
         codigoUniversal: "7798123400013",
@@ -50,6 +52,7 @@ export const INITIAL_ITEMS: Item[] = [
         precio: { costo: 45000, margen: 50, iva: 21, precioFinal: 81675 },
       },
       {
+        id: "M7R3YQ8L",
         name: "Proemio Grand Reserve",
         sku: "VNO-PROGRES-MALB-2019",
         codigoUniversal: "7798123400020",
@@ -70,6 +73,7 @@ export const INITIAL_ITEMS: Item[] = [
 
       // --- CABERNET SAUVIGNON ---
       {
+        id: "C2V8P6DW",
         name: "Proemio Grand Reserve",
         sku: "VNO-PROGRES-CABS-2012",
         codigoUniversal: "7798123400037",
@@ -88,6 +92,7 @@ export const INITIAL_ITEMS: Item[] = [
         precio: { costo: 48000, margen: 50, iva: 21, precioFinal: 87120 },
       },
       {
+        id: "T9K4X1HJ",
         name: "Proemio Grand Reserve",
         sku: "VNO-PROGRES-CABS-2019",
         codigoUniversal: "7798123400044",
@@ -108,6 +113,7 @@ export const INITIAL_ITEMS: Item[] = [
 
       // --- SYRAH GARNACHA ---
       {
+        id: "Q6Z2MN8R",
         name: "Proemio Grand Reserve",
         sku: "VNO-PROGRES-SYGA-2012",
         codigoUniversal: "7798123400051",
@@ -126,6 +132,7 @@ export const INITIAL_ITEMS: Item[] = [
         precio: { costo: 44000, margen: 50, iva: 21, precioFinal: 79860 },
       },
       {
+        id: "L3W7F9KP",
         name: "Proemio Grand Reserve",
         sku: "VNO-PROGRES-SYGA-2019",
         codigoUniversal: "7798123400068",
@@ -146,6 +153,7 @@ export const INITIAL_ITEMS: Item[] = [
     ],
   },
   {
+    id: "R8D1V4TX",
     name: "DV Catena",
     categoria: "Vinos",
     hasVariants: true,
@@ -171,9 +179,9 @@ export const INITIAL_ITEMS: Item[] = [
 
     variantCount: 2,
     variants: [
-
       // --- malbec ---
       {
+        id: "N5JQ2C7M",
         name: "DV Catena",
         sku: "VNO-DVCAT-MALB",
         codigoUniversal: "7799002000214",
@@ -193,6 +201,7 @@ export const INITIAL_ITEMS: Item[] = [
 
       // --- 2022 ---
       {
+        id: "P4Y8L1ZW",
         name: "DV Catena",
         sku: "VNO-DVCAT-CABS",
         codigoUniversal: "7799002000221",
@@ -213,6 +222,7 @@ export const INITIAL_ITEMS: Item[] = [
   },
   
   {
+    id: "H7M3T9QK",
     name: "Chañarmuyo 5 Hileras Blend",
     categoria: "Vinos",
     hasVariants: false,
@@ -240,6 +250,7 @@ export const INITIAL_ITEMS: Item[] = [
     precio: { costo: 18000, margen: 50, iva: 21, precioFinal: 32580 },
   },
   {
+    id: "Z2X6R4VN",
     name: "Domiciano Gran Reserva Blend",
     categoria: "Vinos",
     hasVariants: false,
@@ -270,6 +281,7 @@ export const INITIAL_ITEMS: Item[] = [
     precio: { costo: 18000, margen: 50, iva: 21, precioFinal: 32580 },
   },
   {
+    id: "K8P1D7WY",
     name: "Domiciano Estelar",
     categoria: "Vinos",
     hasVariants: true,
@@ -299,6 +311,7 @@ export const INITIAL_ITEMS: Item[] = [
     variants: [
       // Blend (Malbec - Syrah)
       {
+        id: "V3N9Q2LF",
         name: "Domiciano Estelar",
         sku: "VNO-DOMESTE-BLND",
         codigoUniversal: "7799002000042",
@@ -320,6 +333,7 @@ export const INITIAL_ITEMS: Item[] = [
 
       // Malbec
       {
+        id: "D6T4M8XJ",
         name: "Domiciano Estelar",
         sku: "VNO-DOMESTE-MALB",
         codigoUniversal: "7799002000059",
@@ -340,6 +354,7 @@ export const INITIAL_ITEMS: Item[] = [
 
       // Blanco Dulce
       {
+        id: "Y1R7K3ZP",
         name: "Domiciano Estelar",
         sku: "VNO-DOMESTE-BLDL",
         codigoUniversal: "7799002000066",
@@ -360,6 +375,7 @@ export const INITIAL_ITEMS: Item[] = [
 
       // Chardonnay
       {
+        id: "W9C2H6TN",
         name: "Domiciano Estelar",
         sku: "VNO-DOMESTE-CHRD",
         codigoUniversal: "7799002000080",
@@ -380,6 +396,7 @@ export const INITIAL_ITEMS: Item[] = [
     ],
   },
   {
+    id: "F4L8V1QM",
     name: "Domiciano Estelar Brut Nature",
     categoria: "Espumantes",
     hasVariants: false,
@@ -417,6 +434,7 @@ export const INITIAL_ITEMS: Item[] = [
     precio: { costo: 15000, margen: 50, iva: 21, precioFinal: 27150 },
   },
   {
+    id: "J7X3P9DK",
     name: "Domiciano Mistela",
     categoria: "Licores",
     hasVariants: false,
@@ -454,6 +472,7 @@ export const INITIAL_ITEMS: Item[] = [
 
   // --- SALENTEIN (agrupador por dosaje) ---
   {
+    id: "M2Z6R4YW",
     name: "Salentein",
     categoria: "Espumantes",
     hasVariants: true,
@@ -485,6 +504,7 @@ export const INITIAL_ITEMS: Item[] = [
     variantCount: 3,
     variants: [
       {
+        id: "Q8N1T5LV",
         name: "Salentein",
         sku: "ESP-SALENT-EXBR",
         codigoUniversal: "7798123401027",
@@ -503,6 +523,7 @@ export const INITIAL_ITEMS: Item[] = [
         precio: { costo: 22000, margen: 50, iva: 21, precioFinal: 39930 },
       },
       {
+        id: "X3K7D9MP",
         name: "Salentein",
         sku: "ESP-SALENT-BRNA",
         codigoUniversal: "7798123401034",
@@ -521,6 +542,7 @@ export const INITIAL_ITEMS: Item[] = [
         precio: { costo: 24000, margen: 50, iva: 21, precioFinal: 43560 },
       },
       {
+        id: "C6V2Y4RH",
         name: "Salentein",
         sku: "ESP-SALENT-BRRO",
         codigoUniversal: "7798123401041",
@@ -541,6 +563,7 @@ export const INITIAL_ITEMS: Item[] = [
     ],
   },
   {
+    id: "T1W8Q3ZN",
     name: "Navarro Correas Extra Brut",
     categoria: "Espumantes",
     hasVariants: false,
@@ -574,6 +597,7 @@ export const INITIAL_ITEMS: Item[] = [
     precio: { costo: 15000, margen: 50, iva: 21, precioFinal: 27150 },
   },
   {
+    id: "P9M4L7XK",
     name: "Bombay Sapphire",
     categoria: "Gin",
     hasVariants: false,
@@ -599,6 +623,7 @@ export const INITIAL_ITEMS: Item[] = [
   },
 
   {
+    id: "H2R6D8VY",
     name: "Myrica Botánicos",
     categoria: "Gin",
     hasVariants: false,
@@ -627,6 +652,7 @@ export const INITIAL_ITEMS: Item[] = [
   // RESTINGA (AGRUPADOR)
   // =====================
   {
+    id: "Z7F1N3QT",
     name: "Restinga",
     categoria: "Gin",
     hasVariants: true,
@@ -651,6 +677,7 @@ export const INITIAL_ITEMS: Item[] = [
     variantCount: 3,
     variants: [
       {
+        id: "K4X9P2WM",
         name: "Restinga",
         sku: "GIN-REST-ORIG",
         codigoUniversal: "7798123456789",
@@ -662,6 +689,7 @@ export const INITIAL_ITEMS: Item[] = [
         precio: { costo: 11000, margen: 50, iva: 21, precioFinal: 19965 },
       },
       {
+        id: "V8J3L6RC",
         name: "Restinga",
         sku: "GIN-REST-OTON",
         codigoUniversal: "7798123456796",
@@ -673,6 +701,7 @@ export const INITIAL_ITEMS: Item[] = [
         precio: { costo: 12000, margen: 50, iva: 21, precioFinal: 21720 },
       },
       {
+        id: "D1Y7T4MK",
         name: "Restinga",
         sku: "GIN-REST-FLAV",
         codigoUniversal: "7798123456802",
@@ -690,6 +719,7 @@ export const INITIAL_ITEMS: Item[] = [
   // ACONCAGUA (STANDALONE)
   // =====================
   {
+    id: "Y6Q2H8XZ",
     name: "Aconcagua Original",
     categoria: "Gin",
     hasVariants: false,
@@ -715,6 +745,7 @@ export const INITIAL_ITEMS: Item[] = [
     precio: { costo: 10000, margen: 50, iva: 21, precioFinal: 18150 },
   },
   {
+    id: "W3N9V1LP",
     name: "Absolut",
     categoria: "Vodka",
     hasVariants: true,
@@ -739,6 +770,7 @@ export const INITIAL_ITEMS: Item[] = [
     variantCount: 4,
     variants: [
       {
+        id: "F8K4R7TD",
         name: "Absolut",
         sku: "VDKA-ABSO-ORIG",
         codigoUniversal: "7312040017014",
@@ -751,6 +783,7 @@ export const INITIAL_ITEMS: Item[] = [
         precio: { costo: 12000, margen: 50, iva: 21, precioFinal: 21720 },
       },
       {
+        id: "J2M6X3QW",
         name: "Absolut",
         sku: "VDKA-ABSO-RASP",
         codigoUniversal: "7312040030754",
@@ -763,6 +796,7 @@ export const INITIAL_ITEMS: Item[] = [
         precio: { costo: 13000, margen: 50, iva: 21, precioFinal: 23595 },
       },
       {
+        id: "M9C1P8YV",
         name: "Absolut",
         sku: "VDKA-ABSO-PEAR",
         codigoUniversal: "7312040030778",
@@ -775,6 +809,7 @@ export const INITIAL_ITEMS: Item[] = [
         precio: { costo: 13000, margen: 50, iva: 21, precioFinal: 23595 },
       },
       {
+        id: "Q4Z7L2NH",
         name: "Absolut",
         sku: "VDKA-ABSO-VANI",
         codigoUniversal: "7312040030761",
@@ -789,6 +824,7 @@ export const INITIAL_ITEMS: Item[] = [
     ],
   },
   {
+    id: "X1T6D9KR",
     name: "Cîroc Original",
     categoria: "Vodka",
     hasVariants: false,
@@ -814,6 +850,7 @@ export const INITIAL_ITEMS: Item[] = [
   },
   // --- RON: MALIBU (STANDALONE) ---
   {
+    id: "C8W3M5PJ",
     name: "Malibu",
     categoria: "Ron",
     hasVariants: false,
@@ -844,6 +881,7 @@ export const INITIAL_ITEMS: Item[] = [
 
   // --- TEQUILA: PATRÓN SILVER (STANDALONE) ---
   {
+    id: "T2V7Q1LX",
     name: "Patrón Silver",
     categoria: "Tequila",
     hasVariants: false,
@@ -869,6 +907,7 @@ export const INITIAL_ITEMS: Item[] = [
     precio: { costo: 26000, margen: 50, iva: 21, precioFinal: 47030 },
   },
   {
+    id: "P6R4Y8ZN",
     name: "Johnnie Walker 750 ml",
     categoria: "Whiskies",
     hasVariants: true,
@@ -898,6 +937,7 @@ export const INITIAL_ITEMS: Item[] = [
     variantCount: 4,
     variants: [
       {
+        id: "H9K2N3WD",
         name: "Johnnie Walker 750 ml",
         sku: "WHKY-JW750-RED",
         codigoUniversal: "5000267011011",
@@ -914,6 +954,7 @@ export const INITIAL_ITEMS: Item[] = [
         precio: { costo: 20000, margen: 60, iva: 21, precioFinal: 37800 },
       },
       {
+        id: "Z5M8T1QV",
         name: "Johnnie Walker 750 ml",
         sku: "WHKY-JW750-BLACK",
         codigoUniversal: "5000267024233",
@@ -930,6 +971,7 @@ export const INITIAL_ITEMS: Item[] = [
         precio: { costo: 28000, margen: 55, iva: 21, precioFinal: 52500 },
       },
       {
+        id: "K2D7X4LP",
         name: "Johnnie Walker 750 ml",
         sku: "WHKY-JW750-DBLK",
         codigoUniversal: "5000267092843",
@@ -946,6 +988,7 @@ export const INITIAL_ITEMS: Item[] = [
         precio: { costo: 32000, margen: 55, iva: 21, precioFinal: 60000 },
       },
       {
+        id: "V1Q9R6YH",
         name: "Johnnie Walker 750 ml",
         sku: "WHKY-JW750-BLUE",
         codigoUniversal: "5000267014012",
@@ -965,6 +1008,7 @@ export const INITIAL_ITEMS: Item[] = [
   },
 
   {
+    id: "D8L3W7MC",
     name: "Jack Daniel’s Old No.7",
     categoria: "Whiskies",
     hasVariants: false,
@@ -994,6 +1038,7 @@ export const INITIAL_ITEMS: Item[] = [
   },
 
   {
+    id: "Y4P1Z2TN",
     name: "Jameson Original",
     categoria: "Whiskies",
     hasVariants: false,
@@ -1024,6 +1069,7 @@ export const INITIAL_ITEMS: Item[] = [
   },
 
   {
+    id: "W7H6K9XV",
     name: "Jameson Black Barrel",
     categoria: "Whiskies",
     hasVariants: false,
@@ -1054,6 +1100,7 @@ export const INITIAL_ITEMS: Item[] = [
   // --- LICORES ---
   //LICORES
   {
+    id: "F1N4Q8RM",
     name: "Jägermeister 700 ml",
     categoria: "Licores",
     hasVariants: false,
@@ -1082,6 +1129,7 @@ export const INITIAL_ITEMS: Item[] = [
     precio: { costo: 14000, margen: 65, iva: 21, precioFinal: 27615 },
   },
   {
+    id: "J8T2D5LY",
     name: "Sheridan's Original",
     categoria: "Licores",
     hasVariants: false,
@@ -1112,6 +1160,7 @@ export const INITIAL_ITEMS: Item[] = [
 
   // FIREBALL
   {
+    id: "M3V7P1QZ",
     name: "Fireball 750 ml",
     categoria: "Licores",
     hasVariants: false,
@@ -1140,6 +1189,7 @@ export const INITIAL_ITEMS: Item[] = [
 
   // COINTREAU
   {
+    id: "Q9X4K6NW",
     name: "Cointreau 700 ml",
     categoria: "Licores",
     hasVariants: false,
