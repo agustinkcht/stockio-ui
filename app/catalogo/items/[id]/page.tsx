@@ -129,9 +129,11 @@ export default function CatalogoItemDetailPage() {
     })
 
   useEffect(() => {
-    // Only redirect if items are loaded AND the param doesn't look like a static route segment
-    const staticSegments = ["creador-masivo", "editor-masivo"]
-    if (!selectedItem && items.length > 0 && !staticSegments.includes(itemParam)) {
+    // Don't redirect if the param matches a known static sub-route that
+    // should be handled by its own page (Next.js static routes sometimes
+    // lose priority over dynamic segments in this environment).
+    const STATIC_SEGMENTS = ["creador-masivo", "editor-masivo"]
+    if (!selectedItem && items.length > 0 && !STATIC_SEGMENTS.includes(itemParam)) {
       router.push("/catalogo/items")
     }
   }, [selectedItem, items, router, itemParam])
