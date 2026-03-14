@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import type React from "react"
 import type { Item } from "@/lib/types"
-import { ChevronDown, ChevronRight, Plus, Copy, X, Minus, Check, ArrowDownToLine, Lock, LockOpen, Pencil, Upload } from "lucide-react"
+import { ChevronDown, ChevronRight, Plus, Copy, X, Minus, Check, ArrowDownToLine, Pencil, Upload } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
 import { TEMPLATES } from "@/lib/constants" // DEPOSITS and SAVED_ATRIBUTOS imports removed
@@ -216,9 +216,6 @@ export function CatalogoItemDetailPanel({
     Array<{ key: string; variantes: string[]; keyOpen?: boolean; variantesOpen?: boolean }>
   >(selectedItem?.containerAtributosPrincipales || [])
 
-  // Lock state for Atributos Principales section - locked by default when variants exist
-  const [isAtributosPrincipalesLocked, setIsAtributosPrincipalesLocked] = useState(true)
-  
   // Nueva Variante modal state
   const [isNuevaVarianteModalOpen, setIsNuevaVarianteModalOpen] = useState(false)
 
@@ -1414,34 +1411,9 @@ export function CatalogoItemDetailPanel({
                               Atributos que definen las variantes del producto (máximo 2)
                             </p>
                           </div>
-                          {/* Lock button - only visible when variants exist */}
-                          {variantItems.length > 0 && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setIsAtributosPrincipalesLocked(!isAtributosPrincipalesLocked)
-                              }}
-                              className={`p-2 rounded-lg transition-all duration-200 ${
-                                isAtributosPrincipalesLocked
-                                  ? "text-amber-500 hover:text-amber-600 hover:bg-amber-50"
-                                  : "text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50"
-                              }`}
-                              title={isAtributosPrincipalesLocked ? "Desbloquear edición" : "Bloquear edición"}
-                            >
-                              {isAtributosPrincipalesLocked ? (
-                                <Lock className="w-4 h-4" />
-                              ) : (
-                                <LockOpen className="w-4 h-4" />
-                              )}
-                            </button>
-                          )}
                         </div>
-                        {/* Atributo inputs and buttons - these get locked */}
-                        <div className={`flex flex-col gap-3 transition-all duration-300 ${
-                          variantItems.length > 0 && isAtributosPrincipalesLocked 
-                            ? "opacity-50 pointer-events-none select-none" 
-                            : ""
-                        }`}>
+                        {/* Atributo inputs and buttons */}
+                        <div className="flex flex-col gap-3">
 
                           {containerAtributosPrincipales.map((attr, index) => (
                         <div key={index} className="flex items-start gap-3">
@@ -1692,6 +1664,43 @@ export function CatalogoItemDetailPanel({
                             <span>Nueva Variante</span>
                           </button>
                         </div>
+                        
+                        {/* SKU Padre field - below Variantes header */}
+                        <div className="mb-4">
+                          <label className="text-[9px] font-medium text-slate-400 uppercase tracking-wider block mb-1.5">
+                            SKU Padre
+                          </label>
+                          <input
+                            type="text"
+                            value={skuValue}
+                            onChange={(e) => {
+                              const newSkuPadre = e.target.value.toUpperCase()
+                              const oldSkuPadre = skuValue
+                              setSkuValue(newSkuPadre)
+                              
+                              // Update variant SKUs in real-time (visual only, no save until Guardar)
+                              if (variantItems.length > 0) {
+                                setVariantItems(prev => prev.map(variant => {
+                                  // Replace the old SKU padre part with the new one
+                                  const skuParts = variant.sku.split('-')
+                                  const oldPadreParts = oldSkuPadre.split('-')
+                                  
+                                  // Replace the parent part of the variant SKU
+                                  if (skuParts.length > oldPadreParts.length) {
+                                    const variantSuffix = skuParts.slice(oldPadreParts.length).join('-')
+                                    return { ...variant, sku: newSkuPadre + '-' + variantSuffix }
+                                  }
+                                  return variant
+                                }))
+                              }
+                            }}
+                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300 font-mono"
+                            placeholder="Ej: VNO-KNECHT"
+                          />
+                          <p className="text-[9px] text-slate-400 mt-1.5 italic">
+                            Base para generar SKUs de variantes
+                          </p>
+                        </div>
                       </div>
                     )}
 
@@ -1807,7 +1816,7 @@ export function CatalogoItemDetailPanel({
                             onClick={() => {
                               // Navigate to the child item when clicking on the variant row
                               if (displaySku) {
-                                router.push(`/inventario/articulos/${displaySku}`)
+                                router.push(`/catalogo/items/${displaySku}`)
                               }
                             }}
                             className="group grid grid-cols-[1fr_minmax(80px,1fr)_28px] items-center hover:bg-accent/50 transition-colors cursor-pointer"
@@ -2018,44 +2027,6 @@ export function CatalogoItemDetailPanel({
                   </div>
                 </div>
                 
-                {/* SKU Padre field - below the header row */}
-                <div className="mt-4">
-                  <label className="text-[9px] font-medium text-slate-400 uppercase tracking-wider block mb-1.5">
-                    SKU Padre
-                  </label>
-                  <input
-                    type="text"
-                    value={skuValue}
-                    onChange={(e) => {
-                      const newSkuPadre = e.target.value.toUpperCase()
-                      const oldSkuPadre = skuValue
-                      setSkuValue(newSkuPadre)
-                      
-                      // Update variant SKUs in real-time (visual only, no save until Guardar)
-                      if (variantItems.length > 0) {
-                        setVariantItems(prev => prev.map(variant => {
-                          // Replace the old SKU padre part with the new one
-                          const skuParts = variant.sku.split('-')
-                          // The parent SKU is typically the first 1-2 segments (e.g., CZA-ISOR)
-                          const oldPadreParts = oldSkuPadre.split('-')
-                          const newPadreParts = newSkuPadre.split('-')
-                          
-                          // Replace the parent part of the variant SKU
-                          if (skuParts.length > oldPadreParts.length) {
-                            const variantSuffix = skuParts.slice(oldPadreParts.length).join('-')
-                            return { ...variant, sku: newSkuPadre + '-' + variantSuffix }
-                          }
-                          return variant
-                        }))
-                      }
-                    }}
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300 font-mono"
-                    placeholder="Ej: VNO-KNECHT"
-                  />
-                  <p className="text-[9px] text-slate-400 mt-1.5 italic">
-                    Base para generar SKUs de variantes
-                  </p>
-                </div>
               </div>
             )}
 
