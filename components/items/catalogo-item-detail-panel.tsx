@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import type React from "react"
 import type { Item } from "@/lib/types"
-import { ChevronDown, ChevronRight, Plus, Copy, X, Minus, Check, ArrowDownToLine, Pencil, Upload } from "lucide-react"
+import { ChevronDown, ChevronRight, Plus, Copy, X, Minus, Check, ArrowDownToLine, Pencil, Upload, Layers } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
 import { TEMPLATES } from "@/lib/constants" // DEPOSITS and SAVED_ATRIBUTOS imports removed
@@ -1666,40 +1666,48 @@ export function CatalogoItemDetailPanel({
                         </div>
                         
                         {/* SKU Padre field - below Variantes header */}
-                        <div className="mb-4">
-                          <label className="text-[9px] font-medium text-slate-400 uppercase tracking-wider block mb-1.5">
+                        <div className="mb-4 w-1/2">
+                          <label className="text-[9px] font-medium text-slate-400 uppercase tracking-wider block mb-0.5">
                             SKU Padre
                           </label>
-                          <input
-                            type="text"
-                            value={skuValue}
-                            onChange={(e) => {
-                              const newSkuPadre = e.target.value.toUpperCase()
-                              const oldSkuPadre = skuValue
-                              setSkuValue(newSkuPadre)
-                              
-                              // Update variant SKUs in real-time (visual only, no save until Guardar)
-                              if (variantItems.length > 0) {
-                                setVariantItems(prev => prev.map(variant => {
-                                  // Replace the old SKU padre part with the new one
-                                  const skuParts = variant.sku.split('-')
-                                  const oldPadreParts = oldSkuPadre.split('-')
-                                  
-                                  // Replace the parent part of the variant SKU
-                                  if (skuParts.length > oldPadreParts.length) {
-                                    const variantSuffix = skuParts.slice(oldPadreParts.length).join('-')
-                                    return { ...variant, sku: newSkuPadre + '-' + variantSuffix }
-                                  }
-                                  return variant
-                                }))
-                              }
-                            }}
-                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300 font-mono"
-                            placeholder="Ej: VNO-KNECHT"
-                          />
-                          <p className="text-[9px] text-slate-400 mt-1.5 italic">
+                          <p className="text-[9px] text-slate-400 mb-1.5 italic">
                             Base para generar SKUs de variantes
                           </p>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={skuValue}
+                              onChange={(e) => {
+                                const newSkuPadre = e.target.value.toUpperCase()
+                                const oldSkuPadre = skuValue
+                                setSkuValue(newSkuPadre)
+                                
+                                if (variantItems.length > 0) {
+                                  setVariantItems(prev => prev.map(variant => {
+                                    const skuParts = variant.sku.split('-')
+                                    const oldPadreParts = oldSkuPadre.split('-')
+                                    
+                                    if (skuParts.length > oldPadreParts.length) {
+                                      const variantSuffix = skuParts.slice(oldPadreParts.length).join('-')
+                                      return { ...variant, sku: newSkuPadre + '-' + variantSuffix }
+                                    }
+                                    return variant
+                                  }))
+                                }
+                              }}
+                              className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300 font-mono"
+                              placeholder="Ej: VNO-KNECHT"
+                            />
+                            {skuValue !== (selectedItem?.sku || "") && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleSkuBlur() }}
+                                className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-600 hover:bg-emerald-100 transition-colors flex-shrink-0"
+                                title="Confirmar SKU Padre"
+                              >
+                                <Check className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     )}
@@ -2009,24 +2017,17 @@ export function CatalogoItemDetailPanel({
             
             {/* Thumbnail + Title Header for Parent Items */}
             {isViewingContainer && (
-              <div className="mb-6 pb-5 border-b border-slate-100">
-                {/* Top row: Thumbnail + Title aligned horizontally */}
+              <div className="mb-6 pb-5 border-b border-slate-200/60 -mt-6 -mx-8 px-8 pt-6 rounded-t-2xl bg-gradient-to-b from-slate-900 via-slate-900/95 to-transparent">
+                {/* Top row: Layers icon + Title aligned horizontally */}
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-                    <Image
-                      src={getCategoryImage(selectedItem.categoria) || "/placeholder.svg"}
-                      alt={selectedItem.name}
-                      width={56}
-                      height={56}
-                      className="object-cover"
-                    />
+                  <div className="w-14 h-14 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
+                    <Layers className="w-6 h-6 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h2 className="font-semibold text-slate-900 text-base truncate">{selectedItem.name}</h2>
-                    <p className="text-[10px] text-slate-400 uppercase tracking-wider mt-0.5">Agrupador de variantes</p>
+                    <h2 className="font-semibold text-white text-base truncate">{selectedItem.name}</h2>
+                    <p className="text-[10px] text-white/50 uppercase tracking-wider mt-0.5">Agrupador de variantes</p>
                   </div>
                 </div>
-                
               </div>
             )}
 
