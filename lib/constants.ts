@@ -159,12 +159,6 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     ],
   },
   {
-    icon: LayoutList,
-    label: "Catálogo",
-    hasDropdown: true,
-    dropdown: [{ label: "Items", href: "/catalogo/items" }],
-  },
-  {
     icon: Receipt,
     label: "Ventas",
     hasDropdown: true,
@@ -180,19 +174,16 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     ],
   },
   {
-    icon: Users,
-    label: "Contactos",
+    icon: LayoutList,
+    label: "Catálogo",
     hasDropdown: true,
-    dropdown: [
-      { label: "Clientes", href: "/contactos/clientes" },
-      { label: "Proveedores", href: "/contactos/proveedores" },
-    ],
+    dropdown: [{ label: "Items", href: "/catalogo/items" }],
   },
   {
     icon: Tag,
     label: "Precios",
     hasDropdown: true,
-    dropdown: [{ label: "Listas de Precios", href: "/precios/lista-de-precios" }],
+    dropdown: [{ label: "Lista de Precios", href: "/precios/lista-de-precios" }],
   },
   {
     icon: Box,
@@ -202,6 +193,16 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
       { label: "Stock", href: "/inventario/stock" },
     ],
   },
+  {
+    icon: Users,
+    label: "Contactos",
+    hasDropdown: true,
+    dropdown: [
+      { label: "Clientes", href: "/contactos/clientes" },
+      { label: "Proveedores", href: "/contactos/proveedores" },
+    ],
+  },
+
 ]
 
 export const BOTTOM_SIDEBAR_ITEMS: SidebarItem[] = [
