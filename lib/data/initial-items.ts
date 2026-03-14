@@ -227,10 +227,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenCantidad: 750,
     volumenUnidad: "ml",
     stock: { total: "18", reservado: "2", disponible: "16" },
-    atributosPrincipales: [
-    { key: "Varietal", value: "Blend" },
-    { key: "Año", value: "2021" },
-    ],  
+    atributosPrincipales: [],  
 
     atributosInformativos: [
       { key: "Varietal", value: "Blend" },
@@ -261,9 +258,7 @@ export const INITIAL_ITEMS: Item[] = [
       reservado: "4",
       disponible: "32",
     },
-    atributosPrincipales: [
-      { key: "Varietal", value: "Blend" },
-    ],  
+    atributosPrincipales: [],  
     atributosInformativos: [
       { key: "Varietal", value: "Blend" },
       { key: "Tipo de Vino", value: "Tinto" },
