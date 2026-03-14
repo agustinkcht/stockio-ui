@@ -1071,7 +1071,7 @@ export function CatalogoItemDetailPanel({
                     {!isViewingContainer && (
                       <>
                         
-                        <div className="flex flex-col gap-2 text-xs text-slate-400 font-mono">
+                        <div className="flex flex-col gap-2 text-xs text-slate-400 font-mono ml-0 pl-[18px]">
                           <div className="flex items-center gap-1.5">
                             <span className="font-medium text-slate-200 w-8">SKU:</span>
                             <span>{selectedItem.sku}</span>
