@@ -2017,7 +2017,7 @@ export function CatalogoItemDetailPanel({
             
             {/* Thumbnail + Title Header for Parent Items */}
             {isViewingContainer && (
-              <div className="mb-6 pb-5 border-b border-slate-200/60 -mt-6 -mx-8 px-8 pt-6 rounded-t-2xl bg-gradient-to-b from-slate-900 via-slate-900/95 to-transparent">
+              <div className="mb-6 pb-5 border-b border-slate-200/60 -mt-6 -mx-8 px-8 pt-6 rounded-t-2xl bg-slate-900">
                 {/* Top row: Layers icon + Title aligned horizontally */}
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
@@ -2084,9 +2084,14 @@ export function CatalogoItemDetailPanel({
                 <>
                   {selectedDetailTab === "info" && (
                     <div className="h-full flex flex-col py-2">
-                      <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
+                      <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
                         Información del Producto
                       </h3>
+                      {isViewingContainer && (
+                        <p className="text-[11px] text-slate-400 mb-3 italic">
+                          Esta información es compartida por todas las variantes.
+                        </p>
+                      )}
 
                       <div className="space-y-3">
                         <div className="grid grid-cols-2 gap-4">
