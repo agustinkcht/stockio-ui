@@ -445,8 +445,8 @@ export default function CreadorMasivoPage() {
   }
 
   const breadcrumbs = [
-    { label: "Inventario", href: "/inventario" },
-    { label: "Creador Masivo", href: "/inventario/creador-masivo" },
+    { label: "Catálogo", href: "/catalogo/items" },
+    { label: "Creador Masivo", href: "/catalogo/creador-masivo" },
   ]
 
   const toggleSection = (sectionId: string) => {

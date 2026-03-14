@@ -129,15 +129,6 @@ export default function CatalogoItemDetailPage() {
     })
 
   useEffect(() => {
-    const STATIC_SEGMENTS: Record<string, string> = {
-      "creador-masivo": "/catalogo/items/creador-masivo",
-      "editor-masivo": "/catalogo/items/editor-masivo",
-    }
-    if (STATIC_SEGMENTS[itemParam]) {
-      // This [id] route was matched instead of the static page — redirect there directly.
-      router.replace(STATIC_SEGMENTS[itemParam])
-      return
-    }
     if (!selectedItem && items.length > 0) {
       router.push("/catalogo/items")
     }
