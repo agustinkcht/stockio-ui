@@ -129,7 +129,9 @@ export default function CatalogoItemDetailPage() {
     })
 
   useEffect(() => {
-    if (!selectedItem && items.length > 0) {
+    // Only redirect if items are loaded AND the param doesn't look like a static route segment
+    const staticSegments = ["creador-masivo", "editor-masivo"]
+    if (!selectedItem && items.length > 0 && !staticSegments.includes(itemParam)) {
       router.push("/catalogo/items")
     }
   }, [selectedItem, items, router, itemParam])
