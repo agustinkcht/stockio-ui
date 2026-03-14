@@ -2025,7 +2025,7 @@ export function CatalogoItemDetailPanel({
                   </div>
                   <div className="flex-1 min-w-0">
                     <h2 className="font-semibold text-white text-base truncate">{selectedItem.name}</h2>
-                    <p className="text-[10px] text-white/50 uppercase tracking-wider mt-0.5">Agrupador de variantes</p>
+                    <p className="text-[10px] uppercase tracking-wider mt-0.5 text-slate-300">Agrupador de variantes</p>
                   </div>
                 </div>
               </div>
