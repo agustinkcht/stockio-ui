@@ -1088,7 +1088,7 @@ export function CatalogoItemDetailPanel({
                             </button>
                           </div>
                           <div className="flex items-center gap-1.5">
-                            <span className="font-medium text-slate-200 w-8">C.U.:</span>
+                            <span className="font-medium text-slate-200 w-8">Código Universal:</span>
                             <span>{selectedItem.codigoUniversal || "N/A"}</span>
                             <button
                               onClick={(e) => { e.stopPropagation(); handleCopyCodigoUniversal() }}
