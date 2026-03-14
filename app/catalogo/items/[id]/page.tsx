@@ -21,7 +21,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 export default function CatalogoItemDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const itemParam = params.item as string
+  const itemParam = params.id as string
 
   const [isSaving, setIsSaving] = useState(false)
   const [selectedDetailTab, setSelectedDetailTab] = useState<"info" | "stock" | "precios" | "canales">("info")
@@ -50,8 +50,8 @@ export default function CatalogoItemDetailPage() {
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
 
   const selectedItem =
-    items.find((item) => item.sku === itemParam) ||
-    items.flatMap((item) => item.variants || []).find((variant) => variant.sku === itemParam)
+    items.find((item) => item.id === itemParam) ||
+    items.flatMap((item) => item.variants || []).find((variant) => variant.id === itemParam)
 
   const handleUndo = () => {
     if (canUndoEdit) {

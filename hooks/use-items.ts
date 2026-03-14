@@ -195,6 +195,7 @@ export function useItems() {
     }
 
     const newItem: Item = {
+      id: Math.random().toString(36).substring(2, 10).toUpperCase(),
       name: itemTitulo,
       stock: {
         total: "0",
@@ -285,6 +286,7 @@ export function useItems() {
     }
 
     const newItem: Item = {
+      id: Math.random().toString(36).substring(2, 10).toUpperCase(),
       name: itemTitulo,
       hasVariants: true,
       isAgrupador: true,

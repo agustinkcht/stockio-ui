@@ -256,7 +256,7 @@ export default function CatalogoPage() {
   }
 
   const handleItemClick = (item: Item) => {
-    router.push(`/catalogo/items/${item.sku}`)
+    router.push(`/catalogo/items/${item.id}`)
   }
 
   const toggleVariantExpansion = (index: number) => {
@@ -277,7 +277,7 @@ export default function CatalogoPage() {
   const handleCreateItemWithSuccess = async (itemTitulo: string, itemTemplate: string, handleClose: () => void) => {
     const newItem = await handleCreateNuevoItem(itemTitulo, itemTemplate, handleClose)
     if (newItem) {
-      router.push(`/catalogo/items/${newItem.sku}`)
+      router.push(`/catalogo/items/${newItem.id}`)
     }
     setItemCreated(true)
     setTimeout(() => setItemCreated(false), 100)
@@ -290,7 +290,7 @@ export default function CatalogoPage() {
   ) => {
     const newItem = await handleCreateNuevoItemConVariantes(itemTitulo, itemTemplate, handleClose)
     if (newItem) {
-      router.push(`/catalogo/items/${newItem.sku}`)
+      router.push(`/catalogo/items/${newItem.id}`)
     }
     setItemCreated(true)
     setTimeout(() => setItemCreated(false), 100)
