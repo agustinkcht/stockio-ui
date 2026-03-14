@@ -129,11 +129,16 @@ export default function CatalogoItemDetailPage() {
     })
 
   useEffect(() => {
-    // Don't redirect if the param matches a known static sub-route that
-    // should be handled by its own page (Next.js static routes sometimes
-    // lose priority over dynamic segments in this environment).
-    const STATIC_SEGMENTS = ["creador-masivo", "editor-masivo"]
-    if (!selectedItem && items.length > 0 && !STATIC_SEGMENTS.includes(itemParam)) {
+    const STATIC_SEGMENTS: Record<string, string> = {
+      "creador-masivo": "/catalogo/items/creador-masivo",
+      "editor-masivo": "/catalogo/items/editor-masivo",
+    }
+    if (STATIC_SEGMENTS[itemParam]) {
+      // This [id] route was matched instead of the static page — redirect there directly.
+      router.replace(STATIC_SEGMENTS[itemParam])
+      return
+    }
+    if (!selectedItem && items.length > 0) {
       router.push("/catalogo/items")
     }
   }, [selectedItem, items, router, itemParam])
@@ -150,11 +155,8 @@ export default function CatalogoItemDetailPage() {
     : [{ label: "Catálogo" }, { label: "Items", href: "/catalogo/items" }]
 
   if (!selectedItem) {
-    return (
-      <div className="min-h-screen bg-[rgb(243,242,238)] flex items-center justify-center">
-        <p>Loading...</p>
-      </div>
-    )
+    // While redirecting to a static sub-route or waiting for items, show nothing.
+    return <div className="min-h-screen bg-[rgb(243,242,238)]" />
   }
 
   const canUndo = canUndoEdit || hasUnsavedDeletes
