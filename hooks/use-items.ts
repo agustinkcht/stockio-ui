@@ -1098,7 +1098,7 @@ export function useItems() {
         const variantName = variantNameSuffix ? `${data.name} ${variantNameSuffix}` : data.name
         
         return {
-          id: variant.id || `variant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          id: variant.id || Math.random().toString(36).substring(2, 10).toUpperCase(),
           sku: variantSku,
           name: variantName, // Add name to variant
           codigoUniversal: variant.codigoUniversal || "",

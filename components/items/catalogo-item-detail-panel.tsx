@@ -728,7 +728,7 @@ export function CatalogoItemDetailPanel({
     
     // Create the new variant object
     const newVariant: any = {
-      id: `variant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: Math.random().toString(36).substring(2, 10).toUpperCase(),
       sku: generatedSku,
       codigoUniversal: "",
       descripcion: "",
@@ -792,7 +792,7 @@ export function CatalogoItemDetailPanel({
     }))
 
     const newVariantObjects = newCombinations.map((combo) => ({
-      id: `variant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: Math.random().toString(36).substring(2, 10).toUpperCase(),
       sku: combo.sku,
       name: selectedItem.name,
       codigoUniversal: combo.codigoUniversal || "",
@@ -813,7 +813,6 @@ export function CatalogoItemDetailPanel({
 
     // Combine valid existing variants + new ones
     const updatedVariants = [...validExistingVariants, ...newVariantObjects]
-    console.log("[v0] handleGenerarVariantes - updatedVariants with ids:", updatedVariants.map(v => ({ id: v.id, sku: v.sku })))
     
     // Update variantItems for display
     setVariantItems(convertSavedVariantsToDisplay(updatedVariants))
@@ -1744,7 +1743,6 @@ export function CatalogoItemDetailPanel({
 
                         const displaySku = sourceVariant?.sku || variant.sku
                         const variantId = sourceVariant?.id || variant.id
-                        console.log("[v0] variant matrix click debug:", { variantSku: variant.sku, variantId, sourceVariantId: sourceVariant?.id, variantDisplayId: variant.id, sourceVariant })
 
                         // Delete variant handler - removes variant and cleans up unused tags
                         const handleDeleteVariant = () => {
