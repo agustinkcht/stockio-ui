@@ -50,8 +50,8 @@ export default function CatalogoItemDetailPage() {
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
 
   const selectedItem =
-    items.find((item) => item.id === itemParam) ||
-    items.flatMap((item) => item.variants || []).find((variant) => variant.id === itemParam)
+    items.find((item) => item.id === itemParam || item.sku === itemParam) ||
+    items.flatMap((item) => item.variants || []).find((variant) => variant.id === itemParam || variant.sku === itemParam)
 
   const handleUndo = () => {
     if (canUndoEdit) {
