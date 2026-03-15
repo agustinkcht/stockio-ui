@@ -580,6 +580,7 @@ export function CatalogoItemDetailPanel({
   // Convert saved variants to variantItems format for display
   const convertSavedVariantsToDisplay = (savedVariants: any[]) => {
     return savedVariants.map((v: any) => ({
+      id: v.id,
       sku: v.sku,
       codigoUniversal: v.codigoUniversal || "",
       descripcion: v.descripcion || "",
@@ -727,6 +728,7 @@ export function CatalogoItemDetailPanel({
     
     // Create the new variant object
     const newVariant: any = {
+      id: Math.random().toString(36).substring(2, 10).toUpperCase(),
       sku: generatedSku,
       codigoUniversal: "",
       descripcion: "",
@@ -790,6 +792,7 @@ export function CatalogoItemDetailPanel({
     }))
 
     const newVariantObjects = newCombinations.map((combo) => ({
+      id: Math.random().toString(36).substring(2, 10).toUpperCase(),
       sku: combo.sku,
       name: selectedItem.name,
       codigoUniversal: combo.codigoUniversal || "",
@@ -1740,6 +1743,7 @@ export function CatalogoItemDetailPanel({
                         })
 
                         const displaySku = sourceVariant?.sku || variant.sku
+                        const variantId = sourceVariant?.id
 
                         // Delete variant handler - removes variant and cleans up unused tags
                         const handleDeleteVariant = () => {
@@ -1823,8 +1827,8 @@ export function CatalogoItemDetailPanel({
                             key={variant.sku}
                             onClick={() => {
                               // Navigate to the child item when clicking on the variant row
-                              if (displaySku) {
-                                router.push(`/catalogo/items/${displaySku}`)
+                              if (variantId) {
+                                router.push(`/catalogo/items/${variantId}`)
                               }
                             }}
                             className="group grid grid-cols-[1fr_minmax(80px,1fr)_28px] items-center hover:bg-accent/50 transition-colors cursor-pointer"
