@@ -400,6 +400,10 @@ export function CatalogoItemDetailPanel({
     setDescripcionValue(selectedItem.descripcion || "")
     setAtributosPrincipales(selectedItem?.atributosPrincipales || [])
     setAtributosInformativos(getMergedAtributosInformativos(fatherItem?.atributosInformativos, selectedItem?.atributosInformativos))
+    // Reset variantItems from selectedItem.variants when selectedItem changes (covers Deshacer restoring state)
+    if (selectedItem?.variants && selectedItem.variants.length > 0) {
+      setVariantItems(convertSavedVariantsToDisplay(selectedItem.variants))
+    }
     // Ensure unitsPorPack and volume state are also synced if they are part of selectedItem
     setUnidadesPorPack(() => {
       const inherited = shouldStrictlyInherit(fatherItem?.unidadesPorPack)
@@ -1797,8 +1801,8 @@ export function CatalogoItemDetailPanel({
                           return hasMatchingAttr1 && hasMatchingAttr2
                         })
 
-                        const displaySku = sourceVariant?.sku || variant.sku
-                        const variantId = sourceVariant?.id || variant.id
+                        const displaySku = variant.sku || sourceVariant?.sku
+                        const variantId = variant.id || sourceVariant?.id
 
                         // Delete variant handler - removes variant and cleans up unused tags
                         const handleDeleteVariant = () => {
