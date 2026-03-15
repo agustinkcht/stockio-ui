@@ -1928,7 +1928,8 @@ export function CatalogoItemDetailPanel({
 
                             <div className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
                               {(() => {
-                                const skuPadreValue = selectedItem?.sku || ""
+                                // Use skuValue (local state) as the prefix source, not selectedItem.sku (which lags behind)
+                                const skuPadreValue = skuValue || selectedItem?.sku || ""
                                 const fullSku = displaySku || ""
                                 // Suffix is everything after "{skuPadre}-"
                                 const prefix = skuPadreValue ? `${skuPadreValue}-` : ""
