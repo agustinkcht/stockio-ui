@@ -862,7 +862,7 @@ export function CatalogoItemDetailPanel({
     }))
   }
 
-  const updateVariantField = (sku: string, field: "codigoUniversal" | "descripcion" | "foto", value: string) => {
+  const updateVariantField = (sku: string, field: "sku" | "codigoUniversal" | "descripcion" | "foto", value: string) => {
     setVariantItems((prev) => prev.map((item) => (item.sku === sku ? { ...item, [field]: value } : item)))
     // Optionally notify parent via onFieldChange if needed
     onFieldChange(sku, field, value)
@@ -1075,31 +1075,73 @@ export function CatalogoItemDetailPanel({
                           {/* SKU row */}
                           <div className="flex items-center gap-2 group/sku">
                             <span className="font-medium text-slate-400 whitespace-nowrap">SKU:</span>
-                            {editingSku ? (
-                              <input
-                                type="text"
-                                value={skuValue}
-                                onChange={(e) => setSkuValue(e.target.value)}
-                                onBlur={handleSkuBlur}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") (e.target as HTMLInputElement).blur()
-                                  if (e.key === "Escape") {
-                                    setSkuValue(selectedItem.sku || "")
-                                    setEditingSku(false)
-                                  }
-                                }}
-                                onClick={(e) => e.stopPropagation()}
-                                className="text-slate-100 bg-transparent border-b border-white/40 focus:border-white outline-none w-full max-w-[160px]"
-                                autoFocus
-                              />
-                            ) : (
-                              <div
-                                className="flex items-center gap-1.5 cursor-pointer"
-                                onClick={(e) => { e.stopPropagation(); setEditingSku(true) }}
-                              >
-                                <span className="text-slate-100">{skuValue || selectedItem.sku}</span>
-                                <Pencil className="w-3 h-3 text-white/40 opacity-0 group-hover/sku:opacity-100 transition-opacity" />
-                              </div>
+                            {isChildItem && fatherItem ? (() => {
+                              // Split into locked prefix (parent SKU + "-") and editable suffix
+                              const prefix = `${fatherItem.sku}-`
+                              const fullSku = skuValue || selectedItem.sku || ""
+                              const suffix = fullSku.startsWith(prefix) ? fullSku.slice(prefix.length) : fullSku
+                              return (
+                                <div className="flex items-center gap-0 flex-1 group/sku-inner">
+                                  <span className="font-mono text-slate-400/80 whitespace-nowrap select-none">
+                                    {prefix}
+                                  </span>
+                                  {editingSku ? (
+                                    <input
+                                      type="text"
+                                      value={suffix}
+                                      onChange={(e) => setSkuValue(prefix + e.target.value)}
+                                      onBlur={handleSkuBlur}
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter") (e.target as HTMLInputElement).blur()
+                                        if (e.key === "Escape") {
+                                          setSkuValue(selectedItem.sku || "")
+                                          setEditingSku(false)
+                                        }
+                                      }}
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="text-slate-100 bg-transparent border-b border-white/40 focus:border-white outline-none w-full max-w-[120px]"
+                                      autoFocus
+                                    />
+                                  ) : (
+                                    <div
+                                      className="flex items-center gap-1.5 cursor-pointer"
+                                      onClick={(e) => { e.stopPropagation(); setEditingSku(true) }}
+                                    >
+                                      <span className="text-slate-100">{suffix}</span>
+                                      <Pencil className="w-3 h-3 text-white/40 opacity-0 group-hover/sku:opacity-100 transition-opacity" />
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            })() : (
+                              <>
+                                {editingSku ? (
+                                  <input
+                                    type="text"
+                                    value={skuValue}
+                                    onChange={(e) => setSkuValue(e.target.value)}
+                                    onBlur={handleSkuBlur}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") (e.target as HTMLInputElement).blur()
+                                      if (e.key === "Escape") {
+                                        setSkuValue(selectedItem.sku || "")
+                                        setEditingSku(false)
+                                      }
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="text-slate-100 bg-transparent border-b border-white/40 focus:border-white outline-none w-full max-w-[160px]"
+                                    autoFocus
+                                  />
+                                ) : (
+                                  <div
+                                    className="flex items-center gap-1.5 cursor-pointer"
+                                    onClick={(e) => { e.stopPropagation(); setEditingSku(true) }}
+                                  >
+                                    <span className="text-slate-100">{skuValue || selectedItem.sku}</span>
+                                    <Pencil className="w-3 h-3 text-white/40 opacity-0 group-hover/sku:opacity-100 transition-opacity" />
+                                  </div>
+                                )}
+                              </>
                             )}
                             <button
                               onClick={(e) => { e.stopPropagation(); handleCopySku() }}
@@ -1849,13 +1891,32 @@ export function CatalogoItemDetailPanel({
                             </div>
 
                             <div className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
-                              <input
-                                type="text"
-                                value={displaySku}
-                                onChange={(e) => updateVariantField(variant.sku, "sku", e.target.value)}
-                                className="w-full bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-primary/50 px-0 py-0.5 text-[11px] font-mono text-foreground focus:outline-none transition-colors"
-                                placeholder="SKU..."
-                              />
+                              {(() => {
+                                const skuPadreValue = selectedItem?.sku || ""
+                                const fullSku = displaySku || ""
+                                // Suffix is everything after "{skuPadre}-"
+                                const prefix = skuPadreValue ? `${skuPadreValue}-` : ""
+                                const suffix = fullSku.startsWith(prefix) ? fullSku.slice(prefix.length) : fullSku
+                                return (
+                                  <div className="flex items-center w-full">
+                                    {prefix && (
+                                      <span className="text-[11px] font-mono text-muted-foreground/60 select-none whitespace-nowrap">
+                                        {prefix}
+                                      </span>
+                                    )}
+                                    <input
+                                      type="text"
+                                      value={suffix}
+                                      onChange={(e) => {
+                                        const newFullSku = prefix + e.target.value
+                                        updateVariantField(variant.sku, "sku", newFullSku)
+                                      }}
+                                      className="flex-1 min-w-0 bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-primary/50 px-0 py-0.5 text-[11px] font-mono text-foreground focus:outline-none transition-colors"
+                                      placeholder="sufijo..."
+                                    />
+                                  </div>
+                                )
+                              })()}
                             </div>
 
                             <div className="px-1 py-2 flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
