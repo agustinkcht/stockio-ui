@@ -1734,15 +1734,17 @@ export function CatalogoItemDetailPanel({
                                   setEditingSkuPadre(false)
                                   const newSkuPadre = skuValue
                                   const oldSkuPadre = skuPadreBeforeEdit.current
+                                  console.log("[v0] SKU padre cascade - oldSkuPadre:", oldSkuPadre, "newSkuPadre:", newSkuPadre)
+                                  console.log("[v0] SKU padre cascade - variantItems before:", variantItems.map(v => v.sku))
                                   if (oldSkuPadre === newSkuPadre) return
                                   // Compute cascaded variants before any state updates
                                   const cascadedVariants = variantItems.map((variant) => {
                                     const oldPrefix = oldSkuPadre + "-"
-                                    if (variant.sku.startsWith(oldPrefix)) {
-                                      const suffix = variant.sku.slice(oldPrefix.length)
-                                      return { ...variant, sku: newSkuPadre + "-" + suffix }
-                                    }
-                                    return variant
+                                    const startsWithOld = variant.sku.startsWith(oldPrefix)
+                                    const suffix = startsWithOld ? variant.sku.slice(oldPrefix.length) : variant.sku
+                                    const newSku = startsWithOld ? newSkuPadre + "-" + suffix : variant.sku
+                                    console.log("[v0] Cascade variant:", { oldSku: variant.sku, oldPrefix, startsWithOld, suffix, newSku })
+                                    return { ...variant, sku: newSku }
                                   })
                                   // Set flag so useEffect doesn't overwrite our cascaded variantItems
                                   isCascadingSkuPadre.current = true
