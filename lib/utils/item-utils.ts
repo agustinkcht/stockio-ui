@@ -9,13 +9,14 @@ import type {
 } from "../types"
 
 /**
- * Generates a cryptographically random 8-character base-36 uppercase ID.
+ * Generates a cryptographically random 7-character base-36 uppercase ID.
  * Uses crypto.getRandomValues for strong randomness.
+ * A Uint32 value in base-36 is at most 7 characters (max: ZZZZZZ3 = 4294967295).
  */
 export function generateId(): string {
   const bytes = new Uint32Array(1)
   crypto.getRandomValues(bytes)
-  return bytes[0].toString(36).padStart(7, "0").substring(0, 8).toUpperCase()
+  return bytes[0].toString(36).padStart(7, "0").toUpperCase()
 }
 
 export function getItemDisplayName(item: Item): string {
