@@ -189,6 +189,7 @@ export function CatalogoItemDetailPanel({
   const [codigoProveedor, setCodigoProveedor] = useState(selectedItem?.codigoProveedor || "")
 
   const [editingSku, setEditingSku] = useState(false)
+  const [editingSkuPadre, setEditingSkuPadre] = useState(false)
   const [editingCodigoUniversal, setEditingCodigoUniversal] = useState(false)
   const [skuValue, setSkuValue] = useState(selectedItem.sku || "")
   const [codigoUniversalValue, setCodigoUniversalValue] = useState(selectedItem.codigoUniversal || "")
@@ -1710,49 +1711,61 @@ export function CatalogoItemDetailPanel({
                           </button>
                         </div>
                         
-                        {/* SKU Padre field - below Variantes header */}
-                        <div className="mb-4 w-1/2">
-                          <label className="text-[9px] font-medium text-slate-400 uppercase tracking-wider block mb-0.5">
-                            SKU Padre
-                          </label>
-                          <p className="text-[9px] text-slate-400 mb-1.5 italic">
-                            Base para generar SKUs de variantes
-                          </p>
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="text"
-                              value={skuValue}
-                              onChange={(e) => {
-                                const newSkuPadre = e.target.value.toUpperCase()
-                                const oldSkuPadre = skuValue
-                                setSkuValue(newSkuPadre)
-                                
-                                if (variantItems.length > 0) {
-                                  setVariantItems(prev => prev.map(variant => {
-                                    const skuParts = variant.sku.split('-')
-                                    const oldPadreParts = oldSkuPadre.split('-')
-                                    
-                                    if (skuParts.length > oldPadreParts.length) {
-                                      const variantSuffix = skuParts.slice(oldPadreParts.length).join('-')
-                                      return { ...variant, sku: newSkuPadre + '-' + variantSuffix }
-                                    }
-                                    return variant
-                                  }))
-                                }
-                              }}
-                              className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300 font-mono"
-                              placeholder="Ej: VNO-KNECHT"
-                            />
-                            {skuValue !== (selectedItem?.sku || "") && (
-                              <button
-                                onClick={(e) => { e.stopPropagation(); handleSkuBlur() }}
-                                className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-600 hover:bg-emerald-100 transition-colors flex-shrink-0"
-                                title="Confirmar SKU Padre"
+                        {/* SKU Padre - inline label + click-to-edit value */}
+                        <div className="mb-4">
+                          <div className="flex items-center gap-2 group/skupadre">
+                            <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">
+                              SKU Padre
+                            </span>
+                            {editingSkuPadre ? (
+                              <input
+                                type="text"
+                                value={skuValue}
+                                autoFocus
+                                onChange={(e) => setSkuValue(e.target.value.toUpperCase())}
+                                onBlur={() => {
+                                  setEditingSkuPadre(false)
+                                  const newSkuPadre = skuValue
+                                  const oldSkuPadre = selectedItem?.sku || ""
+                                  // Cascade: update all variant SKU prefixes
+                                  if (variantItems.length > 0) {
+                                    setVariantItems((prev) =>
+                                      prev.map((variant) => {
+                                        const oldPrefix = oldSkuPadre + "-"
+                                        if (variant.sku.startsWith(oldPrefix)) {
+                                          const suffix = variant.sku.slice(oldPrefix.length)
+                                          return { ...variant, sku: newSkuPadre + "-" + suffix }
+                                        }
+                                        return variant
+                                      }),
+                                    )
+                                  }
+                                  onFieldChange(selectedItem.sku, "sku", newSkuPadre)
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") (e.target as HTMLInputElement).blur()
+                                  if (e.key === "Escape") {
+                                    setSkuValue(selectedItem?.sku || "")
+                                    setEditingSkuPadre(false)
+                                  }
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                                className="font-mono text-sm text-slate-800 bg-transparent border-b border-slate-400 focus:border-slate-600 focus:outline-none w-full max-w-[180px]"
+                                placeholder="Ej: VNO-KNECHT"
+                              />
+                            ) : (
+                              <div
+                                className="flex items-center gap-1.5 cursor-pointer"
+                                onClick={(e) => { e.stopPropagation(); setEditingSkuPadre(true) }}
                               >
-                                <Check className="w-4 h-4" />
-                              </button>
+                                <span className="font-mono text-sm text-slate-800">{skuValue || selectedItem?.sku}</span>
+                                <Pencil className="w-3 h-3 text-slate-400/60 opacity-0 group-hover/skupadre:opacity-100 transition-opacity" />
+                              </div>
                             )}
                           </div>
+                          <p className="text-[9px] text-slate-400 mt-0.5 italic">
+                            Base para generar SKUs de variantes
+                          </p>
                         </div>
                       </div>
                     )}
