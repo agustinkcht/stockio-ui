@@ -191,6 +191,7 @@ export function CatalogoItemDetailPanel({
   const [editingSku, setEditingSku] = useState(false)
   const [editingSkuPadre, setEditingSkuPadre] = useState(false)
   const skuPadreBeforeEdit = useRef<string>("")
+  const isCascadingSkuPadre = useRef(false)
   const [editingCodigoUniversal, setEditingCodigoUniversal] = useState(false)
   const [skuValue, setSkuValue] = useState(selectedItem.sku || "")
   const [codigoUniversalValue, setCodigoUniversalValue] = useState(selectedItem.codigoUniversal || "")
@@ -402,7 +403,8 @@ export function CatalogoItemDetailPanel({
     setAtributosPrincipales(selectedItem?.atributosPrincipales || [])
     setAtributosInformativos(getMergedAtributosInformativos(fatherItem?.atributosInformativos, selectedItem?.atributosInformativos))
     // Reset variantItems from selectedItem.variants when selectedItem changes (covers Deshacer restoring state)
-    if (selectedItem?.variants && selectedItem.variants.length > 0) {
+    // Skip if we're mid-cascade (SKU padre rename) — variantItems are already correct in local state
+    if (!isCascadingSkuPadre.current && selectedItem?.variants && selectedItem.variants.length > 0) {
       setVariantItems(convertSavedVariantsToDisplay(selectedItem.variants))
     }
     // Ensure unitsPorPack and volume state are also synced if they are part of selectedItem
@@ -1732,20 +1734,32 @@ export function CatalogoItemDetailPanel({
                                   setEditingSkuPadre(false)
                                   const newSkuPadre = skuValue
                                   const oldSkuPadre = skuPadreBeforeEdit.current
-                                  // Cascade: replace old prefix with new prefix in all variant SKUs
-                                  if (variantItems.length > 0 && oldSkuPadre !== newSkuPadre) {
-                                    setVariantItems((prev) =>
-                                      prev.map((variant) => {
-                                        const oldPrefix = oldSkuPadre + "-"
-                                        if (variant.sku.startsWith(oldPrefix)) {
-                                          const suffix = variant.sku.slice(oldPrefix.length)
-                                          return { ...variant, sku: newSkuPadre + "-" + suffix }
-                                        }
-                                        return variant
-                                      }),
-                                    )
-                                  }
+                                  if (oldSkuPadre === newSkuPadre) return
+                                  // Compute cascaded variants before any state updates
+                                  const cascadedVariants = variantItems.map((variant) => {
+                                    const oldPrefix = oldSkuPadre + "-"
+                                    if (variant.sku.startsWith(oldPrefix)) {
+                                      const suffix = variant.sku.slice(oldPrefix.length)
+                                      return { ...variant, sku: newSkuPadre + "-" + suffix }
+                                    }
+                                    return variant
+                                  })
+                                  // Set flag so useEffect doesn't overwrite our cascaded variantItems
+                                  isCascadingSkuPadre.current = true
+                                  // Update local display state
+                                  setVariantItems(cascadedVariants)
+                                  // Persist new SKU padre to selectedItem (triggers useEffect, but flag guards it)
                                   onFieldChange(oldSkuPadre, "sku", newSkuPadre)
+                                  // Persist cascaded variant SKUs to selectedItem.variants
+                                  onFieldChange(newSkuPadre, "variants",
+                                    cascadedVariants.map((v) => ({
+                                      ...v,
+                                      atributosPrincipales: v.atributosPrincipales || [],
+                                      atributosInformativos: v.atributosInformativos || [],
+                                    }))
+                                  )
+                                  // Clear flag after React has processed state updates
+                                  setTimeout(() => { isCascadingSkuPadre.current = false }, 0)
                                 }}
                                 onKeyDown={(e) => {
                                   if (e.key === "Enter") (e.target as HTMLInputElement).blur()
