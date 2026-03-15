@@ -11,13 +11,13 @@ import type {
 /**
  * Generates a cryptographically random 7-character base-36 uppercase ID
  * prefixed by item type: STA (standalone), PAR (parent), VAR (child/variant).
- * Format: {PREFIX}-{7 chars} e.g. "STA-0GB8E5Z"
+ * Format: {PREFIX}{7 chars} e.g. "STA0GB8E5Z"
  */
 export function generateId(type: "STA" | "PAR" | "VAR"): string {
   const bytes = new Uint32Array(1)
   crypto.getRandomValues(bytes)
   const code = bytes[0].toString(36).padStart(7, "0").toUpperCase()
-  return `${type}-${code}`
+  return `${type}${code}`
 }
 
 export function getItemDisplayName(item: Item): string {
