@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
 import { TEMPLATES } from "@/lib/constants" // DEPOSITS and SAVED_ATRIBUTOS imports removed
 import { getCategoryImage } from "@/lib/utils/category-images"
+import { generateId } from "@/lib/utils/item-utils"
 import Image from "next/image"
 import { NuevaVarianteModal } from "@/components/modals/nueva-variante-modal"
 // import { Breadcrumb } from "@/components/layout/breadcrumb"
@@ -728,7 +729,7 @@ export function CatalogoItemDetailPanel({
     
     // Create the new variant object
     const newVariant: any = {
-      id: Math.random().toString(36).substring(2, 10).toUpperCase(),
+      id: generateId(),
       sku: generatedSku,
       codigoUniversal: "",
       descripcion: "",
@@ -792,7 +793,7 @@ export function CatalogoItemDetailPanel({
     }))
 
     const newVariantObjects = newCombinations.map((combo) => ({
-      id: Math.random().toString(36).substring(2, 10).toUpperCase(),
+      id: generateId(),
       sku: combo.sku,
       name: selectedItem.name,
       codigoUniversal: combo.codigoUniversal || "",

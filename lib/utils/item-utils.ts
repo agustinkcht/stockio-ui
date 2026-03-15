@@ -8,6 +8,16 @@ import type {
   FilterConfig,
 } from "../types"
 
+/**
+ * Generates a cryptographically random 8-character base-36 uppercase ID.
+ * Uses crypto.getRandomValues for strong randomness.
+ */
+export function generateId(): string {
+  const bytes = new Uint32Array(1)
+  crypto.getRandomValues(bytes)
+  return bytes[0].toString(36).padStart(7, "0").substring(0, 8).toUpperCase()
+}
+
 export function getItemDisplayName(item: Item): string {
   const attributes = []
 
