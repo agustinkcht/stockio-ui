@@ -813,7 +813,7 @@ export function CatalogoItemDetailPanel({
 
     // Combine valid existing variants + new ones
     const updatedVariants = [...validExistingVariants, ...newVariantObjects]
-    console.log("[v0] Updated variants:", updatedVariants)
+    console.log("[v0] handleGenerarVariantes - updatedVariants with ids:", updatedVariants.map(v => ({ id: v.id, sku: v.sku })))
     
     // Update variantItems for display
     setVariantItems(convertSavedVariantsToDisplay(updatedVariants))
@@ -1744,6 +1744,7 @@ export function CatalogoItemDetailPanel({
 
                         const displaySku = sourceVariant?.sku || variant.sku
                         const variantId = sourceVariant?.id || variant.id
+                        console.log("[v0] variant matrix click debug:", { variantSku: variant.sku, variantId, sourceVariantId: sourceVariant?.id, variantDisplayId: variant.id, sourceVariant })
 
                         // Delete variant handler - removes variant and cleans up unused tags
                         const handleDeleteVariant = () => {
