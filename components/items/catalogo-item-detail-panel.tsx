@@ -190,6 +190,7 @@ export function CatalogoItemDetailPanel({
 
   const [editingSku, setEditingSku] = useState(false)
   const [editingSkuPadre, setEditingSkuPadre] = useState(false)
+  const skuPadreBeforeEdit = useRef<string>("")
   const [editingCodigoUniversal, setEditingCodigoUniversal] = useState(false)
   const [skuValue, setSkuValue] = useState(selectedItem.sku || "")
   const [codigoUniversalValue, setCodigoUniversalValue] = useState(selectedItem.codigoUniversal || "")
@@ -1730,9 +1731,9 @@ export function CatalogoItemDetailPanel({
                                 onBlur={() => {
                                   setEditingSkuPadre(false)
                                   const newSkuPadre = skuValue
-                                  const oldSkuPadre = selectedItem?.sku || ""
-                                  // Cascade: update all variant SKU prefixes
-                                  if (variantItems.length > 0) {
+                                  const oldSkuPadre = skuPadreBeforeEdit.current
+                                  // Cascade: replace old prefix with new prefix in all variant SKUs
+                                  if (variantItems.length > 0 && oldSkuPadre !== newSkuPadre) {
                                     setVariantItems((prev) =>
                                       prev.map((variant) => {
                                         const oldPrefix = oldSkuPadre + "-"
@@ -1744,12 +1745,12 @@ export function CatalogoItemDetailPanel({
                                       }),
                                     )
                                   }
-                                  onFieldChange(selectedItem.sku, "sku", newSkuPadre)
+                                  onFieldChange(oldSkuPadre, "sku", newSkuPadre)
                                 }}
                                 onKeyDown={(e) => {
                                   if (e.key === "Enter") (e.target as HTMLInputElement).blur()
                                   if (e.key === "Escape") {
-                                    setSkuValue(selectedItem?.sku || "")
+                                    setSkuValue(skuPadreBeforeEdit.current)
                                     setEditingSkuPadre(false)
                                   }
                                 }}
@@ -1760,7 +1761,11 @@ export function CatalogoItemDetailPanel({
                             ) : (
                               <div
                                 className="flex items-center gap-1.5 cursor-pointer"
-                                onClick={(e) => { e.stopPropagation(); setEditingSkuPadre(true) }}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  skuPadreBeforeEdit.current = skuValue
+                                  setEditingSkuPadre(true)
+                                }}
                               >
                                 <span className="font-mono text-sm text-slate-800">{skuValue || selectedItem?.sku}</span>
                                 <Pencil className="w-3 h-3 text-slate-400/60 opacity-0 group-hover/skupadre:opacity-100 transition-opacity" />
