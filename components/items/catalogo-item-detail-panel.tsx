@@ -728,7 +728,7 @@ export function CatalogoItemDetailPanel({
     
     // Create the new variant object
     const newVariant: any = {
-      id: Math.random().toString(36).substring(2, 10).toUpperCase(),
+      id: `variant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       sku: generatedSku,
       codigoUniversal: "",
       descripcion: "",
@@ -792,7 +792,7 @@ export function CatalogoItemDetailPanel({
     }))
 
     const newVariantObjects = newCombinations.map((combo) => ({
-      id: Math.random().toString(36).substring(2, 10).toUpperCase(),
+      id: `variant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       sku: combo.sku,
       name: selectedItem.name,
       codigoUniversal: combo.codigoUniversal || "",
@@ -1743,7 +1743,7 @@ export function CatalogoItemDetailPanel({
                         })
 
                         const displaySku = sourceVariant?.sku || variant.sku
-                        const variantId = sourceVariant?.id
+                        const variantId = sourceVariant?.id || variant.id
 
                         // Delete variant handler - removes variant and cleans up unused tags
                         const handleDeleteVariant = () => {
@@ -1826,7 +1826,6 @@ export function CatalogoItemDetailPanel({
                           <div
                             key={variant.sku}
                             onClick={() => {
-                              // Navigate to the child item when clicking on the variant row
                               if (variantId) {
                                 router.push(`/catalogo/items/${variantId}`)
                               }
