@@ -729,7 +729,7 @@ export function CatalogoItemDetailPanel({
     
     // Create the new variant object
     const newVariant: any = {
-      id: generateId(),
+      id: generateId("VAR"),
       sku: generatedSku,
       codigoUniversal: "",
       descripcion: "",
@@ -793,7 +793,7 @@ export function CatalogoItemDetailPanel({
     }))
 
     const newVariantObjects = newCombinations.map((combo) => ({
-      id: generateId(),
+      id: generateId("VAR"),
       sku: combo.sku,
       name: selectedItem.name,
       codigoUniversal: combo.codigoUniversal || "",

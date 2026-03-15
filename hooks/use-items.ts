@@ -196,7 +196,7 @@ export function useItems() {
     }
 
     const newItem: Item = {
-      id: generateId(),
+      id: generateId("STA"),
       name: itemTitulo,
       stock: {
         total: "0",
@@ -287,7 +287,7 @@ export function useItems() {
     }
 
     const newItem: Item = {
-      id: generateId(),
+      id: generateId("PAR"),
       name: itemTitulo,
       hasVariants: true,
       isAgrupador: true,
@@ -1099,7 +1099,7 @@ export function useItems() {
         const variantName = variantNameSuffix ? `${data.name} ${variantNameSuffix}` : data.name
         
         return {
-          id: variant.id || generateId(),
+          id: variant.id || generateId("VAR"),
           sku: variantSku,
           name: variantName, // Add name to variant
           codigoUniversal: variant.codigoUniversal || "",
