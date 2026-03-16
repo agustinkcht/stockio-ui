@@ -557,8 +557,10 @@ export function CatalogoItemDetailPanel({
     if (attrs.length === 1) {
       attrs[0].variantes.forEach((v1) => {
         if (!variantExists(v1, null)) {
+          const suffix = v1.toLowerCase().replace(/\s+/g, "-")
           newCombinations.push({
-            sku: `${skuPadre}-${v1.toLowerCase().replace(/\s+/g, "-")}`,
+            sku: `${skuPadre}-${suffix}`,
+            skuSuffix: suffix,
             codigoUniversal: "",
             descripcion: "",
             foto: "",
@@ -571,8 +573,10 @@ export function CatalogoItemDetailPanel({
       attrs[0].variantes.forEach((v1) => {
         attrs[1].variantes.forEach((v2) => {
           if (!variantExists(v1, v2)) {
+            const suffix = `${v1.toLowerCase().replace(/\s+/g, "-")}-${v2.toLowerCase().replace(/\s+/g, "-")}`
             newCombinations.push({
-              sku: `${skuPadre}-${v1.toLowerCase().replace(/\s+/g, "-")}-${v2.toLowerCase().replace(/\s+/g, "-")}`,
+              sku: `${skuPadre}-${suffix}`,
+              skuSuffix: suffix,
               codigoUniversal: "",
               descripcion: "",
               foto: "",
@@ -588,17 +592,20 @@ export function CatalogoItemDetailPanel({
   }
 
   // Convert saved variants to variantItems format for display
-  const convertSavedVariantsToDisplay = (savedVariants: any[]) => {
-    const parentSku = selectedItem?.sku || ""
+  // skuSuffix is stored directly in variant data, or extracted from full SKU as fallback
+  const convertSavedVariantsToDisplay = (savedVariants: any[], parentSkuOverride?: string) => {
+    const parentSku = parentSkuOverride || selectedItem?.sku || ""
     return savedVariants.map((v: any) => {
-      const fullSku = v.sku || ""
-      const prefix = parentSku + "-"
-      // Extract suffix: everything after "{parentSku}-"
-      const skuSuffix = fullSku.startsWith(prefix) ? fullSku.slice(prefix.length) : fullSku
+      // Prefer stored skuSuffix, fallback to extracting from full SKU
+      let skuSuffix = v.skuSuffix
+      if (!skuSuffix && v.sku) {
+        const prefix = parentSku + "-"
+        skuSuffix = v.sku.startsWith(prefix) ? v.sku.slice(prefix.length) : v.sku
+      }
       return {
         id: v.id,
-        sku: fullSku,
-        skuSuffix,
+        sku: v.sku || "",
+        skuSuffix: skuSuffix || "",
         codigoUniversal: v.codigoUniversal || "",
         descripcion: v.descripcion || "",
         foto: v.foto || "",
@@ -748,6 +755,7 @@ export function CatalogoItemDetailPanel({
     const newVariant: any = {
       id: generateId("VAR"),
       sku: generatedSku,
+      skuSuffix: variantSuffix, // Store suffix directly for clean parent-child relationship
       codigoUniversal: "",
       descripcion: "",
       foto: selectedItem.foto || "",
@@ -945,10 +953,19 @@ export function CatalogoItemDetailPanel({
 
   const handleSkuBlur = () => {
     if (selectedItem?.sku && editingSku) {
-      updateItem(selectedItem.sku, { sku: skuValue })
+      // For child items, also extract and persist skuSuffix
+      let skuSuffix: string | undefined
+      if (isChildItem && fatherItem) {
+        const prefix = fatherItem.sku + "-"
+        skuSuffix = skuValue.startsWith(prefix) ? skuValue.slice(prefix.length) : skuValue
+      }
+      updateItem(selectedItem.sku, { sku: skuValue, ...(skuSuffix !== undefined && { skuSuffix }) })
       setEditingSku(false)
       // Notify parent of change
       onFieldChange(selectedItem.sku, "sku", skuValue)
+      if (skuSuffix !== undefined) {
+        onFieldChange(skuValue, "skuSuffix", skuSuffix)
+      }
     }
   }
 
@@ -1093,10 +1110,10 @@ export function CatalogoItemDetailPanel({
                           <div className="flex items-center gap-2 group/sku">
                             <span className="font-medium text-slate-400 whitespace-nowrap">SKU:</span>
                             {isChildItem && fatherItem ? (() => {
-                              // Split into locked prefix (parent SKU + "-") and editable suffix
+                              // Use skuSuffix directly from selectedItem if available, otherwise extract from fullSku
                               const prefix = `${fatherItem.sku}-`
                               const fullSku = skuValue || selectedItem.sku || ""
-                              const suffix = fullSku.startsWith(prefix) ? fullSku.slice(prefix.length) : fullSku
+                              const suffix = selectedItem.skuSuffix || (fullSku.startsWith(prefix) ? fullSku.slice(prefix.length) : fullSku)
                               return (
                                 <div className="flex items-center gap-0 flex-1 group/sku-inner">
                                   <span className="font-mono text-slate-400/80 whitespace-nowrap select-none">
@@ -1764,7 +1781,8 @@ export function CatalogoItemDetailPanel({
                                       return {
                                         ...original,
                                         id: v.id,
-                                        sku: v.sku, // Use the cascaded full SKU
+                                        sku: v.sku, // Full SKU = newSkuPadre + "-" + skuSuffix
+                                        skuSuffix: v.skuSuffix, // Store suffix directly so it survives re-extraction
                                       }
                                     })
                                   )
@@ -1953,13 +1971,19 @@ export function CatalogoItemDetailPanel({
                                       onChange={(e) => {
                                         const newSuffix = e.target.value
                                         const newFullSku = prefix + newSuffix
-                                        // Update both sku and skuSuffix
+                                        const oldSku = variant.sku
+                                        // Update both sku and skuSuffix in local state
                                         setVariantItems((prev) =>
                                           prev.map((v) =>
-                                            v.sku === variant.sku ? { ...v, sku: newFullSku, skuSuffix: newSuffix } : v
+                                            v.sku === oldSku ? { ...v, sku: newFullSku, skuSuffix: newSuffix } : v
                                           )
                                         )
-                                        onFieldChange(variant.sku, "sku", newFullSku)
+                                        // Persist both sku and skuSuffix to selectedItem.variants
+                                        const originalVariants = selectedItem?.variants || []
+                                        const updatedVariants = originalVariants.map((ov: any) =>
+                                          ov.sku === oldSku ? { ...ov, sku: newFullSku, skuSuffix: newSuffix } : ov
+                                        )
+                                        onFieldChange(selectedItem.sku, "variants", updatedVariants)
                                       }}
                                       className="flex-1 min-w-0 bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-primary/50 px-0 py-0.5 text-[11px] font-mono text-foreground focus:outline-none transition-colors"
                                       placeholder="sufijo..."
