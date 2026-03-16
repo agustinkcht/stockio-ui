@@ -190,8 +190,6 @@ export function CatalogoItemDetailPanel({
 
   const [editingSku, setEditingSku] = useState(false)
   const [editingSkuPadre, setEditingSkuPadre] = useState(false)
-  const skuPadreBeforeEdit = useRef<string>("")
-  const isCascadingSkuPadre = useRef(false)
   const [editingCodigoUniversal, setEditingCodigoUniversal] = useState(false)
   const [skuValue, setSkuValue] = useState(selectedItem.sku || "")
   const [codigoUniversalValue, setCodigoUniversalValue] = useState(selectedItem.codigoUniversal || "")
@@ -285,10 +283,11 @@ export function CatalogoItemDetailPanel({
   const [showAtributosView, setShowAtributosView] = useState(false)
   const [showIndividualAtributosView, setShowIndividualAtributosView] = useState(false)
 
+  // variantItems: skuSuffix is the source of truth, full SKU is computed as {skuValue}-{skuSuffix}
   const [variantItems, setVariantItems] = useState<
     Array<{
-      sku: string
-      skuSuffix: string // The suffix part only (e.g. "peine" from "MISDECU-peine")
+      id: string
+      skuSuffix: string // Source of truth - the suffix part only (e.g. "negro" for "CAMDELI-negro")
       codigoUniversal: string
       descripcion: string
       foto: string
@@ -404,8 +403,7 @@ export function CatalogoItemDetailPanel({
     setAtributosPrincipales(selectedItem?.atributosPrincipales || [])
     setAtributosInformativos(getMergedAtributosInformativos(fatherItem?.atributosInformativos, selectedItem?.atributosInformativos))
     // Reset variantItems from selectedItem.variants when selectedItem changes (covers Deshacer restoring state)
-    // Skip if we're mid-cascade (SKU padre rename) — variantItems are already correct in local state
-    if (!isCascadingSkuPadre.current && selectedItem?.variants && selectedItem.variants.length > 0) {
+    if (selectedItem?.variants && selectedItem.variants.length > 0) {
       setVariantItems(convertSavedVariantsToDisplay(selectedItem.variants))
     }
     // Ensure unitsPorPack and volume state are also synced if they are part of selectedItem
@@ -557,10 +555,9 @@ export function CatalogoItemDetailPanel({
     if (attrs.length === 1) {
       attrs[0].variantes.forEach((v1) => {
         if (!variantExists(v1, null)) {
-          const suffix = v1.toLowerCase().replace(/\s+/g, "-")
+          const skuSuffix = v1.toLowerCase().replace(/\s+/g, "-")
           newCombinations.push({
-            sku: `${skuPadre}-${suffix}`,
-            skuSuffix: suffix,
+            skuSuffix, // Source of truth - full SKU is computed as {skuPadre}-{skuSuffix}
             codigoUniversal: "",
             descripcion: "",
             foto: "",
@@ -573,10 +570,9 @@ export function CatalogoItemDetailPanel({
       attrs[0].variantes.forEach((v1) => {
         attrs[1].variantes.forEach((v2) => {
           if (!variantExists(v1, v2)) {
-            const suffix = `${v1.toLowerCase().replace(/\s+/g, "-")}-${v2.toLowerCase().replace(/\s+/g, "-")}`
+            const skuSuffix = `${v1.toLowerCase().replace(/\s+/g, "-")}-${v2.toLowerCase().replace(/\s+/g, "-")}`
             newCombinations.push({
-              sku: `${skuPadre}-${suffix}`,
-              skuSuffix: suffix,
+              skuSuffix, // Source of truth - full SKU is computed as {skuPadre}-{skuSuffix}
               codigoUniversal: "",
               descripcion: "",
               foto: "",
@@ -592,20 +588,15 @@ export function CatalogoItemDetailPanel({
   }
 
   // Convert saved variants to variantItems format for display
-  // skuSuffix is stored directly in variant data, or extracted from full SKU as fallback
-  const convertSavedVariantsToDisplay = (savedVariants: any[], parentSkuOverride?: string) => {
-    const parentSku = parentSkuOverride || selectedItem?.sku || ""
+  // skuSuffix is the source of truth - stored directly in variant data
+  // Full SKU is computed on-the-fly as {skuValue}-{skuSuffix}
+  const convertSavedVariantsToDisplay = (savedVariants: any[]) => {
     return savedVariants.map((v: any) => {
-      // Prefer stored skuSuffix, fallback to extracting from full SKU
-      let skuSuffix = v.skuSuffix
-      if (!skuSuffix && v.sku) {
-        const prefix = parentSku + "-"
-        skuSuffix = v.sku.startsWith(prefix) ? v.sku.slice(prefix.length) : v.sku
-      }
+      // skuSuffix must exist in stored data; if not, this is legacy data
+      const skuSuffix = v.skuSuffix || ""
       return {
         id: v.id,
-        sku: v.sku || "",
-        skuSuffix: skuSuffix || "",
+        skuSuffix, // This is the source of truth
         codigoUniversal: v.codigoUniversal || "",
         descripcion: v.descripcion || "",
         foto: v.foto || "",
@@ -732,30 +723,16 @@ export function CatalogoItemDetailPanel({
       }
     }
     
-    // Generate SKU automatically using the same logic as "Generar Variantes"
-    const skuPadre =
-      selectedItem.sku ||
-      selectedItem.name
-        .toUpperCase()
-        .replace(/[^A-Z0-9\s]/g, "")
-        .split(" ")
-        .map((word) => word.substring(0, 3))
-        .join("-")
-        .substring(0, 15)
-    
     // Get variant values for SKU suffix
     const variantValues = Object.values(attributeValues)
-    const variantSuffix = variantValues
+    const skuSuffix = variantValues
       .map((v) => v.substring(0, 3).toUpperCase())
       .join("-")
     
-    const generatedSku = `${skuPadre}-${variantSuffix}`
-    
-    // Create the new variant object
+    // Create the new variant object - only store skuSuffix, full SKU is computed
     const newVariant: any = {
       id: generateId("VAR"),
-      sku: generatedSku,
-      skuSuffix: variantSuffix, // Store suffix directly for clean parent-child relationship
+      skuSuffix, // Source of truth - full SKU computed as {skuPadre}-{skuSuffix}
       codigoUniversal: "",
       descripcion: "",
       foto: selectedItem.foto || "",
@@ -817,10 +794,10 @@ export function CatalogoItemDetailPanel({
       inheritValue: attr.inheritValue,
     }))
 
+    const skuPadre = selectedItem.sku || ""
     const newVariantObjects = newCombinations.map((combo) => ({
       id: generateId("VAR"),
-      sku: combo.sku,
-      skuSuffix: combo.skuSuffix, // Store suffix directly for clean parent-child SKU relationship
+      skuSuffix: combo.skuSuffix, // Source of truth - full SKU computed as {skuPadre}-{skuSuffix}
       name: selectedItem.name,
       codigoUniversal: combo.codigoUniversal || "",
       descripcion: combo.descripcion || "",
@@ -1759,41 +1736,16 @@ export function CatalogoItemDetailPanel({
                                 onChange={(e) => setSkuValue(e.target.value.toUpperCase())}
                                 onBlur={() => {
                                   setEditingSkuPadre(false)
-                                  const newSkuPadre = skuValue
-                                  const oldSkuPadre = skuPadreBeforeEdit.current
-                                  if (oldSkuPadre === newSkuPadre) return
-                                  // Cascade: rebuild full SKU using new prefix + existing suffix (skuSuffix stays the same)
-                                  const cascadedVariants = variantItems.map((variant) => ({
-                                    ...variant,
-                                    sku: newSkuPadre + "-" + variant.skuSuffix,
-                                  }))
-                                  // Set flag so useEffect doesn't overwrite our cascaded variantItems
-                                  isCascadingSkuPadre.current = true
-                                  // Update local display state
-                                  setVariantItems(cascadedVariants)
-                                  // Persist new SKU padre to selectedItem (triggers useEffect, but flag guards it)
-                                  onFieldChange(oldSkuPadre, "sku", newSkuPadre)
-                                  // Persist cascaded variant SKUs to selectedItem.variants
-                                  // Need to merge with original variant data to preserve atributosPrincipales etc.
-                                  const originalVariants = selectedItem?.variants || []
-                                  onFieldChange(newSkuPadre, "variants",
-                                    cascadedVariants.map((v) => {
-                                      const original = originalVariants.find((ov: any) => ov.id === v.id)
-                                      return {
-                                        ...original,
-                                        id: v.id,
-                                        sku: v.sku, // Full SKU = newSkuPadre + "-" + skuSuffix
-                                        skuSuffix: v.skuSuffix, // Store suffix directly so it survives re-extraction
-                                      }
-                                    })
-                                  )
-                                  // Clear flag after React has processed state updates
-                                  setTimeout(() => { isCascadingSkuPadre.current = false }, 0)
+                                  // Just update the parent SKU - no cascade needed
+                                  // Children compute their full SKU as {skuValue}-{skuSuffix}
+                                  if (skuValue !== selectedItem?.sku) {
+                                    onFieldChange(selectedItem.sku, "sku", skuValue)
+                                  }
                                 }}
                                 onKeyDown={(e) => {
                                   if (e.key === "Enter") (e.target as HTMLInputElement).blur()
                                   if (e.key === "Escape") {
-                                    setSkuValue(skuPadreBeforeEdit.current)
+                                    setSkuValue(selectedItem?.sku || "")
                                     setEditingSkuPadre(false)
                                   }
                                 }}
@@ -1806,7 +1758,6 @@ export function CatalogoItemDetailPanel({
                                 className="flex items-center gap-1.5 cursor-pointer"
                                 onClick={(e) => {
                                   e.stopPropagation()
-                                  skuPadreBeforeEdit.current = skuValue
                                   setEditingSkuPadre(true)
                                 }}
                               >
@@ -1956,42 +1907,33 @@ export function CatalogoItemDetailPanel({
                             </div>
 
                             <div className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
-                              {(() => {
-                                // Use skuValue (current SKU padre) as prefix, skuSuffix from variantItems directly
-                                const prefix = skuValue ? `${skuValue}-` : ""
-                                return (
-                                  <div className="flex items-center w-full">
-                                    {prefix && (
-                                      <span className="text-[11px] font-mono text-muted-foreground/60 select-none whitespace-nowrap">
-                                        {prefix}
-                                      </span>
-                                    )}
-                                    <input
-                                      type="text"
-                                      value={variant.skuSuffix}
-                                      onChange={(e) => {
-                                        const newSuffix = e.target.value
-                                        const newFullSku = prefix + newSuffix
-                                        const oldSku = variant.sku
-                                        // Update both sku and skuSuffix in local state
-                                        setVariantItems((prev) =>
-                                          prev.map((v) =>
-                                            v.sku === oldSku ? { ...v, sku: newFullSku, skuSuffix: newSuffix } : v
-                                          )
-                                        )
-                                        // Persist both sku and skuSuffix to selectedItem.variants
-                                        const originalVariants = selectedItem?.variants || []
-                                        const updatedVariants = originalVariants.map((ov: any) =>
-                                          ov.sku === oldSku ? { ...ov, sku: newFullSku, skuSuffix: newSuffix } : ov
-                                        )
-                                        onFieldChange(selectedItem.sku, "variants", updatedVariants)
-                                      }}
-                                      className="flex-1 min-w-0 bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-primary/50 px-0 py-0.5 text-[11px] font-mono text-foreground focus:outline-none transition-colors"
-                                      placeholder="sufijo..."
-                                    />
-                                  </div>
-                                )
-                              })()}
+                              {/* Full SKU = {skuValue}-{skuSuffix}, computed on the fly */}
+                              <div className="flex items-center w-full">
+                                <span className="text-[11px] font-mono text-muted-foreground/60 select-none whitespace-nowrap">
+                                  {skuValue}-
+                                </span>
+                                <input
+                                  type="text"
+                                  value={variant.skuSuffix}
+                                  onChange={(e) => {
+                                    const newSuffix = e.target.value
+                                    // Update skuSuffix in local state
+                                    setVariantItems((prev) =>
+                                      prev.map((v) =>
+                                        v.id === variant.id ? { ...v, skuSuffix: newSuffix } : v
+                                      )
+                                    )
+                                    // Persist skuSuffix to selectedItem.variants
+                                    const originalVariants = selectedItem?.variants || []
+                                    const updatedVariants = originalVariants.map((ov: any) =>
+                                      ov.id === variant.id ? { ...ov, skuSuffix: newSuffix } : ov
+                                    )
+                                    onFieldChange(selectedItem.sku, "variants", updatedVariants)
+                                  }}
+                                  className="flex-1 min-w-0 bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-primary/50 px-0 py-0.5 text-[11px] font-mono text-foreground focus:outline-none transition-colors"
+                                  placeholder="sufijo..."
+                                />
+                              </div>
                             </div>
 
                             <div className="px-1 py-2 flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
