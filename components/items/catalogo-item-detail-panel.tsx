@@ -820,6 +820,7 @@ export function CatalogoItemDetailPanel({
     const newVariantObjects = newCombinations.map((combo) => ({
       id: generateId("VAR"),
       sku: combo.sku,
+      skuSuffix: combo.skuSuffix, // Store suffix directly for clean parent-child SKU relationship
       name: selectedItem.name,
       codigoUniversal: combo.codigoUniversal || "",
       descripcion: combo.descripcion || "",
