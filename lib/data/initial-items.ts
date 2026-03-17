@@ -158,7 +158,7 @@ export const INITIAL_ITEMS: Item[] = [
     categoria: "Vinos",
     hasVariants: true,
     isAgrupador: true,
-    sku: "VNO-DVCAT",
+    skuPrefix: "VNO-DVCAT",
     marca: "Catena Zapata",
     proveedor: "Catena Zapata",
     formatoVenta: "unidad",
@@ -183,7 +183,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "N5JQ2C7M",
         name: "DV Catena",
-        sku: "VNO-DVCAT-MALB",
+        skuSuffix: "MALB",
         codigoUniversal: "7799002000214",
         codigoProveedor: "DVCAT-MALB",
         categoria: "Vinos",
@@ -203,7 +203,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "P4Y8L1ZW",
         name: "DV Catena",
-        sku: "VNO-DVCAT-CABS",
+        skuSuffix: "CABS",
         codigoUniversal: "7799002000221",
         codigoProveedor: "DVCAT-CABS",
         categoria: "Vinos",
@@ -286,7 +286,7 @@ export const INITIAL_ITEMS: Item[] = [
     categoria: "Vinos",
     hasVariants: true,
     isAgrupador: true,
-    sku: "VNO-DOMESTE",
+    skuPrefix: "VNO-DOMESTE",
     marca: "Domiciano",
     proveedor: "Bodega Domiciano",
     formatoVenta: "unidad",
@@ -313,7 +313,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "V3N9Q2LF",
         name: "Domiciano Estelar",
-        sku: "VNO-DOMESTE-BLND",
+        skuSuffix: "BLND",
         codigoUniversal: "7799002000042",
         codigoProveedor: "DOM-EST-BLND-MS",
         categoria: "Vinos",
@@ -335,7 +335,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "D6T4M8XJ",
         name: "Domiciano Estelar",
-        sku: "VNO-DOMESTE-MALB",
+        skuSuffix: "MALB",
         codigoUniversal: "7799002000059",
         codigoProveedor: "DOM-EST-MALB",
         categoria: "Vinos",
@@ -356,7 +356,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "Y1R7K3ZP",
         name: "Domiciano Estelar",
-        sku: "VNO-DOMESTE-BLDL",
+        skuSuffix: "BLDL",
         codigoUniversal: "7799002000066",
         codigoProveedor: "DOM-EST-BLDL",
         categoria: "Vinos",
@@ -377,7 +377,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "W9C2H6TN",
         name: "Domiciano Estelar",
-        sku: "VNO-DOMESTE-CHRD",
+        skuSuffix: "CHRD",
         codigoUniversal: "7799002000080",
         codigoProveedor: "DOM-EST-CHRD",
         categoria: "Vinos",
