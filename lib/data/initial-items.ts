@@ -7,7 +7,7 @@ export const INITIAL_ITEMS: Item[] = [
     categoria: "Vinos",
     hasVariants: true,
     isAgrupador: true,
-    sku: "VNO-PROGRES",
+    skuPrefix: "VNO-PROGRES",
     marca: "Proemio",
     proveedor: "Proemio Wines",
     formatoVenta: "unidad",
@@ -35,7 +35,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "X4N9T2BZ",
         name: "Proemio Grand Reserve",
-        sku: "VNO-PROGRES-MALB-2012",
+        skuSuffix: "MALB-2012",
         codigoUniversal: "7798123400013",
         codigoProveedor: "PROE-GR-MALB-2012",
         categoria: "Vinos",
@@ -54,7 +54,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "M7R3YQ8L",
         name: "Proemio Grand Reserve",
-        sku: "VNO-PROGRES-MALB-2019",
+        skuSuffix: "MALB-2019",
         codigoUniversal: "7798123400020",
         codigoProveedor: "PROE-GR-MALB-2019",
         categoria: "Vinos",
@@ -75,7 +75,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "C2V8P6DW",
         name: "Proemio Grand Reserve",
-        sku: "VNO-PROGRES-CABS-2012",
+        skuSuffix: "CABS-2012",
         codigoUniversal: "7798123400037",
         codigoProveedor: "PROE-GR-CABS-2012",
         categoria: "Vinos",
@@ -94,7 +94,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "T9K4X1HJ",
         name: "Proemio Grand Reserve",
-        sku: "VNO-PROGRES-CABS-2019",
+        skuSuffix: "CABS-2019",
         codigoUniversal: "7798123400044",
         codigoProveedor: "PROE-GR-CABS-2019",
         categoria: "Vinos",
@@ -115,7 +115,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "Q6Z2MN8R",
         name: "Proemio Grand Reserve",
-        sku: "VNO-PROGRES-SYGA-2012",
+        skuSuffix: "SYGA-2012",
         codigoUniversal: "7798123400051",
         codigoProveedor: "PROE-GR-SYGA-2012",
         categoria: "Vinos",
@@ -134,7 +134,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "L3W7F9KP",
         name: "Proemio Grand Reserve",
-        sku: "VNO-PROGRES-SYGA-2019",
+        skuSuffix: "SYGA-2019",
         codigoUniversal: "7798123400068",
         codigoProveedor: "PROE-GR-SYGA-2019",
         categoria: "Vinos",
