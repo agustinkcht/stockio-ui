@@ -657,7 +657,7 @@ export const INITIAL_ITEMS: Item[] = [
     categoria: "Gin",
     hasVariants: true,
     isAgrupador: true,
-    sku: "GIN-RESTINGA",
+    skuPrefix: "GIN-RESTINGA",
     marca: "Restinga",
     proveedor: "Destilería Restinga",
     formatoVenta: "unidad",
@@ -679,7 +679,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "K4X9P2WM",
         name: "Restinga",
-        sku: "GIN-REST-ORIG",
+        skuSuffix: "ORIG",
         codigoUniversal: "7798123456789",
         categoria: "Gin",
         marca: "Restinga",
@@ -691,7 +691,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "V8J3L6RC",
         name: "Restinga",
-        sku: "GIN-REST-OTON",
+        skuSuffix: "OTON",
         codigoUniversal: "7798123456796",
         categoria: "Gin",
         marca: "Restinga",
@@ -703,7 +703,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "D1Y7T4MK",
         name: "Restinga",
-        sku: "GIN-REST-FLAV",
+        skuSuffix: "FLAV",
         codigoUniversal: "7798123456802",
         categoria: "Gin",
         marca: "Restinga",
@@ -750,7 +750,7 @@ export const INITIAL_ITEMS: Item[] = [
     categoria: "Vodka",
     hasVariants: true,
     isAgrupador: true,
-    sku: "VDKA-ABSO",
+    skuPrefix: "VDKA-ABSO",
     marca: "Absolut",
     proveedor: "The Absolut Company",
     formatoVenta: "unidad",
@@ -772,7 +772,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "F8K4R7TD",
         name: "Absolut",
-        sku: "VDKA-ABSO-ORIG",
+        skuSuffix: "ORIG",
         codigoUniversal: "7312040017014",
         codigoProveedor: "ABS-ORG-750",
         categoria: "Vodka",
@@ -785,7 +785,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "J2M6X3QW",
         name: "Absolut",
-        sku: "VDKA-ABSO-RASP",
+        skuSuffix: "RASP",
         codigoUniversal: "7312040030754",
         codigoProveedor: "ABS-RASP-750",
         categoria: "Vodka",
@@ -798,7 +798,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "M9C1P8YV",
         name: "Absolut",
-        sku: "VDKA-ABSO-PEAR",
+        skuSuffix: "PEAR",
         codigoUniversal: "7312040030778",
         codigoProveedor: "ABS-PEAR-750",
         categoria: "Vodka",
@@ -811,7 +811,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "Q4Z7L2NH",
         name: "Absolut",
-        sku: "VDKA-ABSO-VANI",
+        skuSuffix: "VANI",
         codigoUniversal: "7312040030761",
         codigoProveedor: "ABS-VANI-750",
         categoria: "Vodka",
@@ -912,7 +912,7 @@ export const INITIAL_ITEMS: Item[] = [
     categoria: "Whiskies",
     hasVariants: true,
     isAgrupador: true,
-    sku: "WHKY-JW750",
+    skuPrefix: "WHKY-JW750",
     marca: "Johnnie Walker",
     proveedor: "Diageo",
     formatoVenta: "unidad",
@@ -939,7 +939,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "H9K2N3WD",
         name: "Johnnie Walker 750 ml",
-        sku: "WHKY-JW750-RED",
+        skuSuffix: "RED",
         codigoUniversal: "5000267011011",
         codigoProveedor: "JW-RED-750",
         categoria: "Whiskies",
@@ -956,7 +956,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "Z5M8T1QV",
         name: "Johnnie Walker 750 ml",
-        sku: "WHKY-JW750-BLACK",
+        skuSuffix: "BLACK",
         codigoUniversal: "5000267024233",
         codigoProveedor: "JW-BLACK-750",
         categoria: "Whiskies",
@@ -973,7 +973,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "K2D7X4LP",
         name: "Johnnie Walker 750 ml",
-        sku: "WHKY-JW750-DBLK",
+        skuSuffix: "DBLK",
         codigoUniversal: "5000267092843",
         codigoProveedor: "JW-DBLACK-750",
         categoria: "Whiskies",
@@ -990,7 +990,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "V1Q9R6YH",
         name: "Johnnie Walker 750 ml",
-        sku: "WHKY-JW750-BLUE",
+        skuSuffix: "BLUE",
         codigoUniversal: "5000267014012",
         codigoProveedor: "JW-BLUE-750",
         categoria: "Whiskies",
