@@ -9,9 +9,10 @@ import type {
 } from "../types"
 
 // ===== SKU PARADIGM HELPERS =====
-// - Standalone items: use `sku`
-// - Parent items (hasVariants=true): use `skuPrefix`
-// - Children (variants): use `skuSuffix`, full SKU = `{parentItem.skuPrefix}-{skuSuffix}`
+// Standalone items: use `sku` field
+// Parent items (hasVariants=true): use `skuPrefix` field
+// Children (ItemVariant): use `skuSuffix` field
+//   - Full SKU is computed as `{parentItem.skuPrefix}-{skuSuffix}`
 
 /**
  * Get the SKU identifier for any item (standalone or parent)
@@ -20,7 +21,7 @@ import type {
  */
 export function getItemSku(item: Item | null | undefined): string {
   if (!item) return ""
-  if (item.hasVariants) return item.skuPrefix || ""
+  if (item.hasVariants || item.isAgrupador) return item.skuPrefix || ""
   return item.sku || ""
 }
 
@@ -32,7 +33,8 @@ export function getVariantFullSku(parentItem: Item | null | undefined, variant: 
   if (!parentItem || !variant) return ""
   const prefix = parentItem.skuPrefix || ""
   const suffix = variant.skuSuffix || ""
-  if (!prefix || !suffix) return suffix || ""
+  if (!prefix) return suffix
+  if (!suffix) return ""
   return `${prefix}-${suffix}`
 }
 
@@ -50,29 +52,7 @@ export function findItemByIdentifier(items: Item[], identifier: string): Item | 
 }
 
 /**
- * Find a variant within items by its id or skuSuffix
- * Returns both the parent and the variant
- */
-export function findVariantByIdentifier(
-  items: Item[], 
-  identifier: string
-): { parent: Item; variant: ItemVariant } | undefined {
-  for (const item of items) {
-    if (item.variants) {
-      const variant = item.variants.find((v) => 
-        v.id === identifier || 
-        v.skuSuffix === identifier
-      )
-      if (variant) {
-        return { parent: item, variant }
-      }
-    }
-  }
-  return undefined
-}
-
-/**
- * Check if an identifier matches an item (by sku, skuPrefix, or id)
+ * Check if an item matches a given identifier (by id, sku, or skuPrefix)
  */
 export function itemMatchesIdentifier(item: Item, identifier: string): boolean {
   if (!identifier) return false
@@ -164,7 +144,10 @@ export function searchItems(items: Item[], searchQuery: string): Item[] {
     const fields: string[] = []
 
     if (item.name) fields.push(item.name)
-    if (item.sku) fields.push(item.sku)
+    // Handle both sku (standalone), skuPrefix (parent), and skuSuffix (variant)
+    if ("sku" in item && item.sku) fields.push(item.sku)
+    if ("skuPrefix" in item && (item as Item).skuPrefix) fields.push((item as Item).skuPrefix!)
+    if ("skuSuffix" in item && (item as ItemVariant).skuSuffix) fields.push((item as ItemVariant).skuSuffix)
     if (item.marca) fields.push(item.marca)
     if ("categoria" in item && item.categoria) fields.push(item.categoria)
     if ("modelo" in item && item.modelo) fields.push(item.modelo)

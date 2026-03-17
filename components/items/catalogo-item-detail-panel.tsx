@@ -110,9 +110,10 @@ export function CatalogoItemDetailPanel({
   const router = useRouter()
   const isViewingContainer = selectedItem?.isAgrupador || selectedItem?.hasVariants || false
 
+  // Find parent item by checking if selectedItem matches any variant by id or skuSuffix
   const fatherItem = !isViewingContainer
     ? allItems.find(
-        (item) => (item.hasVariants || item.isAgrupador) && item.variants?.some((v: any) => v.sku === selectedItem.sku),
+        (item) => (item.hasVariants || item.isAgrupador) && item.variants?.some((v: any) => v.id === selectedItem.id || v.skuSuffix === selectedItem.skuSuffix),
       )
     : null
 
@@ -242,7 +243,12 @@ export function CatalogoItemDetailPanel({
   const [editingSku, setEditingSku] = useState(false)
   const [editingSkuPadre, setEditingSkuPadre] = useState(false)
   const [editingCodigoUniversal, setEditingCodigoUniversal] = useState(false)
-  const [skuValue, setSkuValue] = useState(selectedItem.sku || "")
+  // For parent items with variants, use skuPrefix; for standalone, use sku
+  const [skuValue, setSkuValue] = useState(
+    (selectedItem.hasVariants || selectedItem.isAgrupador) 
+      ? (selectedItem.skuPrefix || "") 
+      : (selectedItem.sku || "")
+  )
   const [codigoUniversalValue, setCodigoUniversalValue] = useState(selectedItem.codigoUniversal || "")
   const [imageView, setImageView] = useState<"imagen" | "descripcion">("imagen")
   const [isCardFlipped, setIsCardFlipped] = useState(false)
@@ -581,8 +587,9 @@ export function CatalogoItemDetailPanel({
     const attrs = containerAtributosPrincipales.filter((attr) => attr.key && attr.variantes.length > 0)
     if (attrs.length === 0) return []
 
+    // For parent items with variants, use skuPrefix; fallback to name-derived
     const skuPadre =
-      selectedItem.sku ||
+      selectedItem.skuPrefix ||
       selectedItem.name
         .toUpperCase()
         .replace(/[^A-Z0-9\s]/g, "")
@@ -845,7 +852,7 @@ export function CatalogoItemDetailPanel({
       inheritValue: attr.inheritValue,
     }))
 
-    const skuPadre = selectedItem.sku || ""
+    const skuPadre = selectedItem.skuPrefix || ""
     const newVariantObjects = newCombinations.map((combo) => ({
       id: generateId("VAR"),
       skuSuffix: combo.skuSuffix, // Source of truth - full SKU computed as {skuPadre}-{skuSuffix}
@@ -985,7 +992,7 @@ export function CatalogoItemDetailPanel({
       // For child items, also extract and persist skuSuffix
       let skuSuffix: string | undefined
       if (isChildItem && fatherItem) {
-        const prefix = fatherItem.sku + "-"
+        const prefix = (fatherItem.skuPrefix || "") + "-"
         skuSuffix = skuValue.startsWith(prefix) ? skuValue.slice(prefix.length) : skuValue
       }
       updateItem(selectedItem.sku, { sku: skuValue, ...(skuSuffix !== undefined && { skuSuffix }) })
@@ -1140,7 +1147,7 @@ export function CatalogoItemDetailPanel({
                             <span className="font-medium text-slate-400 whitespace-nowrap">SKU:</span>
                             {isChildItem && fatherItem ? (
                               <ChildSkuEditor
-                                fatherSku={fatherItem.sku}
+                                fatherSku={fatherItem.skuPrefix || ""}
                                 skuSuffix={selectedItem.skuSuffix || ""}
                                 onSave={(newSuffix) => {
                                   // Use id to identify the specific child
@@ -1158,7 +1165,12 @@ export function CatalogoItemDetailPanel({
                                     onKeyDown={(e) => {
                                       if (e.key === "Enter") (e.target as HTMLInputElement).blur()
                                       if (e.key === "Escape") {
-                                        setSkuValue(selectedItem.sku || "")
+    // Use skuPrefix for parent items with variants, sku for standalone
+    setSkuValue(
+      (selectedItem.hasVariants || selectedItem.isAgrupador) 
+        ? (selectedItem.skuPrefix || "") 
+        : (selectedItem.sku || "")
+    )
                                         setEditingSku(false)
                                       }
                                     }}
@@ -1758,16 +1770,18 @@ export function CatalogoItemDetailPanel({
                                 onChange={(e) => setSkuValue(e.target.value.toUpperCase())}
                                 onBlur={() => {
                                   setEditingSkuPadre(false)
-                                  // Just update the parent SKU - no cascade needed
-                                  // Children compute their full SKU as {skuValue}-{skuSuffix}
-                                  if (skuValue !== selectedItem?.sku) {
-                                    onFieldChange(selectedItem.sku, "sku", skuValue)
+                                  // Update the parent's skuPrefix - children compute their full SKU as {skuPrefix}-{skuSuffix}
+                                  const currentSkuPrefix = selectedItem?.skuPrefix || ""
+                                  if (skuValue !== currentSkuPrefix) {
+                                    // Use item id or skuPrefix as identifier
+                                    const itemIdentifier = selectedItem.id || selectedItem.skuPrefix || ""
+                                    onFieldChange(itemIdentifier, "skuPrefix", skuValue)
                                   }
                                 }}
                                 onKeyDown={(e) => {
                                   if (e.key === "Enter") (e.target as HTMLInputElement).blur()
                                   if (e.key === "Escape") {
-                                    setSkuValue(selectedItem?.sku || "")
+                                    setSkuValue(selectedItem?.skuPrefix || "")
                                     setEditingSkuPadre(false)
                                   }
                                 }}
@@ -1783,7 +1797,7 @@ export function CatalogoItemDetailPanel({
                                   setEditingSkuPadre(true)
                                 }}
                               >
-                                <span className="font-mono text-sm text-slate-800">{skuValue || selectedItem?.sku}</span>
+                                <span className="font-mono text-sm text-slate-800">{skuValue || selectedItem?.skuPrefix}</span>
                                 <Pencil className="w-3 h-3 text-slate-400/60 opacity-0 group-hover/skupadre:opacity-100 transition-opacity" />
                               </div>
                             )}
