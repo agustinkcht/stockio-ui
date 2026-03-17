@@ -8,6 +8,77 @@ import type {
   FilterConfig,
 } from "../types"
 
+// ===== SKU PARADIGM HELPERS =====
+// - Standalone items: use `sku`
+// - Parent items (hasVariants=true): use `skuPrefix`
+// - Children (variants): use `skuSuffix`, full SKU = `{parentItem.skuPrefix}-{skuSuffix}`
+
+/**
+ * Get the SKU identifier for any item (standalone or parent)
+ * For standalone items, returns `sku`
+ * For parent items with variants, returns `skuPrefix`
+ */
+export function getItemSku(item: Item | null | undefined): string {
+  if (!item) return ""
+  if (item.hasVariants) return item.skuPrefix || ""
+  return item.sku || ""
+}
+
+/**
+ * Get the full SKU for a variant/child item
+ * Computes as: `{parentSkuPrefix}-{childSkuSuffix}`
+ */
+export function getVariantFullSku(parentItem: Item | null | undefined, variant: ItemVariant | null | undefined): string {
+  if (!parentItem || !variant) return ""
+  const prefix = parentItem.skuPrefix || ""
+  const suffix = variant.skuSuffix || ""
+  if (!prefix || !suffix) return suffix || ""
+  return `${prefix}-${suffix}`
+}
+
+/**
+ * Find an item by its identifier (sku, skuPrefix, or id)
+ * Works for both standalone and parent items
+ */
+export function findItemByIdentifier(items: Item[], identifier: string): Item | undefined {
+  if (!identifier) return undefined
+  return items.find((item) => 
+    item.id === identifier || 
+    item.sku === identifier || 
+    item.skuPrefix === identifier
+  )
+}
+
+/**
+ * Find a variant within items by its id or skuSuffix
+ * Returns both the parent and the variant
+ */
+export function findVariantByIdentifier(
+  items: Item[], 
+  identifier: string
+): { parent: Item; variant: ItemVariant } | undefined {
+  for (const item of items) {
+    if (item.variants) {
+      const variant = item.variants.find((v) => 
+        v.id === identifier || 
+        v.skuSuffix === identifier
+      )
+      if (variant) {
+        return { parent: item, variant }
+      }
+    }
+  }
+  return undefined
+}
+
+/**
+ * Check if an identifier matches an item (by sku, skuPrefix, or id)
+ */
+export function itemMatchesIdentifier(item: Item, identifier: string): boolean {
+  if (!identifier) return false
+  return item.id === identifier || item.sku === identifier || item.skuPrefix === identifier
+}
+
 /**
  * Generates a cryptographically random 7-character base-36 uppercase ID
  * prefixed by item type: STA (standalone), PAR (parent), VAR (child/variant).

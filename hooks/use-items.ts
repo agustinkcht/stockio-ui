@@ -5,25 +5,7 @@ import { useAccount } from "@/lib/contexts/account-context"
 import type { Item } from "@/lib/types"
 import { TEMPLATES } from "@/lib/constants"
 import { generateStandaloneSKU, generateParentSKU, generateUniqueSKU } from "@/lib/utils/sku-generator"
-import { generateId } from "@/lib/utils/item-utils"
-
-// SKU paradigm helper: get the identifier for an item
-// - Standalone items use `sku`
-// - Parent items (hasVariants) use `skuPrefix`
-// - Can also match by `id`
-const getItemIdentifier = (item: Item): string => {
-  if (item.hasVariants) return item.skuPrefix || item.id || ""
-  return item.sku || item.id || ""
-}
-
-// Find item by identifier (sku, skuPrefix, or id)
-const findItemByIdentifier = (items: Item[], identifier: string): Item | undefined => {
-  return items.find((item) => 
-    item.id === identifier || 
-    item.sku === identifier || 
-    item.skuPrefix === identifier
-  )
-}
+import { generateId, getItemSku, findItemByIdentifier, findVariantByIdentifier, itemMatchesIdentifier } from "@/lib/utils/item-utils"
 
 interface DeletedItemWithPosition {
   item: Item
@@ -141,24 +123,19 @@ export function useItems() {
     fetchItems()
   }, [currentUser, currentAccount])
 
-  const updateStock = (itemSku: string, field: "total" | "reservado", value: number) => {
-    // First check if it's a top-level item
-    let item = items.find((i) => i.sku === itemSku)
+  const updateStock = (itemIdentifier: string, field: "total" | "reservado", value: number) => {
+    // First check if it's a top-level item (by id, sku, or skuPrefix)
+    let item = findItemByIdentifier(items, itemIdentifier)
     let parentItem: Item | undefined = undefined
     let isVariant = false
 
-    // If not found at top level, search in variants
+    // If not found at top level, search in variants (by id or skuSuffix)
     if (!item) {
-      for (const parent of items) {
-        if (parent.variants) {
-          const variant = parent.variants.find((v: any) => v.sku === itemSku)
-          if (variant) {
-            item = variant as any
-            parentItem = parent
-            isVariant = true
-            break
-          }
-        }
+      const variantResult = findVariantByIdentifier(items, itemIdentifier)
+      if (variantResult) {
+        item = variantResult.variant as any
+        parentItem = variantResult.parent
+        isVariant = true
       }
     }
 
@@ -179,10 +156,11 @@ export function useItems() {
     }
 
     if (isVariant && parentItem) {
-      editVariantField(parentItem.sku!, itemSku, "stock", newStock)
+      // Use parent's identifier (skuPrefix for parent items)
+      editVariantField(getItemSku(parentItem), itemIdentifier, "stock", newStock)
     } else {
       // For standalone items, use regular editField
-      editField(itemSku, "stock", newStock)
+      editField(itemIdentifier, "stock", newStock)
     }
   }
 
@@ -194,9 +172,10 @@ export function useItems() {
 
     setIsCreatingItem(true)
 
-    const existingSkus = items.map((item) => item.sku)
+    // Get all existing SKUs (standalone use `sku`, parents use `skuPrefix`)
+    const existingSkus = items.map((item) => getItemSku(item)).filter(Boolean)
     const baseSku = generateStandaloneSKU({ title: itemTitulo })
-    const sku = generateUniqueSKU(baseSku, existingSkus)
+    const sku = generateUniqueSKU(baseSku, existingSkus as string[])
 
     const generateCodigoUniversal = () => {
       return Math.floor(Math.random() * 9000000000000) + 1000000000000
@@ -282,9 +261,10 @@ export function useItems() {
 
     setIsCreatingItem(true)
 
-    const existingSkus = items.map((item) => item.sku)
+    // Get all existing SKUs (standalone use `sku`, parents use `skuPrefix`)
+    const existingSkus = items.map((item) => getItemSku(item)).filter(Boolean) as string[]
     const baseSku = generateParentSKU({ title: itemTitulo })
-    const sku = generateUniqueSKU(baseSku, existingSkus)
+    const skuPrefix = generateUniqueSKU(baseSku, existingSkus)
 
     const generateCodigoUniversal = () => {
       return Math.floor(Math.random() * 9000000000000) + 1000000000000
@@ -304,12 +284,13 @@ export function useItems() {
       }
     }
 
+    // Parent items use skuPrefix (not sku)
     const newItem: Item = {
       id: generateId("PAR"),
       name: itemTitulo,
       hasVariants: true,
       isAgrupador: true,
-      sku: sku,
+      skuPrefix: skuPrefix,
       codigoUniversal: generateCodigoUniversal().toString(),
       marca: "",
       modelo: "",
@@ -327,7 +308,7 @@ export function useItems() {
       if (USE_MOCK_DATA) {
         const updatedItems = [newItem, ...items]
         localStorage.setItem(getStorageKey(), JSON.stringify(updatedItems))
-        console.log("[v0] Saved new item with variants to localStorage:", newItem.sku)
+        console.log("[v0] Saved new item with variants to localStorage:", newItem.skuPrefix)
         setItems(updatedItems)
         handleClose()
         return newItem
@@ -358,15 +339,16 @@ export function useItems() {
   }
 
   const updateItem = async (updatedItem: Item) => {
+    const itemIdentifier = getItemSku(updatedItem) || updatedItem.id
     try {
-      const response = await fetch(`/api/items/${updatedItem.sku}`, {
+      const response = await fetch(`/api/items/${itemIdentifier}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedItem),
       })
 
       if (response.ok) {
-        setItems((prevItems) => prevItems.map((item) => (item.sku === updatedItem.sku ? updatedItem : item)))
+        setItems((prevItems) => prevItems.map((item) => (itemMatchesIdentifier(item, itemIdentifier!) ? updatedItem : item)))
       } else {
         console.error("[v0] Failed to update item")
         alert("Error al actualizar el item")
@@ -379,14 +361,15 @@ export function useItems() {
 
   const deleteItem = (itemToDelete: Item) => {
     console.log("[v0] useItems - deleteItem called for:", itemToDelete.name)
-    const originalIndex = items.findIndex((item) => item.sku === itemToDelete.sku)
+    const itemIdentifier = getItemSku(itemToDelete) || itemToDelete.id || ""
+    const originalIndex = items.findIndex((item) => itemMatchesIdentifier(item, itemIdentifier))
     console.log("[v0] useItems - originalIndex:", originalIndex)
     setDeletedItems((prev) => {
       const newDeleted = [...prev, { item: itemToDelete, originalIndex }]
       console.log("[v0] useItems - setDeletedItems, new count:", newDeleted.length)
       return newDeleted
     })
-    setItems((prevItems) => prevItems.filter((item) => item.sku !== itemToDelete.sku))
+    setItems((prevItems) => prevItems.filter((item) => !itemMatchesIdentifier(item, itemIdentifier)))
     console.log("[v0] useItems - setting hasUnsavedDeletes to true")
     setHasUnsavedDeletes(true)
   }
@@ -444,39 +427,29 @@ export function useItems() {
     }
   }
 
-  const editField = (itemIdentifier: string, field: string, newValue: any) => {
-    console.log("[v0] useItems - editField called:", { itemIdentifier, field, newValue })
+  const editField = (itemSku: string, field: string, newValue: any) => {
+    console.log("[v0] useItems - editField called:", { itemSku, field, newValue })
 
-    // itemIdentifier can be sku, skuPrefix, or id
-    let parentItem: Item | undefined = undefined
-    let variantId: string | undefined = undefined
-    for (const item of items) {
-      if (item.variants) {
-        // Search children by id first (preferred), then by sku
-        const variant = item.variants.find((v: any) => v.id === itemIdentifier || v.sku === itemIdentifier)
-        if (variant) {
-          parentItem = item
-          variantId = variant.id
-          break
-        }
-      }
-    }
-
-    if (parentItem && variantId) {
-      // This is a child item - use editVariantField with id
-      const parentId = getItemIdentifier(parentItem)
-      editVariantField(parentId, variantId, field, newValue)
+    // itemIdentifier can be id, sku (standalone), skuPrefix (parent), or skuSuffix/id (variant)
+    // First check if it's a variant
+    const variantResult = findVariantByIdentifier(items, itemSku)
+    if (variantResult) {
+      // This is a child item - use editVariantField
+      editVariantField(getItemSku(variantResult.parent), variantResult.variant.id || variantResult.variant.skuSuffix, field, newValue)
       return
     }
 
-    // Regular top-level item edit
-    if (!editedItem || editedItem.itemSku !== itemIdentifier) {
+    // Regular top-level item edit (standalone or parent)
+    const originalItem = findItemByIdentifier(items, itemSku)
+    if (!originalItem) return
+
+    if (!editedItem || editedItem.itemSku !== itemSku) {
       setEditedItem({
-        itemSku: itemIdentifier,
+        itemSku,
         originalValues: { ...originalItem },
         currentValues: { ...originalItem, [field]: newValue },
       })
-      console.log("[v0] useItems - captured original state for:", itemIdentifier)
+      console.log("[v0] useItems - captured original state for:", itemSku)
     } else {
       setEditedItem({
         ...editedItem,
@@ -487,29 +460,29 @@ export function useItems() {
     setHasUnsavedEdits(true)
     setLastUndoneEdit(null)
 
-    setItems((prevItems) => prevItems.map((item) => (getItemIdentifier(item) === itemIdentifier || item.id === itemIdentifier ? { ...item, [field]: newValue } : item)))
+    setItems((prevItems) => prevItems.map((item) => (itemMatchesIdentifier(item, itemSku) ? { ...item, [field]: newValue } : item)))
   }
 
-  const editVariantField = (parentIdentifier: string, variantId: string, field: string, newValue: any) => {
-    console.log("[v0] useItems - editVariantField called:", { parentIdentifier, variantId, field, newValue })
+  const editVariantField = (parentIdentifier: string, variantIdentifier: string, field: string, newValue: any) => {
+    console.log("[v0] useItems - editVariantField called:", { parentIdentifier, variantIdentifier, field, newValue })
 
     const parentItem = findItemByIdentifier(items, parentIdentifier)
     if (!parentItem || !parentItem.variants) return
 
-    // Find variant by id (preferred) or sku as fallback
-    const variantIndex = parentItem.variants.findIndex((v: any) => v.id === variantId || v.sku === variantId)
+    // Find variant by id (preferred) or skuSuffix
+    const variantIndex = parentItem.variants.findIndex((v: any) => v.id === variantIdentifier || v.skuSuffix === variantIdentifier)
     if (variantIndex === -1) return
 
     const originalVariant = parentItem.variants[variantIndex]
 
-    if (!editedItem || editedItem.itemSku !== variantId) {
+    if (!editedItem || editedItem.itemSku !== variantIdentifier) {
       setEditedItem({
-        itemSku: variantId,
+        itemSku: variantIdentifier,
         parentSku: parentIdentifier,
         originalValues: { ...originalVariant },
         currentValues: { ...originalVariant, [field]: newValue },
       })
-      console.log("[v0] useItems - captured original variant state for:", variantId)
+      console.log("[v0] useItems - captured original variant state for:", variantIdentifier)
     } else {
       setEditedItem({
         ...editedItem,
@@ -520,12 +493,12 @@ export function useItems() {
     setHasUnsavedEdits(true)
     setLastUndoneEdit(null)
 
-    // Update the variant within the parent's variants array by id
+    // Update the variant within the parent's variants array by id or skuSuffix
     setItems((prevItems) =>
       prevItems.map((item) => {
-        if (getItemIdentifier(item) === parentIdentifier && item.variants) {
+        if (itemMatchesIdentifier(item, parentIdentifier) && item.variants) {
           const updatedVariants = item.variants.map((v: any) =>
-            v.id === variantId || v.sku === variantId ? { ...v, [field]: newValue } : v,
+            v.id === variantIdentifier || v.skuSuffix === variantIdentifier ? { ...v, [field]: newValue } : v,
           )
           return { ...item, variants: updatedVariants }
         }
@@ -534,15 +507,15 @@ export function useItems() {
     )
   }
 
-  const updateParentWithVariants = (parentSku: string, updates: Partial<Item>) => {
-    console.log("[v0] useItems - updateParentWithVariants called:", { parentSku, updates })
+  const updateParentWithVariants = (parentIdentifier: string, updates: Partial<Item>) => {
+    console.log("[v0] useItems - updateParentWithVariants called:", { parentIdentifier, updates })
 
-    const parentItem = items.find((item) => item.sku === parentSku)
+    const parentItem = findItemByIdentifier(items, parentIdentifier)
     if (!parentItem) return
 
-    if (!editedItem || editedItem.itemSku !== parentSku) {
+    if (!editedItem || editedItem.itemSku !== parentIdentifier) {
       setEditedItem({
-        itemSku: parentSku,
+        itemSku: parentIdentifier,
         originalValues: { ...parentItem },
         currentValues: { ...parentItem, ...updates },
       })
@@ -558,7 +531,7 @@ export function useItems() {
 
     setItems((prevItems) =>
       prevItems.map((item) => {
-        if (item.sku === parentSku) {
+        if (itemMatchesIdentifier(item, parentIdentifier)) {
           return { ...item, ...updates }
         }
         return item
@@ -576,9 +549,9 @@ export function useItems() {
     if (editedItem.parentSku) {
       setItems((prevItems) =>
         prevItems.map((item) => {
-          if (item.sku === editedItem.parentSku && item.variants) {
+          if (itemMatchesIdentifier(item, editedItem.parentSku!) && item.variants) {
             const updatedVariants = item.variants.map((v: any) =>
-              v.sku === editedItem.itemSku ? { ...v, ...editedItem.originalValues } : v,
+              v.id === editedItem.itemSku || v.skuSuffix === editedItem.itemSku ? { ...v, ...editedItem.originalValues } : v,
             )
             return { ...item, variants: updatedVariants }
           }
@@ -587,7 +560,7 @@ export function useItems() {
       )
     } else {
       setItems((prevItems) =>
-        prevItems.map((item) => (item.sku === editedItem.itemSku ? { ...item, ...editedItem.originalValues } : item)),
+        prevItems.map((item) => (itemMatchesIdentifier(item, editedItem.itemSku) ? { ...item, ...editedItem.originalValues } : item)),
       )
     }
 
@@ -604,9 +577,9 @@ export function useItems() {
     if (lastUndoneEdit.parentSku) {
       setItems((prevItems) =>
         prevItems.map((item) => {
-          if (item.sku === lastUndoneEdit.parentSku && item.variants) {
+          if (itemMatchesIdentifier(item, lastUndoneEdit.parentSku!) && item.variants) {
             const updatedVariants = item.variants.map((v: any) =>
-              v.sku === lastUndoneEdit.itemSku ? { ...v, ...lastUndoneEdit.currentValues } : v,
+              v.id === lastUndoneEdit.itemSku || v.skuSuffix === lastUndoneEdit.itemSku ? { ...v, ...lastUndoneEdit.currentValues } : v,
             )
             return { ...item, variants: updatedVariants }
           }
@@ -616,7 +589,7 @@ export function useItems() {
     } else {
       setItems((prevItems) =>
         prevItems.map((item) =>
-          item.sku === lastUndoneEdit.itemSku ? { ...item, ...lastUndoneEdit.currentValues } : item,
+          itemMatchesIdentifier(item, lastUndoneEdit.itemSku) ? { ...item, ...lastUndoneEdit.currentValues } : item,
         ),
       )
     }
