@@ -1143,7 +1143,8 @@ export function CatalogoItemDetailPanel({
                                 fatherSku={fatherItem.sku}
                                 skuSuffix={selectedItem.skuSuffix || ""}
                                 onSave={(newSuffix) => {
-                                  onFieldChange(selectedItem.sku, "skuSuffix", newSuffix)
+                                  // Use id to identify the specific child
+                                  onFieldChange(selectedItem.id, "skuSuffix", newSuffix)
                                 }}
                               />
                             ) : (

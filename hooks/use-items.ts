@@ -429,20 +429,24 @@ export function useItems() {
   const editField = (itemSku: string, field: string, newValue: any) => {
     console.log("[v0] useItems - editField called:", { itemSku, field, newValue })
 
+    // itemSku can be a SKU or an ID for children
     let parentItem: Item | undefined = undefined
+    let variantId: string | undefined = undefined
     for (const item of items) {
       if (item.variants) {
-        const variant = item.variants.find((v: any) => v.sku === itemSku)
+        // Search by id first (preferred for children), then by sku
+        const variant = item.variants.find((v: any) => v.id === itemSku || v.sku === itemSku)
         if (variant) {
           parentItem = item
+          variantId = variant.id
           break
         }
       }
     }
 
-    if (parentItem) {
-      // This is a child item - use editVariantField instead
-      editVariantField(parentItem.sku!, itemSku, field, newValue)
+    if (parentItem && variantId) {
+      // This is a child item - use editVariantField with id
+      editVariantField(parentItem.sku!, variantId, field, newValue)
       return
     }
 
@@ -470,25 +474,26 @@ export function useItems() {
     setItems((prevItems) => prevItems.map((item) => (item.sku === itemSku ? { ...item, [field]: newValue } : item)))
   }
 
-  const editVariantField = (parentSku: string, variantSku: string, field: string, newValue: any) => {
-    console.log("[v0] useItems - editVariantField called:", { parentSku, variantSku, field, newValue })
+  const editVariantField = (parentSku: string, variantId: string, field: string, newValue: any) => {
+    console.log("[v0] useItems - editVariantField called:", { parentSku, variantId, field, newValue })
 
     const parentItem = items.find((item) => item.sku === parentSku)
     if (!parentItem || !parentItem.variants) return
 
-    const variantIndex = parentItem.variants.findIndex((v: any) => v.sku === variantSku)
+    // Find variant by id (preferred) or sku as fallback
+    const variantIndex = parentItem.variants.findIndex((v: any) => v.id === variantId || v.sku === variantId)
     if (variantIndex === -1) return
 
     const originalVariant = parentItem.variants[variantIndex]
 
-    if (!editedItem || editedItem.itemSku !== variantSku) {
+    if (!editedItem || editedItem.itemSku !== variantId) {
       setEditedItem({
-        itemSku: variantSku,
+        itemSku: variantId,
         parentSku: parentSku,
         originalValues: { ...originalVariant },
         currentValues: { ...originalVariant, [field]: newValue },
       })
-      console.log("[v0] useItems - captured original variant state for:", variantSku)
+      console.log("[v0] useItems - captured original variant state for:", variantId)
     } else {
       setEditedItem({
         ...editedItem,
@@ -499,12 +504,12 @@ export function useItems() {
     setHasUnsavedEdits(true)
     setLastUndoneEdit(null)
 
-    // Update the variant within the parent's variants array
+    // Update the variant within the parent's variants array by id
     setItems((prevItems) =>
       prevItems.map((item) => {
         if (item.sku === parentSku && item.variants) {
           const updatedVariants = item.variants.map((v: any) =>
-            v.sku === variantSku ? { ...v, [field]: newValue } : v,
+            v.id === variantId || v.sku === variantId ? { ...v, [field]: newValue } : v,
           )
           return { ...item, variants: updatedVariants }
         }
