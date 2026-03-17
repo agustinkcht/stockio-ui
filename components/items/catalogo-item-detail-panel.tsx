@@ -242,7 +242,9 @@ export function CatalogoItemDetailPanel({
   const [editingSku, setEditingSku] = useState(false)
   const [editingSkuPadre, setEditingSkuPadre] = useState(false)
   const [editingCodigoUniversal, setEditingCodigoUniversal] = useState(false)
-  const [skuValue, setSkuValue] = useState(selectedItem.sku || "")
+  // SKU paradigm: parent items use skuPrefix, standalone items use sku
+  const getItemSku = (item: any) => item?.hasVariants ? (item.skuPrefix || "") : (item?.sku || "")
+  const [skuValue, setSkuValue] = useState(getItemSku(selectedItem))
   const [codigoUniversalValue, setCodigoUniversalValue] = useState(selectedItem.codigoUniversal || "")
   const [imageView, setImageView] = useState<"imagen" | "descripcion">("imagen")
   const [isCardFlipped, setIsCardFlipped] = useState(false)
@@ -448,7 +450,7 @@ export function CatalogoItemDetailPanel({
     )
     setProveedor(shouldInheritField(fatherItem?.proveedor) ? fatherItem!.proveedor : selectedItem?.proveedor || "")
     setCodigoProveedor(selectedItem?.codigoProveedor || "")
-    setSkuValue(selectedItem.sku || "")
+    setSkuValue(getItemSku(selectedItem))
     setCodigoUniversalValue(selectedItem.codigoUniversal || "")
     setDescripcionValue(selectedItem.descripcion || "")
     setAtributosPrincipales(selectedItem?.atributosPrincipales || [])
@@ -985,7 +987,7 @@ export function CatalogoItemDetailPanel({
       // For child items, also extract and persist skuSuffix
       let skuSuffix: string | undefined
       if (isChildItem && fatherItem) {
-        const prefix = fatherItem.sku + "-"
+        const prefix = (fatherItem.skuPrefix || "") + "-"
         skuSuffix = skuValue.startsWith(prefix) ? skuValue.slice(prefix.length) : skuValue
       }
       updateItem(selectedItem.sku, { sku: skuValue, ...(skuSuffix !== undefined && { skuSuffix }) })
@@ -1140,7 +1142,7 @@ export function CatalogoItemDetailPanel({
                             <span className="font-medium text-slate-400 whitespace-nowrap">SKU:</span>
                             {isChildItem && fatherItem ? (
                               <ChildSkuEditor
-                                fatherSku={fatherItem.sku}
+                                fatherSku={fatherItem.skuPrefix || ""}
                                 skuSuffix={selectedItem.skuSuffix || ""}
                                 onSave={(newSuffix) => {
                                   // Use id to identify the specific child
@@ -1158,7 +1160,7 @@ export function CatalogoItemDetailPanel({
                                     onKeyDown={(e) => {
                                       if (e.key === "Enter") (e.target as HTMLInputElement).blur()
                                       if (e.key === "Escape") {
-                                        setSkuValue(selectedItem.sku || "")
+                                        setSkuValue(getItemSku(selectedItem))
                                         setEditingSku(false)
                                       }
                                     }}
@@ -1758,10 +1760,10 @@ export function CatalogoItemDetailPanel({
                                 onChange={(e) => setSkuValue(e.target.value.toUpperCase())}
                                 onBlur={() => {
                                   setEditingSkuPadre(false)
-                                  // Just update the parent SKU - no cascade needed
-                                  // Children compute their full SKU as {skuValue}-{skuSuffix}
-                                  if (skuValue !== selectedItem?.sku) {
-                                    onFieldChange(selectedItem.sku, "sku", skuValue)
+                                  // Update skuPrefix for parent items - children compute full SKU as {skuPrefix}-{skuSuffix}
+                                  const currentSku = getItemSku(selectedItem)
+                                  if (skuValue !== currentSku) {
+                                    onFieldChange(selectedItem.id, "skuPrefix", skuValue)
                                   }
                                 }}
                                 onKeyDown={(e) => {
@@ -1783,7 +1785,7 @@ export function CatalogoItemDetailPanel({
                                   setEditingSkuPadre(true)
                                 }}
                               >
-                                <span className="font-mono text-sm text-slate-800">{skuValue || selectedItem?.sku}</span>
+                                <span className="font-mono text-sm text-slate-800">{skuValue || getItemSku(selectedItem)}</span>
                                 <Pencil className="w-3 h-3 text-slate-400/60 opacity-0 group-hover/skupadre:opacity-100 transition-opacity" />
                               </div>
                             )}

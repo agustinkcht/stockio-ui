@@ -85,13 +85,14 @@ export function ItemCard({
   auditStockValues,
   showPrecioColumn = false,
 }: ItemCardProps) {
-  // Compute full SKU for children: {parentSku}-{skuSuffix}
+  // Compute full SKU for children: {parentItem.skuPrefix}-{skuSuffix}
   const displaySku = useMemo(() => {
-    if (isChild && parentItem?.sku && item.skuSuffix) {
-      return `${parentItem.sku}-${item.skuSuffix}`
+    if (isChild && parentItem?.skuPrefix && item.skuSuffix) {
+      return `${parentItem.skuPrefix}-${item.skuSuffix}`
     }
-    return item.sku || ""
-  }, [isChild, parentItem?.sku, item.skuSuffix, item.sku])
+    // Standalone items use sku, parent items use skuPrefix
+    return item.sku || item.skuPrefix || ""
+  }, [isChild, parentItem?.skuPrefix, item.skuSuffix, item.sku, item.skuPrefix])
   const [isHovered, setIsHovered] = useState(false)
   const [showTransition, setShowTransition] = useState(false)
   const [copiedSku, setCopiedSku] = useState(false)
