@@ -477,7 +477,7 @@ export const INITIAL_ITEMS: Item[] = [
     categoria: "Espumantes",
     hasVariants: true,
     isAgrupador: true,
-    sku: "ESP-SALENT",
+    skuPrefix: "ESP-SALENT",
     marca: "Salentein",
     proveedor: "Bodega Salentein",
     formatoVenta: "unidad",
@@ -506,7 +506,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "Q8N1T5LV",
         name: "Salentein",
-        sku: "ESP-SALENT-EXBR",
+        skuSuffix: "EXBR",
         codigoUniversal: "7798123401027",
         codigoProveedor: "SAL-ESP-EXBR-750",
         categoria: "Espumantes",
@@ -525,7 +525,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "X3K7D9MP",
         name: "Salentein",
-        sku: "ESP-SALENT-BRNA",
+        skuSuffix: "BRNA",
         codigoUniversal: "7798123401034",
         codigoProveedor: "SAL-ESP-BRNA-750",
         categoria: "Espumantes",
@@ -544,7 +544,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "C6V2Y4RH",
         name: "Salentein",
-        sku: "ESP-SALENT-BRRO",
+        skuSuffix: "BRRO",
         codigoUniversal: "7798123401041",
         codigoProveedor: "SAL-ESP-BRRO-750",
         categoria: "Espumantes",
