@@ -17,6 +17,57 @@ import { NuevaVarianteModal } from "@/components/modals/nueva-variante-modal"
 // Single deposit for simplified stock management
 const DEPOSITS = ["Torcuato"]
 
+// Child SKU editor with local state for suffix editing
+function ChildSkuEditor({ fatherSku, skuSuffix, onSave }: { fatherSku: string; skuSuffix: string; onSave: (suffix: string) => void }) {
+  const [editing, setEditing] = useState(false)
+  const [localSuffix, setLocalSuffix] = useState(skuSuffix)
+  
+  useEffect(() => {
+    setLocalSuffix(skuSuffix)
+  }, [skuSuffix])
+  
+  const prefix = `${fatherSku}-`
+  
+  return (
+    <div className="flex items-center gap-0 flex-1 group/sku-inner">
+      <span className="font-mono text-slate-400/80 whitespace-nowrap select-none">
+        {prefix}
+      </span>
+      {editing ? (
+        <input
+          type="text"
+          value={localSuffix}
+          onChange={(e) => setLocalSuffix(e.target.value)}
+          onBlur={() => {
+            setEditing(false)
+            if (localSuffix !== skuSuffix) {
+              onSave(localSuffix)
+            }
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") (e.target as HTMLInputElement).blur()
+            if (e.key === "Escape") {
+              setLocalSuffix(skuSuffix)
+              setEditing(false)
+            }
+          }}
+          onClick={(e) => e.stopPropagation()}
+          className="text-slate-100 bg-transparent border-b border-white/40 focus:border-white outline-none w-full max-w-[120px]"
+          autoFocus
+        />
+      ) : (
+        <div
+          className="flex items-center gap-1.5 cursor-pointer"
+          onClick={(e) => { e.stopPropagation(); setEditing(true) }}
+        >
+          <span className="text-slate-100">{localSuffix}</span>
+          <Pencil className="w-3 h-3 text-white/40 opacity-0 group-hover/sku:opacity-100 transition-opacity" />
+        </div>
+      )}
+    </div>
+  )
+}
+
 interface ItemDetailPanelProps {
   selectedItem: Item
   selectedDetailTab: string
@@ -1087,45 +1138,15 @@ export function CatalogoItemDetailPanel({
                           {/* SKU row */}
                           <div className="flex items-center gap-2 group/sku">
                             <span className="font-medium text-slate-400 whitespace-nowrap">SKU:</span>
-                            {isChildItem && fatherItem ? (() => {
-                              // Use skuSuffix directly from selectedItem if available, otherwise extract from fullSku
-                              const prefix = `${fatherItem.sku}-`
-                              const fullSku = skuValue || selectedItem.sku || ""
-                              const suffix = selectedItem.skuSuffix || (fullSku.startsWith(prefix) ? fullSku.slice(prefix.length) : fullSku)
-                              return (
-                                <div className="flex items-center gap-0 flex-1 group/sku-inner">
-                                  <span className="font-mono text-slate-400/80 whitespace-nowrap select-none">
-                                    {prefix}
-                                  </span>
-                                  {editingSku ? (
-                                    <input
-                                      type="text"
-                                      value={suffix}
-                                      onChange={(e) => setSkuValue(prefix + e.target.value)}
-                                      onBlur={handleSkuBlur}
-                                      onKeyDown={(e) => {
-                                        if (e.key === "Enter") (e.target as HTMLInputElement).blur()
-                                        if (e.key === "Escape") {
-                                          setSkuValue(selectedItem.sku || "")
-                                          setEditingSku(false)
-                                        }
-                                      }}
-                                      onClick={(e) => e.stopPropagation()}
-                                      className="text-slate-100 bg-transparent border-b border-white/40 focus:border-white outline-none w-full max-w-[120px]"
-                                      autoFocus
-                                    />
-                                  ) : (
-                                    <div
-                                      className="flex items-center gap-1.5 cursor-pointer"
-                                      onClick={(e) => { e.stopPropagation(); setEditingSku(true) }}
-                                    >
-                                      <span className="text-slate-100">{suffix}</span>
-                                      <Pencil className="w-3 h-3 text-white/40 opacity-0 group-hover/sku:opacity-100 transition-opacity" />
-                                    </div>
-                                  )}
-                                </div>
-                              )
-                            })() : (
+                            {isChildItem && fatherItem ? (
+                              <ChildSkuEditor
+                                fatherSku={fatherItem.sku}
+                                skuSuffix={selectedItem.skuSuffix || ""}
+                                onSave={(newSuffix) => {
+                                  onFieldChange(selectedItem.sku, "skuSuffix", newSuffix)
+                                }}
+                              />
+                            ) : (
                               <>
                                 {editingSku ? (
                                   <input
@@ -2264,10 +2285,10 @@ export function CatalogoItemDetailPanel({
                             <label className="text-sm font-medium text-gray-700">Volumen de la unidad</label>
                             <button
                               onClick={() => handleFieldChange("volumenActive", !volumenActive, setVolumenActive)}
-                              disabled={shouldStrictlyInherit(fatherItem?.volumenActive)}
+                              disabled={isChildItem}
                               className={`w-10 h-5 rounded-full transition-colors relative ${
                                 volumenActive ? "bg-blue-500" : "bg-gray-300"
-                              } ${shouldStrictlyInherit(fatherItem?.volumenActive) ? "opacity-50 cursor-not-allowed" : ""}`}
+                              } ${isChildItem ? "opacity-50 cursor-not-allowed" : ""}`}
                             >
                               <div
                                 className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${
@@ -2287,9 +2308,9 @@ export function CatalogoItemDetailPanel({
                                   onChange={(e) =>
                                     handleFieldChange("volumenCantidad", e.target.value, setVolumenCantidad)
                                   }
-                                  disabled={shouldStrictlyInherit(fatherItem?.volumenCantidad)}
+                                  disabled={isChildItem}
                                   className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                    shouldStrictlyInherit(fatherItem?.volumenCantidad)
+                                    isChildItem
                                       ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
                                       : "bg-white border-gray-300 text-gray-900"
                                   }`}
@@ -2302,9 +2323,9 @@ export function CatalogoItemDetailPanel({
                                 <select
                                   value={volumenUnidad}
                                   onChange={(e) => handleFieldChange("volumenUnidad", e.target.value, setVolumenUnidad)}
-                                  disabled={shouldStrictlyInherit(fatherItem?.volumenUnidad)}
+                                  disabled={isChildItem}
                                   className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none ${
-                                    shouldStrictlyInherit(fatherItem?.volumenUnidad)
+                                    isChildItem
                                       ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
                                       : "bg-white border-gray-300 text-gray-900 cursor-pointer"
                                   }`}
@@ -2497,10 +2518,10 @@ export function CatalogoItemDetailPanel({
                             <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Volumen de la unidad</label>
                             <button
                               onClick={() => handleFieldChange("volumenActive", !volumenActive, setVolumenActive)}
-                              disabled={shouldStrictlyInherit(fatherItem?.volumenActive)}
+                              disabled={isChildItem}
                               className={`w-9 h-5 rounded-full transition-all relative ${
                                 volumenActive ? "bg-slate-800" : "bg-slate-200"
-                              } ${shouldStrictlyInherit(fatherItem?.volumenActive) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                              } ${isChildItem ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                             >
                               <div
                                 className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${
@@ -2520,9 +2541,9 @@ export function CatalogoItemDetailPanel({
                                   onChange={(e) =>
                                     handleFieldChange("volumenCantidad", e.target.value, setVolumenCantidad)
                                   }
-                                  disabled={shouldStrictlyInherit(fatherItem?.volumenCantidad)}
+                                  disabled={isChildItem}
                                   className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${
-                                    shouldStrictlyInherit(fatherItem?.volumenCantidad)
+                                    isChildItem
                                       ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
                                       : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
                                   }`}
@@ -2535,9 +2556,9 @@ export function CatalogoItemDetailPanel({
                                 <select
                                   value={volumenUnidad}
                                   onChange={(e) => handleFieldChange("volumenUnidad", e.target.value, setVolumenUnidad)}
-                                  disabled={shouldStrictlyInherit(fatherItem?.volumenUnidad)}
+                                  disabled={isChildItem}
                                   className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 appearance-none transition-all text-sm ${
-                                    shouldStrictlyInherit(fatherItem?.volumenUnidad)
+                                    isChildItem
                                       ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
                                       : "bg-white border-slate-200 text-slate-800 cursor-pointer hover:border-slate-300"
                                   }`}

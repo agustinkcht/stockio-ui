@@ -26,6 +26,7 @@ interface ItemCardProps {
   nextItem?: Item
   isChild?: boolean
   isLastChild?: boolean
+  parentItem?: Item // Parent item for children to compute full SKU
   handleItemSelection?: (item: Item, isChild?: boolean) => void
   getSelectionState?: (item: Item, isChild?: boolean) => { checked: boolean; indeterminate: boolean }
   isAuditMode?: boolean
@@ -76,6 +77,7 @@ export function ItemCard({
   nextItem,
   isChild = false,
   isLastChild = false,
+  parentItem,
   handleItemSelection,
   getSelectionState,
   isAuditMode = false,
@@ -83,6 +85,13 @@ export function ItemCard({
   auditStockValues,
   showPrecioColumn = false,
 }: ItemCardProps) {
+  // Compute full SKU for children: {parentSku}-{skuSuffix}
+  const displaySku = useMemo(() => {
+    if (isChild && parentItem?.sku && item.skuSuffix) {
+      return `${parentItem.sku}-${item.skuSuffix}`
+    }
+    return item.sku || ""
+  }, [isChild, parentItem?.sku, item.skuSuffix, item.sku])
   const [isHovered, setIsHovered] = useState(false)
   const [showTransition, setShowTransition] = useState(false)
   const [copiedSku, setCopiedSku] = useState(false)
@@ -228,7 +237,7 @@ export function ItemCard({
 
   const handleCopySku = async (e: React.MouseEvent) => {
     e.stopPropagation()
-    await navigator.clipboard.writeText(item.sku)
+    await navigator.clipboard.writeText(displaySku)
     setCopiedSku(true)
     setTimeout(() => setCopiedSku(false), 2000)
   }
@@ -653,7 +662,7 @@ export function ItemCard({
                     {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
                     {item.marca && <span className="text-xs text-muted-foreground">·</span>}
                     <div className="flex items-center gap-1.5">
-                      <span className="text-xs text-muted-foreground">{item.sku}</span>
+                      <span className="text-xs text-muted-foreground">{displaySku}</span>
                       <button
                         onClick={handleCopySku}
                         className="p-1 text-muted-foreground hover:text-foreground transition-colors"
@@ -798,7 +807,7 @@ export function ItemCard({
             const childState = getSelectionState ? getSelectionState(variant, true) : { checked: false, indeterminate: false }
             return (
               <ItemCard
-                key={variant.sku || variantIndex}
+                key={variant.skuSuffix || variant.sku || variantIndex}
                 item={variant}
                 index={variantIndex}
                 gridSize={gridSize}
@@ -812,6 +821,7 @@ export function ItemCard({
                 nextItem={item.variants?.[variantIndex + 1]}
                 isChild={true}
                 isLastChild={variantIndex === item.variants.length - 1}
+                parentItem={item}
                 handleItemSelection={handleItemSelection}
                 getSelectionState={getSelectionState}
                 isAuditMode={isAuditMode}
