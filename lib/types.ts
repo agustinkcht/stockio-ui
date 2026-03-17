@@ -22,7 +22,11 @@ export interface ItemVariant {
     iva: number
     precioFinal: number
   }
-  sku: string
+  // SKU paradigm: children store only skuSuffix.
+  // Full SKU is computed at render time as "{parentSku}-{skuSuffix}".
+  // sku is kept optional for legacy data compatibility.
+  skuSuffix: string
+  sku?: string
   codigoUniversal: string
   marca?: string
   modelo?: string
@@ -91,8 +95,11 @@ export interface DepositStockMap {
   }
 }
 
+// Local display type for the variant matrix in the detail panel.
+// skuSuffix is the source of truth; full SKU is computed as "{parentSku}-{skuSuffix}".
 export interface VariantItem {
-  sku: string
+  id: string
+  skuSuffix: string
   codigoUniversal: string
   descripcion: string
   foto: string
