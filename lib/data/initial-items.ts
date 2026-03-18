@@ -7,7 +7,7 @@ export const INITIAL_ITEMS: Item[] = [
     categoria: "Vinos",
     hasVariants: true,
     isAgrupador: true,
-    skuPrefix: "VNO-PROGRES",
+    sku: "VNO-PROGRES",
     marca: "Proemio",
     proveedor: "Proemio Wines",
     formatoVenta: "unidad",
@@ -35,7 +35,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "X4N9T2BZ",
         name: "Proemio Grand Reserve",
-        skuSuffix: "MALB-2012",
+        sku: "VNO-PROGRES-MALB-2012",
         codigoUniversal: "7798123400013",
         codigoProveedor: "PROE-GR-MALB-2012",
         categoria: "Vinos",
@@ -54,7 +54,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "M7R3YQ8L",
         name: "Proemio Grand Reserve",
-        skuSuffix: "MALB-2019",
+        sku: "VNO-PROGRES-MALB-2019",
         codigoUniversal: "7798123400020",
         codigoProveedor: "PROE-GR-MALB-2019",
         categoria: "Vinos",
@@ -75,7 +75,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "C2V8P6DW",
         name: "Proemio Grand Reserve",
-        skuSuffix: "CABS-2012",
+        sku: "VNO-PROGRES-CABS-2012",
         codigoUniversal: "7798123400037",
         codigoProveedor: "PROE-GR-CABS-2012",
         categoria: "Vinos",
@@ -94,7 +94,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "T9K4X1HJ",
         name: "Proemio Grand Reserve",
-        skuSuffix: "CABS-2019",
+        sku: "VNO-PROGRES-CABS-2019",
         codigoUniversal: "7798123400044",
         codigoProveedor: "PROE-GR-CABS-2019",
         categoria: "Vinos",
@@ -115,7 +115,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "Q6Z2MN8R",
         name: "Proemio Grand Reserve",
-        skuSuffix: "SYGA-2012",
+        sku: "VNO-PROGRES-SYGA-2012",
         codigoUniversal: "7798123400051",
         codigoProveedor: "PROE-GR-SYGA-2012",
         categoria: "Vinos",
@@ -134,7 +134,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "L3W7F9KP",
         name: "Proemio Grand Reserve",
-        skuSuffix: "SYGA-2019",
+        sku: "VNO-PROGRES-SYGA-2019",
         codigoUniversal: "7798123400068",
         codigoProveedor: "PROE-GR-SYGA-2019",
         categoria: "Vinos",
@@ -158,7 +158,7 @@ export const INITIAL_ITEMS: Item[] = [
     categoria: "Vinos",
     hasVariants: true,
     isAgrupador: true,
-    skuPrefix: "VNO-DVCAT",
+    sku: "VNO-DVCAT",
     marca: "Catena Zapata",
     proveedor: "Catena Zapata",
     formatoVenta: "unidad",
@@ -183,7 +183,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "N5JQ2C7M",
         name: "DV Catena",
-        skuSuffix: "MALB",
+        sku: "VNO-DVCAT-MALB",
         codigoUniversal: "7799002000214",
         codigoProveedor: "DVCAT-MALB",
         categoria: "Vinos",
@@ -203,7 +203,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "P4Y8L1ZW",
         name: "DV Catena",
-        skuSuffix: "CABS",
+        sku: "VNO-DVCAT-CABS",
         codigoUniversal: "7799002000221",
         codigoProveedor: "DVCAT-CABS",
         categoria: "Vinos",
@@ -286,7 +286,7 @@ export const INITIAL_ITEMS: Item[] = [
     categoria: "Vinos",
     hasVariants: true,
     isAgrupador: true,
-    skuPrefix: "VNO-DOMESTE",
+    sku: "VNO-DOMESTE",
     marca: "Domiciano",
     proveedor: "Bodega Domiciano",
     formatoVenta: "unidad",
@@ -313,7 +313,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "V3N9Q2LF",
         name: "Domiciano Estelar",
-        skuSuffix: "BLND",
+        sku: "VNO-DOMESTE-BLND",
         codigoUniversal: "7799002000042",
         codigoProveedor: "DOM-EST-BLND-MS",
         categoria: "Vinos",
@@ -335,7 +335,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "D6T4M8XJ",
         name: "Domiciano Estelar",
-        skuSuffix: "MALB",
+        sku: "VNO-DOMESTE-MALB",
         codigoUniversal: "7799002000059",
         codigoProveedor: "DOM-EST-MALB",
         categoria: "Vinos",
@@ -356,7 +356,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "Y1R7K3ZP",
         name: "Domiciano Estelar",
-        skuSuffix: "BLDL",
+        sku: "VNO-DOMESTE-BLDL",
         codigoUniversal: "7799002000066",
         codigoProveedor: "DOM-EST-BLDL",
         categoria: "Vinos",
@@ -377,7 +377,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "W9C2H6TN",
         name: "Domiciano Estelar",
-        skuSuffix: "CHRD",
+        sku: "VNO-DOMESTE-CHRD",
         codigoUniversal: "7799002000080",
         codigoProveedor: "DOM-EST-CHRD",
         categoria: "Vinos",
@@ -477,7 +477,7 @@ export const INITIAL_ITEMS: Item[] = [
     categoria: "Espumantes",
     hasVariants: true,
     isAgrupador: true,
-    skuPrefix: "ESP-SALENT",
+    sku: "ESP-SALENT",
     marca: "Salentein",
     proveedor: "Bodega Salentein",
     formatoVenta: "unidad",
@@ -506,7 +506,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "Q8N1T5LV",
         name: "Salentein",
-        skuSuffix: "EXBR",
+        sku: "ESP-SALENT-EXBR",
         codigoUniversal: "7798123401027",
         codigoProveedor: "SAL-ESP-EXBR-750",
         categoria: "Espumantes",
@@ -525,7 +525,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "X3K7D9MP",
         name: "Salentein",
-        skuSuffix: "BRNA",
+        sku: "ESP-SALENT-BRNA",
         codigoUniversal: "7798123401034",
         codigoProveedor: "SAL-ESP-BRNA-750",
         categoria: "Espumantes",
@@ -544,7 +544,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "C6V2Y4RH",
         name: "Salentein",
-        skuSuffix: "BRRO",
+        sku: "ESP-SALENT-BRRO",
         codigoUniversal: "7798123401041",
         codigoProveedor: "SAL-ESP-BRRO-750",
         categoria: "Espumantes",
@@ -657,7 +657,7 @@ export const INITIAL_ITEMS: Item[] = [
     categoria: "Gin",
     hasVariants: true,
     isAgrupador: true,
-    skuPrefix: "GIN-RESTINGA",
+    sku: "GIN-RESTINGA",
     marca: "Restinga",
     proveedor: "Destilería Restinga",
     formatoVenta: "unidad",
@@ -679,7 +679,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "K4X9P2WM",
         name: "Restinga",
-        skuSuffix: "ORIG",
+        sku: "GIN-REST-ORIG",
         codigoUniversal: "7798123456789",
         categoria: "Gin",
         marca: "Restinga",
@@ -691,7 +691,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "V8J3L6RC",
         name: "Restinga",
-        skuSuffix: "OTON",
+        sku: "GIN-REST-OTON",
         codigoUniversal: "7798123456796",
         categoria: "Gin",
         marca: "Restinga",
@@ -703,7 +703,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "D1Y7T4MK",
         name: "Restinga",
-        skuSuffix: "FLAV",
+        sku: "GIN-REST-FLAV",
         codigoUniversal: "7798123456802",
         categoria: "Gin",
         marca: "Restinga",
@@ -750,7 +750,7 @@ export const INITIAL_ITEMS: Item[] = [
     categoria: "Vodka",
     hasVariants: true,
     isAgrupador: true,
-    skuPrefix: "VDKA-ABSO",
+    sku: "VDKA-ABSO",
     marca: "Absolut",
     proveedor: "The Absolut Company",
     formatoVenta: "unidad",
@@ -772,7 +772,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "F8K4R7TD",
         name: "Absolut",
-        skuSuffix: "ORIG",
+        sku: "VDKA-ABSO-ORIG",
         codigoUniversal: "7312040017014",
         codigoProveedor: "ABS-ORG-750",
         categoria: "Vodka",
@@ -785,7 +785,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "J2M6X3QW",
         name: "Absolut",
-        skuSuffix: "RASP",
+        sku: "VDKA-ABSO-RASP",
         codigoUniversal: "7312040030754",
         codigoProveedor: "ABS-RASP-750",
         categoria: "Vodka",
@@ -798,7 +798,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "M9C1P8YV",
         name: "Absolut",
-        skuSuffix: "PEAR",
+        sku: "VDKA-ABSO-PEAR",
         codigoUniversal: "7312040030778",
         codigoProveedor: "ABS-PEAR-750",
         categoria: "Vodka",
@@ -811,7 +811,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "Q4Z7L2NH",
         name: "Absolut",
-        skuSuffix: "VANI",
+        sku: "VDKA-ABSO-VANI",
         codigoUniversal: "7312040030761",
         codigoProveedor: "ABS-VANI-750",
         categoria: "Vodka",
@@ -912,7 +912,7 @@ export const INITIAL_ITEMS: Item[] = [
     categoria: "Whiskies",
     hasVariants: true,
     isAgrupador: true,
-    skuPrefix: "WHKY-JW750",
+    sku: "WHKY-JW750",
     marca: "Johnnie Walker",
     proveedor: "Diageo",
     formatoVenta: "unidad",
@@ -939,7 +939,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "H9K2N3WD",
         name: "Johnnie Walker 750 ml",
-        skuSuffix: "RED",
+        sku: "WHKY-JW750-RED",
         codigoUniversal: "5000267011011",
         codigoProveedor: "JW-RED-750",
         categoria: "Whiskies",
@@ -956,7 +956,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "Z5M8T1QV",
         name: "Johnnie Walker 750 ml",
-        skuSuffix: "BLACK",
+        sku: "WHKY-JW750-BLACK",
         codigoUniversal: "5000267024233",
         codigoProveedor: "JW-BLACK-750",
         categoria: "Whiskies",
@@ -973,7 +973,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "K2D7X4LP",
         name: "Johnnie Walker 750 ml",
-        skuSuffix: "DBLK",
+        sku: "WHKY-JW750-DBLK",
         codigoUniversal: "5000267092843",
         codigoProveedor: "JW-DBLACK-750",
         categoria: "Whiskies",
@@ -990,7 +990,7 @@ export const INITIAL_ITEMS: Item[] = [
       {
         id: "V1Q9R6YH",
         name: "Johnnie Walker 750 ml",
-        skuSuffix: "BLUE",
+        sku: "WHKY-JW750-BLUE",
         codigoUniversal: "5000267014012",
         codigoProveedor: "JW-BLUE-750",
         categoria: "Whiskies",

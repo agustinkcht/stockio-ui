@@ -8,57 +8,6 @@ import type {
   FilterConfig,
 } from "../types"
 
-// ===== SKU PARADIGM HELPERS =====
-// Standalone items: use `sku` field
-// Parent items (hasVariants=true): use `skuPrefix` field
-// Children (ItemVariant): use `skuSuffix` field
-//   - Full SKU is computed as `{parentItem.skuPrefix}-{skuSuffix}`
-
-/**
- * Get the SKU identifier for any item (standalone or parent)
- * For standalone items, returns `sku`
- * For parent items with variants, returns `skuPrefix`
- */
-export function getItemSku(item: Item | null | undefined): string {
-  if (!item) return ""
-  if (item.hasVariants || item.isAgrupador) return item.skuPrefix || ""
-  return item.sku || ""
-}
-
-/**
- * Get the full SKU for a variant/child item
- * Computes as: `{parentSkuPrefix}-{childSkuSuffix}`
- */
-export function getVariantFullSku(parentItem: Item | null | undefined, variant: ItemVariant | null | undefined): string {
-  if (!parentItem || !variant) return ""
-  const prefix = parentItem.skuPrefix || ""
-  const suffix = variant.skuSuffix || ""
-  if (!prefix) return suffix
-  if (!suffix) return ""
-  return `${prefix}-${suffix}`
-}
-
-/**
- * Find an item by its identifier (sku, skuPrefix, or id)
- * Works for both standalone and parent items
- */
-export function findItemByIdentifier(items: Item[], identifier: string): Item | undefined {
-  if (!identifier) return undefined
-  return items.find((item) => 
-    item.id === identifier || 
-    item.sku === identifier || 
-    item.skuPrefix === identifier
-  )
-}
-
-/**
- * Check if an item matches a given identifier (by id, sku, or skuPrefix)
- */
-export function itemMatchesIdentifier(item: Item, identifier: string): boolean {
-  if (!identifier) return false
-  return item.id === identifier || item.sku === identifier || item.skuPrefix === identifier
-}
-
 /**
  * Generates a cryptographically random 7-character base-36 uppercase ID
  * prefixed by item type: STA (standalone), PAR (parent), VAR (child/variant).
@@ -144,10 +93,7 @@ export function searchItems(items: Item[], searchQuery: string): Item[] {
     const fields: string[] = []
 
     if (item.name) fields.push(item.name)
-    // Handle both sku (standalone), skuPrefix (parent), and skuSuffix (variant)
-    if ("sku" in item && item.sku) fields.push(item.sku)
-    if ("skuPrefix" in item && (item as Item).skuPrefix) fields.push((item as Item).skuPrefix!)
-    if ("skuSuffix" in item && (item as ItemVariant).skuSuffix) fields.push((item as ItemVariant).skuSuffix)
+    if (item.sku) fields.push(item.sku)
     if (item.marca) fields.push(item.marca)
     if ("categoria" in item && item.categoria) fields.push(item.categoria)
     if ("modelo" in item && item.modelo) fields.push(item.modelo)
