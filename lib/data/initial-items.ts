@@ -220,7 +220,7 @@ export const INITIAL_ITEMS: Item[] = [
       },
     ],
   },
-  
+
   {
     id: "H7M3T9QK",
     name: "Chañarmuyo 5 Hileras Blend",
@@ -237,7 +237,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenCantidad: 750,
     volumenUnidad: "ml",
     stock: { total: "18", reservado: "2", disponible: "16" },
-    atributosPrincipales: [],  
+    atributosPrincipales: [],
 
     atributosInformativos: [
       { key: "Varietal", value: "Blend" },
@@ -269,7 +269,7 @@ export const INITIAL_ITEMS: Item[] = [
       reservado: "4",
       disponible: "32",
     },
-    atributosPrincipales: [],  
+    atributosPrincipales: [],
     atributosInformativos: [
       { key: "Varietal", value: "Blend" },
       { key: "Tipo de Vino", value: "Tinto" },
@@ -416,7 +416,7 @@ export const INITIAL_ITEMS: Item[] = [
       reservado: "2",
       disponible: "16",
     },
-    atributosPrincipales: [],  
+    atributosPrincipales: [],
     atributosInformativos: [
       { key: "Dosaje", value: "Brut Nature" },
       { key: "Varietal", value: "Blend" },
@@ -454,7 +454,7 @@ export const INITIAL_ITEMS: Item[] = [
       reservado: "2",
       disponible: "22",
     },
-    atributosPrincipales: [],  
+    atributosPrincipales: [],
     atributosInformativos: [
       { key: "Tipo de Licor", value: "Espirituoso a base de mosto de uva" },
       { key: "Varietal", value: "Blend" },
@@ -579,7 +579,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenUnidad: "ml",
 
     stock: { total: "30", reservado: "4", disponible: "26" },
-    atributosPrincipales: [],  
+    atributosPrincipales: [],
     atributosInformativos: [
       { key: "Dosaje", value: "Extra Brut" },
       { key: "Varietal", value: "Chardonnay 80% - Pinot Noir 20%" },
@@ -612,7 +612,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenUnidad: "ml",
 
     stock: { total: "30", reservado: "4", disponible: "26" },
-    atributosPrincipales: [],  
+    atributosPrincipales: [],
     atributosInformativos: [
       { key: "Estilo", value: "London Dry" },
       { key: "Origen", value: "Reino Unido" },
@@ -638,7 +638,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenUnidad: "ml",
 
     stock: { total: "14", reservado: "1", disponible: "13" },
-    atributosPrincipales: [],  
+    atributosPrincipales: [],
     atributosInformativos: [
       { key: "Estilo", value: "Artesanal" },
       { key: "Origen", value: "Argentina" },
@@ -735,7 +735,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenUnidad: "ml",
 
     stock: { total: "16", reservado: "2", disponible: "14" },
-    atributosPrincipales: [],  
+    atributosPrincipales: [],
     atributosInformativos: [
       { key: "Estilo", value: "London Dry" },
       { key: "Origen", value: "Argentina" },
@@ -840,7 +840,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenUnidad: "ml",
 
     stock: { total: "20", reservado: "2", disponible: "18" },
-    atributosPrincipales: [],  
+    atributosPrincipales: [],
     atributosInformativos: [
       { key: "Origen", value: "Francia" },
       { key: "ABV", value: "40%" },
@@ -866,7 +866,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenUnidad: "ml",
 
     stock: { total: "28", reservado: "4", disponible: "24" },
-    atributosPrincipales: [],      
+    atributosPrincipales: [],
     atributosInformativos: [
       { key: "Origen", value: "Barbados" },
       { key: "Añejamiento", value: "No aplica" },
@@ -897,7 +897,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenUnidad: "ml",
 
     stock: { total: "12", reservado: "2", disponible: "10" },
-    atributosPrincipales: [],      
+    atributosPrincipales: [],
     atributosInformativos: [
       { key: "Origen", value: "México" },
       { key: "Añejamiento", value: "Sin añejamiento" },
@@ -1024,7 +1024,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenUnidad: "ml",
 
     stock: { total: "40", reservado: "5", disponible: "35" },
-    atributosPrincipales: [],      
+    atributosPrincipales: [],
     atributosInformativos: [
       { key: "Tipo de Whisky", value: "Tennessee" },
       { key: "Método de Elaboración", value: "Filtrado por carbón" },
@@ -1054,7 +1054,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenUnidad: "ml",
 
     stock: { total: "34", reservado: "4", disponible: "30" },
-    atributosPrincipales: [],      
+    atributosPrincipales: [],
 
     atributosInformativos: [
       { key: "Tipo de Whisky", value: "Irish" },
@@ -1085,7 +1085,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenUnidad: "ml",
 
     stock: { total: "22", reservado: "3", disponible: "19" },
-    atributosPrincipales: [],      
+    atributosPrincipales: [],
     atributosInformativos: [
       { key: "Tipo de Whisky", value: "Irish" },
       { key: "Método de Elaboración", value: "Triple destilado" },
@@ -1119,7 +1119,7 @@ export const INITIAL_ITEMS: Item[] = [
       reservado: "6",
       disponible: "42",
     },
-    atributosPrincipales: [],      
+    atributosPrincipales: [],
     atributosInformativos: [
       { key: "Tipo de Licor", value: "Licor herbal amargo" },
       { key: "Origen", value: "Alemania" },
@@ -1129,7 +1129,7 @@ export const INITIAL_ITEMS: Item[] = [
     precio: { costo: 14000, margen: 65, iva: 21, precioFinal: 27615 },
   },
   {
-    id: "J8T2D5LY",
+    id: "STAJ8T2D5LY",
     name: "Sheridan's Original",
     categoria: "Licores",
     hasVariants: false,
@@ -1148,7 +1148,7 @@ export const INITIAL_ITEMS: Item[] = [
       reservado: "5",
       disponible: "31",
     },
-    atributosPrincipales: [],      
+    atributosPrincipales: [],
     atributosInformativos: [
       { key: "Tipo de Licor", value: "Licor de crema y café" },
       { key: "Origen", value: "Irlanda" },
@@ -1176,7 +1176,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenUnidad: "ml",
 
     stock: { total: "24", reservado: "3", disponible: "21" },
-    atributosPrincipales: [],      
+    atributosPrincipales: [],
 
     atributosInformativos: [
       { key: "Tipo de Licor", value: "Licor de whisky y canela" },
@@ -1204,7 +1204,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenCantidad: 700,
     volumenUnidad: "ml",
     stock: { total: "18", reservado: "2", disponible: "16" },
-    atributosPrincipales: [],      
+    atributosPrincipales: [],
     atributosInformativos: [
       { key: "Tipo de Licor", value: "Triple sec (licor de naranja)" },
       { key: "Origen", value: "Francia" },
