@@ -1904,7 +1904,7 @@ export function CatalogoItemDetailPanel({
 
                         return (
                           <div
-                            key={variant.sku}
+                            key={variant.id || variant.skuSuffix || variant.sku || index}
                             onClick={() => {
                               if (variantId) {
                                 router.push(`/catalogo/items/${variantId}`)
