@@ -433,6 +433,18 @@ export function ItemsGrid({
                   </Button>
                 )}
 
+                {!hideCreadorMasivoButton && (
+                  <Button
+                    onClick={() => router.push("/inventario/articulos/editor-masivo")}
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5 mr-1.5 text-blue-600" />
+                    Editor Masivo
+                  </Button>
+                )}
+
                 {!hideAuditButton && (
                   <Button
                     onClick={() => setIsAuditMode(!isAuditMode)}
