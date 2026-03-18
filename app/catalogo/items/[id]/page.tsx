@@ -104,12 +104,48 @@ export default function CatalogoItemDetailPage() {
     router.push("/catalogo/items")
   }
 
+  const hasUnsavedChanges = hasUnsavedEdits || hasUnsavedDeletes
+  const { showNavigationModal, handleSaveAndNavigate, handleDiscardAndNavigate, handleCancelNavigation } =
+    useNavigationGuard({
+      hasUnsavedChanges,
+      onSave: handleGuardar,
+      onDiscard: handleDeshacer,
+    })
+
+  // Guarded navigation — shows modal if there are unsaved changes, otherwise navigates directly
+  const guardedNavigate = (href: string) => {
+    if (hasUnsavedChanges) {
+      router.push(href) // router.push is intercepted by useNavigationGuard when hasUnsavedChanges is true
+    } else {
+      router.push(href)
+    }
+  }
+
   const handleNavigateBack = () => {
-    navigateBack()
+    if (hasUnsavedChanges) {
+      // Use the guarded router.push which is already intercepted
+      const prev = navigationHistory[historyIndex - 1]
+      if (prev?.item) {
+        router.push(`/catalogo/items/${prev.item.id || prev.item.sku}`)
+      } else if (historyIndex > 0) {
+        router.push("/catalogo/items")
+      }
+    } else {
+      navigateBack()
+    }
   }
 
   const handleNavigateForward = () => {
-    navigateForward()
+    if (hasUnsavedChanges) {
+      const next = navigationHistory[historyIndex + 1]
+      if (next?.item) {
+        router.push(`/catalogo/items/${next.item.id || next.item.sku}`)
+      } else {
+        router.push("/catalogo/items")
+      }
+    } else {
+      navigateForward()
+    }
   }
 
   const handleClose = () => {
@@ -119,14 +155,6 @@ export default function CatalogoItemDetailPage() {
   const handleFieldChange = (itemSku: string, field: string, value: any) => {
     editField(itemSku, field, value)
   }
-
-  const hasUnsavedChanges = hasUnsavedEdits || hasUnsavedDeletes
-  const { showNavigationModal, handleSaveAndNavigate, handleDiscardAndNavigate, handleCancelNavigation } =
-    useNavigationGuard({
-      hasUnsavedChanges,
-      onSave: handleGuardar,
-      onDiscard: handleDeshacer,
-    })
 
   useEffect(() => {
     if (!selectedItem && items.length > 0) {
@@ -171,7 +199,7 @@ export default function CatalogoItemDetailPage() {
           <div className="relative border-b border-border h-[44px] bg-white">
             <div className="px-4 flex items-center justify-between h-full">
               <div className="flex items-center">
-                <Breadcrumb items={breadcrumbs} />
+                <Breadcrumb items={breadcrumbs} onNavigate={guardedNavigate} />
               </div>
 
               <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center gap-3 mt-0">
