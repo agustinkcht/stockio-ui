@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 
-export async function GET(request: Request, { params }: { params: Promise<{ sku: string }> }) {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ sku: string }> }
+) {
   try {
     const { sku } = await params
 
@@ -17,7 +20,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ sku:
   }
 }
 
-export async function PUT(request: Request, { params }: { params: Promise<{ sku: string }> }) {
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ sku: string }> }
+) {
   try {
     const { sku } = await params
     const body = await request.json()
@@ -65,7 +71,10 @@ export async function PUT(request: Request, { params }: { params: Promise<{ sku:
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ sku: string }> }) {
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ sku: string }> }
+) {
   try {
     const { sku } = await params
 
