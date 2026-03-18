@@ -110,10 +110,11 @@ export function CatalogoItemDetailPanel({
   const router = useRouter()
   const isViewingContainer = selectedItem?.isAgrupador || selectedItem?.hasVariants || false
 
+  // Find the parent item that contains this child - prioritize ID match for accuracy
   const fatherItem = !isViewingContainer
     ? allItems.find(
         (item) => (item.hasVariants || item.isAgrupador) && item.variants?.some((v: any) => 
-          v.id === selectedItem.id || v.skuSuffix === selectedItem.skuSuffix || v.sku === selectedItem.sku
+          v.id === selectedItem.id  // ID is unique and should be the primary match
         ),
       )
     : null
@@ -1150,8 +1151,13 @@ export function CatalogoItemDetailPanel({
                                 fatherSku={fatherItem.skuPrefix || fatherItem.sku || ""}
                                 skuSuffix={selectedItem.skuSuffix || selectedItem.sku || ""}
                                 onSave={(newSuffix) => {
-                                  // Use id to identify the specific child
-                                  onFieldChange(selectedItem.id, "skuSuffix", newSuffix)
+                                  // Update variant within parent's variants array
+                                  const updatedVariants = fatherItem.variants?.map((v: any) =>
+                                    v.id === selectedItem.id ? { ...v, skuSuffix: newSuffix } : v
+                                  )
+                                  if (updatedVariants && onFieldChange) {
+                                    onFieldChange(fatherItem.id, "variants", updatedVariants)
+                                  }
                                 }}
                               />
                             ) : (
