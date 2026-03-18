@@ -339,6 +339,8 @@ export function CatalogoItemDetailPanel({
 
   const [showAtributosView, setShowAtributosView] = useState(false)
   const [showIndividualAtributosView, setShowIndividualAtributosView] = useState(false)
+  // Atributos de Variantes collapsed by default — user can expand to edit them
+  const [isAtributosCollapsed, setIsAtributosCollapsed] = useState(true)
 
   // variantItems: skuSuffix is the source of truth, full SKU is computed as {skuValue}-{skuSuffix}
   const [variantItems, setVariantItems] = useState<
@@ -1024,11 +1026,16 @@ export function CatalogoItemDetailPanel({
   }
 
   const handleNameBlur = () => {
-    if (selectedItem?.sku && editingName) {
+    if (editingName) {
       const trimmed = nameValue.trim()
       if (trimmed && trimmed !== selectedItem.name) {
-        updateItem(selectedItem.sku, { name: trimmed })
-        onFieldChange(selectedItem.id, "name", trimmed)
+        // Use id for lookup so it works for both standalone and parent items
+        if (selectedItem?.id) {
+          onFieldChange(selectedItem.id, "name", trimmed)
+        } else if (selectedItem?.sku) {
+          updateItem(selectedItem.sku, { name: trimmed })
+          onFieldChange(selectedItem.id, "name", trimmed)
+        }
       } else {
         setNameValue(selectedItem.name || "")
       }
@@ -1091,8 +1098,7 @@ export function CatalogoItemDetailPanel({
 
                   <div className="mb-0 mt-6">
                     <div className="flex items-center justify-center gap-2 mt-[-20px] mb-0 flex-wrap group/title">
-                      {!isChildItem && editingName ? (
-                        <input
+                      {!isChildItem && editingName ? (                        <input
                           type="text"
                           value={nameValue}
                           onChange={(e) => setNameValue(e.target.value)}
@@ -1916,16 +1922,30 @@ export function CatalogoItemDetailPanel({
                         </div>
                       ) : (
                         <div className="mb-6">
-                          <div className="flex items-center justify-between mb-3">
-                            <div>
+                          {/* Collapsible header — only show toggle when there are variants */}
+                          <button
+                            onClick={() => setIsAtributosCollapsed((prev) => !prev)}
+                            className="w-full flex items-center justify-between mb-3 group/atributos-header cursor-pointer"
+                          >
+                            <div className="text-left">
                               <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
                                 Atributos de Variantes
                               </h3>
-                              <p className="text-xs text-gray-500 italic">
-                                Atributos que definen las variantes del producto (máximo 2)
-                              </p>
+                              {!isAtributosCollapsed && (
+                                <p className="text-xs text-gray-500 italic">
+                                  Atributos que definen las variantes del producto (máximo 2)
+                                </p>
+                              )}
                             </div>
-                          </div>
+                            <ChevronDown
+                              className={`w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0 ${
+                                isAtributosCollapsed ? "" : "rotate-180"
+                              }`}
+                            />
+                          </button>
+
+                          {/* Collapsible content */}
+                          {!isAtributosCollapsed && (
                           <div className="flex flex-col gap-3">
                             {containerAtributosPrincipales.map((attr, index) => (
                               <div key={index} className="flex items-start gap-3">
@@ -2109,6 +2129,7 @@ export function CatalogoItemDetailPanel({
                               )
                             })()}
                           </div>
+                          )} {/* end !isAtributosCollapsed */}
                         </div>
                       )}
 
