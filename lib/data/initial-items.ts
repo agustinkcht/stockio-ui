@@ -623,12 +623,12 @@ export const INITIAL_ITEMS: Item[] = [
   },
 
   {
-    id: "H2R6D8VY",
+    id: "STAH2R6D8VY",
     name: "Myrica Botánicos",
     categoria: "Gin",
     hasVariants: false,
     isAgrupador: false,
-    sku: "GIN-MYRBOT",
+    sku: "GIN-MYRBT",
     codigoUniversal: "7799988776655",
     marca: "Myrica",
     proveedor: "Destilería Myrica",
