@@ -112,7 +112,9 @@ export function CatalogoItemDetailPanel({
 
   const fatherItem = !isViewingContainer
     ? allItems.find(
-        (item) => (item.hasVariants || item.isAgrupador) && item.variants?.some((v: any) => v.sku === selectedItem.sku),
+        (item) => (item.hasVariants || item.isAgrupador) && item.variants?.some((v: any) => 
+          v.id === selectedItem.id || v.skuSuffix === selectedItem.skuSuffix || v.sku === selectedItem.sku
+        ),
       )
     : null
 
@@ -242,7 +244,10 @@ export function CatalogoItemDetailPanel({
   const [editingSku, setEditingSku] = useState(false)
   const [editingSkuPadre, setEditingSkuPadre] = useState(false)
   const [editingCodigoUniversal, setEditingCodigoUniversal] = useState(false)
-  const [skuValue, setSkuValue] = useState(selectedItem.sku || "")
+  // For parent items, use skuPrefix; for standalone, use sku
+  const [skuValue, setSkuValue] = useState(
+    selectedItem.hasVariants ? (selectedItem.skuPrefix || selectedItem.sku || "") : (selectedItem.sku || "")
+  )
   const [codigoUniversalValue, setCodigoUniversalValue] = useState(selectedItem.codigoUniversal || "")
   const [imageView, setImageView] = useState<"imagen" | "descripcion">("imagen")
   const [isCardFlipped, setIsCardFlipped] = useState(false)
@@ -448,7 +453,8 @@ export function CatalogoItemDetailPanel({
     )
     setProveedor(shouldInheritField(fatherItem?.proveedor) ? fatherItem!.proveedor : selectedItem?.proveedor || "")
     setCodigoProveedor(selectedItem?.codigoProveedor || "")
-    setSkuValue(selectedItem.sku || "")
+    // For parent items, use skuPrefix; for standalone items, use sku
+    setSkuValue(selectedItem.hasVariants ? (selectedItem.skuPrefix || selectedItem.sku || "") : (selectedItem.sku || ""))
     setCodigoUniversalValue(selectedItem.codigoUniversal || "")
     setDescripcionValue(selectedItem.descripcion || "")
     setAtributosPrincipales(selectedItem?.atributosPrincipales || [])
@@ -582,6 +588,7 @@ export function CatalogoItemDetailPanel({
     if (attrs.length === 0) return []
 
     const skuPadre =
+      selectedItem.skuPrefix ||
       selectedItem.sku ||
       selectedItem.name
         .toUpperCase()
@@ -845,7 +852,7 @@ export function CatalogoItemDetailPanel({
       inheritValue: attr.inheritValue,
     }))
 
-    const skuPadre = selectedItem.sku || ""
+    const skuPadre = selectedItem.skuPrefix || selectedItem.sku || ""
     const newVariantObjects = newCombinations.map((combo) => ({
       id: generateId("VAR"),
       skuSuffix: combo.skuSuffix, // Source of truth - full SKU computed as {skuPadre}-{skuSuffix}
@@ -1140,8 +1147,8 @@ export function CatalogoItemDetailPanel({
                             <span className="font-medium text-slate-400 whitespace-nowrap">SKU:</span>
                             {isChildItem && fatherItem ? (
                               <ChildSkuEditor
-                                fatherSku={fatherItem.sku}
-                                skuSuffix={selectedItem.skuSuffix || ""}
+                                fatherSku={fatherItem.skuPrefix || fatherItem.sku || ""}
+                                skuSuffix={selectedItem.skuSuffix || selectedItem.sku || ""}
                                 onSave={(newSuffix) => {
                                   // Use id to identify the specific child
                                   onFieldChange(selectedItem.id, "skuSuffix", newSuffix)
@@ -1758,16 +1765,16 @@ export function CatalogoItemDetailPanel({
                                 onChange={(e) => setSkuValue(e.target.value.toUpperCase())}
                                 onBlur={() => {
                                   setEditingSkuPadre(false)
-                                  // Just update the parent SKU - no cascade needed
-                                  // Children compute their full SKU as {skuValue}-{skuSuffix}
-                                  if (skuValue !== selectedItem?.sku) {
-                                    onFieldChange(selectedItem.sku, "sku", skuValue)
+                                  // Update skuPrefix for parent items - children compute full SKU as {skuPrefix}-{skuSuffix}
+                                  const currentPrefix = selectedItem?.skuPrefix || selectedItem?.sku || ""
+                                  if (skuValue !== currentPrefix) {
+                                    onFieldChange(selectedItem.id, "skuPrefix", skuValue)
                                   }
                                 }}
                                 onKeyDown={(e) => {
                                   if (e.key === "Enter") (e.target as HTMLInputElement).blur()
                                   if (e.key === "Escape") {
-                                    setSkuValue(selectedItem?.sku || "")
+                                    setSkuValue(selectedItem?.skuPrefix || selectedItem?.sku || "")
                                     setEditingSkuPadre(false)
                                   }
                                 }}
@@ -1783,7 +1790,7 @@ export function CatalogoItemDetailPanel({
                                   setEditingSkuPadre(true)
                                 }}
                               >
-                                <span className="font-mono text-sm text-slate-800">{skuValue || selectedItem?.sku}</span>
+                                <span className="font-mono text-sm text-slate-800">{skuValue || selectedItem?.skuPrefix || selectedItem?.sku}</span>
                                 <Pencil className="w-3 h-3 text-slate-400/60 opacity-0 group-hover/skupadre:opacity-100 transition-opacity" />
                               </div>
                             )}
