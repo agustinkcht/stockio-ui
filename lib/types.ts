@@ -22,7 +22,12 @@ export interface ItemVariant {
     iva: number
     precioFinal: number
   }
-  sku: string
+  // SKU structure for children:
+  // - `skuSuffix` is the unique part for this variant
+  // - Full SKU is computed as `{parent.skuPrefix}-{skuSuffix}`
+  // - `sku` is deprecated for children, kept for backwards compatibility
+  sku?: string // @deprecated - use skuSuffix instead
+  skuSuffix?: string // The suffix part (combined with parent's skuPrefix)
   codigoUniversal: string
   marca?: string
   modelo?: string
@@ -50,7 +55,12 @@ export interface Item {
   isAgrupador?: boolean
   variantCount?: number
   itemCount?: number | string
-  sku?: string
+  // SKU structure:
+  // - Standalone items: use `sku` directly
+  // - Parent items (hasVariants=true): use `skuPrefix` as the prefix for children
+  // - Children (ItemVariant): use `skuSuffix`, full SKU = `{parent.skuPrefix}-{child.skuSuffix}`
+  sku?: string // For standalone items only
+  skuPrefix?: string // For parent items (the "sku padre")
   codigoUniversal?: string
   marca?: string
   categoria?: string
