@@ -411,15 +411,15 @@ export function CatalogoItemDetailPanel({
 
   const handleFieldChange = (field: string, value: any, setter: (val: any) => void) => {
     setter(value)
-    onFieldChange(selectedItem.sku, field, value)
+    onFieldChange(selectedItem.id, field, value)
   }
 
   const handleAtributosPrincipalesChange = (
     updated: Array<{ key: string; value: string; keyOpen?: boolean; valueOpen?: boolean }>,
   ) => {
     setAtributosPrincipales(updated)
-    if (onFieldChange && selectedItem?.sku) {
-      onFieldChange(selectedItem.sku, "atributosPrincipales", updated)
+    if (onFieldChange && selectedItem?.id) {
+      onFieldChange(selectedItem.id, "atributosPrincipales", updated)
     }
   }
 
@@ -427,8 +427,8 @@ export function CatalogoItemDetailPanel({
     updated: Array<{ key: string; value: string; keyOpen?: boolean; valueOpen?: boolean }>,
   ) => {
     setAtributosInformativos(updated)
-    if (onFieldChange && selectedItem?.sku) {
-      onFieldChange(selectedItem.sku, "atributosInformativos", updated)
+    if (onFieldChange && selectedItem?.id) {
+      onFieldChange(selectedItem.id, "atributosInformativos", updated)
     }
   }
 
@@ -436,8 +436,8 @@ export function CatalogoItemDetailPanel({
     updated: Array<{ key: string; variantes: string[]; keyOpen?: boolean; variantesOpen?: boolean }>,
   ) => {
     setContainerAtributosPrincipales(updated)
-    if (onFieldChange && selectedItem?.sku) {
-      onFieldChange(selectedItem.sku, "containerAtributosPrincipales", updated)
+    if (onFieldChange && selectedItem?.id) {
+      onFieldChange(selectedItem.id, "containerAtributosPrincipales", updated)
     }
   }
 
@@ -714,7 +714,7 @@ export function CatalogoItemDetailPanel({
   //       } else if (previousVariantsRef.current !== variantsKey) {
   //         previousVariantsRef.current = variantsKey
   //         if (onFieldChange && selectedItem.sku) {
-  //           onFieldChange(selectedItem.sku, "variants", updatedVariants)
+  //           onFieldChange(selectedItem.id, "variants", updatedVariants)
   //         }
   //       }
   //     } else {
@@ -777,7 +777,7 @@ export function CatalogoItemDetailPanel({
       console.log("[v0] New tags added to atributos principales:", updatedContainerAttrs)
       setContainerAtributosPrincipales(updatedContainerAttrs)
       if (onFieldChange && selectedItem.sku) {
-        onFieldChange(selectedItem.sku, "containerAtributosPrincipales", updatedContainerAttrs)
+        onFieldChange(selectedItem.id, "containerAtributosPrincipales", updatedContainerAttrs)
       }
     }
     
@@ -811,7 +811,7 @@ export function CatalogoItemDetailPanel({
     
     // Save to parent
     if (onFieldChange && selectedItem.sku) {
-      onFieldChange(selectedItem.sku, "variants", updatedVariants)
+      onFieldChange(selectedItem.id, "variants", updatedVariants)
     }
   }
 
@@ -883,7 +883,7 @@ export function CatalogoItemDetailPanel({
     
     // Always call onFieldChange to save the variants
     if (onFieldChange && selectedItem.sku) {
-      onFieldChange(selectedItem.sku, "variants", updatedVariants)
+      onFieldChange(selectedItem.id, "variants", updatedVariants)
     }
     
     // Update the ref for change tracking
@@ -998,7 +998,7 @@ export function CatalogoItemDetailPanel({
       updateItem(selectedItem.sku, { sku: skuValue, ...(skuSuffix !== undefined && { skuSuffix }) })
       setEditingSku(false)
       // Notify parent of change
-      onFieldChange(selectedItem.sku, "sku", skuValue)
+      onFieldChange(selectedItem.id, "sku", skuValue)
       if (skuSuffix !== undefined) {
         onFieldChange(skuValue, "skuSuffix", skuSuffix)
       }
@@ -1010,7 +1010,7 @@ export function CatalogoItemDetailPanel({
       updateItem(selectedItem.sku, { codigoUniversal: codigoUniversalValue })
       setEditingCodigoUniversal(false)
       // Notify parent of change
-      onFieldChange(selectedItem.sku, "codigoUniversal", codigoUniversalValue)
+      onFieldChange(selectedItem.id, "codigoUniversal", codigoUniversalValue)
     }
   }
 
@@ -1018,7 +1018,7 @@ export function CatalogoItemDetailPanel({
     if (selectedItem?.sku && editingDescripcion) {
       updateItem(selectedItem.sku, { descripcion: descripcionValue })
       setEditingDescripcion(false)
-      onFieldChange(selectedItem.sku, "descripcion", descripcionValue)
+      onFieldChange(selectedItem.id, "descripcion", descripcionValue)
     }
   }
 
@@ -1027,7 +1027,7 @@ export function CatalogoItemDetailPanel({
       const trimmed = nameValue.trim()
       if (trimmed && trimmed !== selectedItem.name) {
         updateItem(selectedItem.sku, { name: trimmed })
-        onFieldChange(selectedItem.sku, "name", trimmed)
+        onFieldChange(selectedItem.id, "name", trimmed)
       } else {
         setNameValue(selectedItem.name || "")
       }
@@ -1651,8 +1651,8 @@ export function CatalogoItemDetailPanel({
                                           
                                           // Save both changes together (batched)
                                           if (onFieldChange && selectedItem.sku) {
-                                            onFieldChange(selectedItem.sku, "containerAtributosPrincipales", updated)
-                                            onFieldChange(selectedItem.sku, "variants", updatedVariants)
+                                            onFieldChange(selectedItem.id, "containerAtributosPrincipales", updated)
+                                            onFieldChange(selectedItem.id, "variants", updatedVariants)
                                           }
                                         }}
                                         className="text-gray-400 hover:text-gray-600 cursor-pointer"
@@ -1673,8 +1673,8 @@ export function CatalogoItemDetailPanel({
                               
                               // Clear all variants when removing an atributo principal
                               setVariantItems([])
-                              if (onFieldChange && selectedItem?.sku) {
-                                onFieldChange(selectedItem.sku, "variants", [])
+                              if (onFieldChange && selectedItem?.id) {
+                                onFieldChange(selectedItem.id, "variants", [])
                               }
                               
                               if (updated.length === 0 && atributosInformativos.length === 0) {
@@ -1899,13 +1899,13 @@ export function CatalogoItemDetailPanel({
                           if (tagsChanged) {
                             setContainerAtributosPrincipales(updatedContainerAttrs)
                             if (onFieldChange && selectedItem.sku) {
-                              onFieldChange(selectedItem.sku, "containerAtributosPrincipales", updatedContainerAttrs)
+                              onFieldChange(selectedItem.id, "containerAtributosPrincipales", updatedContainerAttrs)
                             }
                           }
 
                           // Save the updated variants
                           if (onFieldChange && selectedItem.sku) {
-                            onFieldChange(selectedItem.sku, "variants", updatedVariants)
+                            onFieldChange(selectedItem.id, "variants", updatedVariants)
                           }
                         }
 
@@ -1957,7 +1957,7 @@ export function CatalogoItemDetailPanel({
                                     const updatedVariants = originalVariants.map((ov: any) =>
                                       ov.id === variant.id ? { ...ov, skuSuffix: newSuffix } : ov
                                     )
-                                    onFieldChange(selectedItem.sku, "variants", updatedVariants)
+                                    onFieldChange(selectedItem.id, "variants", updatedVariants)
                                   }}
                                   className="flex-1 min-w-0 bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-primary/50 px-0 py-0.5 text-[11px] font-mono text-foreground focus:outline-none transition-colors"
                                   placeholder="sufijo..."

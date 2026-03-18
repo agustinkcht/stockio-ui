@@ -361,7 +361,7 @@ export function useItems() {
 
   const deleteItem = (itemToDelete: Item) => {
     console.log("[v0] useItems - deleteItem called for:", itemToDelete.name)
-    const originalIndex = items.findIndex((item) => item.sku === itemToDelete.sku)
+    const originalIndex = items.findIndex((item) => item.id === itemToDelete.id || item.sku === itemToDelete.sku)
     console.log("[v0] useItems - originalIndex:", originalIndex)
     setDeletedItems((prev) => {
       const newDeleted = [...prev, { item: itemToDelete, originalIndex }]
@@ -450,17 +450,19 @@ export function useItems() {
       return
     }
 
-    // Regular top-level item edit
-    if (!editedItem || editedItem.itemSku !== itemSku) {
-      const originalItem = items.find((item) => item.sku === itemSku)
-      if (!originalItem) return
+    // Regular top-level item edit - find by id first, then sku
+    const originalItem = items.find((item) => item.id === itemSku || item.sku === itemSku)
+    if (!originalItem) return
 
+    const itemId = originalItem.id || originalItem.sku
+    
+    if (!editedItem || editedItem.itemSku !== itemId) {
       setEditedItem({
-        itemSku,
+        itemSku: itemId!,
         originalValues: { ...originalItem },
         currentValues: { ...originalItem, [field]: newValue },
       })
-      console.log("[v0] useItems - captured original state for:", itemSku)
+      console.log("[v0] useItems - captured original state for:", itemId)
     } else {
       setEditedItem({
         ...editedItem,
@@ -471,13 +473,14 @@ export function useItems() {
     setHasUnsavedEdits(true)
     setLastUndoneEdit(null)
 
-    setItems((prevItems) => prevItems.map((item) => (item.sku === itemSku ? { ...item, [field]: newValue } : item)))
+    setItems((prevItems) => prevItems.map((item) => (item.id === itemSku || item.sku === itemSku ? { ...item, [field]: newValue } : item)))
   }
 
   const editVariantField = (parentSku: string, variantId: string, field: string, newValue: any) => {
     console.log("[v0] useItems - editVariantField called:", { parentSku, variantId, field, newValue })
 
-    const parentItem = items.find((item) => item.sku === parentSku)
+    // Find parent by id first, then sku
+    const parentItem = items.find((item) => item.id === parentSku || item.sku === parentSku)
     if (!parentItem || !parentItem.variants) return
 
     // Find variant by id (preferred) or sku as fallback
@@ -507,7 +510,7 @@ export function useItems() {
     // Update the variant within the parent's variants array by id
     setItems((prevItems) =>
       prevItems.map((item) => {
-        if (item.sku === parentSku && item.variants) {
+        if ((item.id === parentSku || item.sku === parentSku) && item.variants) {
           const updatedVariants = item.variants.map((v: any) =>
             v.id === variantId || v.sku === variantId ? { ...v, [field]: newValue } : v,
           )
@@ -521,7 +524,7 @@ export function useItems() {
   const updateParentWithVariants = (parentSku: string, updates: Partial<Item>) => {
     console.log("[v0] useItems - updateParentWithVariants called:", { parentSku, updates })
 
-    const parentItem = items.find((item) => item.sku === parentSku)
+    const parentItem = items.find((item) => item.id === parentSku || item.sku === parentSku)
     if (!parentItem) return
 
     if (!editedItem || editedItem.itemSku !== parentSku) {
@@ -542,7 +545,7 @@ export function useItems() {
 
     setItems((prevItems) =>
       prevItems.map((item) => {
-        if (item.sku === parentSku) {
+        if (item.id === parentSku || item.sku === parentSku) {
           return { ...item, ...updates }
         }
         return item
@@ -560,9 +563,9 @@ export function useItems() {
     if (editedItem.parentSku) {
       setItems((prevItems) =>
         prevItems.map((item) => {
-          if (item.sku === editedItem.parentSku && item.variants) {
+          if ((item.id === editedItem.parentSku || item.sku === editedItem.parentSku) && item.variants) {
             const updatedVariants = item.variants.map((v: any) =>
-              v.sku === editedItem.itemSku ? { ...v, ...editedItem.originalValues } : v,
+              v.id === editedItem.itemSku || v.sku === editedItem.itemSku ? { ...v, ...editedItem.originalValues } : v,
             )
             return { ...item, variants: updatedVariants }
           }
@@ -571,7 +574,7 @@ export function useItems() {
       )
     } else {
       setItems((prevItems) =>
-        prevItems.map((item) => (item.sku === editedItem.itemSku ? { ...item, ...editedItem.originalValues } : item)),
+        prevItems.map((item) => (item.id === editedItem.itemSku || item.sku === editedItem.itemSku ? { ...item, ...editedItem.originalValues } : item)),
       )
     }
 
@@ -588,9 +591,9 @@ export function useItems() {
     if (lastUndoneEdit.parentSku) {
       setItems((prevItems) =>
         prevItems.map((item) => {
-          if (item.sku === lastUndoneEdit.parentSku && item.variants) {
+          if ((item.id === lastUndoneEdit.parentSku || item.sku === lastUndoneEdit.parentSku) && item.variants) {
             const updatedVariants = item.variants.map((v: any) =>
-              v.sku === lastUndoneEdit.itemSku ? { ...v, ...lastUndoneEdit.currentValues } : v,
+              v.id === lastUndoneEdit.itemSku || v.sku === lastUndoneEdit.itemSku ? { ...v, ...lastUndoneEdit.currentValues } : v,
             )
             return { ...item, variants: updatedVariants }
           }
@@ -600,7 +603,7 @@ export function useItems() {
     } else {
       setItems((prevItems) =>
         prevItems.map((item) =>
-          item.sku === lastUndoneEdit.itemSku ? { ...item, ...lastUndoneEdit.currentValues } : item,
+          item.id === lastUndoneEdit.itemSku || item.sku === lastUndoneEdit.itemSku ? { ...item, ...lastUndoneEdit.currentValues } : item,
         ),
       )
     }
@@ -690,7 +693,7 @@ export function useItems() {
     console.log("[v0] useItems - cancelEdit called for:", editedItem.itemSku)
 
     setItems((prevItems) =>
-      prevItems.map((item) => (item.sku === editedItem.itemSku ? { ...item, ...editedItem.originalValues } : item)),
+      prevItems.map((item) => (item.id === editedItem.itemSku || item.sku === editedItem.itemSku ? { ...item, ...editedItem.originalValues } : item)),
     )
 
     setEditedItem(null)
