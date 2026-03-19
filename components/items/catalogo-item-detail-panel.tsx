@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import type React from "react"
 import type { Item } from "@/lib/types"
-import { ChevronDown, ChevronRight, Plus, Copy, X, Minus, Check, ArrowDownToLine, Pencil, Upload, Layers } from "lucide-react"
+import { ChevronDown, Plus, Copy, X, Minus, Check, ArrowDownToLine, Pencil, Upload, Layers } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
 import { TEMPLATES } from "@/lib/constants" // DEPOSITS and SAVED_ATRIBUTOS imports removed
@@ -377,6 +377,18 @@ export function CatalogoItemDetailPanel({
 
   // Section toggle: 'info', 'both', or 'stock' - default to both expanded
   const [expandedSection, setExpandedSection] = useState<"info" | "both" | "stock">("both")
+  
+  // Precio and Stock modal states
+  const [isPrecioModalOpen, setIsPrecioModalOpen] = useState(false)
+  const [isStockModalOpen, setIsStockModalOpen] = useState(false)
+  
+  // Precio modal editing values
+  const [precioModalValues, setPrecioModalValues] = useState({
+    costo: 0,
+    margen: 0,
+    iva: 0,
+    precioFinal: 0,
+  })
 
   // Right card mode toggle for parent items: 'info' or 'atributos'
   const [rightCardMode, setRightCardMode] = useState<"info" | "atributos">("info")
@@ -1056,10 +1068,10 @@ export function CatalogoItemDetailPanel({
       {/* <Breadcrumb dynamicContent={null} /> */}
 
       <div className="px-8 pb-6 bg-slate-50 min-h-screen pl-8 pt-0">
-        <div className={`grid gap-2 ${isViewingContainer ? "grid-cols-2 gap-6" : "grid-cols-20 gap-3"}`}>
-          {/* Middle Column - Image Card (only for standalone/children) - col-span-6 */}
+        <div className={`grid gap-2 ${isViewingContainer ? "grid-cols-2 gap-6" : "grid-cols-3 gap-6"}`}>
+          {/* Left Column - Image Card (only for standalone/children) - col-span-1 */}
           {!isViewingContainer && (
-          <div className="col-span-6 order-1 z-20 rounded-xl flex flex-col transition-all duration-300 mt-4 border-none shadow-none pl-0 pr-0">
+          <div className="col-span-1 order-1 z-20 rounded-xl flex flex-col transition-all duration-300 mt-4 border-none shadow-none pl-0 pr-0">
             {/* Flip card container */}
             <div className="sticky top-4 mt-7" style={{ perspective: "1200px" }}>
               <div
@@ -1249,6 +1261,46 @@ export function CatalogoItemDetailPanel({
                               )}
                             </button>
                           </div>
+                          
+                          {/* Precio de Venta row */}
+                          <div className="flex items-center gap-2 group/precio">
+                            <span className="font-medium text-slate-400 whitespace-nowrap">Precio:</span>
+                            <div
+                              className="flex items-center gap-1.5 cursor-pointer"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setPrecioModalValues({
+                                  costo: selectedItem?.precio?.costo || 0,
+                                  margen: selectedItem?.precio?.margen || 0,
+                                  iva: selectedItem?.precio?.iva || 0,
+                                  precioFinal: selectedItem?.precio?.precioFinal || 0,
+                                })
+                                setIsPrecioModalOpen(true)
+                              }}
+                            >
+                              <span className="text-emerald-400 font-semibold">
+                                ${(selectedItem?.precio?.precioFinal || 0).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                              </span>
+                              <Pencil className="w-3 h-3 text-white/40 opacity-0 group-hover/precio:opacity-100 transition-opacity" />
+                            </div>
+                          </div>
+                          
+                          {/* Stock Disponible row */}
+                          <div className="flex items-center gap-2 group/stock">
+                            <span className="font-medium text-slate-400 whitespace-nowrap">Stock:</span>
+                            <div
+                              className="flex items-center gap-1.5 cursor-pointer"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setIsStockModalOpen(true)
+                              }}
+                            >
+                              <span className="text-blue-400 font-semibold">
+                                {Number.parseInt(selectedItem?.stock?.total || "0") - Number.parseInt(selectedItem?.stock?.reservado || "0")} disponible
+                              </span>
+                              <Pencil className="w-3 h-3 text-white/40 opacity-0 group-hover/stock:opacity-100 transition-opacity" />
+                            </div>
+                          </div>
                         </div>
                       </>
                     )}
@@ -1382,72 +1434,7 @@ export function CatalogoItemDetailPanel({
           </div>
           )}
 
-          {/* Vertical Toggle Toolstripe - Section Switcher (only for standalone/children items) - col-span-1 */}
-          {!isViewingContainer && (
-          <div className="order-2 col-span-1 flex flex-col justify-start mt-[44px] pt-6 items-center">
-            <div className="sticky top-4 flex flex-col items-center">
-              {/* Toggle Track */}
-              <div className="relative flex flex-col items-center">
-                {/* Vertical line */}
-                <div className="absolute top-0 bottom-0 w-px bg-gradient-to-b from-slate-200 via-slate-300 to-slate-200" />
-                
-                {/* Three-way Toggle */}
-                <div className="relative z-10 flex flex-col items-center gap-1 py-2 px-1">
-                  {/* Info indicator */}
-                  <button
-                    onClick={() => setExpandedSection("info")}
-                    className={`w-2 h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                      expandedSection === "info" 
-                        ? "bg-slate-800 scale-125" 
-                        : "bg-slate-300 hover:bg-slate-400"
-                    }`}
-                    title="Expandir Info"
-                  />
-                  
-                  {/* Both indicator */}
-                  <button
-                    onClick={() => setExpandedSection("both")}
-                    className={`w-2.5 h-2.5 rounded-full transition-all duration-300 cursor-pointer my-1 ${
-                      expandedSection === "both" 
-                        ? "bg-slate-800 scale-125" 
-                        : "bg-slate-300 hover:bg-slate-400"
-                    }`}
-                    title="Mostrar ambos"
-                  />
-                  
-                  {/* Stock indicator */}
-                  <button
-                    onClick={() => setExpandedSection("stock")}
-                    className={`w-2 h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                      expandedSection === "stock" 
-                        ? "bg-slate-800 scale-125" 
-                        : "bg-slate-300 hover:bg-slate-400"
-                    }`}
-                    title="Expandir Stock"
-                  />
-                </div>
-                
-                {/* Labels */}
-                <div className="mt-4 flex flex-col items-center gap-6">
-                  <span className={`text-[8px] font-medium uppercase tracking-[0.12em] transition-all duration-300 ${
-                    expandedSection === "info" 
-                      ? "text-slate-700" 
-                      : "text-slate-400"
-                  }`} style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
-                    Info
-                  </span>
-                  <span className={`text-[8px] font-medium uppercase tracking-[0.12em] transition-all duration-300 ${
-                    expandedSection === "stock" 
-                      ? "text-slate-700" 
-                      : "text-slate-400"
-                  }`} style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
-                    Stock
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-          )}
+
 
           {/* Right Column - Variantes Card (only for parent items) */}
           {isViewingContainer && (
@@ -1833,8 +1820,8 @@ export function CatalogoItemDetailPanel({
             </div>
           )}
 
-{/* Info/Atributos Column - 12 cols when info expanded, 7 cols when both, 2 col when stock expanded */}
-        <div className={`flex flex-col transition-all duration-500 overflow-hidden mr-3.5 pb-0 ${isViewingContainer ? "order-1 col-span-1 mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : `order-3 relative mt-[44px] pt-6 pb-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10 ${expandedSection === "info" ? "col-span-11 px-8" : expandedSection === "both" ? "col-span-7 px-6" : "col-span-2 px-3"}`}`}>
+{/* Info/Atributos Column - col-span-2 for standalone/children, col-span-1 for container */}
+        <div className={`flex flex-col transition-all duration-500 overflow-hidden mr-3.5 pb-0 ${isViewingContainer ? "order-1 col-span-1 mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : "order-2 col-span-2 relative mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10"}`}>
             
             {/* Thumbnail + Title Header for Parent Items */}
             {isViewingContainer && (
@@ -1852,25 +1839,8 @@ export function CatalogoItemDetailPanel({
               </div>
             )}
 
-            {/* Collapsed Info State - Minimal Slider View (only when stock is fully expanded) */}
-            {!isViewingContainer && expandedSection === "stock" && (
-              <div 
-                onClick={() => setExpandedSection("both")}
-                className="flex flex-col items-center justify-start h-full py-4 cursor-pointer group"
-              >
-                <div className="flex flex-col items-center gap-4">
-                  <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center group-hover:bg-slate-200 transition-colors">
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600" />
-                  </div>
-                  <span className="text-[9px] font-medium text-slate-400 uppercase tracking-[0.12em] group-hover:text-slate-600 transition-colors" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
-                    Info
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {/* Sticky Segment Buttons - Show when info or both is active (only for non-container items) */}
-            {!isViewingContainer && (expandedSection === "info" || expandedSection === "both") && (
+            {/* Sticky Segment Buttons (only for non-container items) */}
+            {!isViewingContainer && (
             <div className="z-20 mb-6 sticky top-[0px]">
               <div className="flex items-center gap-1 h-11 p-1 bg-slate-100/80 rounded-xl">
                 <button
@@ -1897,8 +1867,8 @@ export function CatalogoItemDetailPanel({
             </div>
             )}
 
-            {/* Tab Content - Show when info or both is active */}
-            {(isViewingContainer || expandedSection === "info" || expandedSection === "both") && (
+            {/* Tab Content */}
+            {(
             <div className="flex-1 w-full overflow-hidden">
               {isViewingContainer ? (
                 // Container item tab content
@@ -2674,337 +2644,220 @@ export function CatalogoItemDetailPanel({
             )}
           </div>
 
-{/* Stock Column - 11 cols when stock expanded, 6 cols when both, 2 col when info expanded */}
-          {!isViewingContainer && (
-          <div className={`order-4 flex flex-col mt-[44px] transition-all duration-500 ${expandedSection === "stock" ? "col-span-11 pl-4" : expandedSection === "both" ? "col-span-6 pl-3" : "col-span-2 pl-2"}`}>
-
-              <div className={`sticky top-4 bg-white border border-border/40 rounded-xl shadow-sm ${expandedSection === "stock" ? "p-5" : expandedSection === "both" ? "p-4" : "p-3"}`}>
-                
-                {/* Collapsed Stock State - Minimal Slider View (only when info is fully expanded) */}
-                {expandedSection === "info" && (
-                  <div 
-                    onClick={() => setExpandedSection("both")}
-                    className="flex flex-col items-center justify-start py-2 cursor-pointer group"
-                  >
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center group-hover:bg-slate-200 transition-colors">
-                        <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 rotate-180" />
-                      </div>
-                      <span className="text-[9px] font-medium text-slate-400 uppercase tracking-[0.12em] group-hover:text-slate-600 transition-colors" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}>
-                        Stock
-                      </span>
-                      <div className="flex flex-col items-center gap-0.5 mt-2">
-                        <span className="text-lg font-bold text-slate-600 tabular-nums">
-                          {Number.parseInt(selectedItem?.stock?.total || "0")}
-                        </span>
-                        <span className="text-[8px] text-slate-400 uppercase tracking-wider">Total</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Expanded Stock Content - show when stock or both is active */}
-                {(expandedSection === "stock" || expandedSection === "both") && (
-                <>
-                <h3 className="text-xs font-semibold text-foreground/60 uppercase tracking-wider mb-4">
-                  Stock en Depósito: Torcuato
-                </h3>
-
-                <div className="space-y-2">
-                  {/* Total Section */}
-                  <div className="border border-border/40 rounded-lg bg-slate-50 overflow-hidden">
-                    {/* Total Header - clickable to expand/collapse */}
-                    <div 
-                      onClick={() => setActiveStockEdit("total")}
-                      className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${
-                        activeStockEdit === "total" ? "bg-accent/30" : "hover:bg-accent/20"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${
-                          activeStockEdit === "total" ? "rotate-0" : "-rotate-90"
-                        }`} />
-                        <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total</div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {activeStockEdit === "total" && (
-                          <>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                if (selectedItem?.sku) {
-                                  const current = Number.parseInt(selectedItem?.stock?.total || "0")
-                                  updateStock(selectedItem.sku, "total", Math.max(0, current - 1))
-                                }
-                              }}
-                              className="w-6 h-6 rounded border border-border/50 hover:bg-accent hover:border-border transition-all flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer"
-                            >
-                              <Minus className="w-3 h-3" />
-                            </button>
-                          </>
-                        )}
-                        <span className="text-base font-semibold text-foreground tabular-nums min-w-[2rem] text-center">
-                          {Number.parseInt(selectedItem?.stock?.total || "0")}
-                        </span>
-                        {activeStockEdit === "total" && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              if (selectedItem?.sku) {
-                                const current = Number.parseInt(selectedItem?.stock?.total || "0")
-                                updateStock(selectedItem.sku, "total", current + 1)
-                              }
-                            }}
-                            className="w-6 h-6 rounded border border-border/50 hover:bg-accent hover:border-border transition-all flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer"
-                          >
-                            <Plus className="w-3 h-3" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Total Edición Avanzada Panel */}
-                    {activeStockEdit === "total" && (
-                      <div className="px-4 pb-3 pt-1 border-t border-border/30 bg-muted/10">
-                        <div className="flex items-center gap-2">
-                          <select
-                            value={stockModification.total.operation}
-                            onChange={(e) => setStockModification((prev) => ({
-                              ...prev,
-                              total: { ...prev.total, operation: e.target.value },
-                            }))}
-                            className="text-xs border border-border/50 rounded bg-background hover:bg-accent transition-colors focus:outline-none focus:ring-1 focus:ring-primary/20 cursor-pointer px-2 py-1.5"
-                          >
-<option value="agregar">Agregar</option>
-  <option value="remover">Remover</option>
-  <option value="sobreescribir">Sobreescribir</option>
-  </select>
-  <input
-                            type="number"
-                            placeholder="0"
-                            value={stockModification.total.value}
-                            onChange={(e) => setStockModification((prev) => ({
-                              ...prev,
-                              total: { ...prev.total, value: e.target.value },
-                            }))}
-                            className="w-16 text-sm border border-border/50 rounded px-2 py-1.5 bg-background focus:outline-none focus:ring-1 focus:ring-primary/20 tabular-nums text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                          />
-                          <span className="text-muted-foreground/50 text-sm">→</span>
-                          <span className="text-sm font-medium text-muted-foreground/60 tabular-nums min-w-[2.5rem] text-right">
-                            {stockModification.total.value
-                              ? (() => {
-                                  const current = Number.parseInt(selectedItem?.stock?.total || "0")
-                                  const value = Number.parseInt(stockModification.total.value || "0")
-                                  switch (stockModification.total.operation) {
-                                    case "agregar": return Math.max(0, current + value)
-                                    case "remover": return Math.max(0, current - value)
-                                    case "sobreescribir": return Math.max(0, value)
-                                    default: return current
-                                  }
-                                })()
-                              : Number.parseInt(selectedItem?.stock?.total || "0")
-                            }
-                          </span>
-                          <button
-                            onClick={() => {
-                              handleStockModificationAccept("total")
-                              setStockModification((prev) => ({
-                                ...prev,
-                                total: { operation: "agregar", value: "" },
-                              }))
-                            }}
-                            disabled={!stockModification.total.value}
-                            className={`w-7 h-7 rounded border flex items-center justify-center transition-all ml-auto ${
-                              stockModification.total.value
-                                ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90 cursor-pointer"
-                                : "bg-muted/30 text-muted-foreground/30 border-border/30 cursor-not-allowed"
-                            }`}
-                          >
-                            <Check className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-{/* Reservado Section */}
-  <div className="border border-border/40 rounded-lg bg-slate-50 overflow-hidden">
-  {/* Reservado Header - clickable to expand/collapse */}
-  <div
-  onClick={() => setActiveStockEdit("reservado")}
-  className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${
-  activeStockEdit === "reservado" ? "bg-accent/30" : "hover:bg-accent/20"
-  }`}
-  >
-  <div className="flex items-center gap-2">
-  <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${
-  activeStockEdit === "reservado" ? "rotate-0" : "-rotate-90"
-  }`} />
-  <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Reservado</div>
-  </div>
-  <div className="flex items-center gap-2">
-    {activeStockEdit === "reservado" && (
-      <button
-        onClick={(e) => {
-          e.stopPropagation()
-          if (selectedItem?.sku) {
-            const current = Number.parseInt(selectedItem?.stock?.reservado || "0")
-            updateStock(selectedItem.sku, "reservado", Math.max(0, current - 1))
-          }
-        }}
-        className="w-6 h-6 rounded border border-border/50 hover:bg-accent hover:border-border transition-all flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer"
-      >
-        <Minus className="w-3 h-3" />
-      </button>
-    )}
-    <span className="text-base font-semibold text-foreground tabular-nums min-w-[2rem] text-center">
-      {Number.parseInt(selectedItem?.stock?.reservado || "0")}
-    </span>
-    {activeStockEdit === "reservado" && (
-      <button
-        onClick={(e) => {
-          e.stopPropagation()
-          if (selectedItem?.sku) {
-            const current = Number.parseInt(selectedItem?.stock?.reservado || "0")
-            updateStock(selectedItem.sku, "reservado", current + 1)
-          }
-        }}
-        className="w-6 h-6 rounded border border-border/50 hover:bg-accent hover:border-border transition-all flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer"
-      >
-        <Plus className="w-3 h-3" />
-      </button>
-    )}
-  </div>
-  </div>
-
-                    {/* Reservado Edición Avanzada Panel */}
-                    {activeStockEdit === "reservado" && (
-                      <div className="px-4 pb-3 pt-1 border-t border-border/30 bg-muted/10">
-                        <div className="flex items-center gap-2">
-                          <select
-                            value={stockModification.reservado.operation}
-                            onChange={(e) => setStockModification((prev) => ({
-                              ...prev,
-                              reservado: { ...prev.reservado, operation: e.target.value },
-                            }))}
-                            className="text-xs border border-border/50 rounded bg-background hover:bg-accent transition-colors focus:outline-none focus:ring-1 focus:ring-primary/20 cursor-pointer px-2 py-1.5"
-                          >
-<option value="agregar">Agregar</option>
-  <option value="remover">Remover</option>
-  <option value="sobreescribir">Sobreescribir</option>
-  </select>
-  <input
-                            type="number"
-                            placeholder="0"
-                            value={stockModification.reservado.value}
-                            onChange={(e) => setStockModification((prev) => ({
-                              ...prev,
-                              reservado: { ...prev.reservado, value: e.target.value },
-                            }))}
-                            className="w-16 text-sm border border-border/50 rounded px-2 py-1.5 bg-background focus:outline-none focus:ring-1 focus:ring-primary/20 tabular-nums text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                          />
-                          <span className="text-muted-foreground/50 text-sm">→</span>
-                          <span className="text-sm font-medium text-muted-foreground/60 tabular-nums min-w-[2.5rem] text-right">
-                            {stockModification.reservado.value
-                              ? (() => {
-                                  const current = Number.parseInt(selectedItem?.stock?.reservado || "0")
-                                  const value = Number.parseInt(stockModification.reservado.value || "0")
-                                  switch (stockModification.reservado.operation) {
-                                    case "agregar": return Math.max(0, current + value)
-                                    case "remover": return Math.max(0, current - value)
-                                    case "sobreescribir": return Math.max(0, value)
-                                    default: return current
-                                  }
-                                })()
-                              : Number.parseInt(selectedItem?.stock?.reservado || "0")
-                            }
-                          </span>
-                          <button
-                            onClick={() => {
-                              handleStockModificationAccept("reservado")
-                              setStockModification((prev) => ({
-                                ...prev,
-                                reservado: { operation: "agregar", value: "" },
-                              }))
-                            }}
-                            disabled={!stockModification.reservado.value}
-                            className={`w-7 h-7 rounded border flex items-center justify-center transition-all ml-auto ${
-                              stockModification.reservado.value
-                                ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90 cursor-pointer"
-                                : "bg-muted/30 text-muted-foreground/30 border-border/30 cursor-not-allowed"
-                            }`}
-                          >
-                            <Check className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Disponible - Read only */}
-                  <div className="border border-emerald-200 rounded-lg bg-emerald-50/50 overflow-hidden">
-                    <div className="flex items-center justify-between px-4 py-3">
-                      <div className="text-xs font-medium text-emerald-700 uppercase tracking-wide">Disponible</div>
-                      <span className="text-xl font-bold text-emerald-600 tabular-nums">
-                        {Number.parseInt(selectedItem?.stock?.total || "0") -
-                          Number.parseInt(selectedItem?.stock?.reservado || "0")}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                </>
-                )}
-              </div>
-
-              {/* Precio Card - Below Stock Card */}
-              {(expandedSection === "stock" || expandedSection === "both") && (
-              <div className={`mt-4 bg-white border border-border/40 rounded-xl shadow-sm ${expandedSection === "stock" ? "p-5" : "p-4"}`}>
-                <h3 className="text-xs font-semibold text-foreground/60 uppercase tracking-wider mb-4">
-                  Precio
-                </h3>
-                
-                {/* Upper part: Costo, Margen, IVA */}
-                <div className="space-y-2 mb-4">
-                  {/* Costo */}
-                  <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 rounded-lg border border-border/40">
-                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Costo</span>
-                    <span className="text-base font-semibold text-slate-700 tabular-nums">
-                      ${(selectedItem?.precio?.costo || 0).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                  
-                  {/* Margen and IVA on same line */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 rounded-lg border border-border/40">
-                      <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Margen</span>
-                      <span className="text-base font-semibold text-slate-700 tabular-nums">
-                        {selectedItem?.precio?.margen || 0}%
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 rounded-lg border border-border/40">
-                      <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">IVA</span>
-                      <span className="text-base font-semibold text-slate-700 tabular-nums">
-                        {selectedItem?.precio?.iva || 0}%
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Bottom part: Precio Final - Big and prominent */}
-                <div className="border-t border-slate-200 pt-4">
-                  <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl p-4 border border-emerald-200/60">
-                    <div className="text-xs font-medium text-emerald-700 uppercase tracking-wide mb-1">Precio Final</div>
-                    <div className="font-bold text-emerald-600 tabular-nums text-2xl">
-                      ${(selectedItem?.precio?.precioFinal || 0).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              )}
-            </div>
-          )}
         </div>
       </div>
+
+      {/* Precio Modal */}
+      {isPrecioModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setIsPrecioModalOpen(false)} />
+          <div className="relative bg-white rounded-xl shadow-xl p-6 w-full max-w-lg mx-4">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">Editar Precio</h3>
+            
+            <div className="grid grid-cols-4 gap-3 mb-6">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Costo</label>
+                <input
+                  type="number"
+                  value={precioModalValues.costo}
+                  onChange={(e) => {
+                    const costo = Number.parseFloat(e.target.value) || 0
+                    const precioFinal = costo * (1 + precioModalValues.margen / 100) * (1 + precioModalValues.iva / 100)
+                    setPrecioModalValues((prev) => ({ ...prev, costo, precioFinal }))
+                  }}
+                  className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Margen %</label>
+                <input
+                  type="number"
+                  value={precioModalValues.margen}
+                  onChange={(e) => {
+                    const margen = Number.parseFloat(e.target.value) || 0
+                    const precioFinal = precioModalValues.costo * (1 + margen / 100) * (1 + precioModalValues.iva / 100)
+                    setPrecioModalValues((prev) => ({ ...prev, margen, precioFinal }))
+                  }}
+                  className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">IVA %</label>
+                <input
+                  type="number"
+                  value={precioModalValues.iva}
+                  onChange={(e) => {
+                    const iva = Number.parseFloat(e.target.value) || 0
+                    const precioFinal = precioModalValues.costo * (1 + precioModalValues.margen / 100) * (1 + iva / 100)
+                    setPrecioModalValues((prev) => ({ ...prev, iva, precioFinal }))
+                  }}
+                  className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-emerald-600 uppercase tracking-wide">Precio Final</label>
+                <div className="px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-lg text-sm font-semibold text-emerald-700">
+                  ${precioModalValues.precioFinal.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setIsPrecioModalOpen(false)}
+                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  if (selectedItem?.sku) {
+                    onFieldChange(selectedItem.id, "precio", precioModalValues)
+                  }
+                  setIsPrecioModalOpen(false)
+                }}
+                className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                Aceptar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Stock Modal */}
+      {isStockModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setIsStockModalOpen(false)} />
+          <div className="relative bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">Editar Stock</h3>
+            
+            <div className="space-y-3 mb-6">
+              {/* Total */}
+              <div className="border border-slate-200 rounded-lg bg-slate-50 overflow-hidden">
+                <div
+                  onClick={() => setActiveStockEdit("total")}
+                  className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${
+                    activeStockEdit === "total" ? "bg-slate-100" : "hover:bg-slate-100"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${activeStockEdit === "total" ? "rotate-0" : "-rotate-90"}`} />
+                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Total</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {activeStockEdit === "total" && (
+                      <button onClick={(e) => { e.stopPropagation(); if (selectedItem?.sku) updateStock(selectedItem.sku, "total", Math.max(0, Number.parseInt(selectedItem?.stock?.total || "0") - 1)) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
+                        <Minus className="w-3 h-3" />
+                      </button>
+                    )}
+                    <span className="text-base font-semibold tabular-nums min-w-[2rem] text-center">{Number.parseInt(selectedItem?.stock?.total || "0")}</span>
+                    {activeStockEdit === "total" && (
+                      <button onClick={(e) => { e.stopPropagation(); if (selectedItem?.sku) updateStock(selectedItem.sku, "total", Number.parseInt(selectedItem?.stock?.total || "0") + 1) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                {activeStockEdit === "total" && (
+                  <div className="px-4 pb-3 pt-1 border-t border-slate-200 bg-slate-100/50">
+                    <div className="flex items-center gap-2">
+                      <select value={stockModification.total.operation} onChange={(e) => setStockModification((prev) => ({ ...prev, total: { ...prev.total, operation: e.target.value } }))} className="text-xs border border-slate-300 rounded bg-white px-2 py-1.5 cursor-pointer">
+                        <option value="agregar">Agregar</option>
+                        <option value="remover">Remover</option>
+                        <option value="sobreescribir">Sobreescribir</option>
+                      </select>
+                      <input type="number" placeholder="0" value={stockModification.total.value} onChange={(e) => setStockModification((prev) => ({ ...prev, total: { ...prev.total, value: e.target.value } }))} className="w-16 text-sm border border-slate-300 rounded px-2 py-1.5 text-center" />
+                      <span className="text-slate-400 text-sm">→</span>
+                      <span className="text-sm font-medium text-slate-500 tabular-nums min-w-[2rem] text-right">
+                        {stockModification.total.value ? (() => { const c = Number.parseInt(selectedItem?.stock?.total || "0"), v = Number.parseInt(stockModification.total.value || "0"); return stockModification.total.operation === "agregar" ? Math.max(0, c + v) : stockModification.total.operation === "remover" ? Math.max(0, c - v) : Math.max(0, v) })() : Number.parseInt(selectedItem?.stock?.total || "0")}
+                      </span>
+                      <button onClick={() => { handleStockModificationAccept("total"); setStockModification((prev) => ({ ...prev, total: { operation: "agregar", value: "" } })) }} disabled={!stockModification.total.value} className={`w-7 h-7 rounded border flex items-center justify-center ml-auto ${stockModification.total.value ? "bg-slate-900 text-white border-slate-900 cursor-pointer" : "bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed"}`}>
+                        <Check className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Reservado */}
+              <div className="border border-slate-200 rounded-lg bg-slate-50 overflow-hidden">
+                <div
+                  onClick={() => setActiveStockEdit("reservado")}
+                  className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${
+                    activeStockEdit === "reservado" ? "bg-slate-100" : "hover:bg-slate-100"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${activeStockEdit === "reservado" ? "rotate-0" : "-rotate-90"}`} />
+                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Reservado</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {activeStockEdit === "reservado" && (
+                      <button onClick={(e) => { e.stopPropagation(); if (selectedItem?.sku) updateStock(selectedItem.sku, "reservado", Math.max(0, Number.parseInt(selectedItem?.stock?.reservado || "0") - 1)) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
+                        <Minus className="w-3 h-3" />
+                      </button>
+                    )}
+                    <span className="text-base font-semibold tabular-nums min-w-[2rem] text-center">{Number.parseInt(selectedItem?.stock?.reservado || "0")}</span>
+                    {activeStockEdit === "reservado" && (
+                      <button onClick={(e) => { e.stopPropagation(); if (selectedItem?.sku) updateStock(selectedItem.sku, "reservado", Number.parseInt(selectedItem?.stock?.reservado || "0") + 1) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                {activeStockEdit === "reservado" && (
+                  <div className="px-4 pb-3 pt-1 border-t border-slate-200 bg-slate-100/50">
+                    <div className="flex items-center gap-2">
+                      <select value={stockModification.reservado.operation} onChange={(e) => setStockModification((prev) => ({ ...prev, reservado: { ...prev.reservado, operation: e.target.value } }))} className="text-xs border border-slate-300 rounded bg-white px-2 py-1.5 cursor-pointer">
+                        <option value="agregar">Agregar</option>
+                        <option value="remover">Remover</option>
+                        <option value="sobreescribir">Sobreescribir</option>
+                      </select>
+                      <input type="number" placeholder="0" value={stockModification.reservado.value} onChange={(e) => setStockModification((prev) => ({ ...prev, reservado: { ...prev.reservado, value: e.target.value } }))} className="w-16 text-sm border border-slate-300 rounded px-2 py-1.5 text-center" />
+                      <span className="text-slate-400 text-sm">→</span>
+                      <span className="text-sm font-medium text-slate-500 tabular-nums min-w-[2rem] text-right">
+                        {stockModification.reservado.value ? (() => { const c = Number.parseInt(selectedItem?.stock?.reservado || "0"), v = Number.parseInt(stockModification.reservado.value || "0"); return stockModification.reservado.operation === "agregar" ? Math.max(0, c + v) : stockModification.reservado.operation === "remover" ? Math.max(0, c - v) : Math.max(0, v) })() : Number.parseInt(selectedItem?.stock?.reservado || "0")}
+                      </span>
+                      <button onClick={() => { handleStockModificationAccept("reservado"); setStockModification((prev) => ({ ...prev, reservado: { operation: "agregar", value: "" } })) }} disabled={!stockModification.reservado.value} className={`w-7 h-7 rounded border flex items-center justify-center ml-auto ${stockModification.reservado.value ? "bg-slate-900 text-white border-slate-900 cursor-pointer" : "bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed"}`}>
+                        <Check className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Disponible - Read only */}
+              <div className="border border-emerald-200 rounded-lg bg-emerald-50/50">
+                <div className="flex items-center justify-between px-4 py-3">
+                  <span className="text-xs font-medium text-emerald-700 uppercase tracking-wide">Disponible</span>
+                  <span className="text-xl font-bold text-emerald-600 tabular-nums">
+                    {Number.parseInt(selectedItem?.stock?.total || "0") - Number.parseInt(selectedItem?.stock?.reservado || "0")}
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setIsStockModalOpen(false)}
+                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => setIsStockModalOpen(false)}
+                className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                Aceptar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Nueva Variante Modal */}
       <NuevaVarianteModal
