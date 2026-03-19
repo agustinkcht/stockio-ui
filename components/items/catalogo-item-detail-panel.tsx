@@ -1068,7 +1068,7 @@ export function CatalogoItemDetailPanel({
       {/* <Breadcrumb dynamicContent={null} /> */}
 
       <div className="px-8 pb-6 bg-slate-50 min-h-screen pl-8 pt-0">
-        <div className={`grid gap-2 ${isViewingContainer ? "grid-cols-2 gap-6" : "grid-cols-10 gap-8"}`}>
+        <div className={`grid gap-2 ${isViewingContainer ? "grid-cols-2 gap-6" : "grid-cols-10 gap-16"}`}>
           {/* Left Column - Image Card (only for standalone/children) - col-span-4 */}
           {!isViewingContainer && (
             <div className="col-span-4 order-1 z-20 rounded-xl flex flex-col transition-all duration-300 mt-4 border-none shadow-none pl-0 pr-0">
@@ -1084,7 +1084,7 @@ export function CatalogoItemDetailPanel({
                 >
                   {/* FRONT SIDE */}
                   <div
-                    className="absolute inset-0 p-6 px-8 pr-11 border-solid border border-black rounded-xl bg-black shadow-md pl-11 ml-0 cursor-pointer"
+                    className="absolute inset-0 p-6 px-8 pr-11 border-solid border border-black rounded-xl bg-black shadow-md pl-11 ml-6 cursor-pointer"
                     style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
                     onClick={() => setIsCardFlipped(true)}
                   >
@@ -1445,8 +1445,8 @@ export function CatalogoItemDetailPanel({
                     <button
                       onClick={() => setRightCardMode("info")}
                       className={`flex-1 px-3 py-2 rounded-md text-xs font-medium transition-all ${rightCardMode === "info"
-                          ? "bg-white text-slate-900 shadow-sm"
-                          : "text-slate-600 hover:text-slate-900"
+                        ? "bg-white text-slate-900 shadow-sm"
+                        : "text-slate-600 hover:text-slate-900"
                         }`}
                     >
                       Info
@@ -1454,8 +1454,8 @@ export function CatalogoItemDetailPanel({
                     <button
                       onClick={() => setRightCardMode("atributos")}
                       className={`flex-1 px-3 py-2 rounded-md text-xs font-medium transition-all ${rightCardMode === "atributos"
-                          ? "bg-white text-slate-900 shadow-sm"
-                          : "text-slate-600 hover:text-slate-900"
+                        ? "bg-white text-slate-900 shadow-sm"
+                        : "text-slate-600 hover:text-slate-900"
                         }`}
                     >
                       Atributos
@@ -1483,8 +1483,8 @@ export function CatalogoItemDetailPanel({
                             onChange={(e) => handleFieldChange("categoria", e.target.value, setCategoria)}
                             disabled={shouldStrictlyInherit(fatherItem?.categoria)}
                             className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${shouldStrictlyInherit(fatherItem?.categoria)
-                                ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
-                                : "bg-white border-gray-300 text-gray-900"
+                              ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
+                              : "bg-white border-gray-300 text-gray-900"
                               }`}
                             placeholder="Ej: Vinos"
                           />
@@ -1498,8 +1498,8 @@ export function CatalogoItemDetailPanel({
                             onChange={(e) => handleFieldChange("marca", e.target.value, setMarca)}
                             disabled={shouldStrictlyInherit(fatherItem?.marca)}
                             className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${shouldStrictlyInherit(fatherItem?.marca)
-                                ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
-                                : "bg-white border-gray-300 text-gray-900"
+                              ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
+                              : "bg-white border-gray-300 text-gray-900"
                               }`}
                             placeholder="Ej: YKK"
                           />
@@ -1520,8 +1520,8 @@ export function CatalogoItemDetailPanel({
                             onChange={(e) => handleFieldChange("formatoVenta", e.target.value, setFormatoVenta)}
                             disabled={shouldStrictlyInherit(fatherItem?.formatoVenta)}
                             className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none ${shouldStrictlyInherit(fatherItem?.formatoVenta)
-                                ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
-                                : "bg-white border-gray-300 text-gray-900 cursor-pointer"
+                              ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
+                              : "bg-white border-gray-300 text-gray-900 cursor-pointer"
                               }`}
                           >
                             <option value="unidad">Unidad</option>
@@ -1545,8 +1545,8 @@ export function CatalogoItemDetailPanel({
                             }}
                             disabled={formatoVenta === "unidad" || isUnidadesPorPackLocked}
                             className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${formatoVenta === "unidad" || isUnidadesPorPackLocked
-                                ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
-                                : "bg-white border-gray-300 text-gray-900"
+                              ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
+                              : "bg-white border-gray-300 text-gray-900"
                               }`}
                             placeholder="N.E."
                           />
@@ -1581,8 +1581,8 @@ export function CatalogoItemDetailPanel({
                                 }
                                 disabled={isChildItem}
                                 className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isChildItem
-                                    ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
-                                    : "bg-white border-gray-300 text-gray-900"
+                                  ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
+                                  : "bg-white border-gray-300 text-gray-900"
                                   }`}
                                 placeholder="0"
                               />
@@ -1595,8 +1595,8 @@ export function CatalogoItemDetailPanel({
                                 onChange={(e) => handleFieldChange("volumenUnidad", e.target.value, setVolumenUnidad)}
                                 disabled={isChildItem}
                                 className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none ${isChildItem
-                                    ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
-                                    : "bg-white border-gray-300 text-gray-900 cursor-pointer"
+                                  ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
+                                  : "bg-white border-gray-300 text-gray-900 cursor-pointer"
                                   }`}
                               >
                                 <option value="ml">ml</option>
@@ -1660,8 +1660,8 @@ export function CatalogoItemDetailPanel({
                           onChange={(e) => handleFieldChange("proveedor", e.target.value, setProveedor)}
                           disabled={shouldInheritField(fatherItem?.proveedor)}
                           className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${shouldInheritField(fatherItem?.proveedor)
-                              ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
-                              : "bg-white border-gray-300 text-gray-900"
+                            ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
+                            : "bg-white border-gray-300 text-gray-900"
                             }`}
                           placeholder="Nombre del proveedor"
                         />
@@ -1736,10 +1736,10 @@ export function CatalogoItemDetailPanel({
                                     }}
                                     disabled={isValueLocked || (!isChildItem && attr.inheritValue)}
                                     className={`w-full px-3 py-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${isValueLocked
-                                        ? "bg-slate-50 border border-slate-200 text-slate-400 cursor-not-allowed"
-                                        : (!isChildItem && attr.inheritValue)
-                                          ? "bg-slate-50 border-2 border-dashed border-slate-300 text-slate-400 cursor-not-allowed italic"
-                                          : "bg-white border border-slate-200 text-slate-800 hover:border-slate-300"
+                                      ? "bg-slate-50 border border-slate-200 text-slate-400 cursor-not-allowed"
+                                      : (!isChildItem && attr.inheritValue)
+                                        ? "bg-slate-50 border-2 border-dashed border-slate-300 text-slate-400 cursor-not-allowed italic"
+                                        : "bg-white border border-slate-200 text-slate-800 hover:border-slate-300"
                                       }`}
                                     placeholder={(!isChildItem && attr.inheritValue) ? "Variantes completarán..." : "Ej: Algodón"}
                                   />
@@ -1757,8 +1757,8 @@ export function CatalogoItemDetailPanel({
                                         handleAtributosInformativosChange(updated)
                                       }}
                                       className={`p-1.5 rounded-md transition-all cursor-pointer ${attr.inheritValue
-                                          ? "bg-slate-800 text-white"
-                                          : "text-gray-400 hover:text-slate-600 hover:bg-slate-100"
+                                        ? "bg-slate-800 text-white"
+                                        : "text-gray-400 hover:text-slate-600 hover:bg-slate-100"
                                         }`}
                                       title={attr.inheritValue ? "Valor heredable a variantes (click para desactivar)" : "Marcar para que variantes completen el valor"}
                                     >
@@ -1829,8 +1829,8 @@ export function CatalogoItemDetailPanel({
                   <button
                     onClick={() => setSelectedDetailTab("info")}
                     className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${selectedDetailTab === "info"
-                        ? "bg-white text-slate-900 shadow-sm font-semibold"
-                        : "text-slate-500 hover:text-slate-700"
+                      ? "bg-white text-slate-900 shadow-sm font-semibold"
+                      : "text-slate-500 hover:text-slate-700"
                       }`}
                   >
                     <span className="text-xs font-medium uppercase tracking-widest">Info</span>
@@ -1838,8 +1838,8 @@ export function CatalogoItemDetailPanel({
                   <button
                     onClick={() => setSelectedDetailTab("atributos")}
                     className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${selectedDetailTab === "atributos"
-                        ? "bg-white text-slate-900 shadow-sm font-semibold"
-                        : "text-slate-500 hover:text-slate-700"
+                      ? "bg-white text-slate-900 shadow-sm font-semibold"
+                      : "text-slate-500 hover:text-slate-700"
                       }`}
                   >
                     <span className="text-xs font-medium uppercase tracking-widest">Atributos</span>
@@ -1946,8 +1946,8 @@ export function CatalogoItemDetailPanel({
                                           onFocus={() => setDuplicateTagError({ ...duplicateTagError, [index]: false })}
                                           placeholder="Ej: Rojo"
                                           className={`w-full px-3 py-2.5 bg-white border rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 transition-all hover:border-slate-300 text-sm ${duplicateTagError[index]
-                                              ? "border-red-400 focus:ring-red-400"
-                                              : "border-slate-200 focus:ring-slate-300"
+                                            ? "border-red-400 focus:ring-red-400"
+                                            : "border-slate-200 focus:ring-slate-300"
                                             }`}
                                         />
 
@@ -1989,8 +1989,8 @@ export function CatalogoItemDetailPanel({
                                               <span
                                                 key={vIndex}
                                                 className={`px-3 py-1.5 bg-white rounded-md text-sm flex items-center gap-2 ${isComplete
-                                                    ? "border border-gray-300 text-gray-900"
-                                                    : "border-2 border-dashed border-gray-300 text-gray-500"
+                                                  ? "border border-gray-300 text-gray-900"
+                                                  : "border-2 border-dashed border-gray-300 text-gray-500"
                                                   }`}
                                               >
                                                 {variante}
@@ -2067,8 +2067,8 @@ export function CatalogoItemDetailPanel({
                                       onClick={handleGenerarVariantes}
                                       disabled={!isEnabled}
                                       className={`w-full px-4 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 ${isEnabled
-                                          ? "bg-slate-900 text-white hover:bg-slate-800 cursor-pointer"
-                                          : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                                        ? "bg-slate-900 text-white hover:bg-slate-800 cursor-pointer"
+                                        : "bg-slate-100 text-slate-400 cursor-not-allowed"
                                         }`}
                                     >
                                       Generar Variantes
@@ -2299,8 +2299,8 @@ export function CatalogoItemDetailPanel({
                                 onChange={(e) => handleFieldChange("categoria", e.target.value, setCategoria)}
                                 disabled={shouldStrictlyInherit(fatherItem?.categoria)}
                                 className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${shouldStrictlyInherit(fatherItem?.categoria)
-                                    ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
-                                    : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
+                                  ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                  : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
                                   }`}
                                 placeholder="Ej: Vinos"
                               />
@@ -2314,8 +2314,8 @@ export function CatalogoItemDetailPanel({
                                 onChange={(e) => handleFieldChange("marca", e.target.value, setMarca)}
                                 disabled={shouldStrictlyInherit(fatherItem?.marca)}
                                 className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${shouldStrictlyInherit(fatherItem?.marca)
-                                    ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
-                                    : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
+                                  ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                  : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
                                   }`}
                                 placeholder="Ej: YKK"
                               />
@@ -2337,8 +2337,8 @@ export function CatalogoItemDetailPanel({
                                 onChange={(e) => handleFieldChange("formatoVenta", e.target.value, setFormatoVenta)}
                                 disabled={shouldStrictlyInherit(fatherItem?.formatoVenta)}
                                 className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 appearance-none transition-all text-sm ${shouldStrictlyInherit(fatherItem?.formatoVenta)
-                                    ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
-                                    : "bg-white border-slate-200 text-slate-800 cursor-pointer hover:border-slate-300"
+                                  ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                  : "bg-white border-slate-200 text-slate-800 cursor-pointer hover:border-slate-300"
                                   }`}
                               >
                                 <option value="unidad">Unidad</option>
@@ -2363,8 +2363,8 @@ export function CatalogoItemDetailPanel({
                                 }}
                                 disabled={formatoVenta === "unidad" || isUnidadesPorPackLocked}
                                 className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${formatoVenta === "unidad" || isUnidadesPorPackLocked
-                                    ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
-                                    : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
+                                  ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                  : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
                                   }`}
                                 placeholder="N.E."
                               />
@@ -2399,8 +2399,8 @@ export function CatalogoItemDetailPanel({
                                     }
                                     disabled={isChildItem}
                                     className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${isChildItem
-                                        ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
-                                        : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
+                                      ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                      : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
                                       }`}
                                     placeholder="0"
                                   />
@@ -2413,8 +2413,8 @@ export function CatalogoItemDetailPanel({
                                     onChange={(e) => handleFieldChange("volumenUnidad", e.target.value, setVolumenUnidad)}
                                     disabled={isChildItem}
                                     className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 appearance-none transition-all text-sm ${isChildItem
-                                        ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
-                                        : "bg-white border-slate-200 text-slate-800 cursor-pointer hover:border-slate-300"
+                                      ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                      : "bg-white border-slate-200 text-slate-800 cursor-pointer hover:border-slate-300"
                                       }`}
                                   >
                                     <option value="ml">ml</option>
@@ -2476,8 +2476,8 @@ export function CatalogoItemDetailPanel({
                                   onChange={(e) => handleFieldChange("proveedor", e.target.value, setProveedor)}
                                   disabled={shouldInheritField(fatherItem?.proveedor)}
                                   className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${shouldInheritField(fatherItem?.proveedor)
-                                      ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
-                                      : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
+                                    ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                    : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
                                     }`}
                                   placeholder="Nombre del proveedor"
                                 />
