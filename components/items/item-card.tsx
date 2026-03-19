@@ -344,23 +344,31 @@ export function ItemCard({
 
                 {/* Categoría cell */}
                 <div
-                  className="col-span-7 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+                  className="col-span-8 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
                   onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
                 >
                   <span className="text-sm text-foreground">{item.categoria || "-"}</span>
                 </div>
 
+                {/* Estado cell */}
+                <div
+                  className="col-span-4 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+                  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+                >
+                  <span className="text-sm text-foreground">{item.estado || "-"}</span>
+                </div>
+
                 {/* Precio Final cell - empty for parent */}
                 <div
-                  className="col-span-7 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+                  className="col-span-8 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
                   onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
                 >
                   <span className="w-4 h-px bg-slate-200 rounded-full block" />
                 </div>
 
-                {/* Stock cell - empty with chevron at right edge */}
+                {/* Stock Disponible cell - empty with chevron at right edge */}
                 <div
-                  className="col-span-14 h-full flex items-center justify-end px-4 cursor-pointer"
+                  className="col-span-8 h-full flex items-center justify-end px-4 cursor-pointer"
                   onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
                 >
                   <button
@@ -584,11 +592,35 @@ export function ItemCard({
                 </div>
               </div>
 
-              {/* Categoría cell */}
-              <div
-                className="col-span-7 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
-                onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
-              >
+  {/* Estado cell */}
+  <div
+  className="col-span-4 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+  >
+    <span className="text-sm text-foreground">{item.estado || "-"}</span>
+  </div>
+
+  {/* Categoría cell */}
+  <div
+  className="col-span-8 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+  >
+    <span className="text-sm text-foreground">{item.categoria || "-"}</span>
+  </div>
+
+  {/* Precio Final - blank for parent */}
+  <div
+  className="col-span-8 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+  >
+    <span className="w-4 h-px bg-slate-200 rounded-full block" />
+  </div>
+
+  {/* Stock Disponible - blank for parent, chevron at right edge */}
+  <div
+  className="col-span-8 h-full flex items-center justify-end px-4 cursor-pointer"
+  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+  >
                 <span className="text-sm text-foreground">{item.categoria || "-"}</span>
               </div>
 
