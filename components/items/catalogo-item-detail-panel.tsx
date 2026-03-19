@@ -1068,10 +1068,10 @@ export function CatalogoItemDetailPanel({
       {/* <Breadcrumb dynamicContent={null} /> */}
 
       <div className="px-8 pb-6 bg-slate-50 min-h-screen pl-8 pt-0">
-        <div className={`grid gap-2 ${isViewingContainer ? "grid-cols-2 gap-6" : "grid-cols-3 gap-6"}`}>
-          {/* Left Column - Image Card (only for standalone/children) - col-span-1 */}
+        <div className={`grid gap-2 ${isViewingContainer ? "grid-cols-2 gap-6" : "grid-cols-10 gap-6"}`}>
+          {/* Left Column - Image Card (only for standalone/children) - col-span-4 */}
           {!isViewingContainer && (
-          <div className="col-span-1 order-1 z-20 rounded-xl flex flex-col transition-all duration-300 mt-4 border-none shadow-none pl-0 pr-0">
+          <div className="col-span-4 order-1 z-20 rounded-xl flex flex-col transition-all duration-300 mt-4 border-none shadow-none pl-0 pr-0">
             {/* Flip card container */}
             <div className="sticky top-4 mt-7" style={{ perspective: "1200px" }}>
               <div
@@ -1263,8 +1263,8 @@ export function CatalogoItemDetailPanel({
                           </div>
                           
                           {/* Precio de Venta row */}
-                          <div className="flex items-center gap-2 group/precio">
-                            <span className="font-medium text-slate-400 whitespace-nowrap">Precio:</span>
+                          <div className="flex items-center gap-2 group/precio mt-1">
+                            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Precio</span>
                             <div
                               className="flex items-center gap-1.5 cursor-pointer"
                               onClick={(e) => {
@@ -1278,16 +1278,16 @@ export function CatalogoItemDetailPanel({
                                 setIsPrecioModalOpen(true)
                               }}
                             >
-                              <span className="text-emerald-400 font-semibold">
+                              <span className="text-emerald-400 font-bold text-lg leading-tight">
                                 ${(selectedItem?.precio?.precioFinal || 0).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
                               </span>
-                              <Pencil className="w-3 h-3 text-white/40 opacity-0 group-hover/precio:opacity-100 transition-opacity" />
+                              <Pencil className="w-3.5 h-3.5 text-white/50 opacity-0 group-hover/precio:opacity-100 transition-opacity" />
                             </div>
                           </div>
                           
                           {/* Stock Disponible row */}
                           <div className="flex items-center gap-2 group/stock">
-                            <span className="font-medium text-slate-400 whitespace-nowrap">Stock:</span>
+                            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Stock</span>
                             <div
                               className="flex items-center gap-1.5 cursor-pointer"
                               onClick={(e) => {
@@ -1295,10 +1295,10 @@ export function CatalogoItemDetailPanel({
                                 setIsStockModalOpen(true)
                               }}
                             >
-                              <span className="text-blue-400 font-semibold">
-                                {Number.parseInt(selectedItem?.stock?.total || "0") - Number.parseInt(selectedItem?.stock?.reservado || "0")} disponible
+                              <span className="text-blue-400 font-bold text-lg leading-tight">
+                                {Number.parseInt(selectedItem?.stock?.total || "0") - Number.parseInt(selectedItem?.stock?.reservado || "0")} disp.
                               </span>
-                              <Pencil className="w-3 h-3 text-white/40 opacity-0 group-hover/stock:opacity-100 transition-opacity" />
+                              <Pencil className="w-3.5 h-3.5 text-white/50 opacity-0 group-hover/stock:opacity-100 transition-opacity" />
                             </div>
                           </div>
                         </div>
@@ -1820,8 +1820,8 @@ export function CatalogoItemDetailPanel({
             </div>
           )}
 
-{/* Info/Atributos Column - col-span-2 for standalone/children, col-span-1 for container */}
-        <div className={`flex flex-col transition-all duration-500 overflow-hidden mr-3.5 pb-0 ${isViewingContainer ? "order-1 col-span-1 mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : "order-2 col-span-2 relative mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10"}`}>
+{/* Info/Atributos Column - col-span-6 for standalone/children, col-span-1 for container */}
+        <div className={`flex flex-col transition-all duration-500 overflow-hidden mr-3.5 pb-0 ${isViewingContainer ? "order-1 col-span-1 mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : "order-2 col-span-6 relative mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10"}`}>
             
             {/* Thumbnail + Title Header for Parent Items */}
             {isViewingContainer && (
@@ -2699,9 +2699,21 @@ export function CatalogoItemDetailPanel({
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-emerald-600 uppercase tracking-wide">Precio Final</label>
-                <div className="px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-lg text-sm font-semibold text-emerald-700">
-                  ${precioModalValues.precioFinal.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
-                </div>
+                <input
+                  type="number"
+                  value={precioModalValues.precioFinal}
+                  onChange={(e) => {
+                    const precioFinal = Number.parseFloat(e.target.value) || 0
+                    // Back-calculate margen from precio final, costo and iva
+                    const base = precioFinal / (1 + precioModalValues.iva / 100)
+                    const margen = precioModalValues.costo > 0
+                      ? ((base / precioModalValues.costo) - 1) * 100
+                      : 0
+                    setPrecioModalValues((prev) => ({ ...prev, precioFinal, margen: Math.round(margen * 100) / 100 }))
+                  }}
+                  className="px-3 py-2 border border-emerald-300 bg-emerald-50 rounded-lg text-sm font-semibold text-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  placeholder="0"
+                />
               </div>
             </div>
             
