@@ -21,13 +21,13 @@ const DEPOSITS = ["Torcuato"]
 function ChildSkuEditor({ fatherSku, skuSuffix, onSave }: { fatherSku: string; skuSuffix: string; onSave: (suffix: string) => void }) {
   const [editing, setEditing] = useState(false)
   const [localSuffix, setLocalSuffix] = useState(skuSuffix)
-  
+
   useEffect(() => {
     setLocalSuffix(skuSuffix)
   }, [skuSuffix])
-  
+
   const prefix = `${fatherSku}-`
-  
+
   return (
     <div className="flex items-center gap-0 flex-1 group/sku-inner">
       <span className="font-mono text-slate-400/80 whitespace-nowrap select-none">
@@ -113,10 +113,10 @@ export function CatalogoItemDetailPanel({
   // Find the parent item that contains this child - prioritize ID match for accuracy
   const fatherItem = !isViewingContainer
     ? allItems.find(
-        (item) => (item.hasVariants || item.isAgrupador) && item.variants?.some((v: any) => 
-          v.id === selectedItem.id  // ID is unique and should be the primary match
-        ),
-      )
+      (item) => (item.hasVariants || item.isAgrupador) && item.variants?.some((v: any) =>
+        v.id === selectedItem.id  // ID is unique and should be the primary match
+      ),
+    )
     : null
 
   const isChildItem = fatherItem !== null && fatherItem !== undefined
@@ -134,63 +134,63 @@ export function CatalogoItemDetailPanel({
   // Case 2 (Key-only): Parent has key with empty value -> child can fill its own value
   // Case 3 (Exclusive): Child can have additional attributes not in parent
   const getMergedAtributosInformativos = (
-  parentAttrs: Array<{ key: string; value: string; inheritValue?: boolean; inherit?: boolean }> | undefined,
-  childAttrs: Array<{ key: string; value: string; inheritValue?: boolean; inherit?: boolean }> | undefined,
+    parentAttrs: Array<{ key: string; value: string; inheritValue?: boolean; inherit?: boolean }> | undefined,
+    childAttrs: Array<{ key: string; value: string; inheritValue?: boolean; inherit?: boolean }> | undefined,
   ): Array<{ key: string; value: string; keyOpen?: boolean; valueOpen?: boolean; inheritValue?: boolean }> => {
-  if (!isChildItem || !fatherItem) {
-  // Not a child item, just return child's attributes (normalizing inherit/inheritValue to inheritValue)
-  return (childAttrs || []).map(attr => ({ 
-    ...attr, 
-    keyOpen: false, 
-    valueOpen: false,
-    inheritValue: attr.inheritValue || attr.inherit || false 
-  }))
-  }
+    if (!isChildItem || !fatherItem) {
+      // Not a child item, just return child's attributes (normalizing inherit/inheritValue to inheritValue)
+      return (childAttrs || []).map(attr => ({
+        ...attr,
+        keyOpen: false,
+        valueOpen: false,
+        inheritValue: attr.inheritValue || attr.inherit || false
+      }))
+    }
 
     const result: Array<{ key: string; value: string; keyOpen?: boolean; valueOpen?: boolean }> = []
     const childMap = new Map<string, { key: string; value: string }>()
-    
-    // Build a map of child's attributes by key
-    ;(childAttrs || []).forEach(attr => {
-      childMap.set(attr.key, attr)
-    })
-    
-  // First, add all parent attributes (Case 1 and Case 2)
-  ;(parentAttrs || []).forEach(parentAttr => {
-  const childAttr = childMap.get(parentAttr.key)
-  
-  // Normalize inherit/inheritValue property
-  const inheritFlag = parentAttr.inheritValue || parentAttr.inherit || false
-  
-  // Case 2 is now determined by inheritValue flag (or empty value for backward compatibility)
-  const isCase2 = inheritFlag || (!parentAttr.value && inheritFlag !== false)
-      
-      if (!isCase2 && parentAttr.value) {
-        // Case 1: Parent has value filled and not marked for inherit - use parent's complete pair (locked)
-        result.push({ key: parentAttr.key, value: parentAttr.value, keyOpen: false, valueOpen: false, inheritValue: false })
-      } else if (isCase2) {
-        // Case 2: Parent marked inheritValue - child can fill value
-        result.push({ 
-          key: parentAttr.key, 
-          value: childAttr?.value || "", 
-          keyOpen: false, 
-          valueOpen: false,
-          inheritValue: true
-        })
-      } else {
-        // Parent has value - Case 1
-        result.push({ key: parentAttr.key, value: parentAttr.value || "", keyOpen: false, valueOpen: false, inheritValue: false })
-      }
-      
-      // Remove from child map so we don't duplicate
-      childMap.delete(parentAttr.key)
-    })
-    
+
+      // Build a map of child's attributes by key
+      ; (childAttrs || []).forEach(attr => {
+        childMap.set(attr.key, attr)
+      })
+
+      // First, add all parent attributes (Case 1 and Case 2)
+      ; (parentAttrs || []).forEach(parentAttr => {
+        const childAttr = childMap.get(parentAttr.key)
+
+        // Normalize inherit/inheritValue property
+        const inheritFlag = parentAttr.inheritValue || parentAttr.inherit || false
+
+        // Case 2 is now determined by inheritValue flag (or empty value for backward compatibility)
+        const isCase2 = inheritFlag || (!parentAttr.value && inheritFlag !== false)
+
+        if (!isCase2 && parentAttr.value) {
+          // Case 1: Parent has value filled and not marked for inherit - use parent's complete pair (locked)
+          result.push({ key: parentAttr.key, value: parentAttr.value, keyOpen: false, valueOpen: false, inheritValue: false })
+        } else if (isCase2) {
+          // Case 2: Parent marked inheritValue - child can fill value
+          result.push({
+            key: parentAttr.key,
+            value: childAttr?.value || "",
+            keyOpen: false,
+            valueOpen: false,
+            inheritValue: true
+          })
+        } else {
+          // Parent has value - Case 1
+          result.push({ key: parentAttr.key, value: parentAttr.value || "", keyOpen: false, valueOpen: false, inheritValue: false })
+        }
+
+        // Remove from child map so we don't duplicate
+        childMap.delete(parentAttr.key)
+      })
+
     // Then, add remaining child-exclusive attributes (Case 3)
     childMap.forEach(childAttr => {
       result.push({ ...childAttr, keyOpen: false, valueOpen: false })
     })
-    
+
     return result
   }
 
@@ -258,7 +258,7 @@ export function CatalogoItemDetailPanel({
   const [editingName, setEditingName] = useState(false)
   const [nameValue, setNameValue] = useState(selectedItem.name || "")
   const [proveedorDropdownOpen, setProveedorDropdownOpen] = useState(false)
-  
+
   // Media photos state - initialize with category image as thumbnail/portada
   const [mediaPhotos, setMediaPhotos] = useState<string[]>(() => {
     const photos: string[] = []
@@ -367,7 +367,7 @@ export function CatalogoItemDetailPanel({
 
   // State for variant input
   const [varianteInput, setVarianteInput] = useState<Record<number, string>>({})
-  
+
   // State for duplicate tag errors
   const [duplicateTagError, setDuplicateTagError] = useState<Record<number, boolean>>({})
 
@@ -377,11 +377,11 @@ export function CatalogoItemDetailPanel({
 
   // Section toggle: 'info', 'both', or 'stock' - default to both expanded
   const [expandedSection, setExpandedSection] = useState<"info" | "both" | "stock">("both")
-  
+
   // Precio and Stock modal states
   const [isPrecioModalOpen, setIsPrecioModalOpen] = useState(false)
   const [isStockModalOpen, setIsStockModalOpen] = useState(false)
-  
+
   // Precio modal editing values
   const [precioModalValues, setPrecioModalValues] = useState({
     costo: 0,
@@ -749,11 +749,11 @@ export function CatalogoItemDetailPanel({
   useEffect(() => {
     if (selectedItem && selectedItem.hasVariants && isViewingContainer) {
       const existingVariants = selectedItem.variants || []
-      
+
       // Just display existing variants, don't generate new ones
       if (existingVariants.length > 0) {
         setVariantItems(convertSavedVariantsToDisplay(existingVariants))
-        
+
         // Initialize the ref
         const variantsKey = JSON.stringify(existingVariants.map((v: any) => ({ sku: v.sku, attrs: v.atributosPrincipales })))
         if (previousVariantsRef.current === null) {
@@ -770,11 +770,11 @@ export function CatalogoItemDetailPanel({
   // Handler for creating a new variant manually
   const handleNuevaVariante = (attributeValues: Record<string, string>) => {
     console.log("[v0] Creating new variant with values:", attributeValues)
-    
+
     // Check if any new tags need to be added to containerAtributosPrincipales
     const updatedContainerAttrs = [...containerAtributosPrincipales]
     let hasNewTags = false
-    
+
     Object.entries(attributeValues).forEach(([key, value]) => {
       const attrIndex = updatedContainerAttrs.findIndex((attr) => attr.key === key)
       if (attrIndex !== -1) {
@@ -786,7 +786,7 @@ export function CatalogoItemDetailPanel({
         }
       }
     })
-    
+
     // If new tags were added, update containerAtributosPrincipales
     if (hasNewTags) {
       console.log("[v0] New tags added to atributos principales:", updatedContainerAttrs)
@@ -795,13 +795,13 @@ export function CatalogoItemDetailPanel({
         onFieldChange(selectedItem.id, "containerAtributosPrincipales", updatedContainerAttrs)
       }
     }
-    
+
     // Get variant values for SKU suffix
     const variantValues = Object.values(attributeValues)
     const skuSuffix = variantValues
       .map((v) => v.substring(0, 3).toUpperCase())
       .join("-")
-    
+
     // Create the new variant object - only store skuSuffix, full SKU is computed
     const newVariant: any = {
       id: generateId("VAR"),
@@ -814,16 +814,16 @@ export function CatalogoItemDetailPanel({
         value,
       })),
     }
-    
+
     // Add the new variant to the existing variants array
     const existingVariants = selectedItem?.variants || []
     const updatedVariants = [...existingVariants, newVariant]
-    
+
     console.log("[v0] Updated variants array:", updatedVariants)
-    
+
     // Update display
     setVariantItems(convertSavedVariantsToDisplay(updatedVariants))
-    
+
     // Save to parent
     if (onFieldChange && selectedItem.sku) {
       onFieldChange(selectedItem.id, "variants", updatedVariants)
@@ -832,7 +832,7 @@ export function CatalogoItemDetailPanel({
 
   const handleGenerarVariantes = () => {
     console.log("[v0] Generar Variantes clicked - starting manual generation")
-    
+
     if (!selectedItem || !selectedItem.hasVariants || !isViewingContainer) {
       console.log("[v0] Cannot generate variants - conditions not met")
       return
@@ -840,13 +840,13 @@ export function CatalogoItemDetailPanel({
 
     const existingVariants = selectedItem.variants || []
     console.log("[v0] Existing variants:", existingVariants)
-    
+
     // Count how many atributos principales we currently have
     const currentAttrCount = containerAtributosPrincipales.filter(
       (attr) => attr.key && attr.variantes.length > 0
     ).length
     console.log("[v0] Current atributo count:", currentAttrCount)
-    
+
     // Filter out existing variants that don't match the current atributo count
     // (e.g., if we now have 2 atributos, remove variants with only 1 atributo)
     const validExistingVariants = existingVariants.filter((v: any) => {
@@ -855,11 +855,11 @@ export function CatalogoItemDetailPanel({
       return variantAttrCount === currentAttrCount
     })
     console.log("[v0] Valid existing variants (matching attr count):", validExistingVariants)
-    
+
     // Generate only NEW combinations that don't already exist among valid variants
     const newCombinations = generateNewVariantCombinations(validExistingVariants)
     console.log("[v0] New combinations to add:", newCombinations)
-    
+
     // Prepare inherited atributosInformativos for new variants
     const inheritedAtributosInformativos = (selectedItem.atributosInformativos || []).map(attr => ({
       key: attr.key,
@@ -890,17 +890,17 @@ export function CatalogoItemDetailPanel({
 
     // Combine valid existing variants + new ones
     const updatedVariants = [...validExistingVariants, ...newVariantObjects]
-    
+
     // Update variantItems for display
     setVariantItems(convertSavedVariantsToDisplay(updatedVariants))
 
     const variantsKey = JSON.stringify(updatedVariants.map((v) => ({ sku: v.sku, attrs: v.atributosPrincipales })))
-    
+
     // Always call onFieldChange to save the variants
     if (onFieldChange && selectedItem.sku) {
       onFieldChange(selectedItem.id, "variants", updatedVariants)
     }
-    
+
     // Update the ref for change tracking
     previousVariantsRef.current = variantsKey
   }
@@ -1068,49 +1068,49 @@ export function CatalogoItemDetailPanel({
       {/* <Breadcrumb dynamicContent={null} /> */}
 
       <div className="px-8 pb-6 bg-slate-50 min-h-screen pl-8 pt-0">
-        <div className={`grid gap-2 ${isViewingContainer ? "grid-cols-2 gap-6" : "grid-cols-10 gap-6"}`}>
+        <div className={`grid gap-2 ${isViewingContainer ? "grid-cols-2 gap-6" : "grid-cols-10 gap-8"}`}>
           {/* Left Column - Image Card (only for standalone/children) - col-span-4 */}
           {!isViewingContainer && (
-          <div className="col-span-4 order-1 z-20 rounded-xl flex flex-col transition-all duration-300 mt-4 border-none shadow-none pl-0 pr-0">
-            {/* Flip card container */}
-            <div className="sticky top-4 mt-7" style={{ perspective: "1200px" }}>
-              <div
-                className="relative transition-transform duration-500"
-                style={{
-                  transformStyle: "preserve-3d",
-                  transform: isCardFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
-                  minHeight: "520px",
-                }}
-              >
-                {/* FRONT SIDE */}
+            <div className="col-span-4 order-1 z-20 rounded-xl flex flex-col transition-all duration-300 mt-4 border-none shadow-none pl-0 pr-0">
+              {/* Flip card container */}
+              <div className="sticky top-4 mt-7" style={{ perspective: "1200px" }}>
                 <div
-                  className="absolute inset-0 p-6 px-8 pr-11 border-solid border border-black rounded-xl bg-black shadow-md pl-11 ml-0 cursor-pointer"
-                  style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
-                  onClick={() => setIsCardFlipped(true)}
+                  className="relative transition-transform duration-500"
+                  style={{
+                    transformStyle: "preserve-3d",
+                    transform: isCardFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
+                    minHeight: "520px",
+                  }}
                 >
-                  {/* Flip hint top-right */}
-                  <div className="absolute top-3 right-4 flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors select-none pointer-events-none">
-                    <span className="text-[10px] uppercase tracking-wider">Descripción</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M9 18l6-6-6-6"/>
-                    </svg>
-                  </div>
-
-                  <div className="mt-2">
-                    <div className="w-full h-64 backdrop-blur-sm rounded-lg flex items-center justify-center overflow-hidden shadow-2xl border-slate-700/30 border-none border-0 bg-transparent shadow-none">
-                      <Image
-                        src={getCategoryImage(selectedItem.categoria) || "/placeholder.svg"}
-                        alt={selectedItem.name}
-                        width={200}
-                        height={256}
-                        className="object-contain rounded-xl shadow-xl"
-                      />
+                  {/* FRONT SIDE */}
+                  <div
+                    className="absolute inset-0 p-6 px-8 pr-11 border-solid border border-black rounded-xl bg-black shadow-md pl-11 ml-0 cursor-pointer"
+                    style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
+                    onClick={() => setIsCardFlipped(true)}
+                  >
+                    {/* Flip hint top-right */}
+                    <div className="absolute top-3 right-4 flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors select-none pointer-events-none">
+                      <span className="text-[10px] uppercase tracking-wider">Descripción</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M9 18l6-6-6-6" />
+                      </svg>
                     </div>
-                  </div>
 
-                  <div className="mb-0 mt-6">
-                    <div className="flex items-center justify-center gap-2 mt-[-20px] mb-0 flex-wrap group/title">
-                      {!isChildItem && editingName ? (                        <input
+                    <div className="mt-2">
+                      <div className="w-full h-64 backdrop-blur-sm rounded-lg flex items-center justify-center overflow-hidden shadow-2xl border-slate-700/30 border-none border-0 bg-transparent shadow-none">
+                        <Image
+                          src={getCategoryImage(selectedItem.categoria) || "/placeholder.svg"}
+                          alt={selectedItem.name}
+                          width={200}
+                          height={256}
+                          className="object-contain rounded-xl shadow-xl"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mb-0 mt-6">
+                      <div className="flex items-center justify-center gap-2 mt-[-20px] mb-0 flex-wrap group/title">
+                        {!isChildItem && editingName ? (<input
                           type="text"
                           value={nameValue}
                           onChange={(e) => setNameValue(e.target.value)}
@@ -1126,312 +1126,311 @@ export function CatalogoItemDetailPanel({
                           className="font-semibold text-white text-lg bg-transparent border-b border-white/40 focus:border-white outline-none text-center w-full max-w-[220px]"
                           autoFocus
                         />
-                      ) : (
-                        <div
-                          className={`flex items-center gap-1.5 ${!isChildItem ? "cursor-pointer" : ""}`}
-                          onClick={(e) => {
-                            if (!isChildItem) {
-                              e.stopPropagation()
-                              setEditingName(true)
-                            }
-                          }}
-                        >
-                          <h2 className="font-semibold text-white text-lg">{nameValue || selectedItem.name}</h2>
-                          {!isChildItem && (
-                            <Pencil className="w-3.5 h-3.5 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity" />
-                          )}
-                        </div>
-                      )}
-                      {isChildItem && selectedItem.atributosPrincipales && selectedItem.atributosPrincipales.length > 0 && (
-                        <div className="flex items-center gap-1">
-                          {selectedItem.atributosPrincipales.map((attr, i) => (
-                            <span
-                              key={i}
-                              className="text-[10px] px-1.5 py-0.5 rounded bg-white/20 text-white/80 whitespace-nowrap"
-                            >
-                              {attr.value}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* SKU and Código Universal below the line, in column */}
-                    {!isViewingContainer && (
-                      <>
-                        
-                        <div className="flex flex-col gap-3 mt-5 text-sm font-mono ml-0 pl-[18px]">
-                          {/* SKU row */}
-                          <div className="flex items-center gap-2 group/sku">
-                            <span className="font-medium text-slate-400 whitespace-nowrap">SKU:</span>
-                            {isChildItem && fatherItem ? (
-                              <ChildSkuEditor
-                                fatherSku={fatherItem.skuPrefix || fatherItem.sku || ""}
-                                skuSuffix={selectedItem.skuSuffix || selectedItem.sku || ""}
-                                onSave={(newSuffix) => {
-                                  // Update variant within parent's variants array
-                                  const updatedVariants = fatherItem.variants?.map((v: any) =>
-                                    v.id === selectedItem.id ? { ...v, skuSuffix: newSuffix } : v
-                                  )
-                                  if (updatedVariants && onFieldChange) {
-                                    onFieldChange(fatherItem.id, "variants", updatedVariants)
-                                  }
-                                }}
-                              />
-                            ) : (
-                              <>
-                                {editingSku ? (
-                                  <input
-                                    type="text"
-                                    value={skuValue}
-                                    onChange={(e) => setSkuValue(e.target.value)}
-                                    onBlur={handleSkuBlur}
-                                    onKeyDown={(e) => {
-                                      if (e.key === "Enter") (e.target as HTMLInputElement).blur()
-                                      if (e.key === "Escape") {
-                                        setSkuValue(selectedItem.sku || "")
-                                        setEditingSku(false)
-                                      }
-                                    }}
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="text-slate-100 bg-transparent border-b border-white/40 focus:border-white outline-none w-full max-w-[160px]"
-                                    autoFocus
-                                  />
-                                ) : (
-                                  <div
-                                    className="flex items-center gap-1.5 cursor-pointer"
-                                    onClick={(e) => { e.stopPropagation(); setEditingSku(true) }}
-                                  >
-                                    <span className="text-slate-100">{skuValue || selectedItem.sku}</span>
-                                    <Pencil className="w-3 h-3 text-white/40 opacity-0 group-hover/sku:opacity-100 transition-opacity" />
-                                  </div>
-                                )}
-                              </>
+                        ) : (
+                          <div
+                            className={`flex items-center gap-1.5 ${!isChildItem ? "cursor-pointer" : ""}`}
+                            onClick={(e) => {
+                              if (!isChildItem) {
+                                e.stopPropagation()
+                                setEditingName(true)
+                              }
+                            }}
+                          >
+                            <h2 className="font-semibold text-white text-lg">{nameValue || selectedItem.name}</h2>
+                            {!isChildItem && (
+                              <Pencil className="w-3.5 h-3.5 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity" />
                             )}
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleCopySku() }}
-                              className="text-slate-500 hover:text-slate-300 transition-colors p-0.5 ml-0.5"
-                              title="Copiar SKU"
-                            >
-                              {skuCopied ? (
-                                <span className="text-green-400 text-xs">✓</span>
-                              ) : (
-                                <Copy className="h-3 w-3" />
-                              )}
-                            </button>
                           </div>
-                          {/* Código Universal row */}
-                          <div className="flex items-center gap-2 group/codigo">
-                            <span className="font-medium text-slate-400 whitespace-nowrap">Cód. Universal:</span>
-                            {editingCodigoUniversal ? (
-                              <input
-                                type="text"
-                                value={codigoUniversalValue}
-                                onChange={(e) => setCodigoUniversalValue(e.target.value)}
-                                onBlur={handleCodigoUniversalBlur}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") (e.target as HTMLInputElement).blur()
-                                  if (e.key === "Escape") {
-                                    setCodigoUniversalValue(selectedItem.codigoUniversal || "")
-                                    setEditingCodigoUniversal(false)
-                                  }
-                                }}
-                                onClick={(e) => e.stopPropagation()}
-                                className="text-slate-100 bg-transparent border-b border-white/40 focus:border-white outline-none w-full max-w-[160px]"
-                                autoFocus
-                              />
-                            ) : (
+                        )}
+                        {isChildItem && selectedItem.atributosPrincipales && selectedItem.atributosPrincipales.length > 0 && (
+                          <div className="flex items-center gap-1">
+                            {selectedItem.atributosPrincipales.map((attr, i) => (
+                              <span
+                                key={i}
+                                className="text-[10px] px-1.5 py-0.5 rounded bg-white/20 text-white/80 whitespace-nowrap"
+                              >
+                                {attr.value}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* SKU and Código Universal below the line, in column */}
+                      {!isViewingContainer && (
+                        <>
+
+                          <div className="flex flex-col gap-3 mt-5 text-sm font-mono ml-0 pl-[18px]">
+                            {/* SKU row */}
+                            <div className="flex items-center gap-2 group/sku">
+                              <span className="font-medium text-slate-400 whitespace-nowrap">SKU:</span>
+                              {isChildItem && fatherItem ? (
+                                <ChildSkuEditor
+                                  fatherSku={fatherItem.skuPrefix || fatherItem.sku || ""}
+                                  skuSuffix={selectedItem.skuSuffix || selectedItem.sku || ""}
+                                  onSave={(newSuffix) => {
+                                    // Update variant within parent's variants array
+                                    const updatedVariants = fatherItem.variants?.map((v: any) =>
+                                      v.id === selectedItem.id ? { ...v, skuSuffix: newSuffix } : v
+                                    )
+                                    if (updatedVariants && onFieldChange) {
+                                      onFieldChange(fatherItem.id, "variants", updatedVariants)
+                                    }
+                                  }}
+                                />
+                              ) : (
+                                <>
+                                  {editingSku ? (
+                                    <input
+                                      type="text"
+                                      value={skuValue}
+                                      onChange={(e) => setSkuValue(e.target.value)}
+                                      onBlur={handleSkuBlur}
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter") (e.target as HTMLInputElement).blur()
+                                        if (e.key === "Escape") {
+                                          setSkuValue(selectedItem.sku || "")
+                                          setEditingSku(false)
+                                        }
+                                      }}
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="text-slate-100 bg-transparent border-b border-white/40 focus:border-white outline-none w-full max-w-[160px]"
+                                      autoFocus
+                                    />
+                                  ) : (
+                                    <div
+                                      className="flex items-center gap-1.5 cursor-pointer"
+                                      onClick={(e) => { e.stopPropagation(); setEditingSku(true) }}
+                                    >
+                                      <span className="text-slate-100">{skuValue || selectedItem.sku}</span>
+                                      <Pencil className="w-3 h-3 text-white/40 opacity-0 group-hover/sku:opacity-100 transition-opacity" />
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleCopySku() }}
+                                className="text-slate-500 hover:text-slate-300 transition-colors p-0.5 ml-0.5"
+                                title="Copiar SKU"
+                              >
+                                {skuCopied ? (
+                                  <span className="text-green-400 text-xs">✓</span>
+                                ) : (
+                                  <Copy className="h-3 w-3" />
+                                )}
+                              </button>
+                            </div>
+                            {/* Código Universal row */}
+                            <div className="flex items-center gap-2 group/codigo">
+                              <span className="font-medium text-slate-400 whitespace-nowrap">Cód. Universal:</span>
+                              {editingCodigoUniversal ? (
+                                <input
+                                  type="text"
+                                  value={codigoUniversalValue}
+                                  onChange={(e) => setCodigoUniversalValue(e.target.value)}
+                                  onBlur={handleCodigoUniversalBlur}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") (e.target as HTMLInputElement).blur()
+                                    if (e.key === "Escape") {
+                                      setCodigoUniversalValue(selectedItem.codigoUniversal || "")
+                                      setEditingCodigoUniversal(false)
+                                    }
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="text-slate-100 bg-transparent border-b border-white/40 focus:border-white outline-none w-full max-w-[160px]"
+                                  autoFocus
+                                />
+                              ) : (
+                                <div
+                                  className="flex items-center gap-1.5 cursor-pointer"
+                                  onClick={(e) => { e.stopPropagation(); setEditingCodigoUniversal(true) }}
+                                >
+                                  <span className="text-slate-100">{codigoUniversalValue || selectedItem.codigoUniversal || "N/A"}</span>
+                                  <Pencil className="w-3 h-3 text-white/40 opacity-0 group-hover/codigo:opacity-100 transition-opacity" />
+                                </div>
+                              )}
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleCopyCodigoUniversal() }}
+                                className="text-slate-500 hover:text-slate-300 transition-colors p-0.5 ml-0.5"
+                                title="Copiar Código Universal"
+                              >
+                                {codigoUniversalCopied ? (
+                                  <span className="text-green-400 text-xs">✓</span>
+                                ) : (
+                                  <Copy className="h-3 w-3" />
+                                )}
+                              </button>
+                            </div>
+
+                            {/* Precio de Venta row */}
+                            <div className="flex items-center gap-2 group/precio mt-1">
+                              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Precio</span>
                               <div
                                 className="flex items-center gap-1.5 cursor-pointer"
-                                onClick={(e) => { e.stopPropagation(); setEditingCodigoUniversal(true) }}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setPrecioModalValues({
+                                    costo: selectedItem?.precio?.costo || 0,
+                                    margen: selectedItem?.precio?.margen || 0,
+                                    iva: selectedItem?.precio?.iva || 0,
+                                    precioFinal: selectedItem?.precio?.precioFinal || 0,
+                                  })
+                                  setIsPrecioModalOpen(true)
+                                }}
                               >
-                                <span className="text-slate-100">{codigoUniversalValue || selectedItem.codigoUniversal || "N/A"}</span>
-                                <Pencil className="w-3 h-3 text-white/40 opacity-0 group-hover/codigo:opacity-100 transition-opacity" />
+                                <span className="text-emerald-400 font-bold text-lg leading-tight">
+                                  ${(selectedItem?.precio?.precioFinal || 0).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                                </span>
+                                <Pencil className="w-3.5 h-3.5 text-white/50 opacity-0 group-hover/precio:opacity-100 transition-opacity" />
                               </div>
-                            )}
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleCopyCodigoUniversal() }}
-                              className="text-slate-500 hover:text-slate-300 transition-colors p-0.5 ml-0.5"
-                              title="Copiar Código Universal"
-                            >
-                              {codigoUniversalCopied ? (
-                                <span className="text-green-400 text-xs">✓</span>
-                              ) : (
-                                <Copy className="h-3 w-3" />
-                              )}
-                            </button>
-                          </div>
-                          
-                          {/* Precio de Venta row */}
-                          <div className="flex items-center gap-2 group/precio mt-1">
-                            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Precio</span>
-                            <div
-                              className="flex items-center gap-1.5 cursor-pointer"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setPrecioModalValues({
-                                  costo: selectedItem?.precio?.costo || 0,
-                                  margen: selectedItem?.precio?.margen || 0,
-                                  iva: selectedItem?.precio?.iva || 0,
-                                  precioFinal: selectedItem?.precio?.precioFinal || 0,
-                                })
-                                setIsPrecioModalOpen(true)
-                              }}
-                            >
-                              <span className="text-emerald-400 font-bold text-lg leading-tight">
-                                ${(selectedItem?.precio?.precioFinal || 0).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
-                              </span>
-                              <Pencil className="w-3.5 h-3.5 text-white/50 opacity-0 group-hover/precio:opacity-100 transition-opacity" />
+                            </div>
+
+                            {/* Stock Disponible row */}
+                            <div className="flex items-center gap-2 group/stock">
+                              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Stock</span>
+                              <div
+                                className="flex items-center gap-1.5 cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setIsStockModalOpen(true)
+                                }}
+                              >
+                                <span className="text-blue-400 font-bold text-lg leading-tight">
+                                  {Number.parseInt(selectedItem?.stock?.total || "0") - Number.parseInt(selectedItem?.stock?.reservado || "0")} disp.
+                                </span>
+                                <Pencil className="w-3.5 h-3.5 text-white/50 opacity-0 group-hover/stock:opacity-100 transition-opacity" />
+                              </div>
                             </div>
                           </div>
-                          
-                          {/* Stock Disponible row */}
-                          <div className="flex items-center gap-2 group/stock">
-                            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Stock</span>
-                            <div
-                              className="flex items-center gap-1.5 cursor-pointer"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setIsStockModalOpen(true)
-                              }}
-                            >
-                              <span className="text-blue-400 font-bold text-lg leading-tight">
-                                {Number.parseInt(selectedItem?.stock?.total || "0") - Number.parseInt(selectedItem?.stock?.reservado || "0")} disp.
-                              </span>
-                              <Pencil className="w-3.5 h-3.5 text-white/50 opacity-0 group-hover/stock:opacity-100 transition-opacity" />
-                            </div>
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* BACK SIDE */}
-                <div
-                  className="absolute inset-0 p-6 px-8 pr-11 border-solid border border-black rounded-xl bg-black shadow-md pl-11 ml-0 cursor-pointer"
-                  style={{
-                    backfaceVisibility: "hidden",
-                    WebkitBackfaceVisibility: "hidden",
-                    transform: "rotateY(180deg)",
-                  }}
-                  onClick={() => setIsCardFlipped(false)}
-                >
-                  {/* Flip back hint top-right */}
-                  <div className="absolute top-3 right-4 flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors select-none pointer-events-none">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M15 18l-6-6 6-6"/>
-                    </svg>
-                    <span className="text-[10px] uppercase tracking-wider">Volver</span>
-                  </div>
-
-                  <div className="flex flex-col h-full pt-2 overflow-y-auto">
-                    {/* Media Section */}
-                    <h3 className="text-sm font-medium uppercase tracking-wider mb-3 text-slate-50">
-                      Media
-                    </h3>
-                    <div className="flex gap-3 mb-5">
-                      {/* Upload Button */}
-                      <button
-                        onClick={(e) => e.stopPropagation()}
-                        className="flex-shrink-0 w-20 h-20 border-2 border-dashed border-blue-400/60 rounded-xl flex flex-col items-center justify-center gap-1.5 hover:border-blue-400 hover:bg-blue-500/10 transition-all cursor-pointer"
-                      >
-                        <Upload className="w-5 h-5 text-blue-400" />
-                        <span className="text-[10px] text-blue-400 font-medium">Seleccionar</span>
-                      </button>
-                      
-                      {/* Photo Thumbnails */}
-                      <div className="flex gap-3 overflow-x-auto pb-1">
-                        {mediaPhotos.map((photo, index) => (
-                          <div
-                            key={index}
-                            draggable
-                            onDragStart={(e) => {
-                              e.stopPropagation()
-                              setDraggedPhotoIndex(index)
-                            }}
-                            onDragOver={(e) => {
-                              e.preventDefault()
-                              e.stopPropagation()
-                            }}
-                            onDrop={(e) => {
-                              e.preventDefault()
-                              e.stopPropagation()
-                              if (draggedPhotoIndex !== null && draggedPhotoIndex !== index) {
-                                const newPhotos = [...mediaPhotos]
-                                const [draggedPhoto] = newPhotos.splice(draggedPhotoIndex, 1)
-                                newPhotos.splice(index, 0, draggedPhoto)
-                                setMediaPhotos(newPhotos)
-                              }
-                              setDraggedPhotoIndex(null)
-                            }}
-                            onDragEnd={() => setDraggedPhotoIndex(null)}
-                            className={`relative flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 cursor-move group ${
-                              draggedPhotoIndex === index ? 'opacity-50 border-blue-400' : 'border-slate-600 hover:border-slate-400'
-                            }`}
-                          >
-                            <img
-                              src={photo}
-                              alt={`Product photo ${index + 1}`}
-                              className="w-full h-full object-cover"
-                            />
-                            
-                            {/* Delete button - currently disabled/does nothing */}
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                // TODO: Implement delete functionality
-                              }}
-                              className="absolute top-1 right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-100"
-                            >
-                              <X className="w-3 h-3 text-slate-600" />
-                            </button>
-                            
-                            {/* Portada tag for first photo */}
-                            {index === 0 && (
-                              <div className="absolute bottom-0 left-0 right-0 bg-black/70 py-0.5 px-1">
-                                <span className="text-[8px] font-bold text-white uppercase tracking-wider">Portada</span>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    
-                    {/* Divider */}
-                    <div className="border-t border-slate-700 mb-4"></div>
-                    
-                    {/* Descripción Section */}
-                    <h3 className="text-sm font-medium uppercase tracking-wider mb-3 text-slate-50">
-                      Descripción
-                    </h3>
-                    <div className="flex-1">
-                      {editingDescripcion ? (
-                        <textarea
-                          value={descripcionValue}
-                          onChange={(e) => setDescripcionValue(e.target.value)}
-                          onBlur={handleDescripcionBlur}
-                          onClick={(e) => e.stopPropagation()}
-                          className="w-full h-full min-h-[120px] px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-500 resize-none text-sm placeholder:text-slate-500"
-                          placeholder="Agregar descripción del producto..."
-                          autoFocus
-                        />
-                      ) : (
-                        <div
-                          onClick={(e) => { e.stopPropagation(); setEditingDescripcion(true) }}
-                          className="w-full min-h-[120px] px-3 py-2 bg-slate-800/30 rounded-lg text-slate-200 cursor-text hover:bg-slate-800/50 transition-colors text-sm"
-                        >
-                          {descripcionValue || (
-                            <span className="text-slate-500">Click para agregar descripción...</span>
-                          )}
-                        </div>
+                        </>
                       )}
+                    </div>
+                  </div>
+
+                  {/* BACK SIDE */}
+                  <div
+                    className="absolute inset-0 p-6 px-8 pr-11 border-solid border border-black rounded-xl bg-black shadow-md pl-11 ml-0 cursor-pointer"
+                    style={{
+                      backfaceVisibility: "hidden",
+                      WebkitBackfaceVisibility: "hidden",
+                      transform: "rotateY(180deg)",
+                    }}
+                    onClick={() => setIsCardFlipped(false)}
+                  >
+                    {/* Flip back hint top-right */}
+                    <div className="absolute top-3 right-4 flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors select-none pointer-events-none">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M15 18l-6-6 6-6" />
+                      </svg>
+                      <span className="text-[10px] uppercase tracking-wider">Volver</span>
+                    </div>
+
+                    <div className="flex flex-col h-full pt-2 overflow-y-auto">
+                      {/* Media Section */}
+                      <h3 className="text-sm font-medium uppercase tracking-wider mb-3 text-slate-50">
+                        Media
+                      </h3>
+                      <div className="flex gap-3 mb-5">
+                        {/* Upload Button */}
+                        <button
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex-shrink-0 w-20 h-20 border-2 border-dashed border-blue-400/60 rounded-xl flex flex-col items-center justify-center gap-1.5 hover:border-blue-400 hover:bg-blue-500/10 transition-all cursor-pointer"
+                        >
+                          <Upload className="w-5 h-5 text-blue-400" />
+                          <span className="text-[10px] text-blue-400 font-medium">Seleccionar</span>
+                        </button>
+
+                        {/* Photo Thumbnails */}
+                        <div className="flex gap-3 overflow-x-auto pb-1">
+                          {mediaPhotos.map((photo, index) => (
+                            <div
+                              key={index}
+                              draggable
+                              onDragStart={(e) => {
+                                e.stopPropagation()
+                                setDraggedPhotoIndex(index)
+                              }}
+                              onDragOver={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                              }}
+                              onDrop={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                if (draggedPhotoIndex !== null && draggedPhotoIndex !== index) {
+                                  const newPhotos = [...mediaPhotos]
+                                  const [draggedPhoto] = newPhotos.splice(draggedPhotoIndex, 1)
+                                  newPhotos.splice(index, 0, draggedPhoto)
+                                  setMediaPhotos(newPhotos)
+                                }
+                                setDraggedPhotoIndex(null)
+                              }}
+                              onDragEnd={() => setDraggedPhotoIndex(null)}
+                              className={`relative flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 cursor-move group ${draggedPhotoIndex === index ? 'opacity-50 border-blue-400' : 'border-slate-600 hover:border-slate-400'
+                                }`}
+                            >
+                              <img
+                                src={photo}
+                                alt={`Product photo ${index + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+
+                              {/* Delete button - currently disabled/does nothing */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  // TODO: Implement delete functionality
+                                }}
+                                className="absolute top-1 right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-100"
+                              >
+                                <X className="w-3 h-3 text-slate-600" />
+                              </button>
+
+                              {/* Portada tag for first photo */}
+                              {index === 0 && (
+                                <div className="absolute bottom-0 left-0 right-0 bg-black/70 py-0.5 px-1">
+                                  <span className="text-[8px] font-bold text-white uppercase tracking-wider">Portada</span>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Divider */}
+                      <div className="border-t border-slate-700 mb-4"></div>
+
+                      {/* Descripción Section */}
+                      <h3 className="text-sm font-medium uppercase tracking-wider mb-3 text-slate-50">
+                        Descripción
+                      </h3>
+                      <div className="flex-1">
+                        {editingDescripcion ? (
+                          <textarea
+                            value={descripcionValue}
+                            onChange={(e) => setDescripcionValue(e.target.value)}
+                            onBlur={handleDescripcionBlur}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-full h-full min-h-[120px] px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-500 resize-none text-sm placeholder:text-slate-500"
+                            placeholder="Agregar descripción del producto..."
+                            autoFocus
+                          />
+                        ) : (
+                          <div
+                            onClick={(e) => { e.stopPropagation(); setEditingDescripcion(true) }}
+                            className="w-full min-h-[120px] px-3 py-2 bg-slate-800/30 rounded-lg text-slate-200 cursor-text hover:bg-slate-800/50 transition-colors text-sm"
+                          >
+                            {descripcionValue || (
+                              <span className="text-slate-500">Click para agregar descripción...</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
           )}
 
 
@@ -1445,21 +1444,19 @@ export function CatalogoItemDetailPanel({
                   <div className="flex rounded-lg border border-slate-200 p-1 bg-slate-50 w-full">
                     <button
                       onClick={() => setRightCardMode("info")}
-                      className={`flex-1 px-3 py-2 rounded-md text-xs font-medium transition-all ${
-                        rightCardMode === "info"
+                      className={`flex-1 px-3 py-2 rounded-md text-xs font-medium transition-all ${rightCardMode === "info"
                           ? "bg-white text-slate-900 shadow-sm"
                           : "text-slate-600 hover:text-slate-900"
-                      }`}
+                        }`}
                     >
                       Info
                     </button>
                     <button
                       onClick={() => setRightCardMode("atributos")}
-                      className={`flex-1 px-3 py-2 rounded-md text-xs font-medium transition-all ${
-                        rightCardMode === "atributos"
+                      className={`flex-1 px-3 py-2 rounded-md text-xs font-medium transition-all ${rightCardMode === "atributos"
                           ? "bg-white text-slate-900 shadow-sm"
                           : "text-slate-600 hover:text-slate-900"
-                      }`}
+                        }`}
                     >
                       Atributos
                     </button>
@@ -1485,11 +1482,10 @@ export function CatalogoItemDetailPanel({
                             value={categoria}
                             onChange={(e) => handleFieldChange("categoria", e.target.value, setCategoria)}
                             disabled={shouldStrictlyInherit(fatherItem?.categoria)}
-                            className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                              shouldStrictlyInherit(fatherItem?.categoria)
+                            className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${shouldStrictlyInherit(fatherItem?.categoria)
                                 ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
                                 : "bg-white border-gray-300 text-gray-900"
-                            }`}
+                              }`}
                             placeholder="Ej: Vinos"
                           />
                         </div>
@@ -1501,11 +1497,10 @@ export function CatalogoItemDetailPanel({
                             value={marca}
                             onChange={(e) => handleFieldChange("marca", e.target.value, setMarca)}
                             disabled={shouldStrictlyInherit(fatherItem?.marca)}
-                            className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                              shouldStrictlyInherit(fatherItem?.marca)
+                            className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${shouldStrictlyInherit(fatherItem?.marca)
                                 ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
                                 : "bg-white border-gray-300 text-gray-900"
-                            }`}
+                              }`}
                             placeholder="Ej: YKK"
                           />
                         </div>
@@ -1524,11 +1519,10 @@ export function CatalogoItemDetailPanel({
                             value={formatoVenta}
                             onChange={(e) => handleFieldChange("formatoVenta", e.target.value, setFormatoVenta)}
                             disabled={shouldStrictlyInherit(fatherItem?.formatoVenta)}
-                            className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none ${
-                              shouldStrictlyInherit(fatherItem?.formatoVenta)
+                            className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none ${shouldStrictlyInherit(fatherItem?.formatoVenta)
                                 ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
                                 : "bg-white border-gray-300 text-gray-900 cursor-pointer"
-                            }`}
+                              }`}
                           >
                             <option value="unidad">Unidad</option>
                             <option value="pack">Pack</option>
@@ -1550,11 +1544,10 @@ export function CatalogoItemDetailPanel({
                               }
                             }}
                             disabled={formatoVenta === "unidad" || isUnidadesPorPackLocked}
-                            className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                              formatoVenta === "unidad" || isUnidadesPorPackLocked
+                            className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${formatoVenta === "unidad" || isUnidadesPorPackLocked
                                 ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
                                 : "bg-white border-gray-300 text-gray-900"
-                            }`}
+                              }`}
                             placeholder="N.E."
                           />
                         </div>
@@ -1566,14 +1559,12 @@ export function CatalogoItemDetailPanel({
                           <button
                             onClick={() => handleFieldChange("volumenActive", !volumenActive, setVolumenActive)}
                             disabled={isChildItem}
-                            className={`w-10 h-5 rounded-full transition-colors relative ${
-                              volumenActive ? "bg-blue-500" : "bg-gray-300"
-                            } ${isChildItem ? "opacity-50 cursor-not-allowed" : ""}`}
+                            className={`w-10 h-5 rounded-full transition-colors relative ${volumenActive ? "bg-blue-500" : "bg-gray-300"
+                              } ${isChildItem ? "opacity-50 cursor-not-allowed" : ""}`}
                           >
                             <div
-                              className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${
-                                volumenActive ? "translate-x-5" : "translate-x-0"
-                              }`}
+                              className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${volumenActive ? "translate-x-5" : "translate-x-0"
+                                }`}
                             />
                           </button>
                         </div>
@@ -1589,11 +1580,10 @@ export function CatalogoItemDetailPanel({
                                   handleFieldChange("volumenCantidad", e.target.value, setVolumenCantidad)
                                 }
                                 disabled={isChildItem}
-                                className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                  isChildItem
+                                className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${isChildItem
                                     ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
                                     : "bg-white border-gray-300 text-gray-900"
-                                }`}
+                                  }`}
                                 placeholder="0"
                               />
                             </div>
@@ -1604,11 +1594,10 @@ export function CatalogoItemDetailPanel({
                                 value={volumenUnidad}
                                 onChange={(e) => handleFieldChange("volumenUnidad", e.target.value, setVolumenUnidad)}
                                 disabled={isChildItem}
-                                className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none ${
-                                  isChildItem
+                                className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none ${isChildItem
                                     ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
                                     : "bg-white border-gray-300 text-gray-900 cursor-pointer"
-                                }`}
+                                  }`}
                               >
                                 <option value="ml">ml</option>
                                 <option value="l">l</option>
@@ -1628,14 +1617,12 @@ export function CatalogoItemDetailPanel({
                           <label className="text-sm font-medium text-gray-700">Vencimiento</label>
                           <button
                             onClick={() => setVencimientoActive(!vencimientoActive)}
-                            className={`w-10 h-5 rounded-full transition-colors relative ${
-                              vencimientoActive ? "bg-blue-500" : "bg-gray-300"
-                            }`}
+                            className={`w-10 h-5 rounded-full transition-colors relative ${vencimientoActive ? "bg-blue-500" : "bg-gray-300"
+                              }`}
                           >
                             <div
-                              className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${
-                                vencimientoActive ? "translate-x-5" : "translate-x-0"
-                              }`}
+                              className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${vencimientoActive ? "translate-x-5" : "translate-x-0"
+                                }`}
                             />
                           </button>
                         </div>
@@ -1672,11 +1659,10 @@ export function CatalogoItemDetailPanel({
                           value={proveedor}
                           onChange={(e) => handleFieldChange("proveedor", e.target.value, setProveedor)}
                           disabled={shouldInheritField(fatherItem?.proveedor)}
-                          className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${
-                            shouldInheritField(fatherItem?.proveedor)
+                          className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${shouldInheritField(fatherItem?.proveedor)
                               ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
                               : "bg-white border-gray-300 text-gray-900"
-                          }`}
+                            }`}
                           placeholder="Nombre del proveedor"
                         />
                       </div>
@@ -1714,7 +1700,7 @@ export function CatalogoItemDetailPanel({
                             const fatherAttr = fatherItem?.atributosInformativos?.find((a) => a.key === attr.key)
                             const isAttributeLocked = isChildItem && fatherAttr !== undefined
                             const isValueLocked = isChildItem && fatherAttr && fatherAttr.value && !fatherAttr.inheritValue
-                            
+
                             return (
                               <div key={index} className="flex items-start gap-3">
                                 <div className="flex-1">
@@ -1730,9 +1716,8 @@ export function CatalogoItemDetailPanel({
                                       }
                                     }}
                                     disabled={isAttributeLocked}
-                                    className={`w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${
-                                      isAttributeLocked ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
-                                    }`}
+                                    className={`w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${isAttributeLocked ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
+                                      }`}
                                     placeholder="Ej: Material"
                                   />
                                 </div>
@@ -1750,13 +1735,12 @@ export function CatalogoItemDetailPanel({
                                       }
                                     }}
                                     disabled={isValueLocked || (!isChildItem && attr.inheritValue)}
-                                    className={`w-full px-3 py-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${
-                                      isValueLocked 
-                                        ? "bg-slate-50 border border-slate-200 text-slate-400 cursor-not-allowed" 
+                                    className={`w-full px-3 py-2.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${isValueLocked
+                                        ? "bg-slate-50 border border-slate-200 text-slate-400 cursor-not-allowed"
                                         : (!isChildItem && attr.inheritValue)
                                           ? "bg-slate-50 border-2 border-dashed border-slate-300 text-slate-400 cursor-not-allowed italic"
                                           : "bg-white border border-slate-200 text-slate-800 hover:border-slate-300"
-                                    }`}
+                                      }`}
                                     placeholder={(!isChildItem && attr.inheritValue) ? "Variantes completarán..." : "Ej: Algodón"}
                                   />
                                 </div>
@@ -1772,11 +1756,10 @@ export function CatalogoItemDetailPanel({
                                         }
                                         handleAtributosInformativosChange(updated)
                                       }}
-                                      className={`p-1.5 rounded-md transition-all cursor-pointer ${
-                                        attr.inheritValue 
-                                          ? "bg-slate-800 text-white" 
+                                      className={`p-1.5 rounded-md transition-all cursor-pointer ${attr.inheritValue
+                                          ? "bg-slate-800 text-white"
                                           : "text-gray-400 hover:text-slate-600 hover:bg-slate-100"
-                                      }`}
+                                        }`}
                                       title={attr.inheritValue ? "Valor heredable a variantes (click para desactivar)" : "Marcar para que variantes completen el valor"}
                                     >
                                       <ArrowDownToLine className="w-3.5 h-3.5" />
@@ -1820,9 +1803,9 @@ export function CatalogoItemDetailPanel({
             </div>
           )}
 
-{/* Info/Atributos Column - col-span-6 for standalone/children, col-span-1 for container */}
-        <div className={`flex flex-col transition-all duration-500 overflow-hidden mr-3.5 pb-0 ${isViewingContainer ? "order-1 col-span-1 mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : "order-2 col-span-6 relative mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10"}`}>
-            
+          {/* Info/Atributos Column - col-span-6 for standalone/children, col-span-1 for container */}
+          <div className={`flex flex-col transition-all duration-500 overflow-hidden mr-3.5 pb-0 ${isViewingContainer ? "order-1 col-span-1 mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : "order-2 col-span-6 relative mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10"}`}>
+
             {/* Thumbnail + Title Header for Parent Items */}
             {isViewingContainer && (
               <div className="mb-6 pb-5 border-b border-slate-200/60 -mt-6 -mx-8 px-8 pt-6 rounded-t-2xl bg-slate-900">
@@ -1841,806 +1824,791 @@ export function CatalogoItemDetailPanel({
 
             {/* Sticky Segment Buttons (only for non-container items) */}
             {!isViewingContainer && (
-            <div className="z-20 mb-6 sticky top-[0px]">
-              <div className="flex items-center gap-1 h-11 p-1 bg-slate-100/80 rounded-xl">
-                <button
-                  onClick={() => setSelectedDetailTab("info")}
-                  className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
-                    selectedDetailTab === "info"
-                      ? "bg-white text-slate-900 shadow-sm font-semibold"
-                      : "text-slate-500 hover:text-slate-700"
-                  }`}
-                >
-                  <span className="text-xs font-medium uppercase tracking-widest">Info</span>
-                </button>
-                <button
-                  onClick={() => setSelectedDetailTab("atributos")}
-                  className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${
-                    selectedDetailTab === "atributos"
-                      ? "bg-white text-slate-900 shadow-sm font-semibold"
-                      : "text-slate-500 hover:text-slate-700"
-                  }`}
-                >
-                  <span className="text-xs font-medium uppercase tracking-widest">Atributos</span>
-                </button>
+              <div className="z-20 mb-6 sticky top-[0px]">
+                <div className="flex items-center gap-1 h-11 p-1 bg-slate-100/80 rounded-xl">
+                  <button
+                    onClick={() => setSelectedDetailTab("info")}
+                    className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${selectedDetailTab === "info"
+                        ? "bg-white text-slate-900 shadow-sm font-semibold"
+                        : "text-slate-500 hover:text-slate-700"
+                      }`}
+                  >
+                    <span className="text-xs font-medium uppercase tracking-widest">Info</span>
+                  </button>
+                  <button
+                    onClick={() => setSelectedDetailTab("atributos")}
+                    className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${selectedDetailTab === "atributos"
+                        ? "bg-white text-slate-900 shadow-sm font-semibold"
+                        : "text-slate-500 hover:text-slate-700"
+                      }`}
+                  >
+                    <span className="text-xs font-medium uppercase tracking-widest">Atributos</span>
+                  </button>
+                </div>
               </div>
-            </div>
             )}
 
             {/* Tab Content */}
             {(
-            <div className="flex-1 w-full overflow-hidden">
-              {isViewingContainer ? (
-                // Container item tab content
-                <>
-                  {selectedDetailTab === "info" && (
-                    <div className="h-full flex flex-col py-2">
-                      <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-5">
-                        {variantItems.length} {variantItems.length === 1 ? "variante" : "variantes"}
-                      </h3>
-
-                      {/* Atributos Principales Section */}
-                      {!showAtributosView ? (
-                        <div className="flex flex-col items-center justify-center gap-4 py-8 mb-6">
-                          <p className="text-gray-500 text-sm">No hay atributos configurados</p>
-                          <button
-                            onClick={() => setShowAtributosView(true)}
-                            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg transition-colors cursor-pointer"
-                          >
-                            Agregar atributo
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="mb-6">
-                          {/* Collapsible header — only show toggle when there are variants */}
-                          <button
-                            onClick={() => setIsAtributosCollapsed((prev) => !prev)}
-                            className="w-full flex items-center justify-between mb-3 group/atributos-header cursor-pointer"
-                          >
-                            <div className="text-left">
-                              <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
-                                Atributos de Variantes
-                              </h3>
-                              {!isAtributosCollapsed && (
-                                <p className="text-xs text-gray-500 italic">
-                                  Atributos que definen las variantes del producto (máximo 2)
-                                </p>
-                              )}
-                            </div>
-                            <ChevronDown
-                              className={`w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0 ${
-                                isAtributosCollapsed ? "" : "rotate-180"
-                              }`}
-                            />
-                          </button>
-
-                          {/* Collapsible content */}
-                          {!isAtributosCollapsed && (
-                          <div className="flex flex-col gap-3">
-                            {containerAtributosPrincipales.map((attr, index) => (
-                              <div key={index} className="flex items-start gap-3">
-                                <div className="flex-1">
-                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
-                                  <input
-                                    type="text"
-                                    value={attr.key}
-                                    onChange={(e) => {
-                                      const updated = [...containerAtributosPrincipales]
-                                      updated[index].key = e.target.value
-                                      handleContainerAtributosPrincipalesChange(updated)
-                                    }}
-                                    className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300"
-                                    placeholder="Ej: Color"
-                                  />
-                                </div>
-
-                                <div className="flex-1">
-                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Variantes</label>
-                                  <div className="space-y-2">
-                                    <input
-                                      type="text"
-                                      value={varianteInput[index] || ""}
-                                      onChange={(e) =>
-                                        setVarianteInput({ ...varianteInput, [index]: e.target.value })
-                                      }
-                                      onKeyDown={(e) => {
-                                        if (e.key === "Enter" && varianteInput[index]?.trim()) {
-                                          const newTag = varianteInput[index].trim()
-                                          const updated = [...containerAtributosPrincipales]
-                                          const isDuplicate = updated[index].variantes.some(
-                                            (existing) => existing.toLowerCase() === newTag.toLowerCase()
-                                          )
-                                          if (!isDuplicate) {
-                                            updated[index].variantes.push(newTag)
-                                            handleContainerAtributosPrincipalesChange(updated)
-                                            setDuplicateTagError({ ...duplicateTagError, [index]: false })
-                                          } else {
-                                            setDuplicateTagError({ ...duplicateTagError, [index]: true })
-                                            setTimeout(() => {
-                                              setDuplicateTagError((prev) => ({ ...prev, [index]: false }))
-                                            }, 2000)
-                                          }
-                                          setVarianteInput({ ...varianteInput, [index]: "" })
-                                        }
-                                      }}
-                                      onFocus={() => setDuplicateTagError({ ...duplicateTagError, [index]: false })}
-                                      placeholder="Ej: Rojo"
-                                      className={`w-full px-3 py-2.5 bg-white border rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 transition-all hover:border-slate-300 text-sm ${
-                                        duplicateTagError[index]
-                                          ? "border-red-400 focus:ring-red-400"
-                                          : "border-slate-200 focus:ring-slate-300"
-                                      }`}
-                                    />
-
-                                    {duplicateTagError[index] && (
-                                      <p className="text-red-500 text-xs mt-1 font-medium animate-pulse">
-                                        Este tag ya existe (no se permiten duplicados, incluso con diferente capitalización)
-                                      </p>
-                                    )}
-
-                                    <div className="flex flex-wrap gap-2">
-                                      {attr.variantes.map((variante, vIndex) => {
-                                        const existingVariants = selectedItem?.variants || []
-                                        const otherAttrIndex = index === 0 ? 1 : 0
-                                        const otherAttr = containerAtributosPrincipales[otherAttrIndex]
-                                        let isComplete = true
-                                        if (existingVariants.length > 0 && otherAttr && otherAttr.variantes.length > 0) {
-                                          for (const otherValue of otherAttr.variantes) {
-                                            const hasCombination = existingVariants.some((v: any) => {
-                                              if (!v.atributosPrincipales) return false
-                                              const attr1Val = v.atributosPrincipales[0]?.value
-                                              const attr2Val = v.atributosPrincipales[1]?.value
-                                              if (index === 0) {
-                                                return attr1Val === variante && attr2Val === otherValue
-                                              } else {
-                                                return attr1Val === otherValue && attr2Val === variante
-                                              }
-                                            })
-                                            if (!hasCombination) { isComplete = false; break }
-                                          }
-                                        } else if (existingVariants.length > 0 && containerAtributosPrincipales.length === 1) {
-                                          isComplete = existingVariants.some((v: any) => {
-                                            if (!v.atributosPrincipales) return false
-                                            return v.atributosPrincipales[0]?.value === variante
-                                          })
-                                        } else if (existingVariants.length === 0) {
-                                          isComplete = false
-                                        }
-                                        return (
-                                          <span
-                                            key={vIndex}
-                                            className={`px-3 py-1.5 bg-white rounded-md text-sm flex items-center gap-2 ${
-                                              isComplete
-                                                ? "border border-gray-300 text-gray-900"
-                                                : "border-2 border-dashed border-gray-300 text-gray-500"
-                                            }`}
-                                          >
-                                            {variante}
-                                            <button
-                                              onClick={() => {
-                                                const updated = [...containerAtributosPrincipales]
-                                                updated[index].variantes = updated[index].variantes.filter((_, i) => i !== vIndex)
-                                                const updatedVariants = (selectedItem?.variants || []).filter((v: any) => {
-                                                  if (!v.atributosPrincipales) return true
-                                                  if (index === 0) return v.atributosPrincipales[0]?.value !== variante
-                                                  else return v.atributosPrincipales[1]?.value !== variante
-                                                })
-                                                setContainerAtributosPrincipales(updated)
-                                                setVariantItems(convertSavedVariantsToDisplay(updatedVariants))
-                                                if (onFieldChange && selectedItem.sku) {
-                                                  onFieldChange(selectedItem.id, "containerAtributosPrincipales", updated)
-                                                  onFieldChange(selectedItem.id, "variants", updatedVariants)
-                                                }
-                                              }}
-                                              className="text-gray-400 hover:text-gray-600 cursor-pointer"
-                                            >
-                                              <X className="w-3 h-3" />
-                                            </button>
-                                          </span>
-                                        )
-                                      })}
-                                    </div>
-                                  </div>
-                                </div>
-
-                                <button
-                                  onClick={() => {
-                                    const updated = containerAtributosPrincipales.filter((_, i) => i !== index)
-                                    handleContainerAtributosPrincipalesChange(updated)
-                                    setVariantItems([])
-                                    if (onFieldChange && selectedItem?.id) {
-                                      onFieldChange(selectedItem.id, "variants", [])
-                                    }
-                                    if (updated.length === 0 && atributosInformativos.length === 0) {
-                                      setShowAtributosView(false)
-                                    }
-                                  }}
-                                  className="mt-8 text-gray-400 hover:text-red-400 transition-colors cursor-pointer"
-                                >
-                                  <X className="w-4 h-4" />
-                                </button>
-                              </div>
-                            ))}
-
-                            {containerAtributosPrincipales.length < 2 && (
-                              <button
-                                onClick={() => {
-                                  handleContainerAtributosPrincipalesChange([
-                                    ...containerAtributosPrincipales,
-                                    { key: "", variantes: [] },
-                                  ])
-                                }}
-                                className="w-full px-3 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 transition-colors flex items-center justify-center gap-2 cursor-pointer"
-                              >
-                                <Plus className="w-4 h-4" />
-                                <span className="text-sm">Agregar atributo</span>
-                              </button>
-                            )}
-
-                            {containerAtributosPrincipales.length > 0 && (() => {
-                              const hasAtLeastOneVariante = containerAtributosPrincipales.some(
-                                (attr) => attr.key.trim() !== "" && attr.variantes.length > 0
-                              )
-                              const existingVariants = selectedItem?.variants || []
-                              const potentialNewVariants = generateNewVariantCombinations(existingVariants)
-                              const isEnabled = hasAtLeastOneVariante && potentialNewVariants.length > 0
-                              return (
-                                <button
-                                  onClick={handleGenerarVariantes}
-                                  disabled={!isEnabled}
-                                  className={`w-full px-4 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 ${
-                                    isEnabled
-                                      ? "bg-slate-900 text-white hover:bg-slate-800 cursor-pointer"
-                                      : "bg-slate-100 text-slate-400 cursor-not-allowed"
-                                  }`}
-                                >
-                                  Generar Variantes
-                                </button>
-                              )
-                            })()}
-                          </div>
-                          )} {/* end !isAtributosCollapsed */}
-                        </div>
-                      )}
-
-                      {/* Variant matrix */}
-                      {variantItems.length > 0 && (
-                        <div className="mt-8 pt-6 border-t border-gray-200">
-                          <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">
-                              Variantes
-                            </h3>
-                            <button
-                              onClick={() => setIsNuevaVarianteModalOpen(true)}
-                              className="px-3 py-1.5 border border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-colors flex items-center gap-1.5 text-xs cursor-pointer"
-                            >
-                              <Plus className="w-3.5 h-3.5" />
-                              <span>Nueva Variante</span>
-                            </button>
-                          </div>
-
-                          {/* SKU Padre */}
-                          <div className="mb-4">
-                            <div className="flex items-center gap-2 group/skupadre">
-                              <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">
-                                SKU Padre
-                              </span>
-                              {editingSkuPadre ? (
-                                <input
-                                  type="text"
-                                  value={skuValue}
-                                  autoFocus
-                                  onChange={(e) => setSkuValue(e.target.value.toUpperCase())}
-                                  onBlur={() => {
-                                    setEditingSkuPadre(false)
-                                    const currentPrefix = selectedItem?.skuPrefix || selectedItem?.sku || ""
-                                    if (skuValue !== currentPrefix) {
-                                      onFieldChange(selectedItem.id, "skuPrefix", skuValue)
-                                    }
-                                  }}
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter") (e.target as HTMLInputElement).blur()
-                                    if (e.key === "Escape") {
-                                      setSkuValue(selectedItem?.skuPrefix || selectedItem?.sku || "")
-                                      setEditingSkuPadre(false)
-                                    }
-                                  }}
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="font-mono text-sm text-slate-800 bg-transparent border-b border-slate-400 focus:border-slate-600 focus:outline-none w-full max-w-[180px]"
-                                  placeholder="Ej: VNO-KNECHT"
-                                />
-                              ) : (
-                                <div
-                                  className="flex items-center gap-1.5 cursor-pointer"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    setEditingSkuPadre(true)
-                                  }}
-                                >
-                                  <span className="font-mono text-sm text-slate-800">{skuValue || selectedItem?.skuPrefix || selectedItem?.sku}</span>
-                                  <Pencil className="w-3 h-3 text-slate-400/60 opacity-0 group-hover/skupadre:opacity-100 transition-opacity" />
-                                </div>
-                              )}
-                            </div>
-                            <p className="text-[9px] text-slate-400 mt-0.5 italic">
-                              Base para generar SKUs de variantes
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {variantItems.length > 0 ? (
-                        <div className="bg-white border border-border/40 rounded-lg overflow-hidden">
-                          <div className="grid grid-cols-[1fr_minmax(80px,1fr)_28px] bg-white border-b border-border/30">
-                            <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider" />
-                            <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                              SKU
-                            </div>
-                            <div />
-                          </div>
-                          <div className="divide-y divide-border/30">
-                            {variantItems.map((variant) => {
-                              const sourceVariant = selectedItem.variants?.find((v: any) => {
-                                if (!v.atributosPrincipales) return false
-                                const hasMatchingAttr1 = variant.variant1
-                                  ? v.atributosPrincipales.some((attr: any) => attr.value === variant.variant1)
-                                  : true
-                                const hasMatchingAttr2 = variant.variant2
-                                  ? v.atributosPrincipales.some((attr: any) => attr.value === variant.variant2)
-                                  : true
-                                return hasMatchingAttr1 && hasMatchingAttr2
-                              })
-                              const variantId = variant.id || sourceVariant?.id
-
-                              const handleDeleteVariant = () => {
-                                const attr1Value = variant.variant1
-                                const attr2Value = variant.variant2
-                                const updatedVariants = (selectedItem.variants || []).filter((v: any) => {
-                                  if (!v.atributosPrincipales) return true
-                                  const variantAttr1 = v.atributosPrincipales[0]?.value
-                                  const variantAttr2 = v.atributosPrincipales[1]?.value
-                                  if (!attr2Value) return variantAttr1 !== attr1Value
-                                  return !(variantAttr1 === attr1Value && variantAttr2 === attr2Value)
-                                })
-                                const updatedContainerAttrs = containerAtributosPrincipales.map((attr, attrIndex) => {
-                                  const otherAttrIndex = attrIndex === 0 ? 1 : 0
-                                  const otherAttr = containerAtributosPrincipales[otherAttrIndex]
-                                  if (!otherAttr || otherAttr.variantes.length === 0) {
-                                    return { ...attr, variantes: attr.variantes.filter(tag =>
-                                      updatedVariants.some((v: any) => v.atributosPrincipales?.[attrIndex]?.value === tag)
-                                    )}
-                                  }
-                                  return { ...attr, variantes: attr.variantes.filter(tag =>
-                                    updatedVariants.some((v: any) => {
-                                      if (!v.atributosPrincipales) return false
-                                      return attrIndex === 0
-                                        ? v.atributosPrincipales[0]?.value === tag
-                                        : v.atributosPrincipales[1]?.value === tag
-                                    })
-                                  )}
-                                })
-                                setVariantItems(convertSavedVariantsToDisplay(updatedVariants))
-                                const tagsChanged = JSON.stringify(containerAtributosPrincipales) !== JSON.stringify(updatedContainerAttrs)
-                                if (tagsChanged) {
-                                  setContainerAtributosPrincipales(updatedContainerAttrs)
-                                  if (onFieldChange && selectedItem.sku) {
-                                    onFieldChange(selectedItem.id, "containerAtributosPrincipales", updatedContainerAttrs)
-                                  }
-                                }
-                                if (onFieldChange && selectedItem.sku) {
-                                  onFieldChange(selectedItem.id, "variants", updatedVariants)
-                                }
-                              }
-
-                              return (
-                                <div
-                                  key={variant.id || variant.skuSuffix || variant.sku}
-                                  onClick={() => { if (variantId) router.push(`/catalogo/items/${variantId}`) }}
-                                  className="group grid grid-cols-[1fr_minmax(80px,1fr)_28px] items-center hover:bg-accent/50 transition-colors cursor-pointer"
-                                >
-                                  <div className="px-3 py-2 flex items-center gap-1.5">
-                                    {variant.variant1 && (
-                                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[70px]">
-                                        {variant.variant1}
-                                      </span>
-                                    )}
-                                    {variant.variant1 && variant.variant2 && (
-                                      <span className="text-[9px] text-muted-foreground/50 font-medium">×</span>
-                                    )}
-                                    {variant.variant2 && (
-                                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[70px]">
-                                        {variant.variant2}
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
-                                    <div className="flex items-center w-full">
-                                      <span className="text-[11px] font-mono text-muted-foreground/60 select-none whitespace-nowrap">
-                                        {skuValue}-
-                                      </span>
-                                      <input
-                                        type="text"
-                                        value={variant.skuSuffix}
-                                        onChange={(e) => {
-                                          const newSuffix = e.target.value
-                                          setVariantItems((prev) =>
-                                            prev.map((v) => v.id === variant.id ? { ...v, skuSuffix: newSuffix } : v)
-                                          )
-                                          const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
-                                            ov.id === variant.id ? { ...ov, skuSuffix: newSuffix } : ov
-                                          )
-                                          onFieldChange(selectedItem.id, "variants", updatedVariants)
-                                        }}
-                                        className="flex-1 min-w-0 bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-primary/50 px-0 py-0.5 text-[11px] font-mono text-foreground focus:outline-none transition-colors"
-                                        placeholder="sufijo..."
-                                      />
-                                    </div>
-                                  </div>
-                                  <div className="px-1 py-2 flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-                                    <button
-                                      onClick={handleDeleteVariant}
-                                      className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all cursor-pointer"
-                                      title="Eliminar variante"
-                                    >
-                                      <X className="h-3 w-3" />
-                                    </button>
-                                  </div>
-                                </div>
-                              )
-                            })}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="text-center text-xs text-muted-foreground py-8 border border-dashed border-border/60 rounded-lg">
-                          No hay variantes configuradas
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </>
-              ) : (
-                // Individual item tab content
-                <>
-                  {selectedDetailTab === "info" && (
-                    <div className="h-full flex flex-col mt-5">
-                      <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-4">
-                        Información del Producto
-                      </h3>
-
-                      <div className="space-y-4">
-                        {/* Categoría and Marca */}
-                        <div className="grid grid-cols-2 gap-5">
-                          <div className="flex flex-col gap-1.5">
-                            <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Categoría</label>
-                            <input
-                              type="text"
-                              value={categoria}
-                              onChange={(e) => handleFieldChange("categoria", e.target.value, setCategoria)}
-                              disabled={shouldStrictlyInherit(fatherItem?.categoria)}
-                              className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${
-                                shouldStrictlyInherit(fatherItem?.categoria)
-                                  ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
-                                  : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
-                              }`}
-                              placeholder="Ej: Vinos"
-                            />
-                          </div>
-
-                          <div className="flex flex-col gap-1.5">
-                            <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Marca</label>
-                            <input
-                              type="text"
-                              value={marca}
-                              onChange={(e) => handleFieldChange("marca", e.target.value, setMarca)}
-                              disabled={shouldStrictlyInherit(fatherItem?.marca)}
-                              className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${
-                                shouldStrictlyInherit(fatherItem?.marca)
-                                  ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
-                                  : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
-                              }`}
-                              placeholder="Ej: YKK"
-                            />
-                          </div>
-                        </div>
-
-                        {/* Horizontal divider line */}
-                        <div className="my-6 border-t border-slate-200"></div>
-
-                        <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-4">
-                          Presentación
+              <div className="flex-1 w-full overflow-hidden">
+                {isViewingContainer ? (
+                  // Container item tab content
+                  <>
+                    {selectedDetailTab === "info" && (
+                      <div className="h-full flex flex-col py-2">
+                        <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-5">
+                          {variantItems.length} {variantItems.length === 1 ? "variante" : "variantes"}
                         </h3>
 
-                        <div className="grid grid-cols-2 gap-5">
-                          <div className="flex flex-col gap-1.5">
-                            <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Formato de venta</label>
-                            <select
-                              value={formatoVenta}
-                              onChange={(e) => handleFieldChange("formatoVenta", e.target.value, setFormatoVenta)}
-                              disabled={shouldStrictlyInherit(fatherItem?.formatoVenta)}
-                              className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 appearance-none transition-all text-sm ${
-                                shouldStrictlyInherit(fatherItem?.formatoVenta)
-                                  ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
-                                  : "bg-white border-slate-200 text-slate-800 cursor-pointer hover:border-slate-300"
-                              }`}
-                            >
-                              <option value="unidad">Unidad</option>
-                              <option value="pack">Pack</option>
-                            </select>
-                          </div>
-
-                          <div className="flex flex-col gap-1.5">
-                            <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Unidades por pack</label>
-                            <input
-                              type="text"
-                              value={unidadesPorPack === "N.E." ? "" : unidadesPorPack}
-                              onChange={(e) => {
-                                const value = e.target.value
-                                if (value === "") {
-                                  handleFieldChange("unidadesPorPack", "N.E.", setUnidadesPorPack)
-                                } else if (/^\d+$/.test(value)) {
-                                  const numValue = Number.parseInt(value)
-                                  handleFieldChange("unidadesPorPack", numValue < 1 ? "1" : value, setUnidadesPorPack)
-                                }
-                                // Ignore non-numeric input
-                              }}
-                              disabled={formatoVenta === "unidad" || isUnidadesPorPackLocked}
-                              className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${
-                                formatoVenta === "unidad" || isUnidadesPorPackLocked
-                                  ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
-                                  : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
-                              }`}
-                              placeholder="N.E."
-                            />
-                          </div>
-                        </div>
-
-                        <div className="flex flex-col gap-2 mt-3">
-                          <div className="flex items-center gap-3 mt-3.5">
-                            <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Volumen de la unidad</label>
+                        {/* Atributos Principales Section */}
+                        {!showAtributosView ? (
+                          <div className="flex flex-col items-center justify-center gap-4 py-8 mb-6">
+                            <p className="text-gray-500 text-sm">No hay atributos configurados</p>
                             <button
-                              onClick={() => handleFieldChange("volumenActive", !volumenActive, setVolumenActive)}
-                              disabled={isChildItem}
-                              className={`w-9 h-5 rounded-full transition-all relative ${
-                                volumenActive ? "bg-slate-800" : "bg-slate-200"
-                              } ${isChildItem ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                              onClick={() => setShowAtributosView(true)}
+                              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg transition-colors cursor-pointer"
                             >
-                              <div
-                                className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${
-                                  volumenActive ? "translate-x-4" : "translate-x-0"
-                                }`}
-                              />
+                              Agregar atributo
                             </button>
                           </div>
-
-                          {volumenActive && (
-                            <div className="grid grid-cols-2 gap-5 mt-2">
-                              <div className="flex flex-col gap-1.5">
-                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Cantidad</label>
-                                <input
-                                  type="number"
-                                  value={volumenCantidad}
-                                  onChange={(e) =>
-                                    handleFieldChange("volumenCantidad", e.target.value, setVolumenCantidad)
-                                  }
-                                  disabled={isChildItem}
-                                  className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${
-                                    isChildItem
-                                      ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
-                                      : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
-                                  }`}
-                                  placeholder="0"
-                                />
-                              </div>
-
-                              <div className="flex flex-col gap-1.5">
-                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Unidad de medida</label>
-                                <select
-                                  value={volumenUnidad}
-                                  onChange={(e) => handleFieldChange("volumenUnidad", e.target.value, setVolumenUnidad)}
-                                  disabled={isChildItem}
-                                  className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 appearance-none transition-all text-sm ${
-                                    isChildItem
-                                      ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
-                                      : "bg-white border-slate-200 text-slate-800 cursor-pointer hover:border-slate-300"
-                                  }`}
-                                >
-                                  <option value="ml">ml</option>
-                                  <option value="l">l</option>
-                                  <option value="g">g</option>
-                                  <option value="kg">kg</option>
-                                  <option value="cm">cm</option>
-                                  <option value="m">m</option>
-                                </select>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Vencimiento Section */}
-                        <div className="flex flex-col gap-2 mt-4">
-                          <div className="flex items-center gap-3 mb-0 mt-3.5">
-                            <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Vencimiento</label>
+                        ) : (
+                          <div className="mb-6">
+                            {/* Collapsible header — only show toggle when there are variants */}
                             <button
-                              onClick={() => setVencimientoActive(!vencimientoActive)}
-                              className={`w-9 h-5 rounded-full transition-all relative cursor-pointer ${
-                                vencimientoActive ? "bg-slate-800" : "bg-slate-200"
-                              }`}
+                              onClick={() => setIsAtributosCollapsed((prev) => !prev)}
+                              className="w-full flex items-center justify-between mb-3 group/atributos-header cursor-pointer"
                             >
-                              <div
-                                className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${
-                                  vencimientoActive ? "translate-x-4" : "translate-x-0"
-                                }`}
+                              <div className="text-left">
+                                <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
+                                  Atributos de Variantes
+                                </h3>
+                                {!isAtributosCollapsed && (
+                                  <p className="text-xs text-gray-500 italic">
+                                    Atributos que definen las variantes del producto (máximo 2)
+                                  </p>
+                                )}
+                              </div>
+                              <ChevronDown
+                                className={`w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0 ${isAtributosCollapsed ? "" : "rotate-180"
+                                  }`}
                               />
                             </button>
-                          </div>
 
-                          {vencimientoActive && (
-                            <div className="mt-2 p-4 border border-slate-200 rounded-xl bg-slate-50/50">
-                              <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-2 block">
-                                Fecha de Vencimiento
-                              </label>
-                              <div className="relative">
-                                <input
-                                  type="date"
-                                  value={fechaVencimiento}
-                                  onChange={(e) => setFechaVencimiento(e.target.value)}
-                                  className="w-full px-3 py-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-slate-300 text-slate-800 text-sm transition-all hover:border-slate-300"
-                                />
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Información del Proveedor Section - Below Vencimiento */}
-                        <div className="border-t border-slate-200 pt-4 mt-4">
-                          <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-4">
-                            Información del Proveedor
-                          </h3>
-                          <div className="grid grid-cols-2 gap-5">
-                            <div className="flex flex-col gap-1.5">
-                              <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Proveedor</label>
-                              <input
-                                type="text"
-                                value={proveedor}
-                                onChange={(e) => handleFieldChange("proveedor", e.target.value, setProveedor)}
-                                disabled={shouldInheritField(fatherItem?.proveedor)}
-                                className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${
-                                  shouldInheritField(fatherItem?.proveedor)
-                                    ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
-                                    : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
-                                }`}
-                                placeholder="Nombre del proveedor"
-                              />
-                            </div>
-                            <div className="flex flex-col gap-1.5">
-                              <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Código Proveedor</label>
-                              <input
-                                type="text"
-                                value={codigoProveedor}
-                                onChange={(e) => handleFieldChange("codigoProveedor", e.target.value, setCodigoProveedor)}
-                                className="px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300"
-                                placeholder="Código del proveedor"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedDetailTab === "atributos" && (
-                    <div className="h-full flex flex-col">
-                      {!showIndividualAtributosView ? (
-                        <div className="flex flex-col items-center justify-center h-full gap-4 py-12">
-                          <p className="text-slate-400 text-sm">No hay atributos configurados</p>
-                          <button
-                            onClick={() => setShowIndividualAtributosView(true)}
-                            className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-all text-sm font-medium cursor-pointer"
-                          >
-                            Agregar atributos
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col gap-6">
-                          <div className="flex flex-col gap-3">
-                            <div>
-                              <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
-                                Atributos Informativos
-                              </h3>
-                              <p className="text-xs text-gray-500 italic mt-1">
-                                Atributos que describen propiedades adicionales del producto
-                              </p>
-                            </div>
-
-                            {atributosInformativos.map((attr, index) => {
-                              const fatherAttr = isChildItem
-                                ? fatherItem?.atributosInformativos?.find((a) => a.key === attr.key)
-                                : undefined
-                              const isAttributeLocked = isChildItem && fatherAttr !== undefined
-                              // Value is locked if parent has a value AND inheritValue is NOT true (Case 1)
-                              // Value is editable if parent marked inheritValue (Case 2)
-                              const isValueLocked = isChildItem && fatherAttr && fatherAttr.value && !fatherAttr.inheritValue
-                              
-                              return (
-                                <div key={index} className="flex items-start gap-3">
-                                  <div className="flex-1">
-                                    <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
-                                    <input
-                                      type="text"
-                                      value={attr.key}
-                                      onChange={(e) => {
-                                        if (!isAttributeLocked) {
-                                          const updated = [...atributosInformativos]
+                            {/* Collapsible content */}
+                            {!isAtributosCollapsed && (
+                              <div className="flex flex-col gap-3">
+                                {containerAtributosPrincipales.map((attr, index) => (
+                                  <div key={index} className="flex items-start gap-3">
+                                    <div className="flex-1">
+                                      <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
+                                      <input
+                                        type="text"
+                                        value={attr.key}
+                                        onChange={(e) => {
+                                          const updated = [...containerAtributosPrincipales]
                                           updated[index].key = e.target.value
-                                          handleAtributosInformativosChange(updated)
-                                        }
-                                      }}
-                                      disabled={isAttributeLocked}
-                                      className={`w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${
-                                        isAttributeLocked ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
-                                      }`}
-                                      placeholder="Ej: Material"
-                                    />
-                                  </div>
+                                          handleContainerAtributosPrincipalesChange(updated)
+                                        }}
+                                        className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300"
+                                        placeholder="Ej: Color"
+                                      />
+                                    </div>
 
-                                  <div className="flex-1">
-                                    <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Valor</label>
-                                    <input
-                                      type="text"
-                                      value={attr.value}
-                                      onChange={(e) => {
-                                        if (!isValueLocked) {
-                                          const updated = [...atributosInformativos]
-                                          updated[index].value = e.target.value
-                                          handleAtributosInformativosChange(updated)
-                                        }
-                                      }}
-                                      disabled={isValueLocked}
-                                      className={`w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${
-                                        isValueLocked ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
-                                      }`}
-                                      placeholder="Ej: Algodón"
-                                    />
-                                  </div>
+                                    <div className="flex-1">
+                                      <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Variantes</label>
+                                      <div className="space-y-2">
+                                        <input
+                                          type="text"
+                                          value={varianteInput[index] || ""}
+                                          onChange={(e) =>
+                                            setVarianteInput({ ...varianteInput, [index]: e.target.value })
+                                          }
+                                          onKeyDown={(e) => {
+                                            if (e.key === "Enter" && varianteInput[index]?.trim()) {
+                                              const newTag = varianteInput[index].trim()
+                                              const updated = [...containerAtributosPrincipales]
+                                              const isDuplicate = updated[index].variantes.some(
+                                                (existing) => existing.toLowerCase() === newTag.toLowerCase()
+                                              )
+                                              if (!isDuplicate) {
+                                                updated[index].variantes.push(newTag)
+                                                handleContainerAtributosPrincipalesChange(updated)
+                                                setDuplicateTagError({ ...duplicateTagError, [index]: false })
+                                              } else {
+                                                setDuplicateTagError({ ...duplicateTagError, [index]: true })
+                                                setTimeout(() => {
+                                                  setDuplicateTagError((prev) => ({ ...prev, [index]: false }))
+                                                }, 2000)
+                                              }
+                                              setVarianteInput({ ...varianteInput, [index]: "" })
+                                            }
+                                          }}
+                                          onFocus={() => setDuplicateTagError({ ...duplicateTagError, [index]: false })}
+                                          placeholder="Ej: Rojo"
+                                          className={`w-full px-3 py-2.5 bg-white border rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 transition-all hover:border-slate-300 text-sm ${duplicateTagError[index]
+                                              ? "border-red-400 focus:ring-red-400"
+                                              : "border-slate-200 focus:ring-slate-300"
+                                            }`}
+                                        />
 
-                                  {!isAttributeLocked && (
+                                        {duplicateTagError[index] && (
+                                          <p className="text-red-500 text-xs mt-1 font-medium animate-pulse">
+                                            Este tag ya existe (no se permiten duplicados, incluso con diferente capitalización)
+                                          </p>
+                                        )}
+
+                                        <div className="flex flex-wrap gap-2">
+                                          {attr.variantes.map((variante, vIndex) => {
+                                            const existingVariants = selectedItem?.variants || []
+                                            const otherAttrIndex = index === 0 ? 1 : 0
+                                            const otherAttr = containerAtributosPrincipales[otherAttrIndex]
+                                            let isComplete = true
+                                            if (existingVariants.length > 0 && otherAttr && otherAttr.variantes.length > 0) {
+                                              for (const otherValue of otherAttr.variantes) {
+                                                const hasCombination = existingVariants.some((v: any) => {
+                                                  if (!v.atributosPrincipales) return false
+                                                  const attr1Val = v.atributosPrincipales[0]?.value
+                                                  const attr2Val = v.atributosPrincipales[1]?.value
+                                                  if (index === 0) {
+                                                    return attr1Val === variante && attr2Val === otherValue
+                                                  } else {
+                                                    return attr1Val === otherValue && attr2Val === variante
+                                                  }
+                                                })
+                                                if (!hasCombination) { isComplete = false; break }
+                                              }
+                                            } else if (existingVariants.length > 0 && containerAtributosPrincipales.length === 1) {
+                                              isComplete = existingVariants.some((v: any) => {
+                                                if (!v.atributosPrincipales) return false
+                                                return v.atributosPrincipales[0]?.value === variante
+                                              })
+                                            } else if (existingVariants.length === 0) {
+                                              isComplete = false
+                                            }
+                                            return (
+                                              <span
+                                                key={vIndex}
+                                                className={`px-3 py-1.5 bg-white rounded-md text-sm flex items-center gap-2 ${isComplete
+                                                    ? "border border-gray-300 text-gray-900"
+                                                    : "border-2 border-dashed border-gray-300 text-gray-500"
+                                                  }`}
+                                              >
+                                                {variante}
+                                                <button
+                                                  onClick={() => {
+                                                    const updated = [...containerAtributosPrincipales]
+                                                    updated[index].variantes = updated[index].variantes.filter((_, i) => i !== vIndex)
+                                                    const updatedVariants = (selectedItem?.variants || []).filter((v: any) => {
+                                                      if (!v.atributosPrincipales) return true
+                                                      if (index === 0) return v.atributosPrincipales[0]?.value !== variante
+                                                      else return v.atributosPrincipales[1]?.value !== variante
+                                                    })
+                                                    setContainerAtributosPrincipales(updated)
+                                                    setVariantItems(convertSavedVariantsToDisplay(updatedVariants))
+                                                    if (onFieldChange && selectedItem.sku) {
+                                                      onFieldChange(selectedItem.id, "containerAtributosPrincipales", updated)
+                                                      onFieldChange(selectedItem.id, "variants", updatedVariants)
+                                                    }
+                                                  }}
+                                                  className="text-gray-400 hover:text-gray-600 cursor-pointer"
+                                                >
+                                                  <X className="w-3 h-3" />
+                                                </button>
+                                              </span>
+                                            )
+                                          })}
+                                        </div>
+                                      </div>
+                                    </div>
+
                                     <button
                                       onClick={() => {
-                                        const updated = atributosInformativos.filter((_, i) => i !== index)
-                                        handleAtributosInformativosChange(updated)
-                                        if (atributosPrincipales.length === 0 && updated.length === 0) {
-                                          setShowIndividualAtributosView(false)
+                                        const updated = containerAtributosPrincipales.filter((_, i) => i !== index)
+                                        handleContainerAtributosPrincipalesChange(updated)
+                                        setVariantItems([])
+                                        if (onFieldChange && selectedItem?.id) {
+                                          onFieldChange(selectedItem.id, "variants", [])
+                                        }
+                                        if (updated.length === 0 && atributosInformativos.length === 0) {
+                                          setShowAtributosView(false)
                                         }
                                       }}
                                       className="mt-8 text-gray-400 hover:text-red-400 transition-colors cursor-pointer"
                                     >
                                       <X className="w-4 h-4" />
                                     </button>
-                                  )}
-                                  {isAttributeLocked && <div className="mt-8 w-4"></div>}
-                                </div>
-                              )
-                            })}
+                                  </div>
+                                ))}
 
-                            <button
-                              onClick={() => {
-                                handleAtributosInformativosChange([...atributosInformativos, { key: "", value: "" }])
-                              }}
-                              className="w-full px-3 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 transition-colors flex items-center justify-center gap-2 cursor-pointer"
-                            >
-                              <Plus className="w-4 h-4" />
-                              <span className="text-sm">Agregar atributo</span>
-                            </button>
+                                {containerAtributosPrincipales.length < 2 && (
+                                  <button
+                                    onClick={() => {
+                                      handleContainerAtributosPrincipalesChange([
+                                        ...containerAtributosPrincipales,
+                                        { key: "", variantes: [] },
+                                      ])
+                                    }}
+                                    className="w-full px-3 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                                  >
+                                    <Plus className="w-4 h-4" />
+                                    <span className="text-sm">Agregar atributo</span>
+                                  </button>
+                                )}
+
+                                {containerAtributosPrincipales.length > 0 && (() => {
+                                  const hasAtLeastOneVariante = containerAtributosPrincipales.some(
+                                    (attr) => attr.key.trim() !== "" && attr.variantes.length > 0
+                                  )
+                                  const existingVariants = selectedItem?.variants || []
+                                  const potentialNewVariants = generateNewVariantCombinations(existingVariants)
+                                  const isEnabled = hasAtLeastOneVariante && potentialNewVariants.length > 0
+                                  return (
+                                    <button
+                                      onClick={handleGenerarVariantes}
+                                      disabled={!isEnabled}
+                                      className={`w-full px-4 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 ${isEnabled
+                                          ? "bg-slate-900 text-white hover:bg-slate-800 cursor-pointer"
+                                          : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                                        }`}
+                                    >
+                                      Generar Variantes
+                                    </button>
+                                  )
+                                })()}
+                              </div>
+                            )} {/* end !isAtributosCollapsed */}
+                          </div>
+                        )}
+
+                        {/* Variant matrix */}
+                        {variantItems.length > 0 && (
+                          <div className="mt-8 pt-6 border-t border-gray-200">
+                            <div className="flex items-center justify-between mb-4">
+                              <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">
+                                Variantes
+                              </h3>
+                              <button
+                                onClick={() => setIsNuevaVarianteModalOpen(true)}
+                                className="px-3 py-1.5 border border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-colors flex items-center gap-1.5 text-xs cursor-pointer"
+                              >
+                                <Plus className="w-3.5 h-3.5" />
+                                <span>Nueva Variante</span>
+                              </button>
+                            </div>
+
+                            {/* SKU Padre */}
+                            <div className="mb-4">
+                              <div className="flex items-center gap-2 group/skupadre">
+                                <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">
+                                  SKU Padre
+                                </span>
+                                {editingSkuPadre ? (
+                                  <input
+                                    type="text"
+                                    value={skuValue}
+                                    autoFocus
+                                    onChange={(e) => setSkuValue(e.target.value.toUpperCase())}
+                                    onBlur={() => {
+                                      setEditingSkuPadre(false)
+                                      const currentPrefix = selectedItem?.skuPrefix || selectedItem?.sku || ""
+                                      if (skuValue !== currentPrefix) {
+                                        onFieldChange(selectedItem.id, "skuPrefix", skuValue)
+                                      }
+                                    }}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") (e.target as HTMLInputElement).blur()
+                                      if (e.key === "Escape") {
+                                        setSkuValue(selectedItem?.skuPrefix || selectedItem?.sku || "")
+                                        setEditingSkuPadre(false)
+                                      }
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="font-mono text-sm text-slate-800 bg-transparent border-b border-slate-400 focus:border-slate-600 focus:outline-none w-full max-w-[180px]"
+                                    placeholder="Ej: VNO-KNECHT"
+                                  />
+                                ) : (
+                                  <div
+                                    className="flex items-center gap-1.5 cursor-pointer"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setEditingSkuPadre(true)
+                                    }}
+                                  >
+                                    <span className="font-mono text-sm text-slate-800">{skuValue || selectedItem?.skuPrefix || selectedItem?.sku}</span>
+                                    <Pencil className="w-3 h-3 text-slate-400/60 opacity-0 group-hover/skupadre:opacity-100 transition-opacity" />
+                                  </div>
+                                )}
+                              </div>
+                              <p className="text-[9px] text-slate-400 mt-0.5 italic">
+                                Base para generar SKUs de variantes
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {variantItems.length > 0 ? (
+                          <div className="bg-white border border-border/40 rounded-lg overflow-hidden">
+                            <div className="grid grid-cols-[1fr_minmax(80px,1fr)_28px] bg-white border-b border-border/30">
+                              <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider" />
+                              <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                                SKU
+                              </div>
+                              <div />
+                            </div>
+                            <div className="divide-y divide-border/30">
+                              {variantItems.map((variant) => {
+                                const sourceVariant = selectedItem.variants?.find((v: any) => {
+                                  if (!v.atributosPrincipales) return false
+                                  const hasMatchingAttr1 = variant.variant1
+                                    ? v.atributosPrincipales.some((attr: any) => attr.value === variant.variant1)
+                                    : true
+                                  const hasMatchingAttr2 = variant.variant2
+                                    ? v.atributosPrincipales.some((attr: any) => attr.value === variant.variant2)
+                                    : true
+                                  return hasMatchingAttr1 && hasMatchingAttr2
+                                })
+                                const variantId = variant.id || sourceVariant?.id
+
+                                const handleDeleteVariant = () => {
+                                  const attr1Value = variant.variant1
+                                  const attr2Value = variant.variant2
+                                  const updatedVariants = (selectedItem.variants || []).filter((v: any) => {
+                                    if (!v.atributosPrincipales) return true
+                                    const variantAttr1 = v.atributosPrincipales[0]?.value
+                                    const variantAttr2 = v.atributosPrincipales[1]?.value
+                                    if (!attr2Value) return variantAttr1 !== attr1Value
+                                    return !(variantAttr1 === attr1Value && variantAttr2 === attr2Value)
+                                  })
+                                  const updatedContainerAttrs = containerAtributosPrincipales.map((attr, attrIndex) => {
+                                    const otherAttrIndex = attrIndex === 0 ? 1 : 0
+                                    const otherAttr = containerAtributosPrincipales[otherAttrIndex]
+                                    if (!otherAttr || otherAttr.variantes.length === 0) {
+                                      return {
+                                        ...attr, variantes: attr.variantes.filter(tag =>
+                                          updatedVariants.some((v: any) => v.atributosPrincipales?.[attrIndex]?.value === tag)
+                                        )
+                                      }
+                                    }
+                                    return {
+                                      ...attr, variantes: attr.variantes.filter(tag =>
+                                        updatedVariants.some((v: any) => {
+                                          if (!v.atributosPrincipales) return false
+                                          return attrIndex === 0
+                                            ? v.atributosPrincipales[0]?.value === tag
+                                            : v.atributosPrincipales[1]?.value === tag
+                                        })
+                                      )
+                                    }
+                                  })
+                                  setVariantItems(convertSavedVariantsToDisplay(updatedVariants))
+                                  const tagsChanged = JSON.stringify(containerAtributosPrincipales) !== JSON.stringify(updatedContainerAttrs)
+                                  if (tagsChanged) {
+                                    setContainerAtributosPrincipales(updatedContainerAttrs)
+                                    if (onFieldChange && selectedItem.sku) {
+                                      onFieldChange(selectedItem.id, "containerAtributosPrincipales", updatedContainerAttrs)
+                                    }
+                                  }
+                                  if (onFieldChange && selectedItem.sku) {
+                                    onFieldChange(selectedItem.id, "variants", updatedVariants)
+                                  }
+                                }
+
+                                return (
+                                  <div
+                                    key={variant.id || variant.skuSuffix || variant.sku}
+                                    onClick={() => { if (variantId) router.push(`/catalogo/items/${variantId}`) }}
+                                    className="group grid grid-cols-[1fr_minmax(80px,1fr)_28px] items-center hover:bg-accent/50 transition-colors cursor-pointer"
+                                  >
+                                    <div className="px-3 py-2 flex items-center gap-1.5">
+                                      {variant.variant1 && (
+                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[70px]">
+                                          {variant.variant1}
+                                        </span>
+                                      )}
+                                      {variant.variant1 && variant.variant2 && (
+                                        <span className="text-[9px] text-muted-foreground/50 font-medium">×</span>
+                                      )}
+                                      {variant.variant2 && (
+                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[70px]">
+                                          {variant.variant2}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                                      <div className="flex items-center w-full">
+                                        <span className="text-[11px] font-mono text-muted-foreground/60 select-none whitespace-nowrap">
+                                          {skuValue}-
+                                        </span>
+                                        <input
+                                          type="text"
+                                          value={variant.skuSuffix}
+                                          onChange={(e) => {
+                                            const newSuffix = e.target.value
+                                            setVariantItems((prev) =>
+                                              prev.map((v) => v.id === variant.id ? { ...v, skuSuffix: newSuffix } : v)
+                                            )
+                                            const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
+                                              ov.id === variant.id ? { ...ov, skuSuffix: newSuffix } : ov
+                                            )
+                                            onFieldChange(selectedItem.id, "variants", updatedVariants)
+                                          }}
+                                          className="flex-1 min-w-0 bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-primary/50 px-0 py-0.5 text-[11px] font-mono text-foreground focus:outline-none transition-colors"
+                                          placeholder="sufijo..."
+                                        />
+                                      </div>
+                                    </div>
+                                    <div className="px-1 py-2 flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                                      <button
+                                        onClick={handleDeleteVariant}
+                                        className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all cursor-pointer"
+                                        title="Eliminar variante"
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-center text-xs text-muted-foreground py-8 border border-dashed border-border/60 rounded-lg">
+                            No hay variantes configuradas
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  // Individual item tab content
+                  <>
+                    {selectedDetailTab === "info" && (
+                      <div className="h-full flex flex-col mt-5">
+                        <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-4">
+                          Información del Producto
+                        </h3>
+
+                        <div className="space-y-4">
+                          {/* Categoría and Marca */}
+                          <div className="grid grid-cols-2 gap-5">
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Categoría</label>
+                              <input
+                                type="text"
+                                value={categoria}
+                                onChange={(e) => handleFieldChange("categoria", e.target.value, setCategoria)}
+                                disabled={shouldStrictlyInherit(fatherItem?.categoria)}
+                                className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${shouldStrictlyInherit(fatherItem?.categoria)
+                                    ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                    : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
+                                  }`}
+                                placeholder="Ej: Vinos"
+                              />
+                            </div>
+
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Marca</label>
+                              <input
+                                type="text"
+                                value={marca}
+                                onChange={(e) => handleFieldChange("marca", e.target.value, setMarca)}
+                                disabled={shouldStrictlyInherit(fatherItem?.marca)}
+                                className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${shouldStrictlyInherit(fatherItem?.marca)
+                                    ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                    : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
+                                  }`}
+                                placeholder="Ej: YKK"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Horizontal divider line */}
+                          <div className="my-6 border-t border-slate-200"></div>
+
+                          <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-4">
+                            Presentación
+                          </h3>
+
+                          <div className="grid grid-cols-2 gap-5">
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Formato de venta</label>
+                              <select
+                                value={formatoVenta}
+                                onChange={(e) => handleFieldChange("formatoVenta", e.target.value, setFormatoVenta)}
+                                disabled={shouldStrictlyInherit(fatherItem?.formatoVenta)}
+                                className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 appearance-none transition-all text-sm ${shouldStrictlyInherit(fatherItem?.formatoVenta)
+                                    ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                    : "bg-white border-slate-200 text-slate-800 cursor-pointer hover:border-slate-300"
+                                  }`}
+                              >
+                                <option value="unidad">Unidad</option>
+                                <option value="pack">Pack</option>
+                              </select>
+                            </div>
+
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Unidades por pack</label>
+                              <input
+                                type="text"
+                                value={unidadesPorPack === "N.E." ? "" : unidadesPorPack}
+                                onChange={(e) => {
+                                  const value = e.target.value
+                                  if (value === "") {
+                                    handleFieldChange("unidadesPorPack", "N.E.", setUnidadesPorPack)
+                                  } else if (/^\d+$/.test(value)) {
+                                    const numValue = Number.parseInt(value)
+                                    handleFieldChange("unidadesPorPack", numValue < 1 ? "1" : value, setUnidadesPorPack)
+                                  }
+                                  // Ignore non-numeric input
+                                }}
+                                disabled={formatoVenta === "unidad" || isUnidadesPorPackLocked}
+                                className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${formatoVenta === "unidad" || isUnidadesPorPackLocked
+                                    ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                    : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
+                                  }`}
+                                placeholder="N.E."
+                              />
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col gap-2 mt-3">
+                            <div className="flex items-center gap-3 mt-3.5">
+                              <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Volumen de la unidad</label>
+                              <button
+                                onClick={() => handleFieldChange("volumenActive", !volumenActive, setVolumenActive)}
+                                disabled={isChildItem}
+                                className={`w-9 h-5 rounded-full transition-all relative ${volumenActive ? "bg-slate-800" : "bg-slate-200"
+                                  } ${isChildItem ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                              >
+                                <div
+                                  className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${volumenActive ? "translate-x-4" : "translate-x-0"
+                                    }`}
+                                />
+                              </button>
+                            </div>
+
+                            {volumenActive && (
+                              <div className="grid grid-cols-2 gap-5 mt-2">
+                                <div className="flex flex-col gap-1.5">
+                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Cantidad</label>
+                                  <input
+                                    type="number"
+                                    value={volumenCantidad}
+                                    onChange={(e) =>
+                                      handleFieldChange("volumenCantidad", e.target.value, setVolumenCantidad)
+                                    }
+                                    disabled={isChildItem}
+                                    className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${isChildItem
+                                        ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                        : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
+                                      }`}
+                                    placeholder="0"
+                                  />
+                                </div>
+
+                                <div className="flex flex-col gap-1.5">
+                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Unidad de medida</label>
+                                  <select
+                                    value={volumenUnidad}
+                                    onChange={(e) => handleFieldChange("volumenUnidad", e.target.value, setVolumenUnidad)}
+                                    disabled={isChildItem}
+                                    className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 appearance-none transition-all text-sm ${isChildItem
+                                        ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                        : "bg-white border-slate-200 text-slate-800 cursor-pointer hover:border-slate-300"
+                                      }`}
+                                  >
+                                    <option value="ml">ml</option>
+                                    <option value="l">l</option>
+                                    <option value="g">g</option>
+                                    <option value="kg">kg</option>
+                                    <option value="cm">cm</option>
+                                    <option value="m">m</option>
+                                  </select>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Vencimiento Section */}
+                          <div className="flex flex-col gap-2 mt-4">
+                            <div className="flex items-center gap-3 mb-0 mt-3.5">
+                              <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Vencimiento</label>
+                              <button
+                                onClick={() => setVencimientoActive(!vencimientoActive)}
+                                className={`w-9 h-5 rounded-full transition-all relative cursor-pointer ${vencimientoActive ? "bg-slate-800" : "bg-slate-200"
+                                  }`}
+                              >
+                                <div
+                                  className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${vencimientoActive ? "translate-x-4" : "translate-x-0"
+                                    }`}
+                                />
+                              </button>
+                            </div>
+
+                            {vencimientoActive && (
+                              <div className="mt-2 p-4 border border-slate-200 rounded-xl bg-slate-50/50">
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-2 block">
+                                  Fecha de Vencimiento
+                                </label>
+                                <div className="relative">
+                                  <input
+                                    type="date"
+                                    value={fechaVencimiento}
+                                    onChange={(e) => setFechaVencimiento(e.target.value)}
+                                    className="w-full px-3 py-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-slate-300 text-slate-800 text-sm transition-all hover:border-slate-300"
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Información del Proveedor Section - Below Vencimiento */}
+                          <div className="border-t border-slate-200 pt-4 mt-4">
+                            <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-4">
+                              Información del Proveedor
+                            </h3>
+                            <div className="grid grid-cols-2 gap-5">
+                              <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Proveedor</label>
+                                <input
+                                  type="text"
+                                  value={proveedor}
+                                  onChange={(e) => handleFieldChange("proveedor", e.target.value, setProveedor)}
+                                  disabled={shouldInheritField(fatherItem?.proveedor)}
+                                  className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${shouldInheritField(fatherItem?.proveedor)
+                                      ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                      : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
+                                    }`}
+                                  placeholder="Nombre del proveedor"
+                                />
+                              </div>
+                              <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Código Proveedor</label>
+                                <input
+                                  type="text"
+                                  value={codigoProveedor}
+                                  onChange={(e) => handleFieldChange("codigoProveedor", e.target.value, setCodigoProveedor)}
+                                  className="px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300"
+                                  placeholder="Código del proveedor"
+                                />
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      )}
-                    </div>
-                  )}
+                      </div>
+                    )}
+
+                    {selectedDetailTab === "atributos" && (
+                      <div className="h-full flex flex-col">
+                        {!showIndividualAtributosView ? (
+                          <div className="flex flex-col items-center justify-center h-full gap-4 py-12">
+                            <p className="text-slate-400 text-sm">No hay atributos configurados</p>
+                            <button
+                              onClick={() => setShowIndividualAtributosView(true)}
+                              className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-all text-sm font-medium cursor-pointer"
+                            >
+                              Agregar atributos
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col gap-6">
+                            <div className="flex flex-col gap-3">
+                              <div>
+                                <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
+                                  Atributos Informativos
+                                </h3>
+                                <p className="text-xs text-gray-500 italic mt-1">
+                                  Atributos que describen propiedades adicionales del producto
+                                </p>
+                              </div>
+
+                              {atributosInformativos.map((attr, index) => {
+                                const fatherAttr = isChildItem
+                                  ? fatherItem?.atributosInformativos?.find((a) => a.key === attr.key)
+                                  : undefined
+                                const isAttributeLocked = isChildItem && fatherAttr !== undefined
+                                // Value is locked if parent has a value AND inheritValue is NOT true (Case 1)
+                                // Value is editable if parent marked inheritValue (Case 2)
+                                const isValueLocked = isChildItem && fatherAttr && fatherAttr.value && !fatherAttr.inheritValue
+
+                                return (
+                                  <div key={index} className="flex items-start gap-3">
+                                    <div className="flex-1">
+                                      <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
+                                      <input
+                                        type="text"
+                                        value={attr.key}
+                                        onChange={(e) => {
+                                          if (!isAttributeLocked) {
+                                            const updated = [...atributosInformativos]
+                                            updated[index].key = e.target.value
+                                            handleAtributosInformativosChange(updated)
+                                          }
+                                        }}
+                                        disabled={isAttributeLocked}
+                                        className={`w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${isAttributeLocked ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
+                                          }`}
+                                        placeholder="Ej: Material"
+                                      />
+                                    </div>
+
+                                    <div className="flex-1">
+                                      <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Valor</label>
+                                      <input
+                                        type="text"
+                                        value={attr.value}
+                                        onChange={(e) => {
+                                          if (!isValueLocked) {
+                                            const updated = [...atributosInformativos]
+                                            updated[index].value = e.target.value
+                                            handleAtributosInformativosChange(updated)
+                                          }
+                                        }}
+                                        disabled={isValueLocked}
+                                        className={`w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${isValueLocked ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
+                                          }`}
+                                        placeholder="Ej: Algodón"
+                                      />
+                                    </div>
+
+                                    {!isAttributeLocked && (
+                                      <button
+                                        onClick={() => {
+                                          const updated = atributosInformativos.filter((_, i) => i !== index)
+                                          handleAtributosInformativosChange(updated)
+                                          if (atributosPrincipales.length === 0 && updated.length === 0) {
+                                            setShowIndividualAtributosView(false)
+                                          }
+                                        }}
+                                        className="mt-8 text-gray-400 hover:text-red-400 transition-colors cursor-pointer"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </button>
+                                    )}
+                                    {isAttributeLocked && <div className="mt-8 w-4"></div>}
+                                  </div>
+                                )
+                              })}
+
+                              <button
+                                onClick={() => {
+                                  handleAtributosInformativosChange([...atributosInformativos, { key: "", value: "" }])
+                                }}
+                                className="w-full px-3 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                              >
+                                <Plus className="w-4 h-4" />
+                                <span className="text-sm">Agregar atributo</span>
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
 
-                </>
-              )}
-            </div>
+                  </>
+                )}
+              </div>
             )}
           </div>
 
@@ -2653,7 +2621,7 @@ export function CatalogoItemDetailPanel({
           <div className="absolute inset-0 bg-black/50" onClick={() => setIsPrecioModalOpen(false)} />
           <div className="relative bg-white rounded-xl shadow-xl p-6 w-full max-w-lg mx-4">
             <h3 className="text-lg font-semibold text-slate-900 mb-4">Editar Precio</h3>
-            
+
             <div className="grid grid-cols-4 gap-3 mb-6">
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Costo</label>
@@ -2716,7 +2684,7 @@ export function CatalogoItemDetailPanel({
                 />
               </div>
             </div>
-            
+
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setIsPrecioModalOpen(false)}
@@ -2746,15 +2714,14 @@ export function CatalogoItemDetailPanel({
           <div className="absolute inset-0 bg-black/50" onClick={() => setIsStockModalOpen(false)} />
           <div className="relative bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
             <h3 className="text-lg font-semibold text-slate-900 mb-4">Editar Stock</h3>
-            
+
             <div className="space-y-3 mb-6">
               {/* Total */}
               <div className="border border-slate-200 rounded-lg bg-slate-50 overflow-hidden">
                 <div
                   onClick={() => setActiveStockEdit("total")}
-                  className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${
-                    activeStockEdit === "total" ? "bg-slate-100" : "hover:bg-slate-100"
-                  }`}
+                  className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${activeStockEdit === "total" ? "bg-slate-100" : "hover:bg-slate-100"
+                    }`}
                 >
                   <div className="flex items-center gap-2">
                     <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${activeStockEdit === "total" ? "rotate-0" : "-rotate-90"}`} />
@@ -2799,9 +2766,8 @@ export function CatalogoItemDetailPanel({
               <div className="border border-slate-200 rounded-lg bg-slate-50 overflow-hidden">
                 <div
                   onClick={() => setActiveStockEdit("reservado")}
-                  className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${
-                    activeStockEdit === "reservado" ? "bg-slate-100" : "hover:bg-slate-100"
-                  }`}
+                  className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${activeStockEdit === "reservado" ? "bg-slate-100" : "hover:bg-slate-100"
+                    }`}
                 >
                   <div className="flex items-center gap-2">
                     <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${activeStockEdit === "reservado" ? "rotate-0" : "-rotate-90"}`} />
@@ -2852,7 +2818,7 @@ export function CatalogoItemDetailPanel({
                 </div>
               </div>
             </div>
-            
+
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setIsStockModalOpen(false)}
