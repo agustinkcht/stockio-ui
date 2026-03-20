@@ -352,7 +352,7 @@ export function ItemCard({
 
                 {/* Categoría cell */}
                 <div
-                  className="col-span-8 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+                  className="col-span-8 h-full flex items-center justify-center px-4 cursor-pointer"
                   onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
                 >
                   <span className="text-sm text-foreground">{item.categoria || "-"}</span>
@@ -360,10 +360,9 @@ export function ItemCard({
 
                 {/* Precio Final cell - empty for parent */}
                 <div
-                  className="col-span-8 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+                  className="col-span-8 h-full flex items-center justify-center px-4 cursor-pointer"
                   onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
                 >
-                  <span className="w-4 h-px bg-slate-200 rounded-full block" />
                 </div>
 
                 {/* Stock Disponible cell - empty with chevron at right edge */}
@@ -602,7 +601,7 @@ export function ItemCard({
 
   {/* Categoría cell */}
   <div
-  className="col-span-8 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+  className="col-span-8 h-full flex items-center justify-center px-4 cursor-pointer"
   onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
   >
     <span className="text-sm text-foreground">{item.categoria || "-"}</span>
@@ -610,10 +609,9 @@ export function ItemCard({
 
   {/* Precio Final - blank for parent */}
   <div
-  className="col-span-8 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+  className="col-span-8 h-full flex items-center justify-center px-4 cursor-pointer"
   onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
   >
-    <span className="w-4 h-px bg-slate-200 rounded-full block" />
   </div>
 
   {/* Stock Disponible - blank for parent, chevron at right edge */}
