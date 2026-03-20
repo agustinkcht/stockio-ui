@@ -342,20 +342,20 @@ export function ItemCard({
                   </div>
                 </div>
 
-                {/* Categoría cell */}
-                <div
-                  className="col-span-8 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
-                  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
-                >
-                  <span className="text-sm text-foreground">{item.categoria || "-"}</span>
-                </div>
-
                 {/* Estado cell */}
                 <div
                   className="col-span-4 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
                   onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
                 >
                   <span className="text-sm text-foreground">{item.estado || "-"}</span>
+                </div>
+
+                {/* Categoría cell */}
+                <div
+                  className="col-span-8 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+                  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+                >
+                  <span className="text-sm text-foreground">{item.categoria || "-"}</span>
                 </div>
 
                 {/* Precio Final cell - empty for parent */}
@@ -621,38 +621,13 @@ export function ItemCard({
   className="col-span-8 h-full flex items-center justify-end px-4 cursor-pointer"
   onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
   >
-                <span className="text-sm text-foreground">{item.categoria || "-"}</span>
-              </div>
-
-              {/* Estado cell */}
-              <div
-                className="col-span-7 h-full flex items-center justify-center px-4 border-slate-100 cursor-pointer border-r-0"
-                onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
-              >
-                <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 border-none">
-                  Activo
-                </span>
-              </div>
-
-              {/* Precio Final - blank for parent */}
-              <div
-                className="col-span-7 h-full flex items-center justify-center px-4 cursor-pointer border-r-0 border-none"
-                onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
-              >
-              </div>
-
-              {/* Stock Disponible - blank for parent, chevron at right edge */}
-              <div
-                className="col-span-7 h-full flex items-center justify-end px-4 cursor-pointer"
-                onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
-              >
-                <button
-                  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
-                  className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer p-1"
-                >
-                  {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                </button>
-              </div>
+    <button
+      onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+      className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer p-1"
+    >
+      {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+    </button>
+  </div>
             </>
           ) : (
             // NORMAL MODE: Standalone/child items
@@ -722,25 +697,23 @@ export function ItemCard({
 
               {showPrecioColumn ? (
                 <>
+                  {/* Estado cell */}
+                  <div
+                    className="col-span-4 h-full flex items-center justify-center px-4 cursor-pointer transition-colors border-r border-slate-100"
+                    onClick={(e) => { e.stopPropagation(); onItemClick(item) }}
+                  >
+                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">{item.estado || "Activo"}</span>
+                  </div>
                   {/* Categoría cell */}
                   <div
-                    className="col-span-7 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100"
+                    className="col-span-8 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100"
                     onClick={(e) => { e.stopPropagation(); onItemClick(item) }}
                   >
                     <span className="text-sm text-foreground truncate w-full text-center">{item.categoria || "-"}</span>
                   </div>
-                  {/* Estado cell */}
-                  <div
-                    className="col-span-7 h-full flex items-center justify-center px-4 cursor-pointer transition-colors border-r border-slate-100"
-                    onClick={(e) => { e.stopPropagation(); onItemClick(item) }}
-                  >
-                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 border-none">
-                      Activo
-                    </span>
-                  </div>
                   {/* Precio Final cell */}
                   <div
-                    className="col-span-7 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100"
+                    className="col-span-8 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100"
                     onClick={(e) => { e.stopPropagation(); onItemClick(item) }}
                   >
                     <div className="w-full flex flex-col items-center gap-0.5">
@@ -787,16 +760,16 @@ export function ItemCard({
               )}
 
               {item.hasVariants ? (
-                <div className="col-span-7 h-full flex items-center justify-center px-4">
+                <div className="col-span-8 h-full flex items-center justify-center px-4">
                   <span className="text-sm text-container-item-foreground/80">{variantCount} var.</span>
                 </div>
               ) : item.isAgrupador ? (
-                <div className="col-span-7 h-full flex items-center justify-center px-4">
+                <div className="col-span-8 h-full flex items-center justify-center px-4">
                   <span className="text-sm text-container-item-foreground/80">{itemCount} items</span>
                 </div>
               ) : (
                 <div
-                  className="col-span-7 h-full flex items-center justify-center px-4 cursor-pointer transition-colors"
+                  className="col-span-8 h-full flex items-center justify-center px-4 cursor-pointer transition-colors"
                   onClick={(e) => {
                     e.stopPropagation()
                     onItemClick(item)
