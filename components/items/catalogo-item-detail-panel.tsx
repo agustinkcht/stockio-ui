@@ -405,6 +405,7 @@ export function CatalogoItemDetailPanel({
     reservado: { operation: "agregar", value: "" },
   })
   const [expandedMatrixDescModal, setExpandedMatrixDescModal] = useState<{ open: boolean; variant: any | null; value: string }>({ open: false, variant: null, value: "" })
+  const [expandedMatrixMediaModal, setExpandedMatrixMediaModal] = useState<{ open: boolean; variant: any | null }>({ open: false, variant: null })
 
   // Compute whether item has existing attributes (including inherited from parent)
   const hasExistingAttributes =
@@ -1885,6 +1886,11 @@ export function CatalogoItemDetailPanel({
                 {isViewingContainer && isExpandedMatrixOpen ? (
                   // Expanded Variant Matrix View (single card mode)
                   <div className="h-full flex flex-col py-2">
+                    {/* Variant count */}
+                    <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-5">
+                      {variantItems.length} {variantItems.length === 1 ? "variante" : "variantes"}
+                    </h3>
+
                     {/* Atributos de Variantes section - 50% width - ABOVE matrix */}
                     <div className="mb-6 pb-6 border-b border-gray-200 w-1/2">
                       {!showAtributosView ? (
@@ -2106,6 +2112,72 @@ export function CatalogoItemDetailPanel({
                       )}
                     </div>
 
+                    {/* Variantes header with Nueva Variante button */}
+                    {variantItems.length > 0 && (
+                      <div className="mt-8 pt-6 border-t border-gray-200">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">
+                            Variantes
+                          </h3>
+                          <button
+                            onClick={() => setIsNuevaVarianteModalOpen(true)}
+                            className="px-3 py-1.5 border border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-colors flex items-center gap-1.5 text-xs cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Nueva Variante</span>
+                          </button>
+                        </div>
+
+                        {/* SKU Padre */}
+                        <div className="mb-4">
+                          <div className="flex items-center gap-2 group/skupadre">
+                            <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">
+                              SKU Padre
+                            </span>
+                            {editingSkuPadre ? (
+                              <input
+                                type="text"
+                                value={skuValue}
+                                autoFocus
+                                onChange={(e) => setSkuValue(e.target.value.toUpperCase())}
+                                onBlur={() => {
+                                  setEditingSkuPadre(false)
+                                  const currentPrefix = selectedItem?.skuPrefix || selectedItem?.sku || ""
+                                  if (skuValue !== currentPrefix) {
+                                    onFieldChange(selectedItem.id, "skuPrefix", skuValue)
+                                  }
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") (e.target as HTMLInputElement).blur()
+                                  if (e.key === "Escape") {
+                                    setSkuValue(selectedItem?.skuPrefix || selectedItem?.sku || "")
+                                    setEditingSkuPadre(false)
+                                  }
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                                className="font-mono text-sm text-slate-800 bg-transparent border-b border-slate-400 focus:border-slate-600 focus:outline-none w-full max-w-[180px]"
+                                placeholder="Ej: VNO-KNECHT"
+                              />
+                            ) : (
+                              <div
+                                className="flex items-center gap-1.5 cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setEditingSkuPadre(true)
+                                }}
+                              >
+                                <span className="font-mono text-sm text-slate-800">{skuValue || selectedItem?.skuPrefix || selectedItem?.sku}</span>
+                                <Pencil className="w-3 h-3 text-slate-400/60 opacity-0 group-hover/skupadre:opacity-100 transition-opacity" />
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-[9px] text-slate-400 mt-0.5 italic">
+                            Base para generar SKUs de variantes
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Variant Matrix Table */}
                     <div className="bg-white border border-border/40 rounded-lg overflow-hidden">
                       {/* Table Header */}
@@ -2138,21 +2210,34 @@ export function CatalogoItemDetailPanel({
                               key={variant.id || variant.skuSuffix || variant.sku}
                               className="grid grid-cols-[40px_1fr_minmax(120px,1fr)_minmax(100px,0.8fr)_100px_100px_1fr] items-center hover:bg-accent/30 transition-colors"
                             >
-                              {/* Thumbnail */}
+                              {/* Thumbnail - with edit pencil on hover */}
                               <div className="px-2 py-2 flex items-center justify-center">
-                                <div className="w-8 h-8 rounded-md bg-gradient-to-br from-muted to-muted/50 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                                <div
+                                  className="relative w-8 h-8 rounded-md bg-gradient-to-br from-muted to-muted/50 overflow-hidden flex-shrink-0 flex items-center justify-center group/thumb cursor-pointer"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setExpandedMatrixMediaModal({ open: true, variant: { ...variant, sourceVariant } })
+                                  }}
+                                >
                                   <Image
-                                    src={getCategoryImage(selectedItem?.categoria) || "/placeholder.svg"}
+                                    src={sourceVariant?.imagenUrl || getCategoryImage(selectedItem?.categoria) || "/placeholder.svg"}
                                     alt={selectedItem?.categoria || ""}
                                     width={32}
                                     height={32}
-                                    className="w-5 h-5 object-contain opacity-60"
+                                    className={`w-full h-full object-cover ${!sourceVariant?.imagenUrl ? "w-5 h-5 object-contain opacity-60" : ""}`}
                                   />
+                                  {/* Edit pencil overlay */}
+                                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center">
+                                    <Pencil className="w-3.5 h-3.5 text-white" />
+                                  </div>
                                 </div>
                               </div>
 
-                              {/* Variant tags */}
-                              <div className="px-3 py-2 flex items-center gap-1.5">
+                              {/* Variant tags - clickable to navigate to child */}
+                              <div
+                                className="px-3 py-2 flex items-center gap-1.5 cursor-pointer hover:bg-slate-100 rounded transition-colors"
+                                onClick={() => { if (variant.id) router.push(`/catalogo/items/${variant.id}`) }}
+                              >
                                 {variant.variant1 && (
                                   <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[80px]">
                                     {variant.variant1}
@@ -3558,6 +3643,92 @@ export function CatalogoItemDetailPanel({
                 className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 Aceptar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Expanded Matrix - Media Modal */}
+      {expandedMatrixMediaModal.open && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setExpandedMatrixMediaModal({ open: false, variant: null })} />
+          <div className="relative bg-slate-900 rounded-xl shadow-xl p-6 w-full max-w-lg mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white">Media</h3>
+              <button
+                onClick={() => setExpandedMatrixMediaModal({ open: false, variant: null })}
+                className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Variant info */}
+            <div className="flex items-center gap-2 mb-4 pb-4 border-b border-slate-700">
+              {expandedMatrixMediaModal.variant?.variant1 && (
+                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-500/20 text-blue-300 border border-blue-400/30">
+                  {expandedMatrixMediaModal.variant.variant1}
+                </span>
+              )}
+              {expandedMatrixMediaModal.variant?.variant1 && expandedMatrixMediaModal.variant?.variant2 && (
+                <span className="text-xs text-slate-500">×</span>
+              )}
+              {expandedMatrixMediaModal.variant?.variant2 && (
+                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-500/20 text-blue-300 border border-blue-400/30">
+                  {expandedMatrixMediaModal.variant.variant2}
+                </span>
+              )}
+            </div>
+
+            {/* Media section */}
+            <div className="flex gap-3 mb-4">
+              {/* Upload Button */}
+              <button
+                onClick={(e) => e.stopPropagation()}
+                className="flex-shrink-0 w-20 h-20 border-2 border-dashed border-blue-400/60 rounded-xl flex flex-col items-center justify-center gap-1.5 hover:border-blue-400 hover:bg-blue-500/10 transition-all cursor-pointer"
+              >
+                <Upload className="w-5 h-5 text-blue-400" />
+                <span className="text-[10px] text-blue-400 font-medium">Seleccionar</span>
+              </button>
+
+              {/* Current photo (if any) */}
+              {expandedMatrixMediaModal.variant?.sourceVariant?.imagenUrl && (
+                <div className="relative flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 border-slate-600 group">
+                  <img
+                    src={expandedMatrixMediaModal.variant.sourceVariant.imagenUrl}
+                    alt="Variant photo"
+                    className="w-full h-full object-cover"
+                  />
+                  {/* Delete button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      // Remove the image
+                      const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
+                        ov.id === expandedMatrixMediaModal.variant.id ? { ...ov, imagenUrl: null } : ov
+                      )
+                      onFieldChange(selectedItem.id, "variants", updatedVariants)
+                      setExpandedMatrixMediaModal({ open: false, variant: null })
+                    }}
+                    className="absolute top-1 right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-100 cursor-pointer"
+                  >
+                    <X className="w-3 h-3 text-slate-600" />
+                  </button>
+                  {/* Portada tag */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/70 py-0.5 px-1">
+                    <span className="text-[8px] font-bold text-white uppercase tracking-wider">Portada</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                onClick={() => setExpandedMatrixMediaModal({ open: false, variant: null })}
+                className="px-4 py-2 text-sm font-medium bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors cursor-pointer"
+              >
+                Cerrar
               </button>
             </div>
           </div>
