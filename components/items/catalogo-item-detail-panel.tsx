@@ -404,6 +404,7 @@ export function CatalogoItemDetailPanel({
     total: { operation: "agregar", value: "" },
     reservado: { operation: "agregar", value: "" },
   })
+  const [expandedMatrixDescModal, setExpandedMatrixDescModal] = useState<{ open: boolean; variant: any | null; value: string }>({ open: false, variant: null, value: "" })
 
   // Compute whether item has existing attributes (including inherited from parent)
   const hasExistingAttributes =
@@ -1830,14 +1831,22 @@ export function CatalogoItemDetailPanel({
                     <h2 className="font-semibold text-white text-base truncate">{selectedItem.name}</h2>
                     <p className="text-[10px] uppercase tracking-wider mt-0.5 text-slate-300">Agrupador de variantes</p>
                   </div>
-                  {/* Minimize button when matrix is expanded */}
-                  {isExpandedMatrixOpen && (
+                  {/* Expand/Minimize button */}
+                  {isExpandedMatrixOpen ? (
                     <button
                       onClick={() => setIsExpandedMatrixOpen(false)}
                       className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
                       title="Minimizar"
                     >
                       <Minimize2 className="w-5 h-5" />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setIsExpandedMatrixOpen(true)}
+                      className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
+                      title="Expandir matriz"
+                    >
+                      <Maximize2 className="w-5 h-5" />
                     </button>
                   )}
                 </div>
@@ -1876,182 +1885,8 @@ export function CatalogoItemDetailPanel({
                 {isViewingContainer && isExpandedMatrixOpen ? (
                   // Expanded Variant Matrix View (single card mode)
                   <div className="h-full flex flex-col py-2">
-                    <div className="bg-white border border-border/40 rounded-lg overflow-hidden">
-                      {/* Table Header */}
-                      <div className="grid grid-cols-[40px_1fr_minmax(120px,1fr)_minmax(120px,1fr)_100px_80px_1fr] bg-slate-50 border-b border-border/30">
-                        <div className="px-2 py-3" />
-                        <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Variante</div>
-                        <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">SKU</div>
-                        <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Código Universal</div>
-                        <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider text-right">Precio Final</div>
-                        <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider text-center">Stock Disponible</div>
-                        <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Descripción</div>
-                      </div>
-
-                      {/* Table Body */}
-                      <div className="divide-y divide-border/30">
-                        {variantItems.map((variant) => {
-                          const sourceVariant = selectedItem?.variants?.find((v: any) => {
-                            if (!v.atributosPrincipales) return false
-                            const hasMatchingAttr1 = variant.variant1
-                              ? v.atributosPrincipales.some((attr: any) => attr.value === variant.variant1)
-                              : true
-                            const hasMatchingAttr2 = variant.variant2
-                              ? v.atributosPrincipales.some((attr: any) => attr.value === variant.variant2)
-                              : true
-                            return hasMatchingAttr1 && hasMatchingAttr2
-                          })
-
-                          return (
-                            <div
-                              key={variant.id || variant.skuSuffix || variant.sku}
-                              className="grid grid-cols-[40px_1fr_minmax(120px,1fr)_minmax(120px,1fr)_100px_80px_1fr] items-center hover:bg-accent/30 transition-colors"
-                            >
-                              {/* Thumbnail */}
-                              <div className="px-2 py-2 flex items-center justify-center">
-                                <div className="w-8 h-8 rounded-md bg-gradient-to-br from-muted to-muted/50 overflow-hidden flex-shrink-0 flex items-center justify-center">
-                                  <Image
-                                    src={getCategoryImage(selectedItem?.categoria) || "/placeholder.svg"}
-                                    alt={selectedItem?.categoria || ""}
-                                    width={32}
-                                    height={32}
-                                    className="w-5 h-5 object-contain opacity-60"
-                                  />
-                                </div>
-                              </div>
-
-                              {/* Variant tags */}
-                              <div className="px-3 py-2 flex items-center gap-1.5">
-                                {variant.variant1 && (
-                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[80px]">
-                                    {variant.variant1}
-                                  </span>
-                                )}
-                                {variant.variant1 && variant.variant2 && (
-                                  <span className="text-[9px] text-muted-foreground/50 font-medium">×</span>
-                                )}
-                                {variant.variant2 && (
-                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[80px]">
-                                    {variant.variant2}
-                                  </span>
-                                )}
-                              </div>
-
-                              {/* SKU - editable */}
-                              <div className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
-                                <div className="flex items-center w-full">
-                                  <span className="text-[11px] font-mono text-muted-foreground/60 select-none whitespace-nowrap">
-                                    {skuValue}-
-                                  </span>
-                                  <input
-                                    type="text"
-                                    value={variant.skuSuffix}
-                                    onChange={(e) => {
-                                      const newSuffix = e.target.value
-                                      setVariantItems((prev) =>
-                                        prev.map((v) => v.id === variant.id ? { ...v, skuSuffix: newSuffix } : v)
-                                      )
-                                      const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
-                                        ov.id === variant.id ? { ...ov, skuSuffix: newSuffix } : ov
-                                      )
-                                      onFieldChange(selectedItem.id, "variants", updatedVariants)
-                                    }}
-                                    className="flex-1 min-w-0 bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-primary/50 px-0 py-0.5 text-[11px] font-mono text-foreground focus:outline-none transition-colors"
-                                    placeholder="sufijo..."
-                                  />
-                                </div>
-                              </div>
-
-                              {/* Código Universal - editable */}
-                              <div className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
-                                <input
-                                  type="text"
-                                  value={sourceVariant?.codigoUniversal || ""}
-                                  onChange={(e) => {
-                                    const newCodigo = e.target.value
-                                    const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
-                                      ov.id === variant.id ? { ...ov, codigoUniversal: newCodigo } : ov
-                                    )
-                                    onFieldChange(selectedItem.id, "variants", updatedVariants)
-                                  }}
-                                  className="w-full bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-primary/50 px-0 py-0.5 text-[11px] font-mono text-foreground focus:outline-none transition-colors"
-                                  placeholder="Ej: 7790001234567"
-                                />
-                              </div>
-
-                              {/* Precio Final - clickable */}
-                              <div
-                                className="px-3 py-2 text-right cursor-pointer hover:bg-slate-100 rounded transition-colors group/precio"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  const precio = sourceVariant?.precio || { costo: 0, margen: 0, iva: 0, precioFinal: 0 }
-                                  setExpandedMatrixPrecioValues({
-                                    costo: precio.costo || 0,
-                                    margen: precio.margen || 0,
-                                    iva: precio.iva || 0,
-                                    precioFinal: precio.precioFinal || 0,
-                                  })
-                                  setExpandedMatrixPrecioModal({ open: true, variant: { ...variant, sourceVariant } })
-                                }}
-                              >
-                                <span className="text-sm font-medium text-foreground group-hover/precio:text-blue-600 transition-colors">
-                                  ${(sourceVariant?.precio?.precioFinal || 0).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
-                                </span>
-                              </div>
-
-                              {/* Stock Disponible - clickable */}
-                              <div
-                                className="px-3 py-2 text-center cursor-pointer hover:bg-slate-100 rounded transition-colors group/stock"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  const stock = sourceVariant?.stock || { total: 0, reservado: 0 }
-                                  setExpandedMatrixStockValues({
-                                    total: stock.total || 0,
-                                    reservado: stock.reservado || 0,
-                                  })
-                                  setExpandedMatrixActiveStockEdit("total")
-                                  setExpandedMatrixStockModification({
-                                    total: { operation: "agregar", value: "" },
-                                    reservado: { operation: "agregar", value: "" },
-                                  })
-                                  setExpandedMatrixStockModal({ open: true, variant: { ...variant, sourceVariant } })
-                                }}
-                              >
-                                <span className={`text-sm font-medium tabular-nums group-hover/stock:text-blue-600 transition-colors ${
-                                  (sourceVariant?.stock?.disponible ?? 0) > 0
-                                    ? "text-foreground"
-                                    : (sourceVariant?.stock?.disponible ?? 0) < 0
-                                      ? "text-red-500"
-                                      : "text-muted-foreground"
-                                }`}>
-                                  {sourceVariant?.stock?.disponible ?? 0}
-                                </span>
-                              </div>
-
-                              {/* Descripción - editable */}
-                              <div className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
-                                <input
-                                  type="text"
-                                  value={sourceVariant?.descripcion || ""}
-                                  onChange={(e) => {
-                                    const newDesc = e.target.value
-                                    const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
-                                      ov.id === variant.id ? { ...ov, descripcion: newDesc } : ov
-                                    )
-                                    onFieldChange(selectedItem.id, "variants", updatedVariants)
-                                  }}
-                                  className="w-full bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-primary/50 px-0 py-0.5 text-[11px] text-foreground focus:outline-none transition-colors"
-                                  placeholder="Descripción..."
-                                />
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Atributos de Variantes section - 50% width */}
-                    <div className="mt-8 pt-6 border-t border-gray-200 w-1/2">
+                    {/* Atributos de Variantes section - 50% width - ABOVE matrix */}
+                    <div className="mb-6 pb-6 border-b border-gray-200 w-1/2">
                       {!showAtributosView ? (
                         <div className="flex flex-col items-center justify-center gap-4 py-8">
                           <p className="text-gray-500 text-sm">No hay atributos configurados</p>
@@ -2269,6 +2104,181 @@ export function CatalogoItemDetailPanel({
                           )}
                         </div>
                       )}
+                    </div>
+
+                    {/* Variant Matrix Table */}
+                    <div className="bg-white border border-border/40 rounded-lg overflow-hidden">
+                      {/* Table Header */}
+                      <div className="grid grid-cols-[40px_1fr_minmax(120px,1fr)_minmax(100px,0.8fr)_100px_100px_1fr] bg-slate-50 border-b border-border/30">
+                        <div className="px-2 py-3" />
+                        <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Variante</div>
+                        <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">SKU</div>
+                        <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Cód. Universal</div>
+                        <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider text-right">Precio Final</div>
+                        <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider text-center">Stock Disp.</div>
+                        <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Descripción</div>
+                      </div>
+
+                      {/* Table Body */}
+                      <div className="divide-y divide-border/30">
+                        {variantItems.map((variant) => {
+                          const sourceVariant = selectedItem?.variants?.find((v: any) => {
+                            if (!v.atributosPrincipales) return false
+                            const hasMatchingAttr1 = variant.variant1
+                              ? v.atributosPrincipales.some((attr: any) => attr.value === variant.variant1)
+                              : true
+                            const hasMatchingAttr2 = variant.variant2
+                              ? v.atributosPrincipales.some((attr: any) => attr.value === variant.variant2)
+                              : true
+                            return hasMatchingAttr1 && hasMatchingAttr2
+                          })
+
+                          return (
+                            <div
+                              key={variant.id || variant.skuSuffix || variant.sku}
+                              className="grid grid-cols-[40px_1fr_minmax(120px,1fr)_minmax(100px,0.8fr)_100px_100px_1fr] items-center hover:bg-accent/30 transition-colors"
+                            >
+                              {/* Thumbnail */}
+                              <div className="px-2 py-2 flex items-center justify-center">
+                                <div className="w-8 h-8 rounded-md bg-gradient-to-br from-muted to-muted/50 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                                  <Image
+                                    src={getCategoryImage(selectedItem?.categoria) || "/placeholder.svg"}
+                                    alt={selectedItem?.categoria || ""}
+                                    width={32}
+                                    height={32}
+                                    className="w-5 h-5 object-contain opacity-60"
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Variant tags */}
+                              <div className="px-3 py-2 flex items-center gap-1.5">
+                                {variant.variant1 && (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[80px]">
+                                    {variant.variant1}
+                                  </span>
+                                )}
+                                {variant.variant1 && variant.variant2 && (
+                                  <span className="text-[9px] text-muted-foreground/50 font-medium">×</span>
+                                )}
+                                {variant.variant2 && (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[80px]">
+                                    {variant.variant2}
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* SKU - editable */}
+                              <div className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                                <div className="flex items-center w-full">
+                                  <span className="text-[11px] font-mono text-muted-foreground/60 select-none whitespace-nowrap">
+                                    {skuValue}-
+                                  </span>
+                                  <input
+                                    type="text"
+                                    value={variant.skuSuffix}
+                                    onChange={(e) => {
+                                      const newSuffix = e.target.value
+                                      setVariantItems((prev) =>
+                                        prev.map((v) => v.id === variant.id ? { ...v, skuSuffix: newSuffix } : v)
+                                      )
+                                      const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
+                                        ov.id === variant.id ? { ...ov, skuSuffix: newSuffix } : ov
+                                      )
+                                      onFieldChange(selectedItem.id, "variants", updatedVariants)
+                                    }}
+                                    className="flex-1 min-w-0 bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-primary/50 px-0 py-0.5 text-[11px] font-mono text-foreground focus:outline-none transition-colors"
+                                    placeholder="sufijo..."
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Código Universal - editable */}
+                              <div className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                                <input
+                                  type="text"
+                                  value={sourceVariant?.codigoUniversal || ""}
+                                  onChange={(e) => {
+                                    const newCodigo = e.target.value
+                                    const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
+                                      ov.id === variant.id ? { ...ov, codigoUniversal: newCodigo } : ov
+                                    )
+                                    onFieldChange(selectedItem.id, "variants", updatedVariants)
+                                  }}
+                                  className="w-full bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-primary/50 px-0 py-0.5 text-[11px] font-mono text-foreground focus:outline-none transition-colors"
+                                  placeholder="Ej: 7790001234567"
+                                />
+                              </div>
+
+                              {/* Precio Final - clickable */}
+                              <div
+                                className="px-3 py-2 text-right cursor-pointer hover:bg-slate-100 rounded transition-colors group/precio"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  const precio = sourceVariant?.precio || { costo: 0, margen: 0, iva: 0, precioFinal: 0 }
+                                  setExpandedMatrixPrecioValues({
+                                    costo: precio.costo || 0,
+                                    margen: precio.margen || 0,
+                                    iva: precio.iva || 0,
+                                    precioFinal: precio.precioFinal || 0,
+                                  })
+                                  setExpandedMatrixPrecioModal({ open: true, variant: { ...variant, sourceVariant } })
+                                }}
+                              >
+                                <span className="text-sm font-medium text-foreground group-hover/precio:text-blue-600 transition-colors">
+                                  ${(sourceVariant?.precio?.precioFinal || 0).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                                </span>
+                              </div>
+
+                              {/* Stock Disponible - clickable */}
+                              <div
+                                className="px-3 py-2 text-center cursor-pointer hover:bg-slate-100 rounded transition-colors group/stock"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  const stock = sourceVariant?.stock || { total: 0, reservado: 0 }
+                                  setExpandedMatrixStockValues({
+                                    total: stock.total || 0,
+                                    reservado: stock.reservado || 0,
+                                  })
+                                  setExpandedMatrixActiveStockEdit("total")
+                                  setExpandedMatrixStockModification({
+                                    total: { operation: "agregar", value: "" },
+                                    reservado: { operation: "agregar", value: "" },
+                                  })
+                                  setExpandedMatrixStockModal({ open: true, variant: { ...variant, sourceVariant } })
+                                }}
+                              >
+                                <span className={`text-sm font-medium tabular-nums group-hover/stock:text-blue-600 transition-colors ${
+                                  (sourceVariant?.stock?.disponible ?? 0) > 0
+                                    ? "text-foreground"
+                                    : (sourceVariant?.stock?.disponible ?? 0) < 0
+                                      ? "text-red-500"
+                                      : "text-muted-foreground"
+                                }`}>
+                                  {sourceVariant?.stock?.disponible ?? 0}
+                                </span>
+                              </div>
+
+                              {/* Descripción - clickable to open modal */}
+                              <div
+                                className="px-3 py-2 cursor-pointer hover:bg-slate-100 rounded transition-colors group/desc"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setExpandedMatrixDescModal({
+                                    open: true,
+                                    variant: { ...variant, sourceVariant },
+                                    value: sourceVariant?.descripcion || ""
+                                  })
+                                }}
+                              >
+                                <span className="text-[11px] text-foreground group-hover/desc:text-blue-600 transition-colors line-clamp-1">
+                                  {sourceVariant?.descripcion || <span className="text-muted-foreground italic">Descripción...</span>}
+                                </span>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
                     </div>
                   </div>
                 ) : isViewingContainer ? (
@@ -2507,22 +2517,13 @@ export function CatalogoItemDetailPanel({
                               <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">
                                 Variantes
                               </h3>
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() => setIsNuevaVarianteModalOpen(true)}
-                                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-colors flex items-center gap-1.5 text-xs cursor-pointer"
-                                >
-                                  <Plus className="w-3.5 h-3.5" />
-                                  <span>Nueva Variante</span>
-                                </button>
-                                <button
-                                  onClick={() => setIsExpandedMatrixOpen(true)}
-                                  className="p-1.5 border border-gray-300 rounded-lg text-gray-500 hover:text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-colors cursor-pointer"
-                                  title="Expandir matriz"
-                                >
-                                  <Maximize2 className="w-4 h-4" />
-                                </button>
-                              </div>
+                              <button
+                                onClick={() => setIsNuevaVarianteModalOpen(true)}
+                                className="px-3 py-1.5 border border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-colors flex items-center gap-1.5 text-xs cursor-pointer"
+                              >
+                                <Plus className="w-3.5 h-3.5" />
+                                <span>Nueva Variante</span>
+                              </button>
                             </div>
 
                             {/* SKU Padre */}
@@ -3512,6 +3513,47 @@ export function CatalogoItemDetailPanel({
                     onFieldChange(selectedItem.id, "variants", updatedVariants)
                   }
                   setExpandedMatrixStockModal({ open: false, variant: null })
+                }}
+                className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                Aceptar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Expanded Matrix - Description Modal */}
+      {expandedMatrixDescModal.open && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setExpandedMatrixDescModal({ open: false, variant: null, value: "" })} />
+          <div className="relative bg-white rounded-xl shadow-xl p-6 w-full max-w-lg mx-4">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">Editar Descripción</h3>
+            <div className="mb-6">
+              <textarea
+                value={expandedMatrixDescModal.value}
+                onChange={(e) => setExpandedMatrixDescModal(prev => ({ ...prev, value: e.target.value }))}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px] resize-y"
+                placeholder="Ingresa la descripción de la variante..."
+                autoFocus
+              />
+            </div>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setExpandedMatrixDescModal({ open: false, variant: null, value: "" })}
+                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  if (expandedMatrixDescModal.variant?.id) {
+                    const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
+                      ov.id === expandedMatrixDescModal.variant.id ? { ...ov, descripcion: expandedMatrixDescModal.value } : ov
+                    )
+                    onFieldChange(selectedItem.id, "variants", updatedVariants)
+                  }
+                  setExpandedMatrixDescModal({ open: false, variant: null, value: "" })
                 }}
                 className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
               >
