@@ -1884,7 +1884,7 @@ export function CatalogoItemDetailPanel({
                         <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">SKU</div>
                         <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Código Universal</div>
                         <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider text-right">Precio Final</div>
-                        <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider text-center">Stock</div>
+                        <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider text-center">Stock Disponible</div>
                         <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Descripción</div>
                       </div>
 
@@ -2048,6 +2048,227 @@ export function CatalogoItemDetailPanel({
                           )
                         })}
                       </div>
+                    </div>
+
+                    {/* Atributos de Variantes section - 50% width */}
+                    <div className="mt-8 pt-6 border-t border-gray-200 w-1/2">
+                      {!showAtributosView ? (
+                        <div className="flex flex-col items-center justify-center gap-4 py-8">
+                          <p className="text-gray-500 text-sm">No hay atributos configurados</p>
+                          <button
+                            onClick={() => setShowAtributosView(true)}
+                            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg transition-colors cursor-pointer"
+                          >
+                            Agregar atributo
+                          </button>
+                        </div>
+                      ) : (
+                        <div>
+                          {/* Collapsible header */}
+                          <button
+                            onClick={() => setIsAtributosCollapsed((prev) => !prev)}
+                            className="w-full flex items-center justify-between mb-3 group/atributos-header cursor-pointer"
+                          >
+                            <div className="text-left">
+                              <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
+                                Atributos de Variantes
+                              </h3>
+                              {!isAtributosCollapsed && (
+                                <p className="text-xs text-gray-500 italic">
+                                  Atributos que definen las variantes del producto (máximo 2)
+                                </p>
+                              )}
+                            </div>
+                            <ChevronDown
+                              className={`w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0 ${isAtributosCollapsed ? "" : "rotate-180"}`}
+                            />
+                          </button>
+
+                          {/* Collapsible content */}
+                          {!isAtributosCollapsed && (
+                            <div className="flex flex-col gap-3">
+                              {containerAtributosPrincipales.map((attr, index) => (
+                                <div key={index} className="flex items-start gap-3">
+                                  <div className="flex-1">
+                                    <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
+                                    <input
+                                      type="text"
+                                      value={attr.key}
+                                      onChange={(e) => {
+                                        const updated = [...containerAtributosPrincipales]
+                                        updated[index].key = e.target.value
+                                        handleContainerAtributosPrincipalesChange(updated)
+                                      }}
+                                      className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300"
+                                      placeholder="Ej: Color"
+                                    />
+                                  </div>
+
+                                  <div className="flex-1">
+                                    <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Variantes</label>
+                                    <div className="space-y-2">
+                                      <input
+                                        type="text"
+                                        value={varianteInput[index] || ""}
+                                        onChange={(e) =>
+                                          setVarianteInput({ ...varianteInput, [index]: e.target.value })
+                                        }
+                                        onKeyDown={(e) => {
+                                          if (e.key === "Enter" && varianteInput[index]?.trim()) {
+                                            const newTag = varianteInput[index].trim()
+                                            const updated = [...containerAtributosPrincipales]
+                                            const isDuplicate = updated[index].variantes.some(
+                                              (existing) => existing.toLowerCase() === newTag.toLowerCase()
+                                            )
+                                            if (!isDuplicate) {
+                                              updated[index].variantes.push(newTag)
+                                              handleContainerAtributosPrincipalesChange(updated)
+                                              setDuplicateTagError({ ...duplicateTagError, [index]: false })
+                                            } else {
+                                              setDuplicateTagError({ ...duplicateTagError, [index]: true })
+                                              setTimeout(() => {
+                                                setDuplicateTagError((prev) => ({ ...prev, [index]: false }))
+                                              }, 2000)
+                                            }
+                                            setVarianteInput({ ...varianteInput, [index]: "" })
+                                          }
+                                        }}
+                                        onFocus={() => setDuplicateTagError({ ...duplicateTagError, [index]: false })}
+                                        placeholder="Ej: Rojo"
+                                        className={`w-full px-3 py-2.5 bg-white border rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 transition-all hover:border-slate-300 text-sm ${duplicateTagError[index]
+                                          ? "border-red-400 focus:ring-red-400"
+                                          : "border-slate-200 focus:ring-slate-300"
+                                          }`}
+                                      />
+
+                                      {duplicateTagError[index] && (
+                                        <p className="text-red-500 text-xs mt-1 font-medium animate-pulse">
+                                          Este tag ya existe
+                                        </p>
+                                      )}
+
+                                      <div className="flex flex-wrap gap-2">
+                                        {attr.variantes.map((variante, vIndex) => {
+                                          const existingVariants = selectedItem?.variants || []
+                                          const otherAttrIndex = index === 0 ? 1 : 0
+                                          const otherAttr = containerAtributosPrincipales[otherAttrIndex]
+                                          let isComplete = true
+                                          if (existingVariants.length > 0 && otherAttr && otherAttr.variantes.length > 0) {
+                                            for (const otherValue of otherAttr.variantes) {
+                                              const hasCombination = existingVariants.some((v: any) => {
+                                                if (!v.atributosPrincipales) return false
+                                                const attr1Val = v.atributosPrincipales[0]?.value
+                                                const attr2Val = v.atributosPrincipales[1]?.value
+                                                if (index === 0) {
+                                                  return attr1Val === variante && attr2Val === otherValue
+                                                } else {
+                                                  return attr1Val === otherValue && attr2Val === variante
+                                                }
+                                              })
+                                              if (!hasCombination) { isComplete = false; break }
+                                            }
+                                          } else if (existingVariants.length > 0 && containerAtributosPrincipales.length === 1) {
+                                            isComplete = existingVariants.some((v: any) => {
+                                              if (!v.atributosPrincipales) return false
+                                              return v.atributosPrincipales[0]?.value === variante
+                                            })
+                                          } else if (existingVariants.length === 0) {
+                                            isComplete = false
+                                          }
+                                          return (
+                                            <span
+                                              key={vIndex}
+                                              className={`px-3 py-1.5 bg-white rounded-md text-sm flex items-center gap-2 ${isComplete
+                                                ? "border border-gray-300 text-gray-900"
+                                                : "border-2 border-dashed border-gray-300 text-gray-500"
+                                                }`}
+                                            >
+                                              {variante}
+                                              <button
+                                                onClick={() => {
+                                                  const updated = [...containerAtributosPrincipales]
+                                                  updated[index].variantes = updated[index].variantes.filter((_, i) => i !== vIndex)
+                                                  const updatedVariants = (selectedItem?.variants || []).filter((v: any) => {
+                                                    if (!v.atributosPrincipales) return true
+                                                    if (index === 0) return v.atributosPrincipales[0]?.value !== variante
+                                                    else return v.atributosPrincipales[1]?.value !== variante
+                                                  })
+                                                  setContainerAtributosPrincipales(updated)
+                                                  setVariantItems(convertSavedVariantsToDisplay(updatedVariants))
+                                                  if (onFieldChange && selectedItem.sku) {
+                                                    onFieldChange(selectedItem.id, "containerAtributosPrincipales", updated)
+                                                    onFieldChange(selectedItem.id, "variants", updatedVariants)
+                                                  }
+                                                }}
+                                                className="text-gray-400 hover:text-gray-600 cursor-pointer"
+                                              >
+                                                <X className="w-3 h-3" />
+                                              </button>
+                                            </span>
+                                          )
+                                        })}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <button
+                                    onClick={() => {
+                                      const updated = containerAtributosPrincipales.filter((_, i) => i !== index)
+                                      handleContainerAtributosPrincipalesChange(updated)
+                                      setVariantItems([])
+                                      if (onFieldChange && selectedItem?.id) {
+                                        onFieldChange(selectedItem.id, "variants", [])
+                                      }
+                                      if (updated.length === 0 && atributosInformativos.length === 0) {
+                                        setShowAtributosView(false)
+                                      }
+                                    }}
+                                    className="mt-8 text-gray-400 hover:text-red-400 transition-colors cursor-pointer"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ))}
+
+                              {containerAtributosPrincipales.length < 2 && (
+                                <button
+                                  onClick={() => {
+                                    handleContainerAtributosPrincipalesChange([
+                                      ...containerAtributosPrincipales,
+                                      { key: "", variantes: [] },
+                                    ])
+                                  }}
+                                  className="w-full px-3 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                                >
+                                  <Plus className="w-4 h-4" />
+                                  <span className="text-sm">Agregar atributo</span>
+                                </button>
+                              )}
+
+                              {containerAtributosPrincipales.length > 0 && (() => {
+                                const hasAtLeastOneVariante = containerAtributosPrincipales.some(
+                                  (attr) => attr.key.trim() !== "" && attr.variantes.length > 0
+                                )
+                                const existingVariants = selectedItem?.variants || []
+                                const potentialNewVariants = generateNewVariantCombinations(existingVariants)
+                                const isEnabled = hasAtLeastOneVariante && potentialNewVariants.length > 0
+                                return (
+                                  <button
+                                    onClick={handleGenerarVariantes}
+                                    disabled={!isEnabled}
+                                    className={`w-full px-4 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 ${isEnabled
+                                      ? "bg-slate-900 text-white hover:bg-slate-800 cursor-pointer"
+                                      : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                                      }`}
+                                  >
+                                    Generar Variantes
+                                  </button>
+                                )
+                              })()}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ) : isViewingContainer ? (
