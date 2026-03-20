@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import type React from "react"
 import type { Item } from "@/lib/types"
-import { ChevronDown, Plus, Copy, X, Minus, Check, ArrowDownToLine, Pencil, Upload, Layers } from "lucide-react"
+import { ChevronDown, Plus, Copy, X, Minus, Check, ArrowDownToLine, Pencil, Upload, Layers, Maximize2, Minimize2 } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
 import { TEMPLATES } from "@/lib/constants" // DEPOSITS and SAVED_ATRIBUTOS imports removed
@@ -392,6 +392,18 @@ export function CatalogoItemDetailPanel({
 
   // Right card mode toggle for parent items: 'info' or 'atributos'
   const [rightCardMode, setRightCardMode] = useState<"info" | "atributos">("info")
+
+  // Expanded variant matrix modal state
+  const [isExpandedMatrixOpen, setIsExpandedMatrixOpen] = useState(false)
+  const [expandedMatrixPrecioModal, setExpandedMatrixPrecioModal] = useState<{ open: boolean; variant: any | null }>({ open: false, variant: null })
+  const [expandedMatrixStockModal, setExpandedMatrixStockModal] = useState<{ open: boolean; variant: any | null }>({ open: false, variant: null })
+  const [expandedMatrixPrecioValues, setExpandedMatrixPrecioValues] = useState({ costo: 0, margen: 0, iva: 0, precioFinal: 0 })
+  const [expandedMatrixStockValues, setExpandedMatrixStockValues] = useState({ total: 0, reservado: 0 })
+  const [expandedMatrixActiveStockEdit, setExpandedMatrixActiveStockEdit] = useState<"total" | "reservado">("total")
+  const [expandedMatrixStockModification, setExpandedMatrixStockModification] = useState({
+    total: { operation: "agregar", value: "" },
+    reservado: { operation: "agregar", value: "" },
+  })
 
   // Compute whether item has existing attributes (including inherited from parent)
   const hasExistingAttributes =
@@ -2087,13 +2099,22 @@ export function CatalogoItemDetailPanel({
                               <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">
                                 Variantes
                               </h3>
-                              <button
-                                onClick={() => setIsNuevaVarianteModalOpen(true)}
-                                className="px-3 py-1.5 border border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-colors flex items-center gap-1.5 text-xs cursor-pointer"
-                              >
-                                <Plus className="w-3.5 h-3.5" />
-                                <span>Nueva Variante</span>
-                              </button>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => setIsNuevaVarianteModalOpen(true)}
+                                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-colors flex items-center gap-1.5 text-xs cursor-pointer"
+                                >
+                                  <Plus className="w-3.5 h-3.5" />
+                                  <span>Nueva Variante</span>
+                                </button>
+                                <button
+                                  onClick={() => setIsExpandedMatrixOpen(true)}
+                                  className="p-1.5 border border-gray-300 rounded-lg text-gray-500 hover:text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-colors cursor-pointer"
+                                  title="Expandir matriz"
+                                >
+                                  <Maximize2 className="w-4 h-4" />
+                                </button>
+                              </div>
                             </div>
 
                             {/* SKU Padre */}
@@ -2148,7 +2169,8 @@ export function CatalogoItemDetailPanel({
 
                         {variantItems.length > 0 ? (
                           <div className="bg-white border border-border/40 rounded-lg overflow-hidden">
-                            <div className="grid grid-cols-[1fr_minmax(80px,1fr)_28px] bg-white border-b border-border/30">
+                            <div className="grid grid-cols-[32px_1fr_minmax(80px,1fr)_28px] bg-white border-b border-border/30">
+                              <div className="px-1 py-2" />
                               <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider" />
                               <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
                                 SKU
@@ -2217,8 +2239,26 @@ export function CatalogoItemDetailPanel({
                                   <div
                                     key={variant.id || variant.skuSuffix || variant.sku}
                                     onClick={() => { if (variantId) router.push(`/catalogo/items/${variantId}`) }}
-                                    className="group grid grid-cols-[1fr_minmax(80px,1fr)_28px] items-center hover:bg-accent/50 transition-colors cursor-pointer"
+                                    className="group grid grid-cols-[32px_1fr_minmax(80px,1fr)_28px] items-center hover:bg-accent/50 transition-colors cursor-pointer"
                                   >
+                                    {/* Thumbnail */}
+                                    <div className="px-1 py-1.5 flex items-center justify-center">
+                                      <div className="w-6 h-6 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+                                        {sourceVariant?.imagenUrl || selectedItem?.imagenUrl ? (
+                                          <Image
+                                            src={sourceVariant?.imagenUrl || selectedItem?.imagenUrl || ""}
+                                            alt={variant.variant1 || ""}
+                                            width={24}
+                                            height={24}
+                                            className="w-full h-full object-cover"
+                                          />
+                                        ) : (
+                                          <div className="w-full h-full flex items-center justify-center">
+                                            <Layers className="w-3 h-3 text-slate-400" />
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
                                     <div className="px-3 py-2 flex items-center gap-1.5">
                                       {variant.variant1 && (
                                         <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[70px]">
@@ -2828,6 +2868,452 @@ export function CatalogoItemDetailPanel({
               </button>
               <button
                 onClick={() => setIsStockModalOpen(false)}
+                className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                Aceptar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Expanded Variant Matrix Modal */}
+      {isExpandedMatrixOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setIsExpandedMatrixOpen(false)} />
+          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-5xl mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+              <h3 className="text-lg font-semibold text-slate-900">Matriz de Variantes</h3>
+              <button
+                onClick={() => setIsExpandedMatrixOpen(false)}
+                className="p-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                title="Minimizar"
+              >
+                <Minimize2 className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Table */}
+            <div className="flex-1 overflow-auto p-6">
+              <div className="bg-white border border-border/40 rounded-lg overflow-hidden">
+                {/* Table Header */}
+                <div className="grid grid-cols-[40px_1fr_minmax(120px,1fr)_minmax(120px,1fr)_100px_80px_1fr] bg-slate-50 border-b border-border/30">
+                  <div className="px-2 py-3" />
+                  <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Variante</div>
+                  <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">SKU</div>
+                  <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Código Universal</div>
+                  <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider text-right">Precio Final</div>
+                  <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider text-center">Stock</div>
+                  <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Descripción</div>
+                </div>
+
+                {/* Table Body */}
+                <div className="divide-y divide-border/30">
+                  {variantItems.map((variant) => {
+                    const sourceVariant = selectedItem?.variants?.find((v: any) => {
+                      if (!v.atributosPrincipales) return false
+                      const hasMatchingAttr1 = variant.variant1
+                        ? v.atributosPrincipales.some((attr: any) => attr.value === variant.variant1)
+                        : true
+                      const hasMatchingAttr2 = variant.variant2
+                        ? v.atributosPrincipales.some((attr: any) => attr.value === variant.variant2)
+                        : true
+                      return hasMatchingAttr1 && hasMatchingAttr2
+                    })
+
+                    return (
+                      <div
+                        key={variant.id || variant.skuSuffix || variant.sku}
+                        className="grid grid-cols-[40px_1fr_minmax(120px,1fr)_minmax(120px,1fr)_100px_80px_1fr] items-center hover:bg-accent/30 transition-colors"
+                      >
+                        {/* Thumbnail */}
+                        <div className="px-2 py-2 flex items-center justify-center">
+                          <div className="w-8 h-8 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+                            {sourceVariant?.imagenUrl || selectedItem?.imagenUrl ? (
+                              <Image
+                                src={sourceVariant?.imagenUrl || selectedItem?.imagenUrl || ""}
+                                alt={variant.variant1 || ""}
+                                width={32}
+                                height={32}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Layers className="w-4 h-4 text-slate-400" />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Variant tags */}
+                        <div className="px-3 py-2 flex items-center gap-1.5">
+                          {variant.variant1 && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[80px]">
+                              {variant.variant1}
+                            </span>
+                          )}
+                          {variant.variant1 && variant.variant2 && (
+                            <span className="text-[9px] text-muted-foreground/50 font-medium">×</span>
+                          )}
+                          {variant.variant2 && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[80px]">
+                              {variant.variant2}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* SKU - editable */}
+                        <div className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center w-full">
+                            <span className="text-[11px] font-mono text-muted-foreground/60 select-none whitespace-nowrap">
+                              {skuValue}-
+                            </span>
+                            <input
+                              type="text"
+                              value={variant.skuSuffix}
+                              onChange={(e) => {
+                                const newSuffix = e.target.value
+                                setVariantItems((prev) =>
+                                  prev.map((v) => v.id === variant.id ? { ...v, skuSuffix: newSuffix } : v)
+                                )
+                                const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
+                                  ov.id === variant.id ? { ...ov, skuSuffix: newSuffix } : ov
+                                )
+                                onFieldChange(selectedItem.id, "variants", updatedVariants)
+                              }}
+                              className="flex-1 min-w-0 bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-primary/50 px-0 py-0.5 text-[11px] font-mono text-foreground focus:outline-none transition-colors"
+                              placeholder="sufijo..."
+                            />
+                          </div>
+                        </div>
+
+                        {/* Código Universal - editable */}
+                        <div className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="text"
+                            value={sourceVariant?.codigoUniversal || ""}
+                            onChange={(e) => {
+                              const newCodigo = e.target.value
+                              const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
+                                ov.id === variant.id ? { ...ov, codigoUniversal: newCodigo } : ov
+                              )
+                              onFieldChange(selectedItem.id, "variants", updatedVariants)
+                            }}
+                            className="w-full bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-primary/50 px-0 py-0.5 text-[11px] font-mono text-foreground focus:outline-none transition-colors"
+                            placeholder="Ej: 7790001234567"
+                          />
+                        </div>
+
+                        {/* Precio Final - clickable */}
+                        <div
+                          className="px-3 py-2 text-right cursor-pointer hover:bg-slate-100 rounded transition-colors group/precio"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            const precio = sourceVariant?.precio || { costo: 0, margen: 0, iva: 0, precioFinal: 0 }
+                            setExpandedMatrixPrecioValues({
+                              costo: precio.costo || 0,
+                              margen: precio.margen || 0,
+                              iva: precio.iva || 0,
+                              precioFinal: precio.precioFinal || 0,
+                            })
+                            setExpandedMatrixPrecioModal({ open: true, variant: { ...variant, sourceVariant } })
+                          }}
+                        >
+                          <span className="text-sm font-medium text-foreground group-hover/precio:text-blue-600 transition-colors">
+                            ${(sourceVariant?.precio?.precioFinal || 0).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                          </span>
+                        </div>
+
+                        {/* Stock Disponible - clickable */}
+                        <div
+                          className="px-3 py-2 text-center cursor-pointer hover:bg-slate-100 rounded transition-colors group/stock"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            const stock = sourceVariant?.stock || { total: 0, reservado: 0 }
+                            setExpandedMatrixStockValues({
+                              total: stock.total || 0,
+                              reservado: stock.reservado || 0,
+                            })
+                            setExpandedMatrixActiveStockEdit("total")
+                            setExpandedMatrixStockModification({
+                              total: { operation: "agregar", value: "" },
+                              reservado: { operation: "agregar", value: "" },
+                            })
+                            setExpandedMatrixStockModal({ open: true, variant: { ...variant, sourceVariant } })
+                          }}
+                        >
+                          <span className={`text-sm font-medium tabular-nums group-hover/stock:text-blue-600 transition-colors ${
+                            (sourceVariant?.stock?.disponible ?? 0) > 0
+                              ? "text-foreground"
+                              : (sourceVariant?.stock?.disponible ?? 0) < 0
+                                ? "text-red-500"
+                                : "text-muted-foreground"
+                          }`}>
+                            {sourceVariant?.stock?.disponible ?? 0}
+                          </span>
+                        </div>
+
+                        {/* Descripción - editable */}
+                        <div className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="text"
+                            value={sourceVariant?.descripcion || ""}
+                            onChange={(e) => {
+                              const newDesc = e.target.value
+                              const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
+                                ov.id === variant.id ? { ...ov, descripcion: newDesc } : ov
+                              )
+                              onFieldChange(selectedItem.id, "variants", updatedVariants)
+                            }}
+                            className="w-full bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-primary/50 px-0 py-0.5 text-[11px] text-foreground focus:outline-none transition-colors"
+                            placeholder="Descripción..."
+                          />
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Expanded Matrix - Precio Modal */}
+      {expandedMatrixPrecioModal.open && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setExpandedMatrixPrecioModal({ open: false, variant: null })} />
+          <div className="relative bg-white rounded-xl shadow-xl p-6 w-full max-w-lg mx-4">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">Editar Precio</h3>
+            <div className="grid grid-cols-4 gap-3 mb-6">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Costo</label>
+                <input
+                  type="number"
+                  value={expandedMatrixPrecioValues.costo}
+                  onChange={(e) => {
+                    const costo = Number.parseFloat(e.target.value) || 0
+                    const precioFinal = costo * (1 + expandedMatrixPrecioValues.margen / 100) * (1 + expandedMatrixPrecioValues.iva / 100)
+                    setExpandedMatrixPrecioValues((prev) => ({ ...prev, costo, precioFinal }))
+                  }}
+                  className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Margen %</label>
+                <input
+                  type="number"
+                  value={expandedMatrixPrecioValues.margen}
+                  onChange={(e) => {
+                    const margen = Number.parseFloat(e.target.value) || 0
+                    const precioFinal = expandedMatrixPrecioValues.costo * (1 + margen / 100) * (1 + expandedMatrixPrecioValues.iva / 100)
+                    setExpandedMatrixPrecioValues((prev) => ({ ...prev, margen, precioFinal }))
+                  }}
+                  className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">IVA %</label>
+                <input
+                  type="number"
+                  value={expandedMatrixPrecioValues.iva}
+                  onChange={(e) => {
+                    const iva = Number.parseFloat(e.target.value) || 0
+                    const precioFinal = expandedMatrixPrecioValues.costo * (1 + expandedMatrixPrecioValues.margen / 100) * (1 + iva / 100)
+                    setExpandedMatrixPrecioValues((prev) => ({ ...prev, iva, precioFinal }))
+                  }}
+                  className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-emerald-600 uppercase tracking-wide">Precio Final</label>
+                <input
+                  type="number"
+                  value={expandedMatrixPrecioValues.precioFinal}
+                  onChange={(e) => {
+                    const precioFinal = Number.parseFloat(e.target.value) || 0
+                    const base = precioFinal / (1 + expandedMatrixPrecioValues.iva / 100)
+                    const margen = expandedMatrixPrecioValues.costo > 0 ? ((base / expandedMatrixPrecioValues.costo) - 1) * 100 : 0
+                    setExpandedMatrixPrecioValues((prev) => ({ ...prev, precioFinal, margen: Math.round(margen * 100) / 100 }))
+                  }}
+                  className="px-3 py-2 border border-emerald-300 bg-emerald-50 rounded-lg text-sm font-semibold text-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  placeholder="0"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setExpandedMatrixPrecioModal({ open: false, variant: null })}
+                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  if (expandedMatrixPrecioModal.variant?.id) {
+                    const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
+                      ov.id === expandedMatrixPrecioModal.variant.id ? { ...ov, precio: expandedMatrixPrecioValues } : ov
+                    )
+                    onFieldChange(selectedItem.id, "variants", updatedVariants)
+                  }
+                  setExpandedMatrixPrecioModal({ open: false, variant: null })
+                }}
+                className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                Aceptar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Expanded Matrix - Stock Modal */}
+      {expandedMatrixStockModal.open && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setExpandedMatrixStockModal({ open: false, variant: null })} />
+          <div className="relative bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">Editar Stock</h3>
+            <div className="space-y-3 mb-6">
+              {/* Total */}
+              <div className="border border-slate-200 rounded-lg bg-slate-50 overflow-hidden">
+                <div
+                  onClick={() => setExpandedMatrixActiveStockEdit("total")}
+                  className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${expandedMatrixActiveStockEdit === "total" ? "bg-slate-100" : "hover:bg-slate-100"}`}
+                >
+                  <div className="flex items-center gap-2">
+                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${expandedMatrixActiveStockEdit === "total" ? "rotate-0" : "-rotate-90"}`} />
+                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Total</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {expandedMatrixActiveStockEdit === "total" && (
+                      <button onClick={(e) => { e.stopPropagation(); setExpandedMatrixStockValues(prev => ({ ...prev, total: Math.max(0, prev.total - 1) })) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
+                        <Minus className="w-3 h-3" />
+                      </button>
+                    )}
+                    <span className="text-base font-semibold tabular-nums min-w-[2rem] text-center">{expandedMatrixStockValues.total}</span>
+                    {expandedMatrixActiveStockEdit === "total" && (
+                      <button onClick={(e) => { e.stopPropagation(); setExpandedMatrixStockValues(prev => ({ ...prev, total: prev.total + 1 })) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                {expandedMatrixActiveStockEdit === "total" && (
+                  <div className="px-4 pb-3 pt-1 border-t border-slate-200 bg-slate-100/50">
+                    <div className="flex items-center gap-2">
+                      <select value={expandedMatrixStockModification.total.operation} onChange={(e) => setExpandedMatrixStockModification((prev) => ({ ...prev, total: { ...prev.total, operation: e.target.value } }))} className="text-xs border border-slate-300 rounded bg-white px-2 py-1.5 cursor-pointer">
+                        <option value="agregar">Agregar</option>
+                        <option value="remover">Remover</option>
+                        <option value="sobreescribir">Sobreescribir</option>
+                      </select>
+                      <input type="number" placeholder="0" value={expandedMatrixStockModification.total.value} onChange={(e) => setExpandedMatrixStockModification((prev) => ({ ...prev, total: { ...prev.total, value: e.target.value } }))} className="w-16 text-sm border border-slate-300 rounded px-2 py-1.5 text-center" />
+                      <span className="text-slate-400 text-sm">→</span>
+                      <span className="text-sm font-medium text-slate-500 tabular-nums min-w-[2rem] text-right">
+                        {expandedMatrixStockModification.total.value ? (() => { const c = expandedMatrixStockValues.total, v = Number.parseInt(expandedMatrixStockModification.total.value || "0"); return expandedMatrixStockModification.total.operation === "agregar" ? Math.max(0, c + v) : expandedMatrixStockModification.total.operation === "remover" ? Math.max(0, c - v) : Math.max(0, v) })() : expandedMatrixStockValues.total}
+                      </span>
+                      <button onClick={() => {
+                        const v = Number.parseInt(expandedMatrixStockModification.total.value || "0")
+                        let newTotal = expandedMatrixStockValues.total
+                        if (expandedMatrixStockModification.total.operation === "agregar") newTotal = Math.max(0, expandedMatrixStockValues.total + v)
+                        else if (expandedMatrixStockModification.total.operation === "remover") newTotal = Math.max(0, expandedMatrixStockValues.total - v)
+                        else newTotal = Math.max(0, v)
+                        setExpandedMatrixStockValues(prev => ({ ...prev, total: newTotal }))
+                        setExpandedMatrixStockModification((prev) => ({ ...prev, total: { operation: "agregar", value: "" } }))
+                      }} disabled={!expandedMatrixStockModification.total.value} className={`w-7 h-7 rounded border flex items-center justify-center ml-auto ${expandedMatrixStockModification.total.value ? "bg-slate-900 text-white border-slate-900 cursor-pointer" : "bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed"}`}>
+                        <Check className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Reservado */}
+              <div className="border border-slate-200 rounded-lg bg-slate-50 overflow-hidden">
+                <div
+                  onClick={() => setExpandedMatrixActiveStockEdit("reservado")}
+                  className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${expandedMatrixActiveStockEdit === "reservado" ? "bg-slate-100" : "hover:bg-slate-100"}`}
+                >
+                  <div className="flex items-center gap-2">
+                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${expandedMatrixActiveStockEdit === "reservado" ? "rotate-0" : "-rotate-90"}`} />
+                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Reservado</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {expandedMatrixActiveStockEdit === "reservado" && (
+                      <button onClick={(e) => { e.stopPropagation(); setExpandedMatrixStockValues(prev => ({ ...prev, reservado: Math.max(0, prev.reservado - 1) })) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
+                        <Minus className="w-3 h-3" />
+                      </button>
+                    )}
+                    <span className="text-base font-semibold tabular-nums min-w-[2rem] text-center">{expandedMatrixStockValues.reservado}</span>
+                    {expandedMatrixActiveStockEdit === "reservado" && (
+                      <button onClick={(e) => { e.stopPropagation(); setExpandedMatrixStockValues(prev => ({ ...prev, reservado: prev.reservado + 1 })) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                {expandedMatrixActiveStockEdit === "reservado" && (
+                  <div className="px-4 pb-3 pt-1 border-t border-slate-200 bg-slate-100/50">
+                    <div className="flex items-center gap-2">
+                      <select value={expandedMatrixStockModification.reservado.operation} onChange={(e) => setExpandedMatrixStockModification((prev) => ({ ...prev, reservado: { ...prev.reservado, operation: e.target.value } }))} className="text-xs border border-slate-300 rounded bg-white px-2 py-1.5 cursor-pointer">
+                        <option value="agregar">Agregar</option>
+                        <option value="remover">Remover</option>
+                        <option value="sobreescribir">Sobreescribir</option>
+                      </select>
+                      <input type="number" placeholder="0" value={expandedMatrixStockModification.reservado.value} onChange={(e) => setExpandedMatrixStockModification((prev) => ({ ...prev, reservado: { ...prev.reservado, value: e.target.value } }))} className="w-16 text-sm border border-slate-300 rounded px-2 py-1.5 text-center" />
+                      <span className="text-slate-400 text-sm">→</span>
+                      <span className="text-sm font-medium text-slate-500 tabular-nums min-w-[2rem] text-right">
+                        {expandedMatrixStockModification.reservado.value ? (() => { const c = expandedMatrixStockValues.reservado, v = Number.parseInt(expandedMatrixStockModification.reservado.value || "0"); return expandedMatrixStockModification.reservado.operation === "agregar" ? Math.max(0, c + v) : expandedMatrixStockModification.reservado.operation === "remover" ? Math.max(0, c - v) : Math.max(0, v) })() : expandedMatrixStockValues.reservado}
+                      </span>
+                      <button onClick={() => {
+                        const v = Number.parseInt(expandedMatrixStockModification.reservado.value || "0")
+                        let newReservado = expandedMatrixStockValues.reservado
+                        if (expandedMatrixStockModification.reservado.operation === "agregar") newReservado = Math.max(0, expandedMatrixStockValues.reservado + v)
+                        else if (expandedMatrixStockModification.reservado.operation === "remover") newReservado = Math.max(0, expandedMatrixStockValues.reservado - v)
+                        else newReservado = Math.max(0, v)
+                        setExpandedMatrixStockValues(prev => ({ ...prev, reservado: newReservado }))
+                        setExpandedMatrixStockModification((prev) => ({ ...prev, reservado: { operation: "agregar", value: "" } }))
+                      }} disabled={!expandedMatrixStockModification.reservado.value} className={`w-7 h-7 rounded border flex items-center justify-center ml-auto ${expandedMatrixStockModification.reservado.value ? "bg-slate-900 text-white border-slate-900 cursor-pointer" : "bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed"}`}>
+                        <Check className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Disponible - Read only */}
+              <div className="border border-emerald-200 rounded-lg bg-emerald-50/50">
+                <div className="flex items-center justify-between px-4 py-3">
+                  <span className="text-xs font-medium text-emerald-700 uppercase tracking-wide">Disponible</span>
+                  <span className="text-xl font-bold text-emerald-600 tabular-nums">{expandedMatrixStockValues.total - expandedMatrixStockValues.reservado}</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setExpandedMatrixStockModal({ open: false, variant: null })}
+                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  if (expandedMatrixStockModal.variant?.id) {
+                    const newStock = {
+                      total: expandedMatrixStockValues.total,
+                      reservado: expandedMatrixStockValues.reservado,
+                      disponible: expandedMatrixStockValues.total - expandedMatrixStockValues.reservado,
+                    }
+                    const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
+                      ov.id === expandedMatrixStockModal.variant.id ? { ...ov, stock: newStock } : ov
+                    )
+                    onFieldChange(selectedItem.id, "variants", updatedVariants)
+                  }
+                  setExpandedMatrixStockModal({ open: false, variant: null })
+                }}
                 className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 Aceptar
