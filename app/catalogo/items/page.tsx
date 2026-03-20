@@ -45,7 +45,6 @@ export default function CatalogoPage() {
     deletedItems,
     isCreatingItem,
     updateStock,
-    editField,
   } = useItems()
 
   const {
@@ -370,7 +369,6 @@ export default function CatalogoPage() {
                     hasSelectedItems={hasSelectedItems}
                     onBatchDelete={handleBatchDeleteClick}
                     onUpdateStock={updateStock}
-                    onUpdatePrecio={(itemId, precio) => editField(itemId, "precio", precio)}
                     getSelectedSkus={getSelectedSkus}
                     hideAuditButton={true}
                     showPrecioColumn={true}
