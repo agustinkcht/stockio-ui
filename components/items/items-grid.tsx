@@ -39,6 +39,7 @@ interface ItemsGridProps {
   hasSelectedItems?: boolean
   onBatchDelete?: () => void
   onUpdateStock?: (itemSku: string, field: "total" | "reservado", value: number) => void
+  onUpdatePrecio?: (itemId: string, precio: { costo: number; margen: number; iva: number; precioFinal: number }) => void
   // Audit mode callbacks to parent for D-G buttons
   onAuditChangesUpdate?: (hasChanges: boolean, pendingCount: number) => void
   onAuditSave?: (changes: Record<string, { total: number; reservado: number }>) => void
@@ -76,6 +77,7 @@ export function ItemsGrid({
   hasSelectedItems,
   onBatchDelete,
   onUpdateStock,
+  onUpdatePrecio,
   onAuditChangesUpdate,
   onAuditSave,
   onAuditDiscard,
@@ -699,6 +701,7 @@ export function ItemsGrid({
                   onStockChange={handleAuditStockChange}
                   auditStockValues={auditStockChanges}
                   showPrecioColumn={showPrecioColumn}
+                  onUpdatePrecio={onUpdatePrecio}
                 />
               )
             })}
