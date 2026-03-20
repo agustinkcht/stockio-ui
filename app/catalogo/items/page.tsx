@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { Package, Plus, Search, X, Check, CheckCircle2 } from "lucide-react"
 import { useAccount } from "@/lib/contexts/account-context"
@@ -16,6 +16,8 @@ import { useItemSelection } from "@/hooks/use-item-selection"
 import { useModals } from "@/hooks/use-modals"
 import { useSidebar } from "@/hooks/use-sidebar"
 import { useChangeTracker } from "@/hooks/use-change-tracker"
+import { useNavigationGuard } from "@/hooks/use-navigation-guard"
+import { UnsavedChangesModal } from "@/components/modals/unsaved-changes-modal"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 import type { Item } from "@/lib/types"
 
@@ -104,6 +106,50 @@ export default function CatalogoPage() {
 
   const changeTracker = useChangeTracker()
 
+  // Track unsaved changes from grid (precio/stock edits)
+  const [gridChanges, setGridChanges] = useState<Record<string, { tipo: "precio" | "stock"; original: any; nuevo: any }>>({})
+  const hasGridChanges = Object.keys(gridChanges).length > 0
+
+  // Wrap editField to track precio changes
+  const handleUpdatePrecio = useCallback((itemId: string, precio: { costo: number; margen: number; iva: number; precioFinal: number }) => {
+    const item = items.find(i => i.id === itemId) || items.flatMap(i => [...(i.variants || []), ...(i.items || [])]).find(i => i.id === itemId)
+    if (item) {
+      setGridChanges(prev => ({
+        ...prev,
+        [`precio-${itemId}`]: { tipo: "precio", original: item.precio, nuevo: precio }
+      }))
+    }
+    editField(itemId, "precio", precio)
+  }, [items, editField])
+
+  // Wrap updateStock to track stock changes
+  const handleUpdateStockWithTracking = useCallback((itemSku: string, field: "total" | "reservado", value: number) => {
+    const item = items.find(i => i.sku === itemSku) || items.flatMap(i => [...(i.variants || []), ...(i.items || [])]).find(i => i.sku === itemSku)
+    if (item) {
+      setGridChanges(prev => ({
+        ...prev,
+        [`stock-${itemSku}-${field}`]: { tipo: "stock", original: item.stock?.[field], nuevo: value }
+      }))
+    }
+    updateStock(itemSku, field, value)
+  }, [items, updateStock])
+
+  // Navigation guard for unsaved changes
+  const {
+    showNavigationModal,
+    handleSaveAndNavigate,
+    handleDiscardAndNavigate,
+    handleCancelNavigation,
+  } = useNavigationGuard({
+    hasUnsavedChanges: hasGridChanges || hasUnsavedDeletes,
+    onSave: async () => {
+      await handleGuardar()
+    },
+    onDiscard: () => {
+      handleDeshacer()
+    },
+  })
+
   useEffect(() => {
     setGridSize("md")
   }, [setGridSize])
@@ -129,6 +175,9 @@ export default function CatalogoPage() {
     if (hasUnsavedDeletes) {
       undoDelete()
     }
+    // Reset grid changes (this triggers a refetch from local storage)
+    setGridChanges({})
+    window.location.reload()
   }
 
   const handleGuardar = async () => {
@@ -142,7 +191,9 @@ export default function CatalogoPage() {
         await saveDeletedItems()
       }
 
-      changeTracker.commitAll()
+      // Clear grid changes (already persisted via editField/updateStock)
+      setGridChanges({})
+      changeTracker.undoAll()
       
       setShowSaveSuccess(true)
       setTimeout(() => {
@@ -339,6 +390,24 @@ export default function CatalogoPage() {
                     <span className="text-sm text-green-700 font-medium">Cambios Guardados</span>
                   </div>
                 )}
+
+                {/* Deshacer/Guardar buttons - appear when there are unsaved changes */}
+                {(hasGridChanges || hasUnsavedDeletes) && !isSaving && !showSaveSuccess && (
+                  <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2 duration-300">
+                    <button
+                      onClick={handleDeshacer}
+                      className="px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors cursor-pointer"
+                    >
+                      Deshacer
+                    </button>
+                    <button
+                      onClick={handleGuardar}
+                      className="px-3 py-1.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-md transition-colors cursor-pointer"
+                    >
+                      Guardar
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -369,8 +438,8 @@ export default function CatalogoPage() {
                     handleOpenNuevoItemConVariantes={handleOpenNuevoItemConVariantes}
                     hasSelectedItems={hasSelectedItems}
                     onBatchDelete={handleBatchDeleteClick}
-                    onUpdateStock={updateStock}
-                    onUpdatePrecio={(itemId, precio) => editField(itemId, "precio", precio)}
+                    onUpdateStock={handleUpdateStockWithTracking}
+                    onUpdatePrecio={handleUpdatePrecio}
                     getSelectedSkus={getSelectedSkus}
                     hideAuditButton={true}
                     showPrecioColumn={true}
@@ -467,6 +536,14 @@ export default function CatalogoPage() {
           </div>
         </div>
       )}
+
+      {/* Unsaved Changes Navigation Modal */}
+      <UnsavedChangesModal
+        isOpen={showNavigationModal}
+        onSave={handleSaveAndNavigate}
+        onDiscard={handleDiscardAndNavigate}
+        onCancel={handleCancelNavigation}
+      />
     </div>
   )
 }
