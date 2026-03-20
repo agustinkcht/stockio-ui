@@ -2171,7 +2171,7 @@ export function CatalogoItemDetailPanel({
                           <div className="bg-white border border-border/40 rounded-lg overflow-hidden">
                             <div className="grid grid-cols-[32px_1fr_minmax(80px,1fr)_28px] bg-white border-b border-border/30">
                               <div className="px-1 py-2" />
-                              <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider" />
+                              <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Variante</div>
                               <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
                                 SKU
                               </div>
@@ -2242,21 +2242,15 @@ export function CatalogoItemDetailPanel({
                                     className="group grid grid-cols-[32px_1fr_minmax(80px,1fr)_28px] items-center hover:bg-accent/50 transition-colors cursor-pointer"
                                   >
                                     {/* Thumbnail */}
-                                    <div className="px-1 py-1.5 flex items-center justify-center">
-                                      <div className="w-6 h-6 rounded bg-slate-100 overflow-hidden flex-shrink-0">
-                                        {sourceVariant?.imagenUrl || selectedItem?.imagenUrl ? (
-                                          <Image
-                                            src={sourceVariant?.imagenUrl || selectedItem?.imagenUrl || ""}
-                                            alt={variant.variant1 || ""}
-                                            width={24}
-                                            height={24}
-                                            className="w-full h-full object-cover"
-                                          />
-                                        ) : (
-                                          <div className="w-full h-full flex items-center justify-center">
-                                            <Layers className="w-3 h-3 text-slate-400" />
-                                          </div>
-                                        )}
+                                    <div className="pl-2 py-1.5 flex items-center justify-center">
+                                      <div className="w-6 h-6 rounded-md bg-gradient-to-br from-muted to-muted/50 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                                        <Image
+                                          src={getCategoryImage(selectedItem?.categoria) || "/placeholder.svg"}
+                                          alt={selectedItem?.categoria || ""}
+                                          width={24}
+                                          height={24}
+                                          className="w-4 h-4 object-contain opacity-60"
+                                        />
                                       </div>
                                     </div>
                                     <div className="px-3 py-2 flex items-center gap-1.5">
@@ -2929,20 +2923,14 @@ export function CatalogoItemDetailPanel({
                       >
                         {/* Thumbnail */}
                         <div className="px-2 py-2 flex items-center justify-center">
-                          <div className="w-8 h-8 rounded bg-slate-100 overflow-hidden flex-shrink-0">
-                            {sourceVariant?.imagenUrl || selectedItem?.imagenUrl ? (
-                              <Image
-                                src={sourceVariant?.imagenUrl || selectedItem?.imagenUrl || ""}
-                                alt={variant.variant1 || ""}
-                                width={32}
-                                height={32}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <Layers className="w-4 h-4 text-slate-400" />
-                              </div>
-                            )}
+                          <div className="w-8 h-8 rounded-md bg-gradient-to-br from-muted to-muted/50 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                            <Image
+                              src={getCategoryImage(selectedItem?.categoria) || "/placeholder.svg"}
+                              alt={selectedItem?.categoria || ""}
+                              width={32}
+                              height={32}
+                              className="w-5 h-5 object-contain opacity-60"
+                            />
                           </div>
                         </div>
 
