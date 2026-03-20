@@ -48,6 +48,10 @@ export default function CatalogoPage() {
     isCreatingItem,
     updateStock,
     editField,
+    editVariantField,
+    saveEdit,
+    cancelEdit,
+    hasUnsavedEdits,
   } = useItems()
 
   const {
@@ -106,33 +110,68 @@ export default function CatalogoPage() {
 
   const changeTracker = useChangeTracker()
 
-  // Track unsaved changes from grid (precio/stock edits)
-  const [gridChanges, setGridChanges] = useState<Record<string, { tipo: "precio" | "stock"; original: any; nuevo: any }>>({})
-  const hasGridChanges = Object.keys(gridChanges).length > 0
+  // Use the built-in hasUnsavedEdits from useItems for precio/stock changes
+  const hasChanges = hasUnsavedEdits || hasUnsavedDeletes
 
-  // Wrap editField to track precio changes
+  // Handle precio updates - check if it's a variant or standalone
   const handleUpdatePrecio = useCallback((itemId: string, precio: { costo: number; margen: number; iva: number; precioFinal: number }) => {
-    const item = items.find(i => i.id === itemId) || items.flatMap(i => [...(i.variants || []), ...(i.items || [])]).find(i => i.id === itemId)
-    if (item) {
-      setGridChanges(prev => ({
-        ...prev,
-        [`precio-${itemId}`]: { tipo: "precio", original: item.precio, nuevo: precio }
-      }))
-    }
-    editField(itemId, "precio", precio)
-  }, [items, editField])
+    // Check if this is a variant by looking through parent items
+    let isVariant = false
+    let parentSku: string | undefined
 
-  // Wrap updateStock to track stock changes
-  const handleUpdateStockWithTracking = useCallback((itemSku: string, field: "total" | "reservado", value: number) => {
-    const item = items.find(i => i.sku === itemSku) || items.flatMap(i => [...(i.variants || []), ...(i.items || [])]).find(i => i.sku === itemSku)
-    if (item) {
-      setGridChanges(prev => ({
-        ...prev,
-        [`stock-${itemSku}-${field}`]: { tipo: "stock", original: item.stock?.[field], nuevo: value }
-      }))
+    for (const item of items) {
+      if (item.variants) {
+        const variant = item.variants.find((v: any) => v.id === itemId || v.sku === itemId)
+        if (variant) {
+          isVariant = true
+          parentSku = item.sku
+          editVariantField(parentSku, variant.sku, "precio", precio)
+          return
+        }
+      }
     }
-    updateStock(itemSku, field, value)
-  }, [items, updateStock])
+
+    // Not a variant, use regular editField
+    editField(itemId, "precio", precio)
+  }, [items, editField, editVariantField])
+
+  // Handle stock updates - uses the built-in tracking from useItems
+  const handleUpdateStockWithTracking = useCallback((itemSku: string, field: "total" | "reservado", value: number) => {
+    // Check if this is a variant
+    let isVariant = false
+    let parentSku: string | undefined
+
+    for (const item of items) {
+      if (item.variants) {
+        const variant = item.variants.find((v: any) => v.sku === itemSku)
+        if (variant) {
+          isVariant = true
+          parentSku = item.sku
+          // For variants, update the stock field via editVariantField
+          const currentStock = variant.stock || { total: 0, reservado: 0, disponible: 0 }
+          const newStock = {
+            ...currentStock,
+            [field]: value,
+            disponible: field === "total" ? value - currentStock.reservado : currentStock.total - value
+          }
+          editVariantField(parentSku, itemSku, "stock", newStock)
+          return
+        }
+      }
+    }
+
+    // Not a variant - find the item and update
+    const item = items.find(i => i.sku === itemSku)
+    if (item) {
+      const currentStock = item.stock || { total: 0, reservado: 0, disponible: 0 }
+      const newStock = {
+        ...currentStock,
+        [field]: value,
+        disponible: field === "total" ? value - currentStock.reservado : currentStock.total - value
+      }
+      editField(itemSku, "stock", newStock)
+    }
+  }, [items, editField, editVariantField])
 
   // Navigation guard for unsaved changes
   const {
@@ -141,7 +180,7 @@ export default function CatalogoPage() {
     handleDiscardAndNavigate,
     handleCancelNavigation,
   } = useNavigationGuard({
-    hasUnsavedChanges: hasGridChanges || hasUnsavedDeletes,
+    hasUnsavedChanges: hasChanges,
     onSave: async () => {
       await handleGuardar()
     },
@@ -172,12 +211,12 @@ export default function CatalogoPage() {
 
   const handleDeshacer = () => {
     changeTracker.undoAll()
+    if (hasUnsavedEdits) {
+      cancelEdit()
+    }
     if (hasUnsavedDeletes) {
       undoDelete()
     }
-    // Reset grid changes (this triggers a refetch from local storage)
-    setGridChanges({})
-    window.location.reload()
   }
 
   const handleGuardar = async () => {
@@ -187,12 +226,16 @@ export default function CatalogoPage() {
     try {
       await sleep(800)
 
+      // Save precio/stock edits
+      if (hasUnsavedEdits) {
+        saveEdit()
+      }
+
+      // Save deleted items
       if (hasUnsavedDeletes) {
         await saveDeletedItems()
       }
 
-      // Clear grid changes (already persisted via editField/updateStock)
-      setGridChanges({})
       changeTracker.undoAll()
       
       setShowSaveSuccess(true)
@@ -392,7 +435,7 @@ export default function CatalogoPage() {
                 )}
 
                 {/* Deshacer/Guardar buttons - appear when there are unsaved changes */}
-                {(hasGridChanges || hasUnsavedDeletes) && !isSaving && !showSaveSuccess && (
+                {hasChanges && !isSaving && !showSaveSuccess && (
                   <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2 duration-300">
                     <button
                       onClick={handleDeshacer}
