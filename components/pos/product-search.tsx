@@ -195,15 +195,15 @@ export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
                     <ChevronDown
                       className={cn("h-4 w-4 text-muted-foreground transition-transform", isExpanded && "rotate-180")}
                     />
-                  ) : (
+                  ) : itemActive ? (
                     <Button
                       size="icon"
                       variant="ghost"
                       className={cn(
                         "h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity",
-                        (stockStatus.status === "sin-stock" || !itemActive) && "pointer-events-none",
+                        stockStatus.status === "sin-stock" && "pointer-events-none",
                       )}
-                      disabled={stockStatus.status === "sin-stock" || !itemActive}
+                      disabled={stockStatus.status === "sin-stock"}
                       onClick={(e) => {
                         e.stopPropagation()
                         handleAddItem(item)
@@ -211,7 +211,7 @@ export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
-                  )}
+                  ) : null}
                 </div>
 
                 {/* Variants */}
@@ -253,21 +253,23 @@ export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
                               {variantStock.label}
                             </span>
                           </div>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className={cn(
-                              "h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity",
-                              (variantStock.status === "sin-stock" || !variantActive) && "pointer-events-none",
-                            )}
-                            disabled={variantStock.status === "sin-stock" || !variantActive}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleAddItem(item, variant)
-                            }}
-                          >
-                            <Plus className="h-3 w-3" />
-                          </Button>
+                          {variantActive ? (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className={cn(
+                                "h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity",
+                                variantStock.status === "sin-stock" && "pointer-events-none",
+                              )}
+                              disabled={variantStock.status === "sin-stock"}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleAddItem(item, variant)
+                              }}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          ) : null}
                         </div>
                       )
                     })}
