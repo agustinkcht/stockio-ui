@@ -1359,7 +1359,18 @@ export function CatalogoItemDetailPanel({
                                         onClick={(e) => {
                                           e.stopPropagation()
                                           if (!isCurrent && selectedItem) {
-                                            updateItem(selectedItem.sku, { isActive: value })
+                                            if (isChildItem && fatherItem) {
+                                              // Child item: update isActive within parent's variants array
+                                              const updatedVariants = fatherItem.variants?.map((v: any) =>
+                                                v.id === selectedItem.id ? { ...v, isActive: value } : v
+                                              )
+                                              if (updatedVariants) {
+                                                onFieldChange(fatherItem.id, "variants", updatedVariants)
+                                              }
+                                            } else {
+                                              // Standalone item: update directly
+                                              onFieldChange(selectedItem.id, "isActive", value)
+                                            }
                                           }
                                           ;(e.currentTarget.parentElement as HTMLElement).style.display = "none"
                                         }}
