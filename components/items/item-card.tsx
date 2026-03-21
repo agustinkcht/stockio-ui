@@ -390,7 +390,7 @@ export function ItemCard({
 
                 {/* Categoría cell */}
                 <div
-                  className="col-span-8 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+                  className="col-span-10 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
                   onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
                 >
                   <span className="text-sm text-foreground">{item.categoria || "-"}</span>
@@ -398,21 +398,14 @@ export function ItemCard({
 
                 {/* Precio Final cell - empty for parent */}
                 <div
-                  className="col-span-8 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+                  className="col-span-10 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
                   onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
                 >
                 </div>
 
                 {/* Stock Disponible cell - empty for parent */}
                 <div
-                  className="col-span-8 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
-                  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
-                >
-                </div>
-
-                {/* Estado - empty for parent */}
-                <div
-                  className="col-span-4 h-full flex items-center justify-center px-2 cursor-pointer"
+                  className="col-span-8 h-full flex items-center justify-center px-4 cursor-pointer"
                   onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
                 >
                 </div>
@@ -635,7 +628,7 @@ export function ItemCard({
 
               {/* Categoría cell */}
               <div
-                className="col-span-8 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+                className="col-span-10 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
                 onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
               >
                 <span className="text-sm text-foreground">{item.categoria || "-"}</span>
@@ -643,21 +636,14 @@ export function ItemCard({
 
               {/* Precio Final - blank for parent */}
               <div
-                className="col-span-8 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+                className="col-span-10 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
                 onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
               >
               </div>
 
               {/* Stock Disponible - blank for parent */}
               <div
-                className="col-span-8 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
-                onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
-              >
-              </div>
-
-              {/* Estado - blank for parent */}
-              <div
-                className="col-span-4 h-full flex items-center justify-center px-2 cursor-pointer"
+                className="col-span-8 h-full flex items-center justify-center px-4 cursor-pointer"
                 onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
               >
               </div>
@@ -732,14 +718,14 @@ export function ItemCard({
                 <>
                   {/* Categoría cell */}
                   <div
-                    className="col-span-8 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100"
+                    className="col-span-10 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100"
                     onClick={(e) => { e.stopPropagation(); onItemClick(item) }}
                   >
                     <span className="text-sm text-foreground truncate w-full text-center">{item.categoria || "-"}</span>
                   </div>
                   {/* Precio Final cell - clickable to open precio modal */}
                   <div
-                    className="col-span-8 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100 hover:bg-slate-50 group/precio"
+                    className="col-span-10 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100 hover:bg-slate-50 group/precio"
                     onClick={(e) => {
                       e.stopPropagation()
                       setPrecioModalValues({
@@ -795,16 +781,16 @@ export function ItemCard({
               )}
 
               {item.hasVariants ? (
-                <div className="col-span-8 h-full flex items-center justify-center px-4 border-r border-slate-100">
+                <div className="col-span-8 h-full flex items-center justify-center px-4">
                   <span className="text-sm text-container-item-foreground/80">{variantCount} var.</span>
                 </div>
               ) : item.isAgrupador ? (
-                <div className="col-span-8 h-full flex items-center justify-center px-4 border-r border-slate-100">
+                <div className="col-span-8 h-full flex items-center justify-center px-4">
                   <span className="text-sm text-container-item-foreground/80">{itemCount} items</span>
                 </div>
               ) : (
                 <div
-                  className="col-span-8 h-full flex items-center justify-center px-4 cursor-pointer transition-colors hover:bg-slate-50 group/stock border-r border-slate-100"
+                  className="col-span-8 h-full flex items-center justify-center px-4 cursor-pointer transition-colors hover:bg-slate-50 group/stock"
                   onClick={(e) => {
                     e.stopPropagation()
                     setActiveStockEdit("total")
@@ -823,20 +809,6 @@ export function ItemCard({
                   </span>
                 </div>
               )}
-
-              {/* Estado column */}
-              <div
-                className="col-span-4 h-full flex items-center justify-center px-2"
-                onClick={(e) => { e.stopPropagation(); onItemClick(item) }}
-              >
-                <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
-                  item.isActive !== false
-                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                    : "bg-amber-50 text-amber-700 border border-amber-200"
-                }`}>
-                  {item.isActive !== false ? "Activo" : "Pausado"}
-                </span>
-              </div>
             </>
           )}
         </div>
