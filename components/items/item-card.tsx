@@ -818,7 +818,7 @@ export function ItemCard({
                         ? "text-red-500"
                         : "text-muted-foreground"
                   }`}>
-                    {item.stock?.disponible ?? 0}
+                    {item.stock?.disponible ?? 0} <span className="text-xs font-normal opacity-60">disp.</span>
                   </span>
                 </div>
               )}
