@@ -88,10 +88,22 @@ export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
   }
 
   const handleAddItem = (item: Item, variant?: ItemVariant) => {
+    // Check if item/variant is active
+    const isActive = variant ? (variant as any).isActive !== false : item.isActive !== false
+    if (!isActive) return
+    
     const stock = variant?.stock || item.stock
     const disponible = Number.parseInt(stock?.disponible || "0")
     if (disponible === 0) return
     onAddToCart(item, variant)
+  }
+
+  // Check if a parent item has at least one active child
+  const isParentActive = (item: Item): boolean => {
+    if (item.variants && item.variants.length > 0) {
+      return item.variants.some((v) => (v as any).isActive !== false)
+    }
+    return item.isActive !== false
   }
 
   return (
@@ -123,6 +135,7 @@ export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
             const hasVariants = item.hasVariants && item.variants && item.variants.length > 0
             const isExpanded = expandedItems.has(item.sku || "")
             const stockStatus = getStockStatus(item.stock)
+            const itemActive = hasVariants ? isParentActive(item) : item.isActive !== false
 
             return (
               <div key={item.sku} className="rounded-lg overflow-hidden">
@@ -132,6 +145,7 @@ export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
                     "flex items-center gap-3 p-3 rounded-lg transition-all",
                     "hover:bg-muted/50 cursor-pointer group",
                     hasVariants && isExpanded && "rounded-b-none bg-muted/30",
+                    !itemActive && "opacity-50 bg-slate-100/50",
                   )}
                   onClick={() => (hasVariants ? toggleExpanded(item.sku || "") : handleAddItem(item))}
                 >
@@ -187,9 +201,9 @@ export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
                       variant="ghost"
                       className={cn(
                         "h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity",
-                        stockStatus.status === "sin-stock" && "pointer-events-none",
+                        (stockStatus.status === "sin-stock" || !itemActive) && "pointer-events-none",
                       )}
-                      disabled={stockStatus.status === "sin-stock"}
+                      disabled={stockStatus.status === "sin-stock" || !itemActive}
                       onClick={(e) => {
                         e.stopPropagation()
                         handleAddItem(item)
@@ -205,13 +219,14 @@ export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
                   <div className="bg-muted/20 border-t border-border/30">
                     {item.variants?.map((variant) => {
                       const variantStock = getStockStatus(variant.stock)
+                      const variantActive = (variant as any).isActive !== false
                       return (
                         <div
                           key={variant.sku}
                           className={cn(
                             "flex items-center gap-3 p-3 pl-8 transition-all",
                             "hover:bg-muted/50 cursor-pointer group",
-                            variantStock.status === "sin-stock" && "opacity-50",
+                            (variantStock.status === "sin-stock" || !variantActive) && "opacity-50 bg-slate-100/30",
                           )}
                           onClick={() => handleAddItem(item, variant)}
                         >
@@ -243,9 +258,9 @@ export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
                             variant="ghost"
                             className={cn(
                               "h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity",
-                              variantStock.status === "sin-stock" && "pointer-events-none",
+                              (variantStock.status === "sin-stock" || !variantActive) && "pointer-events-none",
                             )}
-                            disabled={variantStock.status === "sin-stock"}
+                            disabled={variantStock.status === "sin-stock" || !variantActive}
                             onClick={(e) => {
                               e.stopPropagation()
                               handleAddItem(item, variant)
