@@ -1315,6 +1315,18 @@ export function CatalogoItemDetailPanel({
                                 <Pencil className="w-3.5 h-3.5 text-white/50 opacity-0 group-hover/stock:opacity-100 transition-opacity" />
                               </div>
                             </div>
+
+                            {/* Estado row */}
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Estado</span>
+                              <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${
+                                selectedItem?.isActive !== false
+                                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-400/30"
+                                  : "bg-amber-500/20 text-amber-300 border border-amber-400/30"
+                              }`}>
+                                {selectedItem?.isActive !== false ? "Activo" : "Pausado"}
+                              </span>
+                            </div>
                           </div>
                         </>
                       )}

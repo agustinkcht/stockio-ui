@@ -35,6 +35,7 @@ export interface ItemVariant {
   proveedor?: string
   codigoProveedor?: string
   atributosPrincipales?: Atributo[]
+  isActive?: boolean // Whether the item is active (Activo) or paused (Pausado)
 }
 
 export interface Item {
@@ -82,6 +83,7 @@ export interface Item {
   items?: (Item | ItemWithVariants)[]
   containerAtributosPrincipales?: ContainerAtributo[]
   containerAtributosInformativos?: Atributo[]
+  isActive?: boolean // Whether the item is active (Activo) or paused (Pausado) - for standalone items
 }
 
 export interface ItemWithVariants extends Item {
