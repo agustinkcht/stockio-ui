@@ -100,7 +100,8 @@ export function PriceGrid({
       if (isParent) {
         const children = item.variants || item.items || []
         for (const child of children) {
-          if (child.sku) skus.push(child.sku)
+          const id = (child as any).sku || (child as any).id || (child as any).skuSuffix
+          if (id) skus.push(id)
         }
       } else if (item.sku) {
         skus.push(item.sku)

@@ -10,6 +10,11 @@ interface SelectionState {
 export function usePriceSelection(items: Item[]) {
   const [selectedItems, setSelectedItems] = useState<SelectionState>({})
 
+  // Resolve the effective identifier for an item (children may use id or skuSuffix instead of sku)
+  const getItemId = useCallback((item: any): string | undefined => {
+    return item.sku || item.id || item.skuSuffix
+  }, [])
+
   // Get all SKUs including children
   const getAllSkus = useCallback((itemList: Item[]): string[] => {
     const skus: string[] = []
@@ -19,9 +24,8 @@ export function usePriceSelection(items: Item[]) {
         // Only add children SKUs for parent items
         const children = item.variants || item.items || []
         for (const child of children) {
-          if (child.sku) {
-            skus.push(child.sku)
-          }
+          const id = child.sku || (child as any).id || (child as any).skuSuffix
+          if (id) skus.push(id)
         }
       } else if (item.sku) {
         // Add standalone item SKU
@@ -34,7 +38,9 @@ export function usePriceSelection(items: Item[]) {
   // Get children SKUs for a parent item
   const getChildrenSkus = useCallback((item: Item): string[] => {
     const children = item.variants || item.items || []
-    return children.filter((child) => child.sku).map((child) => child.sku!)
+    return children
+      .map((child) => child.sku || (child as any).id || (child as any).skuSuffix)
+      .filter(Boolean) as string[]
   }, [])
 
   // Check if item is a parent
@@ -89,32 +95,34 @@ export function usePriceSelection(items: Item[]) {
   )
 
   // Handle selecting/deselecting a child item
-  const handleChildSelection = useCallback((sku: string) => {
+  const handleChildSelection = useCallback((id: string) => {
     setSelectedItems((prev) => ({
       ...prev,
-      [sku]: !prev[sku],
+      [id]: !prev[id],
     }))
   }, [])
 
   // Handle item click based on type
   const handleItemSelection = useCallback(
     (item: Item, isChild: boolean = false) => {
-      if (isChild && item.sku) {
-        handleChildSelection(item.sku)
+      const id = getItemId(item)
+      if (isChild && id) {
+        handleChildSelection(id)
       } else if (isParentItem(item)) {
         handleParentSelection(item)
-      } else if (item.sku) {
-        handleStandaloneSelection(item.sku)
+      } else if (id) {
+        handleStandaloneSelection(id)
       }
     },
-    [isParentItem, handleParentSelection, handleChildSelection, handleStandaloneSelection]
+    [getItemId, isParentItem, handleParentSelection, handleChildSelection, handleStandaloneSelection]
   )
 
   // Get selection state for an item
   const getSelectionState = useCallback(
     (item: Item, isChild: boolean = false): { checked: boolean; indeterminate: boolean } => {
-      if (isChild && item.sku) {
-        return { checked: !!selectedItems[item.sku], indeterminate: false }
+      const id = getItemId(item)
+      if (isChild && id) {
+        return { checked: !!selectedItems[id], indeterminate: false }
       }
 
       if (isParentItem(item)) {
@@ -123,9 +131,9 @@ export function usePriceSelection(items: Item[]) {
         return { checked: allSelected, indeterminate: someSelected }
       }
 
-      return { checked: !!selectedItems[item.sku!], indeterminate: false }
+      return { checked: !!selectedItems[id!], indeterminate: false }
     },
-    [selectedItems, isParentItem, areAllChildrenSelected, areSomeChildrenSelected]
+    [getItemId, selectedItems, isParentItem, areAllChildrenSelected, areSomeChildrenSelected]
   )
 
   // Select all / deselect all
