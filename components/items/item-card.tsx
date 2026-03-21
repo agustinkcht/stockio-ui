@@ -315,15 +315,25 @@ export function ItemCard({
             >
               <Minus className="w-3 h-3 text-primary-foreground" />
             </button>
+          ) : isSelected ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onSelectClick()
+              }}
+              className={`relative left-[-7px] h-4.5 w-4.5 flex items-center justify-center rounded-sm bg-primary border border-primary cursor-pointer hover:opacity-90 ${showTransition ? "transition-opacity" : ""}`}
+            >
+              <Check className="w-3 h-3 text-primary-foreground" />
+            </button>
           ) : (
             <button
               onClick={(e) => {
                 e.stopPropagation()
                 onSelectClick()
               }}
-              className={`relative left-[-7px] h-4.5 w-4.5 transition-colors cursor-pointer flex items-center justify-center text-sidebar-accent rounded-full ml-0 border shadow-xs border-slate-300 ${
-                isSelected ? "bg-sky-950 border-primary hover:opacity-90" : "bg-transparent border-border"
-              } ${!isHovered && !isSelected ? "opacity-0" : "opacity-100"} ${showTransition ? "transition-opacity" : ""}`}
+              className={`relative left-[-7px] h-4.5 w-4.5 transition-colors cursor-pointer flex items-center justify-center rounded-sm ml-0 border shadow-xs border-slate-300 bg-transparent border-border ${
+                !isHovered ? "opacity-0" : "opacity-100"
+              } ${showTransition ? "transition-opacity" : ""}`}
             ></button>
           )}
         </div>

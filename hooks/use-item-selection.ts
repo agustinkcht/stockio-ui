@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo } from "react"
 import type { Item } from "@/lib/types"
 
 interface SelectionState {
-  [sku: string]: boolean
+  [id: string]: boolean
 }
 
 export function useItemSelection(items: Item[]) {
@@ -12,31 +12,36 @@ export function useItemSelection(items: Item[]) {
   const [selectedItems, setSelectedItems] = useState<SelectionState>({})
   const [expandedItems, setExpandedItems] = useState<{ [key: number]: boolean }>({})
 
-  // Get all SKUs including children (only selectable items - standalone and children)
-  const getAllSelectableSkus = useCallback((itemList: Item[]): string[] => {
-    const skus: string[] = []
+  // Resolve the stable identifier for any item — always prefer id
+  const getItemId = useCallback((item: any): string | undefined => {
+    return item.id || item.sku
+  }, [])
+
+  // Get all selectable IDs (children IDs for parents, own ID for standalone)
+  const getAllSelectableIds = useCallback((itemList: Item[]): string[] => {
+    const ids: string[] = []
     for (const item of itemList) {
       const isParent = (item.variants && item.variants.length > 0) || (item.items && item.items.length > 0) || item.hasVariants || item.isAgrupador
       if (isParent) {
-        // Only add children SKUs for parent items
         const children = item.variants || item.items || []
         for (const child of children) {
-          if (child.sku) {
-            skus.push(child.sku)
-          }
+          const id = (child as any).id || (child as any).sku
+          if (id) ids.push(id)
         }
-      } else if (item.sku) {
-        // Add standalone item SKU
-        skus.push(item.sku)
+      } else {
+        const id = (item as any).id || item.sku
+        if (id) ids.push(id)
       }
     }
-    return skus
+    return ids
   }, [])
 
-  // Get children SKUs for a parent item
-  const getChildrenSkus = useCallback((item: Item): string[] => {
+  // Get children IDs for a parent item
+  const getChildrenIds = useCallback((item: Item): string[] => {
     const children = item.variants || item.items || []
-    return children.filter((child) => child.sku).map((child) => child.sku!)
+    return children
+      .map((child) => (child as any).id || (child as any).sku)
+      .filter(Boolean) as string[]
   }, [])
 
   // Check if item is a parent
@@ -50,128 +55,122 @@ export function useItemSelection(items: Item[]) {
   // Check if a parent has all children selected
   const areAllChildrenSelected = useCallback(
     (item: Item): boolean => {
-      const childrenSkus = getChildrenSkus(item)
-      if (childrenSkus.length === 0) return false
-      return childrenSkus.every((sku) => selectedItems[sku])
+      const childrenIds = getChildrenIds(item)
+      if (childrenIds.length === 0) return false
+      return childrenIds.every((id) => selectedItems[id])
     },
-    [selectedItems, getChildrenSkus]
+    [selectedItems, getChildrenIds]
   )
 
   // Check if a parent has some (but not all) children selected
   const areSomeChildrenSelected = useCallback(
     (item: Item): boolean => {
-      const childrenSkus = getChildrenSkus(item)
-      if (childrenSkus.length === 0) return false
-      const selectedCount = childrenSkus.filter((sku) => selectedItems[sku]).length
-      return selectedCount > 0 && selectedCount < childrenSkus.length
+      const childrenIds = getChildrenIds(item)
+      if (childrenIds.length === 0) return false
+      const selectedCount = childrenIds.filter((id) => selectedItems[id]).length
+      return selectedCount > 0 && selectedCount < childrenIds.length
     },
-    [selectedItems, getChildrenSkus]
+    [selectedItems, getChildrenIds]
   )
 
   // Handle selecting/deselecting a standalone item
-  const handleStandaloneSelection = useCallback((sku: string) => {
-    setSelectedItems((prev) => ({
-      ...prev,
-      [sku]: !prev[sku],
-    }))
+  const handleStandaloneSelection = useCallback((id: string) => {
+    setSelectedItems((prev) => ({ ...prev, [id]: !prev[id] }))
   }, [])
 
   // Handle selecting/deselecting a parent (selects/deselects all children)
+  // Dash (indeterminate) → deselect all; Empty → select all; Checked → deselect all
   const handleParentSelection = useCallback(
     (item: Item) => {
-      const childrenSkus = getChildrenSkus(item)
+      const childrenIds = getChildrenIds(item)
       const allSelected = areAllChildrenSelected(item)
-
+      const someSelected = areSomeChildrenSelected(item)
+      // If indeterminate (dash) or all selected (check) → deselect all; otherwise select all
+      const shouldSelect = !allSelected && !someSelected
       setSelectedItems((prev) => {
-        const newState = { ...prev }
-        for (const sku of childrenSkus) {
-          newState[sku] = !allSelected
-        }
-        return newState
+        const next = { ...prev }
+        for (const id of childrenIds) next[id] = shouldSelect
+        return next
       })
     },
-    [getChildrenSkus, areAllChildrenSelected]
+    [getChildrenIds, areAllChildrenSelected, areSomeChildrenSelected]
   )
 
   // Handle selecting/deselecting a child item
-  const handleChildSelection = useCallback((sku: string) => {
-    setSelectedItems((prev) => ({
-      ...prev,
-      [sku]: !prev[sku],
-    }))
+  const handleChildSelection = useCallback((id: string) => {
+    setSelectedItems((prev) => ({ ...prev, [id]: !prev[id] }))
   }, [])
 
   // Handle item selection based on type
   const handleItemSelection = useCallback(
     (item: Item, isChild: boolean = false) => {
-      if (isChild && item.sku) {
-        handleChildSelection(item.sku)
+      const id = getItemId(item)
+      if (isChild && id) {
+        handleChildSelection(id)
       } else if (isParentItem(item)) {
         handleParentSelection(item)
-      } else if (item.sku) {
-        handleStandaloneSelection(item.sku)
+      } else if (id) {
+        handleStandaloneSelection(id)
       }
     },
-    [isParentItem, handleParentSelection, handleChildSelection, handleStandaloneSelection]
+    [getItemId, isParentItem, handleParentSelection, handleChildSelection, handleStandaloneSelection]
   )
 
   // Get selection state for an item
   const getSelectionState = useCallback(
     (item: Item, isChild: boolean = false): { checked: boolean; indeterminate: boolean } => {
-      if (isChild && item.sku) {
-        return { checked: !!selectedItems[item.sku], indeterminate: false }
+      const id = getItemId(item)
+      if (isChild) {
+        return { checked: id ? !!selectedItems[id] : false, indeterminate: false }
       }
-
       if (isParentItem(item)) {
-        const allSelected = areAllChildrenSelected(item)
-        const someSelected = areSomeChildrenSelected(item)
-        return { checked: allSelected, indeterminate: someSelected }
+        return {
+          checked: areAllChildrenSelected(item),
+          indeterminate: areSomeChildrenSelected(item),
+        }
       }
-
-      return { checked: !!selectedItems[item.sku!], indeterminate: false }
+      return { checked: id ? !!selectedItems[id] : false, indeterminate: false }
     },
-    [selectedItems, isParentItem, areAllChildrenSelected, areSomeChildrenSelected]
+    [getItemId, selectedItems, isParentItem, areAllChildrenSelected, areSomeChildrenSelected]
   )
 
   // Select all / deselect all
   const selectAllActive = useMemo(() => {
-    const allSkus = getAllSelectableSkus(items)
-    if (allSkus.length === 0) return false
-    return allSkus.every((sku) => selectedItems[sku])
-  }, [items, selectedItems, getAllSelectableSkus])
+    const allIds = getAllSelectableIds(items)
+    if (allIds.length === 0) return false
+    return allIds.every((id) => selectedItems[id])
+  }, [items, selectedItems, getAllSelectableIds])
 
   const somethingSelected = useMemo(() => {
-    const allSkus = getAllSelectableSkus(items)
-    return allSkus.some((sku) => selectedItems[sku])
-  }, [items, selectedItems, getAllSelectableSkus])
+    const allIds = getAllSelectableIds(items)
+    return allIds.some((id) => selectedItems[id])
+  }, [items, selectedItems, getAllSelectableIds])
 
   const selectAllIndeterminate = useMemo(() => {
     return somethingSelected && !selectAllActive
   }, [somethingSelected, selectAllActive])
 
   const handleSelectAll = useCallback(() => {
-    const allSkus = getAllSelectableSkus(items)
-    const shouldSelect = !selectAllActive
-
+    const allIds = getAllSelectableIds(items)
+    // If indeterminate (dash) or all selected (check) → deselect all; otherwise select all
+    const shouldSelect = !selectAllActive && !selectAllIndeterminate
     setSelectedItems((prev) => {
-      const newState = { ...prev }
-      for (const sku of allSkus) {
-        newState[sku] = shouldSelect
-      }
-      return newState
+      const next = { ...prev }
+      for (const id of allIds) next[id] = shouldSelect
+      return next
     })
-  }, [items, selectAllActive, getAllSelectableSkus])
+  }, [items, selectAllActive, selectAllIndeterminate, getAllSelectableIds])
 
   // Get count of selected items
   const selectedCount = useMemo(() => {
     return Object.values(selectedItems).filter(Boolean).length
   }, [selectedItems])
 
-  // Get array of selected SKUs
+  // Get array of selected IDs
   const getSelectedSkus = useCallback((): string[] => {
     return Object.entries(selectedItems)
       .filter(([, isSelected]) => isSelected)
-      .map(([sku]) => sku)
+      .map(([id]) => id)
   }, [selectedItems])
 
   // Clear all selections
