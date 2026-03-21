@@ -63,7 +63,7 @@ export function PriceGrid({
   const orderRef = useRef<HTMLDivElement>(null)
   const filterRef = useRef<HTMLDivElement>(null)
   const accionRef = useRef<HTMLDivElement>(null)
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
 
   const [showOrderModal, setShowOrderModal] = useState(false)
   const [bulkModalType, setBulkModalType] = useState<BulkModalType>(null)
@@ -94,20 +94,21 @@ export function PriceGrid({
 
   // Get all visible SKUs (from sorted and filtered items)
   const getVisibleSkus = useCallback((itemList: Item[]): string[] => {
-    const skus: string[] = []
+    const ids: string[] = []
     for (const item of itemList) {
       const isParent = (item.variants && item.variants.length > 0) || (item.items && item.items.length > 0)
       if (isParent) {
         const children = item.variants || item.items || []
         for (const child of children) {
-          const id = (child as any).sku || (child as any).id || (child as any).skuSuffix
-          if (id) skus.push(id)
+          const id = (child as any).id || (child as any).sku
+          if (id) ids.push(id)
         }
-      } else if (item.sku) {
-        skus.push(item.sku)
+      } else {
+        const id = (item as any).id || item.sku
+        if (id) ids.push(id)
       }
     }
-    return skus
+    return ids
   }, [])
 
   // Get target SKUs for bulk edit (selected items take priority over visible items)
@@ -235,9 +236,10 @@ export function PriceGrid({
     const isParent = !isChild && ((item.variants && item.variants.length > 0) || (item.items && item.items.length > 0))
     const children = item.variants || item.items || []
     const isExpanded = expandedItems[index]
-    const isHovered = hoveredIndex === index
+    const itemId = (item as any).id || item.sku || `item-${index}`
+    const isHovered = hoveredId === itemId
 
-    const itemKey = item.sku || `item-${index}`
+    const itemKey = itemId
     const itemPricing = getItemPricing(item)
 
     const heightClass = gridSize === "sm" ? "h-[44px]" : gridSize === "md" ? "h-[60px]" : "h-[76px]"
@@ -250,8 +252,8 @@ export function PriceGrid({
           className={`grid grid-cols-[40px_4fr_2fr_1fr_1fr_2fr] gap-0 ${heightClass} items-center transition-colors border-b border-border/30 ${
             isHovered ? "bg-accent/50" : ""
           } ${isChild ? "bg-slate-50/50" : ""}`}
-          onMouseEnter={() => setHoveredIndex(index)}
-          onMouseLeave={() => setHoveredIndex(null)}
+          onMouseEnter={() => setHoveredId(itemId)}
+          onMouseLeave={() => setHoveredId(null)}
         >
           {/* Checkbox column */}
           <div className={`flex items-center justify-center h-full border-r border-border/30 ${isChild ? "pl-4" : ""}`}>

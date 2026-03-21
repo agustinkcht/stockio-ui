@@ -4,42 +4,41 @@ import { useState, useCallback, useMemo } from "react"
 import type { Item } from "@/lib/types"
 
 interface SelectionState {
-  [sku: string]: boolean
+  [id: string]: boolean
 }
 
 export function usePriceSelection(items: Item[]) {
   const [selectedItems, setSelectedItems] = useState<SelectionState>({})
 
-  // Resolve the effective identifier for an item (children may use id or skuSuffix instead of sku)
+  // Resolve the stable identifier for any item — always prefer id
   const getItemId = useCallback((item: any): string | undefined => {
-    return item.sku || item.id || item.skuSuffix
+    return item.id || item.sku
   }, [])
 
-  // Get all SKUs including children
-  const getAllSkus = useCallback((itemList: Item[]): string[] => {
-    const skus: string[] = []
+  // Get all selectable IDs (children IDs for parents, own ID for standalone)
+  const getAllIds = useCallback((itemList: Item[]): string[] => {
+    const ids: string[] = []
     for (const item of itemList) {
       const isParent = (item.variants && item.variants.length > 0) || (item.items && item.items.length > 0)
       if (isParent) {
-        // Only add children SKUs for parent items
         const children = item.variants || item.items || []
         for (const child of children) {
-          const id = child.sku || (child as any).id || (child as any).skuSuffix
-          if (id) skus.push(id)
+          const id = (child as any).id || (child as any).sku
+          if (id) ids.push(id)
         }
-      } else if (item.sku) {
-        // Add standalone item SKU
-        skus.push(item.sku)
+      } else {
+        const id = (item as any).id || item.sku
+        if (id) ids.push(id)
       }
     }
-    return skus
+    return ids
   }, [])
 
-  // Get children SKUs for a parent item
-  const getChildrenSkus = useCallback((item: Item): string[] => {
+  // Get children IDs for a parent item
+  const getChildrenIds = useCallback((item: Item): string[] => {
     const children = item.variants || item.items || []
     return children
-      .map((child) => child.sku || (child as any).id || (child as any).skuSuffix)
+      .map((child) => (child as any).id || (child as any).sku)
       .filter(Boolean) as string[]
   }, [])
 
@@ -51,55 +50,46 @@ export function usePriceSelection(items: Item[]) {
   // Check if a parent has all children selected
   const areAllChildrenSelected = useCallback(
     (item: Item): boolean => {
-      const childrenSkus = getChildrenSkus(item)
-      if (childrenSkus.length === 0) return false
-      return childrenSkus.every((sku) => selectedItems[sku])
+      const childrenIds = getChildrenIds(item)
+      if (childrenIds.length === 0) return false
+      return childrenIds.every((id) => selectedItems[id])
     },
-    [selectedItems, getChildrenSkus]
+    [selectedItems, getChildrenIds]
   )
 
   // Check if a parent has some (but not all) children selected
   const areSomeChildrenSelected = useCallback(
     (item: Item): boolean => {
-      const childrenSkus = getChildrenSkus(item)
-      if (childrenSkus.length === 0) return false
-      const selectedCount = childrenSkus.filter((sku) => selectedItems[sku]).length
-      return selectedCount > 0 && selectedCount < childrenSkus.length
+      const childrenIds = getChildrenIds(item)
+      if (childrenIds.length === 0) return false
+      const selectedCount = childrenIds.filter((id) => selectedItems[id]).length
+      return selectedCount > 0 && selectedCount < childrenIds.length
     },
-    [selectedItems, getChildrenSkus]
+    [selectedItems, getChildrenIds]
   )
 
   // Handle selecting/deselecting a standalone item
-  const handleStandaloneSelection = useCallback((sku: string) => {
-    setSelectedItems((prev) => ({
-      ...prev,
-      [sku]: !prev[sku],
-    }))
+  const handleStandaloneSelection = useCallback((id: string) => {
+    setSelectedItems((prev) => ({ ...prev, [id]: !prev[id] }))
   }, [])
 
   // Handle selecting/deselecting a parent (selects/deselects all children)
   const handleParentSelection = useCallback(
     (item: Item) => {
-      const childrenSkus = getChildrenSkus(item)
+      const childrenIds = getChildrenIds(item)
       const allSelected = areAllChildrenSelected(item)
-
       setSelectedItems((prev) => {
-        const newState = { ...prev }
-        for (const sku of childrenSkus) {
-          newState[sku] = !allSelected
-        }
-        return newState
+        const next = { ...prev }
+        for (const id of childrenIds) next[id] = !allSelected
+        return next
       })
     },
-    [getChildrenSkus, areAllChildrenSelected]
+    [getChildrenIds, areAllChildrenSelected]
   )
 
   // Handle selecting/deselecting a child item
   const handleChildSelection = useCallback((id: string) => {
-    setSelectedItems((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }))
+    setSelectedItems((prev) => ({ ...prev, [id]: !prev[id] }))
   }, [])
 
   // Handle item click based on type
@@ -121,60 +111,56 @@ export function usePriceSelection(items: Item[]) {
   const getSelectionState = useCallback(
     (item: Item, isChild: boolean = false): { checked: boolean; indeterminate: boolean } => {
       const id = getItemId(item)
-      if (isChild && id) {
-        return { checked: !!selectedItems[id], indeterminate: false }
+      if (isChild) {
+        return { checked: id ? !!selectedItems[id] : false, indeterminate: false }
       }
-
       if (isParentItem(item)) {
-        const allSelected = areAllChildrenSelected(item)
-        const someSelected = areSomeChildrenSelected(item)
-        return { checked: allSelected, indeterminate: someSelected }
+        return {
+          checked: areAllChildrenSelected(item),
+          indeterminate: areSomeChildrenSelected(item),
+        }
       }
-
-      return { checked: !!selectedItems[id!], indeterminate: false }
+      return { checked: id ? !!selectedItems[id] : false, indeterminate: false }
     },
     [getItemId, selectedItems, isParentItem, areAllChildrenSelected, areSomeChildrenSelected]
   )
 
   // Select all / deselect all
   const selectAllActive = useMemo(() => {
-    const allSkus = getAllSkus(items)
-    if (allSkus.length === 0) return false
-    return allSkus.every((sku) => selectedItems[sku])
-  }, [items, selectedItems, getAllSkus])
+    const allIds = getAllIds(items)
+    if (allIds.length === 0) return false
+    return allIds.every((id) => selectedItems[id])
+  }, [items, selectedItems, getAllIds])
 
   const somethingSelected = useMemo(() => {
-    const allSkus = getAllSkus(items)
-    return allSkus.some((sku) => selectedItems[sku])
-  }, [items, selectedItems, getAllSkus])
+    const allIds = getAllIds(items)
+    return allIds.some((id) => selectedItems[id])
+  }, [items, selectedItems, getAllIds])
 
   const selectAllIndeterminate = useMemo(() => {
     return somethingSelected && !selectAllActive
   }, [somethingSelected, selectAllActive])
 
   const handleSelectAll = useCallback(() => {
-    const allSkus = getAllSkus(items)
+    const allIds = getAllIds(items)
     const shouldSelect = !selectAllActive
-
     setSelectedItems((prev) => {
-      const newState = { ...prev }
-      for (const sku of allSkus) {
-        newState[sku] = shouldSelect
-      }
-      return newState
+      const next = { ...prev }
+      for (const id of allIds) next[id] = shouldSelect
+      return next
     })
-  }, [items, selectAllActive, getAllSkus])
+  }, [items, selectAllActive, getAllIds])
 
   // Get count of selected items
   const selectedCount = useMemo(() => {
     return Object.values(selectedItems).filter(Boolean).length
   }, [selectedItems])
 
-  // Get array of selected SKUs
+  // Get array of selected IDs
   const getSelectedSkus = useCallback((): string[] => {
     return Object.entries(selectedItems)
       .filter(([, isSelected]) => isSelected)
-      .map(([sku]) => sku)
+      .map(([id]) => id)
   }, [selectedItems])
 
   // Clear all selections
