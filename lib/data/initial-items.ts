@@ -34,6 +34,7 @@ export const INITIAL_ITEMS: Item[] = [
       // --- MALBEC ---
       {
         id: "VAR4ZP8X2L",
+        isActive: true,
         name: "Proemio Grand Reserve",
         skuSuffix: "MALB-2012",
         codigoUniversal: "7798123400013",
@@ -53,6 +54,7 @@ export const INITIAL_ITEMS: Item[] = [
       },
       {
         id: "VARM6R1T9W",
+        isActive: true,
         name: "Proemio Grand Reserve",
         skuSuffix: "MALB-2019",
         codigoUniversal: "7798123400020",
@@ -74,6 +76,7 @@ export const INITIAL_ITEMS: Item[] = [
       // --- CABERNET SAUVIGNON ---
       {
         id: "VARQ2J8F7K",
+        isActive: true,
         name: "Proemio Grand Reserve",
         skuSuffix: "CABS-2012",
         codigoUniversal: "7798123400037",
@@ -93,6 +96,7 @@ export const INITIAL_ITEMS: Item[] = [
       },
       {
         id: "VAR9VY4C3N",
+        isActive: true,
         name: "Proemio Grand Reserve",
         skuSuffix: "CABS-2019",
         codigoUniversal: "7798123400044",
@@ -114,6 +118,7 @@ export const INITIAL_ITEMS: Item[] = [
       // --- SYRAH GARNACHA ---
       {
         id: "VARX8L2B7R",
+        isActive: true,
         name: "Proemio Grand Reserve",
         skuSuffix: "SYGA-2012",
         codigoUniversal: "7798123400051",
@@ -133,6 +138,7 @@ export const INITIAL_ITEMS: Item[] = [
       },
       {
         id: "VARK5T9M2Z",
+        isActive: true,
         name: "Proemio Grand Reserve",
         skuSuffix: "SYGA-2019",
         codigoUniversal: "7798123400068",
@@ -182,6 +188,7 @@ export const INITIAL_ITEMS: Item[] = [
       // --- malbec ---
       {
         id: "VARF2W9C6Y",
+        isActive: true,
         name: "DV Catena",
         skuSuffix: "MALB",
         codigoUniversal: "7799002000214",
@@ -202,6 +209,7 @@ export const INITIAL_ITEMS: Item[] = [
       // --- 2022 ---
       {
         id: "VART8R3J4L",
+        isActive: true,
         name: "DV Catena",
         skuSuffix: "CABS",
         codigoUniversal: "7799002000221",
@@ -223,6 +231,7 @@ export const INITIAL_ITEMS: Item[] = [
 
   {
     id: "STAP7K1Z9M",
+    isActive: true,
     name: "Chañarmuyo 5 Hileras Blend",
     categoria: "Vinos",
     hasVariants: false,
@@ -251,6 +260,7 @@ export const INITIAL_ITEMS: Item[] = [
   },
   {
     id: "STA6B2XQ4V",
+    isActive: true,
     name: "Domiciano Gran Reserva Blend",
     categoria: "Vinos",
     hasVariants: false,
@@ -312,6 +322,7 @@ export const INITIAL_ITEMS: Item[] = [
       // Blend (Malbec - Syrah)
       {
         id: "VARW4M7C2K",
+        isActive: true,
         name: "Domiciano Estelar",
         skuSuffix: "BLND",
         codigoUniversal: "7799002000042",
@@ -334,6 +345,7 @@ export const INITIAL_ITEMS: Item[] = [
       // Malbec
       {
         id: "VARY8Q1N5X",
+        isActive: true,
         name: "Domiciano Estelar",
         skuSuffix: "MALB",
         codigoUniversal: "7799002000059",
@@ -355,6 +367,7 @@ export const INITIAL_ITEMS: Item[] = [
       // Blanco Dulce
       {
         id: "VAR2T6P9R3",
+        isActive: true,
         name: "Domiciano Estelar",
         skuSuffix: "BLDL",
         codigoUniversal: "7799002000066",
@@ -376,6 +389,7 @@ export const INITIAL_ITEMS: Item[] = [
       // Chardonnay
       {
         id: "VARC7V4M8L",
+        isActive: true,
         name: "Domiciano Estelar",
         skuSuffix: "CHRD",
         codigoUniversal: "7799002000080",
@@ -397,6 +411,7 @@ export const INITIAL_ITEMS: Item[] = [
   },
   {
     id: "STAJ3X2Q9F",
+    isActive: true,
     name: "Domiciano Estelar Brut Nature",
     categoria: "Espumantes",
     hasVariants: false,
@@ -435,6 +450,7 @@ export const INITIAL_ITEMS: Item[] = [
   },
   {
     id: "STA8K5W1T7",
+    isActive: true,
     name: "Domiciano Mistela",
     categoria: "Licores",
     hasVariants: false,
@@ -505,6 +521,7 @@ export const INITIAL_ITEMS: Item[] = [
     variants: [
       {
         id: "VARZ4M8C1Q",
+        isActive: true,
         name: "Salentein",
         skuSuffix: "EXBR",
         codigoUniversal: "7798123401027",
@@ -524,6 +541,7 @@ export const INITIAL_ITEMS: Item[] = [
       },
       {
         id: "VAR5Y3T7X2",
+        isActive: true,
         name: "Salentein",
         skuSuffix: "BRNA",
         codigoUniversal: "7798123401034",
@@ -543,6 +561,7 @@ export const INITIAL_ITEMS: Item[] = [
       },
       {
         id: "VARV9K6P4W",
+        isActive: true,
         name: "Salentein",
         skuSuffix: "BRRO",
         codigoUniversal: "7798123401041",
@@ -564,6 +583,7 @@ export const INITIAL_ITEMS: Item[] = [
   },
   {
     id: "STAL1R8M2F",
+    isActive: true,
     name: "Navarro Correas Extra Brut",
     categoria: "Espumantes",
     hasVariants: false,
@@ -598,6 +618,7 @@ export const INITIAL_ITEMS: Item[] = [
   },
   {
     id: "STA7Q3Z5N9",
+    isActive: true,
     name: "Bombay Sapphire",
     categoria: "Gin",
     hasVariants: false,
@@ -624,6 +645,7 @@ export const INITIAL_ITEMS: Item[] = [
 
   {
     id: "STAX2C8T4L",
+    isActive: true,
     name: "Myrica Botánicos",
     categoria: "Gin",
     hasVariants: false,
@@ -678,6 +700,7 @@ export const INITIAL_ITEMS: Item[] = [
     variants: [
       {
         id: "VAR4K7F2W8",
+        isActive: true,
         name: "Restinga",
         skuSuffix: "ORIG",
         codigoUniversal: "7798123456789",
@@ -690,6 +713,7 @@ export const INITIAL_ITEMS: Item[] = [
       },
       {
         id: "VART1Z9Q5C",
+        isActive: true,
         name: "Restinga",
         skuSuffix: "OTON",
         codigoUniversal: "7798123456796",
@@ -702,6 +726,7 @@ export const INITIAL_ITEMS: Item[] = [
       },
       {
         id: "VARP8N3L7M",
+        isActive: true,
         name: "Restinga",
         skuSuffix: "FLAV",
         codigoUniversal: "7798123456802",
@@ -720,6 +745,7 @@ export const INITIAL_ITEMS: Item[] = [
   // =====================
   {
     id: "STAR6X2K9V",
+    isActive: true,
     name: "Aconcagua Original",
     categoria: "Gin",
     hasVariants: false,
@@ -771,6 +797,7 @@ export const INITIAL_ITEMS: Item[] = [
     variants: [
       {
         id: "VARW7M5C2Z",
+        isActive: true,
         name: "Absolut",
         skuSuffix: "ORIG",
         codigoUniversal: "7312040017014",
@@ -784,6 +811,7 @@ export const INITIAL_ITEMS: Item[] = [
       },
       {
         id: "VAR9L1P6R3",
+        isActive: true,
         name: "Absolut",
         skuSuffix: "RASP",
         codigoUniversal: "7312040030754",
@@ -797,6 +825,7 @@ export const INITIAL_ITEMS: Item[] = [
       },
       {
         id: "VARK8Q2X4N",
+        isActive: true,
         name: "Absolut",
         skuSuffix: "PEAR",
         codigoUniversal: "7312040030778",
@@ -810,6 +839,7 @@ export const INITIAL_ITEMS: Item[] = [
       },
       {
         id: "VAR2Y7M9T5",
+        isActive: true,
         name: "Absolut",
         skuSuffix: "VANI",
         codigoUniversal: "7312040030761",
@@ -825,6 +855,7 @@ export const INITIAL_ITEMS: Item[] = [
   },
   {
     id: "STAC4R8P1L",
+    isActive: true,
     name: "Cîroc Original",
     categoria: "Vodka",
     hasVariants: false,
@@ -851,6 +882,7 @@ export const INITIAL_ITEMS: Item[] = [
   // --- RON: MALIBU (STANDALONE) ---
   {
     id: "STAF9K3W6Q",
+    isActive: true,
     name: "Malibu",
     categoria: "Ron",
     hasVariants: false,
@@ -882,6 +914,7 @@ export const INITIAL_ITEMS: Item[] = [
   // --- TEQUILA: PATRÓN SILVER (STANDALONE) ---
   {
     id: "STAT2X7M8V",
+    isActive: true,
     name: "Patrón Silver",
     categoria: "Tequila",
     hasVariants: false,
@@ -938,6 +971,7 @@ export const INITIAL_ITEMS: Item[] = [
     variants: [
       {
         id: "VAR6R3L9P7",
+        isActive: true,
         name: "Johnnie Walker 750 ml",
         skuSuffix: "RED",
         codigoUniversal: "5000267011011",
@@ -955,6 +989,7 @@ export const INITIAL_ITEMS: Item[] = [
       },
       {
         id: "VARZ8T2K5M",
+        isActive: true,
         name: "Johnnie Walker 750 ml",
         skuSuffix: "BLACK",
         codigoUniversal: "5000267024233",
@@ -972,6 +1007,7 @@ export const INITIAL_ITEMS: Item[] = [
       },
       {
         id: "VAR1W4F7Q9",
+        isActive: true,
         name: "Johnnie Walker 750 ml",
         skuSuffix: "DBLK",
         codigoUniversal: "5000267092843",
@@ -989,6 +1025,7 @@ export const INITIAL_ITEMS: Item[] = [
       },
       {
         id: "VARP3M8X2C",
+        isActive: true,
         name: "Johnnie Walker 750 ml",
         skuSuffix: "BLUE",
         codigoUniversal: "5000267014012",
@@ -1009,6 +1046,7 @@ export const INITIAL_ITEMS: Item[] = [
 
   {
     id: "STAR7N6T1L",
+    isActive: true,
     name: "Jack Daniel’s Old No.7",
     categoria: "Whiskies",
     hasVariants: false,
@@ -1039,6 +1077,7 @@ export const INITIAL_ITEMS: Item[] = [
 
   {
     id: "STA4Q9K5Y2",
+    isActive: true,
     name: "Jameson Original",
     categoria: "Whiskies",
     hasVariants: false,
@@ -1070,6 +1109,7 @@ export const INITIAL_ITEMS: Item[] = [
 
   {
     id: "STAM2L7F8R",
+    isActive: true,
     name: "Jameson Black Barrel",
     categoria: "Whiskies",
     hasVariants: false,
@@ -1101,6 +1141,7 @@ export const INITIAL_ITEMS: Item[] = [
   //LICORES
   {
     id: "STA8C1P4T6",
+    isActive: true,
     name: "Jägermeister 700 ml",
     categoria: "Licores",
     hasVariants: false,
@@ -1130,6 +1171,7 @@ export const INITIAL_ITEMS: Item[] = [
   },
   {
     id: "STAX5Z9Q3N",
+    isActive: true,
     name: "Sheridan's Original",
     categoria: "Licores",
     hasVariants: false,
@@ -1161,6 +1203,7 @@ export const INITIAL_ITEMS: Item[] = [
   // FIREBALL
   {
     id: "STAK7R2M8W",
+    isActive: true,
     name: "Fireball 750 ml",
     categoria: "Licores",
     hasVariants: false,
@@ -1190,6 +1233,7 @@ export const INITIAL_ITEMS: Item[] = [
   // COINTREAU
   {
     id: "STA3T6P1F9",
+    isActive: true,
     name: "Cointreau 700 ml",
     categoria: "Licores",
     hasVariants: false,
