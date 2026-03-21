@@ -31,7 +31,13 @@ export default function CatalogoPage() {
   const [showSaveSuccess, setShowSaveSuccess] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<Item | null>(null)
   const [showBatchDeleteModal, setShowBatchDeleteModal] = useState(false)
+  const [statusMessage, setStatusMessage] = useState<{ text: string; type: "success" | "info" } | null>(null)
   const { currentAccount } = useAccount()
+
+  const showStatusMessage = (text: string, type: "success" | "info" = "success") => {
+    setStatusMessage({ text, type })
+    setTimeout(() => setStatusMessage(null), 3000)
+  }
 
   const {
     items,
@@ -435,6 +441,13 @@ export default function CatalogoPage() {
                   </div>
                 )}
 
+                {statusMessage && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md animate-in fade-in slide-in-from-right-2 duration-300">
+                    <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    <span className="text-sm text-green-700 font-medium">{statusMessage.text}</span>
+                  </div>
+                )}
+
                 {/* Deshacer/Guardar buttons - appear when there are unsaved changes */}
                 {hasChanges && !isSaving && !showSaveSuccess && (
                   <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2 duration-300">
@@ -487,8 +500,16 @@ export default function CatalogoPage() {
                     getSelectedSkus={getSelectedSkus}
                     hideAuditButton={true}
                     showPrecioColumn={true}
-                    onPauseItems={(ids) => updateItemsActiveStatus(ids, false)}
-                    onReactivateItems={(ids) => updateItemsActiveStatus(ids, true)}
+                    onPauseItems={(ids) => {
+                        updateItemsActiveStatus(ids, false)
+                        clearSelection()
+                        showStatusMessage(`${ids.length} ${ids.length === 1 ? "item pausado" : "items pausados"}`)
+                      }}
+                    onReactivateItems={(ids) => {
+                        updateItemsActiveStatus(ids, true)
+                        clearSelection()
+                        showStatusMessage(`${ids.length} ${ids.length === 1 ? "item reactivado" : "items reactivados"}`)
+                      }}
                   />
                 </div>
               </div>
