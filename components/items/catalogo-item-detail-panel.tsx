@@ -364,10 +364,6 @@ export function CatalogoItemDetailPanel({
   }>({})
 
   const previousVariantsRef = useRef<string | null>(null)
-  
-  // Ref to track the latest variants in save format (with atributosPrincipales)
-  // This solves the stale selectedItem?.variants issue when making rapid edits
-  const latestVariantsRef = useRef<any[]>([])
 
   // State for variant input
   const [varianteInput, setVarianteInput] = useState<Record<number, string>>({})
@@ -495,9 +491,6 @@ export function CatalogoItemDetailPanel({
     // Reset variantItems from selectedItem.variants when selectedItem changes (covers Deshacer restoring state)
     if (selectedItem?.variants && selectedItem.variants.length > 0) {
       setVariantItems(convertSavedVariantsToDisplay(selectedItem.variants))
-      latestVariantsRef.current = selectedItem.variants
-    } else {
-      latestVariantsRef.current = []
     }
     // Ensure unitsPorPack and volume state are also synced if they are part of selectedItem
     setUnidadesPorPack(() => {
@@ -836,15 +829,11 @@ export function CatalogoItemDetailPanel({
       })),
     }
 
-    // Add the new variant to the existing variants array - use ref for latest state
-    console.log("[v0] handleNuevaVariante - ref length:", latestVariantsRef.current.length, "prop length:", (selectedItem?.variants || []).length)
-    const existingVariants = latestVariantsRef.current.length > 0 ? latestVariantsRef.current : (selectedItem?.variants || [])
+    // Add the new variant to the existing variants array
+    const existingVariants = selectedItem?.variants || []
     const updatedVariants = [...existingVariants, newVariant]
 
     console.log("[v0] Updated variants array:", updatedVariants)
-
-    // Update ref immediately for subsequent operations
-    latestVariantsRef.current = updatedVariants
 
     // Update display
     setVariantItems(convertSavedVariantsToDisplay(updatedVariants))
@@ -863,9 +852,7 @@ export function CatalogoItemDetailPanel({
       return
     }
 
-    // Use ref for latest state
-    console.log("[v0] handleGenerarVariantes - ref length:", latestVariantsRef.current.length, "prop length:", (selectedItem.variants || []).length)
-    const existingVariants = latestVariantsRef.current.length > 0 ? latestVariantsRef.current : (selectedItem.variants || [])
+    const existingVariants = selectedItem.variants || []
     console.log("[v0] Existing variants:", existingVariants)
 
     // Count how many atributos principales we currently have
@@ -917,9 +904,6 @@ export function CatalogoItemDetailPanel({
 
     // Combine valid existing variants + new ones
     const updatedVariants = [...validExistingVariants, ...newVariantObjects]
-
-    // Update ref immediately
-    latestVariantsRef.current = updatedVariants
 
     // Update variantItems for display
     setVariantItems(convertSavedVariantsToDisplay(updatedVariants))
@@ -2006,28 +1990,30 @@ export function CatalogoItemDetailPanel({
 
                                       <div className="flex flex-wrap gap-2">
                                         {attr.variantes.map((variante, vIndex) => {
-                                          // Use variantItems (local state) instead of selectedItem?.variants for immediate updates
+                                          const existingVariants = selectedItem?.variants || []
                                           const otherAttrIndex = index === 0 ? 1 : 0
                                           const otherAttr = containerAtributosPrincipales[otherAttrIndex]
                                           let isComplete = true
-                                          if (variantItems.length > 0 && otherAttr && otherAttr.key && otherAttr.variantes.length > 0) {
-                                            // Two-attribute case: check all combinations
+                                          if (existingVariants.length > 0 && otherAttr && otherAttr.variantes.length > 0) {
                                             for (const otherValue of otherAttr.variantes) {
-                                              const hasCombination = variantItems.some((v) => {
+                                              const hasCombination = existingVariants.some((v: any) => {
+                                                if (!v.atributosPrincipales) return false
+                                                const attr1Val = v.atributosPrincipales[0]?.value
+                                                const attr2Val = v.atributosPrincipales[1]?.value
                                                 if (index === 0) {
-                                                  return v.variant1 === variante && v.variant2 === otherValue
+                                                  return attr1Val === variante && attr2Val === otherValue
                                                 } else {
-                                                  return v.variant1 === otherValue && v.variant2 === variante
+                                                  return attr1Val === otherValue && attr2Val === variante
                                                 }
                                               })
                                               if (!hasCombination) { isComplete = false; break }
                                             }
-                                          } else if (variantItems.length > 0 && (!otherAttr || !otherAttr.key || otherAttr.variantes.length === 0)) {
-                                            // Single-attribute case: just check if this value exists
-                                            isComplete = variantItems.some((v) => {
-                                              return index === 0 ? v.variant1 === variante : v.variant2 === variante
+                                          } else if (existingVariants.length > 0 && containerAtributosPrincipales.length === 1) {
+                                            isComplete = existingVariants.some((v: any) => {
+                                              if (!v.atributosPrincipales) return false
+                                              return v.atributosPrincipales[0]?.value === variante
                                             })
-                                          } else if (variantItems.length === 0) {
+                                          } else if (existingVariants.length === 0) {
                                             isComplete = false
                                           }
                                           return (
@@ -2043,14 +2029,11 @@ export function CatalogoItemDetailPanel({
                                                 onClick={() => {
                                                   const updated = [...containerAtributosPrincipales]
                                                   updated[index].variantes = updated[index].variantes.filter((_, i) => i !== vIndex)
-                                                  // Use ref for latest variants state
-                                                  const currentVars = latestVariantsRef.current.length > 0 ? latestVariantsRef.current : (selectedItem?.variants || [])
-                                                  const updatedVariants = currentVars.filter((v: any) => {
+                                                  const updatedVariants = (selectedItem?.variants || []).filter((v: any) => {
                                                     if (!v.atributosPrincipales) return true
                                                     if (index === 0) return v.atributosPrincipales[0]?.value !== variante
                                                     else return v.atributosPrincipales[1]?.value !== variante
                                                   })
-                                                  latestVariantsRef.current = updatedVariants
                                                   setContainerAtributosPrincipales(updated)
                                                   setVariantItems(convertSavedVariantsToDisplay(updatedVariants))
                                                   if (onFieldChange && selectedItem.sku) {
@@ -2284,12 +2267,9 @@ export function CatalogoItemDetailPanel({
                                       setVariantItems((prev) =>
                                         prev.map((v) => v.id === variant.id ? { ...v, skuSuffix: newSuffix } : v)
                                       )
-                                      // Use ref for latest variants state
-                                      const currentVars = latestVariantsRef.current.length > 0 ? latestVariantsRef.current : (selectedItem?.variants || [])
-                                      const updatedVariants = currentVars.map((ov: any) =>
+                                      const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
                                         ov.id === variant.id ? { ...ov, skuSuffix: newSuffix } : ov
                                       )
-                                      latestVariantsRef.current = updatedVariants
                                       onFieldChange(selectedItem.id, "variants", updatedVariants)
                                     }}
                                     className="flex-1 min-w-0 bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-primary/50 px-0 py-0.5 text-[11px] font-mono text-foreground focus:outline-none transition-colors"
@@ -2305,12 +2285,9 @@ export function CatalogoItemDetailPanel({
                                   value={sourceVariant?.codigoUniversal || ""}
                                   onChange={(e) => {
                                     const newCodigo = e.target.value
-                                    // Use ref for latest variants state
-                                    const currentVars = latestVariantsRef.current.length > 0 ? latestVariantsRef.current : (selectedItem?.variants || [])
-                                    const updatedVariants = currentVars.map((ov: any) =>
+                                    const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
                                       ov.id === variant.id ? { ...ov, codigoUniversal: newCodigo } : ov
                                     )
-                                    latestVariantsRef.current = updatedVariants
                                     onFieldChange(selectedItem.id, "variants", updatedVariants)
                                   }}
                                   className="w-full bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-primary/50 px-0 py-0.5 text-[11px] font-mono text-foreground focus:outline-none transition-colors"
@@ -2497,28 +2474,30 @@ export function CatalogoItemDetailPanel({
 
                                         <div className="flex flex-wrap gap-2">
                                           {attr.variantes.map((variante, vIndex) => {
-                                            // Use variantItems (local state) for immediate updates
+                                            const existingVariants = selectedItem?.variants || []
                                             const otherAttrIndex = index === 0 ? 1 : 0
                                             const otherAttr = containerAtributosPrincipales[otherAttrIndex]
                                             let isComplete = true
-                                            if (variantItems.length > 0 && otherAttr && otherAttr.key && otherAttr.variantes.length > 0) {
-                                              // Two-attribute case: check all combinations
+                                            if (existingVariants.length > 0 && otherAttr && otherAttr.variantes.length > 0) {
                                               for (const otherValue of otherAttr.variantes) {
-                                                const hasCombination = variantItems.some((v) => {
+                                                const hasCombination = existingVariants.some((v: any) => {
+                                                  if (!v.atributosPrincipales) return false
+                                                  const attr1Val = v.atributosPrincipales[0]?.value
+                                                  const attr2Val = v.atributosPrincipales[1]?.value
                                                   if (index === 0) {
-                                                    return v.variant1 === variante && v.variant2 === otherValue
+                                                    return attr1Val === variante && attr2Val === otherValue
                                                   } else {
-                                                    return v.variant1 === otherValue && v.variant2 === variante
+                                                    return attr1Val === otherValue && attr2Val === variante
                                                   }
                                                 })
                                                 if (!hasCombination) { isComplete = false; break }
                                               }
-                                            } else if (variantItems.length > 0 && (!otherAttr || !otherAttr.key || otherAttr.variantes.length === 0)) {
-                                              // Single-attribute case: just check if value exists
-                                              isComplete = variantItems.some((v) => {
-                                                return index === 0 ? v.variant1 === variante : v.variant2 === variante
+                                            } else if (existingVariants.length > 0 && containerAtributosPrincipales.length === 1) {
+                                              isComplete = existingVariants.some((v: any) => {
+                                                if (!v.atributosPrincipales) return false
+                                                return v.atributosPrincipales[0]?.value === variante
                                               })
-                                            } else if (variantItems.length === 0) {
+                                            } else if (existingVariants.length === 0) {
                                               isComplete = false
                                             }
                                             return (
@@ -2534,14 +2513,11 @@ export function CatalogoItemDetailPanel({
                                                   onClick={() => {
                                                     const updated = [...containerAtributosPrincipales]
                                                     updated[index].variantes = updated[index].variantes.filter((_, i) => i !== vIndex)
-                                                    // Use ref for latest variants state
-                                                    const currentVars = latestVariantsRef.current.length > 0 ? latestVariantsRef.current : (selectedItem?.variants || [])
-                                                    const updatedVariants = currentVars.filter((v: any) => {
+                                                    const updatedVariants = (selectedItem?.variants || []).filter((v: any) => {
                                                       if (!v.atributosPrincipales) return true
                                                       if (index === 0) return v.atributosPrincipales[0]?.value !== variante
                                                       else return v.atributosPrincipales[1]?.value !== variante
                                                     })
-                                                    latestVariantsRef.current = updatedVariants
                                                     setContainerAtributosPrincipales(updated)
                                                     setVariantItems(convertSavedVariantsToDisplay(updatedVariants))
                                                     if (onFieldChange && selectedItem.sku) {
@@ -2712,16 +2688,13 @@ export function CatalogoItemDetailPanel({
                                 const handleDeleteVariant = () => {
                                   const attr1Value = variant.variant1
                                   const attr2Value = variant.variant2
-                                  // Use ref for latest variants state
-                                  const currentVars = latestVariantsRef.current.length > 0 ? latestVariantsRef.current : (selectedItem.variants || [])
-                                  const updatedVariants = currentVars.filter((v: any) => {
+                                  const updatedVariants = (selectedItem.variants || []).filter((v: any) => {
                                     if (!v.atributosPrincipales) return true
                                     const variantAttr1 = v.atributosPrincipales[0]?.value
                                     const variantAttr2 = v.atributosPrincipales[1]?.value
                                     if (!attr2Value) return variantAttr1 !== attr1Value
                                     return !(variantAttr1 === attr1Value && variantAttr2 === attr2Value)
                                   })
-                                  latestVariantsRef.current = updatedVariants
                                   const updatedContainerAttrs = containerAtributosPrincipales.map((attr, attrIndex) => {
                                     const otherAttrIndex = attrIndex === 0 ? 1 : 0
                                     const otherAttr = containerAtributosPrincipales[otherAttrIndex]
@@ -2802,12 +2775,9 @@ export function CatalogoItemDetailPanel({
                                             setVariantItems((prev) =>
                                               prev.map((v) => v.id === variant.id ? { ...v, skuSuffix: newSuffix } : v)
                                             )
-                                            // Use ref for latest variants state
-                                            const currentVars = latestVariantsRef.current.length > 0 ? latestVariantsRef.current : (selectedItem?.variants || [])
-                                            const updatedVariants = currentVars.map((ov: any) =>
+                                            const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
                                               ov.id === variant.id ? { ...ov, skuSuffix: newSuffix } : ov
                                             )
-                                            latestVariantsRef.current = updatedVariants
                                             onFieldChange(selectedItem.id, "variants", updatedVariants)
                                           }}
                                           className="flex-1 min-w-0 bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-primary/50 px-0 py-0.5 text-[11px] font-mono text-foreground focus:outline-none transition-colors"
@@ -3470,12 +3440,9 @@ export function CatalogoItemDetailPanel({
               <button
                 onClick={() => {
                   if (expandedMatrixPrecioModal.variant?.id) {
-                    // Use ref for latest variants state
-                    const currentVars = latestVariantsRef.current.length > 0 ? latestVariantsRef.current : (selectedItem?.variants || [])
-                    const updatedVariants = currentVars.map((ov: any) =>
+                    const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
                       ov.id === expandedMatrixPrecioModal.variant.id ? { ...ov, precio: expandedMatrixPrecioValues } : ov
                     )
-                    latestVariantsRef.current = updatedVariants
                     onFieldChange(selectedItem.id, "variants", updatedVariants)
                   }
                   setExpandedMatrixPrecioModal({ open: false, variant: null })
@@ -3625,12 +3592,9 @@ export function CatalogoItemDetailPanel({
                       reservado: expandedMatrixStockValues.reservado,
                       disponible: expandedMatrixStockValues.total - expandedMatrixStockValues.reservado,
                     }
-                    // Use ref for latest variants state
-                    const currentVars = latestVariantsRef.current.length > 0 ? latestVariantsRef.current : (selectedItem?.variants || [])
-                    const updatedVariants = currentVars.map((ov: any) =>
+                    const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
                       ov.id === expandedMatrixStockModal.variant.id ? { ...ov, stock: newStock } : ov
                     )
-                    latestVariantsRef.current = updatedVariants
                     onFieldChange(selectedItem.id, "variants", updatedVariants)
                   }
                   setExpandedMatrixStockModal({ open: false, variant: null })
@@ -3669,12 +3633,9 @@ export function CatalogoItemDetailPanel({
               <button
                 onClick={() => {
                   if (expandedMatrixDescModal.variant?.id) {
-                    // Use ref for latest variants state
-                    const currentVars = latestVariantsRef.current.length > 0 ? latestVariantsRef.current : (selectedItem?.variants || [])
-                    const updatedVariants = currentVars.map((ov: any) =>
+                    const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
                       ov.id === expandedMatrixDescModal.variant.id ? { ...ov, descripcion: expandedMatrixDescModal.value } : ov
                     )
-                    latestVariantsRef.current = updatedVariants
                     onFieldChange(selectedItem.id, "variants", updatedVariants)
                   }
                   setExpandedMatrixDescModal({ open: false, variant: null, value: "" })
@@ -3743,12 +3704,10 @@ export function CatalogoItemDetailPanel({
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
-                      // Use ref for latest variants state
-                      const currentVars = latestVariantsRef.current.length > 0 ? latestVariantsRef.current : (selectedItem?.variants || [])
-                      const updatedVariants = currentVars.map((ov: any) =>
+                      // Remove the image
+                      const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
                         ov.id === expandedMatrixMediaModal.variant.id ? { ...ov, imagenUrl: null } : ov
                       )
-                      latestVariantsRef.current = updatedVariants
                       onFieldChange(selectedItem.id, "variants", updatedVariants)
                       setExpandedMatrixMediaModal({ open: false, variant: null })
                     }}
