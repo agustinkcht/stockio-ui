@@ -1319,12 +1319,58 @@ export function CatalogoItemDetailPanel({
                             {/* Estado row */}
                             <div className="flex items-center gap-2">
                               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Estado</span>
-                              <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${selectedItem?.isActive !== false
-                                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-400/30"
-                                : "bg-amber-500/20 text-amber-300 border border-amber-400/30"
-                                }`}>
-                                {selectedItem?.isActive !== false ? "Activo" : "Pausado"}
-                              </span>
+                              <div className="relative group/estado">
+                                <button
+                                  className={`text-sm font-medium px-2 py-0.5 rounded-full cursor-pointer transition-all flex items-center gap-1 ${
+                                    selectedItem?.isActive !== false
+                                      ? "bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 hover:bg-emerald-500/30"
+                                      : "bg-amber-500/20 text-amber-300 border border-amber-400/30 hover:bg-amber-500/30"
+                                  }`}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    const el = e.currentTarget.parentElement?.querySelector("[data-estado-dropdown]") as HTMLElement
+                                    if (el) el.style.display = el.style.display === "none" || !el.style.display ? "flex" : "none"
+                                  }}
+                                >
+                                  {selectedItem?.isActive !== false ? "Activo" : "Pausado"}
+                                  <ChevronDown className="w-3 h-3 opacity-60" />
+                                </button>
+                                <div
+                                  data-estado-dropdown
+                                  style={{ display: "none" }}
+                                  className="absolute top-full left-0 mt-1 z-50 flex-col min-w-[110px] bg-slate-800 border border-slate-600 rounded-lg shadow-xl overflow-hidden"
+                                  onMouseLeave={(e) => {
+                                    (e.currentTarget as HTMLElement).style.display = "none"
+                                  }}
+                                >
+                                  {[
+                                    { label: "Activo", value: true },
+                                    { label: "Pausado", value: false },
+                                  ].map(({ label, value }) => {
+                                    const isCurrent = (selectedItem?.isActive !== false) === value
+                                    return (
+                                      <button
+                                        key={label}
+                                        className={`flex items-center justify-between gap-2 px-3 py-2 text-sm text-left transition-colors w-full ${
+                                          isCurrent
+                                            ? "bg-slate-700 text-white font-medium cursor-default"
+                                            : "text-slate-300 hover:bg-slate-700/60 cursor-pointer"
+                                        }`}
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          if (!isCurrent && selectedItem) {
+                                            updateItem(selectedItem.sku, { isActive: value })
+                                          }
+                                          ;(e.currentTarget.parentElement as HTMLElement).style.display = "none"
+                                        }}
+                                      >
+                                        {label}
+                                        {isCurrent && <Check className="w-3 h-3 text-emerald-400 flex-shrink-0" />}
+                                      </button>
+                                    )
+                                  })}
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </>
