@@ -2,7 +2,7 @@
 
 import type { Item, DepositStock, SortFactorConfig, FilterConfig } from "@/lib/types"
 import { ItemCard } from "./item-card"
-import { Plus, ArrowUpDown, ListFilterIcon, Search, X, Grid, Minus, ClipboardList, Check, MoreVertical } from "lucide-react"
+import { Plus, ArrowUpDown, ListFilterIcon, Search, X, Grid, Minus, ClipboardList, Check, MoreVertical, Pause, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRef, useState, useEffect, useMemo, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -52,6 +52,9 @@ interface ItemsGridProps {
   hideAuditButton?: boolean
   // Show precio column instead of atributos
   showPrecioColumn?: boolean
+  // Pause/Reactivate items
+  onPauseItems?: (itemIds: string[]) => void
+  onReactivateItems?: (itemIds: string[]) => void
 }
 
 export function ItemsGrid({
@@ -86,6 +89,8 @@ export function ItemsGrid({
   hideCreadorMasivoButton = false,
   hideAuditButton = false,
   showPrecioColumn = false,
+  onPauseItems,
+  onReactivateItems,
 }: ItemsGridProps) {
   const router = useRouter()
   const crearNuevoRef = useRef<HTMLDivElement>(null)
@@ -479,27 +484,56 @@ export function ItemsGrid({
                 )}
 
                 {hasSelectedItems && (
-                  <Button
-                    onClick={onBatchDelete}
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 text-xs transition-colors border shadow-sm bg-red-50 hover:bg-red-100 border-red-200 text-red-700 cursor-pointer ml-2"
-                  >
-                    Eliminar
-                  </Button>
+                  <>
+                    <Button
+                      onClick={() => {
+                        if (onPauseItems && getSelectedSkus) {
+                          onPauseItems(getSelectedSkus())
+                        }
+                      }}
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 text-xs transition-colors border shadow-sm bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-700 cursor-pointer ml-2"
+                    >
+                      <Pause className="w-3 h-3 mr-1" />
+                      Pausar
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        if (onReactivateItems && getSelectedSkus) {
+                          onReactivateItems(getSelectedSkus())
+                        }
+                      }}
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 text-xs transition-colors border shadow-sm bg-emerald-50 hover:bg-emerald-100 border-emerald-200 text-emerald-700 cursor-pointer ml-2"
+                    >
+                      <Play className="w-3 h-3 mr-1" />
+                      Reactivar
+                    </Button>
+                    <Button
+                      onClick={onBatchDelete}
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 text-xs transition-colors border shadow-sm bg-red-50 hover:bg-red-100 border-red-200 text-red-700 cursor-pointer ml-2"
+                    >
+                      Eliminar
+                    </Button>
+                  </>
                 )}
               </div>
 
-              {/* Center: Search Bar */}
-              <div className="flex items-center justify-center flex-1">
-                <div className="relative mx-2 transition-all duration-300">
+              {/* Right: Search Bar + Ordenar and Filtro Buttons */}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {/* Search Bar */}
+                <div className="relative transition-all duration-300">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black opacity-100 w-3.5 h-3.5 z-10" />
                   <input
                     type="text"
                     placeholder="Buscar artículos..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-96 h-8 pl-9 pr-9 border shadow-sm rounded-md text-xs placeholder:text-gray-600 text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 bg-white backdrop-blur-sm transition-all duration-300 border-[rgba(202,213,227,0.842391304347826)]"
+                    className="w-64 h-8 pl-9 pr-9 border shadow-sm rounded-md text-xs placeholder:text-gray-600 text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 bg-white backdrop-blur-sm transition-all duration-300 border-[rgba(202,213,227,0.842391304347826)]"
                   />
                   {searchQuery && (
                     <button
@@ -511,10 +545,6 @@ export function ItemsGrid({
                     </button>
                   )}
                 </div>
-              </div>
-
-              {/* Right: Ordenar and Filtro Buttons */}
-              <div className="flex items-center gap-0 flex-shrink-0">
                 <div className="relative mr-3" ref={orderRef}>
                   <button
                     onClick={() => setShowOrderModal(true)}

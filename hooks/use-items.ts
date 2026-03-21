@@ -1168,6 +1168,44 @@ export function useItems() {
     return newItems
   }
 
+  // Update isActive status for multiple items by their IDs
+  const updateItemsActiveStatus = (itemIds: string[], isActive: boolean) => {
+    const updatedItems = items.map((item) => {
+      // Check if this item (standalone) matches
+      if (itemIds.includes(item.id || item.sku || "")) {
+        return { ...item, isActive }
+      }
+      
+      // Check if any variants/children match
+      if (item.variants && item.variants.length > 0) {
+        const updatedVariants = item.variants.map((variant) => {
+          if (itemIds.includes((variant as any).id || variant.sku || "")) {
+            return { ...variant, isActive }
+          }
+          return variant
+        })
+        return { ...item, variants: updatedVariants }
+      }
+      
+      if (item.items && item.items.length > 0) {
+        const updatedChildren = item.items.map((child) => {
+          if (itemIds.includes((child as any).id || (child as any).sku || "")) {
+            return { ...child, isActive }
+          }
+          return child
+        })
+        return { ...item, items: updatedChildren }
+      }
+      
+      return item
+    })
+    
+    // Persist to localStorage
+    localStorage.setItem(getStorageKey(), JSON.stringify(updatedItems))
+    setItems(updatedItems)
+    console.log(`[v0] updateItemsActiveStatus - Updated ${itemIds.length} items to isActive=${isActive}`)
+  }
+
   return {
     items,
     setItems,
@@ -1178,6 +1216,7 @@ export function useItems() {
     bulkCreateItems,
     bulkCreateItemsConVariantes,
     updateItem,
+    updateItemsActiveStatus,
     isLoading,
     deleteItem,
     undoDelete,

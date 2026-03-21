@@ -52,6 +52,7 @@ export default function CatalogoPage() {
     saveEdit,
     cancelEdit,
     hasUnsavedEdits,
+    updateItemsActiveStatus,
   } = useItems()
 
   const {
@@ -486,6 +487,8 @@ export default function CatalogoPage() {
                     getSelectedSkus={getSelectedSkus}
                     hideAuditButton={true}
                     showPrecioColumn={true}
+                    onPauseItems={(ids) => updateItemsActiveStatus(ids, false)}
+                    onReactivateItems={(ids) => updateItemsActiveStatus(ids, true)}
                   />
                 </div>
               </div>

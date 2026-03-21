@@ -126,6 +126,19 @@ export function ItemCard({
   const currentStockDisponible = currentStockTotal - currentStockReservado
   const hasAuditChange = auditStockValues && item.sku in auditStockValues
 
+  // Compute if item is active
+  // - For standalone/children: use item.isActive directly (defaults to true if undefined)
+  // - For parents: active if at least one child is active
+  const isItemActive = useMemo(() => {
+    if (item.hasVariants && item.variants && item.variants.length > 0) {
+      return item.variants.some((v) => (v as any).isActive !== false)
+    }
+    if (item.isAgrupador && item.items && item.items.length > 0) {
+      return item.items.some((i) => (i as any).isActive !== false)
+    }
+    return item.isActive !== false
+  }, [item])
+
   // Modal state for inline grid editing (precio and stock)
   const [isPrecioModalOpen, setIsPrecioModalOpen] = useState(false)
   const [isStockModalOpen, setIsStockModalOpen] = useState(false)
@@ -349,8 +362,8 @@ export function ItemCard({
                       : "bg-white"
                 } border border-border transition-colors ${item.isAgrupador || item.hasVariants ? "cursor-pointer" : ""} overflow-hidden`
               : item.isAgrupador || item.hasVariants
-                ? `grid-cols-44 ${isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors cursor-pointer overflow-hidden`
-                : `grid-cols-44 ${isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors overflow-hidden`
+                ? `grid-cols-44 ${!isItemActive ? "bg-slate-100/80 opacity-60" : isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors cursor-pointer overflow-hidden`
+                : `grid-cols-44 ${!isItemActive ? "bg-slate-100/80 opacity-60" : isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors overflow-hidden`
           }`}
           onClick={(e) => {
             if (item.hasVariants || item.isAgrupador) {
