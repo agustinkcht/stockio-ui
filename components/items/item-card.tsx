@@ -361,17 +361,21 @@ export function ItemCard({
           {isAuditMode ? (
             // AUDIT MODE LAYOUT
             item.isAgrupador || item.hasVariants ? (
-              // Parent items in audit mode - show item info + chevron (same as normal mode)
+              // Parent items in audit mode - chevron on left instead of thumbnail
               <>
-                {/* Item cell - col-span-16, container icon */}
+                {/* Item cell - col-span-16, chevron on left */}
                 <div
                   className={`col-span-16 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors border-r border-slate-100`}
-                  onClick={(e) => { e.stopPropagation(); onItemClick(item) }}
+                  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
                 >
-                  <div className="w-8 h-8 flex-shrink-0 rounded-md bg-slate-100 flex items-center justify-center">
-                    <Layers className="w-4 h-4 text-slate-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
+                  {/* Chevron instead of thumbnail */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+                    className="flex-shrink-0 flex items-center justify-center size-8 rounded-md hover:bg-slate-100 transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+                  >
+                    {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                  </button>
+                  <div className="flex-1 min-w-0" onClick={(e) => { e.stopPropagation(); onItemClick(item) }}>
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-foreground font-medium truncate">{item.name}</span>
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground whitespace-nowrap">
@@ -386,7 +390,7 @@ export function ItemCard({
 
                 {/* Categoría cell */}
                 <div
-                  className="col-span-10 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+                  className="col-span-8 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
                   onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
                 >
                   <span className="text-sm text-foreground">{item.categoria || "-"}</span>
@@ -394,22 +398,23 @@ export function ItemCard({
 
                 {/* Precio Final cell - empty for parent */}
                 <div
-                  className="col-span-10 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+                  className="col-span-8 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
                   onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
                 >
                 </div>
 
-                {/* Stock Disponible cell - empty with chevron at right edge */}
+                {/* Stock Disponible cell - empty for parent */}
                 <div
-                  className="col-span-8 h-full flex items-center justify-end px-4 cursor-pointer"
+                  className="col-span-8 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
                   onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
                 >
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
-                    className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer p-1"
-                  >
-                    {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  </button>
+                </div>
+
+                {/* Estado - empty for parent */}
+                <div
+                  className="col-span-4 h-full flex items-center justify-center px-2 cursor-pointer"
+                  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+                >
                 </div>
               </>
             ) : (
@@ -596,21 +601,24 @@ export function ItemCard({
           ) : item.isAgrupador || item.hasVariants ? (
             // NORMAL MODE: Parent items
             <>
-              {/* Item cell - col-span-16, no thumbnail, container icon instead */}
+              {/* Item cell - col-span-16, chevron on left instead of thumbnail */}
               <div
                 className={`col-span-16 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors border-r border-slate-100`}
                 onClick={(e) => {
                   e.stopPropagation()
-                  onItemClick(item)
+                  onToggleExpansion(index)
                 }}
               >
-                {/* Container icon instead of thumbnail */}
-                <div className="flex-shrink-0 rounded-md flex items-center justify-center size-12 bg-transparent">
-                  <Layers className="size-4 text-blue-900" />
-                </div>
+                {/* Chevron instead of thumbnail */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+                  className="flex-shrink-0 flex items-center justify-center size-8 rounded-md hover:bg-slate-100 transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+                >
+                  {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                </button>
 
                 {/* Product Info */}
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0" onClick={(e) => { e.stopPropagation(); onItemClick(item) }}>
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-container-item-foreground font-medium truncate">
                       {item.name}
@@ -625,33 +633,34 @@ export function ItemCard({
                 </div>
               </div>
 
-  {/* Categoría cell */}
-  <div
-  className="col-span-10 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
-  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
-  >
-    <span className="text-sm text-foreground">{item.categoria || "-"}</span>
-  </div>
+              {/* Categoría cell */}
+              <div
+                className="col-span-8 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+                onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+              >
+                <span className="text-sm text-foreground">{item.categoria || "-"}</span>
+              </div>
 
-  {/* Precio Final - blank for parent */}
-  <div
-  className="col-span-10 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
-  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
-  >
-  </div>
+              {/* Precio Final - blank for parent */}
+              <div
+                className="col-span-8 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+                onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+              >
+              </div>
 
-  {/* Stock Disponible - blank for parent, chevron at right edge */}
-  <div
-  className="col-span-8 h-full flex items-center justify-end px-4 cursor-pointer"
-  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
-  >
-    <button
-      onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
-      className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer p-1"
-    >
-      {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-    </button>
-  </div>
+              {/* Stock Disponible - blank for parent */}
+              <div
+                className="col-span-8 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+                onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+              >
+              </div>
+
+              {/* Estado - blank for parent */}
+              <div
+                className="col-span-4 h-full flex items-center justify-center px-2 cursor-pointer"
+                onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+              >
+              </div>
             </>
           ) : (
             // NORMAL MODE: Standalone/child items
@@ -723,14 +732,14 @@ export function ItemCard({
                 <>
                   {/* Categoría cell */}
                   <div
-                    className="col-span-10 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100"
+                    className="col-span-8 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100"
                     onClick={(e) => { e.stopPropagation(); onItemClick(item) }}
                   >
                     <span className="text-sm text-foreground truncate w-full text-center">{item.categoria || "-"}</span>
                   </div>
                   {/* Precio Final cell - clickable to open precio modal */}
                   <div
-                    className="col-span-10 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100 hover:bg-slate-50 group/precio"
+                    className="col-span-8 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100 hover:bg-slate-50 group/precio"
                     onClick={(e) => {
                       e.stopPropagation()
                       setPrecioModalValues({
@@ -786,16 +795,16 @@ export function ItemCard({
               )}
 
               {item.hasVariants ? (
-                <div className="col-span-8 h-full flex items-center justify-center px-4">
+                <div className="col-span-8 h-full flex items-center justify-center px-4 border-r border-slate-100">
                   <span className="text-sm text-container-item-foreground/80">{variantCount} var.</span>
                 </div>
               ) : item.isAgrupador ? (
-                <div className="col-span-8 h-full flex items-center justify-center px-4">
+                <div className="col-span-8 h-full flex items-center justify-center px-4 border-r border-slate-100">
                   <span className="text-sm text-container-item-foreground/80">{itemCount} items</span>
                 </div>
               ) : (
                 <div
-                  className="col-span-8 h-full flex items-center justify-center px-4 cursor-pointer transition-colors hover:bg-slate-50 group/stock"
+                  className="col-span-8 h-full flex items-center justify-center px-4 cursor-pointer transition-colors hover:bg-slate-50 group/stock border-r border-slate-100"
                   onClick={(e) => {
                     e.stopPropagation()
                     setActiveStockEdit("total")
@@ -814,6 +823,20 @@ export function ItemCard({
                   </span>
                 </div>
               )}
+
+              {/* Estado column */}
+              <div
+                className="col-span-4 h-full flex items-center justify-center px-2"
+                onClick={(e) => { e.stopPropagation(); onItemClick(item) }}
+              >
+                <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
+                  item.isActive !== false
+                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                    : "bg-amber-50 text-amber-700 border border-amber-200"
+                }`}>
+                  {item.isActive !== false ? "Activo" : "Pausado"}
+                </span>
+              </div>
             </>
           )}
         </div>
