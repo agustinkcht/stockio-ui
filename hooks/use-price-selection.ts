@@ -74,17 +74,21 @@ export function usePriceSelection(items: Item[]) {
   }, [])
 
   // Handle selecting/deselecting a parent (selects/deselects all children)
+  // Dash (indeterminate) → deselect all; Empty → select all; Checked → deselect all
   const handleParentSelection = useCallback(
     (item: Item) => {
       const childrenIds = getChildrenIds(item)
       const allSelected = areAllChildrenSelected(item)
+      const someSelected = areSomeChildrenSelected(item)
+      // If indeterminate (dash) or all selected (check) → deselect all; otherwise select all
+      const shouldSelect = !allSelected && !someSelected
       setSelectedItems((prev) => {
         const next = { ...prev }
-        for (const id of childrenIds) next[id] = !allSelected
+        for (const id of childrenIds) next[id] = shouldSelect
         return next
       })
     },
-    [getChildrenIds, areAllChildrenSelected]
+    [getChildrenIds, areAllChildrenSelected, areSomeChildrenSelected]
   )
 
   // Handle selecting/deselecting a child item
@@ -143,13 +147,14 @@ export function usePriceSelection(items: Item[]) {
 
   const handleSelectAll = useCallback(() => {
     const allIds = getAllIds(items)
-    const shouldSelect = !selectAllActive
+    // If indeterminate (dash) or all selected (check) → deselect all; otherwise select all
+    const shouldSelect = !selectAllActive && !selectAllIndeterminate
     setSelectedItems((prev) => {
       const next = { ...prev }
       for (const id of allIds) next[id] = shouldSelect
       return next
     })
-  }, [items, selectAllActive, getAllIds])
+  }, [items, selectAllActive, selectAllIndeterminate, getAllIds])
 
   // Get count of selected items
   const selectedCount = useMemo(() => {
