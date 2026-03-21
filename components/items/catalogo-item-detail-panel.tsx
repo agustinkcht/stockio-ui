@@ -1093,7 +1093,7 @@ export function CatalogoItemDetailPanel({
                   style={{
                     transformStyle: "preserve-3d",
                     transform: isCardFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
-                    minHeight: "520px",
+                    minHeight: "630px",
                   }}
                 >
                   {/* FRONT SIDE */}
@@ -1319,11 +1319,10 @@ export function CatalogoItemDetailPanel({
                             {/* Estado row */}
                             <div className="flex items-center gap-2">
                               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Estado</span>
-                              <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${
-                                selectedItem?.isActive !== false
-                                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-400/30"
-                                  : "bg-amber-500/20 text-amber-300 border border-amber-400/30"
-                              }`}>
+                              <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${selectedItem?.isActive !== false
+                                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-400/30"
+                                : "bg-amber-500/20 text-amber-300 border border-amber-400/30"
+                                }`}>
                                 {selectedItem?.isActive !== false ? "Activo" : "Pausado"}
                               </span>
                             </div>
@@ -2345,13 +2344,12 @@ export function CatalogoItemDetailPanel({
                                   setExpandedMatrixStockModal({ open: true, variant: { ...variant, sourceVariant } })
                                 }}
                               >
-                                <span className={`text-sm font-medium tabular-nums group-hover/stock:text-blue-600 transition-colors ${
-                                  (sourceVariant?.stock?.disponible ?? 0) > 0
-                                    ? "text-foreground"
-                                    : (sourceVariant?.stock?.disponible ?? 0) < 0
-                                      ? "text-red-500"
-                                      : "text-muted-foreground"
-                                }`}>
+                                <span className={`text-sm font-medium tabular-nums group-hover/stock:text-blue-600 transition-colors ${(sourceVariant?.stock?.disponible ?? 0) > 0
+                                  ? "text-foreground"
+                                  : (sourceVariant?.stock?.disponible ?? 0) < 0
+                                    ? "text-red-500"
+                                    : "text-muted-foreground"
+                                  }`}>
                                   {sourceVariant?.stock?.disponible ?? 0}
                                 </span>
                               </div>
