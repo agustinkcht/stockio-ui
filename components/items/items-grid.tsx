@@ -2,7 +2,7 @@
 
 import type { Item, DepositStock, SortFactorConfig, FilterConfig } from "@/lib/types"
 import { ItemCard } from "./item-card"
-import { Plus, ArrowUpDown, ListFilterIcon, Search, X, Grid, Minus, ClipboardList, Check, MoreVertical, Pause, Play } from "lucide-react"
+import { Plus, ArrowUpDown, ListFilterIcon, Search, X, Grid, Minus, ClipboardList, Check, MoreVertical, Pause, Play, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRef, useState, useEffect, useMemo, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -389,16 +389,26 @@ export function ItemsGrid({
             <div className="flex items-center justify-between border-b border-gray-200 border-none pl-0 pr-0 pb-0">
               <div className="flex items-center gap-2 border-0 border-none ml-1.5 mr-0 flex-shrink-0">
                 {!hideNuevoButton && (
-                  <div className="relative" ref={crearNuevoRef}>
+                  <>
                     <Button
-                      onClick={() => setShowCrearNuevoDropdown(!showCrearNuevoDropdown)}
+                      onClick={() => router.push("/catalogo/items/nuevo")}
                       variant="ghost"
                       size="sm"
                       className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer"
                     >
-                    <Plus className="w-3.5 h-3.5 mr-1.5 text-orange-600" />
-                      Nuevo
+                      <Plus className="w-3.5 h-3.5 mr-1.5 text-blue-600" />
+                      Crear Nuevo
                     </Button>
+                    <div className="relative" ref={crearNuevoRef}>
+                      <Button
+                        onClick={() => setShowCrearNuevoDropdown(!showCrearNuevoDropdown)}
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer"
+                      >
+                        <Zap className="w-3.5 h-3.5 mr-1.5 text-orange-600" />
+                        Creador Flash
+                      </Button>
                     {showCrearNuevoDropdown && (
                       <div className="absolute left-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-in fade-in-0 slide-in-from-top-2 duration-200">
                         <div className="p-1">
@@ -426,6 +436,7 @@ export function ItemsGrid({
                       </div>
                     )}
                   </div>
+                  </>
                 )}
 
                 {!hideCreadorMasivoButton && (
