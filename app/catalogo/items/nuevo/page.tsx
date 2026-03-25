@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useMemo, useRef } from "react"
+import { useState, useMemo, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { CheckCircle2, Package, Grid, Asterisk, Plus, X, Upload } from "lucide-react"
+import { CheckCircle2, Package, Grid, Asterisk, Plus, X, Upload, Sparkles } from "lucide-react"
 import { generateStandaloneSKU } from "@/lib/utils/sku-generator"
 import { getCategoryImage } from "@/lib/utils/category-images"
 
@@ -49,6 +49,7 @@ export default function NuevoItemPage() {
 
   // Step 2 form fields - Detalle del Item
   const [sku, setSku] = useState("")
+  const [skuUserModified, setSkuUserModified] = useState(false)
   const [codigoUniversal, setCodigoUniversal] = useState("")
   const [mediaPhotos, setMediaPhotos] = useState<string[]>([])
   const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<number | null>(null)
@@ -69,12 +70,12 @@ export default function NuevoItemPage() {
     })
   }, [titulo, categoria])
 
-  // Initialize SKU with suggested value when it changes and sku is empty
-  useMemo(() => {
-    if (suggestedSku && !sku) {
+  // Initialize SKU with suggested value when it changes and user hasn't modified it
+  useEffect(() => {
+    if (suggestedSku && !skuUserModified) {
       setSku(suggestedSku)
     }
-  }, [suggestedSku])
+  }, [suggestedSku, skuUserModified])
 
   const breadcrumbs = [
     { label: "Catalogo" },
@@ -514,17 +515,18 @@ export default function NuevoItemPage() {
                                 <input
                                   type="text"
                                   value={sku}
-                                  onChange={(e) => setSku(e.target.value.toUpperCase())}
+                                  onChange={(e) => {
+                                    setSku(e.target.value.toUpperCase())
+                                    setSkuUserModified(e.target.value.toUpperCase() !== suggestedSku)
+                                  }}
                                   className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 font-mono text-sm"
-                                  placeholder={suggestedSku || "Ej: VNO-PROICON-MALB"}
+                                  placeholder="Ej: VNO-PROICON-MALB"
                                 />
-                                {suggestedSku && sku !== suggestedSku && (
-                                  <button
-                                    onClick={() => setSku(suggestedSku)}
-                                    className="text-xs text-blue-500 hover:text-blue-600 text-left cursor-pointer"
-                                  >
-                                    Usar sugerido: {suggestedSku}
-                                  </button>
+                                {!skuUserModified && sku && (
+                                  <span className="flex items-center gap-1 text-[11px] text-violet-500/80">
+                                    <Sparkles className="w-3 h-3" />
+                                    generado automaticamente
+                                  </span>
                                 )}
                               </div>
 
