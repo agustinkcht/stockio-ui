@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, CheckCircle2, Package, Grid, AlertCircle } from "lucide-react"
+import { CheckCircle2, Package, Grid, Asterisk } from "lucide-react"
 
 import { Sidebar } from "@/components/layout/sidebar"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
@@ -62,14 +62,6 @@ export default function NuevoItemPage() {
           <div className="relative border-b border-border h-[44px] bg-white z-[100004]">
             <div className="px-4 flex items-center justify-between h-full">
               <div className="flex items-center gap-3">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => router.push("/catalogo/items")}
-                  className="h-8 px-2 cursor-pointer"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                </Button>
                 <Breadcrumb items={breadcrumbs} />
               </div>
 
@@ -86,7 +78,10 @@ export default function NuevoItemPage() {
           {/* Main Content */}
           <main className="flex-1 flex bg-[rgba(250,251,253,1)] overflow-auto">
             <div className="flex-1 flex flex-col items-center pt-12 px-8">
-              <div className="w-full max-w-xl">
+              <div className="w-full max-w-2xl">
+                {/* Page Title */}
+                <h1 className="text-xl font-semibold text-gray-900 mb-6">Crear Nuevo Item</h1>
+
                 {/* Title Section */}
                 <div className="mb-8">
                   <Label htmlFor="titulo" className="text-base font-semibold text-gray-800 mb-2 block">
@@ -112,14 +107,14 @@ export default function NuevoItemPage() {
                       {isTituloValid ? (
                         <CheckCircle2 className="w-7 h-7 text-green-500" />
                       ) : (
-                        <AlertCircle className="w-7 h-7 text-red-500 animate-pulse" />
+                        <Asterisk className="w-7 h-7 text-red-500 animate-pulse" />
                       )}
                     </div>
                   </div>
                 </div>
 
                 {/* Type Selection Label */}
-                <span className={`block text-sm font-medium mb-4 transition-all duration-200 ${!isTituloValid ? 'text-gray-300 blur-[1px] opacity-50' : 'text-gray-700'}`}>
+                <span className={`block text-sm font-medium mb-4 text-center transition-all duration-200 ${!isTituloValid ? 'text-gray-300 blur-[1px] opacity-50' : 'text-gray-700'}`}>
                   Selecciona el tipo de item
                 </span>
 
@@ -154,8 +149,8 @@ export default function NuevoItemPage() {
                     <span className={`text-base font-medium ${!isTituloValid ? 'text-gray-300' : selectedType === 'individual' ? 'text-blue-700' : 'text-gray-700'}`}>
                       Item Individual
                     </span>
-                    <span className={`text-xs mt-1 ${!isTituloValid ? 'text-gray-300' : 'text-gray-400'}`}>
-                      Un solo producto
+                    <span className={`text-xs mt-2 text-center px-2 ${!isTituloValid ? 'text-gray-300' : 'text-gray-400'}`}>
+                      Un producto unico sin variaciones de talle, color u otros atributos
                     </span>
                     {selectedType === 'individual' && isTituloValid && (
                       <div className="absolute top-3 right-3">
@@ -193,8 +188,8 @@ export default function NuevoItemPage() {
                     <span className={`text-base font-medium ${!isTituloValid ? 'text-gray-300' : selectedType === 'variantes' ? 'text-purple-700' : 'text-gray-700'}`}>
                       Item con Variantes
                     </span>
-                    <span className={`text-xs mt-1 ${!isTituloValid ? 'text-gray-300' : 'text-gray-400'}`}>
-                      Multiples variaciones
+                    <span className={`text-xs mt-2 text-center px-2 ${!isTituloValid ? 'text-gray-300' : 'text-gray-400'}`}>
+                      Un producto con multiples variaciones como talle, color, o material
                     </span>
                     {selectedType === 'variantes' && isTituloValid && (
                       <div className="absolute top-3 right-3">
