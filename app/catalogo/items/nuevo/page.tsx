@@ -56,6 +56,19 @@ export default function NuevoItemPage() {
   const [descripcion, setDescripcion] = useState("")
   const [editingDescripcion, setEditingDescripcion] = useState(false)
 
+  // Step 3 form fields - Información Comercial
+  const [costo, setCosto] = useState("")
+  const [margen, setMargen] = useState("")
+  const [iva, setIva] = useState("21")
+  const [stockInicial, setStockInicial] = useState("0")
+  const [stockReservado, setStockReservado] = useState("0")
+  const [proveedor, setProveedor] = useState("")
+  const [codigoProveedor, setCodigoProveedor] = useState("")
+
+  // Creation state
+  const [isCreating, setIsCreating] = useState(false)
+  const [createdItemSku, setCreatedItemSku] = useState<string | null>(null)
+
   // Validate title - must have actual content (not just spaces)
   const isTituloValid = useMemo(() => {
     return titulo.trim().length > 0
@@ -76,6 +89,24 @@ export default function NuevoItemPage() {
       setSku(suggestedSku)
     }
   }, [suggestedSku, skuUserModified])
+
+  // Calculate precio final
+  const precioFinal = useMemo(() => {
+    const costoNum = parseFloat(costo) || 0
+    const margenNum = parseFloat(margen) || 0
+    const ivaNum = parseFloat(iva) || 0
+    
+    const precioConMargen = costoNum * (1 + margenNum / 100)
+    const precioConIva = precioConMargen * (1 + ivaNum / 100)
+    return precioConIva
+  }, [costo, margen, iva])
+
+  // Calculate stock disponible
+  const stockDisponible = useMemo(() => {
+    const inicial = parseInt(stockInicial) || 0
+    const reservado = parseInt(stockReservado) || 0
+    return Math.max(0, inicial - reservado)
+  }, [stockInicial, stockReservado])
 
   const breadcrumbs = [
     { label: "Catalogo" },
@@ -673,7 +704,7 @@ export default function NuevoItemPage() {
                     )}
 
                     {/* Step 3: Información Comercial */}
-                    {currentStep === 3 && (
+                    {currentStep === 3 && !createdItemSku && (
                       <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
                         <div className="h-full flex flex-col py-2">
                           <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
@@ -683,8 +714,132 @@ export default function NuevoItemPage() {
                             Define precios y stock del item.
                           </p>
 
-                          <div className="flex-1 flex items-center justify-center text-gray-400 min-h-[200px]">
-                            Contenido del paso 3 (proximamente)
+                          <div className="space-y-6">
+                            {/* Precio Section */}
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-700 mb-4">Precio</h4>
+                              <div className="grid grid-cols-3 gap-4 mb-4">
+                                <div className="flex flex-col gap-2">
+                                  <label className="text-xs font-medium text-gray-600">Costo</label>
+                                  <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                                    <input
+                                      type="number"
+                                      value={costo}
+                                      onChange={(e) => setCosto(e.target.value)}
+                                      className="w-full pl-7 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
+                                      placeholder="0.00"
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="flex flex-col gap-2">
+                                  <label className="text-xs font-medium text-gray-600">Margen</label>
+                                  <div className="relative">
+                                    <input
+                                      type="number"
+                                      value={margen}
+                                      onChange={(e) => setMargen(e.target.value)}
+                                      className="w-full pl-3 pr-7 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
+                                      placeholder="0"
+                                    />
+                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
+                                  </div>
+                                </div>
+
+                                <div className="flex flex-col gap-2">
+                                  <label className="text-xs font-medium text-gray-600">IVA</label>
+                                  <div className="relative">
+                                    <input
+                                      type="number"
+                                      value={iva}
+                                      onChange={(e) => setIva(e.target.value)}
+                                      className="w-full pl-3 pr-7 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
+                                      placeholder="21"
+                                    />
+                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Precio Final */}
+                              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4">
+                                <span className="text-xs font-medium text-green-700 uppercase tracking-wider">Precio Final</span>
+                                <div className="mt-1 text-3xl font-bold text-green-700">
+                                  ${precioFinal.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="border-t border-gray-200 my-4"></div>
+
+                            {/* Stock Section */}
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-700 mb-4">Stock</h4>
+                              <div className="grid grid-cols-2 gap-4 mb-4">
+                                <div className="flex flex-col gap-2">
+                                  <label className="text-xs font-medium text-gray-600">Stock Inicial</label>
+                                  <input
+                                    type="number"
+                                    value={stockInicial}
+                                    onChange={(e) => setStockInicial(e.target.value)}
+                                    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
+                                    placeholder="0"
+                                    min="0"
+                                  />
+                                </div>
+
+                                <div className="flex flex-col gap-2">
+                                  <label className="text-xs font-medium text-gray-600">Stock Reservado</label>
+                                  <input
+                                    type="number"
+                                    value={stockReservado}
+                                    onChange={(e) => setStockReservado(e.target.value)}
+                                    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
+                                    placeholder="0"
+                                    min="0"
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Stock Disponible */}
+                              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4">
+                                <span className="text-xs font-medium text-blue-700 uppercase tracking-wider">Disponible</span>
+                                <div className="mt-1 text-3xl font-bold text-blue-700">
+                                  {stockDisponible}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="border-t border-gray-200 my-4"></div>
+
+                            {/* Información del Proveedor Section */}
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-700 mb-4">Información del Proveedor</h4>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="flex flex-col gap-2">
+                                  <label className="text-xs font-medium text-gray-600">Proveedor</label>
+                                  <input
+                                    type="text"
+                                    value={proveedor}
+                                    onChange={(e) => setProveedor(e.target.value)}
+                                    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
+                                    placeholder="Nombre del proveedor"
+                                  />
+                                </div>
+
+                                <div className="flex flex-col gap-2">
+                                  <label className="text-xs font-medium text-gray-600">Codigo Proveedor</label>
+                                  <input
+                                    type="text"
+                                    value={codigoProveedor}
+                                    onChange={(e) => setCodigoProveedor(e.target.value)}
+                                    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
+                                    placeholder="Codigo del proveedor"
+                                  />
+                                </div>
+                              </div>
+                            </div>
                           </div>
 
                           {/* Navigation buttons */}
@@ -696,33 +851,120 @@ export default function NuevoItemPage() {
                               Volver
                             </button>
                             <button
-                              onClick={() => {
-                                // TODO: Create item with all collected data
-                                console.log("Creating item with:", {
-                                  titulo,
-                                  tipo: "individual",
-                                  // Step 1 data
-                                  categoria,
-                                  marca,
-                                  formatoVenta,
-                                  unidadesPorPack,
-                                  volumenActive,
-                                  volumenCantidad,
-                                  volumenUnidad,
-                                  vencimientoActive,
-                                  fechaVencimiento,
-                                  atributosInformativos,
-                                  // Step 2 data
-                                  sku,
-                                  codigoUniversal,
-                                  mediaPhotos,
-                                  descripcion,
-                                })
-                                router.push("/catalogo/items")
+                              disabled={isCreating}
+                              onClick={async () => {
+                                setIsCreating(true)
+                                try {
+                                  const response = await fetch('/api/items', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                      sku,
+                                      name: titulo,
+                                      codigoUniversal: codigoUniversal || null,
+                                      marca: marca || null,
+                                      categoria: categoria || null,
+                                      formatoVenta: formatoVenta || null,
+                                      proveedor: proveedor || null,
+                                      codigoProveedor: codigoProveedor || null,
+                                      descripcion: descripcion || null,
+                                      foto: mediaPhotos[0] || null,
+                                      hasVariants: false,
+                                      isAgrupador: false,
+                                      variantCount: 0,
+                                      itemCount: 0,
+                                      volumenActive,
+                                      volumenCantidad: volumenCantidad ? parseFloat(volumenCantidad) : null,
+                                      volumenUnidad: volumenActive ? volumenUnidad : null,
+                                      unidadesPorPack: formatoVenta === 'pack' ? parseInt(unidadesPorPack) : null,
+                                      atributosInformativos,
+                                      precio: {
+                                        costo: parseFloat(costo) || 0,
+                                        margen: parseFloat(margen) || 0,
+                                        iva: parseFloat(iva) || 0,
+                                        precioFinal,
+                                      },
+                                      stockInicial: parseInt(stockInicial) || 0,
+                                      stockReservado: parseInt(stockReservado) || 0,
+                                    }),
+                                  })
+
+                                  if (response.ok) {
+                                    setCreatedItemSku(sku)
+                                  } else {
+                                    console.error('Failed to create item')
+                                    alert('Error al crear el item. Por favor intenta de nuevo.')
+                                  }
+                                } catch (error) {
+                                  console.error('Error creating item:', error)
+                                  alert('Error al crear el item. Por favor intenta de nuevo.')
+                                } finally {
+                                  setIsCreating(false)
+                                }
                               }}
-                              className="px-6 py-2.5 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors cursor-pointer"
+                              className="px-6 py-2.5 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              Crear Item
+                              {isCreating ? 'Creando...' : 'Crear Item'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Success View */}
+                    {currentStep === 3 && createdItemSku && (
+                      <div className="p-8 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
+                        <div className="flex flex-col items-center justify-center py-8">
+                          <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-6">
+                            <CheckCircle2 className="w-10 h-10 text-green-500" />
+                          </div>
+                          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Item Creado Exitosamente</h2>
+                          <p className="text-gray-500 mb-2">{titulo}</p>
+                          <p className="text-sm text-gray-400 font-mono mb-8">{createdItemSku}</p>
+
+                          <div className="flex gap-4">
+                            <button
+                              onClick={() => router.push(`/catalogo/items/${createdItemSku}`)}
+                              className="px-6 py-2.5 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
+                            >
+                              Ver Item
+                            </button>
+                            <button
+                              onClick={() => {
+                                // Reset all state for new item creation
+                                setTitulo("")
+                                setSelectedType(null)
+                                setCurrentStep(1)
+                                setSelectedDetailTab("info")
+                                setCategoria("")
+                                setMarca("")
+                                setFormatoVenta("unidad")
+                                setUnidadesPorPack("1")
+                                setVolumenActive(false)
+                                setVolumenCantidad("")
+                                setVolumenUnidad("ml")
+                                setVencimientoActive(false)
+                                setFechaVencimiento("")
+                                setShowAtributosView(false)
+                                setAtributosInformativos([])
+                                setSku("")
+                                setSkuUserModified(false)
+                                setCodigoUniversal("")
+                                setMediaPhotos([])
+                                setDescripcion("")
+                                setEditingDescripcion(false)
+                                setCosto("")
+                                setMargen("")
+                                setIva("21")
+                                setStockInicial("0")
+                                setStockReservado("0")
+                                setProveedor("")
+                                setCodigoProveedor("")
+                                setCreatedItemSku(null)
+                              }}
+                              className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors cursor-pointer"
+                            >
+                              Crear Otro Item
                             </button>
                           </div>
                         </div>
