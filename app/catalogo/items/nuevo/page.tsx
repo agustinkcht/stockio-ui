@@ -1,24 +1,44 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { CheckCircle2, Package, Grid, Asterisk } from "lucide-react"
 
 import { Sidebar } from "@/components/layout/sidebar"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { UserPanel } from "@/components/layout/user-panel"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 
 const MAX_TITLE_LENGTH = 60
 
+const STEPS = [
+  { id: 1, label: "Información del Item" },
+  { id: 2, label: "Detalle del Item" },
+  { id: 3, label: "Información Comercial" },
+]
+
 export default function NuevoItemPage() {
   const router = useRouter()
   const [titulo, setTitulo] = useState("")
   const [selectedType, setSelectedType] = useState<"individual" | "variantes" | null>(null)
   const [hoveredDropdown, setHoveredDropdown] = useState<string | null>(null)
+  const [currentStep, setCurrentStep] = useState(1)
+  
+  // Refs for scrolling
+  const stepsContainerRef = useRef<HTMLDivElement>(null)
+
+  // Step 1 form fields
+  const [categoria, setCategoria] = useState("")
+  const [marca, setMarca] = useState("")
+  const [formatoVenta, setFormatoVenta] = useState("unidad")
+  const [unidadesPorPack, setUnidadesPorPack] = useState("1")
+  const [volumenActive, setVolumenActive] = useState(false)
+  const [volumenCantidad, setVolumenCantidad] = useState("")
+  const [volumenUnidad, setVolumenUnidad] = useState("ml")
+  const [vencimientoActive, setVencimientoActive] = useState(false)
+  const [fechaVencimiento, setFechaVencimiento] = useState("")
 
   // Validate title - must have actual content (not just spaces)
   const isTituloValid = useMemo(() => {
@@ -41,6 +61,10 @@ export default function NuevoItemPage() {
   const handleTypeSelect = (type: "individual" | "variantes") => {
     if (isTituloValid) {
       setSelectedType(type)
+      // Scroll to steps section after a short delay for the state to update
+      setTimeout(() => {
+        stepsContainerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+      }, 100)
     }
   }
 
@@ -77,7 +101,7 @@ export default function NuevoItemPage() {
 
           {/* Main Content */}
           <main className="flex-1 flex bg-[rgba(250,251,253,1)] overflow-auto">
-            <div className="flex-1 flex flex-col items-center pt-12 px-8">
+            <div className="flex-1 flex flex-col items-center pt-12 px-8 pb-12">
               <div className="w-full max-w-2xl">
                 {/* Page Title */}
                 <h1 className="text-xl font-semibold text-gray-900 mb-6">Crear Nuevo Item</h1>
@@ -199,6 +223,324 @@ export default function NuevoItemPage() {
                   </button>
                 </div>
               </div>
+
+              {/* Steps Section - Only shown when Item Individual is selected */}
+              {selectedType === "individual" && (
+                <div ref={stepsContainerRef} className="w-full max-w-4xl mt-12 pt-8 border-t border-gray-200">
+                  <div className="grid grid-cols-20 gap-6">
+                    {/* Left Column - Steps Indicator (3 cols) */}
+                    <div className="col-span-3">
+                      <div className="sticky top-8">
+                        <div className="flex flex-col">
+                          {STEPS.map((step, index) => (
+                            <div key={step.id} className="flex items-start">
+                              {/* Vertical line and dot */}
+                              <div className="flex flex-col items-center mr-3">
+                                <div 
+                                  className={`w-3 h-3 rounded-full border-2 transition-all duration-300 ${
+                                    currentStep === step.id 
+                                      ? 'bg-blue-500 border-blue-500 shadow-md shadow-blue-200' 
+                                      : currentStep > step.id
+                                        ? 'bg-green-500 border-green-500'
+                                        : 'bg-white border-gray-300'
+                                  }`}
+                                />
+                                {index < STEPS.length - 1 && (
+                                  <div 
+                                    className={`w-0.5 h-16 transition-all duration-300 ${
+                                      currentStep > step.id ? 'bg-green-500' : 'bg-gray-200'
+                                    }`}
+                                  />
+                                )}
+                              </div>
+                              {/* Step label */}
+                              <div className="pb-16">
+                                <button
+                                  onClick={() => setCurrentStep(step.id)}
+                                  className={`text-left transition-all duration-200 cursor-pointer ${
+                                    currentStep === step.id 
+                                      ? 'text-blue-600 font-semibold' 
+                                      : currentStep > step.id
+                                        ? 'text-green-600 font-medium'
+                                        : 'text-gray-400 font-medium hover:text-gray-600'
+                                  }`}
+                                >
+                                  <span className="text-xs uppercase tracking-wider">{step.label}</span>
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Column - Step Content (17 cols) */}
+                    <div className="col-span-17">
+                      {/* Step 1: Información del Item */}
+                      {currentStep === 1 && (
+                        <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
+                          <div className="h-full flex flex-col py-2 overflow-y-auto">
+                            <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
+                              Información del Producto
+                            </h3>
+                            <p className="text-[11px] text-slate-400 mb-3 italic">
+                              Completa la información básica del item.
+                            </p>
+
+                            <div className="space-y-3">
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="flex flex-col gap-2">
+                                  <label className="text-sm font-medium text-gray-700">Categoría</label>
+                                  <input
+                                    type="text"
+                                    value={categoria}
+                                    onChange={(e) => setCategoria(e.target.value)}
+                                    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900"
+                                    placeholder="Ej: Vinos"
+                                  />
+                                </div>
+
+                                <div className="flex flex-col gap-2">
+                                  <label className="text-sm font-medium text-gray-700">Marca</label>
+                                  <input
+                                    type="text"
+                                    value={marca}
+                                    onChange={(e) => setMarca(e.target.value)}
+                                    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900"
+                                    placeholder="Ej: YKK"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="border-t border-gray-200 my-4"></div>
+
+                              <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
+                                Presentación
+                              </h3>
+
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="flex flex-col gap-2">
+                                  <label className="text-sm font-medium text-gray-700">Formato de venta</label>
+                                  <select
+                                    value={formatoVenta}
+                                    onChange={(e) => setFormatoVenta(e.target.value)}
+                                    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white border-gray-300 text-gray-900 cursor-pointer"
+                                  >
+                                    <option value="unidad">Unidad</option>
+                                    <option value="pack">Pack</option>
+                                  </select>
+                                </div>
+
+                                <div className="flex flex-col gap-2">
+                                  <label className="text-sm font-medium text-gray-700">Unidades por pack</label>
+                                  <input
+                                    type="text"
+                                    value={unidadesPorPack === "N.E." ? "" : unidadesPorPack}
+                                    onChange={(e) => {
+                                      const value = e.target.value
+                                      if (value === "") {
+                                        setUnidadesPorPack("N.E.")
+                                      } else if (/^\d+$/.test(value)) {
+                                        const numValue = Number.parseInt(value)
+                                        setUnidadesPorPack(numValue < 1 ? "1" : value)
+                                      }
+                                    }}
+                                    disabled={formatoVenta === "unidad"}
+                                    className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                      formatoVenta === "unidad"
+                                        ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
+                                        : "bg-white border-gray-300 text-gray-900"
+                                    }`}
+                                    placeholder="N.E."
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="flex flex-col gap-2">
+                                <div className="flex items-center gap-2">
+                                  <label className="text-sm font-medium text-gray-700">Volumen de la unidad</label>
+                                  <button
+                                    onClick={() => setVolumenActive(!volumenActive)}
+                                    className={`w-10 h-5 rounded-full transition-colors relative ${
+                                      volumenActive ? "bg-blue-500" : "bg-gray-300"
+                                    }`}
+                                  >
+                                    <div
+                                      className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${
+                                        volumenActive ? "translate-x-5" : "translate-x-0"
+                                      }`}
+                                    />
+                                  </button>
+                                </div>
+
+                                {volumenActive && (
+                                  <div className="grid grid-cols-2 gap-4 mt-2">
+                                    <div className="flex flex-col gap-2">
+                                      <label className="text-sm font-medium text-gray-700">Cantidad</label>
+                                      <input
+                                        type="number"
+                                        value={volumenCantidad}
+                                        onChange={(e) => setVolumenCantidad(e.target.value)}
+                                        className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900"
+                                        placeholder="0"
+                                      />
+                                    </div>
+
+                                    <div className="flex flex-col gap-2">
+                                      <label className="text-sm font-medium text-gray-700">Unidad de medida</label>
+                                      <select
+                                        value={volumenUnidad}
+                                        onChange={(e) => setVolumenUnidad(e.target.value)}
+                                        className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white border-gray-300 text-gray-900 cursor-pointer"
+                                      >
+                                        <option value="ml">ml</option>
+                                        <option value="l">l</option>
+                                        <option value="g">g</option>
+                                        <option value="kg">kg</option>
+                                        <option value="cm">cm</option>
+                                        <option value="m">m</option>
+                                      </select>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Vencimiento Section */}
+                              <div className="flex flex-col gap-2 mt-4">
+                                <div className="flex items-center gap-2">
+                                  <label className="text-sm font-medium text-gray-700">Vencimiento</label>
+                                  <button
+                                    onClick={() => setVencimientoActive(!vencimientoActive)}
+                                    className={`w-10 h-5 rounded-full transition-colors relative ${
+                                      vencimientoActive ? "bg-blue-500" : "bg-gray-300"
+                                    }`}
+                                  >
+                                    <div
+                                      className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${
+                                        vencimientoActive ? "translate-x-5" : "translate-x-0"
+                                      }`}
+                                    />
+                                  </button>
+                                </div>
+
+                                {vencimientoActive && (
+                                  <div className="mt-2 p-3 border border-blue-200/60 rounded-lg bg-gradient-to-br from-blue-50/50 to-indigo-50/30">
+                                    <label className="text-xs font-semibold text-blue-900/70 uppercase tracking-wider mb-2 block">
+                                      Fecha de Vencimiento
+                                    </label>
+                                    <div className="relative">
+                                      <input
+                                        type="date"
+                                        value={fechaVencimiento}
+                                        onChange={(e) => setFechaVencimiento(e.target.value)}
+                                        className="w-full px-3 py-2.5 border border-blue-300/50 rounded-lg bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 text-gray-900 text-sm font-medium transition-all shadow-sm hover:shadow-md"
+                                      />
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Navigation buttons */}
+                            <div className="mt-8 pt-4 border-t border-gray-200 flex justify-end">
+                              <button
+                                onClick={() => setCurrentStep(2)}
+                                className="px-6 py-2.5 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
+                              >
+                                Continuar
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Step 2: Detalle del Item */}
+                      {currentStep === 2 && (
+                        <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
+                          <div className="h-full flex flex-col py-2">
+                            <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
+                              Detalle del Item
+                            </h3>
+                            <p className="text-[11px] text-slate-400 mb-6 italic">
+                              Agrega información adicional y atributos del item.
+                            </p>
+
+                            <div className="flex-1 flex items-center justify-center text-gray-400">
+                              Contenido del paso 2 (próximamente)
+                            </div>
+
+                            {/* Navigation buttons */}
+                            <div className="mt-8 pt-4 border-t border-gray-200 flex justify-between">
+                              <button
+                                onClick={() => setCurrentStep(1)}
+                                className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors cursor-pointer"
+                              >
+                                Volver
+                              </button>
+                              <button
+                                onClick={() => setCurrentStep(3)}
+                                className="px-6 py-2.5 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
+                              >
+                                Continuar
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Step 3: Información Comercial */}
+                      {currentStep === 3 && (
+                        <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
+                          <div className="h-full flex flex-col py-2">
+                            <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
+                              Información Comercial
+                            </h3>
+                            <p className="text-[11px] text-slate-400 mb-6 italic">
+                              Define precios y stock del item.
+                            </p>
+
+                            <div className="flex-1 flex items-center justify-center text-gray-400">
+                              Contenido del paso 3 (próximamente)
+                            </div>
+
+                            {/* Navigation buttons */}
+                            <div className="mt-8 pt-4 border-t border-gray-200 flex justify-between">
+                              <button
+                                onClick={() => setCurrentStep(2)}
+                                className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors cursor-pointer"
+                              >
+                                Volver
+                              </button>
+                              <button
+                                onClick={() => {
+                                  // TODO: Create item with all collected data
+                                  console.log("Creating item with:", {
+                                    titulo,
+                                    tipo: "individual",
+                                    categoria,
+                                    marca,
+                                    formatoVenta,
+                                    unidadesPorPack,
+                                    volumenActive,
+                                    volumenCantidad,
+                                    volumenUnidad,
+                                    vencimientoActive,
+                                    fechaVencimiento,
+                                  })
+                                  router.push("/catalogo/items")
+                                }}
+                                className="px-6 py-2.5 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors cursor-pointer"
+                              >
+                                Crear Item
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </main>
         </div>
