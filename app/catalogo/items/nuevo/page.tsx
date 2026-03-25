@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, CheckCircle2, Package, Grid } from "lucide-react"
+import { ArrowLeft, CheckCircle2, Package, Grid, AlertCircle } from "lucide-react"
 
 import { Sidebar } from "@/components/layout/sidebar"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
@@ -89,34 +89,39 @@ export default function NuevoItemPage() {
               <div className="w-full max-w-xl">
                 {/* Title Section */}
                 <div className="mb-8">
-                  <div className="flex items-center justify-between mb-2">
-                    <Label htmlFor="titulo" className="text-sm font-medium text-gray-700">
-                      Titulo (obligatorio)
-                    </Label>
-                    <span className={`text-xs ${titulo.length >= MAX_TITLE_LENGTH ? 'text-red-500' : 'text-gray-400'}`}>
-                      {titulo.length}/{MAX_TITLE_LENGTH}
-                    </span>
-                  </div>
-                  <div className="relative">
-                    <Input
-                      id="titulo"
-                      type="text"
-                      value={titulo}
-                      onChange={handleTituloChange}
-                      placeholder="Ingresa el titulo del item..."
-                      className="pr-10 h-11"
-                    />
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <Label htmlFor="titulo" className="text-base font-semibold text-gray-800 mb-2 block">
+                    Titulo (obligatorio)
+                  </Label>
+                  <div className="flex items-center gap-3">
+                    <div className="relative flex-1">
+                      <Input
+                        id="titulo"
+                        type="text"
+                        value={titulo}
+                        onChange={handleTituloChange}
+                        placeholder="Ingresa el titulo del item..."
+                        className="pr-20 h-12 text-base"
+                      />
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <span className={`text-xs ${titulo.length >= MAX_TITLE_LENGTH ? 'text-red-500' : 'text-gray-400'}`}>
+                          {titulo.length}/{MAX_TITLE_LENGTH}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex-shrink-0">
                       {isTituloValid ? (
-                        <CheckCircle2 className="w-5 h-5 text-green-500" />
+                        <CheckCircle2 className="w-7 h-7 text-green-500" />
                       ) : (
-                        <div className="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center">
-                          <span className="text-[10px] text-gray-400 font-medium">*</span>
-                        </div>
+                        <AlertCircle className="w-7 h-7 text-red-500 animate-pulse" />
                       )}
                     </div>
                   </div>
                 </div>
+
+                {/* Type Selection Label */}
+                <span className={`block text-sm font-medium mb-4 transition-all duration-200 ${!isTituloValid ? 'text-gray-300 blur-[1px] opacity-50' : 'text-gray-700'}`}>
+                  Selecciona el tipo de item
+                </span>
 
                 {/* Type Selection Cards */}
                 <div className="grid grid-cols-2 gap-4">
