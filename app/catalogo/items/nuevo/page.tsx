@@ -3,8 +3,12 @@
 import { useState, useMemo, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { CheckCircle2, Package, Grid, Asterisk, Plus, X, Upload, Sparkles } from "lucide-react"
-import { generateStandaloneSKU } from "@/lib/utils/sku-generator"
+import { generateStandaloneSKU, generateUniqueSKU } from "@/lib/utils/sku-generator"
 import { getCategoryImage } from "@/lib/utils/category-images"
+import { generateId } from "@/lib/utils/item-utils"
+import { useItems } from "@/hooks/use-items"
+import { useAccount } from "@/lib/contexts/account-context"
+import type { Item } from "@/lib/types"
 
 import { Sidebar } from "@/components/layout/sidebar"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
@@ -23,6 +27,8 @@ const STEPS = [
 
 export default function NuevoItemPage() {
   const router = useRouter()
+  const { items, setItems } = useItems()
+  const { currentAccount } = useAccount()
   const [titulo, setTitulo] = useState("")
   const [selectedType, setSelectedType] = useState<"individual" | "variantes" | null>(null)
   const [hoveredDropdown, setHoveredDropdown] = useState<string | null>(null)
@@ -852,49 +858,58 @@ export default function NuevoItemPage() {
                             </button>
                             <button
                               disabled={isCreating}
-                              onClick={async () => {
+                              onClick={() => {
                                 setIsCreating(true)
                                 try {
-                                  const response = await fetch('/api/items', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({
-                                      sku,
-                                      name: titulo,
-                                      codigoUniversal: codigoUniversal || null,
-                                      marca: marca || null,
-                                      categoria: categoria || null,
-                                      formatoVenta: formatoVenta || null,
-                                      proveedor: proveedor || null,
-                                      codigoProveedor: codigoProveedor || null,
-                                      descripcion: descripcion || null,
-                                      foto: mediaPhotos[0] || null,
-                                      hasVariants: false,
-                                      isAgrupador: false,
-                                      variantCount: 0,
-                                      itemCount: 0,
-                                      volumenActive,
-                                      volumenCantidad: volumenCantidad ? parseFloat(volumenCantidad) : null,
-                                      volumenUnidad: volumenActive ? volumenUnidad : null,
-                                      unidadesPorPack: formatoVenta === 'pack' ? parseInt(unidadesPorPack) : null,
-                                      atributosInformativos,
-                                      precio: {
-                                        costo: parseFloat(costo) || 0,
-                                        margen: parseFloat(margen) || 0,
-                                        iva: parseFloat(iva) || 0,
-                                        precioFinal,
-                                      },
-                                      stockInicial: parseInt(stockInicial) || 0,
-                                      stockReservado: parseInt(stockReservado) || 0,
-                                    }),
-                                  })
+                                  // Generate unique SKU
+                                  const existingSkus = items.map((item) => item.sku)
+                                  const finalSku = generateUniqueSKU(sku, existingSkus)
 
-                                  if (response.ok) {
-                                    setCreatedItemSku(sku)
-                                  } else {
-                                    console.error('Failed to create item')
-                                    alert('Error al crear el item. Por favor intenta de nuevo.')
+                                  // Calculate stock values
+                                  const stockTotal = parseInt(stockInicial) || 0
+                                  const stockRes = parseInt(stockReservado) || 0
+                                  const stockDisp = Math.max(0, stockTotal - stockRes)
+
+                                  // Create new item object matching the useItems pattern
+                                  const newItem: Item = {
+                                    id: generateId("STA"),
+                                    name: titulo,
+                                    sku: finalSku,
+                                    codigoUniversal: codigoUniversal || "",
+                                    marca: marca || "",
+                                    modelo: "",
+                                    categoria: categoria || "",
+                                    formatoVenta: formatoVenta || "unidad",
+                                    proveedor: proveedor || "",
+                                    codigoProveedor: codigoProveedor || "",
+                                    descripcion: descripcion || "",
+                                    foto: mediaPhotos[0] || "",
+                                    hasVariants: false,
+                                    isAgrupador: false,
+                                    variantCount: 0,
+                                    itemCount: 0,
+                                    stock: {
+                                      total: stockTotal.toString(),
+                                      reservado: stockRes.toString(),
+                                      disponible: stockDisp.toString(),
+                                    },
+                                    atributosPrincipales: [],
+                                    atributosInformativos: atributosInformativos,
+                                    precio: {
+                                      costo: parseFloat(costo) || 0,
+                                      margen: parseFloat(margen) || 0,
+                                      iva: parseFloat(iva) || 0,
+                                      precioFinal: precioFinal,
+                                    },
                                   }
+
+                                  // Add to items and persist to localStorage
+                                  const updatedItems = [newItem, ...items]
+                                  const storageKey = `stockio-items-${currentAccount}`
+                                  localStorage.setItem(storageKey, JSON.stringify(updatedItems))
+                                  console.log("[v0] Saved new item to localStorage:", newItem.sku)
+                                  setItems(updatedItems)
+                                  setCreatedItemSku(finalSku)
                                 } catch (error) {
                                   console.error('Error creating item:', error)
                                   alert('Error al crear el item. Por favor intenta de nuevo.')
