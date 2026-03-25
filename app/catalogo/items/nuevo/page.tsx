@@ -2,7 +2,9 @@
 
 import { useState, useMemo, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { CheckCircle2, Package, Grid, Asterisk, Plus, X } from "lucide-react"
+import { CheckCircle2, Package, Grid, Asterisk, Plus, X, Upload } from "lucide-react"
+import { generateStandaloneSKU } from "@/lib/utils/sku-generator"
+import { getCategoryImage } from "@/lib/utils/category-images"
 
 import { Sidebar } from "@/components/layout/sidebar"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
@@ -45,10 +47,34 @@ export default function NuevoItemPage() {
   const [showAtributosView, setShowAtributosView] = useState(false)
   const [atributosInformativos, setAtributosInformativos] = useState<{ key: string; value: string }[]>([])
 
+  // Step 2 form fields - Detalle del Item
+  const [sku, setSku] = useState("")
+  const [codigoUniversal, setCodigoUniversal] = useState("")
+  const [mediaPhotos, setMediaPhotos] = useState<string[]>([])
+  const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<number | null>(null)
+  const [descripcion, setDescripcion] = useState("")
+  const [editingDescripcion, setEditingDescripcion] = useState(false)
+
   // Validate title - must have actual content (not just spaces)
   const isTituloValid = useMemo(() => {
     return titulo.trim().length > 0
   }, [titulo])
+
+  // Generate suggested SKU based on title and category
+  const suggestedSku = useMemo(() => {
+    if (!titulo.trim()) return ""
+    return generateStandaloneSKU({
+      category: categoria || undefined,
+      title: titulo.trim(),
+    })
+  }, [titulo, categoria])
+
+  // Initialize SKU with suggested value when it changes and sku is empty
+  useMemo(() => {
+    if (suggestedSku && !sku) {
+      setSku(suggestedSku)
+    }
+  }, [suggestedSku])
 
   const breadcrumbs = [
     { label: "Catalogo" },
@@ -480,8 +506,149 @@ export default function NuevoItemPage() {
                             Agrega información adicional y atributos del item.
                           </p>
 
-                          <div className="flex-1 flex items-center justify-center text-gray-400 min-h-[200px]">
-                            Contenido del paso 2 (proximamente)
+                          <div className="space-y-6">
+                            {/* SKU and Codigo Universal */}
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="flex flex-col gap-2">
+                                <label className="text-sm font-medium text-gray-700">SKU</label>
+                                <input
+                                  type="text"
+                                  value={sku}
+                                  onChange={(e) => setSku(e.target.value.toUpperCase())}
+                                  className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 font-mono text-sm"
+                                  placeholder={suggestedSku || "Ej: VNO-PROICON-MALB"}
+                                />
+                                {suggestedSku && sku !== suggestedSku && (
+                                  <button
+                                    onClick={() => setSku(suggestedSku)}
+                                    className="text-xs text-blue-500 hover:text-blue-600 text-left cursor-pointer"
+                                  >
+                                    Usar sugerido: {suggestedSku}
+                                  </button>
+                                )}
+                              </div>
+
+                              <div className="flex flex-col gap-2">
+                                <label className="text-sm font-medium text-gray-700">Codigo Universal</label>
+                                <input
+                                  type="text"
+                                  value={codigoUniversal}
+                                  onChange={(e) => setCodigoUniversal(e.target.value)}
+                                  className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 font-mono text-sm"
+                                  placeholder="Ej: 7790001234567"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="border-t border-gray-200 my-4"></div>
+
+                            {/* Media Section */}
+                            <div>
+                              <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
+                                Media
+                              </h3>
+                              <div className="flex gap-3">
+                                {/* Upload Button */}
+                                <button
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="flex-shrink-0 w-20 h-20 border-2 border-dashed border-blue-400/60 rounded-xl flex flex-col items-center justify-center gap-1.5 hover:border-blue-400 hover:bg-blue-50/50 transition-all cursor-pointer"
+                                >
+                                  <Upload className="w-5 h-5 text-blue-400" />
+                                  <span className="text-[10px] text-blue-400 font-medium">Seleccionar</span>
+                                </button>
+
+                                {/* Photo Thumbnails */}
+                                <div className="flex gap-3 overflow-x-auto pb-1">
+                                  {mediaPhotos.length === 0 ? (
+                                    <div className="w-20 h-20 border-2 border-dashed border-gray-200 rounded-xl flex items-center justify-center">
+                                      <span className="text-[10px] text-gray-400">Sin fotos</span>
+                                    </div>
+                                  ) : (
+                                    mediaPhotos.map((photo, index) => (
+                                      <div
+                                        key={index}
+                                        draggable
+                                        onDragStart={(e) => {
+                                          e.stopPropagation()
+                                          setDraggedPhotoIndex(index)
+                                        }}
+                                        onDragOver={(e) => {
+                                          e.preventDefault()
+                                          e.stopPropagation()
+                                        }}
+                                        onDrop={(e) => {
+                                          e.preventDefault()
+                                          e.stopPropagation()
+                                          if (draggedPhotoIndex !== null && draggedPhotoIndex !== index) {
+                                            const newPhotos = [...mediaPhotos]
+                                            const [draggedPhoto] = newPhotos.splice(draggedPhotoIndex, 1)
+                                            newPhotos.splice(index, 0, draggedPhoto)
+                                            setMediaPhotos(newPhotos)
+                                          }
+                                          setDraggedPhotoIndex(null)
+                                        }}
+                                        onDragEnd={() => setDraggedPhotoIndex(null)}
+                                        className={`relative flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 cursor-move group ${
+                                          draggedPhotoIndex === index ? 'opacity-50 border-blue-400' : 'border-gray-200 hover:border-gray-300'
+                                        }`}
+                                      >
+                                        <img
+                                          src={photo}
+                                          alt={`Product photo ${index + 1}`}
+                                          className="w-full h-full object-cover"
+                                        />
+
+                                        {/* Delete button */}
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation()
+                                            setMediaPhotos(mediaPhotos.filter((_, i) => i !== index))
+                                          }}
+                                          className="absolute top-1 right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-100 cursor-pointer"
+                                        >
+                                          <X className="w-3 h-3 text-slate-600" />
+                                        </button>
+
+                                        {/* Portada tag for first photo */}
+                                        {index === 0 && (
+                                          <div className="absolute bottom-0 left-0 right-0 bg-black/70 py-0.5 px-1">
+                                            <span className="text-[8px] font-bold text-white uppercase tracking-wider">Portada</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="border-t border-gray-200 my-4"></div>
+
+                            {/* Descripción Section */}
+                            <div>
+                              <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
+                                Descripcion
+                              </h3>
+                              {editingDescripcion ? (
+                                <textarea
+                                  value={descripcion}
+                                  onChange={(e) => setDescripcion(e.target.value)}
+                                  onBlur={() => setEditingDescripcion(false)}
+                                  className="w-full min-h-[120px] px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm placeholder:text-gray-400"
+                                  placeholder="Agregar descripcion del producto..."
+                                  autoFocus
+                                />
+                              ) : (
+                                <div
+                                  onClick={() => setEditingDescripcion(true)}
+                                  className="w-full min-h-[120px] px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 cursor-text hover:bg-gray-100 transition-colors text-sm"
+                                >
+                                  {descripcion || (
+                                    <span className="text-gray-400">Click para agregar descripcion...</span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           </div>
 
                           {/* Navigation buttons */}
@@ -532,6 +699,7 @@ export default function NuevoItemPage() {
                                 console.log("Creating item with:", {
                                   titulo,
                                   tipo: "individual",
+                                  // Step 1 data
                                   categoria,
                                   marca,
                                   formatoVenta,
@@ -542,6 +710,11 @@ export default function NuevoItemPage() {
                                   vencimientoActive,
                                   fechaVencimiento,
                                   atributosInformativos,
+                                  // Step 2 data
+                                  sku,
+                                  codigoUniversal,
+                                  mediaPhotos,
+                                  descripcion,
                                 })
                                 router.push("/catalogo/items")
                               }}
