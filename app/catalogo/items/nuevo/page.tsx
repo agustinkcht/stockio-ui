@@ -19,9 +19,15 @@ import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 
 const MAX_TITLE_LENGTH = 60
 
-const STEPS = [
+const STEPS_INDIVIDUAL = [
   { id: 1, label: "Información del Item" },
   { id: 2, label: "Detalle del Item" },
+  { id: 3, label: "Información Comercial" },
+]
+
+const STEPS_VARIANTES = [
+  { id: 1, label: "Información Compartida" },
+  { id: 2, label: "Variantes" },
   { id: 3, label: "Información Comercial" },
 ]
 
@@ -243,6 +249,584 @@ export default function NuevoItemPage() {
     )
   }
 
+  // Success View for Variantes - Full screen without stepper
+  if (selectedType === "variantes" && createdItemId) {
+    return (
+      <div className="min-h-screen bg-[rgb(243,242,238)]">
+        <div className="px-[6px] py-[6px] flex gap-[6px] h-screen">
+          <div className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
+            <Sidebar
+              sidebarItems={SIDEBAR_ITEMS}
+              bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
+              hoveredDropdown={hoveredDropdown}
+              onDropdownOpen={setHoveredDropdown}
+              onDropdownClose={() => setHoveredDropdown(null)}
+            />
+          </div>
+
+          <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
+            {/* Header */}
+            <div className="relative border-b border-border h-[44px] bg-white z-[100004]">
+              <div className="px-4 flex items-center justify-between h-full">
+                <div className="flex items-center gap-3">
+                  <Breadcrumb items={breadcrumbs} />
+                </div>
+
+                <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center gap-3">
+                  <UserPanel />
+                </div>
+
+                <div className="flex items-center gap-2 min-w-[280px] justify-end">
+                </div>
+              </div>
+            </div>
+
+            {/* Success Content */}
+            <main className="flex-1 flex items-center justify-center bg-[rgba(250,251,253,1)]">
+              <div className="p-8 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] max-w-md w-full">
+                <div className="flex flex-col items-center justify-center py-8">
+                  <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-6">
+                    <CheckCircle2 className="w-10 h-10 text-green-500" />
+                  </div>
+                  <h2 className="text-2xl font-semibold text-gray-900 mb-2">Item Creado Exitosamente</h2>
+                  <p className="text-gray-500 mb-2">{titulo}</p>
+                  <p className="text-sm text-gray-400 font-mono mb-8">{createdItemSkuDisplay}</p>
+
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => router.push(`/catalogo/items/${createdItemId}`)}
+                      className="px-6 py-2.5 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
+                    >
+                      Ver Item
+                    </button>
+                    <button
+                      onClick={() => {
+                        // Reset all state for new item creation
+                        setTitulo("")
+                        setSelectedType(null)
+                        setCurrentStep(1)
+                        setSelectedDetailTab("info")
+                        setCategoria("")
+                        setMarca("")
+                        setFormatoVenta("unidad")
+                        setUnidadesPorPack("1")
+                        setVolumenActive(false)
+                        setVolumenCantidad("")
+                        setVolumenUnidad("ml")
+                        setVencimientoActive(false)
+                        setFechaVencimiento("")
+                        setShowAtributosView(false)
+                        setAtributosInformativos([])
+                        setSku("")
+                        setSkuUserModified(false)
+                        setCodigoUniversal("")
+                        setMediaPhotos([])
+                        setDescripcion("")
+                        setEditingDescripcion(false)
+                        setCosto("")
+                        setMargen("")
+                        setIva("21")
+                        setPrecioVenta("")
+                        setEditingPrecioVenta(false)
+                        setStockInicial("")
+                        setStockReservado("")
+                        setProveedor("")
+                        setCodigoProveedor("")
+                        setCreatedItemId(null)
+                        setCreatedItemSkuDisplay(null)
+                      }}
+                      className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors cursor-pointer"
+                    >
+                      Crear Otro Item
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </main>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show full-screen steps view when Item con Variantes is selected
+  if (selectedType === "variantes") {
+    return (
+      <div className="min-h-screen bg-[rgb(243,242,238)]">
+        <div className="px-[6px] py-[6px] flex gap-[6px] h-screen">
+          <div className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
+            <Sidebar
+              sidebarItems={SIDEBAR_ITEMS}
+              bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
+              hoveredDropdown={hoveredDropdown}
+              onDropdownOpen={setHoveredDropdown}
+              onDropdownClose={() => setHoveredDropdown(null)}
+            />
+          </div>
+
+          <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
+            {/* Header */}
+            <div className="relative border-b border-border h-[44px] bg-white z-[100004]">
+              <div className="px-4 flex items-center justify-between h-full">
+                <div className="flex items-center gap-3">
+                  <Breadcrumb items={breadcrumbs} />
+                </div>
+
+                <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center gap-3">
+                  <UserPanel />
+                </div>
+
+                <div className="flex items-center gap-2 min-w-[280px] justify-end">
+                  {/* Step indicator in header */}
+                  <span className="text-xs text-gray-500">
+                    Paso {currentStep} de {STEPS_VARIANTES.length}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Main Content - Full Screen Steps View */}
+            <main className="flex-1 flex bg-[rgba(250,251,253,1)] overflow-hidden" ref={stepsContainerRef}>
+              {/* 20-column grid layout */}
+              <div className="w-full h-full grid" style={{ gridTemplateColumns: 'repeat(20, minmax(0, 1fr))' }}>
+                {/* Left Column - Steps Indicator (4 cols) */}
+                <div className="col-span-4 border-r border-gray-200 bg-white p-6 flex flex-col">
+                  <div className="mb-8">
+                    <h2 className="text-sm font-semibold text-gray-900 mb-1">Creando Item con Variantes</h2>
+                    <p className="text-xs text-gray-500 truncate max-w-[180px]">{titulo}</p>
+                  </div>
+                  
+                  <div className="flex flex-col">
+                    {STEPS_VARIANTES.map((step, index) => (
+                      <div key={step.id} className="flex items-start">
+                        {/* Vertical line and dot */}
+                        <div className="flex flex-col items-center mr-3">
+                          <div 
+                            className={`w-3 h-3 rounded-full border-2 transition-all duration-300 ${
+                              currentStep === step.id 
+                                ? 'bg-purple-500 border-purple-500 shadow-md shadow-purple-200' 
+                                : currentStep > step.id
+                                  ? 'bg-green-500 border-green-500'
+                                  : 'bg-white border-gray-300'
+                            }`}
+                          />
+                          {index < STEPS_VARIANTES.length - 1 && (
+                            <div 
+                              className={`w-0.5 h-16 transition-all duration-300 ${
+                                currentStep > step.id ? 'bg-green-500' : 'bg-gray-200'
+                              }`}
+                            />
+                          )}
+                        </div>
+                        {/* Step label */}
+                        <div className="pb-16">
+                          <button
+                            onClick={() => setCurrentStep(step.id)}
+                            className={`text-left transition-all duration-200 cursor-pointer ${
+                              currentStep === step.id 
+                                ? 'text-purple-600 font-semibold' 
+                                : currentStep > step.id
+                                  ? 'text-green-600 font-medium'
+                                  : 'text-gray-400 font-medium hover:text-gray-600'
+                            }`}
+                          >
+                            <span className="text-xs uppercase tracking-wider">{step.label}</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Back to type selection */}
+                  <div className="mt-auto">
+                    <button
+                      onClick={() => setSelectedType(null)}
+                      className="text-xs text-gray-500 hover:text-gray-700 transition-colors cursor-pointer"
+                    >
+                      Cambiar tipo de item
+                    </button>
+                  </div>
+                </div>
+
+                {/* Right Column - Step Content (16 cols) */}
+                <div className="col-span-16 overflow-auto p-8">
+                  <div className="max-w-3xl mx-auto">
+                    {/* Step 1: Información Compartida */}
+                    {currentStep === 1 && (
+                      <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
+                        {/* Info/Atributos Toggle */}
+                        <div className="mb-6">
+                          <div className="flex rounded-lg border border-slate-200 p-1 bg-slate-50 w-full">
+                            <button
+                              onClick={() => setSelectedDetailTab("info")}
+                              className={`flex-1 px-3 py-2 rounded-md text-xs font-medium transition-all cursor-pointer ${selectedDetailTab === "info"
+                                ? "bg-white text-slate-900 shadow-sm"
+                                : "text-slate-600 hover:text-slate-900"
+                              }`}
+                            >
+                              Info
+                            </button>
+                            <button
+                              onClick={() => setSelectedDetailTab("atributos")}
+                              className={`flex-1 px-3 py-2 rounded-md text-xs font-medium transition-all cursor-pointer ${selectedDetailTab === "atributos"
+                                ? "bg-white text-slate-900 shadow-sm"
+                                : "text-slate-600 hover:text-slate-900"
+                              }`}
+                            >
+                              Atributos
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Info Tab Content */}
+                        {selectedDetailTab === "info" && (
+                          <div className="h-full flex flex-col py-2 overflow-y-auto">
+                            <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
+                              Información Compartida
+                            </h3>
+                            <p className="text-[11px] text-slate-400 mb-3 italic">
+                              Esta información sera compartida por todas las variantes.
+                            </p>
+
+                            <div className="space-y-3">
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="flex flex-col gap-2">
+                                  <label className="text-sm font-medium text-gray-700">Categoria</label>
+                                  <input
+                                    type="text"
+                                    value={categoria}
+                                    onChange={(e) => setCategoria(e.target.value)}
+                                    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white border-gray-300 text-gray-900"
+                                    placeholder="Ej: Vinos"
+                                  />
+                                </div>
+
+                                <div className="flex flex-col gap-2">
+                                  <label className="text-sm font-medium text-gray-700">Marca</label>
+                                  <input
+                                    type="text"
+                                    value={marca}
+                                    onChange={(e) => setMarca(e.target.value)}
+                                    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white border-gray-300 text-gray-900"
+                                    placeholder="Ej: YKK"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="border-t border-gray-200 my-4"></div>
+
+                              <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
+                                Presentacion
+                              </h3>
+
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="flex flex-col gap-2">
+                                  <label className="text-sm font-medium text-gray-700">Formato de venta</label>
+                                  <select
+                                    value={formatoVenta}
+                                    onChange={(e) => setFormatoVenta(e.target.value)}
+                                    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none bg-white border-gray-300 text-gray-900 cursor-pointer"
+                                  >
+                                    <option value="unidad">Unidad</option>
+                                    <option value="pack">Pack</option>
+                                  </select>
+                                </div>
+
+                                <div className="flex flex-col gap-2">
+                                  <label className="text-sm font-medium text-gray-700">Unidades por pack</label>
+                                  <input
+                                    type="text"
+                                    value={unidadesPorPack === "N.E." ? "" : unidadesPorPack}
+                                    onChange={(e) => {
+                                      const value = e.target.value
+                                      if (value === "") {
+                                        setUnidadesPorPack("N.E.")
+                                      } else if (/^\d+$/.test(value)) {
+                                        const numValue = Number.parseInt(value)
+                                        setUnidadesPorPack(numValue < 1 ? "1" : value)
+                                      }
+                                    }}
+                                    disabled={formatoVenta === "unidad"}
+                                    className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                                      formatoVenta === "unidad"
+                                        ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
+                                        : "bg-white border-gray-300 text-gray-900"
+                                    }`}
+                                    placeholder="N.E."
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="flex flex-col gap-2">
+                                <div className="flex items-center gap-2">
+                                  <label className="text-sm font-medium text-gray-700">Volumen de la unidad</label>
+                                  <button
+                                    onClick={() => setVolumenActive(!volumenActive)}
+                                    className={`w-10 h-5 rounded-full transition-colors relative cursor-pointer ${
+                                      volumenActive ? "bg-purple-500" : "bg-gray-300"
+                                    }`}
+                                  >
+                                    <div
+                                      className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${
+                                        volumenActive ? "translate-x-5" : "translate-x-0"
+                                      }`}
+                                    />
+                                  </button>
+                                </div>
+
+                                {volumenActive && (
+                                  <div className="grid grid-cols-2 gap-4 mt-2">
+                                    <div className="flex flex-col gap-2">
+                                      <label className="text-sm font-medium text-gray-700">Cantidad</label>
+                                      <input
+                                        type="number"
+                                        value={volumenCantidad}
+                                        onChange={(e) => setVolumenCantidad(e.target.value)}
+                                        className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white border-gray-300 text-gray-900"
+                                        placeholder="0"
+                                      />
+                                    </div>
+
+                                    <div className="flex flex-col gap-2">
+                                      <label className="text-sm font-medium text-gray-700">Unidad de medida</label>
+                                      <select
+                                        value={volumenUnidad}
+                                        onChange={(e) => setVolumenUnidad(e.target.value)}
+                                        className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 appearance-none bg-white border-gray-300 text-gray-900 cursor-pointer"
+                                      >
+                                        <option value="ml">ml</option>
+                                        <option value="l">l</option>
+                                        <option value="g">g</option>
+                                        <option value="kg">kg</option>
+                                        <option value="cm">cm</option>
+                                        <option value="m">m</option>
+                                      </select>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Vencimiento Section */}
+                              <div className="flex flex-col gap-2 mt-4">
+                                <div className="flex items-center gap-2">
+                                  <label className="text-sm font-medium text-gray-700">Vencimiento</label>
+                                  <button
+                                    onClick={() => setVencimientoActive(!vencimientoActive)}
+                                    className={`w-10 h-5 rounded-full transition-colors relative cursor-pointer ${
+                                      vencimientoActive ? "bg-purple-500" : "bg-gray-300"
+                                    }`}
+                                  >
+                                    <div
+                                      className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${
+                                        vencimientoActive ? "translate-x-5" : "translate-x-0"
+                                      }`}
+                                    />
+                                  </button>
+                                </div>
+
+                                {vencimientoActive && (
+                                  <div className="mt-2 p-3 border border-purple-200/60 rounded-lg bg-gradient-to-br from-purple-50/50 to-indigo-50/30">
+                                    <label className="text-xs font-semibold text-purple-900/70 uppercase tracking-wider mb-2 block">
+                                      Fecha de Vencimiento
+                                    </label>
+                                    <div className="relative">
+                                      <input
+                                        type="date"
+                                        value={fechaVencimiento}
+                                        onChange={(e) => setFechaVencimiento(e.target.value)}
+                                        className="w-full px-3 py-2.5 border border-purple-300/50 rounded-lg bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-purple-500/40 focus:border-purple-500 text-gray-900 text-sm font-medium transition-all shadow-sm hover:shadow-md"
+                                      />
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Atributos Tab Content */}
+                        {selectedDetailTab === "atributos" && (
+                          <div className="py-2">
+                            {!showAtributosView ? (
+                              <div className="text-center py-8">
+                                <div className="w-16 h-16 rounded-full bg-purple-50 flex items-center justify-center mx-auto mb-4">
+                                  <Plus className="w-6 h-6 text-purple-400" />
+                                </div>
+                                <h4 className="text-sm font-medium text-gray-700 mb-2">
+                                  Atributos Informativos
+                                </h4>
+                                <p className="text-xs text-gray-500 mb-4 max-w-xs mx-auto">
+                                  Agrega atributos adicionales que describan el item, como material, origen, etc.
+                                </p>
+                                <button
+                                  onClick={() => {
+                                    setShowAtributosView(true)
+                                    if (atributosInformativos.length === 0) {
+                                      setAtributosInformativos([{ key: "", value: "" }])
+                                    }
+                                  }}
+                                  className="px-4 py-2 bg-purple-50 text-purple-600 rounded-lg text-xs font-medium hover:bg-purple-100 transition-colors cursor-pointer"
+                                >
+                                  Agregar Atributos
+                                </button>
+                              </div>
+                            ) : (
+                              <div>
+                                <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
+                                  Atributos Informativos
+                                </h3>
+                                <p className="text-[11px] text-slate-400 mb-4 italic">
+                                  Estos atributos seran compartidos por todas las variantes.
+                                </p>
+
+                                <div className="space-y-3">
+                                  {atributosInformativos.map((attr, index) => (
+                                    <div key={index} className="flex items-center gap-2">
+                                      <input
+                                        type="text"
+                                        value={attr.key}
+                                        onChange={(e) => {
+                                          const newAttrs = [...atributosInformativos]
+                                          newAttrs[index].key = e.target.value
+                                          setAtributosInformativos(newAttrs)
+                                        }}
+                                        className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white border-gray-300 text-gray-900 text-sm"
+                                        placeholder="Atributo"
+                                      />
+                                      <input
+                                        type="text"
+                                        value={attr.value}
+                                        onChange={(e) => {
+                                          const newAttrs = [...atributosInformativos]
+                                          newAttrs[index].value = e.target.value
+                                          setAtributosInformativos(newAttrs)
+                                        }}
+                                        className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white border-gray-300 text-gray-900 text-sm"
+                                        placeholder="Valor"
+                                      />
+                                      <button
+                                        onClick={() => {
+                                          const newAttrs = atributosInformativos.filter((_, i) => i !== index)
+                                          setAtributosInformativos(newAttrs)
+                                          if (newAttrs.length === 0) {
+                                            setShowAtributosView(false)
+                                          }
+                                        }}
+                                        className="p-2 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  ))}
+
+                                  <button
+                                    onClick={() => {
+                                      setAtributosInformativos([...atributosInformativos, { key: "", value: "" }])
+                                    }}
+                                    className="flex items-center gap-2 text-xs text-purple-600 hover:text-purple-700 font-medium cursor-pointer"
+                                  >
+                                    <Plus className="w-3 h-3" />
+                                    Agregar otro atributo
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Navigation buttons */}
+                        <div className="mt-8 pt-4 border-t border-gray-200 flex justify-end">
+                          <button
+                            onClick={() => setCurrentStep(2)}
+                            className="px-6 py-2.5 bg-purple-500 text-white rounded-lg font-medium hover:bg-purple-600 transition-colors cursor-pointer"
+                          >
+                            Continuar
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Step 2: Variantes - Placeholder for now */}
+                    {currentStep === 2 && (
+                      <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
+                        <div className="h-full flex flex-col py-2">
+                          <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
+                            Variantes
+                          </h3>
+                          <p className="text-[11px] text-slate-400 mb-6 italic">
+                            Define las variantes del item.
+                          </p>
+
+                          <div className="flex-1 flex items-center justify-center text-gray-400 min-h-[200px]">
+                            Contenido del paso 2 (proximamente)
+                          </div>
+
+                          {/* Navigation buttons */}
+                          <div className="mt-8 pt-4 border-t border-gray-200 flex justify-between">
+                            <button
+                              onClick={() => setCurrentStep(1)}
+                              className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors cursor-pointer"
+                            >
+                              Volver
+                            </button>
+                            <button
+                              onClick={() => setCurrentStep(3)}
+                              className="px-6 py-2.5 bg-purple-500 text-white rounded-lg font-medium hover:bg-purple-600 transition-colors cursor-pointer"
+                            >
+                              Continuar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Step 3: Información Comercial - Placeholder for now */}
+                    {currentStep === 3 && !createdItemId && (
+                      <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
+                        <div className="h-full flex flex-col py-2">
+                          <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
+                            Información Comercial
+                          </h3>
+                          <p className="text-[11px] text-slate-400 mb-6 italic">
+                            Define precios y stock de las variantes.
+                          </p>
+
+                          <div className="flex-1 flex items-center justify-center text-gray-400 min-h-[200px]">
+                            Contenido del paso 3 (proximamente)
+                          </div>
+
+                          {/* Navigation buttons */}
+                          <div className="mt-8 pt-4 border-t border-gray-200 flex justify-between">
+                            <button
+                              onClick={() => setCurrentStep(2)}
+                              className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors cursor-pointer"
+                            >
+                              Volver
+                            </button>
+                            <button
+                              onClick={() => {
+                                // Placeholder - will implement full creation later
+                                alert("Creación de item con variantes (proximamente)")
+                              }}
+                              className="px-6 py-2.5 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors cursor-pointer"
+                            >
+                              Crear Item
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                  </div>
+                </div>
+              </div>
+            </main>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   // Show full-screen steps view when Item Individual is selected
   if (selectedType === "individual") {
     return (
@@ -273,7 +857,7 @@ export default function NuevoItemPage() {
                 <div className="flex items-center gap-2 min-w-[280px] justify-end">
                   {/* Step indicator in header */}
                   <span className="text-xs text-gray-500">
-                    Paso {currentStep} de {STEPS.length}
+                    Paso {currentStep} de {STEPS_INDIVIDUAL.length}
                   </span>
                 </div>
               </div>
@@ -291,7 +875,7 @@ export default function NuevoItemPage() {
                   </div>
                   
                   <div className="flex flex-col">
-                    {STEPS.map((step, index) => (
+                    {STEPS_INDIVIDUAL.map((step, index) => (
                       <div key={step.id} className="flex items-start">
                         {/* Vertical line and dot */}
                         <div className="flex flex-col items-center mr-3">
@@ -304,7 +888,7 @@ export default function NuevoItemPage() {
                                   : 'bg-white border-gray-300'
                             }`}
                           />
-                          {index < STEPS.length - 1 && (
+                          {index < STEPS_INDIVIDUAL.length - 1 && (
                             <div 
                               className={`w-0.5 h-16 transition-all duration-300 ${
                                 currentStep > step.id ? 'bg-green-500' : 'bg-gray-200'
