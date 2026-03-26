@@ -716,7 +716,7 @@ export default function NuevoItemPage() {
                     )}
 
                     {/* Step 3: Información Comercial */}
-                    {currentStep === 3 && !createdItemSku && (
+                    {currentStep === 3 && !createdItemId && (
                       <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
                         <div className="h-full flex flex-col py-2">
                           <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
