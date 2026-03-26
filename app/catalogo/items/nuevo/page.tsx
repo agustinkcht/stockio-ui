@@ -4,6 +4,7 @@ import { useState, useMemo, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { CheckCircle2, Package, Grid, Asterisk, Plus, X, Upload, Sparkles, Pencil, ImageIcon } from "lucide-react"
+import { NuevaVarianteModal } from "@/components/modals/nueva-variante-modal"
 import { generateStandaloneSKU, generateUniqueSKU } from "@/lib/utils/sku-generator"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import { generateId } from "@/lib/utils/item-utils"
@@ -105,6 +106,8 @@ export default function NuevoItemPage() {
   >([])
   const [skuPadre, setSkuPadre] = useState("")
   const [editingSkuPadre, setEditingSkuPadre] = useState(false)
+  const [variantMediaModal, setVariantMediaModal] = useState<{ open: boolean; variantId: string | null }>({ open: false, variantId: null })
+  const [isNuevaVarianteModalOpen, setIsNuevaVarianteModalOpen] = useState(false)
 
   // Validate title - must have actual content (not just spaces)
   const isTituloValid = useMemo(() => {
@@ -267,6 +270,33 @@ export default function NuevoItemPage() {
     const potentialNewVariants = generateNewVariantCombinations()
     return hasAtLeastOneVariante && potentialNewVariants.length > 0
   }, [containerAtributosPrincipales, variantItems])
+
+  // Handle nueva variante from modal
+  const handleNuevaVariante = (attributeValues: Record<string, string>) => {
+    const values = Object.values(attributeValues).filter(v => v.trim() !== "")
+    if (values.length === 0) return
+
+    const variant1 = values[0] || null
+    const variant2 = values[1] || null
+
+    // Check if this combination already exists
+    const exists = variantItems.some(v => v.variant1 === variant1 && v.variant2 === variant2)
+    if (exists) return
+
+    const skuSuffix = values.map(v => v.toLowerCase().replace(/\s+/g, "-")).join("-")
+    const newVariant = {
+      id: generateId("VAR"),
+      skuSuffix,
+      codigoUniversal: "",
+      descripcion: "",
+      foto: "",
+      variant1,
+      variant2,
+    }
+
+    setVariantItems([...variantItems, newVariant])
+    setIsNuevaVarianteModalOpen(false)
+  }
 
   // Success View - Full screen without stepper (must be checked BEFORE steps view)
   if (selectedType === "individual" && createdItemId) {
@@ -874,8 +904,8 @@ export default function NuevoItemPage() {
                             {variantItems.length} {variantItems.length === 1 ? "variante" : "variantes"}
                           </h3>
 
-                          {/* Atributos de Variantes section - 50% width */}
-                          <div className="mb-6 pb-6 border-b border-gray-200 w-1/2">
+                          {/* Atributos de Variantes section - full width */}
+                          <div className="mb-6 pb-6 border-b border-gray-200">
                             {!showVariantAtributosView ? (
                               <div className="flex flex-col items-center justify-center gap-4 py-8">
                                 <p className="text-gray-500 text-sm">No hay atributos configurados</p>
@@ -1072,6 +1102,13 @@ export default function NuevoItemPage() {
                                 <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">
                                   Variantes
                                 </h3>
+                                <button
+                                  onClick={() => setIsNuevaVarianteModalOpen(true)}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors cursor-pointer"
+                                >
+                                  <Plus className="w-3.5 h-3.5" />
+                                  <span>Nueva Variante</span>
+                                </button>
                               </div>
 
                               {/* SKU Padre */}
@@ -1138,7 +1175,13 @@ export default function NuevoItemPage() {
                                   >
                                     {/* Thumbnail */}
                                     <div className="px-2 py-2 flex items-center justify-center">
-                                      <div className="relative w-8 h-8 rounded-md bg-gradient-to-br from-muted to-muted/50 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                                      <div 
+                                        className="relative w-8 h-8 rounded-md bg-gradient-to-br from-muted to-muted/50 overflow-hidden flex-shrink-0 flex items-center justify-center group/thumb cursor-pointer"
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          setVariantMediaModal({ open: true, variantId: variant.id })
+                                        }}
+                                      >
                                         {variant.foto ? (
                                           <Image
                                             src={variant.foto}
@@ -1152,6 +1195,10 @@ export default function NuevoItemPage() {
                                             <ImageIcon className="w-full h-full" />
                                           </div>
                                         )}
+                                        {/* Hover overlay with pencil */}
+                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center">
+                                          <Pencil className="w-3 h-3 text-white" />
+                                        </div>
                                       </div>
                                     </div>
 
@@ -1298,6 +1345,116 @@ export default function NuevoItemPage() {
           </div>
         </div>
       </div>
+
+      {/* Variant Media Modal */}
+      {variantMediaModal.open && variantMediaModal.variantId && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setVariantMediaModal({ open: false, variantId: null })} />
+          <div className="relative bg-slate-900 rounded-xl shadow-xl p-6 w-full max-w-lg mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white">Media</h3>
+              <button
+                onClick={() => setVariantMediaModal({ open: false, variantId: null })}
+                className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Variant info with item name */}
+            {(() => {
+              const variant = variantItems.find(v => v.id === variantMediaModal.variantId)
+              return variant ? (
+                <div className="flex items-center gap-2 mb-4 pb-4 border-b border-slate-700">
+                  <span className="text-sm font-medium text-white">{titulo}</span>
+                  {variant.variant1 && (
+                    <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-purple-500/20 text-purple-300 border border-purple-400/30">
+                      {variant.variant1}
+                    </span>
+                  )}
+                  {variant.variant1 && variant.variant2 && (
+                    <span className="text-xs text-slate-500">×</span>
+                  )}
+                  {variant.variant2 && (
+                    <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-purple-500/20 text-purple-300 border border-purple-400/30">
+                      {variant.variant2}
+                    </span>
+                  )}
+                </div>
+              ) : null
+            })()}
+
+            {/* Media section */}
+            <div className="flex gap-3 mb-4">
+              {/* Upload Button */}
+              <button
+                onClick={(e) => e.stopPropagation()}
+                className="flex-shrink-0 w-20 h-20 border-2 border-dashed border-purple-400/60 rounded-xl flex flex-col items-center justify-center gap-1.5 hover:border-purple-400 hover:bg-purple-500/10 transition-all cursor-pointer"
+              >
+                <Upload className="w-5 h-5 text-purple-400" />
+                <span className="text-[10px] text-purple-400 font-medium">Seleccionar</span>
+              </button>
+
+              {/* Current photo (if any) */}
+              {(() => {
+                const variant = variantItems.find(v => v.id === variantMediaModal.variantId)
+                return variant?.foto ? (
+                  <div className="relative flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 border-slate-600 group">
+                    <Image
+                      src={variant.foto}
+                      alt="Variant photo"
+                      width={80}
+                      height={80}
+                      className="w-full h-full object-cover"
+                    />
+                    {/* Delete button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setVariantItems(prev => prev.map(v => 
+                          v.id === variantMediaModal.variantId ? { ...v, foto: "" } : v
+                        ))
+                        setVariantMediaModal({ open: false, variantId: null })
+                      }}
+                      className="absolute top-1 right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-100 cursor-pointer"
+                    >
+                      <X className="w-3 h-3 text-slate-600" />
+                    </button>
+                    {/* Portada tag */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/70 py-0.5 px-1">
+                      <span className="text-[8px] font-bold text-white uppercase tracking-wider">Portada</span>
+                    </div>
+                  </div>
+                ) : null
+              })()}
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                onClick={() => setVariantMediaModal({ open: false, variantId: null })}
+                className="px-4 py-2 text-sm font-medium bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors cursor-pointer"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Nueva Variante Modal */}
+      <NuevaVarianteModal
+        isOpen={isNuevaVarianteModalOpen}
+        onClose={() => setIsNuevaVarianteModalOpen(false)}
+        onSubmit={handleNuevaVariante}
+        containerAtributosPrincipales={containerAtributosPrincipales}
+        existingVariants={variantItems.map(v => ({
+          id: v.id,
+          atributos: [
+            ...(v.variant1 ? [{ key: containerAtributosPrincipales[0]?.key || "", value: v.variant1 }] : []),
+            ...(v.variant2 ? [{ key: containerAtributosPrincipales[1]?.key || "", value: v.variant2 }] : []),
+          ]
+        }))}
+      />
     )
   }
 
