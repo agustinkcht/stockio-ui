@@ -1379,7 +1379,7 @@ export default function NuevoItemPage() {
                   <span className="text-sm font-medium text-white">{titulo}</span>
                   {(variant.variant1 || variant.variant2) && (
                     <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-purple-500/20 text-purple-300 border border-purple-400/30">
-                      [{[variant.variant1, variant.variant2].filter(Boolean).join(" × ")}]
+                      {[variant.variant1, variant.variant2].filter(Boolean).join(" × ")}
                     </span>
                   )}
                 </div>
