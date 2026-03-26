@@ -66,8 +66,10 @@ export default function NuevoItemPage() {
   const [costo, setCosto] = useState("")
   const [margen, setMargen] = useState("")
   const [iva, setIva] = useState("21")
-  const [stockInicial, setStockInicial] = useState("0")
-  const [stockReservado, setStockReservado] = useState("0")
+  const [stockInicial, setStockInicial] = useState("")
+  const [stockReservado, setStockReservado] = useState("")
+  const [precioVenta, setPrecioVenta] = useState("")
+  const [editingPrecioVenta, setEditingPrecioVenta] = useState(false)
   const [proveedor, setProveedor] = useState("")
   const [codigoProveedor, setCodigoProveedor] = useState("")
 
@@ -96,8 +98,11 @@ export default function NuevoItemPage() {
     }
   }, [suggestedSku, skuUserModified])
 
-  // Calculate precio final
+  // Calculate precio final - if user manually entered precioVenta, use that; otherwise calculate
   const precioFinal = useMemo(() => {
+    if (precioVenta) {
+      return parseFloat(precioVenta) || 0
+    }
     const costoNum = parseFloat(costo) || 0
     const margenNum = parseFloat(margen) || 0
     const ivaNum = parseFloat(iva) || 0
@@ -105,7 +110,7 @@ export default function NuevoItemPage() {
     const precioConMargen = costoNum * (1 + margenNum / 100)
     const precioConIva = precioConMargen * (1 + ivaNum / 100)
     return precioConIva
-  }, [costo, margen, iva])
+  }, [costo, margen, iva, precioVenta])
 
   // Calculate stock disponible
   const stockDisponible = useMemo(() => {
@@ -177,8 +182,8 @@ export default function NuevoItemPage() {
             <main className="flex-1 flex bg-[rgba(250,251,253,1)] overflow-hidden" ref={stepsContainerRef}>
               {/* 20-column grid layout */}
               <div className="w-full h-full grid" style={{ gridTemplateColumns: 'repeat(20, minmax(0, 1fr))' }}>
-                {/* Left Column - Steps Indicator (3 cols) */}
-                <div className="col-span-3 border-r border-gray-200 bg-white p-6 flex flex-col">
+                {/* Left Column - Steps Indicator (4 cols) */}
+                <div className="col-span-4 border-r border-gray-200 bg-white p-6 flex flex-col">
                   <div className="mb-8">
                     <h2 className="text-sm font-semibold text-gray-900 mb-1">Creando Item Individual</h2>
                     <p className="text-xs text-gray-500 truncate max-w-[180px]">{titulo}</p>
@@ -236,8 +241,8 @@ export default function NuevoItemPage() {
                   </div>
                 </div>
 
-                {/* Right Column - Step Content (17 cols) */}
-                <div className="col-span-17 overflow-auto p-8">
+                {/* Right Column - Step Content (16 cols) */}
+                <div className="col-span-16 overflow-auto p-8">
                   <div className="max-w-3xl mx-auto">
                     {/* Step 1: Información del Item */}
                     {currentStep === 1 && (
@@ -722,9 +727,36 @@ export default function NuevoItemPage() {
 
                           <div className="space-y-6">
                             {/* Precio Section */}
-                            <div>
+                            <div className="w-[60%]">
                               <h4 className="text-sm font-medium text-gray-700 mb-4">Precio</h4>
-                              <div className="grid grid-cols-3 gap-4 mb-4">
+                              
+                              {/* Precio de Venta - Editable, above other fields */}
+                              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 mb-4">
+                                <span className="text-xs font-medium text-green-700 uppercase tracking-wider">Precio de Venta</span>
+                                {editingPrecioVenta ? (
+                                  <div className="mt-1 relative">
+                                    <span className="absolute left-0 top-1/2 -translate-y-1/2 text-2xl font-bold text-green-700">$</span>
+                                    <input
+                                      type="number"
+                                      value={precioVenta || precioFinal.toFixed(2)}
+                                      onChange={(e) => setPrecioVenta(e.target.value)}
+                                      onBlur={() => setEditingPrecioVenta(false)}
+                                      onKeyDown={(e) => e.key === 'Enter' && setEditingPrecioVenta(false)}
+                                      className="w-full pl-6 text-3xl font-bold text-green-700 bg-transparent border-none outline-none focus:ring-0"
+                                      autoFocus
+                                    />
+                                  </div>
+                                ) : (
+                                  <div 
+                                    onClick={() => setEditingPrecioVenta(true)}
+                                    className="mt-1 text-3xl font-bold text-green-700 cursor-pointer hover:opacity-80"
+                                  >
+                                    ${precioFinal.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="grid grid-cols-3 gap-4">
                                 <div className="flex flex-col gap-2">
                                   <label className="text-xs font-medium text-gray-600">Costo</label>
                                   <div className="relative">
@@ -732,7 +764,10 @@ export default function NuevoItemPage() {
                                     <input
                                       type="number"
                                       value={costo}
-                                      onChange={(e) => setCosto(e.target.value)}
+                                      onChange={(e) => {
+                                        setCosto(e.target.value)
+                                        setPrecioVenta("") // Reset manual price when changing costo
+                                      }}
                                       className="w-full pl-7 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
                                       placeholder="0.00"
                                     />
@@ -745,7 +780,10 @@ export default function NuevoItemPage() {
                                     <input
                                       type="number"
                                       value={margen}
-                                      onChange={(e) => setMargen(e.target.value)}
+                                      onChange={(e) => {
+                                        setMargen(e.target.value)
+                                        setPrecioVenta("") // Reset manual price when changing margen
+                                      }}
                                       className="w-full pl-3 pr-7 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
                                       placeholder="0"
                                     />
@@ -759,7 +797,10 @@ export default function NuevoItemPage() {
                                     <input
                                       type="number"
                                       value={iva}
-                                      onChange={(e) => setIva(e.target.value)}
+                                      onChange={(e) => {
+                                        setIva(e.target.value)
+                                        setPrecioVenta("") // Reset manual price when changing iva
+                                      }}
                                       className="w-full pl-3 pr-7 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
                                       placeholder="21"
                                     />
@@ -767,24 +808,16 @@ export default function NuevoItemPage() {
                                   </div>
                                 </div>
                               </div>
-
-                              {/* Precio Final */}
-                              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4">
-                                <span className="text-xs font-medium text-green-700 uppercase tracking-wider">Precio Final</span>
-                                <div className="mt-1 text-3xl font-bold text-green-700">
-                                  ${precioFinal.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                </div>
-                              </div>
                             </div>
 
                             <div className="border-t border-gray-200 my-4"></div>
 
                             {/* Stock Section */}
-                            <div>
+                            <div className="w-[60%]">
                               <h4 className="text-sm font-medium text-gray-700 mb-4">Stock</h4>
-                              <div className="grid grid-cols-2 gap-4 mb-4">
+                              <div className="grid grid-cols-3 gap-4">
                                 <div className="flex flex-col gap-2">
-                                  <label className="text-xs font-medium text-gray-600">Stock Inicial</label>
+                                  <label className="text-xs font-medium text-gray-600">Inicial</label>
                                   <input
                                     type="number"
                                     value={stockInicial}
@@ -796,7 +829,7 @@ export default function NuevoItemPage() {
                                 </div>
 
                                 <div className="flex flex-col gap-2">
-                                  <label className="text-xs font-medium text-gray-600">Stock Reservado</label>
+                                  <label className="text-xs font-medium text-gray-600">Reservado</label>
                                   <input
                                     type="number"
                                     value={stockReservado}
@@ -806,13 +839,12 @@ export default function NuevoItemPage() {
                                     min="0"
                                   />
                                 </div>
-                              </div>
 
-                              {/* Stock Disponible */}
-                              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4">
-                                <span className="text-xs font-medium text-blue-700 uppercase tracking-wider">Disponible</span>
-                                <div className="mt-1 text-3xl font-bold text-blue-700">
-                                  {stockDisponible}
+                                <div className="flex flex-col gap-2">
+                                  <label className="text-xs font-medium text-gray-600">Disponible</label>
+                                  <div className="px-3 py-2 border rounded-lg bg-blue-50 border-blue-200 text-blue-700 text-sm font-semibold">
+                                    {stockDisponible}
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -971,8 +1003,10 @@ export default function NuevoItemPage() {
                                 setCosto("")
                                 setMargen("")
                                 setIva("21")
-                                setStockInicial("0")
-                                setStockReservado("0")
+                                setStockInicial("")
+                                setStockReservado("")
+                                setPrecioVenta("")
+                                setEditingPrecioVenta(false)
                                 setProveedor("")
                                 setCodigoProveedor("")
                                 setCreatedItemSku(null)
