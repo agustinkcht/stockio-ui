@@ -501,6 +501,7 @@ export default function NuevoItemPage() {
   // Show full-screen steps view when Item con Variantes is selected
   if (selectedType === "variantes") {
     return (
+      <>
       <div className="min-h-screen bg-[rgb(243,242,238)]">
         <div className="px-[6px] py-[6px] flex gap-[6px] h-screen">
           <div className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
@@ -1456,6 +1457,7 @@ export default function NuevoItemPage() {
           ]
         }))}
       />
+      </>
     )
   }
 
