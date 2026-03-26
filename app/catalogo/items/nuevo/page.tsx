@@ -2,7 +2,8 @@
 
 import { useState, useMemo, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { CheckCircle2, Package, Grid, Asterisk, Plus, X, Upload, Sparkles } from "lucide-react"
+import Image from "next/image"
+import { CheckCircle2, Package, Grid, Asterisk, Plus, X, Upload, Sparkles, Pencil, ImageIcon } from "lucide-react"
 import { generateStandaloneSKU, generateUniqueSKU } from "@/lib/utils/sku-generator"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import { generateId } from "@/lib/utils/item-utils"
@@ -84,6 +85,27 @@ export default function NuevoItemPage() {
   const [createdItemId, setCreatedItemId] = useState<string | null>(null)
   const [createdItemSkuDisplay, setCreatedItemSkuDisplay] = useState<string | null>(null)
 
+  // Variantes creation state - Step 2 for "Item con Variantes"
+  const [containerAtributosPrincipales, setContainerAtributosPrincipales] = useState<
+    Array<{ key: string; variantes: string[] }>
+  >([])
+  const [varianteInput, setVarianteInput] = useState<Record<number, string>>({})
+  const [duplicateTagError, setDuplicateTagError] = useState<Record<number, boolean>>({})
+  const [showVariantAtributosView, setShowVariantAtributosView] = useState(false)
+  const [variantItems, setVariantItems] = useState<
+    Array<{
+      id: string
+      skuSuffix: string
+      codigoUniversal: string
+      descripcion: string
+      foto: string
+      variant1: string | null
+      variant2: string | null
+    }>
+  >([])
+  const [skuPadre, setSkuPadre] = useState("")
+  const [editingSkuPadre, setEditingSkuPadre] = useState(false)
+
   // Validate title - must have actual content (not just spaces)
   const isTituloValid = useMemo(() => {
     return titulo.trim().length > 0
@@ -142,12 +164,109 @@ export default function NuevoItemPage() {
   const handleTypeSelect = (type: "individual" | "variantes") => {
     if (isTituloValid) {
       setSelectedType(type)
+      // Initialize skuPadre when selecting variantes type
+      if (type === "variantes" && !skuPadre) {
+        const suggestedParentSku = generateStandaloneSKU({
+          category: categoria || undefined,
+          title: titulo.trim(),
+        })
+        setSkuPadre(suggestedParentSku)
+      }
       // Scroll to steps section after a short delay for the state to update
       setTimeout(() => {
         stepsContainerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
       }, 100)
     }
   }
+
+  // Generate new variant combinations based on atributos principales
+  const generateNewVariantCombinations = () => {
+    const attrs = containerAtributosPrincipales.filter((attr) => attr.key && attr.variantes.length > 0)
+    if (attrs.length === 0) return []
+
+    const currentSkuPadre = skuPadre || generateStandaloneSKU({
+      category: categoria || undefined,
+      title: titulo.trim(),
+    })
+
+    // Helper to check if a variant combination already exists
+    const variantExists = (v1: string, v2: string | null) => {
+      return variantItems.some((v) => {
+        return v.variant1 === v1 && v.variant2 === v2
+      })
+    }
+
+    const newCombinations: Array<{
+      id: string
+      skuSuffix: string
+      codigoUniversal: string
+      descripcion: string
+      foto: string
+      variant1: string | null
+      variant2: string | null
+    }> = []
+
+    if (attrs.length === 1) {
+      attrs[0].variantes.forEach((v1) => {
+        if (!variantExists(v1, null)) {
+          const skuSuffix = v1.toLowerCase().replace(/\s+/g, "-")
+          newCombinations.push({
+            id: generateId("VAR"),
+            skuSuffix,
+            codigoUniversal: "",
+            descripcion: "",
+            foto: "",
+            variant1: v1,
+            variant2: null,
+          })
+        }
+      })
+    } else if (attrs.length === 2) {
+      attrs[0].variantes.forEach((v1) => {
+        attrs[1].variantes.forEach((v2) => {
+          if (!variantExists(v1, v2)) {
+            const skuSuffix = `${v1.toLowerCase().replace(/\s+/g, "-")}-${v2.toLowerCase().replace(/\s+/g, "-")}`
+            newCombinations.push({
+              id: generateId("VAR"),
+              skuSuffix,
+              codigoUniversal: "",
+              descripcion: "",
+              foto: "",
+              variant1: v1,
+              variant2: v2,
+            })
+          }
+        })
+      })
+    }
+
+    return newCombinations
+  }
+
+  // Handle generating variants
+  const handleGenerarVariantes = () => {
+    const currentAttrCount = containerAtributosPrincipales.filter(
+      (attr) => attr.key && attr.variantes.length > 0
+    ).length
+
+    // Filter out existing variants that don't match the current atributo count
+    const validExistingVariants = variantItems.filter((v) => {
+      const variantAttrCount = (v.variant1 ? 1 : 0) + (v.variant2 ? 1 : 0)
+      return variantAttrCount === currentAttrCount
+    })
+
+    const newCombinations = generateNewVariantCombinations()
+    setVariantItems([...validExistingVariants, ...newCombinations])
+  }
+
+  // Check if variants can be generated
+  const canGenerateVariants = useMemo(() => {
+    const hasAtLeastOneVariante = containerAtributosPrincipales.some(
+      (attr) => attr.key.trim() !== "" && attr.variantes.length > 0
+    )
+    const potentialNewVariants = generateNewVariantCombinations()
+    return hasAtLeastOneVariante && potentialNewVariants.length > 0
+  }, [containerAtributosPrincipales, variantItems])
 
   // Success View - Full screen without stepper (must be checked BEFORE steps view)
   if (selectedType === "individual" && createdItemId) {
@@ -746,20 +865,370 @@ export default function NuevoItemPage() {
                       </div>
                     )}
 
-                    {/* Step 2: Variantes - Placeholder for now */}
+                    {/* Step 2: Variantes */}
                     {currentStep === 2 && (
                       <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
                         <div className="h-full flex flex-col py-2">
-                          <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
-                            Variantes
+                          {/* Variant count */}
+                          <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-5">
+                            {variantItems.length} {variantItems.length === 1 ? "variante" : "variantes"}
                           </h3>
-                          <p className="text-[11px] text-slate-400 mb-6 italic">
-                            Define las variantes del item.
-                          </p>
 
-                          <div className="flex-1 flex items-center justify-center text-gray-400 min-h-[200px]">
-                            Contenido del paso 2 (proximamente)
+                          {/* Atributos de Variantes section - 50% width */}
+                          <div className="mb-6 pb-6 border-b border-gray-200 w-1/2">
+                            {!showVariantAtributosView ? (
+                              <div className="flex flex-col items-center justify-center gap-4 py-8">
+                                <p className="text-gray-500 text-sm">No hay atributos configurados</p>
+                                <button
+                                  onClick={() => {
+                                    setShowVariantAtributosView(true)
+                                    if (containerAtributosPrincipales.length === 0) {
+                                      setContainerAtributosPrincipales([{ key: "", variantes: [] }])
+                                    }
+                                  }}
+                                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg transition-colors cursor-pointer"
+                                >
+                                  Agregar atributo
+                                </button>
+                              </div>
+                            ) : (
+                              <div>
+                                <div className="text-left mb-3">
+                                  <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
+                                    Atributos de Variantes
+                                  </h3>
+                                  <p className="text-xs text-gray-500 italic">
+                                    Atributos que definen las variantes del producto (máximo 2)
+                                  </p>
+                                </div>
+
+                                <div className="flex flex-col gap-3">
+                                  {containerAtributosPrincipales.map((attr, index) => (
+                                    <div key={index} className="flex items-start gap-3">
+                                      <div className="flex-1">
+                                        <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
+                                        <input
+                                          type="text"
+                                          value={attr.key}
+                                          onChange={(e) => {
+                                            const updated = [...containerAtributosPrincipales]
+                                            updated[index].key = e.target.value
+                                            setContainerAtributosPrincipales(updated)
+                                          }}
+                                          className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-purple-300 text-sm transition-all hover:border-slate-300"
+                                          placeholder="Ej: Color"
+                                        />
+                                      </div>
+
+                                      <div className="flex-1">
+                                        <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Variantes</label>
+                                        <div className="space-y-2">
+                                          <input
+                                            type="text"
+                                            value={varianteInput[index] || ""}
+                                            onChange={(e) =>
+                                              setVarianteInput({ ...varianteInput, [index]: e.target.value })
+                                            }
+                                            onKeyDown={(e) => {
+                                              if (e.key === "Enter" && varianteInput[index]?.trim()) {
+                                                const newTag = varianteInput[index].trim()
+                                                const updated = [...containerAtributosPrincipales]
+                                                const isDuplicate = updated[index].variantes.some(
+                                                  (existing) => existing.toLowerCase() === newTag.toLowerCase()
+                                                )
+                                                if (!isDuplicate) {
+                                                  updated[index].variantes.push(newTag)
+                                                  setContainerAtributosPrincipales(updated)
+                                                  setDuplicateTagError({ ...duplicateTagError, [index]: false })
+                                                } else {
+                                                  setDuplicateTagError({ ...duplicateTagError, [index]: true })
+                                                  setTimeout(() => {
+                                                    setDuplicateTagError((prev) => ({ ...prev, [index]: false }))
+                                                  }, 2000)
+                                                }
+                                                setVarianteInput({ ...varianteInput, [index]: "" })
+                                              }
+                                            }}
+                                            onFocus={() => setDuplicateTagError({ ...duplicateTagError, [index]: false })}
+                                            placeholder="Ej: Rojo"
+                                            className={`w-full px-3 py-2.5 bg-white border rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 transition-all hover:border-slate-300 text-sm ${duplicateTagError[index]
+                                              ? "border-red-400 focus:ring-red-400"
+                                              : "border-slate-200 focus:ring-purple-300"
+                                              }`}
+                                          />
+
+                                          {duplicateTagError[index] && (
+                                            <p className="text-red-500 text-xs mt-1 font-medium animate-pulse">
+                                              Este tag ya existe
+                                            </p>
+                                          )}
+
+                                          <div className="flex flex-wrap gap-2">
+                                            {attr.variantes.map((variante, vIndex) => {
+                                              // Check if this variante has all combinations generated
+                                              const otherAttrIndex = index === 0 ? 1 : 0
+                                              const otherAttr = containerAtributosPrincipales[otherAttrIndex]
+                                              let isComplete = true
+                                              if (variantItems.length > 0 && otherAttr && otherAttr.variantes.length > 0) {
+                                                for (const otherValue of otherAttr.variantes) {
+                                                  const hasCombination = variantItems.some((v) => {
+                                                    if (index === 0) {
+                                                      return v.variant1 === variante && v.variant2 === otherValue
+                                                    } else {
+                                                      return v.variant1 === otherValue && v.variant2 === variante
+                                                    }
+                                                  })
+                                                  if (!hasCombination) { isComplete = false; break }
+                                                }
+                                              } else if (variantItems.length > 0 && containerAtributosPrincipales.length === 1) {
+                                                isComplete = variantItems.some((v) => v.variant1 === variante)
+                                              } else if (variantItems.length === 0) {
+                                                isComplete = false
+                                              }
+                                              return (
+                                                <span
+                                                  key={vIndex}
+                                                  className={`px-3 py-1.5 bg-white rounded-md text-sm flex items-center gap-2 ${isComplete
+                                                    ? "border border-gray-300 text-gray-900"
+                                                    : "border-2 border-dashed border-gray-300 text-gray-500"
+                                                    }`}
+                                                >
+                                                  {variante}
+                                                  <button
+                                                    onClick={() => {
+                                                      const updated = [...containerAtributosPrincipales]
+                                                      updated[index].variantes = updated[index].variantes.filter((_, i) => i !== vIndex)
+                                                      // Remove variants that use this variante value
+                                                      const updatedVariants = variantItems.filter((v) => {
+                                                        if (index === 0) return v.variant1 !== variante
+                                                        else return v.variant2 !== variante
+                                                      })
+                                                      setContainerAtributosPrincipales(updated)
+                                                      setVariantItems(updatedVariants)
+                                                    }}
+                                                    className="text-gray-400 hover:text-gray-600 cursor-pointer"
+                                                  >
+                                                    <X className="w-3 h-3" />
+                                                  </button>
+                                                </span>
+                                              )
+                                            })}
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      <button
+                                        onClick={() => {
+                                          const updated = containerAtributosPrincipales.filter((_, i) => i !== index)
+                                          setContainerAtributosPrincipales(updated)
+                                          setVariantItems([])
+                                          if (updated.length === 0) {
+                                            setShowVariantAtributosView(false)
+                                          }
+                                        }}
+                                        className="mt-8 text-gray-400 hover:text-red-400 transition-colors cursor-pointer"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  ))}
+
+                                  {containerAtributosPrincipales.length < 2 && (
+                                    <button
+                                      onClick={() => {
+                                        setContainerAtributosPrincipales([
+                                          ...containerAtributosPrincipales,
+                                          { key: "", variantes: [] },
+                                        ])
+                                      }}
+                                      className="w-full px-3 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                                    >
+                                      <Plus className="w-4 h-4" />
+                                      <span className="text-sm">Agregar atributo</span>
+                                    </button>
+                                  )}
+
+                                  {containerAtributosPrincipales.length > 0 && (
+                                    <button
+                                      onClick={handleGenerarVariantes}
+                                      disabled={!canGenerateVariants}
+                                      className={`w-full px-4 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 ${canGenerateVariants
+                                        ? "bg-purple-600 text-white hover:bg-purple-700 cursor-pointer"
+                                        : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                                        }`}
+                                    >
+                                      Generar Variantes
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            )}
                           </div>
+
+                          {/* SKU Padre and Variants header */}
+                          {variantItems.length > 0 && (
+                            <div className="mt-2 mb-4">
+                              <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">
+                                  Variantes
+                                </h3>
+                              </div>
+
+                              {/* SKU Padre */}
+                              <div className="mb-4">
+                                <div className="flex items-center gap-2 group/skupadre">
+                                  <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">
+                                    SKU Padre
+                                  </span>
+                                  {editingSkuPadre ? (
+                                    <input
+                                      type="text"
+                                      value={skuPadre}
+                                      autoFocus
+                                      onChange={(e) => setSkuPadre(e.target.value.toUpperCase())}
+                                      onBlur={() => setEditingSkuPadre(false)}
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter") (e.target as HTMLInputElement).blur()
+                                        if (e.key === "Escape") {
+                                          setEditingSkuPadre(false)
+                                        }
+                                      }}
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="font-mono text-sm text-slate-800 bg-transparent border-b border-slate-400 focus:border-purple-500 focus:outline-none w-full max-w-[180px]"
+                                      placeholder="Ej: VNO-KNECHT"
+                                    />
+                                  ) : (
+                                    <div
+                                      className="flex items-center gap-1.5 cursor-pointer"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        setEditingSkuPadre(true)
+                                      }}
+                                    >
+                                      <span className="font-mono text-sm text-slate-800">{skuPadre}</span>
+                                      <Pencil className="w-3 h-3 text-slate-400/60 opacity-0 group-hover/skupadre:opacity-100 transition-opacity" />
+                                    </div>
+                                  )}
+                                </div>
+                                <p className="text-[9px] text-slate-400 mt-0.5 italic">
+                                  Base para generar SKUs de variantes
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Variant Matrix Table */}
+                          {variantItems.length > 0 && (
+                            <div className="bg-white border border-border/40 rounded-lg overflow-hidden">
+                              {/* Table Header */}
+                              <div className="grid grid-cols-[40px_1fr_minmax(120px,1fr)_minmax(100px,0.8fr)_1fr] bg-slate-50 border-b border-border/30">
+                                <div className="px-2 py-3" />
+                                <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Variante</div>
+                                <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">SKU</div>
+                                <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Cód. Universal</div>
+                                <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Descripción</div>
+                              </div>
+
+                              {/* Table Body */}
+                              <div className="divide-y divide-border/30">
+                                {variantItems.map((variant) => (
+                                  <div
+                                    key={variant.id}
+                                    className="grid grid-cols-[40px_1fr_minmax(120px,1fr)_minmax(100px,0.8fr)_1fr] items-center hover:bg-accent/30 transition-colors"
+                                  >
+                                    {/* Thumbnail */}
+                                    <div className="px-2 py-2 flex items-center justify-center">
+                                      <div className="relative w-8 h-8 rounded-md bg-gradient-to-br from-muted to-muted/50 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                                        {variant.foto ? (
+                                          <Image
+                                            src={variant.foto}
+                                            alt=""
+                                            width={32}
+                                            height={32}
+                                            className="w-full h-full object-cover"
+                                          />
+                                        ) : (
+                                          <div className="w-5 h-5 text-gray-300">
+                                            <ImageIcon className="w-full h-full" />
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {/* Variant tags */}
+                                    <div className="px-3 py-2 flex items-center gap-1.5">
+                                      {variant.variant1 && (
+                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-200/60 truncate max-w-[80px]">
+                                          {variant.variant1}
+                                        </span>
+                                      )}
+                                      {variant.variant1 && variant.variant2 && (
+                                        <span className="text-[9px] text-muted-foreground/50 font-medium">×</span>
+                                      )}
+                                      {variant.variant2 && (
+                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-200/60 truncate max-w-[80px]">
+                                          {variant.variant2}
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    {/* SKU - editable */}
+                                    <div className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                                      <div className="flex items-center w-full">
+                                        <span className="text-[11px] font-mono text-muted-foreground/60 select-none whitespace-nowrap">
+                                          {skuPadre}-
+                                        </span>
+                                        <input
+                                          type="text"
+                                          value={variant.skuSuffix}
+                                          onChange={(e) => {
+                                            const newSuffix = e.target.value
+                                            setVariantItems((prev) =>
+                                              prev.map((v) => v.id === variant.id ? { ...v, skuSuffix: newSuffix } : v)
+                                            )
+                                          }}
+                                          className="flex-1 min-w-0 bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-purple-500/50 px-0 py-0.5 text-[11px] font-mono text-foreground focus:outline-none transition-colors"
+                                          placeholder="sufijo..."
+                                        />
+                                      </div>
+                                    </div>
+
+                                    {/* Código Universal - editable */}
+                                    <div className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                                      <input
+                                        type="text"
+                                        value={variant.codigoUniversal}
+                                        onChange={(e) => {
+                                          const newCodigo = e.target.value
+                                          setVariantItems((prev) =>
+                                            prev.map((v) => v.id === variant.id ? { ...v, codigoUniversal: newCodigo } : v)
+                                          )
+                                        }}
+                                        className="w-full bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-purple-500/50 px-0 py-0.5 text-[11px] font-mono text-foreground focus:outline-none transition-colors"
+                                        placeholder="Ej: 7790001234567"
+                                      />
+                                    </div>
+
+                                    {/* Descripción - editable */}
+                                    <div className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                                      <input
+                                        type="text"
+                                        value={variant.descripcion}
+                                        onChange={(e) => {
+                                          const newDesc = e.target.value
+                                          setVariantItems((prev) =>
+                                            prev.map((v) => v.id === variant.id ? { ...v, descripcion: newDesc } : v)
+                                          )
+                                        }}
+                                        className="w-full bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-purple-500/50 px-0 py-0.5 text-[11px] text-foreground focus:outline-none transition-colors"
+                                        placeholder="Descripción..."
+                                      />
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
 
                           {/* Navigation buttons */}
                           <div className="mt-8 pt-4 border-t border-gray-200 flex justify-between">
@@ -771,7 +1240,12 @@ export default function NuevoItemPage() {
                             </button>
                             <button
                               onClick={() => setCurrentStep(3)}
-                              className="px-6 py-2.5 bg-purple-500 text-white rounded-lg font-medium hover:bg-purple-600 transition-colors cursor-pointer"
+                              disabled={variantItems.length === 0}
+                              className={`px-6 py-2.5 rounded-lg font-medium transition-colors cursor-pointer ${
+                                variantItems.length > 0
+                                  ? "bg-purple-500 text-white hover:bg-purple-600"
+                                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                              }`}
                             >
                               Continuar
                             </button>
