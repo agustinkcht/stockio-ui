@@ -1079,16 +1079,25 @@ export default function NuevoItemPage() {
                                   )}
 
                                   {containerAtributosPrincipales.length > 0 && (
-                                    <button
-                                      onClick={handleGenerarVariantes}
-                                      disabled={!canGenerateVariants}
-                                      className={`w-full px-4 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 ${canGenerateVariants
-                                        ? "bg-purple-600 text-white hover:bg-purple-700 cursor-pointer"
-                                        : "bg-slate-100 text-slate-400 cursor-not-allowed"
-                                        }`}
-                                    >
-                                      Generar Variantes
-                                    </button>
+                                    <div className="flex gap-3">
+                                      <button
+                                        onClick={handleGenerarVariantes}
+                                        disabled={!canGenerateVariants}
+                                        className={`flex-1 px-4 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 ${canGenerateVariants
+                                          ? "bg-purple-600 text-white hover:bg-purple-700 cursor-pointer"
+                                          : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                                          }`}
+                                      >
+                                        Generar Variantes
+                                      </button>
+                                      <button
+                                        onClick={() => setIsNuevaVarianteModalOpen(true)}
+                                        className="px-4 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 border border-purple-300 text-purple-600 hover:bg-purple-50 cursor-pointer"
+                                      >
+                                        <Plus className="w-4 h-4" />
+                                        Nueva Variante
+                                      </button>
+                                    </div>
                                   )}
                                 </div>
                               </div>
@@ -1361,23 +1370,15 @@ export default function NuevoItemPage() {
               </button>
             </div>
 
-            {/* Variant info with item name */}
+            {/* Variant info with parent item name + variant tags */}
             {(() => {
               const variant = variantItems.find(v => v.id === variantMediaModal.variantId)
               return variant ? (
                 <div className="flex items-center gap-2 mb-4 pb-4 border-b border-slate-700">
                   <span className="text-sm font-medium text-white">{titulo}</span>
-                  {variant.variant1 && (
+                  {(variant.variant1 || variant.variant2) && (
                     <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-purple-500/20 text-purple-300 border border-purple-400/30">
-                      {variant.variant1}
-                    </span>
-                  )}
-                  {variant.variant1 && variant.variant2 && (
-                    <span className="text-xs text-slate-500">×</span>
-                  )}
-                  {variant.variant2 && (
-                    <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-purple-500/20 text-purple-300 border border-purple-400/30">
-                      {variant.variant2}
+                      [{[variant.variant1, variant.variant2].filter(Boolean).join(" × ")}]
                     </span>
                   )}
                 </div>

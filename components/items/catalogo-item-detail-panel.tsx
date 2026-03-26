@@ -3731,20 +3731,12 @@ export function CatalogoItemDetailPanel({
               </button>
             </div>
 
-            {/* Variant info */}
+            {/* Variant info with parent name + variant tags */}
             <div className="flex items-center gap-2 mb-4 pb-4 border-b border-slate-700">
               <span className="text-sm font-medium text-white">{selectedItem?.name}</span>
-              {expandedMatrixMediaModal.variant?.variant1 && (
+              {(expandedMatrixMediaModal.variant?.variant1 || expandedMatrixMediaModal.variant?.variant2) && (
                 <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-500/20 text-blue-300 border border-blue-400/30">
-                  {expandedMatrixMediaModal.variant.variant1}
-                </span>
-              )}
-              {expandedMatrixMediaModal.variant?.variant1 && expandedMatrixMediaModal.variant?.variant2 && (
-                <span className="text-xs text-slate-500">×</span>
-              )}
-              {expandedMatrixMediaModal.variant?.variant2 && (
-                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-500/20 text-blue-300 border border-blue-400/30">
-                  {expandedMatrixMediaModal.variant.variant2}
+                  [{[expandedMatrixMediaModal.variant?.variant1, expandedMatrixMediaModal.variant?.variant2].filter(Boolean).join(" × ")}]
                 </span>
               )}
             </div>
