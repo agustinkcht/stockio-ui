@@ -143,6 +143,106 @@ export default function NuevoItemPage() {
     }
   }
 
+  // Success View - Full screen without stepper (must be checked BEFORE steps view)
+  if (selectedType === "individual" && createdItemId) {
+    return (
+      <div className="min-h-screen bg-[rgb(243,242,238)]">
+        <div className="px-[6px] py-[6px] flex gap-[6px] h-screen">
+          <div className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
+            <Sidebar
+              sidebarItems={SIDEBAR_ITEMS}
+              bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
+              hoveredDropdown={hoveredDropdown}
+              onDropdownOpen={setHoveredDropdown}
+              onDropdownClose={() => setHoveredDropdown(null)}
+            />
+          </div>
+
+          <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
+            {/* Header */}
+            <div className="relative border-b border-border h-[44px] bg-white z-[100004]">
+              <div className="px-4 flex items-center justify-between h-full">
+                <div className="flex items-center gap-3">
+                  <Breadcrumb items={breadcrumbs} />
+                </div>
+
+                <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center gap-3">
+                  <UserPanel />
+                </div>
+
+                <div className="flex items-center gap-2 min-w-[280px] justify-end">
+                </div>
+              </div>
+            </div>
+
+            {/* Success Content */}
+            <main className="flex-1 flex items-center justify-center bg-[rgba(250,251,253,1)]">
+              <div className="p-8 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] max-w-md w-full">
+                <div className="flex flex-col items-center justify-center py-8">
+                  <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-6">
+                    <CheckCircle2 className="w-10 h-10 text-green-500" />
+                  </div>
+                  <h2 className="text-2xl font-semibold text-gray-900 mb-2">Item Creado Exitosamente</h2>
+                  <p className="text-gray-500 mb-2">{titulo}</p>
+                  <p className="text-sm text-gray-400 font-mono mb-8">{createdItemSkuDisplay}</p>
+
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => router.push(`/catalogo/items/${createdItemId}`)}
+                      className="px-6 py-2.5 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
+                    >
+                      Ver Item
+                    </button>
+                    <button
+                      onClick={() => {
+                        // Reset all state for new item creation
+                        setTitulo("")
+                        setSelectedType(null)
+                        setCurrentStep(1)
+                        setSelectedDetailTab("info")
+                        setCategoria("")
+                        setMarca("")
+                        setFormatoVenta("unidad")
+                        setUnidadesPorPack("1")
+                        setVolumenActive(false)
+                        setVolumenCantidad("")
+                        setVolumenUnidad("ml")
+                        setVencimientoActive(false)
+                        setFechaVencimiento("")
+                        setShowAtributosView(false)
+                        setAtributosInformativos([])
+                        setSku("")
+                        setSkuUserModified(false)
+                        setCodigoUniversal("")
+                        setMediaPhotos([])
+                        setDescripcion("")
+                        setEditingDescripcion(false)
+                        setCosto("")
+                        setMargen("")
+                        setIva("21")
+                        setPrecioVenta("")
+                        setEditingPrecioVenta(false)
+                        setStockInicial("")
+                        setStockReservado("")
+                        setProveedor("")
+                        setCodigoProveedor("")
+                        setCreatedItemId(null)
+                        setCreatedItemSkuDisplay(null)
+                      }}
+                      className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors cursor-pointer"
+                    >
+                      Crear Otro Item
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </main>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   // Show full-screen steps view when Item Individual is selected
   if (selectedType === "individual") {
     return (
@@ -963,106 +1063,6 @@ export default function NuevoItemPage() {
                       </div>
                     )}
 
-                  </div>
-                </div>
-              </div>
-            </main>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // Success View - Full screen without stepper
-  if (selectedType === "individual" && createdItemId) {
-    return (
-      <div className="min-h-screen bg-[rgb(243,242,238)]">
-        <div className="px-[6px] py-[6px] flex gap-[6px] h-screen">
-          <div className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
-            <Sidebar
-              sidebarItems={SIDEBAR_ITEMS}
-              bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
-              hoveredDropdown={hoveredDropdown}
-              onDropdownOpen={setHoveredDropdown}
-              onDropdownClose={() => setHoveredDropdown(null)}
-            />
-          </div>
-
-          <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
-            {/* Header */}
-            <div className="relative border-b border-border h-[44px] bg-white z-[100004]">
-              <div className="px-4 flex items-center justify-between h-full">
-                <div className="flex items-center gap-3">
-                  <Breadcrumb items={breadcrumbs} />
-                </div>
-
-                <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center gap-3">
-                  <UserPanel />
-                </div>
-
-                <div className="flex items-center gap-2 min-w-[280px] justify-end">
-                </div>
-              </div>
-            </div>
-
-            {/* Success Content */}
-            <main className="flex-1 flex items-center justify-center bg-[rgba(250,251,253,1)]">
-              <div className="p-8 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] max-w-md w-full">
-                <div className="flex flex-col items-center justify-center py-8">
-                  <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-6">
-                    <CheckCircle2 className="w-10 h-10 text-green-500" />
-                  </div>
-                  <h2 className="text-2xl font-semibold text-gray-900 mb-2">Item Creado Exitosamente</h2>
-                  <p className="text-gray-500 mb-2">{titulo}</p>
-                  <p className="text-sm text-gray-400 font-mono mb-8">{createdItemSkuDisplay}</p>
-
-                  <div className="flex gap-4">
-                    <button
-                      onClick={() => router.push(`/catalogo/items/${createdItemId}`)}
-                      className="px-6 py-2.5 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
-                    >
-                      Ver Item
-                    </button>
-                    <button
-                      onClick={() => {
-                        // Reset all state for new item creation
-                        setTitulo("")
-                        setSelectedType(null)
-                        setCurrentStep(1)
-                        setSelectedDetailTab("info")
-                        setCategoria("")
-                        setMarca("")
-                        setFormatoVenta("unidad")
-                        setUnidadesPorPack("1")
-                        setVolumenActive(false)
-                        setVolumenCantidad("")
-                        setVolumenUnidad("ml")
-                        setVencimientoActive(false)
-                        setFechaVencimiento("")
-                        setShowAtributosView(false)
-                        setAtributosInformativos([])
-                        setSku("")
-                        setSkuUserModified(false)
-                        setCodigoUniversal("")
-                        setMediaPhotos([])
-                        setDescripcion("")
-                        setEditingDescripcion(false)
-                        setCosto("")
-                        setMargen("")
-                        setIva("21")
-                        setPrecioVenta("")
-                        setEditingPrecioVenta(false)
-                        setStockInicial("")
-                        setStockReservado("")
-                        setProveedor("")
-                        setCodigoProveedor("")
-                        setCreatedItemId(null)
-                        setCreatedItemSkuDisplay(null)
-                      }}
-                      className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors cursor-pointer"
-                    >
-                      Crear Otro Item
-                    </button>
                   </div>
                 </div>
               </div>
