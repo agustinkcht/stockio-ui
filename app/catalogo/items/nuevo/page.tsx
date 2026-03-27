@@ -30,7 +30,8 @@ const STEPS_INDIVIDUAL = [
 const STEPS_VARIANTES = [
   { id: 1, label: "Información Compartida" },
   { id: 2, label: "Variantes" },
-  { id: 3, label: "Información Comercial" },
+  { id: 3, label: "Precio" },
+  { id: 4, label: "Stock" },
 ]
 
 export default function NuevoItemPage() {
@@ -1080,25 +1081,16 @@ export default function NuevoItemPage() {
                                   )}
 
                                   {containerAtributosPrincipales.length > 0 && (
-                                    <div className="flex gap-3">
-                                      <button
-                                        onClick={handleGenerarVariantes}
-                                        disabled={!canGenerateVariants}
-                                        className={`flex-1 px-4 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 ${canGenerateVariants
-                                          ? "bg-purple-600 text-white hover:bg-purple-700 cursor-pointer"
-                                          : "bg-slate-100 text-slate-400 cursor-not-allowed"
-                                          }`}
-                                      >
-                                        Generar Variantes
-                                      </button>
-                                      <button
-                                        onClick={() => setIsNuevaVarianteModalOpen(true)}
-                                        className="px-4 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 border border-purple-300 text-purple-600 hover:bg-purple-50 cursor-pointer"
-                                      >
-                                        <Plus className="w-4 h-4" />
-                                        Nueva Variante
-                                      </button>
-                                    </div>
+                                    <button
+                                      onClick={handleGenerarVariantes}
+                                      disabled={!canGenerateVariants}
+                                      className={`w-full px-4 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 ${canGenerateVariants
+                                        ? "bg-purple-600 text-white hover:bg-purple-700 cursor-pointer"
+                                        : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                                        }`}
+                                    >
+                                      Generar Variantes
+                                    </button>
                                   )}
                                 </div>
                               </div>
@@ -1311,25 +1303,289 @@ export default function NuevoItemPage() {
                       </div>
                     )}
 
-                    {/* Step 3: Información Comercial - Placeholder for now */}
+                    {/* Step 3: Precio */}
                     {currentStep === 3 && !createdItemId && (
                       <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
                         <div className="h-full flex flex-col py-2">
                           <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
-                            Información Comercial
+                            Precio
                           </h3>
                           <p className="text-[11px] text-slate-400 mb-6 italic">
-                            Define precios y stock de las variantes.
+                            Define los precios de cada variante.
                           </p>
 
-                          <div className="flex-1 flex items-center justify-center text-gray-400 min-h-[200px]">
-                            Contenido del paso 3 (proximamente)
-                          </div>
+                          {/* Precio Matrix Table */}
+                          {variantItems.length > 0 && (
+                            <div className="bg-white border border-border/40 rounded-lg overflow-hidden">
+                              {/* Table Header */}
+                              <div className="grid grid-cols-[40px_1fr_100px_80px_80px_100px] bg-slate-50 border-b border-border/30">
+                                <div className="px-2 py-3" />
+                                <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Variante</div>
+                                <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Costo</div>
+                                <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Margen</div>
+                                <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">IVA</div>
+                                <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Precio Final</div>
+                              </div>
+
+                              {/* Table Body */}
+                              <div className="divide-y divide-border/30">
+                                {variantItems.map((variant) => {
+                                  const variantCosto = (variant as any).costo || ""
+                                  const variantMargen = (variant as any).margen || ""
+                                  const variantIva = (variant as any).iva || "21"
+                                  const costoNum = parseFloat(variantCosto) || 0
+                                  const margenNum = parseFloat(variantMargen) || 0
+                                  const ivaNum = parseFloat(variantIva) || 0
+                                  const precioConMargen = costoNum * (1 + margenNum / 100)
+                                  const precioFinalCalc = precioConMargen * (1 + ivaNum / 100)
+                                  
+                                  return (
+                                    <div
+                                      key={variant.id}
+                                      className="grid grid-cols-[40px_1fr_100px_80px_80px_100px] items-center hover:bg-accent/30 transition-colors"
+                                    >
+                                      {/* Thumbnail */}
+                                      <div className="px-2 py-2 flex items-center justify-center">
+                                        <div className="relative w-8 h-8 rounded-md bg-gradient-to-br from-muted to-muted/50 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                                          {variant.foto ? (
+                                            <Image
+                                              src={variant.foto}
+                                              alt=""
+                                              width={32}
+                                              height={32}
+                                              className="w-full h-full object-cover"
+                                            />
+                                          ) : (
+                                            <div className="w-5 h-5 text-gray-300">
+                                              <ImageIcon className="w-full h-full" />
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+
+                                      {/* Variant tags */}
+                                      <div className="px-3 py-2 flex items-center gap-1.5">
+                                        {variant.variant1 && (
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-200/60 truncate max-w-[80px]">
+                                            {variant.variant1}
+                                          </span>
+                                        )}
+                                        {variant.variant1 && variant.variant2 && (
+                                          <span className="text-[9px] text-muted-foreground/50 font-medium">×</span>
+                                        )}
+                                        {variant.variant2 && (
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-200/60 truncate max-w-[80px]">
+                                            {variant.variant2}
+                                          </span>
+                                        )}
+                                      </div>
+
+                                      {/* Costo */}
+                                      <div className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                                        <div className="flex items-center">
+                                          <span className="text-[11px] text-muted-foreground/60 mr-1">$</span>
+                                          <input
+                                            type="number"
+                                            value={variantCosto}
+                                            onChange={(e) => {
+                                              setVariantItems((prev) =>
+                                                prev.map((v) => v.id === variant.id ? { ...v, costo: e.target.value } as any : v)
+                                              )
+                                            }}
+                                            className="w-full bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-purple-500/50 px-0 py-0.5 text-[11px] text-foreground focus:outline-none transition-colors"
+                                            placeholder="0.00"
+                                          />
+                                        </div>
+                                      </div>
+
+                                      {/* Margen */}
+                                      <div className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                                        <div className="flex items-center">
+                                          <input
+                                            type="number"
+                                            value={variantMargen}
+                                            onChange={(e) => {
+                                              setVariantItems((prev) =>
+                                                prev.map((v) => v.id === variant.id ? { ...v, margen: e.target.value } as any : v)
+                                              )
+                                            }}
+                                            className="w-full bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-purple-500/50 px-0 py-0.5 text-[11px] text-foreground focus:outline-none transition-colors"
+                                            placeholder="0"
+                                          />
+                                          <span className="text-[11px] text-muted-foreground/60 ml-1">%</span>
+                                        </div>
+                                      </div>
+
+                                      {/* IVA */}
+                                      <div className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                                        <div className="flex items-center">
+                                          <input
+                                            type="number"
+                                            value={variantIva}
+                                            onChange={(e) => {
+                                              setVariantItems((prev) =>
+                                                prev.map((v) => v.id === variant.id ? { ...v, iva: e.target.value } as any : v)
+                                              )
+                                            }}
+                                            className="w-full bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-purple-500/50 px-0 py-0.5 text-[11px] text-foreground focus:outline-none transition-colors"
+                                            placeholder="21"
+                                          />
+                                          <span className="text-[11px] text-muted-foreground/60 ml-1">%</span>
+                                        </div>
+                                      </div>
+
+                                      {/* Precio Final - calculated */}
+                                      <div className="px-3 py-2">
+                                        <span className="text-[11px] font-medium text-foreground">
+                                          ${precioFinalCalc > 0 ? precioFinalCalc.toFixed(2) : "—"}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )}
 
                           {/* Navigation buttons */}
                           <div className="mt-8 pt-4 border-t border-gray-200 flex justify-between">
                             <button
                               onClick={() => setCurrentStep(2)}
+                              className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors cursor-pointer"
+                            >
+                              Volver
+                            </button>
+                            <button
+                              onClick={() => setCurrentStep(4)}
+                              className="px-6 py-2.5 bg-purple-500 text-white rounded-lg font-medium hover:bg-purple-600 transition-colors cursor-pointer"
+                            >
+                              Continuar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Step 4: Stock */}
+                    {currentStep === 4 && !createdItemId && (
+                      <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
+                        <div className="h-full flex flex-col py-2">
+                          <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
+                            Stock
+                          </h3>
+                          <p className="text-[11px] text-slate-400 mb-6 italic">
+                            Define el stock inicial de cada variante.
+                          </p>
+
+                          {/* Stock Matrix Table */}
+                          {variantItems.length > 0 && (
+                            <div className="bg-white border border-border/40 rounded-lg overflow-hidden">
+                              {/* Table Header */}
+                              <div className="grid grid-cols-[40px_1fr_100px_100px_100px] bg-slate-50 border-b border-border/30">
+                                <div className="px-2 py-3" />
+                                <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Variante</div>
+                                <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Stock Inicial</div>
+                                <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Stock Reservado</div>
+                                <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Stock Disponible</div>
+                              </div>
+
+                              {/* Table Body */}
+                              <div className="divide-y divide-border/30">
+                                {variantItems.map((variant) => {
+                                  const variantStockInicial = (variant as any).stockInicial || ""
+                                  const variantStockReservado = (variant as any).stockReservado || ""
+                                  const stockInicialNum = parseInt(variantStockInicial) || 0
+                                  const stockReservadoNum = parseInt(variantStockReservado) || 0
+                                  const stockDisponibleCalc = stockInicialNum - stockReservadoNum
+                                  
+                                  return (
+                                    <div
+                                      key={variant.id}
+                                      className="grid grid-cols-[40px_1fr_100px_100px_100px] items-center hover:bg-accent/30 transition-colors"
+                                    >
+                                      {/* Thumbnail */}
+                                      <div className="px-2 py-2 flex items-center justify-center">
+                                        <div className="relative w-8 h-8 rounded-md bg-gradient-to-br from-muted to-muted/50 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                                          {variant.foto ? (
+                                            <Image
+                                              src={variant.foto}
+                                              alt=""
+                                              width={32}
+                                              height={32}
+                                              className="w-full h-full object-cover"
+                                            />
+                                          ) : (
+                                            <div className="w-5 h-5 text-gray-300">
+                                              <ImageIcon className="w-full h-full" />
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+
+                                      {/* Variant tags */}
+                                      <div className="px-3 py-2 flex items-center gap-1.5">
+                                        {variant.variant1 && (
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-200/60 truncate max-w-[80px]">
+                                            {variant.variant1}
+                                          </span>
+                                        )}
+                                        {variant.variant1 && variant.variant2 && (
+                                          <span className="text-[9px] text-muted-foreground/50 font-medium">×</span>
+                                        )}
+                                        {variant.variant2 && (
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-200/60 truncate max-w-[80px]">
+                                            {variant.variant2}
+                                          </span>
+                                        )}
+                                      </div>
+
+                                      {/* Stock Inicial */}
+                                      <div className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                                        <input
+                                          type="number"
+                                          value={variantStockInicial}
+                                          onChange={(e) => {
+                                            setVariantItems((prev) =>
+                                              prev.map((v) => v.id === variant.id ? { ...v, stockInicial: e.target.value } as any : v)
+                                            )
+                                          }}
+                                          className="w-full bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-purple-500/50 px-0 py-0.5 text-[11px] text-foreground focus:outline-none transition-colors"
+                                          placeholder="0"
+                                        />
+                                      </div>
+
+                                      {/* Stock Reservado */}
+                                      <div className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                                        <input
+                                          type="number"
+                                          value={variantStockReservado}
+                                          onChange={(e) => {
+                                            setVariantItems((prev) =>
+                                              prev.map((v) => v.id === variant.id ? { ...v, stockReservado: e.target.value } as any : v)
+                                            )
+                                          }}
+                                          className="w-full bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-purple-500/50 px-0 py-0.5 text-[11px] text-foreground focus:outline-none transition-colors"
+                                          placeholder="0"
+                                        />
+                                      </div>
+
+                                      {/* Stock Disponible - calculated */}
+                                      <div className="px-3 py-2">
+                                        <span className={`text-[11px] font-medium ${stockDisponibleCalc < 0 ? "text-red-500" : "text-foreground"}`}>
+                                          {stockInicialNum > 0 || stockReservadoNum > 0 ? stockDisponibleCalc : "—"}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Navigation buttons */}
+                          <div className="mt-8 pt-4 border-t border-gray-200 flex justify-between">
+                            <button
+                              onClick={() => setCurrentStep(3)}
                               className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors cursor-pointer"
                             >
                               Volver
