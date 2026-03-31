@@ -360,3 +360,33 @@ export interface OrdenProveedores {
   factor: ProveedorSortFactor
   direction: SortDirection
 }
+
+// ===== ORDENES DE COMPRA =====
+
+export type MedioPago = "efectivo" | "transferencia" | "tarjeta" | "cuenta_corriente"
+
+export type EstadoEntrega = "prevista" | "recibida"
+
+export interface OrdenCompraItem {
+  sku: string
+  name: string
+  quantity: number
+  unitPrice: number
+  total: number
+  categoria?: string
+  thumbnail?: string
+}
+
+export interface OrdenCompra {
+  id: string
+  numero: number
+  fechaCreacion: string
+  proveedorId: string
+  proveedorNombre: string
+  medioPago: MedioPago
+  estadoPago: number // Percentage 0-100
+  estadoEntrega: EstadoEntrega
+  fechaEntrega: string
+  items: OrdenCompraItem[]
+  importeTotal: number
+}
