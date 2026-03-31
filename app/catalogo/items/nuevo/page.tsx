@@ -541,7 +541,7 @@ export default function NuevoItemPage() {
               {/* 20-column grid layout */}
               <div className="w-full h-full grid" style={{ gridTemplateColumns: 'repeat(20, minmax(0, 1fr))' }}>
                 {/* Left Column - Steps Indicator (4 cols) */}
-                <div className="col-span-4 bg-transparent p-6 flex flex-col">
+                <div className="col-span-4 border-r border-gray-200 bg-white p-6 flex flex-col">
                   <div className="mb-8">
                     <h2 className="text-sm font-semibold text-gray-900 mb-1">Creando Item con Variantes</h2>
                     <p className="text-xs text-gray-500 truncate max-w-[180px]">{titulo}</p>
@@ -599,9 +599,9 @@ export default function NuevoItemPage() {
                   </div>
                 </div>
 
-                {/* Right Column - Step Content (12 cols, centered between two 4-col sidebars) */}
-                <div className="col-span-12 overflow-auto p-8">
-                  <div>
+                {/* Right Column - Step Content (16 cols) */}
+                <div className="col-span-16 overflow-auto p-8">
+                  <div className="max-w-3xl mx-auto">
                     {/* Step 1: Información Compartida */}
                     {currentStep === 1 && (
                       <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
@@ -1606,10 +1606,13 @@ export default function NuevoItemPage() {
 
                   </div>
                 </div>
-                {/* Right spacer - mirrors left stepper width for true centering */}
-                <div className="col-span-4" />
               </div>
             </main>
+          </div>
+        </div>
+      </div>
+
+      {/* Variant Media Modal */}
       {variantMediaModal.open && variantMediaModal.variantId && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center">
           <div className="absolute inset-0 bg-black/50" onClick={() => setVariantMediaModal({ open: false, variantId: null })} />
@@ -1755,7 +1758,7 @@ export default function NuevoItemPage() {
               {/* 20-column grid layout */}
               <div className="w-full h-full grid" style={{ gridTemplateColumns: 'repeat(20, minmax(0, 1fr))' }}>
                 {/* Left Column - Steps Indicator (4 cols) */}
-                <div className="col-span-4 bg-transparent p-6 flex flex-col">
+                <div className="col-span-4 border-r border-gray-200 bg-white p-6 flex flex-col">
                   <div className="mb-8">
                     <h2 className="text-sm font-semibold text-gray-900 mb-1">Creando Item Individual</h2>
                     <p className="text-xs text-gray-500 truncate max-w-[180px]">{titulo}</p>
@@ -1813,9 +1816,9 @@ export default function NuevoItemPage() {
                   </div>
                 </div>
 
-                {/* Right Column - Step Content (12 cols, centered between two 4-col sidebars) */}
-                <div className="col-span-12 overflow-auto p-8">
-                  <div>
+                {/* Right Column - Step Content (16 cols) */}
+                <div className="col-span-16 overflow-auto p-8">
+                  <div className="max-w-3xl mx-auto">
                     {/* Step 1: Información del Item */}
                     {currentStep === 1 && (
                       <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
@@ -2536,8 +2539,6 @@ export default function NuevoItemPage() {
 
                   </div>
                 </div>
-                {/* Right spacer - mirrors left stepper width for true centering */}
-                <div className="col-span-4" />
               </div>
             </main>
           </div>
