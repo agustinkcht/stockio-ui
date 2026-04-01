@@ -1,64 +1,49 @@
 "use client"
 
 import { useState, useMemo, Suspense, useRef, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import { Sidebar } from "@/components/layout/sidebar"
 import { useSidebar } from "@/hooks/use-sidebar"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
-import { useCompras } from "@/hooks/use-compras"
 import { UserPanel } from "@/components/layout/user-panel"
 import {
   Search,
-  Calendar,
   ChevronDown,
   ChevronRight,
   CreditCard,
   Banknote,
   Building2,
   ArrowRightLeft,
-  Copy,
   Package,
   Plus,
   ArrowUpDown,
   ListFilterIcon,
   X,
+  Check,
+  Minus,
 } from "lucide-react"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import Image from "next/image"
-import type { Compra, PaymentMethod } from "@/lib/types"
+import type { OrdenCompra, MedioPago } from "@/lib/types"
 import { Button } from "@/components/ui/button"
+import { ORDENES_COMPRA } from "@/lib/data/initial-ordenes"
 
-const paymentMethodLabels: Record<PaymentMethod, string> = {
+const medioPagoLabels: Record<MedioPago, string> = {
   efectivo: "Efectivo",
   tarjeta: "Tarjeta",
   transferencia: "Transferencia",
   cuenta_corriente: "Cuenta Cte.",
 }
 
-const paymentMethodIcons: Record<PaymentMethod, typeof Banknote> = {
+const medioPagoIcons: Record<MedioPago, typeof Banknote> = {
   efectivo: Banknote,
   tarjeta: CreditCard,
   transferencia: ArrowRightLeft,
   cuenta_corriente: Building2,
 }
 
-const FILTRO_OPTIONS = {
-  metodoPago: [
-    { value: "efectivo", label: "Efectivo" },
-    { value: "tarjeta", label: "Tarjeta" },
-    { value: "transferencia", label: "Transferencia" },
-    { value: "cuenta_corriente", label: "Cuenta Cte." },
-  ],
-  estado: [
-    { value: "completada", label: "Completada" },
-    { value: "pendiente", label: "Pendiente" },
-    { value: "cancelada", label: "Cancelada" },
-  ],
-}
-
 type SortDirection = "asc" | "desc"
-type SortFactor = "fecha" | "total" | "proveedor"
+type SortFactor = "fecha" | "total" | "proveedor" | "numero"
 
 interface SortConfig {
   factor: SortFactor
@@ -66,17 +51,36 @@ interface SortConfig {
 }
 
 interface FilterConfig {
-  metodoPago: PaymentMethod[]
-  estado: string[]
+  medioPago: MedioPago[]
+  estadoEntrega: string[]
+}
+
+const FILTRO_OPTIONS = {
+  medioPago: [
+    { value: "efectivo", label: "Efectivo" },
+    { value: "tarjeta", label: "Tarjeta" },
+    { value: "transferencia", label: "Transferencia" },
+    { value: "cuenta_corriente", label: "Cuenta Cte." },
+  ],
+  estadoEntrega: [
+    { value: "prevista", label: "Prevista" },
+    { value: "recibida", label: "Recibida" },
+  ],
+}
+
+function formatDateShort(dateStr: string): string {
+  const date = new Date(dateStr)
+  const day = date.getDate()
+  const months = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
+  const month = months[date.getMonth()]
+  const year = String(date.getFullYear()).slice(-2)
+  return `${day}/${month}/${year}`
 }
 
 function ComprasContent() {
-  const router = useRouter()
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
-  const { compras, isLoading } = useCompras()
   const [searchQuery, setSearchQuery] = useState("")
-  const [expandedPurchases, setExpandedPurchases] = useState<Set<string>>(new Set())
-  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set())
 
   const [showOrderModal, setShowOrderModal] = useState(false)
   const [showFilterModal, setShowFilterModal] = useState(false)
@@ -84,12 +88,12 @@ function ComprasContent() {
   const filterRef = useRef<HTMLDivElement>(null)
 
   const [activeFilters, setActiveFilters] = useState<FilterConfig>({
-    metodoPago: [],
-    estado: [],
+    medioPago: [],
+    estadoEntrega: [],
   })
 
   const [sortConfig, setSortConfig] = useState<SortConfig>({
-    factor: "fecha",
+    factor: "numero",
     direction: "desc",
   })
 
@@ -111,89 +115,57 @@ function ComprasContent() {
     }
   }, [])
 
-  const filteredCompras = useMemo(() => {
-    let result = compras.filter((compra) => {
+  const filteredOrdenes = useMemo(() => {
+    let result = ORDENES_COMPRA.filter((orden) => {
       const matchesSearch =
         searchQuery === "" ||
-        compra.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        compra.proveedorNombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        compra.items.some((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
+        orden.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        orden.proveedorNombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        orden.items.some((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
 
       return matchesSearch
     })
 
-    if (activeFilters.metodoPago.length > 0) {
-      result = result.filter((c) => activeFilters.metodoPago.includes(c.metodoPago))
+    if (activeFilters.medioPago.length > 0) {
+      result = result.filter((o) => activeFilters.medioPago.includes(o.medioPago))
     }
-    if (activeFilters.estado.length > 0) {
-      result = result.filter((c) => activeFilters.estado.includes(c.estado))
+    if (activeFilters.estadoEntrega.length > 0) {
+      result = result.filter((o) => activeFilters.estadoEntrega.includes(o.estadoEntrega))
     }
 
     result.sort((a, b) => {
       let comparison = 0
       switch (sortConfig.factor) {
         case "fecha":
-          comparison = a.fecha.localeCompare(b.fecha)
+          comparison = a.fechaCreacion.localeCompare(b.fechaCreacion)
           break
         case "total":
-          comparison = a.total - b.total
+          comparison = a.importeTotal - b.importeTotal
           break
         case "proveedor":
           comparison = a.proveedorNombre.localeCompare(b.proveedorNombre)
+          break
+        case "numero":
+          comparison = a.numero - b.numero
           break
       }
       return sortConfig.direction === "asc" ? comparison : -comparison
     })
 
     return result
-  }, [compras, searchQuery, activeFilters, sortConfig])
+  }, [searchQuery, activeFilters, sortConfig])
 
   const toggleExpanded = (id: string) => {
-    const newExpanded = new Set(expandedPurchases)
+    const newExpanded = new Set(expandedOrders)
     if (newExpanded.has(id)) {
       newExpanded.delete(id)
     } else {
       newExpanded.add(id)
     }
-    setExpandedPurchases(newExpanded)
+    setExpandedOrders(newExpanded)
   }
 
-  const copyToClipboard = (text: string, id: string) => {
-    navigator.clipboard.writeText(text)
-    setCopiedId(id)
-    setTimeout(() => setCopiedId(null), 1500)
-  }
-
-  const formatDate = (fecha: string) => {
-    const date = new Date(fecha)
-    const today = new Date()
-    const yesterday = new Date(today)
-    yesterday.setDate(yesterday.getDate() - 1)
-
-    if (fecha === today.toISOString().split("T")[0]) {
-      return "Hoy"
-    } else if (fecha === yesterday.toISOString().split("T")[0]) {
-      return "Ayer"
-    } else {
-      return date.toLocaleDateString("es-AR", { day: "numeric", month: "short" })
-    }
-  }
-
-  const purchasesByDate = useMemo(() => {
-    const grouped: Record<string, Compra[]> = {}
-    filteredCompras.forEach((compra) => {
-      if (!grouped[compra.fecha]) {
-        grouped[compra.fecha] = []
-      }
-      grouped[compra.fecha].push(compra)
-    })
-    return Object.entries(grouped).sort(([a], [b]) => b.localeCompare(a))
-  }, [filteredCompras])
-
-  const totalCompras = filteredCompras.reduce((acc, c) => acc + c.total, 0)
-  const totalTransacciones = filteredCompras.length
-
-  const hasActiveFilters = activeFilters.metodoPago.length > 0 || activeFilters.estado.length > 0
+  const hasActiveFilters = activeFilters.medioPago.length > 0 || activeFilters.estadoEntrega.length > 0
 
   const toggleFilter = (category: keyof FilterConfig, value: string) => {
     setActiveFilters((prev) => {
@@ -248,27 +220,14 @@ function ComprasContent() {
           </div>
 
           <main className="flex-1 flex flex-col bg-[rgba(250,251,253,1)] overflow-hidden">
+            {/* Toolbar */}
             <div className="px-6 pt-6 pb-4">
               <div className="bg-white border border-border/40 rounded-lg shadow-sm">
                 <div className="px-4 py-3 flex items-center justify-between gap-4">
-                  {/* Left: Stats and Nueva Compra Button */}
+                  {/* Left: Nueva Orden Button */}
                   <div className="flex items-center gap-4 shrink-0">
-                    <div className="flex items-center gap-6">
-                      <div>
-                        <p className="text-xs text-muted-foreground">Transacciones</p>
-                        <p className="text-lg font-semibold">{totalTransacciones}</p>
-                      </div>
-                      <div className="h-8 w-px bg-border/50" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">Total Compras</p>
-                        <p className="text-lg font-semibold text-amber-600">
-                          ${totalCompras.toLocaleString("es-AR", { minimumFractionDigits: 0 })}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="h-8 w-px bg-border/50" />
                     <Button
-                      onClick={() => router.push("/compras/portal-de-compras")}
+                      onClick={() => {/* TODO: Nueva Orden */}}
                       variant="ghost"
                       size="sm"
                       className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer gap-1.5 shrink-0"
@@ -283,7 +242,7 @@ function ComprasContent() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-black opacity-100 z-10" />
                     <input
                       type="text"
-                      placeholder="Buscar compras..."
+                      placeholder="Buscar ordenes..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full h-8 pl-9 pr-9 border shadow-sm rounded-md text-xs placeholder:text-gray-600 text-gray-600 focus:outline-none focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500/50 bg-white backdrop-blur-sm transition-all duration-300 border-[rgba(202,213,227,0.842391304347826)]"
@@ -292,7 +251,7 @@ function ComprasContent() {
                       <button
                         onClick={() => setSearchQuery("")}
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors z-10"
-                        title="Limpiar búsqueda"
+                        title="Limpiar busqueda"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -315,6 +274,7 @@ function ComprasContent() {
                         <div className="absolute right-0 top-10 bg-white border border-border/40 rounded-lg shadow-lg z-50 w-48 py-2">
                           <p className="px-3 py-1 text-xs font-medium text-muted-foreground">Ordenar por</p>
                           {[
+                            { value: "numero", label: "Numero" },
                             { value: "fecha", label: "Fecha" },
                             { value: "total", label: "Total" },
                             { value: "proveedor", label: "Proveedor" },
@@ -328,7 +288,7 @@ function ComprasContent() {
                                     prev.factor === option.value ? (prev.direction === "asc" ? "desc" : "asc") : "desc",
                                 }))
                               }}
-                              className={`w-full px-3 py-1.5 text-left text-sm hover:bg-muted/50 flex items-center justify-between ${
+                              className={`w-full px-3 py-1.5 text-left text-sm hover:bg-muted/50 flex items-center justify-between cursor-pointer ${
                                 sortConfig.factor === option.value ? "text-amber-600 font-medium" : ""
                               }`}
                             >
@@ -359,17 +319,17 @@ function ComprasContent() {
                       {showFilterModal && (
                         <div className="absolute right-0 top-10 bg-white border border-border/40 rounded-lg shadow-lg z-50 w-56 py-2">
                           <div className="px-3 py-2 border-b border-border/30">
-                            <p className="text-xs font-medium text-muted-foreground">Método de Pago</p>
+                            <p className="text-xs font-medium text-muted-foreground">Medio de Pago</p>
                             <div className="mt-2 space-y-1">
-                              {FILTRO_OPTIONS.metodoPago.map((option) => (
+                              {FILTRO_OPTIONS.medioPago.map((option) => (
                                 <label
                                   key={option.value}
                                   className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 px-1 py-0.5 rounded"
                                 >
                                   <input
                                     type="checkbox"
-                                    checked={activeFilters.metodoPago.includes(option.value as PaymentMethod)}
-                                    onChange={() => toggleFilter("metodoPago", option.value)}
+                                    checked={activeFilters.medioPago.includes(option.value as MedioPago)}
+                                    onChange={() => toggleFilter("medioPago", option.value)}
                                     className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
                                   />
                                   {option.label}
@@ -378,17 +338,17 @@ function ComprasContent() {
                             </div>
                           </div>
                           <div className="px-3 py-2">
-                            <p className="text-xs font-medium text-muted-foreground">Estado</p>
+                            <p className="text-xs font-medium text-muted-foreground">Estado Entrega</p>
                             <div className="mt-2 space-y-1">
-                              {FILTRO_OPTIONS.estado.map((option) => (
+                              {FILTRO_OPTIONS.estadoEntrega.map((option) => (
                                 <label
                                   key={option.value}
                                   className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 px-1 py-0.5 rounded"
                                 >
                                   <input
                                     type="checkbox"
-                                    checked={activeFilters.estado.includes(option.value)}
-                                    onChange={() => toggleFilter("estado", option.value)}
+                                    checked={activeFilters.estadoEntrega.includes(option.value)}
+                                    onChange={() => toggleFilter("estadoEntrega", option.value)}
                                     className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
                                   />
                                   {option.label}
@@ -399,8 +359,8 @@ function ComprasContent() {
                           {hasActiveFilters && (
                             <div className="px-3 pt-2 border-t border-border/30">
                               <button
-                                onClick={() => setActiveFilters({ metodoPago: [], estado: [] })}
-                                className="text-xs text-amber-600 hover:underline"
+                                onClick={() => setActiveFilters({ medioPago: [], estadoEntrega: [] })}
+                                className="text-xs text-amber-600 hover:underline cursor-pointer"
                               >
                                 Limpiar filtros
                               </button>
@@ -414,156 +374,213 @@ function ComprasContent() {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 pb-6">
-              {isLoading ? (
-                <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                  <p>Cargando compras...</p>
+            {/* Tab Header */}
+            <div className="px-6">
+              <div className="bg-slate-200 border border-[rgba(202,213,227,0.61)] rounded-t-sm">
+                <div className="grid grid-cols-100 h-9">
+                  {/* Chevron spacer */}
+                  <div className="col-span-3 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
+                  </div>
+                  {/* ID */}
+                  <div className="col-span-8 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
+                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">ID</span>
+                  </div>
+                  {/* Proveedor */}
+                  <div className="col-span-20 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
+                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Proveedor</span>
+                  </div>
+                  {/* Entrega */}
+                  <div className="col-span-10 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
+                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Entrega</span>
+                  </div>
+                  {/* Estado Entrega */}
+                  <div className="col-span-12 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
+                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Estado Entrega</span>
+                  </div>
+                  {/* Medio de Pago */}
+                  <div className="col-span-10 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
+                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Medio Pago</span>
+                  </div>
+                  {/* Estado del Pago */}
+                  <div className="col-span-17 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
+                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Estado Pago</span>
+                  </div>
+                  {/* Importe Total */}
+                  <div className="col-span-20 flex items-center justify-center">
+                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Importe Total</span>
+                  </div>
                 </div>
-              ) : purchasesByDate.length === 0 ? (
+              </div>
+            </div>
+
+            {/* Grid Content */}
+            <div className="flex-1 overflow-y-auto px-6 pb-6">
+              {filteredOrdenes.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                   <Package className="w-12 h-12 mb-3 opacity-30" />
-                  <p>No se encontraron compras</p>
+                  <p>No se encontraron ordenes de compra</p>
                 </div>
               ) : (
-                <div className="space-y-6">
-                  {purchasesByDate.map(([date, purchases]) => (
-                    <div key={date}>
-                      <div className="flex items-center gap-2 mb-3">
-                        <Calendar className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm font-medium text-muted-foreground">{formatDate(date)}</span>
-                        <span className="text-xs text-muted-foreground/60">
-                          ({purchases.length} compra{purchases.length > 1 ? "s" : ""})
-                        </span>
-                      </div>
+                <div className="space-y-[1px]">
+                  {filteredOrdenes.map((orden) => {
+                    const isExpanded = expandedOrders.has(orden.id)
+                    const MedioPagoIcon = medioPagoIcons[orden.medioPago]
+                    
+                    // Calcular estado de entrega: productos recibidos / total productos
+                    const totalItems = orden.items.reduce((sum, item) => sum + item.quantity, 0)
+                    const receivedItems = orden.items.reduce((sum, item) => sum + (item.quantityReceived || 0), 0)
+                    const entregaCompleta = receivedItems === totalItems && totalItems > 0
 
-                      <div className="space-y-[2px]">
-                        {purchases.map((compra) => {
-                          const isExpanded = expandedPurchases.has(compra.id)
-                          const PaymentIcon = paymentMethodIcons[compra.metodoPago]
+                    return (
+                      <div key={orden.id} className="bg-white border-x border-b border-[rgba(202,213,227,0.61)] first:border-t-0">
+                        {/* Main Row */}
+                        <div
+                          className="grid grid-cols-100 min-h-[56px] cursor-pointer hover:bg-gray-50/50 transition-colors"
+                          onClick={() => toggleExpanded(orden.id)}
+                        >
+                          {/* Chevron */}
+                          <div className="col-span-3 flex items-center justify-center border-r border-[rgba(202,213,227,0.3)]">
+                            <button className="p-0.5 text-muted-foreground">
+                              {isExpanded ? (
+                                <ChevronDown className="w-4 h-4" />
+                              ) : (
+                                <ChevronRight className="w-4 h-4" />
+                              )}
+                            </button>
+                          </div>
 
-                          return (
-                            <div key={compra.id} className="bg-white rounded-sm overflow-hidden">
-                              <div
-                                className="flex items-center gap-4 px-4 py-3 cursor-pointer transition-colors"
-                                onClick={() => toggleExpanded(compra.id)}
-                              >
-                                <button className="p-0.5 text-muted-foreground">
-                                  {isExpanded ? (
-                                    <ChevronDown className="w-4 h-4" />
-                                  ) : (
-                                    <ChevronRight className="w-4 h-4" />
-                                  )}
-                                </button>
+                          {/* ID */}
+                          <div className="col-span-8 flex flex-col items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]">
+                            <span className="text-sm font-medium text-gray-900">C-{orden.numero}</span>
+                            <span className="text-xs text-muted-foreground">{formatDateShort(orden.fechaCreacion)}</span>
+                          </div>
 
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-medium text-sm">{compra.proveedorNombre}</span>
-                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-                                      {compra.items.length} item{compra.items.length > 1 ? "s" : ""}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-2 mt-0.5">
-                                    <span className="text-xs text-muted-foreground">{compra.id}</span>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        copyToClipboard(compra.id, compra.id)
-                                      }}
-                                      className="p-0.5 hover:bg-muted rounded transition-colors"
-                                    >
-                                      <Copy
-                                        className={`w-3 h-3 ${copiedId === compra.id ? "text-amber-500" : "text-muted-foreground/50"}`}
-                                      />
-                                    </button>
-                                    <span className="text-xs text-muted-foreground/50">·</span>
-                                    <span className="text-xs text-muted-foreground/70">{compra.hora}</span>
-                                  </div>
-                                </div>
+                          {/* Proveedor */}
+                          <div className="col-span-20 flex items-center px-4 py-2 border-r border-[rgba(202,213,227,0.3)]">
+                            <span className="text-sm text-gray-700 truncate">{orden.proveedorNombre}</span>
+                          </div>
 
-                                <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-muted/50">
-                                  <PaymentIcon className="w-3.5 h-3.5 text-muted-foreground" />
-                                  <span className="text-xs text-muted-foreground">
-                                    {paymentMethodLabels[compra.metodoPago]}
-                                  </span>
-                                </div>
+                          {/* Entrega */}
+                          <div className="col-span-10 flex flex-col items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]">
+                            <span className={`text-xs font-medium ${entregaCompleta ? "text-green-600" : "text-amber-600"}`}>
+                              {entregaCompleta ? "Recibida" : "Prevista"}
+                            </span>
+                            <span className="text-xs text-muted-foreground">{formatDateShort(orden.fechaEntrega)}</span>
+                          </div>
 
-                                <div className="text-right min-w-[100px]">
-                                  <p className="font-semibold text-sm">
-                                    ${compra.total.toLocaleString("es-AR", { minimumFractionDigits: 0 })}
-                                  </p>
-                                  {compra.descuento > 0 && (
-                                    <p className="text-[10px] text-amber-600">-{compra.descuento}% desc.</p>
-                                  )}
-                                </div>
+                          {/* Estado Entrega - Items recibidos */}
+                          <div className="col-span-12 flex items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]">
+                            <div className="flex items-center gap-1.5">
+                              <Package className={`w-3.5 h-3.5 ${entregaCompleta ? "text-green-500" : receivedItems > 0 ? "text-amber-500" : "text-gray-400"}`} />
+                              <span className={`text-xs font-medium ${
+                                entregaCompleta ? "text-green-600" : 
+                                receivedItems > 0 ? "text-amber-600" : "text-gray-500"
+                              }`}>
+                                {receivedItems} de {totalItems}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Medio de Pago */}
+                          <div className="col-span-10 flex items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]">
+                            <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-muted/50">
+                              <MedioPagoIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                              <span className="text-xs text-muted-foreground">{medioPagoLabels[orden.medioPago]}</span>
+                            </div>
+                          </div>
+
+                          {/* Estado del Pago */}
+                          <div className="col-span-17 flex items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]">
+                            <div className="flex items-center gap-2">
+                              <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                <div 
+                                  className={`h-full rounded-full transition-all ${
+                                    orden.estadoPago === 100 ? "bg-green-500" : 
+                                    orden.estadoPago > 0 ? "bg-amber-500" : "bg-gray-300"
+                                  }`}
+                                  style={{ width: `${orden.estadoPago}%` }}
+                                />
                               </div>
+                              <span className={`text-xs font-medium ${
+                                orden.estadoPago === 100 ? "text-green-600" : 
+                                orden.estadoPago > 0 ? "text-amber-600" : "text-gray-500"
+                              }`}>
+                                {orden.estadoPago}%
+                              </span>
+                            </div>
+                          </div>
 
-                              {isExpanded && (
-                                <div className="border-t border-border/30 bg-muted/20">
-                                  <div className="px-4 py-2 space-y-1">
-                                    {compra.items.map((item, idx) => (
-                                      <div key={idx} className="flex items-center gap-3 py-2">
-                                        <div className="w-10 h-10 rounded bg-muted/50 overflow-hidden flex-shrink-0">
-                                          <Image
-                                            src={getCategoryImage(item.categoria) || "/placeholder.svg"}
-                                            alt={item.name}
-                                            width={40}
-                                            height={40}
-                                            className="w-full h-full object-cover"
-                                          />
-                                        </div>
+                          {/* Importe Total */}
+                          <div className="col-span-20 flex items-center justify-center py-2">
+                            <span className="text-sm font-semibold text-gray-900">
+                              ${orden.importeTotal.toLocaleString("es-AR", { minimumFractionDigits: 0 })}
+                            </span>
+                          </div>
+                        </div>
 
-                                        <div className="flex-1 min-w-0">
-                                          <p className="text-sm truncate">{item.name}</p>
-                                          <div className="flex items-center gap-2">
-                                            <span className="text-xs text-muted-foreground">{item.sku}</span>
-                                            {item.discount > 0 && (
-                                              <span className="text-[10px] text-amber-600 bg-amber-50 px-1 rounded">
-                                                -{item.discount}%
-                                              </span>
-                                            )}
-                                          </div>
-                                        </div>
-
-                                        <div className="text-right">
-                                          <p className="text-sm font-medium">
-                                            ${item.total.toLocaleString("es-AR", { minimumFractionDigits: 0 })}
-                                          </p>
-                                          <p className="text-xs text-muted-foreground">
-                                            {item.quantity} × ${item.unitPrice.toLocaleString("es-AR")}
-                                          </p>
-                                        </div>
+                        {/* Expanded Items */}
+                        {isExpanded && (
+                          <div className="border-t border-border/30 bg-muted/20">
+                            <div className="px-4 py-2 space-y-1">
+                              {orden.items.map((item, idx) => {
+                                const itemRecibido = item.quantityReceived === item.quantity
+                                const itemParcial = item.quantityReceived > 0 && item.quantityReceived < item.quantity
+                                return (
+                                  <div key={idx} className="grid grid-cols-100 items-center py-2">
+                                    {/* Item Info (leftmost) */}
+                                    <div className="col-span-53 flex items-center gap-3 pl-8">
+                                      <div className="w-10 h-10 rounded bg-muted/50 overflow-hidden flex-shrink-0">
+                                        <Image
+                                          src={getCategoryImage(item.categoria) || "/placeholder.svg"}
+                                          alt={item.name}
+                                          width={40}
+                                          height={40}
+                                          className="w-full h-full object-cover"
+                                        />
                                       </div>
-                                    ))}
-                                  </div>
-
-                                  <div className="px-4 py-2 border-t border-border/30 flex justify-end">
-                                    <div className="text-right text-xs space-y-0.5">
-                                      <div className="flex items-center gap-4 text-muted-foreground">
-                                        <span>Subtotal</span>
-                                        <span>${compra.subtotal.toLocaleString("es-AR")}</span>
-                                      </div>
-                                      {compra.descuento > 0 && (
-                                        <div className="flex items-center gap-4 text-amber-600">
-                                          <span>Descuento ({compra.descuento}%)</span>
-                                          <span>
-                                            -${((compra.subtotal * compra.descuento) / 100).toLocaleString("es-AR")}
-                                          </span>
-                                        </div>
-                                      )}
-                                      <div className="flex items-center gap-4 font-semibold text-sm pt-1">
-                                        <span>Total</span>
-                                        <span>${compra.total.toLocaleString("es-AR")}</span>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-sm truncate">{item.name}</p>
+                                        <span className="text-xs text-muted-foreground">{item.sku}</span>
                                       </div>
                                     </div>
+
+                                    {/* Item Estado Recepcion - alineado con Estado Entrega */}
+                                    <div className="col-span-27 flex items-center justify-center">
+                                      <div className="flex items-center gap-1.5">
+                                        {itemRecibido ? (
+                                          <Check className="w-3.5 h-3.5 text-green-500" />
+                                        ) : itemParcial ? (
+                                          <Minus className="w-3.5 h-3.5 text-amber-500" />
+                                        ) : (
+                                          <Package className="w-3.5 h-3.5 text-gray-400" />
+                                        )}
+                                        <span className={`text-xs font-medium ${
+                                          itemRecibido ? "text-green-600" : 
+                                          itemParcial ? "text-amber-600" : "text-gray-500"
+                                        }`}>
+                                          {item.quantityReceived} de {item.quantity} recibidos
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    {/* Item Subtotal (rightmost, aligned with importe total) */}
+                                    <div className="col-span-20 flex flex-col items-center justify-center">
+                                      <p className="text-sm font-medium">
+                                        ${item.total.toLocaleString("es-AR", { minimumFractionDigits: 0 })}
+                                      </p>
+                                      <p className="text-xs text-muted-foreground">
+                                        {item.quantity} x ${item.unitPrice.toLocaleString("es-AR")}
+                                      </p>
+                                    </div>
                                   </div>
-                                </div>
-                              )}
+                                )
+                              })}
                             </div>
-                          )
-                        })}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </div>
