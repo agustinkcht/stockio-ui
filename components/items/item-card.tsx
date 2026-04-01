@@ -35,6 +35,7 @@ interface ItemCardProps {
   showPrecioColumn?: boolean
   onUpdatePrecio?: (itemId: string, precio: { costo: number; margen: number; iva: number; precioFinal: number }) => void
   onUpdateStock?: (itemSku: string, field: "total" | "reservado", value: number) => void
+  stockViewMode?: boolean // When true, uses stock-specific grid layout (cols-22 with stock columns)
 }
 
 function calculateMarginBottom(currentItem: Item, nextItem: Item | undefined, isChild: boolean): string {
@@ -88,6 +89,7 @@ export function ItemCard({
   showPrecioColumn = false,
   onUpdatePrecio,
   onUpdateStock,
+  stockViewMode = false,
 }: ItemCardProps) {
   // Compute full SKU for children: {parentSkuPrefix}-{skuSuffix}
   // For standalone items, use sku directly
@@ -361,9 +363,11 @@ export function ItemCard({
                       ? "bg-gray-50" 
                       : "bg-white"
                 } border border-border transition-colors ${item.isAgrupador || item.hasVariants ? "cursor-pointer" : ""} overflow-hidden`
-              : item.isAgrupador || item.hasVariants
-                ? `grid-cols-44 ${!isItemActive ? "bg-slate-100/80 opacity-60" : isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors cursor-pointer overflow-hidden`
-                : `grid-cols-44 ${!isItemActive ? "bg-slate-100/80 opacity-60" : isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors overflow-hidden`
+              : stockViewMode
+                ? `grid-cols-22 ${!isItemActive ? "bg-slate-100/80 opacity-60" : isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors ${item.isAgrupador || item.hasVariants ? "cursor-pointer" : ""} overflow-hidden`
+                : item.isAgrupador || item.hasVariants
+                  ? `grid-cols-44 ${!isItemActive ? "bg-slate-100/80 opacity-60" : isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors cursor-pointer overflow-hidden`
+                  : `grid-cols-44 ${!isItemActive ? "bg-slate-100/80 opacity-60" : isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors overflow-hidden`
           }`}
           onClick={(e) => {
             if (item.hasVariants || item.isAgrupador) {
@@ -606,59 +610,149 @@ export function ItemCard({
             )
           ) : item.isAgrupador || item.hasVariants ? (
             // NORMAL MODE: Parent items
-            <>
-              {/* Item cell - col-span-16, chevron on left instead of thumbnail */}
-              <div
-                className={`col-span-16 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors border-r border-slate-100`}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onToggleExpansion(index)
-                }}
-              >
-                {/* Chevron instead of thumbnail */}
-                <button
+            stockViewMode ? (
+              // Stock View Mode: Item (8), Categoria (4), Total (4), Reservado (4), Disponible (2)
+              <>
+                <div
+                  className="col-span-8 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors border-r border-slate-100"
                   onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
-                  className="flex-shrink-0 flex items-center justify-center size-8 rounded-md hover:bg-slate-100 transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
                 >
-                  {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-                </button>
-
-                {/* Product Info */}
-                <div className="flex-1 min-w-0" onClick={(e) => { e.stopPropagation(); onItemClick(item) }}>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-container-item-foreground font-medium truncate">
-                      {item.name}
-                    </span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground whitespace-nowrap">
-                      {item.hasVariants ? `${variantCount} var.` : `${itemCount} items`}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+                    className="flex-shrink-0 flex items-center justify-center size-6 rounded-md hover:bg-slate-100 transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+                  >
+                    {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </button>
+                  <div className="flex-1 min-w-0" onClick={(e) => { e.stopPropagation(); onItemClick(item) }}>
+                    <span className="text-sm text-container-item-foreground font-medium truncate block">{item.name}</span>
+                    <span className="text-[10px] text-muted-foreground">{item.hasVariants ? `${variantCount} var.` : `${itemCount} items`}</span>
                   </div>
                 </div>
-              </div>
+                <div className="col-span-4 h-full flex items-center justify-center px-2 border-r border-slate-100 cursor-pointer" onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}>
+                  <span className="text-xs text-foreground truncate">{item.categoria || "-"}</span>
+                </div>
+                <div className="col-span-4 h-full flex items-center justify-center px-2 border-r border-slate-100 cursor-pointer" onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}></div>
+                <div className="col-span-4 h-full flex items-center justify-center px-2 border-r border-slate-100 cursor-pointer" onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}></div>
+                <div className="col-span-2 h-full flex items-center justify-center px-1 cursor-pointer" onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}></div>
+              </>
+            ) : (
+              // Default: Item (16), Categoria (10), Precio (10), Stock (8)
+              <>
+                {/* Item cell - col-span-16, chevron on left instead of thumbnail */}
+                <div
+                  className={`col-span-16 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors border-r border-slate-100`}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onToggleExpansion(index)
+                  }}
+                >
+                  {/* Chevron instead of thumbnail */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+                    className="flex-shrink-0 flex items-center justify-center size-8 rounded-md hover:bg-slate-100 transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+                  >
+                    {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                  </button>
 
-              {/* Categoría cell */}
-              <div
-                className="col-span-10 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
-                onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
-              >
-                <span className="text-sm text-foreground">{item.categoria || "-"}</span>
-              </div>
+                  {/* Product Info */}
+                  <div className="flex-1 min-w-0" onClick={(e) => { e.stopPropagation(); onItemClick(item) }}>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-container-item-foreground font-medium truncate">
+                        {item.name}
+                      </span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground whitespace-nowrap">
+                        {item.hasVariants ? `${variantCount} var.` : `${itemCount} items`}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
+                    </div>
+                  </div>
+                </div>
 
-              {/* Precio Final - blank for parent */}
-              <div
-                className="col-span-10 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
-                onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
-              >
-              </div>
+                {/* Categoría cell */}
+                <div
+                  className="col-span-10 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+                  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+                >
+                  <span className="text-sm text-foreground">{item.categoria || "-"}</span>
+                </div>
 
-              {/* Stock Disponible - blank for parent */}
+                {/* Precio Final - blank for parent */}
+                <div
+                  className="col-span-10 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+                  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+                >
+                </div>
+
+                {/* Stock Disponible - blank for parent */}
+                <div
+                  className="col-span-8 h-full flex items-center justify-center px-4 cursor-pointer"
+                  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+                >
+                </div>
+              </>
+            )
+          ) : stockViewMode ? (
+            // STOCK VIEW MODE: Standalone/child items - Item (8), Categoria (4), Total (4), Reservado (4), Disponible (2)
+            <>
               <div
-                className="col-span-8 h-full flex items-center justify-center px-4 cursor-pointer"
-                onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+                className={`col-span-8 flex items-center gap-2 h-full border-r border-slate-100 ${isChild ? "pl-6 pr-2" : "px-3"} cursor-pointer transition-colors`}
+                onClick={(e) => { e.stopPropagation(); onItemClick(item) }}
               >
+                <div className={`${isChild ? "w-7 h-7" : "w-9 h-9"} flex-shrink-0 rounded-md bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden`}>
+                  <img
+                    src={getCategoryImage(item.categoria) || "/placeholder.svg"}
+                    alt={item.categoria || "Product"}
+                    className={`${isChild ? "w-5 h-5" : "w-6 h-6"} object-contain opacity-60`}
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className={`text-sm ${isChild ? "text-muted-foreground" : "text-foreground"} font-medium truncate block`}>{item.name}</span>
+                  {isChild && item.atributosPrincipales && item.atributosPrincipales.length > 0 && (
+                    <div className="flex items-center gap-1 mt-0.5">
+                      {item.atributosPrincipales.slice(0, 2).map((attr, i) => (
+                        <span key={i} className="text-[9px] px-1 py-0.5 rounded whitespace-nowrap bg-blue-50 text-blue-800">{attr.value}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="col-span-4 h-full flex items-center justify-center px-2 border-r border-slate-100 cursor-pointer" onClick={(e) => { e.stopPropagation(); onItemClick(item) }}>
+                <span className="text-xs text-foreground truncate">{item.categoria || "-"}</span>
+              </div>
+              <div
+                className="col-span-4 h-full flex items-center justify-center px-2 border-r border-slate-100 cursor-pointer hover:bg-slate-50 group/total"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setActiveStockEdit("total")
+                  setStockModification({ total: { operation: "agregar", value: "" }, reservado: { operation: "agregar", value: "" } })
+                  setIsStockModalOpen(true)
+                }}
+              >
+                <span className="text-sm font-medium tabular-nums text-foreground group-hover/total:text-blue-600 transition-colors">{item.stock?.total ?? 0}</span>
+              </div>
+              <div
+                className="col-span-4 h-full flex items-center justify-center px-2 border-r border-slate-100 cursor-pointer hover:bg-slate-50 group/reservado"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setActiveStockEdit("reservado")
+                  setStockModification({ total: { operation: "agregar", value: "" }, reservado: { operation: "agregar", value: "" } })
+                  setIsStockModalOpen(true)
+                }}
+              >
+                <span className="text-sm font-medium tabular-nums text-foreground group-hover/reservado:text-blue-600 transition-colors">{item.stock?.reservado ?? 0}</span>
+              </div>
+              <div className="col-span-2 h-full flex items-center justify-center px-1">
+                <span className={`text-sm font-medium tabular-nums ${
+                  (item.stock?.disponible ?? 0) > 0
+                    ? "text-foreground"
+                    : (item.stock?.disponible ?? 0) < 0
+                      ? "text-red-500"
+                      : "text-muted-foreground"
+                }`}>
+                  {item.stock?.disponible ?? 0}
+                </span>
               </div>
             </>
           ) : (
@@ -884,6 +978,7 @@ export function ItemCard({
                 showPrecioColumn={showPrecioColumn}
                 onUpdatePrecio={onUpdatePrecio}
                 onUpdateStock={onUpdateStock}
+                stockViewMode={stockViewMode}
               />
             )
           })}
@@ -918,6 +1013,7 @@ export function ItemCard({
                 showPrecioColumn={showPrecioColumn}
                 onUpdatePrecio={onUpdatePrecio}
                 onUpdateStock={onUpdateStock}
+                stockViewMode={stockViewMode}
               />
             )
           })}
