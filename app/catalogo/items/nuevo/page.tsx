@@ -541,7 +541,7 @@ export default function NuevoItemPage() {
               {/* 20-column grid layout */}
               <div className="w-full h-full grid" style={{ gridTemplateColumns: 'repeat(20, minmax(0, 1fr))' }}>
                 {/* Left Column - Steps Indicator (4 cols) */}
-                <div className="col-span-4 border-r border-gray-200 bg-white p-6 flex flex-col">
+                <div className="col-span-4 bg-transparent p-6 flex flex-col">
                   <div className="mb-8">
                     <h2 className="text-sm font-semibold text-gray-900 mb-1">Creando Item con Variantes</h2>
                     <p className="text-xs text-gray-500 truncate max-w-[180px]">{titulo}</p>
@@ -563,14 +563,14 @@ export default function NuevoItemPage() {
                           />
                           {index < STEPS_VARIANTES.length - 1 && (
                             <div 
-                              className={`w-0.5 h-16 transition-all duration-300 ${
+                              className={`w-0.5 h-20 transition-all duration-300 ${
                                 currentStep > step.id ? 'bg-green-500' : 'bg-gray-200'
                               }`}
                             />
                           )}
                         </div>
                         {/* Step label */}
-                        <div className="pb-16">
+                        <div className="pb-20">
                           <button
                             onClick={() => setCurrentStep(step.id)}
                             className={`text-left transition-all duration-200 cursor-pointer ${
@@ -599,8 +599,8 @@ export default function NuevoItemPage() {
                   </div>
                 </div>
 
-                {/* Right Column - Step Content (12 cols) + Empty space (4 cols on right) */}
-                <div className="col-span-12 overflow-auto p-8">
+                {/* Right Column - Step Content (13 cols) + Empty space (3 cols on right) */}
+                <div className="col-span-13 overflow-auto p-8">
                   <div>
                     {/* Step 1: Información Compartida */}
                     {currentStep === 1 && (
@@ -1758,7 +1758,7 @@ export default function NuevoItemPage() {
               {/* 20-column grid layout */}
               <div className="w-full h-full grid" style={{ gridTemplateColumns: 'repeat(20, minmax(0, 1fr))' }}>
                 {/* Left Column - Steps Indicator (4 cols) */}
-                <div className="col-span-4 border-r border-gray-200 bg-white p-6 flex flex-col">
+                <div className="col-span-4 bg-transparent p-6 flex flex-col">
                   <div className="mb-8">
                     <h2 className="text-sm font-semibold text-gray-900 mb-1">Creando Item Individual</h2>
                     <p className="text-xs text-gray-500 truncate max-w-[180px]">{titulo}</p>
@@ -1780,14 +1780,14 @@ export default function NuevoItemPage() {
                           />
                           {index < STEPS_INDIVIDUAL.length - 1 && (
                             <div 
-                              className={`w-0.5 h-16 transition-all duration-300 ${
+                              className={`w-0.5 h-20 transition-all duration-300 ${
                                 currentStep > step.id ? 'bg-green-500' : 'bg-gray-200'
                               }`}
                             />
                           )}
                         </div>
                         {/* Step label */}
-                        <div className="pb-16">
+                        <div className="pb-20">
                           <button
                             onClick={() => setCurrentStep(step.id)}
                             className={`text-left transition-all duration-200 cursor-pointer ${
@@ -1816,8 +1816,8 @@ export default function NuevoItemPage() {
                   </div>
                 </div>
 
-                {/* Right Column - Step Content (12 cols) + Empty space (4 cols on right) */}
-                <div className="col-span-12 overflow-auto p-8">
+                {/* Right Column - Step Content (13 cols) + Empty space (3 cols on right) */}
+                <div className="col-span-13 overflow-auto p-8">
                   <div>
                     {/* Step 1: Información del Item */}
                     {currentStep === 1 && (
