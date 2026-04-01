@@ -371,6 +371,7 @@ export interface OrdenCompraItem {
   sku: string
   name: string
   quantity: number
+  quantityReceived: number // Cantidad de unidades recibidas (para entregas diferidas/parciales)
   unitPrice: number
   total: number
   categoria?: string

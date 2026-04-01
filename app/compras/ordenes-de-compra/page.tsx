@@ -386,23 +386,27 @@ function OrdenesDeCompraContent() {
                     <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Orden</span>
                   </div>
                   {/* Proveedor */}
-                  <div className="col-span-25 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
+                  <div className="col-span-20 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
                     <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Proveedor</span>
                   </div>
                   {/* Entrega */}
-                  <div className="col-span-15 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
+                  <div className="col-span-10 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
                     <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Entrega</span>
+                  </div>
+                  {/* Estado Entrega */}
+                  <div className="col-span-12 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
+                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Estado Entrega</span>
                   </div>
                   {/* Medio de Pago */}
                   <div className="col-span-10 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
                     <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Medio Pago</span>
                   </div>
                   {/* Estado del Pago */}
-                  <div className="col-span-14 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
+                  <div className="col-span-17 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
                     <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Estado Pago</span>
                   </div>
                   {/* Importe Total */}
-                  <div className="col-span-25 flex items-center justify-center">
+                  <div className="col-span-20 flex items-center justify-center">
                     <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Importe Total</span>
                   </div>
                 </div>
@@ -421,6 +425,11 @@ function OrdenesDeCompraContent() {
                   {filteredOrdenes.map((orden) => {
                     const isExpanded = expandedOrders.has(orden.id)
                     const MedioPagoIcon = medioPagoIcons[orden.medioPago]
+                    
+                    // Calcular estado de entrega: productos recibidos / total productos
+                    const totalItems = orden.items.reduce((sum, item) => sum + item.quantity, 0)
+                    const receivedItems = orden.items.reduce((sum, item) => sum + (item.quantityReceived || 0), 0)
+                    const entregaCompleta = receivedItems === totalItems && totalItems > 0
 
                     return (
                       <div key={orden.id} className="bg-white border-x border-b border-[rgba(202,213,227,0.61)] first:border-t-0">
@@ -447,16 +456,29 @@ function OrdenesDeCompraContent() {
                           </div>
 
                           {/* Proveedor */}
-                          <div className="col-span-25 flex items-center px-4 py-2 border-r border-[rgba(202,213,227,0.3)]">
+                          <div className="col-span-20 flex items-center px-4 py-2 border-r border-[rgba(202,213,227,0.3)]">
                             <span className="text-sm text-gray-700 truncate">{orden.proveedorNombre}</span>
                           </div>
 
                           {/* Entrega */}
-                          <div className="col-span-15 flex flex-col items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]">
-                            <span className={`text-xs font-medium ${orden.estadoEntrega === "recibida" ? "text-green-600" : "text-amber-600"}`}>
-                              {orden.estadoEntrega === "recibida" ? "Recibida" : "Prevista para"}
+                          <div className="col-span-10 flex flex-col items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]">
+                            <span className={`text-xs font-medium ${entregaCompleta ? "text-green-600" : "text-amber-600"}`}>
+                              {entregaCompleta ? "Recibida" : "Prevista"}
                             </span>
                             <span className="text-xs text-muted-foreground">{formatDateShort(orden.fechaEntrega)}</span>
+                          </div>
+
+                          {/* Estado Entrega - Items recibidos */}
+                          <div className="col-span-12 flex items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]">
+                            <div className="flex items-center gap-1.5">
+                              <Package className={`w-3.5 h-3.5 ${entregaCompleta ? "text-green-500" : receivedItems > 0 ? "text-amber-500" : "text-gray-400"}`} />
+                              <span className={`text-xs font-medium ${
+                                entregaCompleta ? "text-green-600" : 
+                                receivedItems > 0 ? "text-amber-600" : "text-gray-500"
+                              }`}>
+                                {receivedItems} de {totalItems}
+                              </span>
+                            </div>
                           </div>
 
                           {/* Medio de Pago */}
@@ -468,7 +490,7 @@ function OrdenesDeCompraContent() {
                           </div>
 
                           {/* Estado del Pago */}
-                          <div className="col-span-14 flex items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]">
+                          <div className="col-span-17 flex items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]">
                             <div className="flex items-center gap-2">
                               <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                                 <div 
@@ -489,7 +511,7 @@ function OrdenesDeCompraContent() {
                           </div>
 
                           {/* Importe Total */}
-                          <div className="col-span-25 flex items-center justify-center py-2">
+                          <div className="col-span-20 flex items-center justify-center py-2">
                             <span className="text-sm font-semibold text-gray-900">
                               ${orden.importeTotal.toLocaleString("es-AR", { minimumFractionDigits: 0 })}
                             </span>
@@ -500,36 +522,59 @@ function OrdenesDeCompraContent() {
                         {isExpanded && (
                           <div className="border-t border-border/30 bg-muted/20">
                             <div className="px-4 py-2 space-y-1">
-                              {orden.items.map((item, idx) => (
-                                <div key={idx} className="grid grid-cols-100 items-center py-2">
-                                  {/* Item Info (leftmost) */}
-                                  <div className="col-span-75 flex items-center gap-3 pl-8">
-                                    <div className="w-10 h-10 rounded bg-muted/50 overflow-hidden flex-shrink-0">
-                                      <Image
-                                        src={getCategoryImage(item.categoria) || "/placeholder.svg"}
-                                        alt={item.name}
-                                        width={40}
-                                        height={40}
-                                        className="w-full h-full object-cover"
-                                      />
+                              {orden.items.map((item, idx) => {
+                                const itemRecibido = item.quantityReceived === item.quantity
+                                const itemParcial = item.quantityReceived > 0 && item.quantityReceived < item.quantity
+                                return (
+                                  <div key={idx} className="grid grid-cols-100 items-center py-2">
+                                    {/* Item Info (leftmost) */}
+                                    <div className="col-span-53 flex items-center gap-3 pl-8">
+                                      <div className="w-10 h-10 rounded bg-muted/50 overflow-hidden flex-shrink-0">
+                                        <Image
+                                          src={getCategoryImage(item.categoria) || "/placeholder.svg"}
+                                          alt={item.name}
+                                          width={40}
+                                          height={40}
+                                          className="w-full h-full object-cover"
+                                        />
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-sm truncate">{item.name}</p>
+                                        <span className="text-xs text-muted-foreground">{item.sku}</span>
+                                      </div>
                                     </div>
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-sm truncate">{item.name}</p>
-                                      <span className="text-xs text-muted-foreground">{item.sku}</span>
-                                    </div>
-                                  </div>
 
-                                  {/* Item Subtotal (rightmost, aligned with importe total) */}
-                                  <div className="col-span-25 flex flex-col items-center justify-center">
-                                    <p className="text-sm font-medium">
-                                      ${item.total.toLocaleString("es-AR", { minimumFractionDigits: 0 })}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">
-                                      {item.quantity} x ${item.unitPrice.toLocaleString("es-AR")}
-                                    </p>
+                                    {/* Item Estado Recepcion - alineado con Estado Entrega */}
+                                    <div className="col-span-27 flex items-center justify-center">
+                                      <div className="flex items-center gap-1.5">
+                                        {itemRecibido ? (
+                                          <Check className="w-3.5 h-3.5 text-green-500" />
+                                        ) : itemParcial ? (
+                                          <Minus className="w-3.5 h-3.5 text-amber-500" />
+                                        ) : (
+                                          <Package className="w-3.5 h-3.5 text-gray-400" />
+                                        )}
+                                        <span className={`text-xs font-medium ${
+                                          itemRecibido ? "text-green-600" : 
+                                          itemParcial ? "text-amber-600" : "text-gray-500"
+                                        }`}>
+                                          {item.quantityReceived} de {item.quantity} recibidos
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    {/* Item Subtotal (rightmost, aligned with importe total) */}
+                                    <div className="col-span-20 flex flex-col items-center justify-center">
+                                      <p className="text-sm font-medium">
+                                        ${item.total.toLocaleString("es-AR", { minimumFractionDigits: 0 })}
+                                      </p>
+                                      <p className="text-xs text-muted-foreground">
+                                        {item.quantity} x ${item.unitPrice.toLocaleString("es-AR")}
+                                      </p>
+                                    </div>
                                   </div>
-                                </div>
-                              ))}
+                                )
+                              })}
                             </div>
                           </div>
                         )}
