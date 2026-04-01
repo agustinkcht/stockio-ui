@@ -599,9 +599,9 @@ export default function NuevoItemPage() {
                   </div>
                 </div>
 
-                {/* Right Column - Step Content (16 cols) */}
-                <div className="col-span-16 overflow-auto p-8">
-                  <div className="max-w-3xl mx-auto">
+                {/* Right Column - Step Content (12 cols) + Empty space (4 cols on right) */}
+                <div className="col-span-12 overflow-auto p-8">
+                  <div>
                     {/* Step 1: Información Compartida */}
                     {currentStep === 1 && (
                       <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
@@ -1816,9 +1816,9 @@ export default function NuevoItemPage() {
                   </div>
                 </div>
 
-                {/* Right Column - Step Content (16 cols) */}
-                <div className="col-span-16 overflow-auto p-8">
-                  <div className="max-w-3xl mx-auto">
+                {/* Right Column - Step Content (12 cols) + Empty space (4 cols on right) */}
+                <div className="col-span-12 overflow-auto p-8">
+                  <div>
                     {/* Step 1: Información del Item */}
                     {currentStep === 1 && (
                       <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
