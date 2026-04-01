@@ -23,9 +23,10 @@ const MAX_TITLE_LENGTH = 60
 
 const STEPS_INDIVIDUAL = [
   { id: 1, label: "Información del Item" },
-  { id: 2, label: "Detalle del Item" },
-  { id: 3, label: "Información Comercial" },
-]
+  { id: 2, label: "Precio" },
+  { id: 3, label: "Stock" },
+  { id: 4, label: "Detalles Finales" },
+  ]
 
 const STEPS_VARIANTES = [
   { id: 1, label: "Información Compartida" },
@@ -1859,6 +1860,19 @@ export default function NuevoItemPage() {
                             <div className="space-y-3">
                               <div className="grid grid-cols-2 gap-4">
                                 <div className="flex flex-col gap-2">
+                                  <label className="text-sm font-medium text-gray-700">Proveedor</label>
+                                  <input
+                                    type="text"
+                                    value={proveedor}
+                                    onChange={(e) => setProveedor(e.target.value)}
+                                    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900"
+                                    placeholder="Nombre del proveedor"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="flex flex-col gap-2">
                                   <label className="text-sm font-medium text-gray-700">Categoría</label>
                                   <input
                                     type="text"
@@ -2113,15 +2127,192 @@ export default function NuevoItemPage() {
                       </div>
                     )}
 
-                    {/* Step 2: Detalle del Item */}
+                    {/* Step 2: Precio */}
                     {currentStep === 2 && (
                       <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
                         <div className="h-full flex flex-col py-2">
                           <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
-                            Detalle del Item
+                            Precio
                           </h3>
                           <p className="text-[11px] text-slate-400 mb-6 italic">
-                            Agrega información adicional y atributos del item.
+                            Define el precio de venta del item.
+                          </p>
+
+                          <div className="space-y-6">
+                            {/* Precio de Venta - Above and editable */}
+                            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 mb-4">
+                              <span className="text-xs font-medium text-green-700 uppercase tracking-wider">Precio de Venta</span>
+                              {editingPrecioVenta ? (
+                                <div className="mt-1 flex items-center">
+                                  <span className="text-3xl font-bold text-green-700 mr-1">$</span>
+                                  <input
+                                    type="number"
+                                    value={precioVenta}
+                                    onChange={(e) => setPrecioVenta(e.target.value)}
+                                    onBlur={() => setEditingPrecioVenta(false)}
+                                    onKeyDown={(e) => e.key === 'Enter' && setEditingPrecioVenta(false)}
+                                    className="text-3xl font-bold text-green-700 bg-transparent border-none outline-none w-full"
+                                    placeholder={precioFinal.toFixed(2)}
+                                    autoFocus
+                                  />
+                                </div>
+                              ) : (
+                                <div 
+                                  onClick={() => setEditingPrecioVenta(true)}
+                                  className="mt-1 text-3xl font-bold text-green-700 cursor-pointer hover:opacity-80"
+                                >
+                                  ${precioFinal.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-4">
+                              <div className="flex flex-col gap-2">
+                                <label className="text-xs font-medium text-gray-600">Costo</label>
+                                <div className="relative">
+                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
+                                  <input
+                                    type="number"
+                                    value={costo}
+                                    onChange={(e) => {
+                                      setCosto(e.target.value)
+                                      setPrecioVenta("") // Reset manual price when cost changes
+                                    }}
+                                    className="w-full pl-7 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
+                                    placeholder="0.00"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="flex flex-col gap-2">
+                                <label className="text-xs font-medium text-gray-600">Margen</label>
+                                <div className="relative">
+                                  <input
+                                    type="number"
+                                    value={margen}
+                                    onChange={(e) => {
+                                      setMargen(e.target.value)
+                                      setPrecioVenta("") // Reset manual price when margin changes
+                                    }}
+                                    className="w-full pl-3 pr-7 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
+                                    placeholder="0"
+                                  />
+                                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
+                                </div>
+                              </div>
+
+                              <div className="flex flex-col gap-2">
+                                <label className="text-xs font-medium text-gray-600">IVA</label>
+                                <div className="relative">
+                                  <input
+                                    type="number"
+                                    value={iva}
+                                    onChange={(e) => {
+                                      setIva(e.target.value)
+                                      setPrecioVenta("") // Reset manual price when IVA changes
+                                    }}
+                                    className="w-full pl-3 pr-7 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
+                                    placeholder="21"
+                                  />
+                                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Navigation buttons */}
+                          <div className="mt-8 pt-4 border-t border-gray-200 flex justify-between">
+                            <button
+                              onClick={() => setCurrentStep(1)}
+                              className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors cursor-pointer"
+                            >
+                              Volver
+                            </button>
+                            <button
+                              onClick={() => setCurrentStep(3)}
+                              className="px-6 py-2.5 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
+                            >
+                              Continuar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Step 3: Stock */}
+                    {currentStep === 3 && (
+                      <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
+                        <div className="h-full flex flex-col py-2">
+                          <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
+                            Stock
+                          </h3>
+                          <p className="text-[11px] text-slate-400 mb-6 italic">
+                            Define el stock inicial del item.
+                          </p>
+
+                          <div className="space-y-6">
+                            <div className="grid grid-cols-3 gap-4">
+                              <div className="flex flex-col gap-2">
+                                <label className="text-xs font-medium text-gray-600">Inicial</label>
+                                <input
+                                  type="number"
+                                  value={stockInicial}
+                                  onChange={(e) => setStockInicial(e.target.value)}
+                                  className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
+                                  placeholder="0"
+                                  min="0"
+                                />
+                              </div>
+
+                              <div className="flex flex-col gap-2">
+                                <label className="text-xs font-medium text-gray-600">Reservado</label>
+                                <input
+                                  type="number"
+                                  value={stockReservado}
+                                  onChange={(e) => setStockReservado(e.target.value)}
+                                  className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
+                                  placeholder="0"
+                                  min="0"
+                                />
+                              </div>
+
+                              <div className="flex flex-col gap-2">
+                                <label className="text-xs font-medium text-gray-600">Disponible</label>
+                                <div className="px-3 py-2 border rounded-lg bg-blue-50 border-blue-200 text-blue-700 text-sm font-semibold">
+                                  {stockDisponible}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Navigation buttons */}
+                          <div className="mt-8 pt-4 border-t border-gray-200 flex justify-between">
+                            <button
+                              onClick={() => setCurrentStep(2)}
+                              className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors cursor-pointer"
+                            >
+                              Volver
+                            </button>
+                            <button
+                              onClick={() => setCurrentStep(4)}
+                              className="px-6 py-2.5 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
+                            >
+                              Continuar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Step 4: Detalles Finales */}
+                    {currentStep === 4 && !createdItemId && (
+                      <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
+                        <div className="h-full flex flex-col py-2">
+                          <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
+                            Detalles Finales
+                          </h3>
+                          <p className="text-[11px] text-slate-400 mb-6 italic">
+                            Agrega información adicional del item.
                           </p>
 
                           <div className="space-y-6">
@@ -2155,6 +2346,22 @@ export default function NuevoItemPage() {
                                   onChange={(e) => setCodigoUniversal(e.target.value)}
                                   className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 font-mono text-sm"
                                   placeholder="Ej: 7790001234567"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="border-t border-gray-200 my-4"></div>
+
+                            {/* Codigo Proveedor */}
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="flex flex-col gap-2">
+                                <label className="text-sm font-medium text-gray-700">Codigo Proveedor</label>
+                                <input
+                                  type="text"
+                                  value={codigoProveedor}
+                                  onChange={(e) => setCodigoProveedor(e.target.value)}
+                                  className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 font-mono text-sm"
+                                  placeholder="Codigo del proveedor"
                                 />
                               </div>
                             </div>
@@ -2273,193 +2480,7 @@ export default function NuevoItemPage() {
                           {/* Navigation buttons */}
                           <div className="mt-8 pt-4 border-t border-gray-200 flex justify-between">
                             <button
-                              onClick={() => setCurrentStep(1)}
-                              className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors cursor-pointer"
-                            >
-                              Volver
-                            </button>
-                            <button
                               onClick={() => setCurrentStep(3)}
-                              className="px-6 py-2.5 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
-                            >
-                              Continuar
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Step 3: Información Comercial */}
-                    {currentStep === 3 && !createdItemId && (
-                      <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
-                        <div className="h-full flex flex-col py-2">
-                          <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
-                            Información Comercial
-                          </h3>
-                          <p className="text-[11px] text-slate-400 mb-6 italic">
-                            Define precios y stock del item.
-                          </p>
-
-                          <div className="space-y-6">
-                            {/* Precio Section - 60% width */}
-                            <div className="w-[60%]">
-                              <h4 className="text-sm font-medium text-gray-700 mb-4">Precio</h4>
-                              
-                              {/* Precio de Venta - Above and editable */}
-                              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 mb-4">
-                                <span className="text-xs font-medium text-green-700 uppercase tracking-wider">Precio de Venta</span>
-                                {editingPrecioVenta ? (
-                                  <div className="mt-1 flex items-center">
-                                    <span className="text-3xl font-bold text-green-700 mr-1">$</span>
-                                    <input
-                                      type="number"
-                                      value={precioVenta}
-                                      onChange={(e) => setPrecioVenta(e.target.value)}
-                                      onBlur={() => setEditingPrecioVenta(false)}
-                                      onKeyDown={(e) => e.key === 'Enter' && setEditingPrecioVenta(false)}
-                                      className="text-3xl font-bold text-green-700 bg-transparent border-none outline-none w-full"
-                                      placeholder={precioFinal.toFixed(2)}
-                                      autoFocus
-                                    />
-                                  </div>
-                                ) : (
-                                  <div 
-                                    onClick={() => setEditingPrecioVenta(true)}
-                                    className="mt-1 text-3xl font-bold text-green-700 cursor-pointer hover:opacity-80"
-                                  >
-                                    ${precioFinal.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                  </div>
-                                )}
-                              </div>
-
-                              <div className="grid grid-cols-3 gap-4">
-                                <div className="flex flex-col gap-2">
-                                  <label className="text-xs font-medium text-gray-600">Costo</label>
-                                  <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
-                                    <input
-                                      type="number"
-                                      value={costo}
-                                      onChange={(e) => {
-                                        setCosto(e.target.value)
-                                        setPrecioVenta("") // Reset manual price when cost changes
-                                      }}
-                                      className="w-full pl-7 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
-                                      placeholder="0.00"
-                                    />
-                                  </div>
-                                </div>
-
-                                <div className="flex flex-col gap-2">
-                                  <label className="text-xs font-medium text-gray-600">Margen</label>
-                                  <div className="relative">
-                                    <input
-                                      type="number"
-                                      value={margen}
-                                      onChange={(e) => {
-                                        setMargen(e.target.value)
-                                        setPrecioVenta("") // Reset manual price when margin changes
-                                      }}
-                                      className="w-full pl-3 pr-7 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
-                                      placeholder="0"
-                                    />
-                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
-                                  </div>
-                                </div>
-
-                                <div className="flex flex-col gap-2">
-                                  <label className="text-xs font-medium text-gray-600">IVA</label>
-                                  <div className="relative">
-                                    <input
-                                      type="number"
-                                      value={iva}
-                                      onChange={(e) => {
-                                        setIva(e.target.value)
-                                        setPrecioVenta("") // Reset manual price when IVA changes
-                                      }}
-                                      className="w-full pl-3 pr-7 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
-                                      placeholder="21"
-                                    />
-                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="border-t border-gray-200 my-4"></div>
-
-                            {/* Stock Section - 60% width */}
-                            <div className="w-[60%]">
-                              <h4 className="text-sm font-medium text-gray-700 mb-4">Stock</h4>
-                              <div className="grid grid-cols-3 gap-4">
-                                <div className="flex flex-col gap-2">
-                                  <label className="text-xs font-medium text-gray-600">Inicial</label>
-                                  <input
-                                    type="number"
-                                    value={stockInicial}
-                                    onChange={(e) => setStockInicial(e.target.value)}
-                                    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
-                                    placeholder="0"
-                                    min="0"
-                                  />
-                                </div>
-
-                                <div className="flex flex-col gap-2">
-                                  <label className="text-xs font-medium text-gray-600">Reservado</label>
-                                  <input
-                                    type="number"
-                                    value={stockReservado}
-                                    onChange={(e) => setStockReservado(e.target.value)}
-                                    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
-                                    placeholder="0"
-                                    min="0"
-                                  />
-                                </div>
-
-                                <div className="flex flex-col gap-2">
-                                  <label className="text-xs font-medium text-gray-600">Disponible</label>
-                                  <div className="px-3 py-2 border rounded-lg bg-blue-50 border-blue-200 text-blue-700 text-sm font-semibold">
-                                    {stockDisponible}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="border-t border-gray-200 my-4"></div>
-
-                            {/* Información del Proveedor Section */}
-                            <div>
-                              <h4 className="text-sm font-medium text-gray-700 mb-4">Información del Proveedor</h4>
-                              <div className="grid grid-cols-2 gap-4">
-                                <div className="flex flex-col gap-2">
-                                  <label className="text-xs font-medium text-gray-600">Proveedor</label>
-                                  <input
-                                    type="text"
-                                    value={proveedor}
-                                    onChange={(e) => setProveedor(e.target.value)}
-                                    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
-                                    placeholder="Nombre del proveedor"
-                                  />
-                                </div>
-
-                                <div className="flex flex-col gap-2">
-                                  <label className="text-xs font-medium text-gray-600">Codigo Proveedor</label>
-                                  <input
-                                    type="text"
-                                    value={codigoProveedor}
-                                    onChange={(e) => setCodigoProveedor(e.target.value)}
-                                    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
-                                    placeholder="Codigo del proveedor"
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Navigation buttons */}
-                          <div className="mt-8 pt-4 border-t border-gray-200 flex justify-between">
-                            <button
-                              onClick={() => setCurrentStep(2)}
                               className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors cursor-pointer"
                             >
                               Volver
