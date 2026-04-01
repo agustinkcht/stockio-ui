@@ -2118,43 +2118,11 @@ export default function NuevoItemPage() {
                     {currentStep === 2 && (
                       <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
                         <div className="h-full flex flex-col py-2">
-                          <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
+                          <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-6">
                             Información Comercial
                           </h3>
-                          <p className="text-[11px] text-slate-400 mb-6 italic">
-                            Define proveedor y precio del item.
-                          </p>
 
                           <div className="space-y-6">
-                            {/* Información del Proveedor */}
-                            <div>
-                              <h4 className="text-sm font-medium text-gray-700 mb-4">Información del Proveedor</h4>
-                              <div className="grid grid-cols-2 gap-4">
-                                <div className="flex flex-col gap-2">
-                                  <label className="text-xs font-medium text-gray-600">Proveedor</label>
-                                  <input
-                                    type="text"
-                                    value={proveedor}
-                                    onChange={(e) => setProveedor(e.target.value)}
-                                    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
-                                    placeholder="Nombre del proveedor"
-                                  />
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                  <label className="text-xs font-medium text-gray-600">Codigo Proveedor</label>
-                                  <input
-                                    type="text"
-                                    value={codigoProveedor}
-                                    onChange={(e) => setCodigoProveedor(e.target.value)}
-                                    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
-                                    placeholder="Codigo del proveedor"
-                                  />
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="border-t border-gray-200 my-4"></div>
-
                             {/* Precio Section */}
                             <div>
                               <h4 className="text-sm font-medium text-gray-700 mb-4">Precio</h4>
@@ -2237,6 +2205,35 @@ export default function NuevoItemPage() {
                                 </div>
                               </div>
                             </div>
+                            </div>
+
+                            <div className="border-t border-gray-200 my-4"></div>
+
+                            {/* Información del Proveedor */}
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-700 mb-4">Información del Proveedor</h4>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="flex flex-col gap-2">
+                                  <label className="text-xs font-medium text-gray-600">Proveedor</label>
+                                  <input
+                                    type="text"
+                                    value={proveedor}
+                                    onChange={(e) => setProveedor(e.target.value)}
+                                    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
+                                    placeholder="Nombre del proveedor"
+                                  />
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                  <label className="text-xs font-medium text-gray-600">Codigo Proveedor</label>
+                                  <input
+                                    type="text"
+                                    value={codigoProveedor}
+                                    onChange={(e) => setCodigoProveedor(e.target.value)}
+                                    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
+                                    placeholder="Codigo del proveedor"
+                                  />
+                                </div>
+                              </div>
                             </div>
                           </div>
 
