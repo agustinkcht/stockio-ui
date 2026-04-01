@@ -5,7 +5,7 @@ import { useAccount } from "@/lib/contexts/account-context"
 
 import { Sidebar } from "@/components/layout/sidebar"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
-import { ItemsGrid } from "@/components/items/items-grid"
+import { StockGrid } from "@/components/stock/stock-grid"
 import { UserPanel } from "@/components/layout/user-panel"
 import { useItems } from "@/hooks/use-items"
 import { useItemSelection } from "@/hooks/use-item-selection"
@@ -347,7 +347,7 @@ export default function StockPage() {
             <div className="flex-1 flex flex-col overflow-auto">
               <div className="px-8 pb-8 pt-4">
                 <div className="rounded-xl border border-[rgba(228,230,235,0.5)] bg-transparent shadow-none border-none">
-                  <ItemsGrid
+                  <StockGrid
                     items={items}
                     gridSize={gridSize}
                     depositStock={depositStock}
@@ -372,8 +372,6 @@ export default function StockPage() {
                     onAuditSave={handleAuditSave}
                     onAuditDiscard={handleAuditDiscard}
                     getSelectedSkus={getSelectedSkus}
-                    hideNuevoButton={true}
-                    hideCreadorMasivoButton={true}
                   />
                 </div>
               </div>

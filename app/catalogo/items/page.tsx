@@ -6,7 +6,7 @@ import { useAccount } from "@/lib/contexts/account-context"
 
 import { Sidebar } from "@/components/layout/sidebar"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
-import { ItemsGrid } from "@/components/items/items-grid"
+import { CatalogoGrid } from "@/components/catalogo/catalogo-grid"
 import { NuevoItemModal } from "@/components/modals/nuevo-item-modal"
 import { NuevoItemConVariantesModal } from "@/components/modals/nuevo-item-con-variantes-modal"
 import { TemplateModal } from "@/components/modals/template-modal"
@@ -473,11 +473,9 @@ export default function CatalogoPage() {
             <div className="flex-1 flex flex-col overflow-auto">
               <div className="px-8 pb-8 pt-4">
                 <div className="rounded-xl border border-[rgba(228,230,235,0.5)] bg-transparent shadow-none border-none">
-                  <ItemsGrid
+                  <CatalogoGrid
                     items={items}
                     gridSize={gridSize}
-                    depositStock={depositStock}
-                    updateDepositStock={updateDepositStock}
                     expandedItems={expandedItems}
                     onDeleteItem={handleDeleteWithTracking}
                     handleItemClick={handleItemClick}
@@ -498,8 +496,6 @@ export default function CatalogoPage() {
                     onUpdateStock={handleUpdateStockWithTracking}
                     onUpdatePrecio={handleUpdatePrecio}
                     getSelectedSkus={getSelectedSkus}
-                    hideAuditButton={true}
-                    showPrecioColumn={true}
                     onPauseItems={(ids) => {
                         updateItemsActiveStatus(ids, false)
                         clearSelection()
