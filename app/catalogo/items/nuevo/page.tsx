@@ -599,8 +599,8 @@ export default function NuevoItemPage() {
                   </div>
                 </div>
 
-                {/* Right Column - Step Content (13 cols) + Empty space (3 cols on right) */}
-                <div className="col-span-13 overflow-auto p-8">
+                {/* Right Column - Step Content (16 cols, with right padding for visual 3-col spacing) */}
+                <div className="col-span-16 overflow-auto p-8 pr-[15%]">
                   <div>
                     {/* Step 1: Información Compartida */}
                     {currentStep === 1 && (
@@ -1816,8 +1816,8 @@ export default function NuevoItemPage() {
                   </div>
                 </div>
 
-                {/* Right Column - Step Content (13 cols) + Empty space (3 cols on right) */}
-                <div className="col-span-13 overflow-auto p-8">
+                {/* Right Column - Step Content (16 cols, with right padding for visual 3-col spacing) */}
+                <div className="col-span-16 overflow-auto p-8 pr-[15%]">
                   <div>
                     {/* Step 1: Información del Item */}
                     {currentStep === 1 && (
