@@ -1104,7 +1104,7 @@ export function CatalogoItemDetailPanel({
                   >
                     {/* Flip hint top-right */}
                     <div className="absolute top-3 right-4 flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors select-none pointer-events-none">
-                      <span className="text-[10px] uppercase tracking-wider">Descripción</span>
+                      <span className="text-[10px] uppercase tracking-wider">Detalles</span>
                       <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M9 18l6-6-6-6" />
                       </svg>
@@ -1170,20 +1170,22 @@ export function CatalogoItemDetailPanel({
                         )}
                       </div>
 
-                      {/* SKU and Código Universal below the line, in column */}
+                      {/* SKU centered below title */}
                       {!isViewingContainer && (
-                        <>
-
-                          <div className="flex flex-col gap-3 mt-5 text-sm font-mono ml-0 pl-[18px]">
-                            {/* SKU row */}
-                            <div className="flex items-center gap-2 group/sku">
-                              <span className="font-medium text-slate-400 whitespace-nowrap">SKU:</span>
-                              {isChildItem && fatherItem ? (
-                                <ChildSkuEditor
-                                  fatherSku={fatherItem.skuPrefix || fatherItem.sku || ""}
-                                  skuSuffix={selectedItem.skuSuffix || selectedItem.sku || ""}
-                                  onSave={(newSuffix) => {
-                                    // Update variant within parent's variants array
+                        <div className="flex items-center justify-center gap-1.5 mt-1 group/sku">
+                          {isChildItem && fatherItem ? (
+                            <div className="flex items-center gap-0">
+                              <span className="text-[11px] font-light text-slate-400/70 tracking-wide">
+                                {fatherItem.skuPrefix || fatherItem.sku || ""}-
+                              </span>
+                              {editingSku ? (
+                                <input
+                                  type="text"
+                                  value={skuValue}
+                                  onChange={(e) => setSkuValue(e.target.value)}
+                                  onBlur={() => {
+                                    setEditingSku(false)
+                                    const newSuffix = skuValue
                                     const updatedVariants = fatherItem.variants?.map((v: any) =>
                                       v.id === selectedItem.id ? { ...v, skuSuffix: newSuffix } : v
                                     )
@@ -1191,91 +1193,77 @@ export function CatalogoItemDetailPanel({
                                       onFieldChange(fatherItem.id, "variants", updatedVariants)
                                     }
                                   }}
-                                />
-                              ) : (
-                                <>
-                                  {editingSku ? (
-                                    <input
-                                      type="text"
-                                      value={skuValue}
-                                      onChange={(e) => setSkuValue(e.target.value)}
-                                      onBlur={handleSkuBlur}
-                                      onKeyDown={(e) => {
-                                        if (e.key === "Enter") (e.target as HTMLInputElement).blur()
-                                        if (e.key === "Escape") {
-                                          setSkuValue(selectedItem.sku || "")
-                                          setEditingSku(false)
-                                        }
-                                      }}
-                                      onClick={(e) => e.stopPropagation()}
-                                      className="text-slate-100 bg-transparent border-b border-white/40 focus:border-white outline-none w-full max-w-[160px]"
-                                      autoFocus
-                                    />
-                                  ) : (
-                                    <div
-                                      className="flex items-center gap-1.5 cursor-pointer"
-                                      onClick={(e) => { e.stopPropagation(); setEditingSku(true) }}
-                                    >
-                                      <span className="text-slate-100">{skuValue || selectedItem.sku}</span>
-                                      <Pencil className="w-3 h-3 text-white/40 opacity-0 group-hover/sku:opacity-100 transition-opacity" />
-                                    </div>
-                                  )}
-                                </>
-                              )}
-                              <button
-                                onClick={(e) => { e.stopPropagation(); handleCopySku() }}
-                                className="text-slate-500 hover:text-slate-300 transition-colors p-0.5 ml-0.5"
-                                title="Copiar SKU"
-                              >
-                                {skuCopied ? (
-                                  <span className="text-green-400 text-xs">✓</span>
-                                ) : (
-                                  <Copy className="h-3 w-3" />
-                                )}
-                              </button>
-                            </div>
-                            {/* Código Universal row */}
-                            <div className="flex items-center gap-2 group/codigo">
-                              <span className="font-medium text-slate-400 whitespace-nowrap">Cód. Universal:</span>
-                              {editingCodigoUniversal ? (
-                                <input
-                                  type="text"
-                                  value={codigoUniversalValue}
-                                  onChange={(e) => setCodigoUniversalValue(e.target.value)}
-                                  onBlur={handleCodigoUniversalBlur}
                                   onKeyDown={(e) => {
                                     if (e.key === "Enter") (e.target as HTMLInputElement).blur()
                                     if (e.key === "Escape") {
-                                      setCodigoUniversalValue(selectedItem.codigoUniversal || "")
-                                      setEditingCodigoUniversal(false)
+                                      setSkuValue(selectedItem.skuSuffix || selectedItem.sku || "")
+                                      setEditingSku(false)
                                     }
                                   }}
                                   onClick={(e) => e.stopPropagation()}
-                                  className="text-slate-100 bg-transparent border-b border-white/40 focus:border-white outline-none w-full max-w-[160px]"
+                                  className="text-[11px] font-light text-slate-300 tracking-wide bg-transparent border-b border-white/30 focus:border-white/60 outline-none w-auto max-w-[100px]"
                                   autoFocus
                                 />
                               ) : (
-                                <div
-                                  className="flex items-center gap-1.5 cursor-pointer"
-                                  onClick={(e) => { e.stopPropagation(); setEditingCodigoUniversal(true) }}
+                                <span
+                                  className="text-[11px] font-light text-slate-300 tracking-wide cursor-pointer hover:text-white transition-colors"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setSkuValue(selectedItem.skuSuffix || selectedItem.sku || "")
+                                    setEditingSku(true)
+                                  }}
                                 >
-                                  <span className="text-slate-100">{codigoUniversalValue || selectedItem.codigoUniversal || "N/A"}</span>
-                                  <Pencil className="w-3 h-3 text-white/40 opacity-0 group-hover/codigo:opacity-100 transition-opacity" />
-                                </div>
+                                  {selectedItem.skuSuffix || selectedItem.sku || ""}
+                                </span>
                               )}
-                              <button
-                                onClick={(e) => { e.stopPropagation(); handleCopyCodigoUniversal() }}
-                                className="text-slate-500 hover:text-slate-300 transition-colors p-0.5 ml-0.5"
-                                title="Copiar Código Universal"
-                              >
-                                {codigoUniversalCopied ? (
-                                  <span className="text-green-400 text-xs">✓</span>
-                                ) : (
-                                  <Copy className="h-3 w-3" />
-                                )}
-                              </button>
                             </div>
+                          ) : (
+                            <>
+                              {editingSku ? (
+                                <input
+                                  type="text"
+                                  value={skuValue}
+                                  onChange={(e) => setSkuValue(e.target.value)}
+                                  onBlur={handleSkuBlur}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") (e.target as HTMLInputElement).blur()
+                                    if (e.key === "Escape") {
+                                      setSkuValue(selectedItem.sku || "")
+                                      setEditingSku(false)
+                                    }
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="text-[11px] font-light text-slate-300 tracking-wide bg-transparent border-b border-white/30 focus:border-white/60 outline-none text-center w-auto max-w-[140px]"
+                                  autoFocus
+                                />
+                              ) : (
+                                <span
+                                  className="text-[11px] font-light text-slate-400/80 tracking-wide cursor-pointer hover:text-slate-300 transition-colors"
+                                  onClick={(e) => { e.stopPropagation(); setEditingSku(true) }}
+                                >
+                                  {skuValue || selectedItem.sku}
+                                </span>
+                              )}
+                            </>
+                          )}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleCopySku() }}
+                            className="text-slate-600 hover:text-slate-400 transition-colors p-0.5 opacity-0 group-hover/sku:opacity-100"
+                            title="Copiar SKU"
+                          >
+                            {skuCopied ? (
+                              <span className="text-green-400 text-[10px]">✓</span>
+                            ) : (
+                              <Copy className="h-2.5 w-2.5" />
+                            )}
+                          </button>
+                        </div>
+                      )}
 
+                      {/* Info rows */}
+                      {!isViewingContainer && (
+                        <>
+                          <div className="flex flex-col gap-3 mt-5 text-sm font-mono ml-0 pl-[18px]">
                             {/* Precio de Venta row */}
                             <div className="flex items-center gap-2 group/precio mt-1">
                               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Precio</span>
@@ -1382,6 +1370,48 @@ export function CatalogoItemDetailPanel({
                                   })}
                                 </div>
                               </div>
+                            </div>
+
+                            {/* Código Universal row */}
+                            <div className="flex items-center gap-2 group/codigo">
+                              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Cód. Universal</span>
+                              {editingCodigoUniversal ? (
+                                <input
+                                  type="text"
+                                  value={codigoUniversalValue}
+                                  onChange={(e) => setCodigoUniversalValue(e.target.value)}
+                                  onBlur={handleCodigoUniversalBlur}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") (e.target as HTMLInputElement).blur()
+                                    if (e.key === "Escape") {
+                                      setCodigoUniversalValue(selectedItem.codigoUniversal || "")
+                                      setEditingCodigoUniversal(false)
+                                    }
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="text-slate-300 text-sm bg-transparent border-b border-white/30 focus:border-white/60 outline-none w-auto max-w-[140px]"
+                                  autoFocus
+                                />
+                              ) : (
+                                <div
+                                  className="flex items-center gap-1.5 cursor-pointer"
+                                  onClick={(e) => { e.stopPropagation(); setEditingCodigoUniversal(true) }}
+                                >
+                                  <span className="text-slate-300 text-sm">{codigoUniversalValue || selectedItem.codigoUniversal || "N/A"}</span>
+                                  <Pencil className="w-3 h-3 text-white/40 opacity-0 group-hover/codigo:opacity-100 transition-opacity" />
+                                </div>
+                              )}
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleCopyCodigoUniversal() }}
+                                className="text-slate-500 hover:text-slate-300 transition-colors p-0.5 ml-0.5"
+                                title="Copiar Código Universal"
+                              >
+                                {codigoUniversalCopied ? (
+                                  <span className="text-green-400 text-xs">✓</span>
+                                ) : (
+                                  <Copy className="h-3 w-3" />
+                                )}
+                              </button>
                             </div>
                           </div>
                         </>
