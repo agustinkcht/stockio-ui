@@ -1306,10 +1306,10 @@ export function CatalogoItemDetailPanel({
 
                       {/* Info rows */}
                       {!isViewingContainer && (
-                        <div className="flex flex-col items-center gap-4 mt-5">
-                          {/* Precio de Venta */}
+                        <div className="flex flex-col items-center gap-3 mt-5">
+                          {/* Precio */}
                           <div
-                            className="flex flex-col items-center gap-1 group/precio cursor-pointer"
+                            className="flex items-center gap-2 group/precio cursor-pointer"
                             onClick={(e) => {
                               e.stopPropagation()
                               setPrecioModalValues({
@@ -1321,50 +1321,45 @@ export function CatalogoItemDetailPanel({
                               setIsPrecioModalOpen(true)
                             }}
                           >
-                            <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Precio de Venta</span>
-                            <div className="flex items-center gap-1">
-                              <span className="text-emerald-400 font-bold text-xl leading-tight">
-                                ${(selectedItem?.precio?.precioFinal || 0).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
-                              </span>
-                              <Pencil className="w-3 h-3 text-white/50 opacity-0 group-hover/precio:opacity-100 transition-opacity" />
-                            </div>
+                            <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Precio</span>
+                            <span className="text-emerald-400 font-bold text-xl leading-tight">
+                              ${(selectedItem?.precio?.precioFinal || 0).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                            </span>
+                            <Pencil className="w-3 h-3 text-white/50 opacity-0 group-hover/precio:opacity-100 transition-opacity" />
                           </div>
 
-                          {/* Stock Disponible */}
+                          {/* Stock */}
                           <div
-                            className="flex flex-col items-center gap-1 group/stock cursor-pointer"
+                            className="flex items-center gap-2 group/stock cursor-pointer"
                             onClick={(e) => {
                               e.stopPropagation()
                               setIsStockModalOpen(true)
                             }}
                           >
                             <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Stock</span>
-                            <div className="flex items-center gap-1">
-                              <span className="text-blue-400 font-bold text-xl leading-tight">
-                                {Number.parseInt(selectedItem?.stock?.total || "0") - Number.parseInt(selectedItem?.stock?.reservado || "0")} disponibles
-                              </span>
-                              <Pencil className="w-3 h-3 text-white/50 opacity-0 group-hover/stock:opacity-100 transition-opacity" />
-                            </div>
+                            <span className="text-blue-400 font-bold text-xl leading-tight">
+                              {Number.parseInt(selectedItem?.stock?.total || "0") - Number.parseInt(selectedItem?.stock?.reservado || "0")} disponibles
+                            </span>
+                            <Pencil className="w-3 h-3 text-white/50 opacity-0 group-hover/stock:opacity-100 transition-opacity" />
                           </div>
 
                           {/* Estado - centered */}
-                          <div className="flex flex-col items-center gap-1">
-                            <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Estado</span>
-                            <div className="relative group/estado">
-                              <button
-                                className={`text-sm font-medium px-3 py-1 rounded-full cursor-pointer transition-all flex items-center gap-1 ${
-                                  selectedItem?.isActive !== false
-                                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 hover:bg-emerald-500/30"
-                                    : "bg-amber-500/20 text-amber-300 border border-amber-400/30 hover:bg-amber-500/30"
-                                }`}
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  const el = e.currentTarget.parentElement?.querySelector("[data-estado-dropdown]") as HTMLElement
-                                  if (el) el.style.display = el.style.display === "none" || !el.style.display ? "flex" : "none"
-                                }}
-                              >
-                                {selectedItem?.isActive !== false ? "Activo" : "Pausado"}
-                                <ChevronDown className="w-3 h-3 opacity-60" />
+                          <div className="relative group/estado">
+                            <button
+                              className={`text-sm font-medium px-3 py-1 rounded-full cursor-pointer transition-all flex items-center gap-1.5 ${
+                                selectedItem?.isActive !== false
+                                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 hover:bg-emerald-500/30"
+                                  : "bg-amber-500/20 text-amber-300 border border-amber-400/30 hover:bg-amber-500/30"
+                              }`}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                const el = e.currentTarget.parentElement?.querySelector("[data-estado-dropdown]") as HTMLElement
+                                if (el) el.style.display = el.style.display === "none" || !el.style.display ? "flex" : "none"
+                              }}
+                            >
+                              <span className="text-[10px] font-semibold text-slate-500/80 uppercase tracking-wider">Estado</span>
+                              {selectedItem?.isActive !== false ? "Activo" : "Pausado"}
+                              <ChevronDown className="w-3 h-3 opacity-60" />
                               </button>
                               <div
                                 data-estado-dropdown
@@ -1412,7 +1407,6 @@ export function CatalogoItemDetailPanel({
                                   )
                                 })}
                               </div>
-                            </div>
                           </div>
                         </div>
                       )}
