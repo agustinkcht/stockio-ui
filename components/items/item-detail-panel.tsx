@@ -2123,41 +2123,7 @@ export function ItemDetailPanel({
                           )}
                         </div>
 
-                        {/* Vencimiento Section */}
-                        <div className="flex flex-col gap-2 mt-4">
-                          <div className="flex items-center gap-2">
-                            <label className="text-sm font-medium text-gray-700">Vencimiento</label>
-                            <button
-                              onClick={() => setVencimientoActive(!vencimientoActive)}
-                              className={`w-10 h-5 rounded-full transition-colors relative ${
-                                vencimientoActive ? "bg-blue-500" : "bg-gray-300"
-                              }`}
-                            >
-                              <div
-                                className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${
-                                  vencimientoActive ? "translate-x-5" : "translate-x-0"
-                                }`}
-                              />
-                            </button>
-                          </div>
-
-                          {vencimientoActive && (
-                            <div className="mt-2 p-3 border border-blue-200/60 rounded-lg bg-gradient-to-br from-blue-50/50 to-indigo-50/30">
-                              <label className="text-xs font-semibold text-blue-900/70 uppercase tracking-wider mb-2 block">
-                                Fecha de Vencimiento
-                              </label>
-                              <div className="relative">
-                                <input
-                                  type="date"
-                                  value={fechaVencimiento}
-                                  onChange={(e) => setFechaVencimiento(e.target.value)}
-                                  className="w-full px-3 py-2.5 border border-blue-300/50 rounded-lg bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 text-gray-900 text-sm font-medium transition-all shadow-sm hover:shadow-md"
-                                />
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
+                                              </div>
 
                       <div className="border-t border-gray-200 my-4"></div>
 
@@ -2355,41 +2321,7 @@ export function ItemDetailPanel({
                           )}
                         </div>
 
-                        {/* Vencimiento Section */}
-                        <div className="flex flex-col gap-2 mt-4">
-                          <div className="flex items-center gap-3 mb-0 mt-3.5">
-                            <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Vencimiento</label>
-                            <button
-                              onClick={() => setVencimientoActive(!vencimientoActive)}
-                              className={`w-9 h-5 rounded-full transition-all relative cursor-pointer ${
-                                vencimientoActive ? "bg-slate-800" : "bg-slate-200"
-                              }`}
-                            >
-                              <div
-                                className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${
-                                  vencimientoActive ? "translate-x-4" : "translate-x-0"
-                                }`}
-                              />
-                            </button>
-                          </div>
-
-                          {vencimientoActive && (
-                            <div className="mt-2 p-4 border border-slate-200 rounded-xl bg-slate-50/50">
-                              <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-2 block">
-                                Fecha de Vencimiento
-                              </label>
-                              <div className="relative">
-                                <input
-                                  type="date"
-                                  value={fechaVencimiento}
-                                  onChange={(e) => setFechaVencimiento(e.target.value)}
-                                  className="w-full px-3 py-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-slate-300 text-slate-800 text-sm transition-all hover:border-slate-300"
-                                />
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
+                                              </div>
                     </div>
                   )}
 
