@@ -1150,18 +1150,18 @@ export function CatalogoItemDetailPanel({
                               }
                             }}
                           >
-                            <h2 className="font-semibold text-white text-lg">{nameValue || selectedItem.name}</h2>
+                            <h2 className="font-semibold text-white text-xl">{nameValue || selectedItem.name}</h2>
                             {!isChildItem && (
                               <Pencil className="w-3.5 h-3.5 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity" />
                             )}
                           </div>
                         )}
                         {isChildItem && selectedItem.atributosPrincipales && selectedItem.atributosPrincipales.length > 0 && (
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1.5 mt-0.5">
                             {selectedItem.atributosPrincipales.map((attr, i) => (
                               <span
                                 key={i}
-                                className="text-[10px] px-1.5 py-0.5 rounded bg-white/20 text-white/80 whitespace-nowrap"
+                                className="text-xs px-2 py-0.5 rounded bg-white/20 text-white/80 whitespace-nowrap"
                               >
                                 {attr.value}
                               </span>
@@ -1174,11 +1174,11 @@ export function CatalogoItemDetailPanel({
                       {!isViewingContainer && (
                         <div className="flex flex-col items-center gap-0.5 mt-1">
                           {/* SKU row */}
-                          <div className="flex items-center justify-center gap-1 group/sku">
-                            <span className="text-[10px] font-medium text-slate-500/70 uppercase tracking-wider">SKU:</span>
+                          <div className="flex items-center justify-center gap-1.5 group/sku">
+                            <span className="text-[11px] font-medium text-slate-500/70 uppercase tracking-wider">SKU:</span>
                             {isChildItem && fatherItem ? (
                               <div className="flex items-center gap-0">
-                                <span className="text-[11px] font-light text-slate-400/70 tracking-wide">
+                                <span className="text-xs font-light text-slate-400/70 tracking-wide">
                                   {fatherItem.skuPrefix || fatherItem.sku || ""}-
                                 </span>
                                 {editingSku ? (
@@ -1204,12 +1204,12 @@ export function CatalogoItemDetailPanel({
                                       }
                                     }}
                                     onClick={(e) => e.stopPropagation()}
-                                    className="text-[11px] font-light text-slate-300 tracking-wide bg-transparent border-b border-white/30 focus:border-white/60 outline-none w-auto max-w-[100px]"
+                                    className="text-xs font-light text-slate-300 tracking-wide bg-transparent border-b border-white/30 focus:border-white/60 outline-none w-auto max-w-[100px]"
                                     autoFocus
                                   />
                                 ) : (
                                   <span
-                                    className="text-[11px] font-light text-slate-300 tracking-wide cursor-pointer hover:text-white transition-colors"
+                                    className="text-xs font-light text-slate-300 tracking-wide cursor-pointer hover:text-white transition-colors"
                                     onClick={(e) => {
                                       e.stopPropagation()
                                       setSkuValue(selectedItem.skuSuffix || selectedItem.sku || "")
@@ -1222,31 +1222,31 @@ export function CatalogoItemDetailPanel({
                               </div>
                             ) : (
                               <>
-                                {editingSku ? (
-                                  <input
-                                    type="text"
-                                    value={skuValue}
-                                    onChange={(e) => setSkuValue(e.target.value)}
-                                    onBlur={handleSkuBlur}
-                                    onKeyDown={(e) => {
-                                      if (e.key === "Enter") (e.target as HTMLInputElement).blur()
-                                      if (e.key === "Escape") {
-                                        setSkuValue(selectedItem.sku || "")
-                                        setEditingSku(false)
-                                      }
-                                    }}
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="text-[11px] font-light text-slate-300 tracking-wide bg-transparent border-b border-white/30 focus:border-white/60 outline-none text-center w-auto max-w-[140px]"
-                                    autoFocus
-                                  />
-                                ) : (
-                                  <span
-                                    className="text-[11px] font-light text-slate-400/80 tracking-wide cursor-pointer hover:text-slate-300 transition-colors"
-                                    onClick={(e) => { e.stopPropagation(); setEditingSku(true) }}
-                                  >
-                                    {skuValue || selectedItem.sku}
-                                  </span>
-                                )}
+                              {editingSku ? (
+                                <input
+                                  type="text"
+                                  value={skuValue}
+                                  onChange={(e) => setSkuValue(e.target.value)}
+                                  onBlur={handleSkuBlur}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") (e.target as HTMLInputElement).blur()
+                                    if (e.key === "Escape") {
+                                      setSkuValue(selectedItem.sku || "")
+                                      setEditingSku(false)
+                                    }
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="text-xs font-light text-slate-300 tracking-wide bg-transparent border-b border-white/30 focus:border-white/60 outline-none text-center w-auto max-w-[140px]"
+                                  autoFocus
+                                />
+                              ) : (
+                                <span
+                                  className="text-xs font-light text-slate-400/80 tracking-wide cursor-pointer hover:text-slate-300 transition-colors"
+                                  onClick={(e) => { e.stopPropagation(); setEditingSku(true) }}
+                                >
+                                  {skuValue || selectedItem.sku}
+                                </span>
+                              )}
                               </>
                             )}
                             <button
@@ -1262,8 +1262,8 @@ export function CatalogoItemDetailPanel({
                             </button>
                           </div>
                           {/* Código Universal row */}
-                          <div className="flex items-center justify-center gap-1 group/codigoTop">
-                            <span className="text-[10px] font-medium text-slate-500/70 uppercase tracking-wider">Cód:</span>
+                          <div className="flex items-center justify-center gap-1.5 group/codigoTop">
+                            <span className="text-[11px] font-medium text-slate-500/70 uppercase tracking-wider">Cód. Universal:</span>
                             {editingCodigoUniversal ? (
                               <input
                                 type="text"
@@ -1278,12 +1278,12 @@ export function CatalogoItemDetailPanel({
                                   }
                                 }}
                                 onClick={(e) => e.stopPropagation()}
-                                className="text-[11px] font-light text-slate-300 tracking-wide bg-transparent border-b border-white/30 focus:border-white/60 outline-none text-center w-auto max-w-[140px]"
+                                className="text-xs font-light text-slate-300 tracking-wide bg-transparent border-b border-white/30 focus:border-white/60 outline-none text-center w-auto max-w-[140px]"
                                 autoFocus
                               />
                             ) : (
                               <span
-                                className="text-[11px] font-light text-slate-400/80 tracking-wide cursor-pointer hover:text-slate-300 transition-colors"
+                                className="text-xs font-light text-slate-400/80 tracking-wide cursor-pointer hover:text-slate-300 transition-colors"
                                 onClick={(e) => { e.stopPropagation(); setEditingCodigoUniversal(true) }}
                               >
                                 {codigoUniversalValue || selectedItem.codigoUniversal || "N/A"}
@@ -1307,46 +1307,50 @@ export function CatalogoItemDetailPanel({
                       {/* Info rows */}
                       {!isViewingContainer && (
                         <>
-                          <div className="flex flex-col gap-3 mt-5 text-sm font-mono ml-0 pl-[18px]">
-                            {/* Precio de Venta row */}
-                            <div className="flex items-center gap-2 group/precio mt-1">
-                              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Precio</span>
-                              <div
-                                className="flex items-center gap-1.5 cursor-pointer"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setPrecioModalValues({
-                                    costo: selectedItem?.precio?.costo || 0,
-                                    margen: selectedItem?.precio?.margen || 0,
-                                    iva: selectedItem?.precio?.iva || 0,
-                                    precioFinal: selectedItem?.precio?.precioFinal || 0,
-                                  })
-                                  setIsPrecioModalOpen(true)
-                                }}
-                              >
-                                <span className="text-emerald-400 font-bold text-lg leading-tight">
+                          {/* Precio and Stock side by side, centered */}
+                          <div className="flex items-center justify-center gap-8 mt-5">
+                            {/* Precio de Venta */}
+                            <div
+                              className="flex flex-col items-center gap-1 group/precio cursor-pointer"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setPrecioModalValues({
+                                  costo: selectedItem?.precio?.costo || 0,
+                                  margen: selectedItem?.precio?.margen || 0,
+                                  iva: selectedItem?.precio?.iva || 0,
+                                  precioFinal: selectedItem?.precio?.precioFinal || 0,
+                                })
+                                setIsPrecioModalOpen(true)
+                              }}
+                            >
+                              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Precio de Venta</span>
+                              <div className="flex items-center gap-1">
+                                <span className="text-emerald-400 font-bold text-xl leading-tight">
                                   ${(selectedItem?.precio?.precioFinal || 0).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
                                 </span>
-                                <Pencil className="w-3.5 h-3.5 text-white/50 opacity-0 group-hover/precio:opacity-100 transition-opacity" />
+                                <Pencil className="w-3 h-3 text-white/50 opacity-0 group-hover/precio:opacity-100 transition-opacity" />
                               </div>
                             </div>
 
-                            {/* Stock Disponible row */}
-                            <div className="flex items-center gap-2 group/stock">
-                              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">Stock</span>
-                              <div
-                                className="flex items-center gap-1.5 cursor-pointer"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setIsStockModalOpen(true)
-                                }}
-                              >
-                                <span className="text-blue-400 font-bold text-lg leading-tight">
-                                  {Number.parseInt(selectedItem?.stock?.total || "0") - Number.parseInt(selectedItem?.stock?.reservado || "0")} disp.
+                            {/* Stock Disponible */}
+                            <div
+                              className="flex flex-col items-center gap-1 group/stock cursor-pointer"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setIsStockModalOpen(true)
+                              }}
+                            >
+                              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Stock</span>
+                              <div className="flex items-center gap-1">
+                                <span className="text-blue-400 font-bold text-xl leading-tight">
+                                  {Number.parseInt(selectedItem?.stock?.total || "0") - Number.parseInt(selectedItem?.stock?.reservado || "0")} disponibles
                                 </span>
-                                <Pencil className="w-3.5 h-3.5 text-white/50 opacity-0 group-hover/stock:opacity-100 transition-opacity" />
+                                <Pencil className="w-3 h-3 text-white/50 opacity-0 group-hover/stock:opacity-100 transition-opacity" />
                               </div>
                             </div>
+                          </div>
+
+                          <div className="flex flex-col gap-3 mt-4 text-sm font-mono ml-0 pl-[18px]">
 
                             {/* Estado row */}
                             <div className="flex items-center gap-2">
