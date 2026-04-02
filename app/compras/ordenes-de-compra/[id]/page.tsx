@@ -94,11 +94,11 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     <div className="flex h-screen bg-[#f7f7f7] overflow-hidden p-[6px] gap-[6px]" onClick={handleCloseDropdowns}>
       {/* Sidebar */}
       <Sidebar
-        items={SIDEBAR_ITEMS}
-        bottomItems={BOTTOM_SIDEBAR_ITEMS}
+        sidebarItems={SIDEBAR_ITEMS}
+        bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
         hoveredDropdown={hoveredDropdown}
-        onDropdownMouseEnter={handleDropdownMouseEnter}
-        onDropdownMouseLeave={handleDropdownMouseLeave}
+        onDropdownOpen={handleDropdownMouseEnter}
+        onDropdownClose={handleDropdownMouseLeave}
       />
 
       <div className="flex-1 flex flex-col gap-[6px] min-w-0">
