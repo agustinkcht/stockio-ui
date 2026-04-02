@@ -15,6 +15,9 @@ import {
   X,
   CheckCircle2,
   FileText,
+  FileDown,
+  ShoppingCart,
+  MoreVertical,
 } from "lucide-react"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 
@@ -73,6 +76,8 @@ function OrdenesDeCompraContent() {
   const router = useRouter()
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
   const [searchQuery, setSearchQuery] = useState("")
+  const [selectedOrdenes, setSelectedOrdenes] = useState<Set<string>>(new Set())
+  const [openMoreMenu, setOpenMoreMenu] = useState<string | null>(null)
 
   const [showOrderModal, setShowOrderModal] = useState(false)
   const [showFilterModal, setShowFilterModal] = useState(false)
@@ -156,6 +161,28 @@ function OrdenesDeCompraContent() {
     })
   }
 
+  const toggleSelectOrden = (id: string) => {
+    setSelectedOrdenes(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(id)) {
+        newSet.delete(id)
+      } else {
+        newSet.add(id)
+      }
+      return newSet
+    })
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedOrdenes.size === filteredOrdenes.length) {
+      setSelectedOrdenes(new Set())
+    } else {
+      setSelectedOrdenes(new Set(filteredOrdenes.map(o => o.id)))
+    }
+  }
+
+  const hasSelection = selectedOrdenes.size > 0
+
   return (
     <div className="min-h-screen bg-[rgb(243,242,238)]">
       <div className="px-[6px] py-[6px] flex gap-[6px] h-screen" onClick={handleCloseDropdowns}>
@@ -181,21 +208,50 @@ function OrdenesDeCompraContent() {
               </div>
 
               <div className="flex items-center gap-2">
-                <button
-                  disabled
-                  className="px-4 py-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground hover:bg-muted text-sm font-medium"
-                  title="Deshacer cambios"
-                >
-                  Deshacer
-                </button>
+                {hasSelection ? (
+                  <>
+                    <span className="text-sm text-slate-500 mr-2">{selectedOrdenes.size} seleccionadas</span>
+                    <button
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors"
+                      onClick={() => {/* TODO: Export PDF */}}
+                    >
+                      <FileDown className="w-4 h-4" />
+                      Exportar PDF
+                    </button>
+                    <button
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors"
+                      onClick={() => {/* TODO: Export Text */}}
+                    >
+                      <FileText className="w-4 h-4" />
+                      Exportar Texto
+                    </button>
+                    <button
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded transition-colors"
+                      onClick={() => {/* TODO: Convert to Compras */}}
+                    >
+                      <ShoppingCart className="w-4 h-4" />
+                      Llevar a Compras
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      disabled
+                      className="px-4 py-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground hover:bg-muted text-sm font-medium"
+                      title="Deshacer cambios"
+                    >
+                      Deshacer
+                    </button>
 
-                <button
-                  disabled
-                  className="px-4 py-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-primary hover:bg-muted text-sm font-medium"
-                  title="Guardar cambios"
-                >
-                  Guardar
-                </button>
+                    <button
+                      disabled
+                      className="px-4 py-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-primary hover:bg-muted text-sm font-medium"
+                      title="Guardar cambios"
+                    >
+                      Guardar
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -341,25 +397,37 @@ function OrdenesDeCompraContent() {
             <div className="px-6">
               <div className="bg-slate-200 border border-[rgba(202,213,227,0.61)] rounded-t-sm">
                 <div className="grid grid-cols-100 h-9">
+                  {/* Checkbox */}
+                  <div className="col-span-4 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
+                    <input
+                      type="checkbox"
+                      checked={selectedOrdenes.size === filteredOrdenes.length && filteredOrdenes.length > 0}
+                      onChange={toggleSelectAll}
+                      className="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
+                    />
+                  </div>
                   {/* ID */}
-                  <div className="col-span-12 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
+                  <div className="col-span-10 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
                     <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">ID</span>
                   </div>
-                  {/* Estado Orden - moved before Proveedor */}
-                  <div className="col-span-15 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
+                  {/* Estado Orden */}
+                  <div className="col-span-13 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
                     <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Estado</span>
                   </div>
-                  {/* Proveedor - moved after Estado */}
-                  <div className="col-span-33 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
+                  {/* Proveedor */}
+                  <div className="col-span-30 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
                     <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Proveedor</span>
                   </div>
                   {/* Cantidad Items */}
-                  <div className="col-span-15 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
+                  <div className="col-span-13 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
                     <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Items</span>
                   </div>
                   {/* Importe Estimado */}
-                  <div className="col-span-25 flex items-center justify-center">
-                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Importe Estimado</span>
+                  <div className="col-span-22 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
+                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Importe</span>
+                  </div>
+                  {/* More */}
+                  <div className="col-span-8 flex items-center justify-center">
                   </div>
                 </div>
               </div>
@@ -377,23 +445,42 @@ function OrdenesDeCompraContent() {
                   {filteredOrdenes.map((orden) => {
                     const estadoStyle = estadoColors[orden.estado]
                     const totalItems = orden.items.reduce((sum, item) => sum + item.quantity, 0)
+                    const isSelected = selectedOrdenes.has(orden.id)
 
                     return (
                       <div
                         key={orden.id}
-                        className="bg-white border-x border-b border-[rgba(202,213,227,0.61)] first:border-t-0 cursor-pointer transition-colors hover:bg-gray-50/50"
+                        className={`bg-white border-x border-b border-[rgba(202,213,227,0.61)] first:border-t-0 cursor-pointer transition-colors ${
+                          isSelected ? "bg-amber-50/40" : "hover:bg-gray-50/50"
+                        }`}
                         onClick={() => router.push(`/compras/ordenes-de-compra/${orden.id}`)}
                       >
                         {/* Main Row */}
                         <div className="grid grid-cols-100 min-h-[56px]">
+                          {/* Checkbox */}
+                          <div
+                            className="col-span-4 flex items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              toggleSelectOrden(orden.id)
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => {}}
+                              className="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
+                            />
+                          </div>
+
                           {/* ID */}
-                          <div className="col-span-12 flex flex-col items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]">
+                          <div className="col-span-10 flex flex-col items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]">
                             <span className="text-sm font-medium text-gray-900">ODC-{orden.numero}</span>
                             <span className="text-xs text-muted-foreground">{formatDateShort(orden.fechaCreacion)}</span>
                           </div>
 
-                          {/* Estado Orden - now before Proveedor */}
-                          <div className="col-span-15 flex items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]">
+                          {/* Estado Orden */}
+                          <div className="col-span-13 flex items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]">
                             <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${estadoStyle.bg}`}>
                               <CheckCircle2 className={`w-3.5 h-3.5 ${estadoStyle.icon}`} />
                               <span className={`text-xs font-medium ${estadoStyle.text}`}>
@@ -402,17 +489,17 @@ function OrdenesDeCompraContent() {
                             </div>
                           </div>
 
-                          {/* Proveedor - now after Estado */}
-                          <div className="col-span-33 flex items-center px-4 py-2 border-r border-[rgba(202,213,227,0.3)]">
-                            <span className="text-sm text-gray-700 truncate">{orden.proveedorNombre}</span>
+                          {/* Proveedor */}
+                          <div className="col-span-30 flex items-center px-4 py-2 border-r border-[rgba(202,213,227,0.3)]">
+                            <span className="text-sm font-semibold text-gray-800 truncate">{orden.proveedorNombre}</span>
                           </div>
 
                           {/* Cantidad Items */}
-                          <div className="col-span-15 flex items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]">
+                          <div className="col-span-13 flex items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]">
                             <div className="flex items-center gap-1.5">
                               <Package className="w-3.5 h-3.5 text-gray-400" />
                               <span className="text-sm text-gray-700">
-                                {orden.items.length} productos
+                                {orden.items.length}
                               </span>
                             </div>
                             <span className="text-xs text-muted-foreground ml-1">
@@ -421,10 +508,62 @@ function OrdenesDeCompraContent() {
                           </div>
 
                           {/* Importe Estimado */}
-                          <div className="col-span-25 flex items-center justify-center py-2">
+                          <div className="col-span-22 flex items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]">
                             <span className="text-sm font-semibold text-gray-900">
                               ${orden.importeEstimado.toLocaleString("es-AR", { minimumFractionDigits: 0 })}
                             </span>
+                          </div>
+
+                          {/* More Options */}
+                          <div
+                            className="col-span-8 flex items-center justify-center py-2 relative"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <button
+                              className="p-1.5 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                              onClick={() => setOpenMoreMenu(openMoreMenu === orden.id ? null : orden.id)}
+                            >
+                              <MoreVertical className="w-4 h-4" />
+                            </button>
+                            
+                            {openMoreMenu === orden.id && (
+                              <div
+                                className="absolute top-full right-2 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[160px]"
+                                onMouseLeave={() => setOpenMoreMenu(null)}
+                              >
+                                <button
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                                  onClick={() => {
+                                    // TODO: Export PDF
+                                    setOpenMoreMenu(null)
+                                  }}
+                                >
+                                  <FileDown className="w-4 h-4 text-slate-400" />
+                                  Exportar PDF
+                                </button>
+                                <button
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                                  onClick={() => {
+                                    // TODO: Export Text
+                                    setOpenMoreMenu(null)
+                                  }}
+                                >
+                                  <FileText className="w-4 h-4 text-slate-400" />
+                                  Exportar Texto
+                                </button>
+                                <div className="h-px bg-slate-100 my-1" />
+                                <button
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-amber-700 hover:bg-amber-50 transition-colors text-left"
+                                  onClick={() => {
+                                    // TODO: Convert to Compra
+                                    setOpenMoreMenu(null)
+                                  }}
+                                >
+                                  <ShoppingCart className="w-4 h-4 text-amber-600" />
+                                  Llevar a Compras
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>

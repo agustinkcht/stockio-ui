@@ -12,6 +12,8 @@ import {
   FileText,
   FileDown,
   ShoppingCart,
+  X,
+  Search,
 } from "lucide-react"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { getCategoryImage } from "@/lib/utils/category-images"
@@ -47,10 +49,9 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const [orden, setOrden] = useState<OrdenDeCompra | null>(initialOrden || null)
   const [hasChanges, setHasChanges] = useState(false)
   
-  // New item state
+  // New item modal state
+  const [showAddItemModal, setShowAddItemModal] = useState(false)
   const [newItemSearch, setNewItemSearch] = useState("")
-  const [showNewItemRow, setShowNewItemRow] = useState(false)
-  const [showSearchResults, setShowSearchResults] = useState(false)
   
   // Get all items (standalone and variants) that match the proveedor
   const availableItems = useMemo(() => {
@@ -145,7 +146,7 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const handleDeshacer = () => {
     setOrden(initialOrden || null)
     setHasChanges(false)
-    setShowNewItemRow(false)
+    setShowAddItemModal(false)
     setNewItemSearch("")
   }
 
@@ -169,9 +170,8 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     const newTotal = newItems.reduce((sum, it) => sum + it.total, 0)
     setOrden({ ...orden, items: newItems, importeEstimado: newTotal })
     setHasChanges(true)
-    setShowNewItemRow(false)
+    setShowAddItemModal(false)
     setNewItemSearch("")
-    setShowSearchResults(false)
   }
 
   const handleAddFreeItem = () => {
@@ -186,15 +186,16 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     const newItems = [...orden.items, newItem]
     setOrden({ ...orden, items: newItems })
     setHasChanges(true)
-    setShowNewItemRow(false)
+    setShowAddItemModal(false)
     setNewItemSearch("")
-    setShowSearchResults(false)
   }
 
-  const handleShowNewItemRow = () => {
-    setShowNewItemRow(true)
-    setNewItemSearch("")
-  }
+  // Filter out already selected items
+  const notSelectedItems = useMemo(() => {
+    if (!orden) return availableItems
+    const selectedSkus = new Set(orden.items.map(it => it.sku))
+    return availableItems.filter(it => !selectedSkus.has(it.sku))
+  }, [availableItems, orden])
 
   return (
     <div className="min-h-screen bg-[rgb(243,242,238)]">
@@ -249,29 +250,40 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
             <div className="px-6 py-4 border-b border-border/20 bg-white">
               <div className="flex items-center justify-between">
                 {/* Left: Title and info */}
-                <div className="flex items-center gap-8">
+                <div className="flex items-center gap-6">
                   {/* Order ID as title with label */}
                   <div>
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Orden de Compra</span>
-                    <div className="flex items-baseline gap-2">
-                      <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">ODC-{orden.numero}</h1>
-                      <span className="text-xs text-slate-400">Creación {formatDateShort(orden.fechaCreacion)}</span>
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Orden de Compra</span>
+                    <div className="flex items-center gap-3">
+                      <h1 className="text-2xl font-bold text-gray-900 tracking-tight">ODC-{orden.numero}</h1>
+                      <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                        orden.estado === "aceptada" ? "bg-emerald-50 text-emerald-700" :
+                        orden.estado === "enviada" ? "bg-blue-50 text-blue-700" :
+                        orden.estado === "rechazada" ? "bg-red-50 text-red-700" :
+                        orden.estado === "cancelada" ? "bg-gray-100 text-gray-600" :
+                        "bg-slate-100 text-slate-600"
+                      }`}>
+                        {estadoLabels[orden.estado]}
+                      </span>
                     </div>
                   </div>
                   
                   {/* Separator */}
                   <div className="h-10 w-px bg-border/40" />
                   
-                  {/* Proveedor - more salient */}
+                  {/* Proveedor */}
                   <div className="flex flex-col">
                     <span className="text-[10px] text-slate-400 uppercase tracking-wider">Proveedor</span>
                     <span className="text-sm font-semibold text-gray-800">{orden.proveedorNombre}</span>
                   </div>
 
-                  {/* Estado */}
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-slate-400">Estado:</span>
-                    <span className="text-sm font-medium text-gray-700">{estadoLabels[orden.estado]}</span>
+                  {/* Separator */}
+                  <div className="h-8 w-px bg-border/30" />
+
+                  {/* Creación */}
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Creación</span>
+                    <span className="text-sm text-gray-600">{formatDateShort(orden.fechaCreacion)}</span>
                   </div>
                 </div>
 
@@ -303,7 +315,7 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
             </div>
 
             {/* Items Section with Tab Header */}
-            <div className="flex-1 flex flex-col overflow-hidden px-6 pt-4">
+            <div className="flex-1 overflow-y-auto px-6 pt-4 pb-6">
               {/* Tab Header */}
               <div className="bg-slate-100 border border-slate-200/80 rounded-t-md">
                 <div className="grid grid-cols-12 h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
@@ -314,8 +326,8 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                 </div>
               </div>
 
-              {/* Items List - Scrollable */}
-              <div className="flex-1 overflow-y-auto bg-white border-x border-slate-200/80">
+              {/* Items List */}
+              <div className="bg-white border-x border-slate-200/80">
                 {orden.items.map((item, idx) => (
                   <div
                     key={idx}
@@ -398,123 +410,17 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                   </div>
                 ))}
 
-                {/* New Item Row - Search */}
-                {showNewItemRow && (
-                  <div className="grid grid-cols-12 items-center py-3 px-4 border-b border-slate-100 bg-amber-50/30 relative">
-                    {/* Item - Search Input */}
-                    <div className="col-span-6 flex items-center gap-3">
-                      <div className="w-11 h-11 rounded bg-slate-200/50 overflow-hidden flex-shrink-0 flex items-center justify-center">
-                        <Plus className="w-5 h-5 text-slate-400" />
-                      </div>
-                      <div className="flex-1 min-w-0 relative">
-                        <input
-                          type="text"
-                          value={newItemSearch}
-                          onChange={(e) => {
-                            setNewItemSearch(e.target.value)
-                            setShowSearchResults(true)
-                          }}
-                          onFocus={() => setShowSearchResults(true)}
-                          placeholder="Buscar item, o escribir una descripción libre"
-                          className="w-full text-sm bg-white border border-slate-200 rounded px-3 py-2 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400/20"
-                          autoFocus
-                        />
-                        
-                        {/* Search Results Dropdown */}
-                        {showSearchResults && newItemSearch.trim() && (
-                          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
-                            {searchResults.length > 0 ? (
-                              <>
-                                {searchResults.map((item) => (
-                                  <button
-                                    key={item.id}
-                                    className="w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-50 transition-colors text-left"
-                                    onClick={() => handleSelectItem(item)}
-                                  >
-                                    <div className="w-8 h-8 rounded bg-slate-100 overflow-hidden flex-shrink-0">
-                                      <Image
-                                        src={getCategoryImage(item.categoria) || "/placeholder.svg"}
-                                        alt={item.name}
-                                        width={32}
-                                        height={32}
-                                        className="w-full h-full object-cover"
-                                      />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-sm font-medium text-gray-900 truncate">{item.name}</span>
-                                        {item.tags && item.tags.length > 0 && (
-                                          <div className="flex items-center gap-1">
-                                            {item.tags.map((tag, i) => (
-                                              <span key={i} className="text-[9px] px-1 py-0.5 rounded bg-slate-200/80 text-slate-500">
-                                                {tag}
-                                              </span>
-                                            ))}
-                                          </div>
-                                        )}
-                                      </div>
-                                      <span className="text-xs text-slate-400">{item.sku}</span>
-                                    </div>
-                                    <span className="text-xs text-slate-500">${item.precio?.toLocaleString("es-AR")}</span>
-                                  </button>
-                                ))}
-                              </>
-                            ) : (
-                              <div className="px-3 py-4 text-center">
-                                <p className="text-sm text-slate-500 mb-2">No se encontraron items</p>
-                                <button
-                                  className="text-sm text-amber-600 hover:text-amber-700 font-medium"
-                                  onClick={handleAddFreeItem}
-                                >
-                                  Agregar &quot;{newItemSearch}&quot; como item libre
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Costo Unit. - Empty */}
-                    <div className="col-span-2 flex items-center justify-center">
-                      <span className="text-xs text-slate-300">—</span>
-                    </div>
-
-                    {/* Cantidad - Empty */}
-                    <div className="col-span-2 flex items-center justify-center">
-                      <span className="text-xs text-slate-300">—</span>
-                    </div>
-
-                    {/* Subtotal - Cancel button */}
-                    <div className="col-span-2 flex items-center justify-end">
-                      <button
-                        onClick={() => {
-                          setShowNewItemRow(false)
-                          setNewItemSearch("")
-                          setShowSearchResults(false)
-                        }}
-                        className="p-1.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
-                        title="Cancelar"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-
                 {/* Add Item Button */}
-                {!showNewItemRow && (
-                  <button
-                    className="w-full py-4 text-sm text-slate-400 hover:text-amber-600 hover:bg-amber-50/30 transition-colors flex items-center justify-center gap-2 border-t border-dashed border-slate-200 cursor-pointer"
-                    onClick={handleShowNewItemRow}
-                  >
-                    <Plus className="w-4 h-4" />
-                    Agregar item
-                  </button>
-                )}
+                <button
+                  className="w-full py-4 text-sm text-slate-400 hover:text-amber-600 hover:bg-amber-50/30 transition-colors flex items-center justify-center gap-2 border-t border-dashed border-slate-200 cursor-pointer"
+                  onClick={() => setShowAddItemModal(true)}
+                >
+                  <Plus className="w-4 h-4" />
+                  Agregar item
+                </button>
 
-                {/* Total Row - Part of the grid */}
-                <div className="border-t border-slate-200 bg-slate-50/50 py-4 px-4">
+                {/* Total Row - Part of the grid, closes the table */}
+                <div className="border-t border-b border-slate-200 bg-slate-50/50 py-4 px-4 rounded-b-md">
                   <div className="flex items-center justify-end gap-10">
                     <div className="text-right">
                       <span className="text-[10px] text-slate-400 uppercase tracking-wider">Items</span>
@@ -535,15 +441,152 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                   </div>
                 </div>
               </div>
-
-              {/* Bottom border to close the table */}
-              <div className="h-px bg-slate-200/80" />
             </div>
-
-            
           </main>
         </div>
       </div>
+
+      {/* Add Item Modal */}
+      {showAddItemModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => {
+              setShowAddItemModal(false)
+              setNewItemSearch("")
+            }}
+          />
+          
+          {/* Modal */}
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+            {/* Header */}
+            <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+              <h3 className="text-base font-semibold text-gray-900">Agregar Item</h3>
+              <button
+                onClick={() => {
+                  setShowAddItemModal(false)
+                  setNewItemSearch("")
+                }}
+                className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            {/* Search */}
+            <div className="p-4 border-b border-slate-100">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  value={newItemSearch}
+                  onChange={(e) => setNewItemSearch(e.target.value)}
+                  placeholder="Buscar item, o escribir una descripción libre"
+                  className="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
+                  autoFocus
+                />
+              </div>
+            </div>
+            
+            {/* Results */}
+            <div className="max-h-80 overflow-y-auto">
+              {newItemSearch.trim() ? (
+                <>
+                  {searchResults.length > 0 ? (
+                    <div className="py-2">
+                      {searchResults.map((item) => (
+                        <button
+                          key={item.id}
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left"
+                          onClick={() => handleSelectItem(item)}
+                        >
+                          <div className="w-10 h-10 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+                            <Image
+                              src={getCategoryImage(item.categoria) || "/placeholder.svg"}
+                              alt={item.name}
+                              width={40}
+                              height={40}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-gray-900 truncate">{item.name}</span>
+                              {item.tags && item.tags.length > 0 && (
+                                <div className="flex items-center gap-1">
+                                  {item.tags.slice(0, 2).map((tag, i) => (
+                                    <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-500">
+                                      {tag}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            <span className="text-xs text-slate-400">{item.sku}</span>
+                          </div>
+                          <span className="text-sm font-medium text-gray-700">${item.precio?.toLocaleString("es-AR")}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-8 text-center">
+                      <p className="text-sm text-slate-500 mb-3">No se encontraron items</p>
+                      <button
+                        className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors"
+                        onClick={handleAddFreeItem}
+                      >
+                        <Plus className="w-4 h-4" />
+                        Agregar &quot;{newItemSearch}&quot; como item
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="py-2">
+                  <p className="px-4 py-2 text-xs text-slate-400 uppercase tracking-wider">Productos del proveedor</p>
+                  {notSelectedItems.slice(0, 8).map((item) => (
+                    <button
+                      key={item.id}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left"
+                      onClick={() => handleSelectItem(item)}
+                    >
+                      <div className="w-10 h-10 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+                        <Image
+                          src={getCategoryImage(item.categoria) || "/placeholder.svg"}
+                          alt={item.name}
+                          width={40}
+                          height={40}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-gray-900 truncate">{item.name}</span>
+                          {item.tags && item.tags.length > 0 && (
+                            <div className="flex items-center gap-1">
+                              {item.tags.slice(0, 2).map((tag, i) => (
+                                <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-500">
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-xs text-slate-400">{item.sku}</span>
+                      </div>
+                      <span className="text-sm font-medium text-gray-700">${item.precio?.toLocaleString("es-AR")}</span>
+                    </button>
+                  ))}
+                  {notSelectedItems.length === 0 && (
+                    <p className="px-4 py-6 text-sm text-slate-400 text-center">Todos los productos ya fueron agregados</p>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
