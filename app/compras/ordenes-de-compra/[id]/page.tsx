@@ -52,6 +52,7 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
   // New item modal state
   const [showAddItemModal, setShowAddItemModal] = useState(false)
   const [newItemSearch, setNewItemSearch] = useState("")
+  const [showExportDropdown, setShowExportDropdown] = useState(false)
   
   // Get all items (standalone and variants) that match the proveedor
   const availableItems = useMemo(() => {
@@ -276,40 +277,74 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                     <span className="text-[10px] text-slate-400 uppercase tracking-wider">Proveedor</span>
                     <span className="text-sm font-semibold text-gray-800">{orden.proveedorNombre}</span>
                   </div>
+                </div>
 
-                  {/* Separator */}
-                  <div className="h-8 w-px bg-border/30" />
-
-                  {/* Creación */}
-                  <div className="flex flex-col">
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Creación</span>
-                    <span className="text-sm text-gray-600">{formatDateShort(orden.fechaCreacion)}</span>
-                  </div>
+                {/* Center: Creación */}
+                <div className="flex flex-col items-center">
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider">Creación</span>
+                  <span className="text-sm text-gray-600">{formatDateShort(orden.fechaCreacion)}</span>
                 </div>
 
                 {/* Right: Action buttons */}
                 <div className="flex items-center gap-2">
+                  {/* Exportar Dropdown */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowExportDropdown(!showExportDropdown)}
+                      className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer gap-1.5 shrink-0 px-3 rounded-md flex items-center"
+                    >
+                      <FileDown className="w-3.5 h-3.5 text-slate-500" />
+                      Exportar
+                    </button>
+                    {showExportDropdown && (
+                      <div
+                        className="absolute top-full right-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[140px]"
+                        onMouseLeave={() => setShowExportDropdown(false)}
+                      >
+                        <button
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                          onClick={() => {
+                            // TODO: Export PDF
+                            setShowExportDropdown(false)
+                          }}
+                        >
+                          <FileDown className="w-4 h-4 text-slate-400" />
+                          Exportar PDF
+                        </button>
+                        <button
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                          onClick={() => {
+                            // TODO: Export Text
+                            setShowExportDropdown(false)
+                          }}
+                        >
+                          <FileText className="w-4 h-4 text-slate-400" />
+                          Exportar Texto
+                        </button>
+                      </div>
+                    )}
+                  </div>
                   <button
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors"
-                    onClick={() => {/* TODO: Export PDF */}}
-                  >
-                    <FileDown className="w-4 h-4" />
-                    Exportar PDF
-                  </button>
-                  <button
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors"
-                    onClick={() => {/* TODO: Export Text */}}
-                  >
-                    <FileText className="w-4 h-4" />
-                    Exportar Texto
-                  </button>
-                  <button
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded transition-colors"
                     onClick={() => {/* TODO: Convert to Compra */}}
+                    className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer gap-1.5 shrink-0 px-3 rounded-md flex items-center"
                   >
-                    <ShoppingCart className="w-4 h-4" />
+                    <ShoppingCart className="w-3.5 h-3.5 text-amber-600" />
                     Llevar a Compras
                   </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Summary Widget */}
+            <div className="px-6 py-3 border-b border-border/20 bg-slate-50/50">
+              <div className="flex items-center gap-6">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Resumen:</span>
+                <div className="flex items-center gap-4 text-sm">
+                  <span className="text-gray-700"><span className="font-medium">{orden.items.length}</span> items</span>
+                  <span className="text-slate-300">|</span>
+                  <span className="text-gray-700"><span className="font-medium">{orden.items.reduce((sum, it) => sum + it.quantity, 0)}</span> unidades</span>
+                  <span className="text-slate-300">|</span>
+                  <span className="text-gray-700">Total estimado: <span className="font-semibold text-gray-900">${orden.importeEstimado.toLocaleString("es-AR")}</span></span>
                 </div>
               </div>
             </div>
@@ -420,19 +455,9 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                 </button>
 
                 {/* Total Row - Part of the grid, closes the table */}
-                <div className="border-t border-b border-slate-200 bg-slate-50/50 py-4 px-4 rounded-b-md">
-                  <div className="flex items-center justify-end gap-10">
+                <div className="border-t border-b border-x border-slate-200 bg-slate-100 py-4 px-4 rounded-b-md">
+                  <div className="flex items-center justify-end">
                     <div className="text-right">
-                      <span className="text-[10px] text-slate-400 uppercase tracking-wider">Items</span>
-                      <p className="text-sm font-medium text-gray-700">{orden.items.length}</p>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-[10px] text-slate-400 uppercase tracking-wider">Unidades</span>
-                      <p className="text-sm font-medium text-gray-700">
-                        {orden.items.reduce((sum, it) => sum + it.quantity, 0)}
-                      </p>
-                    </div>
-                    <div className="text-right pl-6 border-l border-border/40">
                       <span className="text-[10px] text-slate-400 uppercase tracking-wider">Total Estimado</span>
                       <p className="text-xl font-bold text-gray-900">
                         ${orden.importeEstimado.toLocaleString("es-AR")}
