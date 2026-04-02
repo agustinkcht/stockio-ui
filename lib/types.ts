@@ -391,3 +391,31 @@ export interface OrdenCompra {
   items: OrdenCompraItem[]
   importeTotal: number
 }
+
+// ===== ORDENES DE COMPRA (ODC) =====
+
+export type EstadoOrdenDeCompra = "borrador" | "enviada" | "aceptada" | "rechazada" | "cancelada"
+
+export interface OrdenDeCompraItem {
+  sku: string
+  name: string
+  quantity: number
+  unitPrice: number
+  total: number
+  categoria?: string
+  thumbnail?: string
+  tags?: string[] // For child item tags (e.g., variant attributes)
+}
+
+export interface OrdenDeCompra {
+  id: string
+  numero: number
+  fechaCreacion: string
+  fechaModificacion?: string
+  proveedorId: string
+  proveedorNombre: string
+  estado: EstadoOrdenDeCompra
+  items: OrdenDeCompraItem[]
+  importeEstimado: number
+  compraId?: string
+}

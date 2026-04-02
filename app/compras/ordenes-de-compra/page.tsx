@@ -7,8 +7,6 @@ import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 import { UserPanel } from "@/components/layout/user-panel"
 import {
   Search,
-  ChevronDown,
-  ChevronRight,
   Package,
   Plus,
   ArrowUpDown,
@@ -16,11 +14,13 @@ import {
   X,
   CheckCircle2,
   FileText,
+  Pencil,
+  Trash2,
 } from "lucide-react"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import Image from "next/image"
-import type { OrdenDeCompra, EstadoOrdenDeCompra } from "@/lib/types"
+import type { OrdenDeCompra, EstadoOrdenDeCompra, OrdenDeCompraItem } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { ORDENES_DE_COMPRA } from "@/lib/data/initial-ordenes-de-compra"
 
@@ -74,7 +74,8 @@ function formatDateShort(dateStr: string): string {
 function OrdenesDeCompraContent() {
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
   const [searchQuery, setSearchQuery] = useState("")
-  const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set())
+  const [selectedOrdenId, setSelectedOrdenId] = useState<string | null>(null)
+  const [ordenes, setOrdenes] = useState(ORDENES_DE_COMPRA)
 
   const [showOrderModal, setShowOrderModal] = useState(false)
   const [showFilterModal, setShowFilterModal] = useState(false)
@@ -108,8 +109,12 @@ function OrdenesDeCompraContent() {
     }
   }, [])
 
+  const selectedOrden = useMemo(() => {
+    return ordenes.find(o => o.id === selectedOrdenId) || null
+  }, [ordenes, selectedOrdenId])
+
   const filteredOrdenes = useMemo(() => {
-    let result = ORDENES_DE_COMPRA.filter((orden) => {
+    let result = ordenes.filter((orden) => {
       const matchesSearch =
         searchQuery === "" ||
         orden.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -148,16 +153,6 @@ function OrdenesDeCompraContent() {
     return result
   }, [searchQuery, activeFilters, sortConfig])
 
-  const toggleExpanded = (id: string) => {
-    const newExpanded = new Set(expandedOrders)
-    if (newExpanded.has(id)) {
-      newExpanded.delete(id)
-    } else {
-      newExpanded.add(id)
-    }
-    setExpandedOrders(newExpanded)
-  }
-
   const hasActiveFilters = activeFilters.estado.length > 0
 
   const toggleFilter = (category: keyof FilterConfig, value: string) => {
@@ -181,7 +176,7 @@ function OrdenesDeCompraContent() {
           />
         </div>
 
-        <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
+        <div className={`flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10 transition-all duration-300 ${selectedOrden ? "flex-1" : "flex-1"}`}>
           <div className="relative border-b border-border h-[44px] bg-white">
             <div className="px-4 flex items-center justify-between h-full">
               <div className="flex items-center">
@@ -353,20 +348,17 @@ function OrdenesDeCompraContent() {
             <div className="px-6">
               <div className="bg-slate-200 border border-[rgba(202,213,227,0.61)] rounded-t-sm">
                 <div className="grid grid-cols-100 h-9">
-                  {/* Chevron spacer */}
-                  <div className="col-span-3 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
-                  </div>
                   {/* ID */}
                   <div className="col-span-12 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
                     <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">ID</span>
                   </div>
-                  {/* Proveedor */}
-                  <div className="col-span-30 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
-                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Proveedor</span>
-                  </div>
-                  {/* Estado Orden */}
+                  {/* Estado Orden - moved before Proveedor */}
                   <div className="col-span-15 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
                     <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Estado</span>
+                  </div>
+                  {/* Proveedor - moved after Estado */}
+                  <div className="col-span-33 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
+                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Proveedor</span>
                   </div>
                   {/* Cantidad Items */}
                   <div className="col-span-15 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
@@ -390,40 +382,27 @@ function OrdenesDeCompraContent() {
               ) : (
                 <div className="space-y-[1px]">
                   {filteredOrdenes.map((orden) => {
-                    const isExpanded = expandedOrders.has(orden.id)
                     const estadoStyle = estadoColors[orden.estado]
                     const totalItems = orden.items.reduce((sum, item) => sum + item.quantity, 0)
+                    const isSelected = selectedOrdenId === orden.id
 
                     return (
-                      <div key={orden.id} className="bg-white border-x border-b border-[rgba(202,213,227,0.61)] first:border-t-0">
+                      <div
+                        key={orden.id}
+                        className={`bg-white border-x border-b border-[rgba(202,213,227,0.61)] first:border-t-0 cursor-pointer transition-colors ${
+                          isSelected ? "bg-amber-50/50 border-l-2 border-l-amber-500" : "hover:bg-gray-50/50"
+                        }`}
+                        onClick={() => setSelectedOrdenId(orden.id)}
+                      >
                         {/* Main Row */}
-                        <div
-                          className="grid grid-cols-100 min-h-[56px] cursor-pointer hover:bg-gray-50/50 transition-colors"
-                          onClick={() => toggleExpanded(orden.id)}
-                        >
-                          {/* Chevron */}
-                          <div className="col-span-3 flex items-center justify-center border-r border-[rgba(202,213,227,0.3)]">
-                            <button className="p-0.5 text-muted-foreground">
-                              {isExpanded ? (
-                                <ChevronDown className="w-4 h-4" />
-                              ) : (
-                                <ChevronRight className="w-4 h-4" />
-                              )}
-                            </button>
-                          </div>
-
+                        <div className="grid grid-cols-100 min-h-[56px]">
                           {/* ID */}
                           <div className="col-span-12 flex flex-col items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]">
                             <span className="text-sm font-medium text-gray-900">ODC-{orden.numero}</span>
                             <span className="text-xs text-muted-foreground">{formatDateShort(orden.fechaCreacion)}</span>
                           </div>
 
-                          {/* Proveedor */}
-                          <div className="col-span-30 flex items-center px-4 py-2 border-r border-[rgba(202,213,227,0.3)]">
-                            <span className="text-sm text-gray-700 truncate">{orden.proveedorNombre}</span>
-                          </div>
-
-                          {/* Estado Orden */}
+                          {/* Estado Orden - now before Proveedor */}
                           <div className="col-span-15 flex items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]">
                             <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${estadoStyle.bg}`}>
                               <CheckCircle2 className={`w-3.5 h-3.5 ${estadoStyle.icon}`} />
@@ -431,6 +410,11 @@ function OrdenesDeCompraContent() {
                                 {estadoLabels[orden.estado]}
                               </span>
                             </div>
+                          </div>
+
+                          {/* Proveedor - now after Estado */}
+                          <div className="col-span-33 flex items-center px-4 py-2 border-r border-[rgba(202,213,227,0.3)]">
+                            <span className="text-sm text-gray-700 truncate">{orden.proveedorNombre}</span>
                           </div>
 
                           {/* Cantidad Items */}
@@ -453,51 +437,6 @@ function OrdenesDeCompraContent() {
                             </span>
                           </div>
                         </div>
-
-                        {/* Expanded Items */}
-                        {isExpanded && (
-                          <div className="border-t border-border/30 bg-muted/20">
-                            <div className="px-4 py-2 space-y-1">
-                              {orden.items.map((item, idx) => (
-                                <div key={idx} className="grid grid-cols-100 items-center py-2">
-                                  {/* Item Info (leftmost) */}
-                                  <div className="col-span-60 flex items-center gap-3 pl-8">
-                                    <div className="w-10 h-10 rounded bg-muted/50 overflow-hidden flex-shrink-0">
-                                      <Image
-                                        src={getCategoryImage(item.categoria) || "/placeholder.svg"}
-                                        alt={item.name}
-                                        width={40}
-                                        height={40}
-                                        className="w-full h-full object-cover"
-                                      />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-sm truncate">{item.name}</p>
-                                      <span className="text-xs text-muted-foreground">{item.sku}</span>
-                                    </div>
-                                  </div>
-
-                                  {/* Item Cantidad */}
-                                  <div className="col-span-15 flex items-center justify-center">
-                                    <span className="text-xs text-muted-foreground">
-                                      {item.quantity} unidades
-                                    </span>
-                                  </div>
-
-                                  {/* Item Subtotal (rightmost, aligned with importe estimado) */}
-                                  <div className="col-span-25 flex flex-col items-center justify-center">
-                                    <p className="text-sm font-medium">
-                                      ${item.total.toLocaleString("es-AR", { minimumFractionDigits: 0 })}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">
-                                      {item.quantity} x ${item.unitPrice.toLocaleString("es-AR")}
-                                    </p>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
                       </div>
                     )
                   })}
@@ -506,6 +445,167 @@ function OrdenesDeCompraContent() {
             </div>
           </main>
         </div>
+
+        {/* Orden Detail Panel */}
+        {selectedOrden && (
+          <div className="w-[480px] flex-shrink-0 bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden flex flex-col border-l border-border/30">
+            {/* Header */}
+            <div className="px-4 py-3 border-b border-border/40 bg-slate-50 flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-semibold text-gray-900">ODC-{selectedOrden.numero}</h2>
+                <p className="text-xs text-muted-foreground">{selectedOrden.proveedorNombre}</p>
+              </div>
+              <button
+                onClick={() => setSelectedOrdenId(null)}
+                className="p-1.5 rounded-full hover:bg-gray-200 transition-colors"
+                title="Cerrar"
+              >
+                <X className="w-4 h-4 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Info Section */}
+            <div className="px-4 py-3 border-b border-border/30 bg-white">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-xs text-muted-foreground uppercase tracking-wider">Fecha Creación</span>
+                  <p className="font-medium text-gray-900">{formatDateShort(selectedOrden.fechaCreacion)}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-muted-foreground uppercase tracking-wider">Última Edición</span>
+                  <p className="font-medium text-gray-900">{selectedOrden.fechaModificacion ? formatDateShort(selectedOrden.fechaModificacion) : "-"}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-muted-foreground uppercase tracking-wider">Proveedor</span>
+                  <p className="font-medium text-gray-900">{selectedOrden.proveedorNombre}</p>
+                </div>
+                <div>
+                  <span className="text-xs text-muted-foreground uppercase tracking-wider">Estado</span>
+                  <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full mt-1 ${estadoColors[selectedOrden.estado].bg}`}>
+                    <CheckCircle2 className={`w-3 h-3 ${estadoColors[selectedOrden.estado].icon}`} />
+                    <span className={`text-xs font-medium ${estadoColors[selectedOrden.estado].text}`}>
+                      {estadoLabels[selectedOrden.estado]}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Items Grid */}
+            <div className="flex-1 overflow-y-auto px-4 py-3">
+              <div className="space-y-0">
+                {selectedOrden.items.map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-3 py-3 border-b border-border/20 last:border-b-0">
+                    {/* Thumbnail */}
+                    <div className="w-12 h-12 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+                      <Image
+                        src={getCategoryImage(item.categoria) || "/placeholder.svg"}
+                        alt={item.name}
+                        width={48}
+                        height={48}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+
+                    {/* Item Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
+                      <p className="text-xs text-muted-foreground">{item.sku}</p>
+                    </div>
+
+                    {/* Quantity - editable */}
+                    <div className="flex flex-col items-center gap-0.5 w-20">
+                      <span className="text-[10px] text-muted-foreground uppercase">Cantidad</span>
+                      <input
+                        type="number"
+                        value={item.quantity}
+                        onChange={(e) => {
+                          const newQuantity = parseInt(e.target.value) || 0
+                          const newItems = selectedOrden.items.map((it, i) =>
+                            i === idx ? { ...it, quantity: newQuantity, total: newQuantity * it.unitPrice } : it
+                          )
+                          const newTotal = newItems.reduce((sum, it) => sum + it.total, 0)
+                          setOrdenes(prev => prev.map(o => o.id === selectedOrden.id ? { ...o, items: newItems, importeEstimado: newTotal } : o))
+                        }}
+                        className="w-16 text-center text-sm font-medium border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                        min={1}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+
+                    {/* Costo Unit - editable */}
+                    <div className="flex flex-col items-center gap-0.5 w-24">
+                      <span className="text-[10px] text-muted-foreground uppercase">Costo Unit.</span>
+                      <div className="flex items-center">
+                        <span className="text-xs text-gray-500 mr-0.5">$</span>
+                        <input
+                          type="number"
+                          value={item.unitPrice}
+                          onChange={(e) => {
+                            const newPrice = parseInt(e.target.value) || 0
+                            const newItems = selectedOrden.items.map((it, i) =>
+                              i === idx ? { ...it, unitPrice: newPrice, total: it.quantity * newPrice } : it
+                            )
+                            const newTotal = newItems.reduce((sum, it) => sum + it.total, 0)
+                            setOrdenes(prev => prev.map(o => o.id === selectedOrden.id ? { ...o, items: newItems, importeEstimado: newTotal } : o))
+                          }}
+                          className="w-20 text-center text-sm font-medium border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                          min={0}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Subtotal */}
+                    <div className="flex flex-col items-end gap-0.5 w-24">
+                      <span className="text-sm font-bold text-gray-900">
+                        ${item.total.toLocaleString("es-AR")}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {item.quantity} x ${item.unitPrice.toLocaleString("es-AR")}
+                      </span>
+                    </div>
+
+                    {/* Delete button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        const newItems = selectedOrden.items.filter((_, i) => i !== idx)
+                        const newTotal = newItems.reduce((sum, it) => sum + it.total, 0)
+                        setOrdenes(prev => prev.map(o => o.id === selectedOrden.id ? { ...o, items: newItems, importeEstimado: newTotal } : o))
+                      }}
+                      className="p-1.5 rounded hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                      title="Eliminar item"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Add Item Button */}
+              <button
+                className="w-full mt-4 py-2.5 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-amber-400 hover:text-amber-600 hover:bg-amber-50/50 transition-colors flex items-center justify-center gap-2"
+                onClick={() => {
+                  // TODO: Open item selector modal (filtered by proveedor)
+                }}
+              >
+                <Plus className="w-4 h-4" />
+                Agregar Item
+              </button>
+            </div>
+
+            {/* Total Footer */}
+            <div className="px-4 py-4 border-t border-border/40 bg-slate-50">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-600">Total Estimado</span>
+                <span className="text-xl font-bold text-gray-900">
+                  ${selectedOrden.importeEstimado.toLocaleString("es-AR")}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
