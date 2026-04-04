@@ -42,7 +42,7 @@ export const FiltrosModalPrecios = forwardRef<HTMLDivElement, FiltrosModalPrecio
       availableDepositos,
     },
     ref
-  ) {
+  ) => {
     const [filters, setFilters] = useState<FilterConfig>(activeFilters || DEFAULT_FILTERS)
     const [categoriaInput, setCategoriaInput] = useState("")
     const [marcaInput, setMarcaInput] = useState("")
