@@ -1170,29 +1170,31 @@ export function CatalogoItemDetailPanel({
                         )}
                       </div>
 
-                      {/* Estado - right below title */}
+                      {/* Estado indicator - minimal dot next to title */}
                       {!isViewingContainer && (
-                        <div className="relative group/estado mt-2">
+                        <div className="relative group/estado mt-1.5">
                           <button
-                            className={`text-sm font-medium px-3 py-1 rounded-full cursor-pointer transition-all flex items-center gap-1.5 ${
-                              selectedItem?.isActive !== false
-                                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 hover:bg-emerald-500/30"
-                                : "bg-amber-500/20 text-amber-300 border border-amber-400/30 hover:bg-amber-500/30"
-                            }`}
+                            className="flex items-center gap-2 cursor-pointer transition-all group/estadoBtn"
                             onClick={(e) => {
                               e.stopPropagation()
                               const el = e.currentTarget.parentElement?.querySelector("[data-estado-dropdown-top]") as HTMLElement
                               if (el) el.style.display = el.style.display === "none" || !el.style.display ? "flex" : "none"
                             }}
                           >
-                            <span className="text-[10px] font-semibold text-slate-500/80 uppercase tracking-wider">Estado</span>
-                            {selectedItem?.isActive !== false ? "Activo" : "Pausado"}
-                            <ChevronDown className="w-3 h-3 opacity-60" />
+                            <div className={`w-2 h-2 rounded-full ${
+                              selectedItem?.isActive !== false
+                                ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]"
+                                : "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]"
+                            }`} />
+                            <span className="text-[11px] text-slate-400 uppercase tracking-wider group-hover/estadoBtn:text-slate-300 transition-colors">
+                              {selectedItem?.isActive !== false ? "Activo" : "Pausado"}
+                            </span>
+                            <ChevronDown className="w-3 h-3 text-slate-500 opacity-0 group-hover/estadoBtn:opacity-100 transition-opacity" />
                           </button>
                           <div
                             data-estado-dropdown-top
                             style={{ display: "none" }}
-                            className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-50 flex-col min-w-[110px] bg-slate-800 border border-slate-600 rounded-lg shadow-xl overflow-hidden"
+                            className="absolute top-full left-0 mt-1 z-50 flex-col min-w-[110px] bg-slate-900/95 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-2xl overflow-hidden"
                             onMouseLeave={(e) => {
                               (e.currentTarget as HTMLElement).style.display = "none"
                             }}
@@ -1207,8 +1209,8 @@ export function CatalogoItemDetailPanel({
                                   key={label}
                                   className={`flex items-center justify-between gap-2 px-3 py-2 text-sm text-left transition-colors w-full ${
                                     isCurrent
-                                      ? "bg-slate-700 text-white font-medium cursor-default"
-                                      : "text-slate-300 hover:bg-slate-700/60 cursor-pointer"
+                                      ? "bg-slate-800/80 text-white font-medium cursor-default"
+                                      : "text-slate-400 hover:bg-slate-800/50 hover:text-white cursor-pointer"
                                   }`}
                                   onClick={(e) => {
                                     e.stopPropagation()
@@ -1227,7 +1229,10 @@ export function CatalogoItemDetailPanel({
                                     ;(e.currentTarget.parentElement as HTMLElement).style.display = "none"
                                   }}
                                 >
-                                  {label}
+                                  <div className="flex items-center gap-2">
+                                    <div className={`w-1.5 h-1.5 rounded-full ${value ? "bg-emerald-400" : "bg-amber-400"}`} />
+                                    {label}
+                                  </div>
                                   {isCurrent && <Check className="w-3 h-3 text-emerald-400 flex-shrink-0" />}
                                 </button>
                               )
@@ -1369,46 +1374,48 @@ export function CatalogoItemDetailPanel({
                       )}
                       */}
 
-                      {/* Info rows - Precio Venta and Stock Disponible */}
+                      {/* Metrics Bar - Sophisticated horizontal layout at bottom */}
                       {!isViewingContainer && (
-                        <div className="flex flex-col items-center gap-4 mt-5">
-                          {/* Precio Venta - column layout */}
-                          <div
-                            className="flex flex-col items-center gap-0.5 group/precio cursor-pointer"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setPrecioModalValues({
-                                costo: selectedItem?.precio?.costo || 0,
-                                margen: selectedItem?.precio?.margen || 0,
-                                iva: selectedItem?.precio?.iva || 0,
-                                precioFinal: selectedItem?.precio?.precioFinal || 0,
-                              })
-                              setIsPrecioModalOpen(true)
-                            }}
-                          >
-                            <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Precio Venta</span>
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-emerald-400 font-bold text-xl leading-tight">
-                                ${(selectedItem?.precio?.precioFinal || 0).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                        <div className="absolute bottom-0 left-0 right-0 px-6 py-4">
+                          {/* Subtle top border */}
+                          <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-slate-700/50 to-transparent" />
+                          
+                          <div className="flex items-center justify-center gap-6">
+                            {/* Precio Venta */}
+                            <div
+                              className="flex flex-col items-center group/precio cursor-pointer transition-all hover:scale-105"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setPrecioModalValues({
+                                  costo: selectedItem?.precio?.costo || 0,
+                                  margen: selectedItem?.precio?.margen || 0,
+                                  iva: selectedItem?.precio?.iva || 0,
+                                  precioFinal: selectedItem?.precio?.precioFinal || 0,
+                                })
+                                setIsPrecioModalOpen(true)
+                              }}
+                            >
+                              <span className="text-[9px] text-slate-500 uppercase tracking-[0.15em] mb-0.5">Precio</span>
+                              <span className="text-white font-light text-lg tracking-tight tabular-nums">
+                                ${(selectedItem?.precio?.precioFinal || 0).toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                               </span>
-                              <Pencil className="w-3 h-3 text-white/50 opacity-0 group-hover/precio:opacity-100 transition-opacity" />
                             </div>
-                          </div>
 
-                          {/* Stock Disponible - column layout, just the number */}
-                          <div
-                            className="flex flex-col items-center gap-0.5 group/stock cursor-pointer"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setIsStockModalOpen(true)
-                            }}
-                          >
-                            <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Stock Disponible</span>
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-blue-400 font-bold text-xl leading-tight">
+                            {/* Vertical separator */}
+                            <div className="w-px h-8 bg-slate-700/40" />
+
+                            {/* Stock Disponible */}
+                            <div
+                              className="flex flex-col items-center group/stock cursor-pointer transition-all hover:scale-105"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setIsStockModalOpen(true)
+                              }}
+                            >
+                              <span className="text-[9px] text-slate-500 uppercase tracking-[0.15em] mb-0.5">Stock</span>
+                              <span className="text-white font-light text-lg tracking-tight tabular-nums">
                                 {Number.parseInt(selectedItem?.stock?.total || "0") - Number.parseInt(selectedItem?.stock?.reservado || "0")}
                               </span>
-                              <Pencil className="w-3 h-3 text-white/50 opacity-0 group-hover/stock:opacity-100 transition-opacity" />
                             </div>
                           </div>
                         </div>
