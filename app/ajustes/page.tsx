@@ -9,7 +9,7 @@ import { useSidebar } from "@/hooks/use-sidebar"
 import { useSettings, type CostoBehavior } from "@/lib/contexts/settings-context"
 
 export default function AjustesPage() {
-  const { isSidebarCollapsed, setIsSidebarCollapsed } = useSidebar()
+  const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
   const { precios, updatePreciosSettings } = useSettings()
 
   const handleCostoBehaviorChange = (behavior: CostoBehavior) => {
@@ -17,15 +17,19 @@ export default function AjustesPage() {
   }
 
   return (
-    <div className="flex h-screen bg-[rgb(243,242,238)] overflow-hidden">
-      <Sidebar
-        items={SIDEBAR_ITEMS}
-        bottomItems={BOTTOM_SIDEBAR_ITEMS}
-        isCollapsed={isSidebarCollapsed}
-        onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-      />
+    <div className="min-h-screen bg-[rgb(243,242,238)]">
+      <div className="px-[6px] py-[6px] flex gap-[6px] h-screen" onClick={handleCloseDropdowns}>
+        <div onClick={(e) => e.stopPropagation()} className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
+          <Sidebar
+            sidebarItems={SIDEBAR_ITEMS}
+            bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
+            hoveredDropdown={hoveredDropdown}
+            onDropdownOpen={handleDropdownMouseEnter}
+            onDropdownClose={handleDropdownMouseLeave}
+          />
+        </div>
 
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white rounded-lg">
         {/* Header */}
         <header className="flex items-center justify-between px-6 py-4 bg-[rgb(243,242,238)] border-b border-border/20">
           <Breadcrumb items={[{ label: "Ajustes", href: "/ajustes" }]} />
@@ -165,7 +169,8 @@ export default function AjustesPage() {
             </div>
           </div>
         </div>
-      </main>
+        </main>
+      </div>
     </div>
   )
 }
