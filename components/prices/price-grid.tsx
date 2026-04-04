@@ -308,20 +308,40 @@ export function PriceGrid({
             <div className="flex-1 min-w-0">
               {isParent ? (
                 <>
-                  <div className="text-sm font-medium text-slate-900 truncate">{item.name}</div>
+                  <div className="text-sm font-semibold text-slate-900 truncate">{item.name}</div>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     {item.marca && <span className="text-[11px] text-slate-400">{item.marca}</span>}
                     {item.marca && item.categoria && <span className="text-[11px] text-slate-300">·</span>}
                     {item.categoria && <span className="text-[11px] text-slate-400">{item.categoria}</span>}
                   </div>
                 </>
+              ) : isChild ? (
+                <>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-slate-800">{item.name}</span>
+                    {item.atributosPrincipales && item.atributosPrincipales.length > 0 && (
+                      <div className="flex items-center gap-1">
+                        {item.atributosPrincipales.map((attr, idx) => (
+                          attr.value && (
+                            <span
+                              key={idx}
+                              className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 text-slate-600 rounded"
+                            >
+                              {attr.value}
+                            </span>
+                          )
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </>
               ) : (
                 <>
-                  <div className="text-sm text-slate-800 truncate">{getFullTitle(item)}</div>
+                  <div className="text-sm font-semibold text-slate-900 truncate">{getFullTitle(item)}</div>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    {!isChild && item.marca && <span className="text-[11px] text-slate-400">{item.marca}</span>}
-                    {!isChild && item.marca && item.categoria && <span className="text-[11px] text-slate-300">·</span>}
-                    {!isChild && item.categoria && <span className="text-[11px] text-slate-400">{item.categoria}</span>}
+                    {item.marca && <span className="text-[11px] text-slate-400">{item.marca}</span>}
+                    {item.marca && item.categoria && <span className="text-[11px] text-slate-300">·</span>}
+                    {item.categoria && <span className="text-[11px] text-slate-400">{item.categoria}</span>}
                   </div>
                 </>
               )}

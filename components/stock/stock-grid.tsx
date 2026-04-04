@@ -81,6 +81,7 @@ export function StockGrid({
     tipos: [],
     categorias: [],
     marcas: [],
+    proveedores: [],
     stock: [],
     depositos: [],
   })

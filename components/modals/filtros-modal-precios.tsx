@@ -31,7 +31,7 @@ const DEFAULT_FILTERS: FilterConfig = {
 }
 
 export const FiltrosModalPrecios = forwardRef<HTMLDivElement, FiltrosModalPreciosProps>(
-  function FiltrosModalPrecios(
+  (
     {
       onClose,
       activeFilters,

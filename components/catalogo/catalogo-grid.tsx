@@ -79,6 +79,7 @@ export function CatalogoGrid({
     tipos: [],
     categorias: [],
     marcas: [],
+    proveedores: [],
     stock: [],
     depositos: [],
   })

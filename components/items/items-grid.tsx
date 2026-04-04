@@ -106,6 +106,7 @@ export function ItemsGrid({
     tipos: [],
     categorias: [],
     marcas: [],
+    proveedores: [],
     stock: [],
     depositos: [],
   })
