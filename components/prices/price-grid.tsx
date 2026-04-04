@@ -293,40 +293,43 @@ export function PriceGrid({
 
           {/* Item column */}
           <div className="flex items-center gap-2 px-4 min-w-0 h-full border-r border-[rgba(202,213,227,0.3)]">
-            {isParent && (
-              <>
-                <button
-                  onClick={() => toggleVariantExpansion(index)}
-                  className="text-slate-500 hover:text-slate-800 cursor-pointer shrink-0"
-                >
-                  {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                </button>
-                <div className="flex-1 min-w-0">
+            {isParent ? (
+              <button
+                onClick={() => toggleVariantExpansion(index)}
+                className="text-slate-500 hover:text-slate-800 cursor-pointer shrink-0 w-4"
+              >
+                {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+            ) : (
+              <div className="w-4 shrink-0" /> /* Spacer to align with parent chevron */
+            )}
+            <div className="flex-1 min-w-0">
+              {isParent ? (
+                <>
                   <div className="text-sm font-medium text-slate-900 truncate">{item.name}</div>
                   <span className="text-[11px] text-slate-400">{item.marca}</span>
-                </div>
-              </>
-            )}
-            {!isParent && (
-              <div className="flex-1 min-w-0">
-                <div className="text-sm text-slate-800 truncate">{getFullTitle(item)}</div>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  {!isChild && item.marca && <span className="text-[11px] text-slate-400">{item.marca}</span>}
-                  {!isChild && item.marca && <span className="text-[11px] text-slate-300">·</span>}
-                  <span className="text-[11px] text-slate-400 font-mono">{item.sku}</span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      navigator.clipboard.writeText(item.sku)
-                    }}
-                    className="inline-flex items-center p-0.5 text-slate-300 hover:text-slate-500 transition-colors"
-                    title="Copiar SKU"
-                  >
-                    <Copy className="w-2.5 h-2.5" />
-                  </button>
-                </div>
-              </div>
-            )}
+                </>
+              ) : (
+                <>
+                  <div className="text-sm text-slate-800 truncate">{getFullTitle(item)}</div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    {!isChild && item.marca && <span className="text-[11px] text-slate-400">{item.marca}</span>}
+                    {!isChild && item.marca && <span className="text-[11px] text-slate-300">·</span>}
+                    <span className="text-[11px] text-slate-400 font-mono">{item.sku}</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        navigator.clipboard.writeText(item.sku)
+                      }}
+                      className="inline-flex items-center p-0.5 text-slate-300 hover:text-slate-500 transition-colors"
+                      title="Copiar SKU"
+                    >
+                      <Copy className="w-2.5 h-2.5" />
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Categoría column */}
