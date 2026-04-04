@@ -309,6 +309,7 @@ export interface FilterConfig {
   tipos: ItemTipo[]
   categorias: string[]
   marcas: string[]
+  proveedores: string[]
   stock: StockFilter[]
   depositos: string[]
 }

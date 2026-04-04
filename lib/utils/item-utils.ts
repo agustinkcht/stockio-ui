@@ -317,6 +317,7 @@ export function filterItems(items: Item[], filterConfig: FilterConfig): Item[] {
     (filterConfig.tipos.length === 0 &&
       filterConfig.categorias.length === 0 &&
       filterConfig.marcas.length === 0 &&
+      (filterConfig.proveedores?.length || 0) === 0 &&
       filterConfig.stock.length === 0 &&
       filterConfig.depositos.length === 0)
   ) {
@@ -349,6 +350,13 @@ export function filterItems(items: Item[], filterConfig: FilterConfig): Item[] {
     // Filter by marca
     if (filterConfig.marcas.length > 0) {
       if (!item.marca || !filterConfig.marcas.includes(item.marca)) {
+        return false
+      }
+    }
+
+    // Filter by proveedor
+    if (filterConfig.proveedores && filterConfig.proveedores.length > 0) {
+      if (!(item as any).proveedor || !filterConfig.proveedores.includes((item as any).proveedor)) {
         return false
       }
     }
@@ -427,4 +435,28 @@ export function getUniqueMarcas(items: Item[]): string[] {
   })
 
   return Array.from(marcas).sort()
+}
+
+/**
+* Get unique proveedores from items list
+*/
+export function getUniqueProveedores(items: Item[]): string[] {
+  const proveedores = new Set<string>()
+
+  items.forEach((item) => {
+    if ((item as any).proveedor) {
+      proveedores.add((item as any).proveedor)
+    }
+
+    // Also check sub-items in agrupadores
+    if (item.isAgrupador && item.items) {
+      item.items.forEach((subItem) => {
+        if ((subItem as any).proveedor) {
+          proveedores.add((subItem as any).proveedor)
+        }
+      })
+    }
+  })
+
+  return Array.from(proveedores).sort()
 }

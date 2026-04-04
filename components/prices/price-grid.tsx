@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useRef, useState, useEffect, useMemo, useCallback } from "react"
 import { usePriceSelection } from "@/hooks/use-price-selection"
-import { searchItems, sortItems, filterItems, getUniqueCategorias, getUniqueMarcas } from "@/lib/utils/item-utils"
+import { searchItems, sortItems, filterItems, getUniqueCategorias, getUniqueMarcas, getUniqueProveedores } from "@/lib/utils/item-utils"
 import { OrdenModalPrecios } from "@/components/modals/orden-modal-precios"
 import { FiltrosModalPrecios } from "@/components/modals/filtros-modal-precios"
 import { BulkPriceModal } from "@/components/modals/bulk-price-modals"
@@ -77,6 +77,7 @@ export function PriceGrid({
     tipos: [],
     categorias: [],
     marcas: [],
+    proveedores: [],
     stock: [],
     depositos: [],
   })
@@ -85,6 +86,7 @@ export function PriceGrid({
 
   const availableCategorias = useMemo(() => getUniqueCategorias(items), [items])
   const availableMarcas = useMemo(() => getUniqueMarcas(items), [items])
+  const availableProveedores = useMemo(() => getUniqueProveedores(items), [items])
   const availableDepositos = useMemo(() => ["Torcuato", "Trujui"], [])
 
   const searchedItems = useMemo(() => searchItems(items, searchTerm), [items, searchTerm])
@@ -246,7 +248,7 @@ export function PriceGrid({
     return { costo: 0, margen: 0, iva: 21, precioFinal: 0 }
   }
 
-  const renderItemRow = (item: Item, index: number, isChild = false, isLastChild = false) => {
+  const renderItemRow = (item: Item, index: number, isChild = false, isLastChild = false, parentProveedor?: string) => {
     const isParent = !isChild && ((item.variants && item.variants.length > 0) || (item.items && item.items.length > 0))
     const children = item.variants || item.items || []
     const isExpanded = expandedItems[index]
@@ -307,7 +309,11 @@ export function PriceGrid({
               {isParent ? (
                 <>
                   <div className="text-sm font-medium text-slate-900 truncate">{item.name}</div>
-                  <span className="text-[11px] text-slate-400">{item.marca}</span>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    {item.marca && <span className="text-[11px] text-slate-400">{item.marca}</span>}
+                    {item.marca && item.categoria && <span className="text-[11px] text-slate-300">·</span>}
+                    {item.categoria && <span className="text-[11px] text-slate-400">{item.categoria}</span>}
+                  </div>
                 </>
               ) : (
                 <>
@@ -324,7 +330,7 @@ export function PriceGrid({
 
           {/* Proveedor column */}
           <div className="flex items-center px-3 h-full border-r border-[rgba(202,213,227,0.3)] min-w-0">
-            <span className="text-[12px] text-slate-600 truncate block w-full">{(item as any).proveedor || "-"}</span>
+            <span className="text-[12px] text-slate-600 truncate block w-full">{(item as any).proveedor || parentProveedor || "-"}</span>
           </div>
 
           {isParent ? (
@@ -417,7 +423,7 @@ export function PriceGrid({
             {children.map((child, childIdx) => {
               const childIndex = index + childIdx + 1
               const isLast = childIdx === children.length - 1
-              return renderItemRow(child as Item, childIndex, true, isLast)
+              return renderItemRow(child as Item, childIndex, true, isLast, (item as any).proveedor)
             })}
           </div>
         )}
@@ -426,7 +432,7 @@ export function PriceGrid({
   }
 
   const hasActiveFilters =
-    activeFilters.tipos.length > 0 || activeFilters.categorias.length > 0 || activeFilters.marcas.length > 0
+    activeFilters.tipos.length > 0 || activeFilters.categorias.length > 0 || activeFilters.marcas.length > 0 || activeFilters.proveedores.length > 0
 
   return (
     <div className="flex-1 flex flex-col bg-slate-50 overflow-hidden">
@@ -641,6 +647,7 @@ export function PriceGrid({
           setActiveFilters={setActiveFilters}
           availableCategorias={availableCategorias}
           availableMarcas={availableMarcas}
+          availableProveedores={availableProveedores}
           availableDepositos={availableDepositos}
         />
       )}
