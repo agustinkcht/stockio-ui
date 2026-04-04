@@ -265,7 +265,7 @@ export function PriceGrid({
     return (
       <div key={item.sku || index}>
         <div
-          className={`grid grid-cols-[40px_3fr_1.2fr_1.2fr_1.5fr_1fr_0.8fr_1.5fr_36px] gap-0 ${heightClass} items-center transition-colors border-b border-[rgba(202,213,227,0.61)] ${
+          className={`grid grid-cols-[40px_3fr_1.5fr_1.5fr_1fr_0.8fr_1.5fr_36px] gap-0 ${heightClass} items-center transition-colors border-b border-[rgba(202,213,227,0.61)] ${
             isHovered ? "bg-gray-50/50" : ""
           } ${isChild ? "bg-slate-50/30" : ""}`}
           onMouseEnter={() => setHoveredId(itemId)}
@@ -314,37 +314,21 @@ export function PriceGrid({
                   <div className="text-sm text-slate-800 truncate">{getFullTitle(item)}</div>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     {!isChild && item.marca && <span className="text-[11px] text-slate-400">{item.marca}</span>}
-                    {!isChild && item.marca && <span className="text-[11px] text-slate-300">·</span>}
-                    <span className="text-[11px] text-slate-400 font-mono">{item.sku}</span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        navigator.clipboard.writeText(item.sku)
-                      }}
-                      className="inline-flex items-center p-0.5 text-slate-300 hover:text-slate-500 transition-colors"
-                      title="Copiar SKU"
-                    >
-                      <Copy className="w-2.5 h-2.5" />
-                    </button>
+                    {!isChild && item.marca && item.categoria && <span className="text-[11px] text-slate-300">·</span>}
+                    {!isChild && item.categoria && <span className="text-[11px] text-slate-400">{item.categoria}</span>}
                   </div>
                 </>
               )}
             </div>
           </div>
 
-          {/* Categoría column */}
-          <div className="flex items-center px-3 h-full border-r border-[rgba(202,213,227,0.3)]">
-            <span className="text-[12px] text-slate-600 truncate">{item.categoria || "-"}</span>
-          </div>
-
           {/* Proveedor column */}
-          <div className="flex items-center px-3 h-full border-r border-[rgba(202,213,227,0.3)]">
-            <span className="text-[12px] text-slate-600 truncate">{(item as any).proveedor || "-"}</span>
+          <div className="flex items-center px-3 h-full border-r border-[rgba(202,213,227,0.3)] min-w-0">
+            <span className="text-[12px] text-slate-600 truncate block w-full">{(item as any).proveedor || "-"}</span>
           </div>
 
           {isParent ? (
             <>
-              <div className="h-full border-r border-[rgba(202,213,227,0.3)]" />
               <div className="h-full border-r border-[rgba(202,213,227,0.3)]" />
               <div className="h-full border-r border-[rgba(202,213,227,0.3)]" />
               <div className="h-full border-r border-[rgba(202,213,227,0.3)]" />
@@ -515,7 +499,7 @@ export function PriceGrid({
         <div className="border border-[rgba(202,213,227,0.61)] rounded-sm">
           {/* Tab Header - sticky */}
           <div className="bg-slate-100 sticky top-0 z-10 rounded-t-sm">
-            <div className="grid grid-cols-[40px_3fr_1.2fr_1.2fr_1.5fr_1fr_0.8fr_1.5fr_36px] h-9">
+            <div className="grid grid-cols-[40px_3fr_1.5fr_1.5fr_1fr_0.8fr_1.5fr_36px] h-9">
             <div className="flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
               <div className="relative flex items-center justify-center">
                 {selectAllIndeterminate ? (
@@ -536,9 +520,6 @@ export function PriceGrid({
             </div>
             <div className="flex items-center px-4 border-r border-[rgba(202,213,227,0.61)]">
               <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Item</span>
-            </div>
-            <div className="flex items-center px-3 border-r border-[rgba(202,213,227,0.61)]">
-              <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Categoría</span>
             </div>
             <div className="flex items-center px-3 border-r border-[rgba(202,213,227,0.61)]">
               <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Proveedor</span>
