@@ -2,7 +2,7 @@
 
 import type { Item, SortFactorConfig, FilterConfig } from "@/lib/types"
 import { ItemCard } from "../items/item-card"
-import { Plus, ArrowUpDown, ListFilterIcon, Search, X, Grid, Minus, Check, Zap, Pause, Play } from "lucide-react"
+import { Plus, ArrowUpDown, ListFilterIcon, Search, X, Grid, Minus, Check, Pause, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRef, useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
@@ -66,13 +66,11 @@ export function CatalogoGrid({
   getSelectedSkus,
 }: CatalogoGridProps) {
   const router = useRouter()
-  const crearNuevoRef = useRef<HTMLDivElement>(null)
   const orderRef = useRef<HTMLDivElement>(null)
   const filterRef = useRef<HTMLDivElement>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [showOrderModal, setShowOrderModal] = useState(false)
   const [showFilterModal, setShowFilterModal] = useState(false)
-  const [showCrearNuevoDropdown, setShowCrearNuevoDropdown] = useState(false)
   const [showFilterDropdown, setShowFilterDropdown] = useState(false)
   const [showOrderDropdown, setShowOrderDropdown] = useState(false)
   const [filterConfig, setFilterConfig] = useState<FilterConfig>({
@@ -109,9 +107,7 @@ export function CatalogoGrid({
       if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
         setShowFilterDropdown(false)
       }
-      if (crearNuevoRef.current && !crearNuevoRef.current.contains(event.target as Node)) {
-        setShowCrearNuevoDropdown(false)
-      }
+
     }
 
     document.addEventListener("mousedown", handleClickOutside)
@@ -146,43 +142,6 @@ export function CatalogoGrid({
                   <Plus className="w-3.5 h-3.5 mr-1.5 text-blue-600" />
                   Crear Nuevo
                 </Button>
-                <div className="relative" ref={crearNuevoRef}>
-                  <Button
-                    onClick={() => setShowCrearNuevoDropdown(!showCrearNuevoDropdown)}
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer"
-                  >
-                    <Zap className="w-3.5 h-3.5 mr-1.5 text-orange-600" />
-                    Creador Flash
-                  </Button>
-                  {showCrearNuevoDropdown && (
-                    <div className="absolute left-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-in fade-in-0 slide-in-from-top-2 duration-200">
-                      <div className="p-1">
-                        <button
-                          onClick={() => {
-                            handleOpenNuevoItem?.()
-                            setShowCrearNuevoDropdown(false)
-                          }}
-                          className="w-full rounded-lg text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer"
-                        >
-                          <Plus className="w-4 h-4 text-gray-400" />
-                          Item Individual
-                        </button>
-                        <button
-                          onClick={() => {
-                            handleOpenNuevoItemConVariantes?.()
-                            setShowCrearNuevoDropdown(false)
-                          }}
-                          className="w-full rounded-lg text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer"
-                        >
-                          <Grid className="w-4 h-4 text-gray-400" />
-                          Item con Variantes
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
 
                 <Button
                   onClick={() => router.push("/catalogo/creador-masivo")}

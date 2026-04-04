@@ -431,7 +431,7 @@ export function ItemCard({
               // Standalone and children items in audit mode - with stock modification controls
               <>
                 <div
-                  className={`col-span-8 flex items-center gap-3 h-full border-r border-slate-100/50 ${isChild ? "pl-6 pr-4" : "px-4"} cursor-pointer transition-colors`}
+                  className={`col-span-8 flex items-center gap-3 h-full border-r border-slate-100/50 px-4 cursor-pointer transition-colors`}
                   onClick={(e) => {
                     e.stopPropagation()
                     onItemClick(item)
@@ -761,7 +761,7 @@ export function ItemCard({
               <div
                 className={`col-span-16 flex items-center gap-3 h-full border-r border-slate-100 ${
                   item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
-                } ${isChild ? "pl-6 pr-4" : "px-4"} cursor-pointer transition-colors`}
+                } px-4 cursor-pointer transition-colors`}
                 onClick={(e) => {
                   e.stopPropagation()
                   onItemClick(item)
