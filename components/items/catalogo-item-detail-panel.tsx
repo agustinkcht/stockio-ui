@@ -1102,6 +1102,79 @@ export function CatalogoItemDetailPanel({
                     style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
                     onClick={() => setIsCardFlipped(true)}
                   >
+                    {/* Estado indicator - top-left */}
+                    {!isViewingContainer && (
+                      <div className="absolute top-3 left-4 z-10">
+                        <div className="relative group/estado">
+                          <button
+                            className="flex items-center gap-1.5 cursor-pointer transition-all group/estadoBtn"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              const el = e.currentTarget.parentElement?.querySelector("[data-estado-dropdown-top]") as HTMLElement
+                              if (el) el.style.display = el.style.display === "none" || !el.style.display ? "flex" : "none"
+                            }}
+                          >
+                            <div className={`w-2 h-2 rounded-full ${
+                              selectedItem?.isActive !== false
+                                ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]"
+                                : "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]"
+                            }`} />
+                            <span className="text-[10px] text-slate-500 uppercase tracking-wider group-hover/estadoBtn:text-slate-300 transition-colors">
+                              {selectedItem?.isActive !== false ? "Activo" : "Pausado"}
+                            </span>
+                            <ChevronDown className="w-3 h-3 text-slate-600 opacity-0 group-hover/estadoBtn:opacity-100 transition-opacity" />
+                          </button>
+                          <div
+                            data-estado-dropdown-top
+                            style={{ display: "none" }}
+                            className="absolute top-full left-0 mt-1 z-50 flex-col min-w-[110px] bg-slate-900/95 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-2xl overflow-hidden"
+                            onMouseLeave={(e) => {
+                              (e.currentTarget as HTMLElement).style.display = "none"
+                            }}
+                          >
+                            {[
+                              { label: "Activo", value: true },
+                              { label: "Pausado", value: false },
+                            ].map(({ label, value }) => {
+                              const isCurrent = (selectedItem?.isActive !== false) === value
+                              return (
+                                <button
+                                  key={label}
+                                  className={`flex items-center justify-between gap-2 px-3 py-2 text-sm text-left transition-colors w-full ${
+                                    isCurrent
+                                      ? "bg-slate-800/80 text-white font-medium cursor-default"
+                                      : "text-slate-400 hover:bg-slate-800/50 hover:text-white cursor-pointer"
+                                  }`}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    if (!isCurrent && selectedItem) {
+                                      if (isChildItem && fatherItem) {
+                                        const updatedVariants = fatherItem.variants?.map((v: any) =>
+                                          v.id === selectedItem.id ? { ...v, isActive: value } : v
+                                        )
+                                        if (updatedVariants) {
+                                          onFieldChange(fatherItem.id, "variants", updatedVariants)
+                                        }
+                                      } else {
+                                        onFieldChange(selectedItem.id, "isActive", value)
+                                      }
+                                    }
+                                    ;(e.currentTarget.parentElement as HTMLElement).style.display = "none"
+                                  }}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <div className={`w-1.5 h-1.5 rounded-full ${value ? "bg-emerald-400" : "bg-amber-400"}`} />
+                                    {label}
+                                  </div>
+                                  {isCurrent && <Check className="w-3 h-3 text-emerald-400 flex-shrink-0" />}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Flip hint top-right */}
                     <div className="absolute top-3 right-4 flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors select-none pointer-events-none">
                       <span className="text-[10px] uppercase tracking-wider">Detalles</span>
@@ -1170,78 +1243,84 @@ export function CatalogoItemDetailPanel({
                         )}
                       </div>
 
-                      {/* Estado indicator - minimal dot next to title */}
+                      {/* SKU below title */}
                       {!isViewingContainer && (
-                        <div className="relative group/estado mt-1.5">
-                          <button
-                            className="flex items-center gap-2 cursor-pointer transition-all group/estadoBtn"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              const el = e.currentTarget.parentElement?.querySelector("[data-estado-dropdown-top]") as HTMLElement
-                              if (el) el.style.display = el.style.display === "none" || !el.style.display ? "flex" : "none"
-                            }}
-                          >
-                            <div className={`w-2 h-2 rounded-full ${
-                              selectedItem?.isActive !== false
-                                ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]"
-                                : "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]"
-                            }`} />
-                            <span className="text-[11px] text-slate-400 uppercase tracking-wider group-hover/estadoBtn:text-slate-300 transition-colors">
-                              {selectedItem?.isActive !== false ? "Activo" : "Pausado"}
+                        <div className="flex items-center justify-center gap-1.5 mt-1.5 group/sku">
+                          <span className="text-[10px] text-slate-500 uppercase tracking-wider">SKU</span>
+                          {isChildItem && fatherItem ? (
+                            <span className="text-xs font-light text-slate-400 tracking-wide">
+                              {fatherItem.skuPrefix || fatherItem.sku || ""}-{selectedItem.skuSuffix || selectedItem.sku || ""}
                             </span>
-                            <ChevronDown className="w-3 h-3 text-slate-500 opacity-0 group-hover/estadoBtn:opacity-100 transition-opacity" />
-                          </button>
-                          <div
-                            data-estado-dropdown-top
-                            style={{ display: "none" }}
-                            className="absolute top-full left-0 mt-1 z-50 flex-col min-w-[110px] bg-slate-900/95 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-2xl overflow-hidden"
-                            onMouseLeave={(e) => {
-                              (e.currentTarget as HTMLElement).style.display = "none"
-                            }}
+                          ) : (
+                            <span className="text-xs font-light text-slate-400 tracking-wide">
+                              {skuValue || selectedItem.sku}
+                            </span>
+                          )}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleCopySku() }}
+                            className="text-slate-600 hover:text-slate-400 transition-colors p-0.5 opacity-0 group-hover/sku:opacity-100"
+                            title="Copiar SKU"
                           >
-                            {[
-                              { label: "Activo", value: true },
-                              { label: "Pausado", value: false },
-                            ].map(({ label, value }) => {
-                              const isCurrent = (selectedItem?.isActive !== false) === value
-                              return (
-                                <button
-                                  key={label}
-                                  className={`flex items-center justify-between gap-2 px-3 py-2 text-sm text-left transition-colors w-full ${
-                                    isCurrent
-                                      ? "bg-slate-800/80 text-white font-medium cursor-default"
-                                      : "text-slate-400 hover:bg-slate-800/50 hover:text-white cursor-pointer"
-                                  }`}
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    if (!isCurrent && selectedItem) {
-                                      if (isChildItem && fatherItem) {
-                                        const updatedVariants = fatherItem.variants?.map((v: any) =>
-                                          v.id === selectedItem.id ? { ...v, isActive: value } : v
-                                        )
-                                        if (updatedVariants) {
-                                          onFieldChange(fatherItem.id, "variants", updatedVariants)
-                                        }
-                                      } else {
-                                        onFieldChange(selectedItem.id, "isActive", value)
-                                      }
-                                    }
-                                    ;(e.currentTarget.parentElement as HTMLElement).style.display = "none"
-                                  }}
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <div className={`w-1.5 h-1.5 rounded-full ${value ? "bg-emerald-400" : "bg-amber-400"}`} />
-                                    {label}
-                                  </div>
-                                  {isCurrent && <Check className="w-3 h-3 text-emerald-400 flex-shrink-0" />}
-                                </button>
-                              )
-                            })}
-                          </div>
+                            {skuCopied ? (
+                              <span className="text-green-400 text-[10px]">✓</span>
+                            ) : (
+                              <Copy className="h-2.5 w-2.5" />
+                            )}
+                          </button>
                         </div>
                       )}
 
-                      {/* PRESERVED FOR RECOVERY: SKU and Código Universal centered below title
+                      {/* Metrics Bar - Precio and Stock with sandwich lines */}
+                      {!isViewingContainer && (
+                        <div className="mt-5 px-2">
+                          {/* Top horizontal line */}
+                          <div className="h-px bg-gradient-to-r from-transparent via-slate-700/50 to-transparent mb-4" />
+                          
+                          <div className="flex items-center justify-center gap-8">
+                            {/* Precio */}
+                            <div
+                              className="flex flex-col items-center group/precio cursor-pointer transition-all hover:scale-105"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setPrecioModalValues({
+                                  costo: selectedItem?.precio?.costo || 0,
+                                  margen: selectedItem?.precio?.margen || 0,
+                                  iva: selectedItem?.precio?.iva || 0,
+                                  precioFinal: selectedItem?.precio?.precioFinal || 0,
+                                })
+                                setIsPrecioModalOpen(true)
+                              }}
+                            >
+                              <span className="text-[9px] text-slate-500 uppercase tracking-[0.15em] mb-0.5">Precio</span>
+                              <span className="text-white font-light text-lg tracking-tight tabular-nums">
+                                ${(selectedItem?.precio?.precioFinal || 0).toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                              </span>
+                            </div>
+
+                            {/* Vertical separator */}
+                            <div className="w-px h-8 bg-slate-700/40" />
+
+                            {/* Stock */}
+                            <div
+                              className="flex flex-col items-center group/stock cursor-pointer transition-all hover:scale-105"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setIsStockModalOpen(true)
+                              }}
+                            >
+                              <span className="text-[9px] text-slate-500 uppercase tracking-[0.15em] mb-0.5">Stock</span>
+                              <span className="text-white font-light text-lg tracking-tight tabular-nums">
+                                {Number.parseInt(selectedItem?.stock?.total || "0") - Number.parseInt(selectedItem?.stock?.reservado || "0")}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Bottom horizontal line */}
+                          <div className="h-px bg-gradient-to-r from-transparent via-slate-700/50 to-transparent mt-4" />
+                        </div>
+                      )}
+
+                      {/* PRESERVED FOR RECOVERY: Full SKU and Código Universal centered below title
                       {!isViewingContainer && (
                         <div className="flex flex-col items-center gap-0.5 mt-1">
                           <div className="flex items-center justify-center gap-1.5 group/sku">
@@ -1374,53 +1453,7 @@ export function CatalogoItemDetailPanel({
                       )}
                       */}
 
-                      {/* Metrics Bar - Sophisticated horizontal layout at bottom */}
-                      {!isViewingContainer && (
-                        <div className="absolute bottom-0 left-0 right-0 px-6 py-4">
-                          {/* Subtle top border */}
-                          <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-slate-700/50 to-transparent" />
-                          
-                          <div className="flex items-center justify-center gap-6">
-                            {/* Precio Venta */}
-                            <div
-                              className="flex flex-col items-center group/precio cursor-pointer transition-all hover:scale-105"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setPrecioModalValues({
-                                  costo: selectedItem?.precio?.costo || 0,
-                                  margen: selectedItem?.precio?.margen || 0,
-                                  iva: selectedItem?.precio?.iva || 0,
-                                  precioFinal: selectedItem?.precio?.precioFinal || 0,
-                                })
-                                setIsPrecioModalOpen(true)
-                              }}
-                            >
-                              <span className="text-[9px] text-slate-500 uppercase tracking-[0.15em] mb-0.5">Precio</span>
-                              <span className="text-white font-light text-lg tracking-tight tabular-nums">
-                                ${(selectedItem?.precio?.precioFinal || 0).toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                              </span>
-                            </div>
-
-                            {/* Vertical separator */}
-                            <div className="w-px h-8 bg-slate-700/40" />
-
-                            {/* Stock Disponible */}
-                            <div
-                              className="flex flex-col items-center group/stock cursor-pointer transition-all hover:scale-105"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setIsStockModalOpen(true)
-                              }}
-                            >
-                              <span className="text-[9px] text-slate-500 uppercase tracking-[0.15em] mb-0.5">Stock</span>
-                              <span className="text-white font-light text-lg tracking-tight tabular-nums">
-                                {Number.parseInt(selectedItem?.stock?.total || "0") - Number.parseInt(selectedItem?.stock?.reservado || "0")}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                                          </div>
                   </div>
 
                   {/* BACK SIDE */}
