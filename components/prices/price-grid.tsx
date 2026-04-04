@@ -10,6 +10,7 @@ import { searchItems, sortItems, filterItems, getUniqueCategorias, getUniqueMarc
 import { OrdenModalPrecios } from "@/components/modals/orden-modal-precios"
 import { FiltrosModalPrecios } from "@/components/modals/filtros-modal-precios"
 import { BulkPriceModal } from "@/components/modals/bulk-price-modals"
+import { useSettings } from "@/lib/contexts/settings-context"
 
 interface PricingData {
   costo: number
@@ -60,6 +61,7 @@ export function PriceGrid({
     hasSelectedItems,
     getSelectedSkus,
   } = usePriceSelection(items)
+  const { precios: preciosSettings } = useSettings()
   const orderRef = useRef<HTMLDivElement>(null)
   const filterRef = useRef<HTMLDivElement>(null)
   const accionRef = useRef<HTMLDivElement>(null)
@@ -174,11 +176,22 @@ export function PriceGrid({
     const updated = { ...currentPricing, [field]: formattedValue }
 
     if (field === "precioFinal") {
+      // When editing precio final, always recalculate margen
       updated.margen = calculateMargen(formattedValue, updated.costo)
-    } else if (field !== "iva") {
-      // IVA changes don't affect precio final anymore
-      updated.precioFinal = calculatePrecioFinal(updated.costo, updated.margen)
+    } else if (field === "costo") {
+      // When editing costo, behavior depends on settings
+      if (preciosSettings.costoBehavior === "preservePrecioFinal") {
+        // Preserve precio final, recalculate margen
+        updated.margen = calculateMargen(updated.precioFinal, formattedValue)
+      } else {
+        // Preserve margen, recalculate precio final
+        updated.precioFinal = calculatePrecioFinal(formattedValue, updated.margen)
+      }
+    } else if (field === "margen") {
+      // When editing margen, always recalculate precio final
+      updated.precioFinal = calculatePrecioFinal(updated.costo, formattedValue)
     }
+    // IVA changes don't affect other fields
 
     if (onPriceFieldChange) {
       onPriceFieldChange(itemSku, "precio", updated)

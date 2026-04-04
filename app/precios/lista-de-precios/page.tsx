@@ -18,8 +18,10 @@ import { useItems } from "@/hooks/use-items"
 import { useModals } from "@/hooks/use-modals"
 import { useNavigationGuard } from "@/hooks/use-navigation-guard"
 import { useSidebar } from "@/hooks/use-sidebar"
+import { useSettings } from "@/lib/contexts/settings-context"
 
 export default function ListaDePreciosPage() {
+  const { precios: preciosSettings } = useSettings()
   const [isSaving, setIsSaving] = useState(false)
   const [itemCreated, setItemCreated] = useState(false)
   const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>({})
@@ -271,8 +273,14 @@ export default function ListaDePreciosPage() {
               : pricing.costo - value
           }
           updatedPricing.costo = Math.max(0, Math.round(newCosto))
-          // Recalculate precioFinal when costo changes (IVA no longer affects it)
-          updatedPricing.precioFinal = calculatePrecioFinal(updatedPricing.costo, updatedPricing.margen)
+          // Behavior depends on settings
+          if (preciosSettings.costoBehavior === "preservePrecioFinal") {
+            // Preserve precio final, recalculate margen
+            updatedPricing.margen = calculateMargen(updatedPricing.precioFinal, updatedPricing.costo)
+          } else {
+            // Preserve margen, recalculate precio final
+            updatedPricing.precioFinal = calculatePrecioFinal(updatedPricing.costo, updatedPricing.margen)
+          }
           break
         }
 
