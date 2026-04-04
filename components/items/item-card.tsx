@@ -431,18 +431,18 @@ export function ItemCard({
               // Standalone and children items in audit mode - with stock modification controls
               <>
                 <div
-                  className={`col-span-8 flex items-center gap-3 h-full border-r border-slate-100/50 px-4 cursor-pointer transition-colors`}
+                  className={`col-span-8 flex items-center gap-3 h-full border-r border-slate-100/50 ${isChild ? "pl-[19px] pr-4" : "px-4"} cursor-pointer transition-colors`}
                   onClick={(e) => {
                     e.stopPropagation()
                     onItemClick(item)
                   }}
                 >
-                  {/* Product Thumbnail */}
-                  <div className={`${isChild ? "w-9 h-9" : "w-12 h-12"} flex-shrink-0 rounded-md bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden`}>
+                  {/* Product Thumbnail - same container size, smaller image for children */}
+                  <div className="w-12 h-12 flex-shrink-0 rounded-md bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden">
                     <img
                       src={getCategoryImage(item.categoria) || "/placeholder.svg"}
                       alt={item.categoria || "Product"}
-                      className={`${isChild ? "w-6 h-6" : "w-8 h-8"} object-contain opacity-60`}
+                      className={`${isChild ? "w-7 h-7" : "w-8 h-8"} object-contain opacity-60`}
                     />
                   </div>
 
@@ -761,18 +761,18 @@ export function ItemCard({
               <div
                 className={`col-span-16 flex items-center gap-3 h-full border-r border-slate-100 ${
                   item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
-                } px-4 cursor-pointer transition-colors`}
+                } ${isChild ? "pl-[19px] pr-4" : "px-4"} cursor-pointer transition-colors`}
                 onClick={(e) => {
                   e.stopPropagation()
                   onItemClick(item)
                 }}
               >
-                {/* Product Thumbnail with category-based image - smaller for children */}
-                <div className={`${isChild ? "w-9 h-9" : "w-12 h-12"} flex-shrink-0 rounded-md bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden`}>
+                {/* Product Thumbnail with category-based image - same container size, smaller image for children */}
+                <div className="w-12 h-12 flex-shrink-0 rounded-md bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden">
                   <img
                     src={getCategoryImage(item.categoria) || "/placeholder.svg"}
                     alt={item.categoria || "Product"}
-                    className={`${isChild ? "w-6 h-6" : "w-8 h-8"} object-contain opacity-60`}
+                    className={`${isChild ? "w-7 h-7" : "w-8 h-8"} object-contain opacity-60`}
                   />
                 </div>
 
