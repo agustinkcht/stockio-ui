@@ -1210,7 +1210,7 @@ export function CatalogoItemDetailPanel({
                             }
                           }}
                           onClick={(e) => e.stopPropagation()}
-                          className="font-semibold text-white text-lg bg-transparent border-b border-white/40 focus:border-white outline-none text-center w-full max-w-[220px]"
+                          className="font-semibold text-white text-xl bg-transparent border-b border-white/40 focus:border-white outline-none text-center w-full max-w-[250px]"
                           autoFocus
                         />
                         ) : (
@@ -1223,7 +1223,7 @@ export function CatalogoItemDetailPanel({
                               }
                             }}
                           >
-                            <h2 className="font-semibold text-white text-xl">{nameValue || selectedItem.name}</h2>
+                            <h2 className="font-semibold text-white text-2xl">{nameValue || selectedItem.name}</h2>
                             {!isChildItem && (
                               <Pencil className="w-3.5 h-3.5 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity" />
                             )}
@@ -1234,7 +1234,7 @@ export function CatalogoItemDetailPanel({
                             {selectedItem.atributosPrincipales.map((attr, i) => (
                               <span
                                 key={i}
-                                className="text-xs px-2 py-0.5 rounded bg-white/20 text-white/80 whitespace-nowrap"
+                                className="text-sm px-2.5 py-0.5 rounded bg-white/20 text-white/80 whitespace-nowrap"
                               >
                                 {attr.value}
                               </span>
@@ -1270,53 +1270,51 @@ export function CatalogoItemDetailPanel({
                         </div>
                       )}
 
-                      {/* Metrics Bar - Precio and Stock with sandwich lines */}
+                      {/* Metrics - Precio Venta and Stock stacked with horizontal lines */}
                       {!isViewingContainer && (
                         <div className="mt-5 px-2">
                           {/* Top horizontal line */}
-                          <div className="h-px bg-gradient-to-r from-transparent via-slate-700/50 to-transparent mb-4" />
+                          <div className="h-px bg-gradient-to-r from-transparent via-slate-700/50 to-transparent" />
                           
-                          <div className="flex items-center justify-center gap-8">
-                            {/* Precio */}
-                            <div
-                              className="flex flex-col items-center group/precio cursor-pointer transition-all hover:scale-105"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setPrecioModalValues({
-                                  costo: selectedItem?.precio?.costo || 0,
-                                  margen: selectedItem?.precio?.margen || 0,
-                                  iva: selectedItem?.precio?.iva || 0,
-                                  precioFinal: selectedItem?.precio?.precioFinal || 0,
-                                })
-                                setIsPrecioModalOpen(true)
-                              }}
-                            >
-                              <span className="text-[9px] text-slate-500 uppercase tracking-[0.15em] mb-0.5">Precio</span>
-                              <span className="text-white font-light text-lg tracking-tight tabular-nums">
-                                ${(selectedItem?.precio?.precioFinal || 0).toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                              </span>
-                            </div>
+                          {/* Precio Venta */}
+                          <div
+                            className="flex flex-col items-center py-3 group/precio cursor-pointer transition-all hover:scale-105"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setPrecioModalValues({
+                                costo: selectedItem?.precio?.costo || 0,
+                                margen: selectedItem?.precio?.margen || 0,
+                                iva: selectedItem?.precio?.iva || 0,
+                                precioFinal: selectedItem?.precio?.precioFinal || 0,
+                              })
+                              setIsPrecioModalOpen(true)
+                            }}
+                          >
+                            <span className="text-[9px] text-slate-500 uppercase tracking-[0.15em] mb-0.5">Precio Venta</span>
+                            <span className="text-white font-light text-lg tracking-tight tabular-nums">
+                              ${(selectedItem?.precio?.precioFinal || 0).toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                            </span>
+                          </div>
 
-                            {/* Vertical separator */}
-                            <div className="w-px h-8 bg-slate-700/40" />
+                          {/* Middle horizontal line */}
+                          <div className="h-px bg-gradient-to-r from-transparent via-slate-700/50 to-transparent" />
 
-                            {/* Stock */}
-                            <div
-                              className="flex flex-col items-center group/stock cursor-pointer transition-all hover:scale-105"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setIsStockModalOpen(true)
-                              }}
-                            >
-                              <span className="text-[9px] text-slate-500 uppercase tracking-[0.15em] mb-0.5">Stock</span>
-                              <span className="text-white font-light text-lg tracking-tight tabular-nums">
-                                {Number.parseInt(selectedItem?.stock?.total || "0") - Number.parseInt(selectedItem?.stock?.reservado || "0")}
-                              </span>
-                            </div>
+                          {/* Stock */}
+                          <div
+                            className="flex flex-col items-center py-3 group/stock cursor-pointer transition-all hover:scale-105"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setIsStockModalOpen(true)
+                            }}
+                          >
+                            <span className="text-[9px] text-slate-500 uppercase tracking-[0.15em] mb-0.5">Stock</span>
+                            <span className="text-white font-light text-lg tracking-tight tabular-nums">
+                              {Number.parseInt(selectedItem?.stock?.total || "0") - Number.parseInt(selectedItem?.stock?.reservado || "0")} disponibles
+                            </span>
                           </div>
 
                           {/* Bottom horizontal line */}
-                          <div className="h-px bg-gradient-to-r from-transparent via-slate-700/50 to-transparent mt-4" />
+                          <div className="h-px bg-gradient-to-r from-transparent via-slate-700/50 to-transparent" />
                         </div>
                       )}
 
@@ -1475,38 +1473,19 @@ export function CatalogoItemDetailPanel({
                     </div>
 
                     <div className="flex flex-col h-full pt-2 overflow-y-auto">
-                      {/* Códigos Section */}
-                      <h3 className="text-sm font-medium uppercase tracking-wider mb-3 text-slate-50">
-                        Códigos
-                      </h3>
-                      <div className="flex flex-col gap-2 mb-5">
-                        {/* SKU row */}
-                        <div className="flex items-center gap-2 group/skuBack">
-                          <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider w-24">SKU:</span>
-                          {isChildItem && fatherItem ? (
-                            <span className="text-sm font-light text-slate-300 tracking-wide">
-                              {fatherItem.skuPrefix || fatherItem.sku || ""}-{selectedItem.skuSuffix || selectedItem.sku || ""}
-                            </span>
-                          ) : (
-                            <span className="text-sm font-light text-slate-300 tracking-wide">
-                              {skuValue || selectedItem.sku}
-                            </span>
-                          )}
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleCopySku() }}
-                            className="text-slate-500 hover:text-slate-300 transition-colors p-0.5 opacity-0 group-hover/skuBack:opacity-100"
-                            title="Copiar SKU"
-                          >
-                            {skuCopied ? (
-                              <span className="text-green-400 text-xs">✓</span>
-                            ) : (
-                              <Copy className="h-3 w-3" />
-                            )}
-                          </button>
-                        </div>
-                        {/* Código Universal row */}
-                        <div className="flex items-center gap-2 group/codigoBack">
-                          <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider w-24">Cód. Universal:</span>
+                      {/* Código Universal Section */}
+                      <div className="mb-5 group/codigoBack">
+                        <h3 
+                          className="text-sm font-medium uppercase tracking-wider mb-2 text-slate-50 cursor-help inline-flex items-center gap-1.5"
+                          title="Número único de 8 a 14 dígitos, generalmente impreso bajo el código de barras, que identifica un producto a nivel global"
+                        >
+                          Código Universal
+                          <svg className="w-3 h-3 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M12 16v-4M12 8h.01" />
+                          </svg>
+                        </h3>
+                        <div className="flex items-center gap-2">
                           <span className="text-sm font-light text-slate-300 tracking-wide">
                             {codigoUniversalValue || selectedItem.codigoUniversal || "N/A"}
                           </span>
