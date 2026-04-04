@@ -149,13 +149,13 @@ export function PriceGrid({
     setBulkModalType(null)
   }
 
-  const calculatePrecioFinal = (costo: number, margen: number, iva: number): number => {
-    return Math.round(costo * (1 + margen / 100) * (1 + iva / 100))
+  const calculatePrecioFinal = (costo: number, margen: number): number => {
+    return Math.round(costo * (1 + margen / 100))
   }
 
-  const calculateMargen = (precioFinal: number, costo: number, iva: number): number => {
+  const calculateMargen = (precioFinal: number, costo: number): number => {
     if (costo === 0) return 0
-    return Math.round((precioFinal / (costo * (1 + iva / 100)) - 1) * 1000) / 10
+    return Math.round((precioFinal / costo - 1) * 1000) / 10
   }
 
   const updatePricingField = (
@@ -174,9 +174,10 @@ export function PriceGrid({
     const updated = { ...currentPricing, [field]: formattedValue }
 
     if (field === "precioFinal") {
-      updated.margen = calculateMargen(formattedValue, updated.costo, updated.iva)
-    } else {
-      updated.precioFinal = calculatePrecioFinal(updated.costo, updated.margen, updated.iva)
+      updated.margen = calculateMargen(formattedValue, updated.costo)
+    } else if (field !== "iva") {
+      // IVA changes don't affect precio final anymore
+      updated.precioFinal = calculatePrecioFinal(updated.costo, updated.margen)
     }
 
     if (onPriceFieldChange) {
@@ -246,17 +247,19 @@ export function PriceGrid({
 
     const selectionState = getSelectionState(item, isChild)
 
+    const hasCosto = itemPricing.costo > 0
+
     return (
       <div key={item.sku || index}>
         <div
-          className={`grid grid-cols-[40px_4fr_2fr_1fr_1fr_2fr] gap-0 ${heightClass} items-center transition-colors border-b border-border/30 ${
-            isHovered ? "bg-accent/50" : ""
-          } ${isChild ? "bg-slate-50/50" : ""}`}
+          className={`grid grid-cols-[40px_3fr_1.2fr_1.2fr_1.5fr_1fr_0.8fr_1.5fr_36px] gap-0 ${heightClass} items-center transition-colors border-b border-slate-100 ${
+            isHovered ? "bg-slate-50/80" : ""
+          } ${isChild ? "bg-slate-50/30" : ""}`}
           onMouseEnter={() => setHoveredId(itemId)}
           onMouseLeave={() => setHoveredId(null)}
         >
           {/* Checkbox column */}
-          <div className={`flex items-center justify-center h-full border-r border-border/30 ${isChild ? "pl-4" : ""}`}>
+          <div className={`flex items-center justify-center h-full ${isChild ? "pl-4" : ""}`}>
             <div className="relative flex items-center justify-center">
               {selectionState.indeterminate ? (
                 <button
@@ -275,80 +278,84 @@ export function PriceGrid({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 px-4 min-w-0 border-r border-border/30 h-full">
+          {/* Item column */}
+          <div className="flex items-center gap-2 px-4 min-w-0 h-full">
             {isParent && (
               <>
                 <button
                   onClick={() => toggleVariantExpansion(index)}
-                  className="text-gray-600 hover:text-gray-900 cursor-pointer shrink-0"
+                  className="text-slate-500 hover:text-slate-800 cursor-pointer shrink-0"
                 >
                   {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                 </button>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-gray-900 truncate">{item.name}</div>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
-                    {item.marca && item.categoria && <span className="text-xs text-muted-foreground">·</span>}
-                    {item.categoria && <span className="text-xs text-muted-foreground">{item.categoria}</span>}
-                  </div>
+                  <div className="text-sm font-medium text-slate-900 truncate">{item.name}</div>
+                  <span className="text-[11px] text-slate-400">{item.marca}</span>
                 </div>
               </>
             )}
             {!isParent && (
               <div className="flex-1 min-w-0">
-                <div className="text-sm text-gray-900 truncate">{getFullTitle(item)}</div>
+                <div className="text-sm text-slate-800 truncate">{getFullTitle(item)}</div>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  {!isChild && item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
-                  {!isChild && item.marca && item.categoria && <span className="text-xs text-muted-foreground">·</span>}
-                  {!isChild && item.categoria && (
-                    <span className="text-xs text-muted-foreground">{item.categoria}</span>
-                  )}
-                  {!isChild && (item.marca || item.categoria) && (
-                    <span className="text-xs text-muted-foreground">·</span>
-                  )}
-                  <span className="text-xs text-muted-foreground">{item.sku}</span>
+                  {!isChild && item.marca && <span className="text-[11px] text-slate-400">{item.marca}</span>}
+                  {!isChild && item.marca && <span className="text-[11px] text-slate-300">·</span>}
+                  <span className="text-[11px] text-slate-400 font-mono">{item.sku}</span>
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
                       navigator.clipboard.writeText(item.sku)
                     }}
-                    className="inline-flex items-center p-0.5 text-muted-foreground hover:text-foreground transition-colors"
+                    className="inline-flex items-center p-0.5 text-slate-300 hover:text-slate-500 transition-colors"
                     title="Copiar SKU"
                   >
-                    <Copy className="w-3 h-3" />
+                    <Copy className="w-2.5 h-2.5" />
                   </button>
                 </div>
               </div>
             )}
           </div>
 
+          {/* Categoría column */}
+          <div className="flex items-center px-3 h-full">
+            <span className="text-[12px] text-slate-600 truncate">{item.categoria || "-"}</span>
+          </div>
+
+          {/* Proveedor column */}
+          <div className="flex items-center px-3 h-full">
+            <span className="text-[12px] text-slate-600 truncate">{(item as any).proveedor || "-"}</span>
+          </div>
+
           {isParent ? (
             <>
-              <div className="border-r border-border/30 h-full" />
-              <div className="border-r border-border/30 h-full" />
-              <div className="border-r border-border/30 h-full" />
+              <div className="h-full" />
+              <div className="h-full" />
+              <div className="h-full" />
+              <div className="h-full" />
               <div className="h-full" />
             </>
           ) : (
             <>
-              <div className="flex items-center justify-center px-2 border-r border-border/30 h-full">
+              {/* Costo */}
+              <div className="flex items-center justify-center px-3 h-full">
                 <div className="flex items-center gap-1 w-full">
-                  <span className="text-xs text-gray-500">$</span>
+                  <span className="text-[11px] text-slate-400">$</span>
                   <input
                     type="number"
                     value={itemPricing.costo || ""}
                     onChange={(e) =>
                       updatePricingField(itemKey, "costo", Number.parseFloat(e.target.value) || 0, itemPricing)
                     }
-                    className="w-full text-sm text-gray-900 bg-transparent border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
+                    className="w-full text-sm text-slate-700 bg-transparent border-0 focus:outline-none focus:bg-slate-50 rounded px-1 tabular-nums"
                     placeholder="0"
                     step="1"
                   />
                 </div>
               </div>
 
+              {/* Margen - disabled if no costo */}
               <div
-                className={`flex items-center justify-center px-2 border-r border-border/30 h-full ${itemPricing.margen < 0 ? "bg-red-50" : ""}`}
+                className={`flex items-center justify-center px-2 h-full ${itemPricing.margen < 0 ? "bg-red-50/50" : ""} ${!hasCosto ? "opacity-40" : ""}`}
               >
                 <div className="flex items-center gap-0.5 w-full">
                   <input
@@ -357,19 +364,21 @@ export function PriceGrid({
                     onChange={(e) =>
                       updatePricingField(itemKey, "margen", Number.parseFloat(e.target.value) || 0, itemPricing)
                     }
-                    className={`w-full text-sm bg-transparent border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-center ${itemPricing.margen < 0 ? "text-red-700" : "text-gray-900"}`}
-                    placeholder="0.0"
+                    disabled={!hasCosto}
+                    className={`w-full text-sm bg-transparent border-0 focus:outline-none focus:bg-slate-50 rounded px-1 text-center tabular-nums ${itemPricing.margen < 0 ? "text-red-600" : "text-slate-700"} ${!hasCosto ? "cursor-not-allowed" : ""}`}
+                    placeholder="0"
                     step="0.1"
                   />
-                  <span className={`text-xs ${itemPricing.margen < 0 ? "text-red-500" : "text-gray-500"}`}>%</span>
+                  <span className={`text-[11px] ${itemPricing.margen < 0 ? "text-red-400" : "text-slate-400"}`}>%</span>
                 </div>
               </div>
 
-              <div className="flex items-center justify-center px-2 border-r border-border/30 h-full">
+              {/* IVA */}
+              <div className="flex items-center justify-center px-2 h-full">
                 <select
                   value={itemPricing.iva}
                   onChange={(e) => updatePricingField(itemKey, "iva", Number.parseFloat(e.target.value), itemPricing)}
-                  className="w-full text-sm text-gray-900 bg-transparent border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-0 text-center"
+                  className="w-full text-sm text-slate-600 bg-transparent border-0 focus:outline-none rounded px-0 text-center cursor-pointer"
                 >
                   {IVA_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -379,22 +388,26 @@ export function PriceGrid({
                 </select>
               </div>
 
-              <div className="flex items-center justify-center px-2 h-full bg-blue-50/50">
+              {/* Precio Final */}
+              <div className="flex items-center justify-center px-3 h-full bg-blue-50/30">
                 <div className="flex items-center gap-1 w-full">
-                  <span className="text-xs text-blue-600">$</span>
+                  <span className="text-[11px] text-blue-500">$</span>
                   <input
                     type="number"
                     value={itemPricing.precioFinal || ""}
                     onChange={(e) =>
                       updatePricingField(itemKey, "precioFinal", Number.parseFloat(e.target.value) || 0, itemPricing)
                     }
-                    className="w-full text-sm font-medium text-blue-900 bg-transparent border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
+                    className="w-full text-sm font-medium text-blue-700 bg-transparent border-0 focus:outline-none focus:bg-blue-50 rounded px-1 tabular-nums"
                     placeholder="0"
                     step="1"
                     min="0"
                   />
                 </div>
               </div>
+
+              {/* Empty cell for grid alignment */}
+              <div className="h-full" />
             </>
           )}
         </div>
@@ -482,9 +495,9 @@ export function PriceGrid({
       </div>
 
       <div className="px-6 pb-3">
-        <div className="bg-white border border-border/40 rounded-t-lg">
-          <div className="grid grid-cols-[40px_4fr_2fr_1fr_1fr_2fr] gap-0 px-0 py-3 text-xs font-medium text-muted-foreground border-b border-border/30">
-            <div className="flex items-center justify-center border-r border-border/30">
+        <div className="bg-white border border-slate-200/60 rounded-lg overflow-hidden">
+          <div className="grid grid-cols-[40px_3fr_1.2fr_1.2fr_1.5fr_1fr_0.8fr_1.5fr_36px] gap-0 px-0 py-2.5 text-[11px] font-medium text-slate-500 uppercase tracking-wider bg-slate-50/80">
+            <div className="flex items-center justify-center">
               <div className="relative flex items-center justify-center">
                 {selectAllIndeterminate ? (
                   <button
@@ -502,62 +515,66 @@ export function PriceGrid({
                 )}
               </div>
             </div>
-            <div className="flex items-center px-4 border-r border-border/30">Item</div>
-            <div className="flex items-center justify-between px-3 border-r border-border/30">
+            <div className="flex items-center px-4">Item</div>
+            <div className="flex items-center px-3">Categoría</div>
+            <div className="flex items-center px-3">Proveedor</div>
+            <div className="flex items-center justify-between px-3">
               <span className="flex-1 text-center">Costo</span>
               <button
                 onClick={() => setBulkModalType("costo")}
-                className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 transition-colors group cursor-pointer"
+                className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors group cursor-pointer"
                 title="Modificar costo en lote"
               >
-                <MoreVertical className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-700" />
+                <MoreVertical className="w-3 h-3 text-slate-400 group-hover:text-slate-600" />
               </button>
             </div>
-            <div className="flex items-center justify-between px-3 border-r border-border/30">
+            <div className="flex items-center justify-between px-3">
               <span className="flex-1 text-center">Margen</span>
               <button
                 onClick={() => setBulkModalType("margen")}
-                className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 transition-colors group cursor-pointer"
+                className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors group cursor-pointer"
                 title="Modificar margen en lote"
               >
-                <MoreVertical className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-700" />
+                <MoreVertical className="w-3 h-3 text-slate-400 group-hover:text-slate-600" />
               </button>
             </div>
-            <div className="flex items-center justify-between px-3 border-r border-border/30">
+            <div className="flex items-center justify-between px-3">
               <span className="flex-1 text-center">IVA</span>
               <button
                 onClick={() => setBulkModalType("iva")}
-                className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 transition-colors group cursor-pointer"
+                className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors group cursor-pointer"
                 title="Modificar IVA en lote"
               >
-                <MoreVertical className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-700" />
+                <MoreVertical className="w-3 h-3 text-slate-400 group-hover:text-slate-600" />
               </button>
             </div>
             <div className="flex items-center justify-between px-3">
               <button
                 onClick={() => setBulkModalType("precioFinal")}
-                className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 transition-colors group cursor-pointer"
+                className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors group cursor-pointer"
                 title="Modificar precio final en lote"
               >
-                <MoreVertical className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-700" />
+                <MoreVertical className="w-3 h-3 text-slate-400 group-hover:text-slate-600" />
               </button>
               <span className="flex-1 text-center">Precio Final</span>
+            </div>
+            <div className="flex items-center justify-center">
               <div className="relative">
                 <button
                   onClick={() => setGridSizeDropdownOpen(!gridSizeDropdownOpen)}
-                  className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 transition-colors group cursor-pointer"
+                  className="w-6 h-6 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors group cursor-pointer"
                   title="Tamaño de grilla"
                 >
-                  <Grid3x3 className="w-3.5 h-3.5 text-gray-600 group-hover:text-gray-900" />
+                  <Grid3x3 className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-700" />
                 </button>
                 {gridSizeDropdownOpen && (
-                  <div className="absolute right-0 mt-1 bg-white border border-border/40 rounded-lg shadow-lg py-1 z-10 min-w-[80px]">
+                  <div className="absolute right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-10 min-w-[80px]">
                     <button
                       onClick={() => {
                         setGridSize("sm")
                         setGridSizeDropdownOpen(false)
                       }}
-                      className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 transition-colors ${gridSize === "sm" ? "font-medium text-blue-600" : "text-gray-700"}`}
+                      className={`w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 transition-colors ${gridSize === "sm" ? "font-medium text-blue-600" : "text-slate-700"}`}
                     >
                       Pequeño
                     </button>
@@ -566,7 +583,7 @@ export function PriceGrid({
                         setGridSize("md")
                         setGridSizeDropdownOpen(false)
                       }}
-                      className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 transition-colors ${gridSize === "md" ? "font-medium text-blue-600" : "text-gray-700"}`}
+                      className={`w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 transition-colors ${gridSize === "md" ? "font-medium text-blue-600" : "text-slate-700"}`}
                     >
                       Mediano
                     </button>
@@ -575,7 +592,7 @@ export function PriceGrid({
                         setGridSize("lg")
                         setGridSizeDropdownOpen(false)
                       }}
-                      className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 transition-colors ${gridSize === "lg" ? "font-medium text-blue-600" : "text-gray-700"}`}
+                      className={`w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 transition-colors ${gridSize === "lg" ? "font-medium text-blue-600" : "text-slate-700"}`}
                     >
                       Grande
                     </button>
@@ -587,8 +604,8 @@ export function PriceGrid({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 pb-6">
-        <div className="bg-white border border-border/40 border-t-0 rounded-b-lg">
+      <div className="flex-1 overflow-y-auto px-6 pb-6 -mt-3">
+        <div className="bg-white border border-slate-200/60 border-t-0 rounded-b-lg">
           {sortedAndFilteredItems.length === 0 && (searchTerm || hasActiveFilters) ? (
             <div className="flex flex-col items-center justify-center py-16 text-gray-500">
               <Search className="w-12 h-12 mb-4 text-gray-300" />

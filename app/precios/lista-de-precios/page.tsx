@@ -185,15 +185,15 @@ export default function ListaDePreciosPage() {
     return { isVariant: false }
   }
 
-  // Helper to calculate precio final from costo, margen, iva
-  const calculatePrecioFinal = (costo: number, margen: number, iva: number): number => {
-    return Math.round(costo * (1 + margen / 100) * (1 + iva / 100))
+  // Helper to calculate precio final from costo, margen (IVA no longer affects precio final)
+  const calculatePrecioFinal = (costo: number, margen: number): number => {
+    return Math.round(costo * (1 + margen / 100))
   }
 
-  // Helper to calculate margen from precio final, costo, iva
-  const calculateMargen = (precioFinal: number, costo: number, iva: number): number => {
+  // Helper to calculate margen from precio final, costo (IVA no longer affects calculation)
+  const calculateMargen = (precioFinal: number, costo: number): number => {
     if (costo === 0) return 0
-    return Math.round((precioFinal / (costo * (1 + iva / 100)) - 1) * 1000) / 10
+    return Math.round((precioFinal / costo - 1) * 1000) / 10
   }
 
   // Get item pricing data by SKU
@@ -206,7 +206,7 @@ export default function ListaDePreciosPage() {
             costo: item.precio.costo || 0,
             margen: item.precio.margen || 0,
             iva: item.precio.iva || 21,
-            precioFinal: item.precio.precioFinal || calculatePrecioFinal(item.precio.costo || 0, item.precio.margen || 0, item.precio.iva || 21)
+            precioFinal: item.precio.precioFinal || calculatePrecioFinal(item.precio.costo || 0, item.precio.margen || 0)
           }
         }
         // Fallback to flat fields
@@ -225,7 +225,7 @@ export default function ListaDePreciosPage() {
               costo: variant.precio.costo || 0,
               margen: variant.precio.margen || 0,
               iva: variant.precio.iva || 21,
-              precioFinal: variant.precio.precioFinal || calculatePrecioFinal(variant.precio.costo || 0, variant.precio.margen || 0, variant.precio.iva || 21)
+              precioFinal: variant.precio.precioFinal || calculatePrecioFinal(variant.precio.costo || 0, variant.precio.margen || 0)
             }
           }
           // Fallback to flat fields
@@ -271,8 +271,8 @@ export default function ListaDePreciosPage() {
               : pricing.costo - value
           }
           updatedPricing.costo = Math.max(0, Math.round(newCosto))
-          // Recalculate precioFinal when costo changes
-          updatedPricing.precioFinal = calculatePrecioFinal(updatedPricing.costo, updatedPricing.margen, updatedPricing.iva)
+          // Recalculate precioFinal when costo changes (IVA no longer affects it)
+          updatedPricing.precioFinal = calculatePrecioFinal(updatedPricing.costo, updatedPricing.margen)
           break
         }
 
@@ -288,12 +288,14 @@ export default function ListaDePreciosPage() {
               : pricing.precioFinal - value
           }
           updatedPricing.precioFinal = Math.max(0, Math.round(newPrecioFinal))
-          // Recalculate margen when precioFinal changes
-          updatedPricing.margen = calculateMargen(updatedPricing.precioFinal, updatedPricing.costo, updatedPricing.iva)
+          // Recalculate margen when precioFinal changes (IVA no longer affects it)
+          updatedPricing.margen = calculateMargen(updatedPricing.precioFinal, updatedPricing.costo)
           break
         }
 
         case "margen": {
+          // Only apply margen changes if there's a costo
+          if (pricing.costo === 0) break
           let newMargen: number
           if (operation === "reemplazar") {
             newMargen = value
@@ -303,15 +305,14 @@ export default function ListaDePreciosPage() {
             newMargen = pricing.margen - value
           }
           updatedPricing.margen = Math.round(newMargen * 10) / 10
-          // Recalculate precioFinal when margen changes
-          updatedPricing.precioFinal = calculatePrecioFinal(updatedPricing.costo, updatedPricing.margen, updatedPricing.iva)
+          // Recalculate precioFinal when margen changes (IVA no longer affects it)
+          updatedPricing.precioFinal = calculatePrecioFinal(updatedPricing.costo, updatedPricing.margen)
           break
         }
 
         case "iva": {
+          // IVA changes no longer affect precio final
           updatedPricing.iva = value
-          // Recalculate precioFinal when iva changes
-          updatedPricing.precioFinal = calculatePrecioFinal(updatedPricing.costo, updatedPricing.margen, updatedPricing.iva)
           break
         }
       }
