@@ -1055,7 +1055,45 @@ export function ItemDetailPanel({
                       )}
                     </div>
 
-                    </div>
+                    {/* SKU and Código Universal below the line, in column */}
+                    {!isViewingContainer && (
+                      <>
+                        <div className="border-t border-slate-700/50 my-4"></div>
+                        <div className="flex flex-col gap-2 text-xs text-slate-400 font-mono">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-medium text-slate-200 w-8">SKU:</span>
+                            <span>{selectedItem.sku}</span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleCopySku() }}
+                              className="text-slate-500 hover:text-slate-300 transition-colors p-0.5"
+                              title="Copiar SKU"
+                            >
+                              {skuCopied ? (
+                                <span className="text-green-400 text-xs">✓</span>
+                              ) : (
+                                <Copy className="h-3 w-3" />
+                              )}
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-medium text-slate-200 w-8">C.U.:</span>
+                            <span>{selectedItem.codigoUniversal || "N/A"}</span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleCopyCodigoUniversal() }}
+                              className="text-slate-500 hover:text-slate-300 transition-colors p-0.5"
+                              title="Copiar Código Universal"
+                            >
+                              {codigoUniversalCopied ? (
+                                <span className="text-green-400 text-xs">✓</span>
+                              ) : (
+                                <Copy className="h-3 w-3" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 {/* BACK SIDE */}
@@ -1077,45 +1115,6 @@ export function ItemDetailPanel({
                   </div>
 
                   <div className="flex flex-col h-full pt-2">
-                    {/* Códigos Section */}
-                    <div className="mb-5">
-                      <h3 className="text-sm font-medium uppercase tracking-wider mb-3 text-slate-50">
-                        Códigos
-                      </h3>
-                      <div className="flex flex-col gap-2 text-xs text-slate-400 font-mono">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-medium text-slate-200 w-8">SKU:</span>
-                          <span>{selectedItem.sku}</span>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleCopySku() }}
-                            className="text-slate-500 hover:text-slate-300 transition-colors p-0.5"
-                            title="Copiar SKU"
-                          >
-                            {skuCopied ? (
-                              <span className="text-green-400 text-xs">✓</span>
-                            ) : (
-                              <Copy className="h-3 w-3" />
-                            )}
-                          </button>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-medium text-slate-200 w-8">C.U.:</span>
-                          <span>{selectedItem.codigoUniversal || "N/A"}</span>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleCopyCodigoUniversal() }}
-                            className="text-slate-500 hover:text-slate-300 transition-colors p-0.5"
-                            title="Copiar Código Universal"
-                          >
-                            {codigoUniversalCopied ? (
-                              <span className="text-green-400 text-xs">✓</span>
-                            ) : (
-                              <Copy className="h-3 w-3" />
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
                     <h3 className="text-sm font-medium uppercase tracking-wider mb-3 text-slate-50">
                       Descripción
                     </h3>
