@@ -1225,7 +1225,7 @@ export function CatalogoItemDetailPanel({
                               }
                             }}
                           >
-                            <h2 className="font-semibold text-white text-2xl">{nameValue || selectedItem.name}</h2>
+                            <h2 className="font-semibold text-white text-2xl text-center">{nameValue || selectedItem.name}</h2>
                             {!isChildItem && (
                               <Pencil className="w-3.5 h-3.5 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity" />
                             )}
@@ -1655,7 +1655,7 @@ export function CatalogoItemDetailPanel({
                             onChange={(e) => setDescripcionValue(e.target.value)}
                             onBlur={handleDescripcionBlur}
                             onClick={(e) => e.stopPropagation()}
-                            className="w-full min-h-[100px] max-h-[200px] px-3 py-2 bg-slate-800/30 border-none rounded-lg text-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-600 resize-none text-sm placeholder:text-slate-500 overflow-hidden"
+                            className="w-full min-h-[100px] max-h-[200px] px-3 py-2 bg-slate-800/30 rounded-lg text-slate-200 focus:outline-none resize-none text-sm placeholder:text-slate-500 overflow-hidden"
                             placeholder="Agregar descripción del producto..."
                             autoFocus
                             style={{ overflow: 'hidden' }}
