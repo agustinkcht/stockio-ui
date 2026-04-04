@@ -1104,7 +1104,13 @@ export function CatalogoItemDetailPanel({
                     {/* Estado indicator - top-left */}
                     {!isViewingContainer && (
                       <div className="absolute top-3 left-4 z-10">
-                        <div className="relative group/estado">
+                        <div 
+                          className="relative group/estado"
+                          onMouseLeave={(e) => {
+                            const dropdown = e.currentTarget.querySelector("[data-estado-dropdown-top]") as HTMLElement
+                            if (dropdown) dropdown.style.display = "none"
+                          }}
+                        >
                           <button
                             className="flex items-center gap-1.5 cursor-pointer transition-all group/estadoBtn"
                             onClick={(e) => {
@@ -1127,9 +1133,6 @@ export function CatalogoItemDetailPanel({
                             data-estado-dropdown-top
                             style={{ display: "none" }}
                             className="absolute top-full left-0 mt-1 z-50 flex-col min-w-[110px] bg-slate-900/95 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-2xl overflow-hidden"
-                            onMouseLeave={(e) => {
-                              (e.currentTarget as HTMLElement).style.display = "none"
-                            }}
                           >
                             {[
                               { label: "Activo", value: true },
@@ -1177,7 +1180,7 @@ export function CatalogoItemDetailPanel({
                     {/* Flip hint top-right - clickable area */}
                     <button
                       onClick={() => setIsCardFlipped(true)}
-                      className="absolute top-0 right-0 px-6 py-4 flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer"
+                      className="absolute top-0 right-0 px-6 py-4 flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer z-20"
                     >
                       <span className="text-[10px] uppercase tracking-wider">Detalles</span>
                       <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
