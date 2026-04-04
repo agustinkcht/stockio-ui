@@ -1098,9 +1098,8 @@ export function CatalogoItemDetailPanel({
                 >
                   {/* FRONT SIDE */}
                   <div
-                    className="absolute inset-0 p-6 px-8 pr-11 border-solid border border-black rounded-xl bg-black shadow-md pl-11 ml-6 cursor-pointer"
+                    className="absolute inset-0 p-6 px-8 pr-11 border-solid border border-black rounded-xl bg-black shadow-md pl-11 ml-6"
                     style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
-                    onClick={() => setIsCardFlipped(true)}
                   >
                     {/* Estado indicator - top-left */}
                     {!isViewingContainer && (
@@ -1175,13 +1174,16 @@ export function CatalogoItemDetailPanel({
                       </div>
                     )}
 
-                    {/* Flip hint top-right */}
-                    <div className="absolute top-3 right-4 flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors select-none pointer-events-none">
+                    {/* Flip hint top-right - clickable area */}
+                    <button
+                      onClick={() => setIsCardFlipped(true)}
+                      className="absolute top-0 right-0 px-6 py-4 flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer"
+                    >
                       <span className="text-[10px] uppercase tracking-wider">Detalles</span>
                       <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M9 18l6-6-6-6" />
                       </svg>
-                    </div>
+                    </button>
 
                     <div className="mt-2">
                       <div className="w-full h-64 backdrop-blur-sm rounded-lg flex items-center justify-center overflow-hidden shadow-2xl border-slate-700/30 border-none border-0 bg-transparent shadow-none">
@@ -1243,18 +1245,82 @@ export function CatalogoItemDetailPanel({
                         )}
                       </div>
 
-                      {/* SKU below title */}
+                      {/* SKU below title - editable */}
                       {!isViewingContainer && (
                         <div className="flex items-center justify-center gap-1.5 mt-1.5 group/sku">
                           <span className="text-[10px] text-slate-500 uppercase tracking-wider">SKU</span>
                           {isChildItem && fatherItem ? (
-                            <span className="text-xs font-light text-slate-400 tracking-wide">
-                              {fatherItem.skuPrefix || fatherItem.sku || ""}-{selectedItem.skuSuffix || selectedItem.sku || ""}
-                            </span>
+                            <div className="flex items-center gap-0">
+                              <span className="text-xs font-light text-slate-500 tracking-wide">
+                                {fatherItem.skuPrefix || fatherItem.sku || ""}-
+                              </span>
+                              {editingSku ? (
+                                <input
+                                  type="text"
+                                  value={skuValue}
+                                  onChange={(e) => setSkuValue(e.target.value)}
+                                  onBlur={() => {
+                                    setEditingSku(false)
+                                    const newSuffix = skuValue
+                                    const updatedVariants = fatherItem.variants?.map((v: any) =>
+                                      v.id === selectedItem.id ? { ...v, skuSuffix: newSuffix } : v
+                                    )
+                                    if (updatedVariants && onFieldChange) {
+                                      onFieldChange(fatherItem.id, "variants", updatedVariants)
+                                    }
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") (e.target as HTMLInputElement).blur()
+                                    if (e.key === "Escape") {
+                                      setSkuValue(selectedItem.skuSuffix || selectedItem.sku || "")
+                                      setEditingSku(false)
+                                    }
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="text-xs font-light text-slate-300 tracking-wide bg-transparent border-b border-slate-600 focus:border-slate-400 outline-none w-auto max-w-[80px]"
+                                  autoFocus
+                                />
+                              ) : (
+                                <span
+                                  className="text-xs font-light text-slate-400 tracking-wide cursor-pointer hover:text-slate-300 transition-colors"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setSkuValue(selectedItem.skuSuffix || selectedItem.sku || "")
+                                    setEditingSku(true)
+                                  }}
+                                >
+                                  {selectedItem.skuSuffix || selectedItem.sku || ""}
+                                </span>
+                              )}
+                            </div>
                           ) : (
-                            <span className="text-xs font-light text-slate-400 tracking-wide">
-                              {skuValue || selectedItem.sku}
-                            </span>
+                            <>
+                              {editingSku ? (
+                                <input
+                                  type="text"
+                                  value={skuValue}
+                                  onChange={(e) => setSkuValue(e.target.value)}
+                                  onBlur={handleSkuBlur}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") (e.target as HTMLInputElement).blur()
+                                    if (e.key === "Escape") {
+                                      setSkuValue(selectedItem.sku || "")
+                                      setEditingSku(false)
+                                    }
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="text-xs font-light text-slate-300 tracking-wide bg-transparent border-b border-slate-600 focus:border-slate-400 outline-none text-center w-auto max-w-[120px]"
+                                  autoFocus
+                                />
+                              ) : (
+                                <span
+                                  className="text-xs font-light text-slate-400 tracking-wide cursor-pointer hover:text-slate-300 transition-colors"
+                                  onClick={(e) => { e.stopPropagation(); setEditingSku(true) }}
+                                >
+                                  {skuValue || selectedItem.sku}
+                                </span>
+                              )}
+                            </>
                           )}
                           <button
                             onClick={(e) => { e.stopPropagation(); handleCopySku() }}
@@ -1290,7 +1356,7 @@ export function CatalogoItemDetailPanel({
                               setIsPrecioModalOpen(true)
                             }}
                           >
-                            <span className="text-[9px] text-slate-500 uppercase tracking-[0.15em] mb-0.5">Precio Venta</span>
+                            <span className="text-[11px] text-slate-500 uppercase tracking-[0.12em] mb-0.5">Precio Venta</span>
                             <span className="text-white font-light text-lg tracking-tight tabular-nums">
                               ${(selectedItem?.precio?.precioFinal || 0).toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                             </span>
@@ -1307,7 +1373,7 @@ export function CatalogoItemDetailPanel({
                               setIsStockModalOpen(true)
                             }}
                           >
-                            <span className="text-[9px] text-slate-500 uppercase tracking-[0.15em] mb-0.5">Stock</span>
+                            <span className="text-[11px] text-slate-500 uppercase tracking-[0.12em] mb-0.5">Stock</span>
                             <span className="text-white font-light text-lg tracking-tight tabular-nums">
                               {Number.parseInt(selectedItem?.stock?.total || "0") - Number.parseInt(selectedItem?.stock?.reservado || "0")} disponibles
                             </span>
@@ -1456,35 +1522,33 @@ export function CatalogoItemDetailPanel({
 
                   {/* BACK SIDE */}
                   <div
-                    className="absolute inset-0 p-6 px-8 pr-11 border-solid border border-black rounded-xl bg-black shadow-md pl-11 ml-0 cursor-pointer"
+                    className="absolute inset-0 p-6 px-8 pr-11 border-solid border border-black rounded-xl bg-black shadow-md pl-11 ml-0"
                     style={{
                       backfaceVisibility: "hidden",
                       WebkitBackfaceVisibility: "hidden",
                       transform: "rotateY(180deg)",
                     }}
-                    onClick={() => setIsCardFlipped(false)}
                   >
-                    {/* Flip back hint top-right */}
-                    <div className="absolute top-3 right-4 flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors select-none pointer-events-none">
+                    {/* Flip back hint top-right - clickable area */}
+                    <button
+                      onClick={() => setIsCardFlipped(false)}
+                      className="absolute top-0 right-0 px-6 py-4 flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer z-10"
+                    >
                       <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M15 18l-6-6 6-6" />
                       </svg>
                       <span className="text-[10px] uppercase tracking-wider">Volver</span>
-                    </div>
+                    </button>
 
                     <div className="flex flex-col h-full pt-2 overflow-y-auto">
                       {/* Código Universal Section */}
                       <div className="mb-5 group/codigoBack">
-                        <h3 
-                          className="text-sm font-medium uppercase tracking-wider mb-2 text-slate-50 cursor-help inline-flex items-center gap-1.5"
-                          title="Número único de 8 a 14 dígitos, generalmente impreso bajo el código de barras, que identifica un producto a nivel global"
-                        >
+                        <h3 className="text-sm font-medium uppercase tracking-wider mb-1 text-slate-50">
                           Código Universal
-                          <svg className="w-3 h-3 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <circle cx="12" cy="12" r="10" />
-                            <path d="M12 16v-4M12 8h.01" />
-                          </svg>
                         </h3>
+                        <p className="text-[11px] font-light text-slate-500 mb-3 leading-relaxed">
+                          Número único de 8 a 14 dígitos, generalmente impreso bajo el código de barras, que identifica un producto a nivel global.
+                        </p>
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-light text-slate-300 tracking-wide">
                             {codigoUniversalValue || selectedItem.codigoUniversal || "N/A"}
@@ -1591,14 +1655,20 @@ export function CatalogoItemDetailPanel({
                             onChange={(e) => setDescripcionValue(e.target.value)}
                             onBlur={handleDescripcionBlur}
                             onClick={(e) => e.stopPropagation()}
-                            className="w-full h-full min-h-[120px] px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-500 resize-none text-sm placeholder:text-slate-500"
+                            className="w-full min-h-[100px] max-h-[200px] px-3 py-2 bg-slate-800/30 border-none rounded-lg text-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-600 resize-none text-sm placeholder:text-slate-500 overflow-hidden"
                             placeholder="Agregar descripción del producto..."
                             autoFocus
+                            style={{ overflow: 'hidden' }}
+                            onInput={(e) => {
+                              const target = e.target as HTMLTextAreaElement;
+                              target.style.height = 'auto';
+                              target.style.height = Math.min(target.scrollHeight, 200) + 'px';
+                            }}
                           />
                         ) : (
                           <div
                             onClick={(e) => { e.stopPropagation(); setEditingDescripcion(true) }}
-                            className="w-full min-h-[120px] px-3 py-2 bg-slate-800/30 rounded-lg text-slate-200 cursor-text hover:bg-slate-800/50 transition-colors text-sm"
+                            className="w-full min-h-[100px] px-3 py-2 bg-slate-800/30 rounded-lg text-slate-200 cursor-text hover:bg-slate-800/40 transition-colors text-sm"
                           >
                             {descripcionValue || (
                               <span className="text-slate-500">Click para agregar descripción...</span>
