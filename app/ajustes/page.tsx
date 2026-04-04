@@ -29,15 +29,26 @@ export default function AjustesPage() {
           />
         </div>
 
-        <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white rounded-lg">
-        {/* Header */}
-        <header className="flex items-center justify-between px-6 py-4 bg-[rgb(243,242,238)] border-b border-border/20">
-          <Breadcrumb items={[{ label: "Ajustes", href: "/ajustes" }]} />
-          <UserPanel />
-        </header>
+        <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white rounded-lg shadow-sm h-[calc(100vh-12px)]">
+          {/* Header - Same as other pages */}
+          <div className="relative border-b border-border h-[44px] bg-white">
+            <div className="px-4 flex items-center justify-between h-full">
+              <div className="flex items-center">
+                <Breadcrumb items={[{ label: "Ajustes", href: "/ajustes" }]} />
+              </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto px-6 py-8">
+              <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center gap-3 mt-0">
+                <UserPanel />
+              </div>
+
+              <div className="flex items-center gap-2 min-w-[200px] justify-end">
+                {/* Placeholder for future action buttons */}
+              </div>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto px-6 py-8 bg-slate-50">
           <div className="max-w-3xl mx-auto">
             {/* Page Title */}
             <div className="flex items-center gap-3 mb-10">
@@ -170,7 +181,7 @@ export default function AjustesPage() {
           </div>
         </div>
         </main>
-      </div>
+        </div>
     </div>
   )
 }

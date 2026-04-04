@@ -265,14 +265,14 @@ export function PriceGrid({
     return (
       <div key={item.sku || index}>
         <div
-          className={`grid grid-cols-[40px_3fr_1.2fr_1.2fr_1.5fr_1fr_0.8fr_1.5fr_36px] gap-0 ${heightClass} items-center transition-colors border-b border-slate-100 ${
-            isHovered ? "bg-slate-50/80" : ""
+          className={`grid grid-cols-[40px_3fr_1.2fr_1.2fr_1.5fr_1fr_0.8fr_1.5fr_36px] gap-0 ${heightClass} items-center transition-colors border-b border-[rgba(202,213,227,0.61)] ${
+            isHovered ? "bg-gray-50/50" : ""
           } ${isChild ? "bg-slate-50/30" : ""}`}
           onMouseEnter={() => setHoveredId(itemId)}
           onMouseLeave={() => setHoveredId(null)}
         >
           {/* Checkbox column */}
-          <div className={`flex items-center justify-center h-full ${isChild ? "pl-4" : ""}`}>
+          <div className={`flex items-center justify-center h-full border-r border-[rgba(202,213,227,0.3)] ${isChild ? "pl-4" : ""}`}>
             <div className="relative flex items-center justify-center">
               {selectionState.indeterminate ? (
                 <button
@@ -292,7 +292,7 @@ export function PriceGrid({
           </div>
 
           {/* Item column */}
-          <div className="flex items-center gap-2 px-4 min-w-0 h-full">
+          <div className="flex items-center gap-2 px-4 min-w-0 h-full border-r border-[rgba(202,213,227,0.3)]">
             {isParent && (
               <>
                 <button
@@ -330,27 +330,27 @@ export function PriceGrid({
           </div>
 
           {/* Categoría column */}
-          <div className="flex items-center px-3 h-full">
+          <div className="flex items-center px-3 h-full border-r border-[rgba(202,213,227,0.3)]">
             <span className="text-[12px] text-slate-600 truncate">{item.categoria || "-"}</span>
           </div>
 
           {/* Proveedor column */}
-          <div className="flex items-center px-3 h-full">
+          <div className="flex items-center px-3 h-full border-r border-[rgba(202,213,227,0.3)]">
             <span className="text-[12px] text-slate-600 truncate">{(item as any).proveedor || "-"}</span>
           </div>
 
           {isParent ? (
             <>
-              <div className="h-full" />
-              <div className="h-full" />
-              <div className="h-full" />
-              <div className="h-full" />
+              <div className="h-full border-r border-[rgba(202,213,227,0.3)]" />
+              <div className="h-full border-r border-[rgba(202,213,227,0.3)]" />
+              <div className="h-full border-r border-[rgba(202,213,227,0.3)]" />
+              <div className="h-full border-r border-[rgba(202,213,227,0.3)]" />
               <div className="h-full" />
             </>
           ) : (
             <>
               {/* Costo */}
-              <div className="flex items-center justify-center px-3 h-full">
+              <div className="flex items-center justify-center px-3 h-full border-r border-[rgba(202,213,227,0.3)]">
                 <div className="flex items-center gap-1 w-full">
                   <span className="text-[11px] text-slate-400">$</span>
                   <input
@@ -368,7 +368,7 @@ export function PriceGrid({
 
               {/* Margen - disabled if no costo */}
               <div
-                className={`flex items-center justify-center px-2 h-full ${itemPricing.margen < 0 ? "bg-red-50/50" : ""} ${!hasCosto ? "opacity-40" : ""}`}
+                className={`flex items-center justify-center px-2 h-full border-r border-[rgba(202,213,227,0.3)] ${itemPricing.margen < 0 ? "bg-red-50/50" : ""} ${!hasCosto ? "opacity-40" : ""}`}
               >
                 <div className="flex items-center gap-0.5 w-full">
                   <input
@@ -387,7 +387,7 @@ export function PriceGrid({
               </div>
 
               {/* IVA */}
-              <div className="flex items-center justify-center px-2 h-full">
+              <div className="flex items-center justify-center px-2 h-full border-r border-[rgba(202,213,227,0.3)]">
                 <select
                   value={itemPricing.iva}
                   onChange={(e) => updatePricingField(itemKey, "iva", Number.parseFloat(e.target.value), itemPricing)}
@@ -402,7 +402,7 @@ export function PriceGrid({
               </div>
 
               {/* Precio Final */}
-              <div className="flex items-center justify-center px-3 h-full bg-blue-50/30">
+              <div className="flex items-center justify-center px-3 h-full border-r border-[rgba(202,213,227,0.3)] bg-blue-50/30">
                 <div className="flex items-center gap-1 w-full">
                   <span className="text-[11px] text-blue-500">$</span>
                   <input
@@ -507,10 +507,11 @@ export function PriceGrid({
         </div>
       </div>
 
-      <div className="px-6 pb-3">
-        <div className="bg-white border border-slate-200/60 rounded-lg overflow-hidden">
-          <div className="grid grid-cols-[40px_3fr_1.2fr_1.2fr_1.5fr_1fr_0.8fr_1.5fr_36px] gap-0 px-0 py-2.5 text-[11px] font-medium text-slate-500 uppercase tracking-wider bg-slate-50/80">
-            <div className="flex items-center justify-center">
+      {/* Tab Header */}
+      <div className="px-6">
+        <div className="bg-slate-100 border border-[rgba(202,213,227,0.61)] rounded-t-sm">
+          <div className="grid grid-cols-[40px_3fr_1.2fr_1.2fr_1.5fr_1fr_0.8fr_1.5fr_36px] h-9">
+            <div className="flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
               <div className="relative flex items-center justify-center">
                 {selectAllIndeterminate ? (
                   <button
@@ -528,11 +529,17 @@ export function PriceGrid({
                 )}
               </div>
             </div>
-            <div className="flex items-center px-4">Item</div>
-            <div className="flex items-center px-3">Categoría</div>
-            <div className="flex items-center px-3">Proveedor</div>
-            <div className="flex items-center justify-between px-3">
-              <span className="flex-1 text-center">Costo</span>
+            <div className="flex items-center px-4 border-r border-[rgba(202,213,227,0.61)]">
+              <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Item</span>
+            </div>
+            <div className="flex items-center px-3 border-r border-[rgba(202,213,227,0.61)]">
+              <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Categoría</span>
+            </div>
+            <div className="flex items-center px-3 border-r border-[rgba(202,213,227,0.61)]">
+              <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Proveedor</span>
+            </div>
+            <div className="flex items-center justify-between px-3 border-r border-[rgba(202,213,227,0.61)]">
+              <span className="flex-1 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">Costo</span>
               <button
                 onClick={() => setBulkModalType("costo")}
                 className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors group cursor-pointer"
@@ -541,8 +548,8 @@ export function PriceGrid({
                 <MoreVertical className="w-3 h-3 text-slate-400 group-hover:text-slate-600" />
               </button>
             </div>
-            <div className="flex items-center justify-between px-3">
-              <span className="flex-1 text-center">Margen</span>
+            <div className="flex items-center justify-between px-3 border-r border-[rgba(202,213,227,0.61)]">
+              <span className="flex-1 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">Margen</span>
               <button
                 onClick={() => setBulkModalType("margen")}
                 className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors group cursor-pointer"
@@ -551,8 +558,8 @@ export function PriceGrid({
                 <MoreVertical className="w-3 h-3 text-slate-400 group-hover:text-slate-600" />
               </button>
             </div>
-            <div className="flex items-center justify-between px-3">
-              <span className="flex-1 text-center">IVA</span>
+            <div className="flex items-center justify-between px-3 border-r border-[rgba(202,213,227,0.61)]">
+              <span className="flex-1 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">IVA</span>
               <button
                 onClick={() => setBulkModalType("iva")}
                 className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors group cursor-pointer"
@@ -561,7 +568,7 @@ export function PriceGrid({
                 <MoreVertical className="w-3 h-3 text-slate-400 group-hover:text-slate-600" />
               </button>
             </div>
-            <div className="flex items-center justify-between px-3">
+            <div className="flex items-center justify-between px-3 border-r border-[rgba(202,213,227,0.61)]">
               <button
                 onClick={() => setBulkModalType("precioFinal")}
                 className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors group cursor-pointer"
@@ -569,7 +576,7 @@ export function PriceGrid({
               >
                 <MoreVertical className="w-3 h-3 text-slate-400 group-hover:text-slate-600" />
               </button>
-              <span className="flex-1 text-center">Precio Final</span>
+              <span className="flex-1 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">Precio Final</span>
             </div>
             <div className="flex items-center justify-center">
               <div className="relative">
@@ -617,8 +624,9 @@ export function PriceGrid({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 pb-6 -mt-3">
-        <div className="bg-white border border-slate-200/60 border-t-0 rounded-b-lg">
+      {/* Grid Content */}
+      <div className="flex-1 overflow-y-auto px-6 pb-6">
+        <div className="bg-white border-x border-b border-[rgba(202,213,227,0.61)]">
           {sortedAndFilteredItems.length === 0 && (searchTerm || hasActiveFilters) ? (
             <div className="flex flex-col items-center justify-center py-16 text-gray-500">
               <Search className="w-12 h-12 mb-4 text-gray-300" />
