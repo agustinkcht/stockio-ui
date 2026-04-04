@@ -507,10 +507,12 @@ export function PriceGrid({
         </div>
       </div>
 
-      {/* Tab Header */}
-      <div className="px-6">
-        <div className="bg-slate-100 border border-[rgba(202,213,227,0.61)] rounded-t-sm">
-          <div className="grid grid-cols-[40px_3fr_1.2fr_1.2fr_1.5fr_1fr_0.8fr_1.5fr_36px] h-9">
+      {/* Scrollable container with sticky header */}
+      <div className="flex-1 overflow-y-auto px-6 pb-6">
+        <div className="border border-[rgba(202,213,227,0.61)] rounded-sm">
+          {/* Tab Header - sticky */}
+          <div className="bg-slate-100 sticky top-0 z-10 rounded-t-sm">
+            <div className="grid grid-cols-[40px_3fr_1.2fr_1.2fr_1.5fr_1fr_0.8fr_1.5fr_36px] h-9">
             <div className="flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
               <div className="relative flex items-center justify-center">
                 {selectAllIndeterminate ? (
@@ -621,12 +623,10 @@ export function PriceGrid({
               </div>
             </div>
           </div>
-        </div>
-      </div>
+          </div>
 
-      {/* Grid Content */}
-      <div className="flex-1 overflow-y-auto px-6 pb-6">
-        <div className="bg-white border-x border-b border-[rgba(202,213,227,0.61)]">
+          {/* Grid Content */}
+          <div className="bg-white">
           {sortedAndFilteredItems.length === 0 && (searchTerm || hasActiveFilters) ? (
             <div className="flex flex-col items-center justify-center py-16 text-gray-500">
               <Search className="w-12 h-12 mb-4 text-gray-300" />
@@ -636,6 +636,7 @@ export function PriceGrid({
           ) : (
             <div>{sortedAndFilteredItems.map((item, index) => renderItemRow(item, index))}</div>
           )}
+        </div>
         </div>
       </div>
 
