@@ -385,10 +385,10 @@ export function ItemCard({
                   className={`col-span-16 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors border-r border-slate-100`}
                   onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
                 >
-                  {/* Chevron instead of thumbnail */}
+                  {/* Chevron instead of thumbnail - match thumbnail size w-12 h-12 */}
                   <button
                     onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
-                    className="flex-shrink-0 flex items-center justify-center size-8 rounded-md hover:bg-slate-100 transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+                    className="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-md hover:bg-slate-100 transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
                   >
                     {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                   </button>
@@ -646,10 +646,10 @@ export function ItemCard({
                     onToggleExpansion(index)
                   }}
                 >
-                  {/* Chevron instead of thumbnail */}
+                  {/* Chevron instead of thumbnail - match thumbnail size w-12 h-12 */}
                   <button
                     onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
-                    className="flex-shrink-0 flex items-center justify-center size-8 rounded-md hover:bg-slate-100 transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+                    className="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-md hover:bg-slate-100 transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
                   >
                     {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                   </button>
