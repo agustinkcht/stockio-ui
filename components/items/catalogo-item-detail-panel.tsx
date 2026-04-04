@@ -1170,10 +1170,75 @@ export function CatalogoItemDetailPanel({
                         )}
                       </div>
 
-                      {/* SKU and Código Universal centered below title */}
+                      {/* Estado - right below title */}
+                      {!isViewingContainer && (
+                        <div className="relative group/estado mt-2">
+                          <button
+                            className={`text-sm font-medium px-3 py-1 rounded-full cursor-pointer transition-all flex items-center gap-1.5 ${
+                              selectedItem?.isActive !== false
+                                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 hover:bg-emerald-500/30"
+                                : "bg-amber-500/20 text-amber-300 border border-amber-400/30 hover:bg-amber-500/30"
+                            }`}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              const el = e.currentTarget.parentElement?.querySelector("[data-estado-dropdown-top]") as HTMLElement
+                              if (el) el.style.display = el.style.display === "none" || !el.style.display ? "flex" : "none"
+                            }}
+                          >
+                            <span className="text-[10px] font-semibold text-slate-500/80 uppercase tracking-wider">Estado</span>
+                            {selectedItem?.isActive !== false ? "Activo" : "Pausado"}
+                            <ChevronDown className="w-3 h-3 opacity-60" />
+                          </button>
+                          <div
+                            data-estado-dropdown-top
+                            style={{ display: "none" }}
+                            className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-50 flex-col min-w-[110px] bg-slate-800 border border-slate-600 rounded-lg shadow-xl overflow-hidden"
+                            onMouseLeave={(e) => {
+                              (e.currentTarget as HTMLElement).style.display = "none"
+                            }}
+                          >
+                            {[
+                              { label: "Activo", value: true },
+                              { label: "Pausado", value: false },
+                            ].map(({ label, value }) => {
+                              const isCurrent = (selectedItem?.isActive !== false) === value
+                              return (
+                                <button
+                                  key={label}
+                                  className={`flex items-center justify-between gap-2 px-3 py-2 text-sm text-left transition-colors w-full ${
+                                    isCurrent
+                                      ? "bg-slate-700 text-white font-medium cursor-default"
+                                      : "text-slate-300 hover:bg-slate-700/60 cursor-pointer"
+                                  }`}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    if (!isCurrent && selectedItem) {
+                                      if (isChildItem && fatherItem) {
+                                        const updatedVariants = fatherItem.variants?.map((v: any) =>
+                                          v.id === selectedItem.id ? { ...v, isActive: value } : v
+                                        )
+                                        if (updatedVariants) {
+                                          onFieldChange(fatherItem.id, "variants", updatedVariants)
+                                        }
+                                      } else {
+                                        onFieldChange(selectedItem.id, "isActive", value)
+                                      }
+                                    }
+                                    ;(e.currentTarget.parentElement as HTMLElement).style.display = "none"
+                                  }}
+                                >
+                                  {label}
+                                  {isCurrent && <Check className="w-3 h-3 text-emerald-400 flex-shrink-0" />}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* PRESERVED FOR RECOVERY: SKU and Código Universal centered below title
                       {!isViewingContainer && (
                         <div className="flex flex-col items-center gap-0.5 mt-1">
-                          {/* SKU row */}
                           <div className="flex items-center justify-center gap-1.5 group/sku">
                             <span className="text-[11px] font-medium text-slate-500/70 uppercase tracking-wider">SKU:</span>
                             {isChildItem && fatherItem ? (
@@ -1261,7 +1326,6 @@ export function CatalogoItemDetailPanel({
                               )}
                             </button>
                           </div>
-                          {/* Código Universal row */}
                           <div className="flex items-center justify-center gap-1.5 group/codigoTop">
                             <span className="text-[11px] font-medium text-slate-500/70 uppercase tracking-wider">Cód. Universal:</span>
                             {editingCodigoUniversal ? (
@@ -1303,13 +1367,14 @@ export function CatalogoItemDetailPanel({
                           </div>
                         </div>
                       )}
+                      */}
 
-                      {/* Info rows */}
+                      {/* Info rows - Precio Venta and Stock Disponible */}
                       {!isViewingContainer && (
-                        <div className="flex flex-col items-center gap-3 mt-5">
-                          {/* Precio */}
+                        <div className="flex flex-col items-center gap-4 mt-5">
+                          {/* Precio Venta - column layout */}
                           <div
-                            className="flex items-center gap-2 group/precio cursor-pointer"
+                            className="flex flex-col items-center gap-0.5 group/precio cursor-pointer"
                             onClick={(e) => {
                               e.stopPropagation()
                               setPrecioModalValues({
@@ -1321,92 +1386,30 @@ export function CatalogoItemDetailPanel({
                               setIsPrecioModalOpen(true)
                             }}
                           >
-                            <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Precio</span>
-                            <span className="text-emerald-400 font-bold text-xl leading-tight">
-                              ${(selectedItem?.precio?.precioFinal || 0).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
-                            </span>
-                            <Pencil className="w-3 h-3 text-white/50 opacity-0 group-hover/precio:opacity-100 transition-opacity" />
+                            <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Precio Venta</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-emerald-400 font-bold text-xl leading-tight">
+                                ${(selectedItem?.precio?.precioFinal || 0).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                              </span>
+                              <Pencil className="w-3 h-3 text-white/50 opacity-0 group-hover/precio:opacity-100 transition-opacity" />
+                            </div>
                           </div>
 
-                          {/* Stock */}
+                          {/* Stock Disponible - column layout, just the number */}
                           <div
-                            className="flex items-center gap-2 group/stock cursor-pointer"
+                            className="flex flex-col items-center gap-0.5 group/stock cursor-pointer"
                             onClick={(e) => {
                               e.stopPropagation()
                               setIsStockModalOpen(true)
                             }}
                           >
-                            <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Stock</span>
-                            <span className="text-blue-400 font-bold text-xl leading-tight">
-                              {Number.parseInt(selectedItem?.stock?.total || "0") - Number.parseInt(selectedItem?.stock?.reservado || "0")} disponibles
-                            </span>
-                            <Pencil className="w-3 h-3 text-white/50 opacity-0 group-hover/stock:opacity-100 transition-opacity" />
-                          </div>
-
-                          {/* Estado - centered */}
-                          <div className="relative group/estado">
-                            <button
-                              className={`text-sm font-medium px-3 py-1 rounded-full cursor-pointer transition-all flex items-center gap-1.5 ${
-                                selectedItem?.isActive !== false
-                                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 hover:bg-emerald-500/30"
-                                  : "bg-amber-500/20 text-amber-300 border border-amber-400/30 hover:bg-amber-500/30"
-                              }`}
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                const el = e.currentTarget.parentElement?.querySelector("[data-estado-dropdown]") as HTMLElement
-                                if (el) el.style.display = el.style.display === "none" || !el.style.display ? "flex" : "none"
-                              }}
-                            >
-                              <span className="text-[10px] font-semibold text-slate-500/80 uppercase tracking-wider">Estado</span>
-                              {selectedItem?.isActive !== false ? "Activo" : "Pausado"}
-                              <ChevronDown className="w-3 h-3 opacity-60" />
-                              </button>
-                              <div
-                                data-estado-dropdown
-                                style={{ display: "none" }}
-                                className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-50 flex-col min-w-[110px] bg-slate-800 border border-slate-600 rounded-lg shadow-xl overflow-hidden"
-                                onMouseLeave={(e) => {
-                                  (e.currentTarget as HTMLElement).style.display = "none"
-                                }}
-                              >
-                                {[
-                                  { label: "Activo", value: true },
-                                  { label: "Pausado", value: false },
-                                ].map(({ label, value }) => {
-                                  const isCurrent = (selectedItem?.isActive !== false) === value
-                                  return (
-                                    <button
-                                      key={label}
-                                      className={`flex items-center justify-between gap-2 px-3 py-2 text-sm text-left transition-colors w-full ${
-                                        isCurrent
-                                          ? "bg-slate-700 text-white font-medium cursor-default"
-                                          : "text-slate-300 hover:bg-slate-700/60 cursor-pointer"
-                                      }`}
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        if (!isCurrent && selectedItem) {
-                                          if (isChildItem && fatherItem) {
-                                            // Child item: update isActive within parent's variants array
-                                            const updatedVariants = fatherItem.variants?.map((v: any) =>
-                                              v.id === selectedItem.id ? { ...v, isActive: value } : v
-                                            )
-                                            if (updatedVariants) {
-                                              onFieldChange(fatherItem.id, "variants", updatedVariants)
-                                            }
-                                          } else {
-                                            // Standalone item: update directly
-                                            onFieldChange(selectedItem.id, "isActive", value)
-                                          }
-                                        }
-                                        ;(e.currentTarget.parentElement as HTMLElement).style.display = "none"
-                                      }}
-                                    >
-                                      {label}
-                                      {isCurrent && <Check className="w-3 h-3 text-emerald-400 flex-shrink-0" />}
-                                    </button>
-                                  )
-                                })}
-                              </div>
+                            <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Stock Disponible</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-blue-400 font-bold text-xl leading-tight">
+                                {Number.parseInt(selectedItem?.stock?.total || "0") - Number.parseInt(selectedItem?.stock?.reservado || "0")}
+                              </span>
+                              <Pencil className="w-3 h-3 text-white/50 opacity-0 group-hover/stock:opacity-100 transition-opacity" />
+                            </div>
                           </div>
                         </div>
                       )}
@@ -1432,6 +1435,58 @@ export function CatalogoItemDetailPanel({
                     </div>
 
                     <div className="flex flex-col h-full pt-2 overflow-y-auto">
+                      {/* Códigos Section */}
+                      <h3 className="text-sm font-medium uppercase tracking-wider mb-3 text-slate-50">
+                        Códigos
+                      </h3>
+                      <div className="flex flex-col gap-2 mb-5">
+                        {/* SKU row */}
+                        <div className="flex items-center gap-2 group/skuBack">
+                          <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider w-24">SKU:</span>
+                          {isChildItem && fatherItem ? (
+                            <span className="text-sm font-light text-slate-300 tracking-wide">
+                              {fatherItem.skuPrefix || fatherItem.sku || ""}-{selectedItem.skuSuffix || selectedItem.sku || ""}
+                            </span>
+                          ) : (
+                            <span className="text-sm font-light text-slate-300 tracking-wide">
+                              {skuValue || selectedItem.sku}
+                            </span>
+                          )}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleCopySku() }}
+                            className="text-slate-500 hover:text-slate-300 transition-colors p-0.5 opacity-0 group-hover/skuBack:opacity-100"
+                            title="Copiar SKU"
+                          >
+                            {skuCopied ? (
+                              <span className="text-green-400 text-xs">✓</span>
+                            ) : (
+                              <Copy className="h-3 w-3" />
+                            )}
+                          </button>
+                        </div>
+                        {/* Código Universal row */}
+                        <div className="flex items-center gap-2 group/codigoBack">
+                          <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider w-24">Cód. Universal:</span>
+                          <span className="text-sm font-light text-slate-300 tracking-wide">
+                            {codigoUniversalValue || selectedItem.codigoUniversal || "N/A"}
+                          </span>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleCopyCodigoUniversal() }}
+                            className="text-slate-500 hover:text-slate-300 transition-colors p-0.5 opacity-0 group-hover/codigoBack:opacity-100"
+                            title="Copiar Código Universal"
+                          >
+                            {codigoUniversalCopied ? (
+                              <span className="text-green-400 text-xs">✓</span>
+                            ) : (
+                              <Copy className="h-3 w-3" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Divider */}
+                      <div className="border-t border-slate-700 mb-4"></div>
+
                       {/* Media Section */}
                       <h3 className="text-sm font-medium uppercase tracking-wider mb-3 text-slate-50">
                         Media
