@@ -667,7 +667,6 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
 
                                   {/* Empty column */}
                                   <div className="col-span-2"></div>
-                                  </div>
                                 </div>
                               )
                             })}
