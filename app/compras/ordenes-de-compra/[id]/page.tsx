@@ -50,21 +50,23 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
 
   // Use hooks for data persistence
-  const { ordenes, isLoading, getOrdenById, updateOrden, updateEstado } = useOrdenesDeCompra()
+  const { ordenes, updateOrden, updateEstado } = useOrdenesDeCompra()
   const { addCompra } = useCompras()
 
-  // Initialize orden from hook (now has initial data immediately)
-  const initialOrden = getOrdenById(id)
-  const [orden, setOrden] = useState<OrdenDeCompra | null>(initialOrden)
+  // Find orden from ordenes array directly (not via callback during render)
+  const foundOrden = useMemo(() => {
+    return ordenes.find(o => o.id === id) || null
+  }, [ordenes, id])
+  
+  const [orden, setOrden] = useState<OrdenDeCompra | null>(null)
   const [hasChanges, setHasChanges] = useState(false)
   
-  // Sync with localStorage when ordenes change
+  // Sync local state with found orden
   useEffect(() => {
-    const updated = getOrdenById(id)
-    if (updated && JSON.stringify(updated) !== JSON.stringify(orden)) {
-      setOrden(updated)
+    if (foundOrden) {
+      setOrden(foundOrden)
     }
-  }, [ordenes, id, getOrdenById, orden])
+  }, [foundOrden])
   
   // Check if order is editable (only borrador state)
   const isEditable = orden?.estado === "borrador"
@@ -339,8 +341,8 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
   }
 
   const handleDeshacer = () => {
-    const stored = getOrdenById(id)
-    setOrden(stored)
+    // Reset to the stored version from ordenes array
+    setOrden(foundOrden)
     setHasChanges(false)
     setShowAddItemModal(false)
     setNewItemSearch("")
