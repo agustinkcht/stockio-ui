@@ -1133,6 +1133,12 @@ export function CatalogoItemDetailPanel({
                             data-estado-dropdown-top
                             style={{ display: "none" }}
                             className="absolute top-full left-0 mt-1 z-50 flex-col min-w-[110px] bg-slate-900/95 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-2xl overflow-hidden"
+                            onMouseLeave={(e) => {
+                              const el = e.currentTarget as HTMLElement
+                              setTimeout(() => {
+                                el.style.display = "none"
+                              }, 300)
+                            }}
                           >
                             {[
                               { label: "Activo", value: true },
@@ -1161,7 +1167,9 @@ export function CatalogoItemDetailPanel({
                                         onFieldChange(selectedItem.id, "isActive", value)
                                       }
                                     }
-                                    ;(e.currentTarget.parentElement as HTMLElement).style.display = "none"
+                                    setTimeout(() => {
+                                      ;(e.currentTarget.parentElement as HTMLElement).style.display = "none"
+                                    }, 300)
                                   }}
                                 >
                                   <div className="flex items-center gap-2">
@@ -1177,15 +1185,18 @@ export function CatalogoItemDetailPanel({
                       </div>
                     )}
 
-                    {/* Flip hint top-right - clickable area */}
+                    {/* Flip clickable area - top 1/3 height, right half width */}
                     <button
                       onClick={() => setIsCardFlipped(true)}
-                  className="absolute top-0 right-0 px-6 py-4 flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer z-20"
-                >
-                  <span className="text-[11px] uppercase tracking-wider">Detalles</span>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M9 18l6-6-6-6" />
-                      </svg>
+                      className="absolute top-0 right-0 w-1/2 h-1/3 cursor-pointer z-10 group/flip"
+                    >
+                      {/* Visual hint in top-right corner */}
+                      <div className="absolute top-4 right-6 flex items-center gap-1 text-slate-500 group-hover/flip:text-slate-300 transition-colors">
+                        <span className="text-[11px] uppercase tracking-wider">Detalles</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M9 18l6-6-6-6" />
+                        </svg>
+                      </div>
                     </button>
 
                     <div className="mt-2">
