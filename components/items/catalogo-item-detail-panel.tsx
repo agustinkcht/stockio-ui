@@ -1103,7 +1103,7 @@ export function CatalogoItemDetailPanel({
                   >
                     {/* Estado indicator - top-left */}
                     {!isViewingContainer && (
-                      <div className="absolute top-4 left-4 z-10">
+                      <div className="absolute top-4 left-6 z-10">
                         <div 
                           className="relative group/estado"
                           onMouseLeave={(e) => {
@@ -1188,10 +1188,10 @@ export function CatalogoItemDetailPanel({
                     {/* Flip clickable area - top 1/3 height, right half width */}
                     <button
                       onClick={() => setIsCardFlipped(true)}
-                      className="absolute top-0 right-0 w-1/2 h-1/3 cursor-pointer z-10 group/flip"
+                      className="absolute top-0 right-0 w-1/2 h-1/3 cursor-pointer z-10"
                     >
                       {/* Visual hint in top-right corner */}
-                      <div className="absolute top-4 right-6 flex items-center gap-1 text-slate-500 group-hover/flip:text-slate-300 transition-colors">
+                      <div className="absolute top-4 right-6 flex items-center gap-1 text-slate-500">
                         <span className="text-[11px] uppercase tracking-wider">Detalles</span>
                         <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M9 18l6-6-6-6" />
@@ -1336,9 +1336,10 @@ export function CatalogoItemDetailPanel({
                               )}
                             </>
                           )}
+                          <Pencil className="h-2.5 w-2.5 text-slate-600 opacity-0 group-hover/sku:opacity-100 transition-opacity" />
                           <button
                             onClick={(e) => { e.stopPropagation(); handleCopySku() }}
-                            className="text-slate-600 hover:text-slate-400 transition-colors p-0.5 opacity-0 group-hover/sku:opacity-100"
+                            className="text-slate-600 hover:text-slate-400 transition-colors p-0.5"
                             title="Copiar SKU"
                           >
                             {skuCopied ? (
@@ -1371,9 +1372,12 @@ export function CatalogoItemDetailPanel({
                             }}
                           >
                             <span className="text-[11px] text-slate-500 uppercase tracking-[0.12em] mb-0.5">Precio Venta</span>
-                            <span className="text-white font-light text-lg tracking-tight tabular-nums">
-                              ${(selectedItem?.precio?.precioFinal || 0).toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-white font-light text-lg tracking-tight tabular-nums">
+                                ${(selectedItem?.precio?.precioFinal || 0).toLocaleString("es-AR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                              </span>
+                              <Pencil className="h-3 w-3 text-slate-600 opacity-0 group-hover/precio:opacity-100 transition-opacity" />
+                            </div>
                           </div>
 
                           {/* Middle horizontal line */}
@@ -1388,9 +1392,12 @@ export function CatalogoItemDetailPanel({
                             }}
                           >
                             <span className="text-[11px] text-slate-500 uppercase tracking-[0.12em] mb-0.5">Stock</span>
-                            <span className="text-white font-light text-lg tracking-tight tabular-nums">
-                              {Number.parseInt(selectedItem?.stock?.total || "0") - Number.parseInt(selectedItem?.stock?.reservado || "0")} disponibles
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-white font-light text-lg tracking-tight tabular-nums">
+                                {Number.parseInt(selectedItem?.stock?.total || "0") - Number.parseInt(selectedItem?.stock?.reservado || "0")} disponibles
+                              </span>
+                              <Pencil className="h-3 w-3 text-slate-600 opacity-0 group-hover/stock:opacity-100 transition-opacity" />
+                            </div>
                           </div>
 
                           {/* Bottom horizontal line */}
@@ -1543,33 +1550,46 @@ export function CatalogoItemDetailPanel({
                       transform: "rotateY(180deg)",
                     }}
                   >
-                    {/* Flip back hint top-right - clickable area */}
+                    {/* Flip back clickable area - top 1/3 height, right half width */}
                     <button
                       onClick={() => setIsCardFlipped(false)}
-                      className="absolute top-0 right-0 px-6 py-4 flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer z-10"
+                      className="absolute top-0 right-0 w-1/2 h-1/3 cursor-pointer z-10"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M15 18l-6-6 6-6" />
-                      </svg>
-                      <span className="text-[10px] uppercase tracking-wider">Volver</span>
+                      {/* Visual hint in top-right corner */}
+                      <div className="absolute top-4 right-6 flex items-center gap-1 text-slate-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M15 18l-6-6 6-6" />
+                        </svg>
+                        <span className="text-[11px] uppercase tracking-wider">Volver</span>
+                      </div>
                     </button>
 
                     <div className="flex flex-col h-full pt-2 overflow-y-auto">
                       {/* Código Universal Section */}
                       <div className="mb-5 group/codigoBack">
-                        <h3 className="text-sm font-medium uppercase tracking-wider mb-1 text-slate-50">
-                          Código Universal
-                        </h3>
-                        <p className="text-[11px] font-light text-slate-500 mb-3 leading-relaxed">
-                          Número único de 8 a 14 dígitos, generalmente impreso bajo el código de barras, que identifica un producto a nivel global.
-                        </p>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 mb-3">
+                          <h3 className="text-sm font-medium uppercase tracking-wider text-slate-50">
+                            Código Universal
+                          </h3>
+                          <div className="relative group/tooltip">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 text-slate-500 cursor-help" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="12" cy="12" r="10" />
+                              <path d="M12 16v-4" />
+                              <path d="M12 8h.01" />
+                            </svg>
+                            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-[11px] text-slate-300 w-48 leading-relaxed opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all z-50 pointer-events-none">
+                              Número único de 8 a 14 dígitos, generalmente impreso bajo el código de barras, que identifica un producto a nivel global.
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 group/codigoVal cursor-pointer" onClick={(e) => { e.stopPropagation(); setEditingCodigoUniversal(true) }}>
                           <span className="text-sm font-light text-slate-300 tracking-wide">
                             {codigoUniversalValue || selectedItem.codigoUniversal || "N/A"}
                           </span>
+                          <Pencil className="h-3 w-3 text-slate-600 opacity-0 group-hover/codigoVal:opacity-100 transition-opacity" />
                           <button
                             onClick={(e) => { e.stopPropagation(); handleCopyCodigoUniversal() }}
-                            className="text-slate-500 hover:text-slate-300 transition-colors p-0.5 opacity-0 group-hover/codigoBack:opacity-100"
+                            className="text-slate-500 hover:text-slate-300 transition-colors p-0.5"
                             title="Copiar Código Universal"
                           >
                             {codigoUniversalCopied ? (
