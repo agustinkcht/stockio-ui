@@ -176,7 +176,11 @@ export function useItems() {
     }
 
     if (isVariant && parentItem) {
-      editVariantField(parentItem.sku!, itemId, "stock", newStock)
+      // Use parent's id first (preferred for newly created items), fallback to sku
+      const parentIdentifier = parentItem.id || parentItem.sku
+      if (parentIdentifier) {
+        editVariantField(parentIdentifier, itemId, "stock", newStock)
+      }
     } else {
       // For standalone items, use regular editField
       editField(itemId, "stock", newStock)
@@ -461,11 +465,14 @@ export function useItems() {
       }
     }
 
-    if (parentItem && variantId) {
-      // This is a child item - use editVariantField with id
-      editVariantField(parentItem.sku!, variantId, field, newValue)
-      return
+  if (parentItem && variantId) {
+    // This is a child item - use editVariantField with id
+    const parentIdentifier = parentItem.id || parentItem.sku
+    if (parentIdentifier) {
+      editVariantField(parentIdentifier, variantId, field, newValue)
     }
+    return
+  }
 
     // Regular top-level item edit - find by id first, then sku
     const originalItem = items.find((item) => item.id === itemSku || item.sku === itemSku)

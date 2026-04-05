@@ -316,7 +316,9 @@ export function CatalogoItemDetailPanel({
   })
 
   const handleStockModificationAccept = (stockType: "total" | "reservado") => {
-    if (!selectedItem?.sku) return
+    // Use id first (for newly created items), fallback to sku
+    const itemIdentifier = selectedItem?.id || selectedItem?.sku
+    if (!itemIdentifier) return
 
     const modification = stockModification[stockType]
     const inputValue = Number.parseInt(modification.value)
@@ -334,7 +336,7 @@ export function CatalogoItemDetailPanel({
       newValue = inputValue
     }
 
-    updateStock(selectedItem.sku, stockType, newValue)
+    updateStock(itemIdentifier, stockType, newValue)
 
     // Clear input after applying
     setStockModification((prev) => ({
@@ -3566,13 +3568,13 @@ export function CatalogoItemDetailPanel({
                   </div>
                   <div className="flex items-center gap-2">
                     {activeStockEdit === "total" && (
-                      <button onClick={(e) => { e.stopPropagation(); if (selectedItem?.sku) updateStock(selectedItem.sku, "total", Math.max(0, Number.parseInt(selectedItem?.stock?.total || "0") - 1)) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
-                        <Minus className="w-3 h-3" />
-                      </button>
-                    )}
-                    <span className="text-base font-semibold tabular-nums min-w-[2rem] text-center">{Number.parseInt(selectedItem?.stock?.total || "0")}</span>
-                    {activeStockEdit === "total" && (
-                      <button onClick={(e) => { e.stopPropagation(); if (selectedItem?.sku) updateStock(selectedItem.sku, "total", Number.parseInt(selectedItem?.stock?.total || "0") + 1) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
+<button onClick={(e) => { e.stopPropagation(); const id = selectedItem?.id || selectedItem?.sku; if (id) updateStock(id, "total", Math.max(0, Number.parseInt(selectedItem?.stock?.total || "0") - 1)) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
+                      <Minus className="w-3 h-3" />
+                    </button>
+                  )}
+                  <span className="text-base font-semibold tabular-nums min-w-[2rem] text-center">{Number.parseInt(selectedItem?.stock?.total || "0")}</span>
+                  {activeStockEdit === "total" && (
+                    <button onClick={(e) => { e.stopPropagation(); const id = selectedItem?.id || selectedItem?.sku; if (id) updateStock(id, "total", Number.parseInt(selectedItem?.stock?.total || "0") + 1) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
                         <Plus className="w-3 h-3" />
                       </button>
                     )}
@@ -3612,13 +3614,13 @@ export function CatalogoItemDetailPanel({
                   </div>
                   <div className="flex items-center gap-2">
                     {activeStockEdit === "reservado" && (
-                      <button onClick={(e) => { e.stopPropagation(); if (selectedItem?.sku) updateStock(selectedItem.sku, "reservado", Math.max(0, Number.parseInt(selectedItem?.stock?.reservado || "0") - 1)) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
-                        <Minus className="w-3 h-3" />
-                      </button>
-                    )}
-                    <span className="text-base font-semibold tabular-nums min-w-[2rem] text-center">{Number.parseInt(selectedItem?.stock?.reservado || "0")}</span>
-                    {activeStockEdit === "reservado" && (
-                      <button onClick={(e) => { e.stopPropagation(); if (selectedItem?.sku) updateStock(selectedItem.sku, "reservado", Number.parseInt(selectedItem?.stock?.reservado || "0") + 1) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
+<button onClick={(e) => { e.stopPropagation(); const id = selectedItem?.id || selectedItem?.sku; if (id) updateStock(id, "reservado", Math.max(0, Number.parseInt(selectedItem?.stock?.reservado || "0") - 1)) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
+                      <Minus className="w-3 h-3" />
+                    </button>
+                  )}
+                  <span className="text-base font-semibold tabular-nums min-w-[2rem] text-center">{Number.parseInt(selectedItem?.stock?.reservado || "0")}</span>
+                  {activeStockEdit === "reservado" && (
+                    <button onClick={(e) => { e.stopPropagation(); const id = selectedItem?.id || selectedItem?.sku; if (id) updateStock(id, "reservado", Number.parseInt(selectedItem?.stock?.reservado || "0") + 1) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
                         <Plus className="w-3 h-3" />
                       </button>
                     )}

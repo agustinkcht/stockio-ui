@@ -189,7 +189,9 @@ export function ItemCard({
       newValue = inputValue
     }
     
-    onStockChange?.(item.sku, type, newValue)
+    // Use item.id for variants (children), fallback to sku for standalone items
+    const itemIdentifier = item.id || item.sku
+    onStockChange?.(itemIdentifier, type, newValue)
     
     // Clear input after applying
     if (type === "total") {
@@ -203,7 +205,9 @@ export function ItemCard({
   const handleStockIncrement = (type: "total" | "reservado", delta: number) => {
     const currentValue = type === "total" ? currentStockTotal : currentStockReservado
     const newValue = Math.max(0, currentValue + delta)
-    onStockChange?.(item.sku, type, newValue)
+    // Use item.id for variants (children), fallback to sku for standalone items
+    const itemIdentifier = item.id || item.sku
+    onStockChange?.(itemIdentifier, type, newValue)
   }
 
   // Calculate preview value based on operation and input
