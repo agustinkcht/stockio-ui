@@ -290,29 +290,22 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     router.push("/compras/compras")
   }
 
+  // Filter out already selected items - MUST be before early return
+  const notSelectedItems = useMemo(() => {
+    if (!orden) return availableItems
+    const selectedSkus = new Set(orden.items.map(it => it.sku))
+    return availableItems.filter(it => !selectedSkus.has(it.sku))
+  }, [availableItems, orden])
+
   const breadcrumbs = [
     { label: "Compras" },
     { label: "Órdenes de Compra", href: "/compras/ordenes-de-compra" },
     { label: orden ? `ODC-${orden.numero}` : "Detalle" },
   ]
 
-  if (!orden) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-[rgb(243,242,238)]">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Orden no encontrada</h2>
-          <p className="text-muted-foreground mb-4">La orden de compra que buscas no existe.</p>
-          <Button onClick={() => router.push("/compras/ordenes-de-compra")}>
-            Volver a Órdenes
-          </Button>
-        </div>
-      </div>
-    )
-  }
-
-  
-
+  // All event handlers - defined as arrow functions, safe after hooks
   const handleQuantityChange = (idx: number, newQuantity: number) => {
+    if (!orden) return
     const newItems = orden.items.map((it, i) =>
       i === idx ? { ...it, quantity: newQuantity, total: newQuantity * it.unitPrice } : it
     )
@@ -323,6 +316,7 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
   }
 
   const handlePriceChange = (idx: number, newPrice: number) => {
+    if (!orden) return
     const newItems = orden.items.map((it, i) =>
       i === idx ? { ...it, unitPrice: newPrice, total: it.quantity * newPrice } : it
     )
@@ -333,6 +327,7 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
   }
 
   const handleDeleteItem = (idx: number) => {
+    if (!orden) return
     const newItems = orden.items.filter((_, i) => i !== idx)
     const newTotal = newItems.reduce((sum, it) => sum + it.total, 0)
     setOrden({ ...orden, items: newItems, importeEstimado: newTotal })
@@ -392,25 +387,16 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     setNewItemSearch("")
   }
 
-  // Filter out already selected items
-  const notSelectedItems = useMemo(() => {
-    if (!orden) return availableItems
-    const selectedSkus = new Set(orden.items.map(it => it.sku))
-    return availableItems.filter(it => !selectedSkus.has(it.sku))
-  }, [availableItems, orden])
-
-  // Show not found state
+  // Early return for not found - AFTER all hooks
   if (!orden) {
     return (
-      <div className="min-h-screen bg-[rgb(243,242,238)] flex items-center justify-center">
+      <div className="flex items-center justify-center h-screen bg-[rgb(243,242,238)]">
         <div className="text-center">
-          <div className="text-slate-500 mb-2">Orden no encontrada</div>
-          <button 
-            onClick={() => router.push("/compras/ordenes-de-compra")}
-            className="text-amber-600 hover:underline text-sm"
-          >
-            Volver a órdenes de compra
-          </button>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Orden no encontrada</h2>
+          <p className="text-muted-foreground mb-4">La orden de compra que buscas no existe.</p>
+          <Button onClick={() => router.push("/compras/ordenes-de-compra")}>
+            Volver a Órdenes
+          </Button>
         </div>
       </div>
     )
