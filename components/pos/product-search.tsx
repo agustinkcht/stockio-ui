@@ -243,6 +243,18 @@ export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
 
                           <div className="flex-1 min-w-0">
                             <p className="text-sm truncate">{getFullTitle(variant)}</p>
+                            {variant.atributosPrincipales && variant.atributosPrincipales.length > 0 && (
+                              <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                                {variant.atributosPrincipales.slice(0, 2).map((attr: any, i: number) => (
+                                  <span
+                                    key={i}
+                                    className="text-[9px] px-1.5 py-0.5 rounded whitespace-nowrap bg-blue-50 text-blue-900 border border-blue-100"
+                                  >
+                                    {attr.value}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                           </div>
                           <div className="text-right flex-shrink-0">
                             <p className="font-semibold text-sm">
