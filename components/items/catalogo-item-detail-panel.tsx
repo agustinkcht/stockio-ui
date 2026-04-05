@@ -1103,7 +1103,7 @@ export function CatalogoItemDetailPanel({
                   >
                     {/* Estado indicator - top-left */}
                     {!isViewingContainer && (
-                      <div className="absolute top-3 left-4 z-10">
+                      <div className="absolute top-4 left-4 z-10">
                         <div 
                           className="relative group/estado"
                           onMouseLeave={(e) => {
@@ -1124,7 +1124,7 @@ export function CatalogoItemDetailPanel({
                                 ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]"
                                 : "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]"
                             }`} />
-                            <span className="text-[10px] text-slate-500 uppercase tracking-wider group-hover/estadoBtn:text-slate-300 transition-colors">
+                            <span className="text-[11px] text-slate-500 uppercase tracking-wider group-hover/estadoBtn:text-slate-300 transition-colors">
                               {selectedItem?.isActive !== false ? "Activo" : "Pausado"}
                             </span>
                             <ChevronDown className="w-3 h-3 text-slate-600 opacity-0 group-hover/estadoBtn:opacity-100 transition-opacity" />
@@ -1180,9 +1180,9 @@ export function CatalogoItemDetailPanel({
                     {/* Flip hint top-right - clickable area */}
                     <button
                       onClick={() => setIsCardFlipped(true)}
-                      className="absolute top-0 right-0 px-6 py-4 flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer z-20"
-                    >
-                      <span className="text-[10px] uppercase tracking-wider">Detalles</span>
+                  className="absolute top-0 right-0 px-6 py-4 flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer z-20"
+                >
+                  <span className="text-[11px] uppercase tracking-wider">Detalles</span>
                       <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M9 18l6-6-6-6" />
                       </svg>
