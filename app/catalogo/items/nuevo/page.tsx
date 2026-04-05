@@ -869,8 +869,11 @@ export default function NuevoItemPage() {
                                 </div>
                               )}
 
-                              {/* Proveedor Field */}
-                              <div className="flex flex-col gap-2 mt-4">
+                              {/* Divider */}
+                              <div className="border-t border-gray-200 my-4"></div>
+
+                              {/* Proveedor Section */}
+                              <div className="flex flex-col gap-2">
                                 <label className="text-sm font-medium text-gray-700">Proveedor</label>
                                 <input
                                   type="text"
@@ -2150,18 +2153,6 @@ export default function NuevoItemPage() {
                                 </div>
                               </div>
 
-                              {/* Proveedor - below Presentación */}
-                              <div className="flex flex-col gap-2 mt-5">
-                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Proveedor</label>
-                                <input
-                                  type="text"
-                                  value={proveedor}
-                                  onChange={(e) => setProveedor(e.target.value)}
-                                  className="px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-800 text-sm placeholder:text-slate-400 transition-all"
-                                  placeholder="Nombre del proveedor"
-                                />
-                              </div>
-
                               <div className="flex flex-col gap-3 mt-2">
                                 <div className="flex items-center gap-3">
                                   <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Volumen de la unidad</label>
@@ -2245,6 +2236,21 @@ export default function NuevoItemPage() {
                                   )}
                                 </div>
                               )}
+
+                              {/* Divider */}
+                              <div className="border-t border-slate-200 my-5"></div>
+
+                              {/* Proveedor Section */}
+                              <div className="flex flex-col gap-2">
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Proveedor</label>
+                                <input
+                                  type="text"
+                                  value={proveedor}
+                                  onChange={(e) => setProveedor(e.target.value)}
+                                  className="px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-800 text-sm placeholder:text-slate-400 transition-all"
+                                  placeholder="Nombre del proveedor"
+                                />
+                              </div>
 
                             </div>
                           </div>
