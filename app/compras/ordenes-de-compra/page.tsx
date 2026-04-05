@@ -24,8 +24,8 @@ import { Breadcrumb } from "@/components/layout/breadcrumb"
 
 import type { EstadoOrdenDeCompra } from "@/lib/types"
 import { Button } from "@/components/ui/button"
-import { ORDENES_DE_COMPRA } from "@/lib/data/initial-ordenes-de-compra"
 import { INITIAL_ITEMS } from "@/lib/data/initial-items"
+import { useOrdenesDeCompra } from "@/hooks/use-ordenes-de-compra"
 
 const estadoLabels: Record<EstadoOrdenDeCompra, string> = {
   borrador: "Borrador",
@@ -83,11 +83,13 @@ function OrdenesDeCompraContent() {
 
   const [showOrderModal, setShowOrderModal] = useState(false)
   const [showFilterModal, setShowFilterModal] = useState(false)
+  const [showExportDropdown, setShowExportDropdown] = useState(false)
   const orderRef = useRef<HTMLDivElement>(null)
   const filterRef = useRef<HTMLDivElement>(null)
+  const exportRef = useRef<HTMLDivElement>(null)
   
-  // Local ordenes state to support adding new orders
-  const [ordenes, setOrdenes] = useState(ORDENES_DE_COMPRA)
+  // Use ordenes de compra hook for localStorage persistence
+  const { ordenes, addOrden, updateEstado, getNextOrderNumber } = useOrdenesDeCompra()
   
   // Nueva Orden Modal state
   const [showNuevaOrdenModal, setShowNuevaOrdenModal] = useState(false)
@@ -113,32 +115,25 @@ function OrdenesDeCompraContent() {
   }, [nuevaOrdenProveedor, uniqueProveedores])
   
   // Generate next order ID
-  const nextOrderNumber = useMemo(() => {
-    const maxNumber = ordenes.reduce((max, o) => Math.max(max, o.numero), 0)
-    return maxNumber + 1
-  }, [ordenes])
-  
+  const nextOrderNumber = getNextOrderNumber()
   const nextOrderId = `ODC-${nextOrderNumber}`
   
   // Handle creating new order
   const handleCreateOrden = () => {
     if (!nuevaOrdenProveedor.trim()) return
     
-    // Create new order and add to local state
-    const newOrden = {
-      id: nextOrderId,
-      numero: nextOrderNumber,
+    // Create new order using the hook (persists to localStorage)
+    const newOrden = addOrden({
       fechaCreacion: new Date().toISOString().split("T")[0],
       proveedorId: "",
       proveedorNombre: nuevaOrdenProveedor.trim(),
       estado: "borrador" as EstadoOrdenDeCompra,
       items: [],
       importeEstimado: 0,
-    }
-    setOrdenes(prev => [newOrden, ...prev])
+    })
     
     // Navigate to the new order page
-    router.push(`/compras/ordenes-de-compra/${nextOrderId}?proveedor=${encodeURIComponent(nuevaOrdenProveedor.trim())}&isNew=true`)
+    router.push(`/compras/ordenes-de-compra/${newOrden.id}`)
     setShowNuevaOrdenModal(false)
     setNuevaOrdenProveedor("")
   }
@@ -175,6 +170,9 @@ function OrdenesDeCompraContent() {
     const handleClickOutside = (event: MouseEvent) => {
       if (proveedorInputRef.current && !proveedorInputRef.current.contains(event.target as Node)) {
         setProveedorDropdownOpen(false)
+      }
+      if (exportRef.current && !exportRef.current.contains(event.target as Node)) {
+        setShowExportDropdown(false)
       }
     }
     document.addEventListener("mousedown", handleClickOutside)
@@ -319,33 +317,49 @@ function OrdenesDeCompraContent() {
                       <>
                         <div className="h-5 w-px bg-slate-200" />
                         <span className="text-xs text-slate-500">{selectedOrdenes.size} seleccionadas</span>
-                        <button
-                          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors"
-                          onClick={() => {/* TODO: Export PDF */}}
-                        >
-                          <FileDown className="w-3.5 h-3.5" />
-                          Exportar PDF
-                        </button>
-                        <button
-                          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors"
-                          onClick={() => {/* TODO: Export Text */}}
-                        >
-                          <FileText className="w-3.5 h-3.5" />
-                          Exportar Texto
-                        </button>
+                        
+                        {/* Exportar Dropdown */}
+                        <div className="relative" ref={exportRef}>
+                          <button
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors"
+                            onClick={() => setShowExportDropdown(!showExportDropdown)}
+                          >
+                            <FileDown className="w-3.5 h-3.5" />
+                            Exportar
+                            <ChevronDown className={`w-3 h-3 transition-transform ${showExportDropdown ? "rotate-180" : ""}`} />
+                          </button>
+                          {showExportDropdown && (
+                            <div className="absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[140px] z-50">
+                              <button
+                                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                                onClick={() => {
+                                  // TODO: Export PDF
+                                  setShowExportDropdown(false)
+                                }}
+                              >
+                                <FileDown className="w-3.5 h-3.5 text-slate-400" />
+                                Exportar PDF
+                              </button>
+                              <button
+                                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                                onClick={() => {
+                                  // TODO: Export Text
+                                  setShowExportDropdown(false)
+                                }}
+                              >
+                                <FileText className="w-3.5 h-3.5 text-slate-400" />
+                                Exportar Texto
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        
                         <button
                           className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded transition-colors"
                           onClick={() => {/* TODO: Convert to Compras */}}
                         >
                           <ShoppingCart className="w-3.5 h-3.5" />
                           Llevar a Compras
-                        </button>
-                        <button
-                          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded transition-colors"
-                          onClick={() => setSelectedOrdenes(new Set())}
-                        >
-                          <X className="w-3.5 h-3.5" />
-                          Deseleccionar
                         </button>
                       </>
                     )}

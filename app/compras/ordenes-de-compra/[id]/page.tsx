@@ -22,9 +22,11 @@ import { getCategoryImage } from "@/lib/utils/category-images"
 import Image from "next/image"
 import type { EstadoOrdenDeCompra } from "@/lib/types"
 import { Button } from "@/components/ui/button"
-import { ORDENES_DE_COMPRA } from "@/lib/data/initial-ordenes-de-compra"
 import { INITIAL_ITEMS } from "@/lib/data/initial-items"
 import type { Item, OrdenDeCompraItem, OrdenDeCompra } from "@/lib/types"
+import { useOrdenesDeCompra } from "@/hooks/use-ordenes-de-compra"
+import { useCompras } from "@/hooks/use-compras"
+import { Eye } from "lucide-react"
 
 const estadoLabels: Record<EstadoOrdenDeCompra, string> = {
   borrador: "Borrador",
@@ -47,35 +49,26 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const searchParams = useSearchParams()
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
 
-  // Check if this is a new order creation
-  const isNewOrder = searchParams.get("isNew") === "true"
-  const proveedorFromQuery = searchParams.get("proveedor")
+  // Use hooks for data persistence
+  const { ordenes, getOrdenById, updateOrden, updateEstado } = useOrdenesDeCompra()
+  const { addCompra } = useCompras()
 
-  // Find the orden or create a new one
-  const initialOrden = useMemo(() => {
-    const existingOrden = ORDENES_DE_COMPRA.find((o) => o.id === id)
-    if (existingOrden) return existingOrden
-    
-    // Create new order if coming from nueva orden modal
-    if (isNewOrder && proveedorFromQuery) {
-      const orderNumber = parseInt(id.replace("ODC-", "")) || 1
-      return {
-        id,
-        numero: orderNumber,
-        fechaCreacion: new Date().toISOString().split("T")[0],
-        proveedorId: "",
-        proveedorNombre: proveedorFromQuery,
-        estado: "borrador" as EstadoOrdenDeCompra,
-        items: [],
-        importeEstimado: 0,
-      }
-    }
-    
-    return null
-  }, [id, isNewOrder, proveedorFromQuery])
+  // Get the orden from hook (localStorage backed)
+  const storedOrden = getOrdenById(id)
   
-  const [orden, setOrden] = useState<OrdenDeCompra | null>(initialOrden)
-  const [hasChanges, setHasChanges] = useState(isNewOrder)
+  const [orden, setOrden] = useState<OrdenDeCompra | null>(storedOrden)
+  const [hasChanges, setHasChanges] = useState(false)
+  
+  // Sync with localStorage when ordenes change
+  useEffect(() => {
+    const updated = getOrdenById(id)
+    if (updated) {
+      setOrden(updated)
+    }
+  }, [ordenes, id, getOrdenById])
+  
+  // Check if order is editable (only borrador state)
+  const isEditable = orden?.estado === "borrador"
   
   // New item modal state
   const [showAddItemModal, setShowAddItemModal] = useState(false)
@@ -236,7 +229,9 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     }
     
     const newTotal = newItems.reduce((sum, it) => sum + it.total, 0)
-    setOrden({ ...orden, items: newItems, importeEstimado: newTotal })
+    const updatedOrden = { ...orden, items: newItems, importeEstimado: newTotal }
+    setOrden(updatedOrden)
+    updateOrden(orden.id, { items: newItems, importeEstimado: newTotal })
     setSelectedProveedorItems({})
     setHasChanges(true)
   }
@@ -251,6 +246,48 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
         item.sku.toLowerCase().includes(search)
     ).slice(0, 6)
   }, [newItemSearch, availableItems])
+  
+  // Handle "Llevar a Compras" - converts orden to aceptada and creates a compra
+  const handleLlevarACompras = () => {
+    if (!orden || orden.items.length === 0) return
+    
+    // Update orden estado to aceptada
+    updateEstado(orden.id, "aceptada")
+    
+    // Create a new compra from this orden
+    const now = new Date()
+    addCompra({
+      fecha: now.toISOString().split("T")[0],
+      hora: now.toTimeString().slice(0, 5),
+      proveedorId: orden.proveedorId,
+      proveedorNombre: orden.proveedorNombre,
+      items: orden.items.map(item => ({
+        sku: item.sku,
+        name: item.name,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        discount: 0,
+        discountType: "percent" as const,
+        total: item.total,
+        categoria: item.categoria,
+      })),
+      subtotal: orden.importeEstimado,
+      descuento: 0,
+      descuentoTipo: "percent" as const,
+      total: orden.importeEstimado,
+      metodoPago: "transferencia",
+      estado: "pendiente",
+      comprador: "",
+    })
+    
+    // Navigate to compras
+    router.push("/compras/compras")
+  }
+  
+  // Handle "Ver en Compras" - just navigate
+  const handleVerEnCompras = () => {
+    router.push("/compras/compras")
+  }
 
   const breadcrumbs = [
     { label: "Compras" },
@@ -280,6 +317,7 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     )
     const newTotal = newItems.reduce((sum, it) => sum + it.total, 0)
     setOrden({ ...orden, items: newItems, importeEstimado: newTotal })
+    updateOrden(orden.id, { items: newItems, importeEstimado: newTotal })
     setHasChanges(true)
   }
 
@@ -289,6 +327,7 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     )
     const newTotal = newItems.reduce((sum, it) => sum + it.total, 0)
     setOrden({ ...orden, items: newItems, importeEstimado: newTotal })
+    updateOrden(orden.id, { items: newItems, importeEstimado: newTotal })
     setHasChanges(true)
   }
 
@@ -296,18 +335,22 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     const newItems = orden.items.filter((_, i) => i !== idx)
     const newTotal = newItems.reduce((sum, it) => sum + it.total, 0)
     setOrden({ ...orden, items: newItems, importeEstimado: newTotal })
+    updateOrden(orden.id, { items: newItems, importeEstimado: newTotal })
     setHasChanges(true)
   }
 
   const handleDeshacer = () => {
-    setOrden(initialOrden || null)
+    const stored = getOrdenById(id)
+    setOrden(stored)
     setHasChanges(false)
     setShowAddItemModal(false)
     setNewItemSearch("")
   }
 
   const handleGuardar = () => {
-    // TODO: Save to backend
+    if (orden) {
+      updateOrden(orden.id, orden)
+    }
     setHasChanges(false)
   }
 
@@ -325,6 +368,7 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     const newItems = [...orden.items, newItem]
     const newTotal = newItems.reduce((sum, it) => sum + it.total, 0)
     setOrden({ ...orden, items: newItems, importeEstimado: newTotal })
+    updateOrden(orden.id, { items: newItems, importeEstimado: newTotal })
     setHasChanges(true)
     setShowAddItemModal(false)
     setNewItemSearch("")
@@ -341,6 +385,7 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     }
     const newItems = [...orden.items, newItem]
     setOrden({ ...orden, items: newItems })
+    updateOrden(orden.id, { items: newItems })
     setHasChanges(true)
     setShowAddItemModal(false)
     setNewItemSearch("")
@@ -479,13 +524,24 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                       </div>
                     )}
                   </div>
-                  <button
-                    onClick={() => {/* TODO: Convert to Compra */}}
-                    className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer gap-1.5 shrink-0 px-3 rounded-md flex items-center"
-                  >
-                    <ShoppingCart className="w-3.5 h-3.5 text-amber-600" />
-                    Llevar a Compras
-                  </button>
+                  {orden.estado === "aceptada" ? (
+                    <button
+                      onClick={handleVerEnCompras}
+                      className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer gap-1.5 shrink-0 px-3 rounded-md flex items-center"
+                    >
+                      <Eye className="w-3.5 h-3.5 text-slate-500" />
+                      Ver en Compras
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleLlevarACompras}
+                      disabled={orden.items.length === 0}
+                      className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer gap-1.5 shrink-0 px-3 rounded-md flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <ShoppingCart className="w-3.5 h-3.5 text-amber-600" />
+                      Llevar a Compras
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -748,27 +804,37 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
 
                         {/* Costo Unit. */}
                         <div className="col-span-2 flex items-center justify-center">
-                          <div className="flex items-center">
-                            <span className="text-xs text-slate-400 mr-0.5">$</span>
-                            <input
-                              type="number"
-                              value={item.unitPrice}
-                              onChange={(e) => handlePriceChange(idx, parseInt(e.target.value) || 0)}
-                              className="w-20 text-center text-sm font-medium bg-transparent border border-transparent hover:border-slate-200 focus:border-amber-400 rounded px-2 py-1 focus:outline-none focus:bg-white transition-all"
-                              min={0}
-                            />
-                          </div>
+                          {isEditable ? (
+                            <div className="flex items-center">
+                              <span className="text-xs text-slate-400 mr-0.5">$</span>
+                              <input
+                                type="number"
+                                value={item.unitPrice}
+                                onChange={(e) => handlePriceChange(idx, parseInt(e.target.value) || 0)}
+                                className="w-20 text-center text-sm font-medium bg-transparent border border-transparent hover:border-slate-200 focus:border-amber-400 rounded px-2 py-1 focus:outline-none focus:bg-white transition-all"
+                                min={0}
+                              />
+                            </div>
+                          ) : (
+                            <span className="text-sm font-medium text-gray-700">
+                              ${item.unitPrice.toLocaleString("es-AR")}
+                            </span>
+                          )}
                         </div>
 
                         {/* Cantidad */}
                         <div className="col-span-2 flex items-center justify-center">
-                          <input
-                            type="number"
-                            value={item.quantity}
-                            onChange={(e) => handleQuantityChange(idx, parseInt(e.target.value) || 0)}
-                            className="w-16 text-center text-sm font-medium bg-transparent border border-transparent hover:border-slate-200 focus:border-amber-400 rounded px-2 py-1 focus:outline-none focus:bg-white transition-all"
-                            min={1}
-                          />
+                          {isEditable ? (
+                            <input
+                              type="number"
+                              value={item.quantity}
+                              onChange={(e) => handleQuantityChange(idx, parseInt(e.target.value) || 0)}
+                              className="w-16 text-center text-sm font-medium bg-transparent border border-transparent hover:border-slate-200 focus:border-amber-400 rounded px-2 py-1 focus:outline-none focus:bg-white transition-all"
+                              min={1}
+                            />
+                          ) : (
+                            <span className="text-sm font-medium text-gray-700">{item.quantity}</span>
+                          )}
                         </div>
 
                         {/* Subtotal */}
@@ -781,25 +847,29 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                               {item.quantity} x ${item.unitPrice.toLocaleString("es-AR")}
                             </p>
                           </div>
-                          <button
-                            onClick={() => handleDeleteItem(idx)}
-                            className="p-1.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
-                            title="Eliminar"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {isEditable && (
+                            <button
+                              onClick={() => handleDeleteItem(idx)}
+                              className="p-1.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                              title="Eliminar"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}
 
-                    {/* Add Item Button */}
-                    <button
-                      className="w-full py-4 text-sm text-slate-400 hover:text-amber-600 hover:bg-amber-50/30 transition-colors flex items-center justify-center gap-2 border-t border-dashed border-slate-200 cursor-pointer"
-                      onClick={() => setShowAddItemModal(true)}
-                    >
-                      <Plus className="w-4 h-4" />
-                      Agregar item
-                    </button>
+                    {/* Add Item Button - only show when editable */}
+                    {isEditable && (
+                      <button
+                        className="w-full py-4 text-sm text-slate-400 hover:text-amber-600 hover:bg-amber-50/30 transition-colors flex items-center justify-center gap-2 border-t border-dashed border-slate-200 cursor-pointer"
+                        onClick={() => setShowAddItemModal(true)}
+                      >
+                        <Plus className="w-4 h-4" />
+                        Agregar item
+                      </button>
+                    )}
                   </div>
 
                   {/* Total Row - Part of the grid, closes the table */}
