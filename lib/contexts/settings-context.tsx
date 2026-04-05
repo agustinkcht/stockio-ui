@@ -8,14 +8,23 @@ interface PreciosSettings {
   costoBehavior: CostoBehavior
 }
 
-interface SettingsContextType {
-  precios: PreciosSettings
-  updatePreciosSettings: (settings: Partial<PreciosSettings>) => void
+interface CatalogoSettings {
+  incluirVencimiento: boolean
 }
 
-const defaultSettings: { precios: PreciosSettings } = {
+interface SettingsContextType {
+  precios: PreciosSettings
+  catalogo: CatalogoSettings
+  updatePreciosSettings: (settings: Partial<PreciosSettings>) => void
+  updateCatalogoSettings: (settings: Partial<CatalogoSettings>) => void
+}
+
+const defaultSettings: { precios: PreciosSettings; catalogo: CatalogoSettings } = {
   precios: {
     costoBehavior: "preservePrecioFinal", // Default: when editing costo, preserve precio final and modify margen
+  },
+  catalogo: {
+    incluirVencimiento: false, // Default: don't show vencimiento toggle in items
   },
 }
 
@@ -23,6 +32,7 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [precios, setPrecios] = useState<PreciosSettings>(defaultSettings.precios)
+  const [catalogo, setCatalogo] = useState<CatalogoSettings>(defaultSettings.catalogo)
 
   // Load settings from localStorage on mount
   useEffect(() => {
@@ -33,6 +43,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         if (parsed.precios) {
           setPrecios({ ...defaultSettings.precios, ...parsed.precios })
         }
+        if (parsed.catalogo) {
+          setCatalogo({ ...defaultSettings.catalogo, ...parsed.catalogo })
+        }
       } catch (e) {
         console.error("Failed to parse settings from localStorage")
       }
@@ -41,15 +54,19 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem("stockio-settings", JSON.stringify({ precios }))
-  }, [precios])
+    localStorage.setItem("stockio-settings", JSON.stringify({ precios, catalogo }))
+  }, [precios, catalogo])
 
   const updatePreciosSettings = (settings: Partial<PreciosSettings>) => {
     setPrecios((prev) => ({ ...prev, ...settings }))
   }
 
+  const updateCatalogoSettings = (settings: Partial<CatalogoSettings>) => {
+    setCatalogo((prev) => ({ ...prev, ...settings }))
+  }
+
   return (
-    <SettingsContext.Provider value={{ precios, updatePreciosSettings }}>
+    <SettingsContext.Provider value={{ precios, catalogo, updatePreciosSettings, updateCatalogoSettings }}>
       {children}
     </SettingsContext.Provider>
   )

@@ -1,6 +1,6 @@
 "use client"
 
-import { Settings, DollarSign, ShoppingCart, Package } from "lucide-react"
+import { Settings, DollarSign, ShoppingCart, Package, FolderOpen } from "lucide-react"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { Sidebar } from "@/components/layout/sidebar"
@@ -10,7 +10,7 @@ import { useSettings, type CostoBehavior } from "@/lib/contexts/settings-context
 
 export default function AjustesPage() {
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
-  const { precios, updatePreciosSettings } = useSettings()
+  const { precios, catalogo, updatePreciosSettings, updateCatalogoSettings } = useSettings()
 
   const handleCostoBehaviorChange = (behavior: CostoBehavior) => {
     updatePreciosSettings({ costoBehavior: behavior })
@@ -140,6 +140,48 @@ export default function AjustesPage() {
                         </div>
                       </label>
                     </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* Catalogo Section */}
+              <section className="bg-white rounded-2xl border border-slate-200/60 overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center">
+                    <FolderOpen className="w-4 h-4 text-violet-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">Catálogo</h2>
+                    <p className="text-xs text-slate-500">Configuración de items y productos</p>
+                  </div>
+                </div>
+                
+                <div className="px-6 py-5">
+                  <div className="space-y-4">
+                    <label 
+                      className="flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all border-slate-200 hover:border-slate-300 hover:bg-slate-50/30"
+                      onClick={() => updateCatalogoSettings({ incluirVencimiento: !catalogo.incluirVencimiento })}
+                    >
+                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center mt-0.5 flex-shrink-0 transition-colors ${
+                        catalogo.incluirVencimiento
+                          ? "border-slate-900 bg-slate-900"
+                          : "border-slate-300"
+                      }`}>
+                        {catalogo.incluirVencimiento && (
+                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm font-medium text-slate-800 block">
+                          Incluir vencimiento en items
+                        </span>
+                        <span className="text-xs text-slate-500 block mt-0.5">
+                          Habilita la opción de establecer fecha de vencimiento en los productos del catálogo.
+                        </span>
+                      </div>
+                    </label>
                   </div>
                 </div>
               </section>

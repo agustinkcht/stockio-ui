@@ -182,18 +182,34 @@ export function Sidebar({
 
       {/* Bottom Navigation */}
       <nav className="mt-auto mb-4 space-y-1 px-2">
-        {bottomSidebarItems.map((item, index) => (
-          <div key={index}>
-            <button className="flex flex-col items-center gap-1 w-full py-2 rounded-lg transition-colors cursor-pointer">
-              <div className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-gray-100 transition-colors">
-                <item.icon className="w-5 h-5 flex-shrink-0 text-sidebar-foreground/70" />
-              </div>
-              <span className="text-[10px] font-medium text-center leading-tight px-1 max-w-full truncate text-sidebar-foreground/70">
-                {item.label}
-              </span>
-            </button>
-          </div>
-        ))}
+        {bottomSidebarItems.map((item, index) => {
+          const isAjustes = item.label === "Ajustes"
+          const isActive = isAjustes && pathname.startsWith("/ajustes")
+          
+          return (
+            <div key={index}>
+              <button 
+                className="flex flex-col items-center gap-1 w-full py-2 rounded-lg transition-colors cursor-pointer"
+                onClick={() => {
+                  if (isAjustes) {
+                    router.push("/ajustes")
+                  }
+                }}
+              >
+                <div className={`w-8 h-8 flex items-center justify-center rounded-md transition-colors ${
+                  isActive ? "bg-gray-100" : "hover:bg-gray-100"
+                }`}>
+                  <item.icon className={`w-5 h-5 flex-shrink-0 ${
+                    isActive ? "text-sidebar-foreground" : "text-sidebar-foreground/70"
+                  }`} />
+                </div>
+                <span className="text-[10px] font-medium text-center leading-tight px-1 max-w-full truncate text-sidebar-foreground/70">
+                  {item.label}
+                </span>
+              </button>
+            </div>
+          )
+        })}
       </nav>
     </div>
   )
