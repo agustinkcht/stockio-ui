@@ -8,7 +8,7 @@ import { useAccount } from "@/lib/contexts/account-context"
 const STORAGE_KEY_PREFIX = "stockio_ordenes_de_compra"
 
 export function useOrdenesDeCompra() {
-  const [ordenes, setOrdenes] = useState<OrdenDeCompra[]>([])
+  const [ordenes, setOrdenes] = useState<OrdenDeCompra[]>(ORDENES_DE_COMPRA)
   const [isLoading, setIsLoading] = useState(true)
   const { currentAccount } = useAccount()
 

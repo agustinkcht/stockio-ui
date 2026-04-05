@@ -53,18 +53,18 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const { ordenes, isLoading, getOrdenById, updateOrden, updateEstado } = useOrdenesDeCompra()
   const { addCompra } = useCompras()
 
-  const [orden, setOrden] = useState<OrdenDeCompra | null>(null)
+  // Initialize orden from hook (now has initial data immediately)
+  const initialOrden = getOrdenById(id)
+  const [orden, setOrden] = useState<OrdenDeCompra | null>(initialOrden)
   const [hasChanges, setHasChanges] = useState(false)
   
-  // Sync with localStorage when ordenes change or load
+  // Sync with localStorage when ordenes change
   useEffect(() => {
-    if (!isLoading) {
-      const updated = getOrdenById(id)
-      if (updated) {
-        setOrden(updated)
-      }
+    const updated = getOrdenById(id)
+    if (updated && JSON.stringify(updated) !== JSON.stringify(orden)) {
+      setOrden(updated)
     }
-  }, [ordenes, id, getOrdenById, isLoading])
+  }, [ordenes, id, getOrdenById, orden])
   
   // Check if order is editable (only borrador state)
   const isEditable = orden?.estado === "borrador"
@@ -396,15 +396,6 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     const selectedSkus = new Set(orden.items.map(it => it.sku))
     return availableItems.filter(it => !selectedSkus.has(it.sku))
   }, [availableItems, orden])
-
-  // Show loading state
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[rgb(243,242,238)] flex items-center justify-center">
-        <div className="text-slate-500">Cargando...</div>
-      </div>
-    )
-  }
 
   // Show not found state
   if (!orden) {
