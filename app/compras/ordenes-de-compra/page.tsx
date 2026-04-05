@@ -86,6 +86,9 @@ function OrdenesDeCompraContent() {
   const orderRef = useRef<HTMLDivElement>(null)
   const filterRef = useRef<HTMLDivElement>(null)
   
+  // Local ordenes state to support adding new orders
+  const [ordenes, setOrdenes] = useState(ORDENES_DE_COMPRA)
+  
   // Nueva Orden Modal state
   const [showNuevaOrdenModal, setShowNuevaOrdenModal] = useState(false)
   const [nuevaOrdenProveedor, setNuevaOrdenProveedor] = useState("")
@@ -111,9 +114,9 @@ function OrdenesDeCompraContent() {
   
   // Generate next order ID
   const nextOrderNumber = useMemo(() => {
-    const maxNumber = ORDENES_DE_COMPRA.reduce((max, o) => Math.max(max, o.numero), 0)
+    const maxNumber = ordenes.reduce((max, o) => Math.max(max, o.numero), 0)
     return maxNumber + 1
-  }, [])
+  }, [ordenes])
   
   const nextOrderId = `ODC-${nextOrderNumber}`
   
@@ -121,7 +124,20 @@ function OrdenesDeCompraContent() {
   const handleCreateOrden = () => {
     if (!nuevaOrdenProveedor.trim()) return
     
-    // Navigate to the new order page with proveedor as query param
+    // Create new order and add to local state
+    const newOrden = {
+      id: nextOrderId,
+      numero: nextOrderNumber,
+      fechaCreacion: new Date().toISOString().split("T")[0],
+      proveedorId: "",
+      proveedorNombre: nuevaOrdenProveedor.trim(),
+      estado: "borrador" as EstadoOrdenDeCompra,
+      items: [],
+      importeEstimado: 0,
+    }
+    setOrdenes(prev => [newOrden, ...prev])
+    
+    // Navigate to the new order page
     router.push(`/compras/ordenes-de-compra/${nextOrderId}?proveedor=${encodeURIComponent(nuevaOrdenProveedor.trim())}&isNew=true`)
     setShowNuevaOrdenModal(false)
     setNuevaOrdenProveedor("")
@@ -166,7 +182,7 @@ function OrdenesDeCompraContent() {
   }, [])
 
   const filteredOrdenes = useMemo(() => {
-    let result = ORDENES_DE_COMPRA.filter((orden) => {
+    let result = ordenes.filter((orden) => {
       const matchesSearch =
         searchQuery === "" ||
         orden.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -203,7 +219,7 @@ function OrdenesDeCompraContent() {
     })
 
     return result
-  }, [searchQuery, activeFilters, sortConfig])
+  }, [ordenes, searchQuery, activeFilters, sortConfig])
 
   const hasActiveFilters = activeFilters.estado.length > 0
 
@@ -262,50 +278,21 @@ function OrdenesDeCompraContent() {
               </div>
 
               <div className="flex items-center gap-2">
-                {hasSelection ? (
-                  <>
-                    <span className="text-sm text-slate-500 mr-2">{selectedOrdenes.size} seleccionadas</span>
-                    <button
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors"
-                      onClick={() => {/* TODO: Export PDF */}}
-                    >
-                      <FileDown className="w-4 h-4" />
-                      Exportar PDF
-                    </button>
-                    <button
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors"
-                      onClick={() => {/* TODO: Export Text */}}
-                    >
-                      <FileText className="w-4 h-4" />
-                      Exportar Texto
-                    </button>
-                    <button
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded transition-colors"
-                      onClick={() => {/* TODO: Convert to Compras */}}
-                    >
-                      <ShoppingCart className="w-4 h-4" />
-                      Llevar a Compras
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      disabled
-                      className="px-4 py-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground hover:bg-muted text-sm font-medium"
-                      title="Deshacer cambios"
-                    >
-                      Deshacer
-                    </button>
+                <button
+                  disabled
+                  className="px-4 py-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground hover:bg-muted text-sm font-medium"
+                  title="Deshacer cambios"
+                >
+                  Deshacer
+                </button>
 
-                    <button
-                      disabled
-                      className="px-4 py-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-primary hover:bg-muted text-sm font-medium"
-                      title="Guardar cambios"
-                    >
-                      Guardar
-                    </button>
-                  </>
-                )}
+                <button
+                  disabled
+                  className="px-4 py-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-primary hover:bg-muted text-sm font-medium"
+                  title="Guardar cambios"
+                >
+                  Guardar
+                </button>
               </div>
             </div>
           </div>
@@ -315,8 +302,8 @@ function OrdenesDeCompraContent() {
             <div className="px-6 pt-6 pb-4">
               <div className="bg-white border border-border/40 rounded-lg shadow-sm">
                 <div className="px-4 py-3 flex items-center justify-between gap-4">
-                  {/* Left: Nueva Orden Button */}
-                  <div className="flex items-center gap-4 shrink-0">
+                  {/* Left: Nueva Orden Button + Selection Actions */}
+                  <div className="flex items-center gap-3 shrink-0">
                     <Button
                       onClick={() => setShowNuevaOrdenModal(true)}
                       variant="ghost"
@@ -326,31 +313,66 @@ function OrdenesDeCompraContent() {
                       <Plus className="w-3.5 h-3.5 text-amber-600" />
                       Nueva Orden
                     </Button>
-                  </div>
-
-                  {/* Center: Search Bar */}
-                  <div className="flex-1 max-w-md relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-black opacity-100 z-10" />
-                    <input
-                      type="text"
-                      placeholder="Buscar ordenes..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full h-8 pl-9 pr-9 border shadow-sm rounded-md text-xs placeholder:text-gray-600 text-gray-600 focus:outline-none focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500/50 bg-white backdrop-blur-sm transition-all duration-300 border-[rgba(202,213,227,0.842391304347826)]"
-                    />
-                    {searchQuery && (
-                      <button
-                        onClick={() => setSearchQuery("")}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors z-10"
-                        title="Limpiar busqueda"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
+                    
+                    {/* Selection Actions */}
+                    {hasSelection && (
+                      <>
+                        <div className="h-5 w-px bg-slate-200" />
+                        <span className="text-xs text-slate-500">{selectedOrdenes.size} seleccionadas</span>
+                        <button
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors"
+                          onClick={() => {/* TODO: Export PDF */}}
+                        >
+                          <FileDown className="w-3.5 h-3.5" />
+                          Exportar PDF
+                        </button>
+                        <button
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors"
+                          onClick={() => {/* TODO: Export Text */}}
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          Exportar Texto
+                        </button>
+                        <button
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded transition-colors"
+                          onClick={() => {/* TODO: Convert to Compras */}}
+                        >
+                          <ShoppingCart className="w-3.5 h-3.5" />
+                          Llevar a Compras
+                        </button>
+                        <button
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded transition-colors"
+                          onClick={() => setSelectedOrdenes(new Set())}
+                        >
+                          <X className="w-3.5 h-3.5" />
+                          Deseleccionar
+                        </button>
+                      </>
                     )}
                   </div>
 
-                  {/* Right: Order and Filter Buttons */}
-                  <div className="flex items-center gap-0 flex-shrink-0">
+                  {/* Right: Search Bar + Order and Filter Buttons */}
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    {/* Search Bar */}
+                    <div className="relative w-56">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-black opacity-100 z-10" />
+                      <input
+                        type="text"
+                        placeholder="Buscar ordenes..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full h-8 pl-9 pr-9 border shadow-sm rounded-md text-xs placeholder:text-gray-600 text-gray-600 focus:outline-none focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500/50 bg-white backdrop-blur-sm transition-all duration-300 border-[rgba(202,213,227,0.842391304347826)]"
+                      />
+                      {searchQuery && (
+                        <button
+                          onClick={() => setSearchQuery("")}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors z-10"
+                          title="Limpiar busqueda"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                     <div className="relative mr-3" ref={orderRef}>
                       <button
                         onClick={() => setShowOrderModal(!showOrderModal)}
