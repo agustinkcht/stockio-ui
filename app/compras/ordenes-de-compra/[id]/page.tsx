@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useMemo, Suspense, use } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useMemo, Suspense, use, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Sidebar } from "@/components/layout/sidebar"
 import { useSidebar } from "@/hooks/use-sidebar"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
@@ -44,12 +44,37 @@ function formatDateShort(dateString: string) {
 function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
 
-  // Find the orden
-  const initialOrden = ORDENES_DE_COMPRA.find((o) => o.id === id)
-  const [orden, setOrden] = useState<OrdenDeCompra | null>(initialOrden || null)
-  const [hasChanges, setHasChanges] = useState(false)
+  // Check if this is a new order creation
+  const isNewOrder = searchParams.get("isNew") === "true"
+  const proveedorFromQuery = searchParams.get("proveedor")
+
+  // Find the orden or create a new one
+  const initialOrden = useMemo(() => {
+    const existingOrden = ORDENES_DE_COMPRA.find((o) => o.id === id)
+    if (existingOrden) return existingOrden
+    
+    // Create new order if coming from nueva orden modal
+    if (isNewOrder && proveedorFromQuery) {
+      const orderNumber = parseInt(id.replace("ODC-", "")) || 1
+      return {
+        id,
+        numero: orderNumber,
+        fechaCreacion: new Date().toISOString().split("T")[0],
+        proveedorNombre: proveedorFromQuery,
+        estado: "borrador" as EstadoOrdenDeCompra,
+        items: [],
+        importeEstimado: 0,
+      }
+    }
+    
+    return null
+  }, [id, isNewOrder, proveedorFromQuery])
+  
+  const [orden, setOrden] = useState<OrdenDeCompra | null>(initialOrden)
+  const [hasChanges, setHasChanges] = useState(isNewOrder)
   
   // New item modal state
   const [showAddItemModal, setShowAddItemModal] = useState(false)
@@ -497,9 +522,9 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                         </button>
                         <span>Item</span>
                       </div>
-                      <div className="col-span-2 flex items-center justify-center">Categoría</div>
+                      <div className="col-span-2 flex items-center justify-center">Stock</div>
                       <div className="col-span-3 flex items-center justify-center">Costo Unitario</div>
-                      <div className="col-span-2 flex items-center justify-center">Stock Disp.</div>
+                      <div className="col-span-2"></div>
                     </div>
                   </div>
 
@@ -542,19 +567,27 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                                   />
                                 </div>
                                 <div className="min-w-0">
-                                  <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
-                                  <p className="text-xs text-slate-400">{item.marca || ""}</p>
+                                  <div className="flex items-center gap-1.5">
+                                    <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
+                                    {isParent && (
+                                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-500">
+                                        {item.variants!.length} var.
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-slate-400">
+                                    {[item.marca, item.categoria].filter(Boolean).join(" · ")}
+                                  </p>
                                 </div>
-                                {isParent && (
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-500 ml-1">
-                                    {item.variants!.length} var.
-                                  </span>
-                                )}
                               </div>
 
-                              {/* Categoría */}
+                              {/* Stock */}
                               <div className="col-span-2 flex items-center justify-center">
-                                <span className="text-sm text-slate-600">{item.categoria || "-"}</span>
+                                {!isParent && (
+                                  <span className="text-sm text-slate-600">
+                                    {parseInt(item.stock?.disponible || "0")} <span className="text-slate-400">disponibles</span>
+                                  </span>
+                                )}
                               </div>
 
                               {/* Costo Unitario */}
@@ -566,14 +599,8 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                                 )}
                               </div>
 
-                              {/* Stock Disp. */}
-                              <div className="col-span-2 flex items-center justify-center">
-                                {!isParent && (
-                                  <span className="text-sm text-slate-600">
-                                    {parseInt(item.stock?.disponible || "0")}
-                                  </span>
-                                )}
-                              </div>
+                              {/* Empty column */}
+                              <div className="col-span-2"></div>
                             </div>
 
                             {/* Children Rows */}
@@ -604,23 +631,30 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                                         className="w-full h-full object-cover"
                                       />
                                     </div>
-                                    <div className="min-w-0 flex items-center gap-2">
-                                      <p className="text-sm text-gray-700 truncate">{variant.name || item.name}</p>
-                                      {variant.atributosPrincipales && variant.atributosPrincipales.length > 0 && (
-                                        <div className="flex items-center gap-1">
-                                          {variant.atributosPrincipales.map((attr, i) => (
-                                            <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-500">
-                                              {attr.value}
-                                            </span>
-                                          ))}
-                                        </div>
-                                      )}
+                                    <div className="min-w-0">
+                                      <div className="flex items-center gap-2">
+                                        <p className="text-sm text-gray-700 truncate">{variant.name || item.name}</p>
+                                        {variant.atributosPrincipales && variant.atributosPrincipales.length > 0 && (
+                                          <div className="flex items-center gap-1">
+                                            {variant.atributosPrincipales.map((attr, i) => (
+                                              <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-500">
+                                                {attr.value}
+                                              </span>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                      <p className="text-xs text-slate-400">
+                                        {[item.marca, variant.categoria || item.categoria].filter(Boolean).join(" · ")}
+                                      </p>
                                     </div>
                                   </div>
 
-                                  {/* Categoría */}
+                                  {/* Stock */}
                                   <div className="col-span-2 flex items-center justify-center">
-                                    <span className="text-xs text-slate-500">{variant.categoria || item.categoria || "-"}</span>
+                                    <span className="text-sm text-slate-600">
+                                      {parseInt(variant.stock?.disponible || "0")} <span className="text-slate-400">disponibles</span>
+                                    </span>
                                   </div>
 
                                   {/* Costo Unitario */}
@@ -630,11 +664,8 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                                     </span>
                                   </div>
 
-                                  {/* Stock Disp. */}
-                                  <div className="col-span-2 flex items-center justify-center">
-                                    <span className="text-sm text-slate-600">
-                                      {parseInt(variant.stock?.disponible || "0")}
-                                    </span>
+                                  {/* Empty column */}
+                                  <div className="col-span-2"></div>
                                   </div>
                                 </div>
                               )

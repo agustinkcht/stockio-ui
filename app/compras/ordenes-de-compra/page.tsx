@@ -18,12 +18,14 @@ import {
   FileDown,
   ShoppingCart,
   MoreVertical,
+  ChevronDown,
 } from "lucide-react"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 
 import type { EstadoOrdenDeCompra } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { ORDENES_DE_COMPRA } from "@/lib/data/initial-ordenes-de-compra"
+import { INITIAL_ITEMS } from "@/lib/data/initial-items"
 
 const estadoLabels: Record<EstadoOrdenDeCompra, string> = {
   borrador: "Borrador",
@@ -83,6 +85,47 @@ function OrdenesDeCompraContent() {
   const [showFilterModal, setShowFilterModal] = useState(false)
   const orderRef = useRef<HTMLDivElement>(null)
   const filterRef = useRef<HTMLDivElement>(null)
+  
+  // Nueva Orden Modal state
+  const [showNuevaOrdenModal, setShowNuevaOrdenModal] = useState(false)
+  const [nuevaOrdenProveedor, setNuevaOrdenProveedor] = useState("")
+  const [proveedorDropdownOpen, setProveedorDropdownOpen] = useState(false)
+  const proveedorInputRef = useRef<HTMLInputElement>(null)
+  
+  // Get unique proveedores from items
+  const uniqueProveedores = useMemo(() => {
+    const proveedores = new Set<string>()
+    INITIAL_ITEMS.forEach(item => {
+      if (item.proveedor) proveedores.add(item.proveedor)
+    })
+    return Array.from(proveedores).sort()
+  }, [])
+  
+  // Filter proveedores based on input
+  const filteredProveedores = useMemo(() => {
+    if (!nuevaOrdenProveedor) return uniqueProveedores
+    return uniqueProveedores.filter(p => 
+      p.toLowerCase().includes(nuevaOrdenProveedor.toLowerCase())
+    )
+  }, [nuevaOrdenProveedor, uniqueProveedores])
+  
+  // Generate next order ID
+  const nextOrderNumber = useMemo(() => {
+    const maxNumber = ORDENES_DE_COMPRA.reduce((max, o) => Math.max(max, o.numero), 0)
+    return maxNumber + 1
+  }, [])
+  
+  const nextOrderId = `ODC-${nextOrderNumber}`
+  
+  // Handle creating new order
+  const handleCreateOrden = () => {
+    if (!nuevaOrdenProveedor.trim()) return
+    
+    // Navigate to the new order page with proveedor as query param
+    router.push(`/compras/ordenes-de-compra/${nextOrderId}?proveedor=${encodeURIComponent(nuevaOrdenProveedor.trim())}&isNew=true`)
+    setShowNuevaOrdenModal(false)
+    setNuevaOrdenProveedor("")
+  }
 
   const [activeFilters, setActiveFilters] = useState<FilterConfig>({
     estado: [],
@@ -109,6 +152,17 @@ function OrdenesDeCompraContent() {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside)
     }
+  }, [])
+  
+  // Close proveedor dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (proveedorInputRef.current && !proveedorInputRef.current.contains(event.target as Node)) {
+        setProveedorDropdownOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
   const filteredOrdenes = useMemo(() => {
@@ -264,7 +318,7 @@ function OrdenesDeCompraContent() {
                   {/* Left: Nueva Orden Button */}
                   <div className="flex items-center gap-4 shrink-0">
                     <Button
-                      onClick={() => {/* TODO: Nueva Orden */}}
+                      onClick={() => setShowNuevaOrdenModal(true)}
                       variant="ghost"
                       size="sm"
                       className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer gap-1.5 shrink-0"
@@ -575,6 +629,117 @@ function OrdenesDeCompraContent() {
           </main>
         </div>
       </div>
+      
+      {/* Nueva Orden Modal */}
+      {showNuevaOrdenModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100010]">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-slate-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">Nueva Orden de Compra</h2>
+                  <p className="text-sm text-slate-500 mt-0.5">Orden: <span className="font-medium text-amber-600">{nextOrderId}</span></p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowNuevaOrdenModal(false)
+                    setNuevaOrdenProveedor("")
+                    setProveedorDropdownOpen(false)
+                  }}
+                  className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+                >
+                  <X className="w-5 h-5 text-slate-500" />
+                </button>
+              </div>
+            </div>
+            
+            {/* Content */}
+            <div className="px-6 py-5">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Proveedor</label>
+                  <div className="relative" ref={proveedorInputRef}>
+                    <input
+                      type="text"
+                      value={nuevaOrdenProveedor}
+                      onChange={(e) => {
+                        setNuevaOrdenProveedor(e.target.value)
+                        setProveedorDropdownOpen(true)
+                      }}
+                      onFocus={() => setProveedorDropdownOpen(true)}
+                      placeholder="Buscar o escribir proveedor..."
+                      className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 text-sm"
+                    />
+                    <button
+                      onClick={() => setProveedorDropdownOpen(!proveedorDropdownOpen)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-100 rounded"
+                    >
+                      <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${proveedorDropdownOpen ? "rotate-180" : ""}`} />
+                    </button>
+                    
+                    {/* Dropdown */}
+                    {proveedorDropdownOpen && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto z-10">
+                        {filteredProveedores.length > 0 ? (
+                          filteredProveedores.map((proveedor) => (
+                            <button
+                              key={proveedor}
+                              onClick={() => {
+                                setNuevaOrdenProveedor(proveedor)
+                                setProveedorDropdownOpen(false)
+                              }}
+                              className={`w-full px-4 py-2 text-left text-sm hover:bg-amber-50 transition-colors ${
+                                nuevaOrdenProveedor === proveedor ? "bg-amber-50 text-amber-700 font-medium" : "text-slate-700"
+                              }`}
+                            >
+                              {proveedor}
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-4 py-3 text-sm text-slate-500">
+                            {nuevaOrdenProveedor ? (
+                              <span>Crear orden con: <span className="font-medium text-slate-700">&quot;{nuevaOrdenProveedor}&quot;</span></span>
+                            ) : (
+                              <span>No hay proveedores</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {nuevaOrdenProveedor && !uniqueProveedores.includes(nuevaOrdenProveedor) && (
+                    <p className="text-xs text-amber-600 mt-1.5">
+                      Se creará una orden con un nuevo proveedor
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            {/* Footer */}
+            <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowNuevaOrdenModal(false)
+                  setNuevaOrdenProveedor("")
+                  setProveedorDropdownOpen(false)
+                }}
+                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleCreateOrden}
+                disabled={!nuevaOrdenProveedor.trim()}
+                className="px-5 py-2 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Crear Orden
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
