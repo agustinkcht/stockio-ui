@@ -23,9 +23,10 @@ import Image from "next/image"
 import type { EstadoOrdenDeCompra } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { INITIAL_ITEMS } from "@/lib/data/initial-items"
-import type { Item, OrdenDeCompraItem, OrdenDeCompra } from "@/lib/types"
+import type { Item, OrdenDeCompraItem, OrdenDeCompra, OrdenCompra, OrdenCompraItem } from "@/lib/types"
 import { useOrdenesDeCompra } from "@/hooks/use-ordenes-de-compra"
-import { useCompras } from "@/hooks/use-compras"
+import { useAccount } from "@/lib/contexts/account-context"
+import { ORDENES_COMPRA } from "@/lib/data/initial-ordenes"
 import { Eye } from "lucide-react"
 
 const estadoLabels: Record<EstadoOrdenDeCompra, string> = {
@@ -51,7 +52,7 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
 
   // Use hooks for data persistence
   const { ordenes, updateOrden, updateEstado } = useOrdenesDeCompra()
-  const { addCompra } = useCompras()
+  const { currentAccount } = useAccount()
 
   // Find orden from ordenes array directly (not via callback during render)
   const foundOrden = useMemo(() => {
@@ -250,36 +251,55 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
   
   // Handle "Llevar a Compras" - converts orden to aceptada and creates a compra
   const handleLlevarACompras = () => {
-    if (!orden || orden.items.length === 0) return
+    if (!orden || orden.items.length === 0 || !currentAccount) return
     
     // Update orden estado to aceptada
     updateEstado(orden.id, "aceptada")
     
-    // Create a new compra from this orden
+    // Get compras from localStorage
+    const storageKey = `stockio_compras_${currentAccount}`
+    let compras: OrdenCompra[] = []
+    try {
+      const storedCompras = localStorage.getItem(storageKey)
+      compras = storedCompras ? JSON.parse(storedCompras) : ORDENES_COMPRA
+    } catch {
+      compras = ORDENES_COMPRA
+    }
+    
+    // Generate new ID based on existing compras
+    const existingNumbers = compras.map(c => c.numero)
+    const maxNumber = Math.max(0, ...existingNumbers)
+    const newNumber = maxNumber + 1
+    const newId = `OC-${newNumber}`
+    
+    // Create new compra with OrdenCompra type
     const now = new Date()
-    addCompra({
-      fecha: now.toISOString().split("T")[0],
-      hora: now.toTimeString().slice(0, 5),
+    const newCompra: OrdenCompra = {
+      id: newId,
+      numero: newNumber,
+      fechaCreacion: now.toISOString().split("T")[0],
       proveedorId: orden.proveedorId,
       proveedorNombre: orden.proveedorNombre,
+      medioPago: "transferencia",
+      estadoPago: 0, // 0% by default
+      estadoEntrega: "prevista",
+      fechaEntrega: now.toISOString().split("T")[0], // Same day by default
       items: orden.items.map(item => ({
         sku: item.sku,
         name: item.name,
         quantity: item.quantity,
+        quantityReceived: 0, // 0% received by default
         unitPrice: item.unitPrice,
-        discount: 0,
-        discountType: "percent" as const,
         total: item.total,
         categoria: item.categoria,
+        thumbnail: "/placeholder.svg",
       })),
-      subtotal: orden.importeEstimado,
-      descuento: 0,
-      descuentoTipo: "percent" as const,
-      total: orden.importeEstimado,
-      metodoPago: "transferencia",
-      estado: "pendiente",
-      comprador: "",
-    })
+      importeTotal: orden.importeEstimado,
+    }
+    
+    // Save to localStorage
+    const updatedCompras = [newCompra, ...compras]
+    localStorage.setItem(storageKey, JSON.stringify(updatedCompras))
     
     // Navigate to compras
     router.push("/compras/compras")
