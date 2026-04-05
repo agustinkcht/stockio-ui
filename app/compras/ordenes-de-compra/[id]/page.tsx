@@ -50,22 +50,21 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
 
   // Use hooks for data persistence
-  const { ordenes, getOrdenById, updateOrden, updateEstado } = useOrdenesDeCompra()
+  const { ordenes, isLoading, getOrdenById, updateOrden, updateEstado } = useOrdenesDeCompra()
   const { addCompra } = useCompras()
 
-  // Get the orden from hook (localStorage backed)
-  const storedOrden = getOrdenById(id)
-  
-  const [orden, setOrden] = useState<OrdenDeCompra | null>(storedOrden)
+  const [orden, setOrden] = useState<OrdenDeCompra | null>(null)
   const [hasChanges, setHasChanges] = useState(false)
   
-  // Sync with localStorage when ordenes change
+  // Sync with localStorage when ordenes change or load
   useEffect(() => {
-    const updated = getOrdenById(id)
-    if (updated) {
-      setOrden(updated)
+    if (!isLoading) {
+      const updated = getOrdenById(id)
+      if (updated) {
+        setOrden(updated)
+      }
     }
-  }, [ordenes, id, getOrdenById])
+  }, [ordenes, id, getOrdenById, isLoading])
   
   // Check if order is editable (only borrador state)
   const isEditable = orden?.estado === "borrador"
@@ -397,6 +396,32 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     const selectedSkus = new Set(orden.items.map(it => it.sku))
     return availableItems.filter(it => !selectedSkus.has(it.sku))
   }, [availableItems, orden])
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[rgb(243,242,238)] flex items-center justify-center">
+        <div className="text-slate-500">Cargando...</div>
+      </div>
+    )
+  }
+
+  // Show not found state
+  if (!orden) {
+    return (
+      <div className="min-h-screen bg-[rgb(243,242,238)] flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-slate-500 mb-2">Orden no encontrada</div>
+          <button 
+            onClick={() => router.push("/compras/ordenes-de-compra")}
+            className="text-amber-600 hover:underline text-sm"
+          >
+            Volver a órdenes de compra
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-[rgb(243,242,238)]">
