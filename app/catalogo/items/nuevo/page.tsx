@@ -1614,8 +1614,8 @@ export default function NuevoItemPage() {
                                       attrPrincipales.push({ key: containerAtributosPrincipales[1].key, value: v.variant2 })
                                     }
                                     
-                                    // Build variant name from attributes
-                                    const variantName = attrPrincipales.map(a => a.value).join(" ")
+                                    // Variant name = parent title; tag badge carries the attribute value
+                                    const variantName = titulo.trim()
                                     
                                     const stockTotal = parseInt(variantStockInicial) || 0
                                     const stockReservado = parseInt(variantStockReservado) || 0
