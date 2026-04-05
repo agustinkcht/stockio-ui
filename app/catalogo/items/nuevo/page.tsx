@@ -2676,7 +2676,7 @@ export default function NuevoItemPage() {
           {/* Main Content */}
           <main className="flex-1 flex bg-[rgba(250,251,253,1)] overflow-auto">
             <div className="flex-1 flex flex-col items-center pt-12 px-8 pb-12">
-              <div className="w-full max-w-[605px]">
+              <div className="w-full max-w-2xl">
                 {/* Page Title */}
                 <h1 className="text-xl font-semibold text-gray-900 mb-6">Crear Nuevo Item</h1>
 
