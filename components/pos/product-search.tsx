@@ -171,8 +171,8 @@ export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
                       )}
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs text-muted-foreground">{item.sku}</span>
-                      {item.marca && <span className="text-xs text-muted-foreground">· {item.marca}</span>}
+                      {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
+                      {item.categoria && <span className="text-xs text-muted-foreground">· {item.categoria}</span>}
                     </div>
                   </div>
 
@@ -243,7 +243,6 @@ export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
 
                           <div className="flex-1 min-w-0">
                             <p className="text-sm truncate">{getFullTitle(variant)}</p>
-                            <p className="text-xs text-muted-foreground">{variant.sku}</p>
                           </div>
                           <div className="text-right flex-shrink-0">
                             <p className="font-semibold text-sm">
