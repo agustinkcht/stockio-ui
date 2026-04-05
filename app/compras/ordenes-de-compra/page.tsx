@@ -633,9 +633,9 @@ function OrdenesDeCompraContent() {
       {/* Nueva Orden Modal */}
       {showNuevaOrdenModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100010]">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
             {/* Header */}
-            <div className="px-6 py-4 border-b border-slate-200">
+            <div className="px-6 py-4 border-b border-slate-200 rounded-t-xl">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900">Nueva Orden de Compra</h2>
@@ -655,7 +655,7 @@ function OrdenesDeCompraContent() {
             </div>
             
             {/* Content */}
-            <div className="px-6 py-5">
+            <div className="px-6 py-5 min-h-[280px]">
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Proveedor</label>
