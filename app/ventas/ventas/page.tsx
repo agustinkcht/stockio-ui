@@ -590,7 +590,7 @@ function VentasContent() {
                                     <div className="col-span-11" />
 
                                     {/* Item pricing section: col-span-2 (aligned with header total+⋮) */}
-                                    <div className="col-span-2 px-4 py-2 space-y-1">
+                                    <div className="col-span-2 pl-4 pr-8 py-2 space-y-1">
                                       {venta.items.map((item, idx) => (
                                         <div key={idx} className="flex items-center py-2 h-[74px] justify-end">
                                           <div className="text-right">
