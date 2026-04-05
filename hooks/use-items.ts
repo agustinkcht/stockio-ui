@@ -138,17 +138,17 @@ export function useItems() {
     fetchItems()
   }, [currentUser, currentAccount])
 
-  const updateStock = (itemSku: string, field: "total" | "reservado", value: number) => {
-    // First check if it's a top-level item
-    let item = items.find((i) => i.sku === itemSku)
+  const updateStock = (itemId: string, field: "total" | "reservado", value: number) => {
+    // First check if it's a top-level item (search by id first, then sku)
+    let item = items.find((i) => i.id === itemId || i.sku === itemId)
     let parentItem: Item | undefined = undefined
     let isVariant = false
 
-    // If not found at top level, search in variants
+    // If not found at top level, search in variants (by id first, then sku)
     if (!item) {
       for (const parent of items) {
         if (parent.variants) {
-          const variant = parent.variants.find((v: any) => v.sku === itemSku)
+          const variant = parent.variants.find((v: any) => v.id === itemId || v.sku === itemId)
           if (variant) {
             item = variant as any
             parentItem = parent
@@ -176,10 +176,10 @@ export function useItems() {
     }
 
     if (isVariant && parentItem) {
-      editVariantField(parentItem.sku!, itemSku, "stock", newStock)
+      editVariantField(parentItem.sku!, itemId, "stock", newStock)
     } else {
       // For standalone items, use regular editField
-      editField(itemSku, "stock", newStock)
+      editField(itemId, "stock", newStock)
     }
   }
 

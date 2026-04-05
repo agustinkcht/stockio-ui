@@ -165,7 +165,9 @@ export function ItemCard({
     if (modification.operation === "agregar") newValue = currentValue + inputValue
     else if (modification.operation === "remover") newValue = Math.max(0, currentValue - inputValue)
     else if (modification.operation === "sobreescribir") newValue = inputValue
-    onUpdateStock?.(item.sku, stockType, newValue)
+    // Use item.id for variants (children), fallback to sku for standalone items
+    const itemIdentifier = item.id || item.sku
+    onUpdateStock?.(itemIdentifier, stockType, newValue)
     setStockModification((prev) => ({ ...prev, [stockType]: { ...prev[stockType], value: "" } }))
   }
 
@@ -437,14 +439,14 @@ export function ItemCard({
                     onItemClick(item)
                   }}
                 >
-                  {/* Product Thumbnail - same container size, smaller image for children */}
-                  <div className="w-12 h-12 flex-shrink-0 rounded-md bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden">
-                    <img
-                      src={getCategoryImage(item.categoria) || "/placeholder.svg"}
-                      alt={item.categoria || "Product"}
-                      className={`${isChild ? "w-7 h-7" : "w-8 h-8"} object-contain opacity-60`}
-                    />
-                  </div>
+  {/* Product Thumbnail - same container size, smaller image for children */}
+                <div className="w-12 h-12 flex-shrink-0 rounded-md bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden">
+                  <img
+                    src={getCategoryImage(item.categoria || parentItem?.categoria) || "/placeholder.svg"}
+                    alt={item.categoria || parentItem?.categoria || "Product"}
+                    className={`${isChild ? "w-7 h-7" : "w-8 h-8"} object-contain opacity-60`}
+                  />
+                </div>
 
                   {/* Product Info */}
                   <div className="flex-1 min-w-0">
@@ -700,13 +702,13 @@ export function ItemCard({
                 className={`col-span-8 flex items-center gap-2 h-full border-r border-slate-100 ${isChild ? "pl-6 pr-2" : "px-3"} cursor-pointer transition-colors`}
                 onClick={(e) => { e.stopPropagation(); onItemClick(item) }}
               >
-                <div className={`${isChild ? "w-7 h-7" : "w-9 h-9"} flex-shrink-0 rounded-md bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden`}>
-                  <img
-                    src={getCategoryImage(item.categoria) || "/placeholder.svg"}
-                    alt={item.categoria || "Product"}
-                    className={`${isChild ? "w-5 h-5" : "w-6 h-6"} object-contain opacity-60`}
-                  />
-                </div>
+  <div className={`${isChild ? "w-7 h-7" : "w-9 h-9"} flex-shrink-0 rounded-md bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden`}>
+                    <img
+                      src={getCategoryImage(item.categoria || parentItem?.categoria) || "/placeholder.svg"}
+                      alt={item.categoria || parentItem?.categoria || "Product"}
+                      className={`${isChild ? "w-5 h-5" : "w-6 h-6"} object-contain opacity-60`}
+                    />
+                  </div>
                 <div className="flex-1 min-w-0">
                   <span className={`text-sm ${isChild ? "text-muted-foreground" : "text-foreground"} font-medium truncate block`}>{item.name}</span>
                   {isChild && item.atributosPrincipales && item.atributosPrincipales.length > 0 && (
@@ -716,15 +718,15 @@ export function ItemCard({
                       ))}
                     </div>
                   )}
+  </div>
                 </div>
-              </div>
-              <div className="col-span-4 h-full flex items-center justify-center px-2 border-r border-slate-100 cursor-pointer" onClick={(e) => { e.stopPropagation(); onItemClick(item) }}>
-                <span className="text-xs text-foreground truncate">{item.categoria || "-"}</span>
-              </div>
-              <div
-                className="col-span-4 h-full flex items-center justify-center px-2 border-r border-slate-100 cursor-pointer hover:bg-slate-50 group/total"
-                onClick={(e) => {
-                  e.stopPropagation()
+                <div className="col-span-4 h-full flex items-center justify-center px-2 border-r border-slate-100 cursor-pointer" onClick={(e) => { e.stopPropagation(); onItemClick(item) }}>
+                  <span className="text-xs text-foreground truncate">{item.categoria || parentItem?.categoria || "-"}</span>
+                </div>
+                <div
+                  className="col-span-4 h-full flex items-center justify-center px-2 border-r border-slate-100 cursor-pointer hover:bg-slate-50 group/total"
+                  onClick={(e) => {
+                    e.stopPropagation()
                   setActiveStockEdit("total")
                   setStockModification({ total: { operation: "agregar", value: "" }, reservado: { operation: "agregar", value: "" } })
                   setIsStockModalOpen(true)
@@ -770,8 +772,8 @@ export function ItemCard({
                 {/* Product Thumbnail with category-based image - same container size, smaller image for children */}
                 <div className="w-12 h-12 flex-shrink-0 rounded-md bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden">
                   <img
-                    src={getCategoryImage(item.categoria) || "/placeholder.svg"}
-                    alt={item.categoria || "Product"}
+                    src={getCategoryImage(item.categoria || parentItem?.categoria) || "/placeholder.svg"}
+                    alt={item.categoria || parentItem?.categoria || "Product"}
                     className={`${isChild ? "w-7 h-7" : "w-8 h-8"} object-contain opacity-60`}
                   />
                 </div>
@@ -828,7 +830,7 @@ export function ItemCard({
                     className="col-span-10 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100"
                     onClick={(e) => { e.stopPropagation(); onItemClick(item) }}
                   >
-                    <span className="text-sm text-foreground truncate w-full text-center">{item.categoria || "-"}</span>
+                    <span className="text-sm text-foreground truncate w-full text-center">{item.categoria || parentItem?.categoria || "-"}</span>
                   </div>
                   {/* Precio Final cell - clickable to open precio modal */}
                   <div
@@ -1119,13 +1121,13 @@ export function ItemCard({
                   </div>
                   <div className="flex items-center gap-2">
                     {activeStockEdit === "total" && (
-                      <button onClick={(e) => { e.stopPropagation(); onUpdateStock?.(item.sku, "total", Math.max(0, currentStockTotal - 1)) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
+                      <button onClick={(e) => { e.stopPropagation(); onUpdateStock?.(item.id || item.sku, "total", Math.max(0, currentStockTotal - 1)) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
                         <Minus className="w-3 h-3" />
                       </button>
                     )}
                     <span className="text-base font-semibold tabular-nums min-w-[2rem] text-center">{currentStockTotal}</span>
                     {activeStockEdit === "total" && (
-                      <button onClick={(e) => { e.stopPropagation(); onUpdateStock?.(item.sku, "total", currentStockTotal + 1) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
+                      <button onClick={(e) => { e.stopPropagation(); onUpdateStock?.(item.id || item.sku, "total", currentStockTotal + 1) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
                         <Plus className="w-3 h-3" />
                       </button>
                     )}
@@ -1160,13 +1162,13 @@ export function ItemCard({
                   </div>
                   <div className="flex items-center gap-2">
                     {activeStockEdit === "reservado" && (
-                      <button onClick={(e) => { e.stopPropagation(); onUpdateStock?.(item.sku, "reservado", Math.max(0, currentStockReservado - 1)) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
+                      <button onClick={(e) => { e.stopPropagation(); onUpdateStock?.(item.id || item.sku, "reservado", Math.max(0, currentStockReservado - 1)) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
                         <Minus className="w-3 h-3" />
                       </button>
                     )}
                     <span className="text-base font-semibold tabular-nums min-w-[2rem] text-center">{currentStockReservado}</span>
                     {activeStockEdit === "reservado" && (
-                      <button onClick={(e) => { e.stopPropagation(); onUpdateStock?.(item.sku, "reservado", currentStockReservado + 1) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
+                      <button onClick={(e) => { e.stopPropagation(); onUpdateStock?.(item.id || item.sku, "reservado", currentStockReservado + 1) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
                         <Plus className="w-3 h-3" />
                       </button>
                     )}

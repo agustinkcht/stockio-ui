@@ -868,6 +868,18 @@ export default function NuevoItemPage() {
                                   )}
                                 </div>
                               )}
+
+                              {/* Proveedor Field */}
+                              <div className="flex flex-col gap-2 mt-4">
+                                <label className="text-sm font-medium text-gray-700">Proveedor</label>
+                                <input
+                                  type="text"
+                                  value={proveedor}
+                                  onChange={(e) => setProveedor(e.target.value)}
+                                  className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white border-gray-300 text-gray-900"
+                                  placeholder="Nombre del proveedor"
+                                />
+                              </div>
                             </div>
                           </div>
                         )}
@@ -1578,7 +1590,8 @@ export default function NuevoItemPage() {
                                     const variantMargen = (v as any).margen || ""
                                     const variantIva = (v as any).iva || "21"
                                     const variantPrecioFinal = (v as any).precioFinal || ""
-                                    const variantStock = (v as any).stock || "0"
+                                    const variantStockInicial = (v as any).stockInicial || "0"
+                                    const variantStockReservado = (v as any).stockReservado || "0"
                                     
                                     const costoNum = parseFloat(variantCosto) || 0
                                     const margenNum = parseFloat(variantMargen) || 0
@@ -1603,15 +1616,19 @@ export default function NuevoItemPage() {
                                     // Build variant name from attributes
                                     const variantName = attrPrincipales.map(a => a.value).join(" ")
                                     
+                                    const stockTotal = parseInt(variantStockInicial) || 0
+                                    const stockReservado = parseInt(variantStockReservado) || 0
+                                    const stockDisponible = stockTotal - stockReservado
+                                    
                                     return {
                                       id: v.id,
                                       name: variantName,
                                       skuSuffix: v.skuSuffix || v.variant1?.toLowerCase().replace(/\s+/g, "-") || "",
                                       codigoUniversal: v.codigoUniversal || "",
                                       stock: {
-                                        total: variantStock,
-                                        reservado: "0",
-                                        disponible: variantStock,
+                                        total: stockTotal.toString(),
+                                        reservado: stockReservado.toString(),
+                                        disponible: stockDisponible.toString(),
                                       },
                                       precio: {
                                         costo: costoNum,
