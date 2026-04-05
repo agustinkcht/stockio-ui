@@ -1098,7 +1098,7 @@ export function CatalogoItemDetailPanel({
                 >
                   {/* FRONT SIDE */}
                   <div
-                    className="absolute inset-0 p-6 px-8 pr-11 border-solid border border-black rounded-xl bg-black shadow-md pl-11 ml-6"
+                    className={`absolute inset-0 p-6 px-8 pr-11 border-solid border border-black rounded-xl bg-black shadow-md pl-11 ml-6 ${isCardFlipped ? "pointer-events-none" : ""}`}
                     style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
                   >
                     {/* Estado indicator - top-left */}
@@ -1543,7 +1543,7 @@ export function CatalogoItemDetailPanel({
 
                   {/* BACK SIDE */}
                   <div
-                    className="absolute inset-0 p-6 px-8 pr-11 border-solid border border-black rounded-xl bg-black shadow-md pl-11 ml-0"
+                    className={`absolute inset-0 p-6 px-8 pr-11 border-solid border border-black rounded-xl bg-black shadow-md pl-11 ml-0 ${!isCardFlipped ? "pointer-events-none" : ""}`}
                     style={{
                       backfaceVisibility: "hidden",
                       WebkitBackfaceVisibility: "hidden",
