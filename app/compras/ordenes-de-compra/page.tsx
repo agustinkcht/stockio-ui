@@ -718,7 +718,7 @@ function OrdenesDeCompraContent() {
             </div>
             
             {/* Footer */}
-            <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3">
+            <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3 rounded-b-xl">
               <button
                 onClick={() => {
                   setShowNuevaOrdenModal(false)
