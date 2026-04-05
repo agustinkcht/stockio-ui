@@ -80,7 +80,6 @@ function movMeta(mov: CajaMovimiento) {
       return { icon: DollarSign, color: "text-gray-400", bg: "bg-gray-50", sign: "", label: "Movimiento", tagLabel: "", tagColor: "bg-gray-100 text-gray-500" }
   }
 }
-}
 
 // ─── Modal shell ───────────────────────────────────────────
 function Modal({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
