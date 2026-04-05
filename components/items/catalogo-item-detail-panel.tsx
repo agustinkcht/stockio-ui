@@ -1338,7 +1338,7 @@ export function CatalogoItemDetailPanel({
                           )}
                           <button
                             onClick={(e) => { e.stopPropagation(); handleCopySku() }}
-                            className="text-slate-600 hover:text-slate-400 transition-colors p-0.5 group-hover/sku:hidden"
+                            className="text-slate-600 hover:text-slate-400 transition-colors p-0.5"
                             title="Copiar SKU"
                           >
                             {skuCopied ? (
@@ -1347,7 +1347,7 @@ export function CatalogoItemDetailPanel({
                               <Copy className="h-2.5 w-2.5" />
                             )}
                           </button>
-                          <Pencil className="h-2.5 w-2.5 text-slate-500 hidden group-hover/sku:block" />
+                          <Pencil className="h-2.5 w-2.5 text-slate-500 opacity-0 group-hover/sku:opacity-100 transition-opacity" />
                         </div>
                       )}
 
@@ -1550,18 +1550,15 @@ export function CatalogoItemDetailPanel({
                       transform: "rotateY(180deg)",
                     }}
                   >
-                    {/* Flip back clickable area - top 1/3 height, right half width */}
+                    {/* Flip back clickable area - just the top-right corner for Volver button */}
                     <button
                       onClick={() => setIsCardFlipped(false)}
-                      className="absolute top-0 right-0 w-1/2 h-1/3 cursor-pointer z-10"
+                      className="absolute top-0 right-0 w-32 h-12 cursor-pointer z-10 flex items-center justify-end pr-6 gap-1 text-slate-500"
                     >
-                      {/* Visual hint in top-right corner */}
-                      <div className="absolute top-4 right-6 flex items-center gap-1 text-slate-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M15 18l-6-6 6-6" />
-                        </svg>
-                        <span className="text-[11px] uppercase tracking-wider">Volver</span>
-                      </div>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M15 18l-6-6 6-6" />
+                      </svg>
+                      <span className="text-[11px] uppercase tracking-wider">Volver</span>
                     </button>
 
                     <div className="flex flex-col h-full pt-2 overflow-y-auto">
@@ -1612,7 +1609,7 @@ export function CatalogoItemDetailPanel({
                           )}
                           <button
                             onClick={(e) => { e.stopPropagation(); handleCopyCodigoUniversal() }}
-                            className="text-slate-500 hover:text-slate-300 transition-colors p-0.5 group-hover/codigoVal:hidden"
+                            className="text-slate-500 hover:text-slate-300 transition-colors p-0.5"
                             title="Copiar Código Universal"
                           >
                             {codigoUniversalCopied ? (
@@ -1621,7 +1618,7 @@ export function CatalogoItemDetailPanel({
                               <Copy className="h-3 w-3" />
                             )}
                           </button>
-                          <Pencil className="h-3 w-3 text-slate-500 hidden group-hover/codigoVal:block" />
+                          <Pencil className="h-3 w-3 text-slate-500 opacity-0 group-hover/codigoVal:opacity-100 transition-opacity" />
                         </div>
                       </div>
 
