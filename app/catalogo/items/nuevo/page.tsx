@@ -593,10 +593,6 @@ export default function NuevoItemPage() {
                 </div>
 
                 <div className="flex items-center gap-2 min-w-[280px] justify-end">
-                  {/* Step indicator in header */}
-                  <span className="text-xs text-gray-500">
-                    Paso {currentStep} de {STEPS_VARIANTES.length}
-                  </span>
                 </div>
               </div>
             </div>
@@ -873,15 +869,17 @@ export default function NuevoItemPage() {
                               <div className="border-t border-gray-200 my-4"></div>
 
                               {/* Proveedor Section */}
-                              <div className="flex flex-col gap-2">
-                                <label className="text-sm font-medium text-gray-700">Proveedor</label>
-                                <input
-                                  type="text"
-                                  value={proveedor}
-                                  onChange={(e) => setProveedor(e.target.value)}
-                                  className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white border-gray-300 text-gray-900"
-                                  placeholder="Nombre del proveedor"
-                                />
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="flex flex-col gap-2">
+                                  <label className="text-sm font-medium text-gray-700">Proveedor</label>
+                                  <input
+                                    type="text"
+                                    value={proveedor}
+                                    onChange={(e) => setProveedor(e.target.value)}
+                                    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white border-gray-300 text-gray-900"
+                                    placeholder="Nombre del proveedor"
+                                  />
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -1974,10 +1972,6 @@ export default function NuevoItemPage() {
                 </div>
 
                 <div className="flex items-center gap-2 min-w-[280px] justify-end">
-                  {/* Step indicator in header */}
-                  <span className="text-xs text-gray-500">
-                    Paso {currentStep} de {STEPS_INDIVIDUAL.length}
-                  </span>
                 </div>
               </div>
             </div>
@@ -2241,15 +2235,17 @@ export default function NuevoItemPage() {
                               <div className="border-t border-slate-200 my-5"></div>
 
                               {/* Proveedor Section */}
-                              <div className="flex flex-col gap-2">
-                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Proveedor</label>
-                                <input
-                                  type="text"
-                                  value={proveedor}
-                                  onChange={(e) => setProveedor(e.target.value)}
-                                  className="px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-800 text-sm placeholder:text-slate-400 transition-all"
-                                  placeholder="Nombre del proveedor"
-                                />
+                              <div className="grid grid-cols-2 gap-5">
+                                <div className="flex flex-col gap-2">
+                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Proveedor</label>
+                                  <input
+                                    type="text"
+                                    value={proveedor}
+                                    onChange={(e) => setProveedor(e.target.value)}
+                                    className="px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-800 text-sm placeholder:text-slate-400 transition-all"
+                                    placeholder="Nombre del proveedor"
+                                  />
+                                </div>
                               </div>
 
                             </div>
