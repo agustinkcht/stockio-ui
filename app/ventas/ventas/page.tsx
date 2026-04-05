@@ -450,13 +450,22 @@ function VentasContent() {
                                   </div>
                                 </div>
 
-                                {/* Payment part: col-span-3 */}
-                                <div className="col-span-3 flex items-center gap-3 justify-end mr-3.5">
+                                {/* Payment part: col-span-4 */}
+                                <div className="col-span-4 flex items-center gap-3 justify-end mr-3.5.5 mr-3.5">
                                   <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-muted/50">
                                     <PaymentIcon className="w-3.5 h-3.5 text-muted-foreground" />
                                     <span className="text-xs text-muted-foreground">
                                       {paymentMethodLabels[venta.metodoPago]}
                                     </span>
+                                  </div>
+
+                                  <div className="text-right">
+                                    <p className="font-semibold text-sm">
+                                      ${venta.total.toLocaleString("es-AR", { minimumFractionDigits: 0 })}
+                                    </p>
+                                    {venta.descuento > 0 && (
+                                      <p className="text-[10px] text-emerald-600">-{venta.descuento}% desc.</p>
+                                    )}
                                   </div>
                                 </div>
 
@@ -497,16 +506,8 @@ function VentasContent() {
                                   )}
                                 </div>
 
-                                {/* Total + More options: col-span-2 */}
-                                <div className="col-span-2 flex items-center justify-end gap-2 relative">
-                                  <div className="text-right">
-                                    <p className="font-semibold text-sm">
-                                      ${venta.total.toLocaleString("es-AR", { minimumFractionDigits: 0 })}
-                                    </p>
-                                    {venta.descuento > 0 && (
-                                      <p className="text-[10px] text-emerald-600">-{venta.descuento}% desc.</p>
-                                    )}
-                                  </div>
+                                {/* More options: col-span-1 */}
+                                <div className="col-span-1 flex justify-center relative">
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation()
