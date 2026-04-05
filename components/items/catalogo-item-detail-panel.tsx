@@ -2630,10 +2630,10 @@ export function CatalogoItemDetailPanel({
                                 className="px-3 py-2 text-center cursor-pointer hover:bg-slate-100 rounded transition-colors group/stock"
                                 onClick={(e) => {
                                   e.stopPropagation()
-                                  const stock = sourceVariant?.stock || { total: 0, reservado: 0 }
+                                  const stock = sourceVariant?.stock || { total: "0", reservado: "0" }
                                   setExpandedMatrixStockValues({
-                                    total: stock.total || 0,
-                                    reservado: stock.reservado || 0,
+                                    total: parseInt(stock.total) || 0,
+                                    reservado: parseInt(stock.reservado) || 0,
                                   })
                                   setExpandedMatrixActiveStockEdit("total")
                                   setExpandedMatrixStockModification({
@@ -3898,10 +3898,11 @@ export function CatalogoItemDetailPanel({
               <button
                 onClick={() => {
                   if (expandedMatrixStockModal.variant?.id) {
+                    // Convert to strings for data model consistency
                     const newStock = {
-                      total: expandedMatrixStockValues.total,
-                      reservado: expandedMatrixStockValues.reservado,
-                      disponible: expandedMatrixStockValues.total - expandedMatrixStockValues.reservado,
+                      total: expandedMatrixStockValues.total.toString(),
+                      reservado: expandedMatrixStockValues.reservado.toString(),
+                      disponible: (expandedMatrixStockValues.total - expandedMatrixStockValues.reservado).toString(),
                     }
                     const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
                       ov.id === expandedMatrixStockModal.variant.id ? { ...ov, stock: newStock } : ov

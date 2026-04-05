@@ -123,10 +123,12 @@ export function ItemCard({
   const [stockReservadoInput, setStockReservadoInput] = useState("")
 
   // Get current stock values (use audit values if available, otherwise original)
-  const currentStockTotal = auditStockValues?.[item.sku]?.total ?? parseInt(item.stock?.total || "0")
-  const currentStockReservado = auditStockValues?.[item.sku]?.reservado ?? parseInt(item.stock?.reservado || "0")
+  // Check by id first (for children/variants), then by sku (for standalone items)
+  const itemKey = item.id || item.sku
+  const currentStockTotal = auditStockValues?.[itemKey]?.total ?? parseInt(item.stock?.total || "0")
+  const currentStockReservado = auditStockValues?.[itemKey]?.reservado ?? parseInt(item.stock?.reservado || "0")
   const currentStockDisponible = currentStockTotal - currentStockReservado
-  const hasAuditChange = auditStockValues && item.sku in auditStockValues
+  const hasAuditChange = auditStockValues && itemKey in auditStockValues
 
   // Compute if item is active
   // - For standalone/children: use item.isActive directly (defaults to true if undefined)
