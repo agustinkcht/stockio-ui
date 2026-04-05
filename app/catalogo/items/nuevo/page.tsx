@@ -11,7 +11,7 @@ import { generateId } from "@/lib/utils/item-utils"
 import { useItems } from "@/hooks/use-items"
 import { useAccount } from "@/lib/contexts/account-context"
 import { useSettings } from "@/lib/contexts/settings-context"
-import type { Item } from "@/lib/types"
+import type { Item, ItemVariant, Atributo } from "@/lib/types"
 
 import { Sidebar } from "@/components/layout/sidebar"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
@@ -1552,13 +1552,126 @@ export default function NuevoItemPage() {
                               Volver
                             </button>
                             <button
-                              onClick={() => {
-                                // Placeholder - will implement full creation later
-                                alert("Creación de item con variantes (proximamente)")
+                              disabled={isCreating}
+                              onClick={async () => {
+                                setIsCreating(true)
+                                try {
+                                  // Generate parent item ID
+                                  const parentItemId = generateId("PAR")
+                                  const finalSkuPrefix = skuPadre || generateStandaloneSKU({
+                                    category: categoria || undefined,
+                                    title: titulo.trim(),
+                                    brand: marca || undefined,
+                                  })
+                                  
+                                  // Build containerAtributosPrincipales for the parent
+                                  const containerAttrs = containerAtributosPrincipales
+                                    .filter(attr => attr.key && attr.variantes.length > 0)
+                                    .map(attr => ({
+                                      key: attr.key,
+                                      variantes: attr.variantes
+                                    }))
+                                  
+                                  // Build variant items with full data
+                                  const variants: ItemVariant[] = variantItems.map((v) => {
+                                    const variantCosto = (v as any).costo || ""
+                                    const variantMargen = (v as any).margen || ""
+                                    const variantIva = (v as any).iva || "21"
+                                    const variantPrecioFinal = (v as any).precioFinal || ""
+                                    const variantStock = (v as any).stock || "0"
+                                    
+                                    const costoNum = parseFloat(variantCosto) || 0
+                                    const margenNum = parseFloat(variantMargen) || 0
+                                    const ivaNum = parseFloat(variantIva) || 21
+                                    const hasCosto = variantCosto !== "" && costoNum > 0
+                                    
+                                    // Calculate precio final if not manually set
+                                    let finalPrice = parseFloat(variantPrecioFinal) || 0
+                                    if (!finalPrice && hasCosto) {
+                                      finalPrice = costoNum * (1 + margenNum / 100)
+                                    }
+                                    
+                                    // Build atributosPrincipales for the variant
+                                    const attrPrincipales: Atributo[] = []
+                                    if (v.variant1 && containerAtributosPrincipales[0]?.key) {
+                                      attrPrincipales.push({ key: containerAtributosPrincipales[0].key, value: v.variant1 })
+                                    }
+                                    if (v.variant2 && containerAtributosPrincipales[1]?.key) {
+                                      attrPrincipales.push({ key: containerAtributosPrincipales[1].key, value: v.variant2 })
+                                    }
+                                    
+                                    // Build variant name from attributes
+                                    const variantName = attrPrincipales.map(a => a.value).join(" ")
+                                    
+                                    return {
+                                      id: v.id,
+                                      name: variantName,
+                                      skuSuffix: v.skuSuffix || v.variant1?.toLowerCase().replace(/\s+/g, "-") || "",
+                                      codigoUniversal: v.codigoUniversal || "",
+                                      stock: {
+                                        total: variantStock,
+                                        reservado: "0",
+                                        disponible: variantStock,
+                                      },
+                                      precio: {
+                                        costo: costoNum,
+                                        margen: margenNum,
+                                        iva: ivaNum,
+                                        precioFinal: finalPrice,
+                                      },
+                                      atributosPrincipales: attrPrincipales,
+                                      isActive: true,
+                                    }
+                                  })
+                                  
+                                  // Create the parent item with variants
+                                  const newParentItem: Item = {
+                                    id: parentItemId,
+                                    name: titulo,
+                                    skuPrefix: finalSkuPrefix,
+                                    codigoUniversal: codigoUniversal || "",
+                                    marca: marca || "",
+                                    modelo: "",
+                                    categoria: categoria || "",
+                                    formatoVenta: formatoVenta || "unidad",
+                                    proveedor: proveedor || "",
+                                    codigoProveedor: codigoProveedor || "",
+                                    descripcion: descripcion || "",
+                                    hasVariants: true,
+                                    isAgrupador: false,
+                                    variantCount: variants.length,
+                                    itemCount: 0,
+                                    containerAtributosPrincipales: containerAttrs,
+                                    variants: variants,
+                                    atributosInformativos: atributosInformativos,
+                                    isActive: true,
+                                  }
+                                  
+                                  // Add to items and persist to localStorage
+                                  const validExistingItems = items.filter((item: any) => {
+                                    if (!item || typeof item !== 'object') return false
+                                    if (!item.id && !item.sku && !item.skuPrefix) return false
+                                    if (!item.name || item.name.trim() === '') return false
+                                    return true
+                                  })
+                                  const updatedItems = [newParentItem, ...validExistingItems]
+                                  const storageKey = `stockio-items-${currentAccount}`
+                                  localStorage.setItem(storageKey, JSON.stringify(updatedItems))
+                                  setItems(updatedItems)
+                                  
+                                  // Store for success screen
+                                  setCreatedItemId(parentItemId)
+                                  setCreatedItemSkuDisplay(finalSkuPrefix)
+                                } catch (error) {
+                                  console.error('Error creating item with variants:', error)
+                                  alert('Error al crear el item. Por favor intenta de nuevo.')
+                                } finally {
+                                  setIsCreating(false)
+                                }
                               }}
-                              className="px-6 py-2.5 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors cursor-pointer"
+                              className="px-6 py-2.5 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              Crear Item
+                              {isCreating ? 'Creando...' : 'Crear Item'}
                             </button>
                           </div>
                         </div>
