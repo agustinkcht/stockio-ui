@@ -32,8 +32,8 @@ const STEPS_INDIVIDUAL = [
 const STEPS_VARIANTES = [
   { id: 1, label: "Información Compartida" },
   { id: 2, label: "Variantes" },
-  { id: 3, label: "Precio" },
-  { id: 4, label: "Stock" },
+  { id: 3, label: "Stock" },
+  { id: 4, label: "Precio" },
 ]
 
 export default function NuevoItemPage() {
@@ -613,44 +613,54 @@ export default function NuevoItemPage() {
                   </div>
                   
                   <div className="flex flex-col">
-                    {STEPS_VARIANTES.map((step, index) => (
-                      <div key={step.id} className="flex items-start">
-                        {/* Vertical line and dot */}
-                        <div className="flex flex-col items-center mr-3">
-                          <div 
-                            className={`w-3 h-3 rounded-full border-2 transition-all duration-300 ${
-                              currentStep === step.id 
-                                ? 'bg-purple-500 border-purple-500 shadow-md shadow-purple-200' 
-                                : currentStep > step.id
-                                  ? 'bg-green-500 border-green-500'
-                                  : 'bg-white border-gray-300'
-                            }`}
-                          />
-                          {index < STEPS_VARIANTES.length - 1 && (
+                    {STEPS_VARIANTES.map((step, index) => {
+                      // Steps 3 (Stock) and 4 (Precio) are disabled if no variants created
+                      const isStepDisabled = (step.id === 3 || step.id === 4) && variantItems.length === 0
+                      
+                      return (
+                        <div key={step.id} className="flex items-start">
+                          {/* Vertical line and dot */}
+                          <div className="flex flex-col items-center mr-3">
                             <div 
-                              className={`w-0.5 h-20 transition-all duration-300 ${
-                                currentStep > step.id ? 'bg-green-500' : 'bg-gray-200'
+                              className={`w-3 h-3 rounded-full border-2 transition-all duration-300 ${
+                                isStepDisabled
+                                  ? 'bg-gray-100 border-gray-200 opacity-50'
+                                  : currentStep === step.id 
+                                    ? 'bg-purple-500 border-purple-500 shadow-md shadow-purple-200' 
+                                    : currentStep > step.id
+                                      ? 'bg-green-500 border-green-500'
+                                      : 'bg-white border-gray-300'
                               }`}
                             />
-                          )}
+                            {index < STEPS_VARIANTES.length - 1 && (
+                              <div 
+                                className={`w-0.5 h-20 transition-all duration-300 ${
+                                  currentStep > step.id ? 'bg-green-500' : 'bg-gray-200'
+                                }`}
+                              />
+                            )}
+                          </div>
+                          {/* Step label */}
+                          <div className="pb-20">
+                            <button
+                              onClick={() => !isStepDisabled && setCurrentStep(step.id)}
+                              disabled={isStepDisabled}
+                              className={`text-left transition-all duration-200 ${
+                                isStepDisabled
+                                  ? 'text-gray-300 font-medium cursor-not-allowed'
+                                  : currentStep === step.id 
+                                    ? 'text-purple-600 font-semibold cursor-pointer' 
+                                    : currentStep > step.id
+                                      ? 'text-green-600 font-medium cursor-pointer'
+                                      : 'text-gray-400 font-medium hover:text-gray-600 cursor-pointer'
+                              }`}
+                            >
+                              <span className="text-xs uppercase tracking-wider">{step.label}</span>
+                            </button>
+                          </div>
                         </div>
-                        {/* Step label */}
-                        <div className="pb-20">
-                          <button
-                            onClick={() => setCurrentStep(step.id)}
-                            className={`text-left transition-all duration-200 cursor-pointer ${
-                              currentStep === step.id 
-                                ? 'text-purple-600 font-semibold' 
-                                : currentStep > step.id
-                                  ? 'text-green-600 font-medium'
-                                  : 'text-gray-400 font-medium hover:text-gray-600'
-                            }`}
-                          >
-                            <span className="text-xs uppercase tracking-wider">{step.label}</span>
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
 
                   {/* Back to type selection */}
@@ -1370,8 +1380,8 @@ export default function NuevoItemPage() {
                       </div>
                     )}
 
-                    {/* Step 3: Precio */}
-                    {currentStep === 3 && !createdItemId && (
+                    {/* Step 4: Precio */}
+                    {currentStep === 4 && !createdItemId && variantItems.length > 0 && (
                       <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
                         <div className="h-full flex flex-col py-2">
                           <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
@@ -1400,11 +1410,15 @@ export default function NuevoItemPage() {
                                   const variantCosto = (variant as any).costo || ""
                                   const variantMargen = (variant as any).margen || ""
                                   const variantIva = (variant as any).iva || "21"
+                                  const variantPrecioFinal = (variant as any).precioFinal || ""
                                   const costoNum = parseFloat(variantCosto) || 0
                                   const margenNum = parseFloat(variantMargen) || 0
-                                  const ivaNum = parseFloat(variantIva) || 0
-                                  const precioConMargen = costoNum * (1 + margenNum / 100)
-                                  const precioFinalCalc = precioConMargen * (1 + ivaNum / 100)
+                                  const hasCosto = variantCosto !== "" && costoNum > 0
+                                  
+                                  // Precio final = costo * (1 + margen/100), IVA does NOT affect precio final
+                                  const precioFinalCalc = variantPrecioFinal !== "" 
+                                    ? parseFloat(variantPrecioFinal) 
+                                    : (hasCosto ? costoNum * (1 + margenNum / 100) : 0)
                                   
                                   return (
                                     <div
@@ -1465,47 +1479,62 @@ export default function NuevoItemPage() {
                                         </div>
                                       </div>
 
-                                      {/* Margen */}
+                                      {/* Margen - disabled if no costo */}
                                       <div className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
                                         <div className="flex items-center">
                                           <input
                                             type="number"
-                                            value={variantMargen}
+                                            value={hasCosto ? variantMargen : ""}
                                             onChange={(e) => {
                                               setVariantItems((prev) =>
                                                 prev.map((v) => v.id === variant.id ? { ...v, margen: e.target.value } as any : v)
                                               )
                                             }}
-                                            className="w-full bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-purple-500/50 px-0 py-0.5 text-[11px] text-foreground focus:outline-none transition-colors"
+                                            disabled={!hasCosto}
+                                            className={`w-full bg-transparent border-0 border-b px-0 py-0.5 text-[11px] focus:outline-none transition-colors ${
+                                              hasCosto 
+                                                ? "border-transparent hover:border-border/40 focus:border-purple-500/50 text-foreground" 
+                                                : "border-transparent text-muted-foreground/40 cursor-not-allowed"
+                                            }`}
                                             placeholder="0"
                                           />
-                                          <span className="text-[11px] text-muted-foreground/60 ml-1">%</span>
+                                          <span className={`text-[11px] ml-1 ${hasCosto ? "text-muted-foreground/60" : "text-muted-foreground/30"}`}>%</span>
                                         </div>
                                       </div>
 
-                                      {/* IVA */}
+                                      {/* IVA - dropdown */}
+                                      <div className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                                        <select
+                                          value={variantIva}
+                                          onChange={(e) => {
+                                            setVariantItems((prev) =>
+                                              prev.map((v) => v.id === variant.id ? { ...v, iva: e.target.value } as any : v)
+                                            )
+                                          }}
+                                          className="w-full bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-purple-500/50 px-0 py-0.5 text-[11px] text-foreground focus:outline-none transition-colors cursor-pointer appearance-none"
+                                        >
+                                          <option value="0">0%</option>
+                                          <option value="10">10%</option>
+                                          <option value="21">21%</option>
+                                        </select>
+                                      </div>
+
+                                      {/* Precio Final - editable */}
                                       <div className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
                                         <div className="flex items-center">
+                                          <span className="text-[11px] text-green-600 mr-1">$</span>
                                           <input
                                             type="number"
-                                            value={variantIva}
+                                            value={variantPrecioFinal !== "" ? variantPrecioFinal : (precioFinalCalc > 0 ? precioFinalCalc.toFixed(2) : "")}
                                             onChange={(e) => {
                                               setVariantItems((prev) =>
-                                                prev.map((v) => v.id === variant.id ? { ...v, iva: e.target.value } as any : v)
+                                                prev.map((v) => v.id === variant.id ? { ...v, precioFinal: e.target.value } as any : v)
                                               )
                                             }}
-                                            className="w-full bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-purple-500/50 px-0 py-0.5 text-[11px] text-foreground focus:outline-none transition-colors"
-                                            placeholder="21"
+                                            className="w-full bg-transparent border-0 border-b border-transparent hover:border-border/40 focus:border-green-500/50 px-0 py-0.5 text-[11px] text-green-700 font-medium focus:outline-none transition-colors"
+                                            placeholder="0.00"
                                           />
-                                          <span className="text-[11px] text-muted-foreground/60 ml-1">%</span>
                                         </div>
-                                      </div>
-
-                                      {/* Precio Final - calculated */}
-                                      <div className="px-3 py-2">
-                                        <span className="text-[11px] font-medium text-foreground">
-                                          ${precioFinalCalc > 0 ? precioFinalCalc.toFixed(2) : "—"}
-                                        </span>
                                       </div>
                                     </div>
                                   )
@@ -1517,31 +1546,34 @@ export default function NuevoItemPage() {
                           {/* Navigation buttons */}
                           <div className="mt-8 pt-4 border-t border-gray-200 flex justify-between">
                             <button
-                              onClick={() => setCurrentStep(2)}
+                              onClick={() => setCurrentStep(3)}
                               className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors cursor-pointer"
                             >
                               Volver
                             </button>
                             <button
-                              onClick={() => setCurrentStep(4)}
-                              className="px-6 py-2.5 bg-purple-500 text-white rounded-lg font-medium hover:bg-purple-600 transition-colors cursor-pointer"
+                              onClick={() => {
+                                // Placeholder - will implement full creation later
+                                alert("Creación de item con variantes (proximamente)")
+                              }}
+                              className="px-6 py-2.5 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors cursor-pointer"
                             >
-                              Continuar
+                              Crear Item
                             </button>
                           </div>
                         </div>
                       </div>
                     )}
 
-                    {/* Step 4: Stock */}
-                    {currentStep === 4 && !createdItemId && (
+                    {/* Step 3: Stock */}
+                    {currentStep === 3 && !createdItemId && variantItems.length > 0 && (
                       <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
                         <div className="h-full flex flex-col py-2">
                           <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
                             Stock
                           </h3>
                           <p className="text-[11px] text-slate-400 mb-6 italic">
-                            Define el stock inicial de cada variante.
+                            Define el stock total de cada variante.
                           </p>
 
                           {/* Stock Matrix Table */}
@@ -1551,7 +1583,7 @@ export default function NuevoItemPage() {
                               <div className="grid grid-cols-[40px_1fr_100px_100px_100px] bg-slate-50 border-b border-border/30">
                                 <div className="px-2 py-3" />
                                 <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Variante</div>
-                                <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Stock Inicial</div>
+                                <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Stock Total</div>
                                 <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Stock Reservado</div>
                                 <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Stock Disponible</div>
                               </div>
@@ -1606,7 +1638,7 @@ export default function NuevoItemPage() {
                                         )}
                                       </div>
 
-                                      {/* Stock Inicial */}
+                                      {/* Stock Total */}
                                       <div className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
                                         <input
                                           type="number"
@@ -1652,19 +1684,16 @@ export default function NuevoItemPage() {
                           {/* Navigation buttons */}
                           <div className="mt-8 pt-4 border-t border-gray-200 flex justify-between">
                             <button
-                              onClick={() => setCurrentStep(3)}
+                              onClick={() => setCurrentStep(2)}
                               className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors cursor-pointer"
                             >
                               Volver
                             </button>
                             <button
-                              onClick={() => {
-                                // Placeholder - will implement full creation later
-                                alert("Creación de item con variantes (proximamente)")
-                              }}
-                              className="px-6 py-2.5 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors cursor-pointer"
+                              onClick={() => setCurrentStep(4)}
+                              className="px-6 py-2.5 bg-purple-500 text-white rounded-lg font-medium hover:bg-purple-600 transition-colors cursor-pointer"
                             >
-                              Crear Item
+                              Continuar
                             </button>
                           </div>
                         </div>
