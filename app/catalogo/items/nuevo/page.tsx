@@ -2020,6 +2020,18 @@ export default function NuevoItemPage() {
                                 </div>
                               </div>
 
+                              {/* Proveedor - below Presentación */}
+                              <div className="flex flex-col gap-2 mt-5">
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Proveedor</label>
+                                <input
+                                  type="text"
+                                  value={proveedor}
+                                  onChange={(e) => setProveedor(e.target.value)}
+                                  className="px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-800 text-sm placeholder:text-slate-400 transition-all"
+                                  placeholder="Nombre del proveedor"
+                                />
+                              </div>
+
                               <div className="flex flex-col gap-3 mt-2">
                                 <div className="flex items-center gap-3">
                                   <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Volumen de la unidad</label>
@@ -2104,35 +2116,6 @@ export default function NuevoItemPage() {
                                 </div>
                               )}
 
-                              <div className="border-t border-slate-100 my-6"></div>
-
-                              {/* Proveedor Section */}
-                              <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-4">
-                                Proveedor
-                              </h3>
-
-                              <div className="grid grid-cols-2 gap-5">
-                                <div className="flex flex-col gap-2">
-                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Proveedor</label>
-                                  <input
-                                    type="text"
-                                    value={proveedor}
-                                    onChange={(e) => setProveedor(e.target.value)}
-                                    className="px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-800 text-sm placeholder:text-slate-400 transition-all"
-                                    placeholder="Nombre del proveedor"
-                                  />
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Código Proveedor</label>
-                                  <input
-                                    type="text"
-                                    value={codigoProveedor}
-                                    onChange={(e) => setCodigoProveedor(e.target.value)}
-                                    className="px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-800 text-sm placeholder:text-slate-400 transition-all"
-                                    placeholder="Código del proveedor"
-                                  />
-                                </div>
-                              </div>
                             </div>
                           </div>
                         )}
