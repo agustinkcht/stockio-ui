@@ -24,10 +24,10 @@ const MAX_TITLE_LENGTH = 60
 
 const STEPS_INDIVIDUAL = [
   { id: 1, label: "Información del Item" },
-  { id: 2, label: "Información Comercial" },
-  { id: 3, label: "Stock" },
+  { id: 2, label: "Stock" },
+  { id: 3, label: "Precio" },
   { id: 4, label: "Detalles Finales" },
-  ]
+]
 
 const STEPS_VARIANTES = [
   { id: 1, label: "Información Compartida" },
@@ -40,7 +40,7 @@ export default function NuevoItemPage() {
   const router = useRouter()
   const { items, setItems } = useItems()
   const { currentAccount } = useAccount()
-  const { catalogo } = useSettings()
+  const { catalogo, precios } = useSettings()
   const [titulo, setTitulo] = useState("")
   const [selectedType, setSelectedType] = useState<"individual" | "variantes" | null>(null)
   const [hoveredDropdown, setHoveredDropdown] = useState<string | null>(null)
@@ -85,6 +85,10 @@ export default function NuevoItemPage() {
   const [proveedor, setProveedor] = useState("")
   const [codigoProveedor, setCodigoProveedor] = useState("")
 
+  // Step 4 - Título final (can be edited, will regenerate SKU if changed)
+  const [tituloFinal, setTituloFinal] = useState("")
+  const [tituloFinalUserModified, setTituloFinalUserModified] = useState(false)
+
   // Creation state
   const [isCreating, setIsCreating] = useState(false)
   const [createdItemId, setCreatedItemId] = useState<string | null>(null)
@@ -118,14 +122,16 @@ export default function NuevoItemPage() {
     return titulo.trim().length > 0
   }, [titulo])
 
-  // Generate suggested SKU based on title and category
+  // Generate suggested SKU based on final title and category
   const suggestedSku = useMemo(() => {
-    if (!titulo.trim()) return ""
+    // Use tituloFinal if set, otherwise use titulo
+    const titleToUse = tituloFinal.trim() || titulo.trim()
+    if (!titleToUse) return ""
     return generateStandaloneSKU({
       category: categoria || undefined,
-      title: titulo.trim(),
+      title: titleToUse,
     })
-  }, [titulo, categoria])
+  }, [titulo, tituloFinal, categoria])
 
   // Initialize SKU with suggested value when it changes and user hasn't modified it
   useEffect(() => {
@@ -134,19 +140,67 @@ export default function NuevoItemPage() {
     }
   }, [suggestedSku, skuUserModified])
 
-  // Calculate precio final - if user manually set precioVenta, use that; otherwise calculate from costo/margen/iva
+  // Sync tituloFinal with titulo when user hasn't modified it
+  useEffect(() => {
+    if (!tituloFinalUserModified) {
+      setTituloFinal(titulo)
+    }
+  }, [titulo, tituloFinalUserModified])
+
+  // Helper functions for price calculations (matching price-grid.tsx)
+  const calculatePrecioFinal = (costoVal: number, margenVal: number): number => {
+    return Math.round(costoVal * (1 + margenVal / 100))
+  }
+
+  const calculateMargen = (precioFinalVal: number, costoVal: number): number => {
+    if (costoVal === 0) return 0
+    return Math.round((precioFinalVal / costoVal - 1) * 1000) / 10
+  }
+
+  // Calculate precio final based on costo and margen
   const precioFinal = useMemo(() => {
     if (precioVenta !== "") {
       return parseFloat(precioVenta) || 0
     }
     const costoNum = parseFloat(costo) || 0
     const margenNum = parseFloat(margen) || 0
-    const ivaNum = parseFloat(iva) || 0
+    return calculatePrecioFinal(costoNum, margenNum)
+  }, [costo, margen, precioVenta])
+
+  // Handle costo change with settings-aware behavior
+  const handleCostoChange = (newCosto: string) => {
+    const newCostoNum = parseFloat(newCosto) || 0
+    const currentPrecioFinal = precioVenta !== "" ? parseFloat(precioVenta) : precioFinal
     
-    const precioConMargen = costoNum * (1 + margenNum / 100)
-    const precioConIva = precioConMargen * (1 + ivaNum / 100)
-    return precioConIva
-  }, [costo, margen, iva, precioVenta])
+    setCosto(newCosto)
+    
+    if (precios.costoBehavior === "preservePrecioFinal") {
+      // Preserve precio final, recalculate margen
+      const newMargen = calculateMargen(currentPrecioFinal, newCostoNum)
+      setMargen(newMargen.toString())
+    } else {
+      // Preserve margen, recalculate precio final
+      setPrecioVenta("")
+    }
+  }
+
+  // Handle margen change - always recalculate precio final
+  const handleMargenChange = (newMargen: string) => {
+    setMargen(newMargen)
+    setPrecioVenta("") // Reset manual price, let it recalculate
+  }
+
+  // Handle precio final change - always recalculate margen
+  const handlePrecioFinalChange = (newPrecioFinal: string) => {
+    const newPrecioNum = parseFloat(newPrecioFinal) || 0
+    const costoNum = parseFloat(costo) || 0
+    
+    setPrecioVenta(newPrecioFinal)
+    
+    // Recalculate margen based on new precio final
+    const newMargen = calculateMargen(newPrecioNum, costoNum)
+    setMargen(newMargen.toString())
+  }
 
   // Calculate stock disponible
   const stockDisponible = useMemo(() => {
@@ -1826,79 +1880,78 @@ export default function NuevoItemPage() {
                   <div>
                     {/* Step 1: Información del Item */}
                     {currentStep === 1 && (
-                      <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
-                        {/* Info/Atributos Toggle */}
-                        <div className="mb-6">
-                          <div className="flex rounded-lg border border-slate-200 p-1 bg-slate-50 w-full">
+                      <div className="p-8 bg-white border border-slate-100 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.08)]">
+                        {/* Info/Atributos Toggle - Pill style matching detail panel */}
+                        <div className="mb-8">
+                          <div className="flex rounded-full border border-slate-200/80 p-1.5 bg-slate-50/50 w-full max-w-md mx-auto">
                             <button
                               onClick={() => setSelectedDetailTab("info")}
-                              className={`flex-1 px-3 py-2 rounded-md text-xs font-medium transition-all cursor-pointer ${selectedDetailTab === "info"
-                                ? "bg-white text-slate-900 shadow-sm"
-                                : "text-slate-600 hover:text-slate-900"
+                              className={`flex-1 px-4 py-2.5 rounded-full text-sm font-medium transition-all cursor-pointer ${selectedDetailTab === "info"
+                                ? "bg-white text-slate-800 shadow-sm"
+                                : "text-slate-500 hover:text-slate-700"
                               }`}
                             >
-                              Info
+                              INFO
                             </button>
                             <button
                               onClick={() => setSelectedDetailTab("atributos")}
-                              className={`flex-1 px-3 py-2 rounded-md text-xs font-medium transition-all cursor-pointer ${selectedDetailTab === "atributos"
-                                ? "bg-white text-slate-900 shadow-sm"
-                                : "text-slate-600 hover:text-slate-900"
+                              className={`flex-1 px-4 py-2.5 rounded-full text-sm font-medium transition-all cursor-pointer ${selectedDetailTab === "atributos"
+                                ? "bg-white text-slate-800 shadow-sm"
+                                : "text-slate-500 hover:text-slate-700"
                               }`}
                             >
-                              Atributos
+                              ATRIBUTOS
                             </button>
                           </div>
                         </div>
 
                         {/* Info Tab Content */}
                         {selectedDetailTab === "info" && (
-                          <div className="h-full flex flex-col py-2 overflow-y-auto">
-                            <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
+                          <div className="h-full flex flex-col overflow-y-auto">
+                            {/* Información del Producto Section */}
+                            <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-5">
                               Información del Producto
                             </h3>
-                            <p className="text-[11px] text-slate-400 mb-3 italic">
-                              Completa la información basica del item.
-                            </p>
 
-                            <div className="space-y-3">
-                              <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-5">
+                              <div className="grid grid-cols-2 gap-5">
                                 <div className="flex flex-col gap-2">
-                                  <label className="text-sm font-medium text-gray-700">Categoría</label>
+                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Categoría</label>
                                   <input
                                     type="text"
                                     value={categoria}
                                     onChange={(e) => setCategoria(e.target.value)}
-                                    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900"
+                                    className="px-4 py-3 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 bg-slate-50/30 text-slate-800 text-sm placeholder:text-slate-400 transition-all hover:border-slate-300"
                                     placeholder="Ej: Vinos"
                                   />
                                 </div>
 
                                 <div className="flex flex-col gap-2">
-                                  <label className="text-sm font-medium text-gray-700">Marca</label>
+                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Marca</label>
                                   <input
                                     type="text"
                                     value={marca}
                                     onChange={(e) => setMarca(e.target.value)}
-                                    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900"
+                                    className="px-4 py-3 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 bg-slate-50/30 text-slate-800 text-sm placeholder:text-slate-400 transition-all hover:border-slate-300"
                                     placeholder="Ej: YKK"
                                   />
                                 </div>
                               </div>
 
-                              <div className="border-t border-gray-200 my-4"></div>
+                              <div className="border-t border-slate-100 my-6"></div>
 
-                              <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
+                              {/* Presentación Section */}
+                              <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-4">
                                 Presentación
                               </h3>
 
-                              <div className="grid grid-cols-2 gap-4">
+                              <div className="grid grid-cols-2 gap-5">
                                 <div className="flex flex-col gap-2">
-                                  <label className="text-sm font-medium text-gray-700">Formato de venta</label>
+                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Formato de venta</label>
                                   <select
                                     value={formatoVenta}
                                     onChange={(e) => setFormatoVenta(e.target.value)}
-                                    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white border-gray-300 text-gray-900 cursor-pointer"
+                                    className="px-4 py-3 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 appearance-none bg-slate-50/30 text-slate-800 text-sm cursor-pointer transition-all hover:border-slate-300"
                                   >
                                     <option value="unidad">Unidad</option>
                                     <option value="pack">Pack</option>
@@ -1906,7 +1959,7 @@ export default function NuevoItemPage() {
                                 </div>
 
                                 <div className="flex flex-col gap-2">
-                                  <label className="text-sm font-medium text-gray-700">Unidades por pack</label>
+                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Unidades por pack</label>
                                   <input
                                     type="text"
                                     value={unidadesPorPack === "N.E." ? "" : unidadesPorPack}
@@ -1920,27 +1973,27 @@ export default function NuevoItemPage() {
                                       }
                                     }}
                                     disabled={formatoVenta === "unidad"}
-                                    className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                    className={`px-4 py-3 border rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 text-sm transition-all ${
                                       formatoVenta === "unidad"
-                                        ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
-                                        : "bg-white border-gray-300 text-gray-900"
+                                        ? "bg-slate-100/50 border-slate-200/60 text-slate-400 cursor-not-allowed"
+                                        : "bg-slate-50/30 border-slate-200/80 text-slate-800 hover:border-slate-300"
                                     }`}
                                     placeholder="N.E."
                                   />
                                 </div>
                               </div>
 
-                              <div className="flex flex-col gap-2">
-                                <div className="flex items-center gap-2">
-                                  <label className="text-sm font-medium text-gray-700">Volumen de la unidad</label>
+                              <div className="flex flex-col gap-3 mt-2">
+                                <div className="flex items-center gap-3">
+                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Volumen de la unidad</label>
                                   <button
                                     onClick={() => setVolumenActive(!volumenActive)}
-                                    className={`w-10 h-5 rounded-full transition-colors relative cursor-pointer ${
-                                      volumenActive ? "bg-blue-500" : "bg-gray-300"
+                                    className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer ${
+                                      volumenActive ? "bg-blue-500" : "bg-slate-300"
                                     }`}
                                   >
                                     <div
-                                      className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${
+                                      className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform shadow-sm ${
                                         volumenActive ? "translate-x-5" : "translate-x-0"
                                       }`}
                                     />
@@ -1948,24 +2001,24 @@ export default function NuevoItemPage() {
                                 </div>
 
                                 {volumenActive && (
-                                  <div className="grid grid-cols-2 gap-4 mt-2">
+                                  <div className="grid grid-cols-2 gap-5 mt-1">
                                     <div className="flex flex-col gap-2">
-                                      <label className="text-sm font-medium text-gray-700">Cantidad</label>
+                                      <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Cantidad</label>
                                       <input
                                         type="number"
                                         value={volumenCantidad}
                                         onChange={(e) => setVolumenCantidad(e.target.value)}
-                                        className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900"
+                                        className="px-4 py-3 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 bg-slate-50/30 text-slate-800 text-sm placeholder:text-slate-400 transition-all hover:border-slate-300"
                                         placeholder="0"
                                       />
                                     </div>
 
                                     <div className="flex flex-col gap-2">
-                                      <label className="text-sm font-medium text-gray-700">Unidad de medida</label>
+                                      <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Unidad de medida</label>
                                       <select
                                         value={volumenUnidad}
                                         onChange={(e) => setVolumenUnidad(e.target.value)}
-                                        className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white border-gray-300 text-gray-900 cursor-pointer"
+                                        className="px-4 py-3 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 appearance-none bg-slate-50/30 text-slate-800 text-sm cursor-pointer transition-all hover:border-slate-300"
                                       >
                                         <option value="ml">ml</option>
                                         <option value="l">l</option>
@@ -1981,17 +2034,17 @@ export default function NuevoItemPage() {
 
                               {/* Vencimiento Section - Only shown if enabled in settings */}
                               {catalogo.incluirVencimiento && (
-                                <div className="flex flex-col gap-2 mt-4">
-                                  <div className="flex items-center gap-2">
-                                    <label className="text-sm font-medium text-gray-700">Vencimiento</label>
+                                <div className="flex flex-col gap-3 mt-2">
+                                  <div className="flex items-center gap-3">
+                                    <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Vencimiento</label>
                                     <button
                                       onClick={() => setVencimientoActive(!vencimientoActive)}
-                                      className={`w-10 h-5 rounded-full transition-colors relative cursor-pointer ${
-                                        vencimientoActive ? "bg-blue-500" : "bg-gray-300"
+                                      className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer ${
+                                        vencimientoActive ? "bg-blue-500" : "bg-slate-300"
                                       }`}
                                     >
                                       <div
-                                        className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${
+                                        className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform shadow-sm ${
                                           vencimientoActive ? "translate-x-5" : "translate-x-0"
                                         }`}
                                       />
@@ -1999,55 +2052,83 @@ export default function NuevoItemPage() {
                                   </div>
 
                                   {vencimientoActive && (
-                                    <div className="mt-2 p-3 border border-blue-200/60 rounded-lg bg-gradient-to-br from-blue-50/50 to-indigo-50/30">
-                                      <label className="text-xs font-semibold text-blue-900/70 uppercase tracking-wider mb-2 block">
+                                    <div className="mt-1 p-4 border border-blue-200/60 rounded-xl bg-gradient-to-br from-blue-50/50 to-indigo-50/30">
+                                      <label className="text-[10px] font-medium text-blue-600/80 uppercase tracking-wider mb-2 block">
                                         Fecha de Vencimiento
                                       </label>
-                                      <div className="relative">
-                                        <input
-                                          type="date"
-                                          value={fechaVencimiento}
-                                          onChange={(e) => setFechaVencimiento(e.target.value)}
-                                          className="w-full px-3 py-2.5 border border-blue-300/50 rounded-lg bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 text-gray-900 text-sm font-medium transition-all shadow-sm hover:shadow-md"
-                                        />
-                                      </div>
+                                      <input
+                                        type="date"
+                                        value={fechaVencimiento}
+                                        onChange={(e) => setFechaVencimiento(e.target.value)}
+                                        className="w-full px-4 py-3 border border-blue-200/50 rounded-xl bg-white/80 focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400 text-slate-800 text-sm transition-all"
+                                      />
                                     </div>
                                   )}
                                 </div>
                               )}
+
+                              <div className="border-t border-slate-100 my-6"></div>
+
+                              {/* Proveedor Section */}
+                              <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-4">
+                                Proveedor
+                              </h3>
+
+                              <div className="grid grid-cols-2 gap-5">
+                                <div className="flex flex-col gap-2">
+                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Proveedor</label>
+                                  <input
+                                    type="text"
+                                    value={proveedor}
+                                    onChange={(e) => setProveedor(e.target.value)}
+                                    className="px-4 py-3 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 bg-slate-50/30 text-slate-800 text-sm placeholder:text-slate-400 transition-all hover:border-slate-300"
+                                    placeholder="Nombre del proveedor"
+                                  />
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Código Proveedor</label>
+                                  <input
+                                    type="text"
+                                    value={codigoProveedor}
+                                    onChange={(e) => setCodigoProveedor(e.target.value)}
+                                    className="px-4 py-3 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 bg-slate-50/30 text-slate-800 text-sm placeholder:text-slate-400 transition-all hover:border-slate-300"
+                                    placeholder="Código del proveedor"
+                                  />
+                                </div>
+                              </div>
                             </div>
                           </div>
                         )}
 
                         {/* Atributos Tab Content */}
                         {selectedDetailTab === "atributos" && (
-                          <div className="py-2">
+                          <div>
                             {!showAtributosView ? (
-                              <div className="flex flex-col items-center justify-center h-full gap-4 py-8">
-                                <p className="text-gray-500 text-sm">No hay atributos configurados</p>
+                              <div className="flex flex-col items-center justify-center h-full gap-4 py-10">
+                                <p className="text-slate-400 text-sm">No hay atributos configurados</p>
                                 <button
                                   onClick={() => setShowAtributosView(true)}
-                                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg transition-colors cursor-pointer"
+                                  className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors cursor-pointer text-sm font-medium"
                                 >
                                   Agregar atributos
                                 </button>
                               </div>
                             ) : (
                               <div className="flex flex-col gap-6">
-                                <div className="flex flex-col gap-3">
+                                <div className="flex flex-col gap-4">
                                   <div>
-                                    <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
+                                    <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-2">
                                       Atributos Informativos
                                     </h3>
-                                    <p className="text-xs text-gray-500 italic mt-1">
+                                    <p className="text-[11px] text-slate-400 italic">
                                       Atributos que describen propiedades generales del producto
                                     </p>
                                   </div>
 
                                   {atributosInformativos.map((attr, index) => (
-                                    <div key={index} className="flex items-start gap-3">
+                                    <div key={index} className="flex items-start gap-4">
                                       <div className="flex-1">
-                                        <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
+                                        <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-2 block">Atributo</label>
                                         <input
                                           type="text"
                                           value={attr.key}
@@ -2056,13 +2137,13 @@ export default function NuevoItemPage() {
                                             updated[index].key = e.target.value
                                             setAtributosInformativos(updated)
                                           }}
-                                          className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all text-slate-800 hover:border-slate-300"
+                                          className="w-full px-4 py-3 bg-slate-50/30 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 text-sm transition-all text-slate-800 hover:border-slate-300 placeholder:text-slate-400"
                                           placeholder="Ej: Material"
                                         />
                                       </div>
 
                                       <div className="flex-1">
-                                        <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Valor</label>
+                                        <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-2 block">Valor</label>
                                         <input
                                           type="text"
                                           value={attr.value}
@@ -2071,7 +2152,7 @@ export default function NuevoItemPage() {
                                             updated[index].value = e.target.value
                                             setAtributosInformativos(updated)
                                           }}
-                                          className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all text-slate-800 hover:border-slate-300"
+                                          className="w-full px-4 py-3 bg-slate-50/30 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 text-sm transition-all text-slate-800 hover:border-slate-300 placeholder:text-slate-400"
                                           placeholder="Ej: Algodon"
                                         />
                                       </div>
@@ -2085,7 +2166,7 @@ export default function NuevoItemPage() {
                                               setShowAtributosView(false)
                                             }
                                           }}
-                                          className="text-gray-400 hover:text-red-400 transition-colors cursor-pointer"
+                                          className="text-slate-400 hover:text-red-400 transition-colors cursor-pointer"
                                         >
                                           <X className="w-4 h-4" />
                                         </button>
@@ -2097,7 +2178,7 @@ export default function NuevoItemPage() {
                                     onClick={() => {
                                       setAtributosInformativos([...atributosInformativos, { key: "", value: "" }])
                                     }}
-                                    className="w-full px-3 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                                    className="w-full px-4 py-3 border border-dashed border-slate-300 rounded-xl text-slate-500 hover:text-slate-600 hover:border-slate-400 transition-colors flex items-center justify-center gap-2 cursor-pointer"
                                   >
                                     <Plus className="w-4 h-4" />
                                     <span className="text-sm">Agregar atributo</span>
@@ -2109,7 +2190,7 @@ export default function NuevoItemPage() {
                         )}
 
                         {/* Navigation buttons */}
-                        <div className="mt-8 pt-4 border-t border-gray-200 flex justify-end">
+                        <div className="mt-8 pt-5 border-t border-slate-100 flex justify-end">
                           <button
                             onClick={() => setCurrentStep(2)}
                             className="px-6 py-2.5 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer"
@@ -2120,134 +2201,57 @@ export default function NuevoItemPage() {
                       </div>
                     )}
 
-                    {/* Step 2: Información Comercial */}
+                    {/* Step 2: Stock */}
                     {currentStep === 2 && (
-                      <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
-                        <div className="h-full flex flex-col py-2">
-                          <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-6">
-                            Información Comercial
+                      <div className="p-8 bg-white border border-slate-100 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.08)]">
+                        <div className="h-full flex flex-col">
+                          <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-2">
+                            Stock
                           </h3>
+                          <p className="text-[11px] text-slate-400 mb-6 italic">
+                            Define el stock del item.
+                          </p>
 
                           <div className="space-y-6">
-                            {/* Precio Section */}
-                            <div>
-                              <h4 className="text-sm font-medium text-gray-700 mb-4">Precio</h4>
-                              {/* Precio de Venta - Above and editable */}
-                            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 mb-4">
-                              <span className="text-xs font-medium text-green-700 uppercase tracking-wider">Precio de Venta</span>
-                              {editingPrecioVenta ? (
-                                <div className="mt-1 flex items-center">
-                                  <span className="text-3xl font-bold text-green-700 mr-1">$</span>
-                                  <input
-                                    type="number"
-                                    value={precioVenta}
-                                    onChange={(e) => setPrecioVenta(e.target.value)}
-                                    onBlur={() => setEditingPrecioVenta(false)}
-                                    onKeyDown={(e) => e.key === 'Enter' && setEditingPrecioVenta(false)}
-                                    className="text-3xl font-bold text-green-700 bg-transparent border-none outline-none w-full"
-                                    placeholder={precioFinal.toFixed(2)}
-                                    autoFocus
-                                  />
-                                </div>
-                              ) : (
-                                <div 
-                                  onClick={() => setEditingPrecioVenta(true)}
-                                  className="mt-1 text-3xl font-bold text-green-700 cursor-pointer hover:opacity-80"
-                                >
-                                  ${precioFinal.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="grid grid-cols-3 gap-4">
+                            <div className="grid grid-cols-3 gap-5">
                               <div className="flex flex-col gap-2">
-                                <label className="text-xs font-medium text-gray-600">Costo</label>
-                                <div className="relative">
-                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
-                                  <input
-                                    type="number"
-                                    value={costo}
-                                    onChange={(e) => {
-                                      setCosto(e.target.value)
-                                      setPrecioVenta("") // Reset manual price when cost changes
-                                    }}
-                                    className="w-full pl-7 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
-                                    placeholder="0.00"
-                                  />
-                                </div>
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Total</label>
+                                <input
+                                  type="number"
+                                  value={stockInicial}
+                                  onChange={(e) => setStockInicial(e.target.value)}
+                                  className="px-4 py-3 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 bg-slate-50/30 text-slate-800 text-sm placeholder:text-slate-400 transition-all hover:border-slate-300"
+                                  placeholder="0"
+                                  min="0"
+                                />
                               </div>
 
                               <div className="flex flex-col gap-2">
-                                <label className="text-xs font-medium text-gray-600">Margen</label>
-                                <div className="relative">
-                                  <input
-                                    type="number"
-                                    value={margen}
-                                    onChange={(e) => {
-                                      setMargen(e.target.value)
-                                      setPrecioVenta("") // Reset manual price when margin changes
-                                    }}
-                                    className="w-full pl-3 pr-7 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
-                                    placeholder="0"
-                                  />
-                                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
-                                </div>
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Reservado</label>
+                                <input
+                                  type="number"
+                                  value={stockReservado}
+                                  onChange={(e) => setStockReservado(e.target.value)}
+                                  className="px-4 py-3 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 bg-slate-50/30 text-slate-800 text-sm placeholder:text-slate-400 transition-all hover:border-slate-300"
+                                  placeholder="0"
+                                  min="0"
+                                />
                               </div>
 
                               <div className="flex flex-col gap-2">
-                                <label className="text-xs font-medium text-gray-600">IVA</label>
-                                <div className="relative">
-                                  <input
-                                    type="number"
-                                    value={iva}
-                                    onChange={(e) => {
-                                      setIva(e.target.value)
-                                      setPrecioVenta("") // Reset manual price when IVA changes
-                                    }}
-                                    className="w-full pl-3 pr-7 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
-                                    placeholder="21"
-                                  />
-                                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
-                                </div>
-                              </div>
-                            </div>
-                            </div>
-
-                            <div className="border-t border-gray-200 my-4"></div>
-
-                            {/* Información del Proveedor */}
-                            <div>
-                              <h4 className="text-sm font-medium text-gray-700 mb-4">Información del Proveedor</h4>
-                              <div className="grid grid-cols-2 gap-4">
-                                <div className="flex flex-col gap-2">
-                                  <label className="text-xs font-medium text-gray-600">Proveedor</label>
-                                  <input
-                                    type="text"
-                                    value={proveedor}
-                                    onChange={(e) => setProveedor(e.target.value)}
-                                    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
-                                    placeholder="Nombre del proveedor"
-                                  />
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                  <label className="text-xs font-medium text-gray-600">Codigo Proveedor</label>
-                                  <input
-                                    type="text"
-                                    value={codigoProveedor}
-                                    onChange={(e) => setCodigoProveedor(e.target.value)}
-                                    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
-                                    placeholder="Codigo del proveedor"
-                                  />
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Disponible</label>
+                                <div className="px-4 py-3 border rounded-xl bg-blue-50/50 border-blue-200/60 text-blue-600 text-sm font-semibold">
+                                  {stockDisponible}
                                 </div>
                               </div>
                             </div>
                           </div>
 
                           {/* Navigation buttons */}
-                          <div className="mt-8 pt-4 border-t border-gray-200 flex justify-between">
+                          <div className="mt-8 pt-4 border-t border-slate-100 flex justify-between">
                             <button
                               onClick={() => setCurrentStep(1)}
-                              className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors cursor-pointer"
+                              className="px-6 py-2.5 bg-slate-100 text-slate-600 rounded-lg font-medium hover:bg-slate-200 transition-colors cursor-pointer"
                             >
                               Volver
                             </button>
@@ -2262,57 +2266,83 @@ export default function NuevoItemPage() {
                       </div>
                     )}
 
-                    {/* Step 3: Stock */}
+                    {/* Step 3: Precio */}
                     {currentStep === 3 && (
-                      <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
-                        <div className="h-full flex flex-col py-2">
-                          <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
-                            Stock
+                      <div className="p-8 bg-white border border-slate-100 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.08)]">
+                        <div className="h-full flex flex-col">
+                          <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-2">
+                            Precio
                           </h3>
                           <p className="text-[11px] text-slate-400 mb-6 italic">
-                            Define el stock inicial del item.
+                            Define el precio del item.
                           </p>
 
                           <div className="space-y-6">
-                            <div className="grid grid-cols-3 gap-4">
+                            {/* 4 fields in one row */}
+                            <div className="grid grid-cols-4 gap-4">
                               <div className="flex flex-col gap-2">
-                                <label className="text-xs font-medium text-gray-600">Inicial</label>
-                                <input
-                                  type="number"
-                                  value={stockInicial}
-                                  onChange={(e) => setStockInicial(e.target.value)}
-                                  className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
-                                  placeholder="0"
-                                  min="0"
-                                />
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Costo</label>
+                                <div className="relative">
+                                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
+                                  <input
+                                    type="number"
+                                    value={costo}
+                                    onChange={(e) => handleCostoChange(e.target.value)}
+                                    className="w-full pl-8 pr-3 py-3 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 bg-slate-50/30 text-slate-800 text-sm placeholder:text-slate-400 transition-all hover:border-slate-300"
+                                    placeholder="0"
+                                  />
+                                </div>
                               </div>
 
                               <div className="flex flex-col gap-2">
-                                <label className="text-xs font-medium text-gray-600">Reservado</label>
-                                <input
-                                  type="number"
-                                  value={stockReservado}
-                                  onChange={(e) => setStockReservado(e.target.value)}
-                                  className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 text-sm"
-                                  placeholder="0"
-                                  min="0"
-                                />
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Margen</label>
+                                <div className="relative">
+                                  <input
+                                    type="number"
+                                    value={margen}
+                                    onChange={(e) => handleMargenChange(e.target.value)}
+                                    className="w-full pl-3.5 pr-8 py-3 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 bg-slate-50/30 text-slate-800 text-sm placeholder:text-slate-400 transition-all hover:border-slate-300"
+                                    placeholder="0"
+                                  />
+                                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span>
+                                </div>
                               </div>
 
                               <div className="flex flex-col gap-2">
-                                <label className="text-xs font-medium text-gray-600">Disponible</label>
-                                <div className="px-3 py-2 border rounded-lg bg-blue-50 border-blue-200 text-blue-700 text-sm font-semibold">
-                                  {stockDisponible}
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">IVA</label>
+                                <div className="relative">
+                                  <input
+                                    type="number"
+                                    value={iva}
+                                    onChange={(e) => setIva(e.target.value)}
+                                    className="w-full pl-3.5 pr-8 py-3 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 bg-slate-50/30 text-slate-800 text-sm placeholder:text-slate-400 transition-all hover:border-slate-300"
+                                    placeholder="21"
+                                  />
+                                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span>
+                                </div>
+                              </div>
+
+                              <div className="flex flex-col gap-2">
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Precio Final</label>
+                                <div className="relative">
+                                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-green-600 text-sm font-medium">$</span>
+                                  <input
+                                    type="number"
+                                    value={precioVenta !== "" ? precioVenta : precioFinal.toString()}
+                                    onChange={(e) => handlePrecioFinalChange(e.target.value)}
+                                    className="w-full pl-8 pr-3 py-3 border border-green-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-green-400/50 focus:border-green-400/50 bg-green-50/30 text-green-700 text-sm font-semibold placeholder:text-green-400 transition-all hover:border-green-300"
+                                    placeholder="0"
+                                  />
                                 </div>
                               </div>
                             </div>
                           </div>
 
                           {/* Navigation buttons */}
-                          <div className="mt-8 pt-4 border-t border-gray-200 flex justify-between">
+                          <div className="mt-8 pt-4 border-t border-slate-100 flex justify-between">
                             <button
                               onClick={() => setCurrentStep(2)}
-                              className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors cursor-pointer"
+                              className="px-6 py-2.5 bg-slate-100 text-slate-600 rounded-lg font-medium hover:bg-slate-200 transition-colors cursor-pointer"
                             >
                               Volver
                             </button>
@@ -2329,9 +2359,9 @@ export default function NuevoItemPage() {
 
                     {/* Step 4: Detalles Finales */}
                     {currentStep === 4 && !createdItemId && (
-                      <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
-                        <div className="h-full flex flex-col py-2">
-                          <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
+                      <div className="p-8 bg-white border border-slate-100 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.08)]">
+                        <div className="h-full flex flex-col">
+                          <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-2">
                             Detalles Finales
                           </h3>
                           <p className="text-[11px] text-slate-400 mb-6 italic">
@@ -2339,10 +2369,27 @@ export default function NuevoItemPage() {
                           </p>
 
                           <div className="space-y-6">
+                            {/* Título */}
+                            <div className="flex flex-col gap-2">
+                              <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Título</label>
+                              <input
+                                type="text"
+                                value={tituloFinal}
+                                onChange={(e) => {
+                                  setTituloFinal(e.target.value)
+                                  setTituloFinalUserModified(e.target.value !== titulo)
+                                  // Reset SKU to auto-generate based on new title
+                                  setSkuUserModified(false)
+                                }}
+                                className="px-4 py-3 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 bg-slate-50/30 text-slate-800 text-sm placeholder:text-slate-400 transition-all hover:border-slate-300"
+                                placeholder="Nombre del item"
+                              />
+                            </div>
+
                             {/* SKU and Codigo Universal */}
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-5">
                               <div className="flex flex-col gap-2">
-                                <label className="text-sm font-medium text-gray-700">SKU</label>
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">SKU</label>
                                 <input
                                   type="text"
                                   value={sku}
@@ -2350,7 +2397,7 @@ export default function NuevoItemPage() {
                                     setSku(e.target.value.toUpperCase())
                                     setSkuUserModified(e.target.value.toUpperCase() !== suggestedSku)
                                   }}
-                                  className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 font-mono text-sm"
+                                  className="px-4 py-3 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 bg-slate-50/30 text-slate-800 font-mono text-sm placeholder:text-slate-400 transition-all hover:border-slate-300"
                                   placeholder="Ej: VNO-PROICON-MALB"
                                 />
                                 {!skuUserModified && sku && (
@@ -2362,22 +2409,22 @@ export default function NuevoItemPage() {
                               </div>
 
                               <div className="flex flex-col gap-2">
-                                <label className="text-sm font-medium text-gray-700">Codigo Universal</label>
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Código Universal</label>
                                 <input
                                   type="text"
                                   value={codigoUniversal}
                                   onChange={(e) => setCodigoUniversal(e.target.value)}
-                                  className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white border-gray-300 text-gray-900 font-mono text-sm"
+                                  className="px-4 py-3 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 bg-slate-50/30 text-slate-800 font-mono text-sm placeholder:text-slate-400 transition-all hover:border-slate-300"
                                   placeholder="Ej: 7790001234567"
                                 />
                               </div>
                             </div>
 
-                            <div className="border-t border-gray-200 my-4"></div>
+                            <div className="border-t border-slate-100 my-4"></div>
 
                             {/* Media Section */}
                             <div>
-                              <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
+                              <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-4">
                                 Media
                               </h3>
                               <div className="flex gap-3">
@@ -2455,29 +2502,29 @@ export default function NuevoItemPage() {
                               </div>
                             </div>
 
-                            <div className="border-t border-gray-200 my-4"></div>
+                            <div className="border-t border-slate-100 my-4"></div>
 
                             {/* Descripción Section */}
                             <div>
-                              <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
-                                Descripcion
+                              <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-4">
+                                Descripción
                               </h3>
                               {editingDescripcion ? (
                                 <textarea
                                   value={descripcion}
                                   onChange={(e) => setDescripcion(e.target.value)}
                                   onBlur={() => setEditingDescripcion(false)}
-                                  className="w-full min-h-[120px] px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm placeholder:text-gray-400"
+                                  className="w-full min-h-[120px] px-4 py-3 bg-slate-50/30 border border-slate-200/80 rounded-xl text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 resize-none text-sm placeholder:text-slate-400 transition-all hover:border-slate-300"
                                   placeholder="Agregar descripcion del producto..."
                                   autoFocus
                                 />
                               ) : (
                                 <div
                                   onClick={() => setEditingDescripcion(true)}
-                                  className="w-full min-h-[120px] px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 cursor-text hover:bg-gray-100 transition-colors text-sm"
+                                  className="w-full min-h-[120px] px-4 py-3 bg-slate-50/30 border border-slate-200/80 rounded-xl text-slate-800 cursor-text hover:border-slate-300 transition-colors text-sm"
                                 >
                                   {descripcion || (
-                                    <span className="text-gray-400">Click para agregar descripcion...</span>
+                                    <span className="text-slate-400">Click para agregar descripcion...</span>
                                   )}
                                 </div>
                               )}
@@ -2485,10 +2532,10 @@ export default function NuevoItemPage() {
                           </div>
 
                           {/* Navigation buttons */}
-                          <div className="mt-8 pt-4 border-t border-gray-200 flex justify-between">
+                          <div className="mt-8 pt-4 border-t border-slate-100 flex justify-between">
                             <button
                               onClick={() => setCurrentStep(3)}
-                              className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors cursor-pointer"
+                              className="px-6 py-2.5 bg-slate-100 text-slate-600 rounded-lg font-medium hover:bg-slate-200 transition-colors cursor-pointer"
                             >
                               Volver
                             </button>
@@ -2510,7 +2557,7 @@ export default function NuevoItemPage() {
                                   const newItemId = generateId("STA")
                                   const newItem: Item = {
                                     id: newItemId,
-                                    name: titulo,
+                                    name: tituloFinal || titulo,
                                     sku: finalSku,
                                     codigoUniversal: codigoUniversal || "",
                                     marca: marca || "",
