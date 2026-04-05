@@ -143,40 +143,45 @@ export default function CatalogoPage() {
   }, [items, editField, editVariantField])
 
   // Handle stock updates - uses the built-in tracking from useItems
-  const handleUpdateStockWithTracking = useCallback((itemSku: string, field: "total" | "reservado", value: number) => {
-    // Check if this is a variant
-    let isVariant = false
-    let parentSku: string | undefined
-
+  const handleUpdateStockWithTracking = useCallback((itemId: string, field: "total" | "reservado", value: number) => {
+    // Check if this is a variant (search by id first, then sku)
     for (const item of items) {
       if (item.variants) {
-        const variant = item.variants.find((v: any) => v.sku === itemSku)
+        const variant = item.variants.find((v: any) => v.id === itemId || v.sku === itemId)
         if (variant) {
-          isVariant = true
-          parentSku = item.sku
+          // Use parent's id first, fallback to sku
+          const parentIdentifier = item.id || item.sku
           // For variants, update the stock field via editVariantField
-          const currentStock = variant.stock || { total: 0, reservado: 0, disponible: 0 }
+          const currentStock = variant.stock || { total: "0", reservado: "0", disponible: "0" }
+          const currentTotal = parseInt(currentStock.total) || 0
+          const currentReservado = parseInt(currentStock.reservado) || 0
           const newStock = {
-            ...currentStock,
-            [field]: value,
-            disponible: field === "total" ? value - currentStock.reservado : currentStock.total - value
+            total: field === "total" ? value.toString() : currentStock.total,
+            reservado: field === "reservado" ? value.toString() : currentStock.reservado,
+            disponible: field === "total" 
+              ? (value - currentReservado).toString() 
+              : (currentTotal - value).toString()
           }
-          editVariantField(parentSku, itemSku, "stock", newStock)
+          editVariantField(parentIdentifier!, itemId, "stock", newStock)
           return
         }
       }
     }
 
-    // Not a variant - find the item and update
-    const item = items.find(i => i.sku === itemSku)
+    // Not a variant - find the item by id first, then sku
+    const item = items.find(i => i.id === itemId || i.sku === itemId)
     if (item) {
-      const currentStock = item.stock || { total: 0, reservado: 0, disponible: 0 }
+      const currentStock = item.stock || { total: "0", reservado: "0", disponible: "0" }
+      const currentTotal = parseInt(currentStock.total) || 0
+      const currentReservado = parseInt(currentStock.reservado) || 0
       const newStock = {
-        ...currentStock,
-        [field]: value,
-        disponible: field === "total" ? value - currentStock.reservado : currentStock.total - value
+        total: field === "total" ? value.toString() : currentStock.total,
+        reservado: field === "reservado" ? value.toString() : currentStock.reservado,
+        disponible: field === "total" 
+          ? (value - currentReservado).toString() 
+          : (currentTotal - value).toString()
       }
-      editField(itemSku, "stock", newStock)
+      editField(itemId, "stock", newStock)
     }
   }, [items, editField, editVariantField])
 
