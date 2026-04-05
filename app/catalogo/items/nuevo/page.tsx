@@ -174,7 +174,10 @@ export default function NuevoItemPage() {
     
     setCosto(newCosto)
     
-    if (precios.costoBehavior === "preservePrecioFinal") {
+    // If no costo or precio final is 0, set margen to 0
+    if (newCostoNum === 0 || currentPrecioFinal === 0) {
+      setMargen("0")
+    } else if (precios.costoBehavior === "preservePrecioFinal") {
       // Preserve precio final, recalculate margen
       const newMargen = calculateMargen(currentPrecioFinal, newCostoNum)
       setMargen(newMargen.toString())
@@ -197,9 +200,14 @@ export default function NuevoItemPage() {
     
     setPrecioVenta(newPrecioFinal)
     
-    // Recalculate margen based on new precio final
-    const newMargen = calculateMargen(newPrecioNum, costoNum)
-    setMargen(newMargen.toString())
+    // If precio final is 0 or no costo, set margen to 0
+    if (newPrecioNum === 0 || costoNum === 0) {
+      setMargen("0")
+    } else {
+      // Recalculate margen based on new precio final
+      const newMargen = calculateMargen(newPrecioNum, costoNum)
+      setMargen(newMargen.toString())
+    }
   }
 
   // Calculate stock disponible
@@ -1881,23 +1889,23 @@ export default function NuevoItemPage() {
                     {/* Step 1: Información del Item */}
                     {currentStep === 1 && (
                       <div className="p-8 bg-white border border-slate-100 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.08)]">
-                        {/* Info/Atributos Toggle - Pill style matching detail panel */}
-                        <div className="mb-8">
-                          <div className="flex rounded-full border border-slate-200/80 p-1.5 bg-slate-50/50 w-full max-w-md mx-auto">
+                        {/* Info/Atributos Toggle - Matching detail panel exactly */}
+                        <div className="mb-6">
+                          <div className="flex rounded-full border border-slate-200 p-1 bg-slate-50/80">
                             <button
                               onClick={() => setSelectedDetailTab("info")}
-                              className={`flex-1 px-4 py-2.5 rounded-full text-sm font-medium transition-all cursor-pointer ${selectedDetailTab === "info"
+                              className={`flex-1 px-4 py-2 rounded-full text-xs font-medium tracking-wide transition-all cursor-pointer ${selectedDetailTab === "info"
                                 ? "bg-white text-slate-800 shadow-sm"
-                                : "text-slate-500 hover:text-slate-700"
+                                : "text-slate-400 hover:text-slate-600"
                               }`}
                             >
                               INFO
                             </button>
                             <button
                               onClick={() => setSelectedDetailTab("atributos")}
-                              className={`flex-1 px-4 py-2.5 rounded-full text-sm font-medium transition-all cursor-pointer ${selectedDetailTab === "atributos"
+                              className={`flex-1 px-4 py-2 rounded-full text-xs font-medium tracking-wide transition-all cursor-pointer ${selectedDetailTab === "atributos"
                                 ? "bg-white text-slate-800 shadow-sm"
-                                : "text-slate-500 hover:text-slate-700"
+                                : "text-slate-400 hover:text-slate-600"
                               }`}
                             >
                               ATRIBUTOS
@@ -1921,7 +1929,7 @@ export default function NuevoItemPage() {
                                     type="text"
                                     value={categoria}
                                     onChange={(e) => setCategoria(e.target.value)}
-                                    className="px-4 py-3 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 bg-slate-50/30 text-slate-800 text-sm placeholder:text-slate-400 transition-all hover:border-slate-300"
+                                    className="px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-800 text-sm placeholder:text-slate-400 transition-all"
                                     placeholder="Ej: Vinos"
                                   />
                                 </div>
@@ -1932,7 +1940,7 @@ export default function NuevoItemPage() {
                                     type="text"
                                     value={marca}
                                     onChange={(e) => setMarca(e.target.value)}
-                                    className="px-4 py-3 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 bg-slate-50/30 text-slate-800 text-sm placeholder:text-slate-400 transition-all hover:border-slate-300"
+                                    className="px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-800 text-sm placeholder:text-slate-400 transition-all"
                                     placeholder="Ej: YKK"
                                   />
                                 </div>
@@ -1951,7 +1959,7 @@ export default function NuevoItemPage() {
                                   <select
                                     value={formatoVenta}
                                     onChange={(e) => setFormatoVenta(e.target.value)}
-                                    className="px-4 py-3 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 appearance-none bg-slate-50/30 text-slate-800 text-sm cursor-pointer transition-all hover:border-slate-300"
+                                    className="px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white text-slate-800 text-sm cursor-pointer transition-all"
                                   >
                                     <option value="unidad">Unidad</option>
                                     <option value="pack">Pack</option>
@@ -1973,10 +1981,10 @@ export default function NuevoItemPage() {
                                       }
                                     }}
                                     disabled={formatoVenta === "unidad"}
-                                    className={`px-4 py-3 border rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 text-sm transition-all ${
+                                    className={`px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm transition-all ${
                                       formatoVenta === "unidad"
-                                        ? "bg-slate-100/50 border-slate-200/60 text-slate-400 cursor-not-allowed"
-                                        : "bg-slate-50/30 border-slate-200/80 text-slate-800 hover:border-slate-300"
+                                        ? "bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed"
+                                        : "bg-white border-slate-200 text-slate-800"
                                     }`}
                                     placeholder="N.E."
                                   />
@@ -1988,12 +1996,12 @@ export default function NuevoItemPage() {
                                   <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Volumen de la unidad</label>
                                   <button
                                     onClick={() => setVolumenActive(!volumenActive)}
-                                    className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer ${
-                                      volumenActive ? "bg-blue-500" : "bg-slate-300"
+                                    className={`w-10 h-5 rounded-full transition-colors relative cursor-pointer ${
+                                      volumenActive ? "bg-slate-800" : "bg-slate-300"
                                     }`}
                                   >
                                     <div
-                                      className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform shadow-sm ${
+                                      className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${
                                         volumenActive ? "translate-x-5" : "translate-x-0"
                                       }`}
                                     />
@@ -2008,7 +2016,7 @@ export default function NuevoItemPage() {
                                         type="number"
                                         value={volumenCantidad}
                                         onChange={(e) => setVolumenCantidad(e.target.value)}
-                                        className="px-4 py-3 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 bg-slate-50/30 text-slate-800 text-sm placeholder:text-slate-400 transition-all hover:border-slate-300"
+                                        className="px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-800 text-sm placeholder:text-slate-400 transition-all"
                                         placeholder="0"
                                       />
                                     </div>
@@ -2018,7 +2026,7 @@ export default function NuevoItemPage() {
                                       <select
                                         value={volumenUnidad}
                                         onChange={(e) => setVolumenUnidad(e.target.value)}
-                                        className="px-4 py-3 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 appearance-none bg-slate-50/30 text-slate-800 text-sm cursor-pointer transition-all hover:border-slate-300"
+                                        className="px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white text-slate-800 text-sm cursor-pointer transition-all"
                                       >
                                         <option value="ml">ml</option>
                                         <option value="l">l</option>
@@ -2039,12 +2047,12 @@ export default function NuevoItemPage() {
                                     <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Vencimiento</label>
                                     <button
                                       onClick={() => setVencimientoActive(!vencimientoActive)}
-                                      className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer ${
-                                        vencimientoActive ? "bg-blue-500" : "bg-slate-300"
+                                      className={`w-10 h-5 rounded-full transition-colors relative cursor-pointer ${
+                                        vencimientoActive ? "bg-slate-800" : "bg-slate-300"
                                       }`}
                                     >
                                       <div
-                                        className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform shadow-sm ${
+                                        className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${
                                           vencimientoActive ? "translate-x-5" : "translate-x-0"
                                         }`}
                                       />
@@ -2081,7 +2089,7 @@ export default function NuevoItemPage() {
                                     type="text"
                                     value={proveedor}
                                     onChange={(e) => setProveedor(e.target.value)}
-                                    className="px-4 py-3 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 bg-slate-50/30 text-slate-800 text-sm placeholder:text-slate-400 transition-all hover:border-slate-300"
+                                    className="px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-800 text-sm placeholder:text-slate-400 transition-all"
                                     placeholder="Nombre del proveedor"
                                   />
                                 </div>
@@ -2091,7 +2099,7 @@ export default function NuevoItemPage() {
                                     type="text"
                                     value={codigoProveedor}
                                     onChange={(e) => setCodigoProveedor(e.target.value)}
-                                    className="px-4 py-3 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 bg-slate-50/30 text-slate-800 text-sm placeholder:text-slate-400 transition-all hover:border-slate-300"
+                                    className="px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-800 text-sm placeholder:text-slate-400 transition-all"
                                     placeholder="Código del proveedor"
                                   />
                                 </div>
@@ -2137,7 +2145,7 @@ export default function NuevoItemPage() {
                                             updated[index].key = e.target.value
                                             setAtributosInformativos(updated)
                                           }}
-                                          className="w-full px-4 py-3 bg-slate-50/30 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 text-sm transition-all text-slate-800 hover:border-slate-300 placeholder:text-slate-400"
+                                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm transition-all text-slate-800 placeholder:text-slate-400"
                                           placeholder="Ej: Material"
                                         />
                                       </div>
@@ -2152,7 +2160,7 @@ export default function NuevoItemPage() {
                                             updated[index].value = e.target.value
                                             setAtributosInformativos(updated)
                                           }}
-                                          className="w-full px-4 py-3 bg-slate-50/30 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 text-sm transition-all text-slate-800 hover:border-slate-300 placeholder:text-slate-400"
+                                          className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm transition-all text-slate-800 placeholder:text-slate-400"
                                           placeholder="Ej: Algodon"
                                         />
                                       </div>
@@ -2220,7 +2228,7 @@ export default function NuevoItemPage() {
                                   type="number"
                                   value={stockInicial}
                                   onChange={(e) => setStockInicial(e.target.value)}
-                                  className="px-4 py-3 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 bg-slate-50/30 text-slate-800 text-sm placeholder:text-slate-400 transition-all hover:border-slate-300"
+                                  className="px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-800 text-sm placeholder:text-slate-400 transition-all"
                                   placeholder="0"
                                   min="0"
                                 />
@@ -2232,7 +2240,7 @@ export default function NuevoItemPage() {
                                   type="number"
                                   value={stockReservado}
                                   onChange={(e) => setStockReservado(e.target.value)}
-                                  className="px-4 py-3 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 bg-slate-50/30 text-slate-800 text-sm placeholder:text-slate-400 transition-all hover:border-slate-300"
+                                  className="px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-800 text-sm placeholder:text-slate-400 transition-all"
                                   placeholder="0"
                                   min="0"
                                 />
@@ -2288,7 +2296,7 @@ export default function NuevoItemPage() {
                                     type="number"
                                     value={costo}
                                     onChange={(e) => handleCostoChange(e.target.value)}
-                                    className="w-full pl-8 pr-3 py-3 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 bg-slate-50/30 text-slate-800 text-sm placeholder:text-slate-400 transition-all hover:border-slate-300"
+                                    className="w-full pl-8 pr-3 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-800 text-sm placeholder:text-slate-400 transition-all"
                                     placeholder="0"
                                   />
                                 </div>
@@ -2299,9 +2307,14 @@ export default function NuevoItemPage() {
                                 <div className="relative">
                                   <input
                                     type="number"
-                                    value={margen}
+                                    value={!costo || parseFloat(costo) === 0 || precioFinal === 0 ? "" : margen}
                                     onChange={(e) => handleMargenChange(e.target.value)}
-                                    className="w-full pl-3.5 pr-8 py-3 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 bg-slate-50/30 text-slate-800 text-sm placeholder:text-slate-400 transition-all hover:border-slate-300"
+                                    disabled={!costo || parseFloat(costo) === 0}
+                                    className={`w-full pl-3.5 pr-8 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm transition-all ${
+                                      !costo || parseFloat(costo) === 0
+                                        ? "bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed"
+                                        : "bg-white border-slate-200 text-slate-800"
+                                    }`}
                                     placeholder="0"
                                   />
                                   <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span>
@@ -2310,16 +2323,15 @@ export default function NuevoItemPage() {
 
                               <div className="flex flex-col gap-2">
                                 <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">IVA</label>
-                                <div className="relative">
-                                  <input
-                                    type="number"
-                                    value={iva}
-                                    onChange={(e) => setIva(e.target.value)}
-                                    className="w-full pl-3.5 pr-8 py-3 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 bg-slate-50/30 text-slate-800 text-sm placeholder:text-slate-400 transition-all hover:border-slate-300"
-                                    placeholder="21"
-                                  />
-                                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span>
-                                </div>
+                                <select
+                                  value={iva}
+                                  onChange={(e) => setIva(e.target.value)}
+                                  className="w-full px-3.5 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-800 text-sm cursor-pointer transition-all appearance-none"
+                                >
+                                  <option value="0">0%</option>
+                                  <option value="10">10%</option>
+                                  <option value="21">21%</option>
+                                </select>
                               </div>
 
                               <div className="flex flex-col gap-2">
@@ -2328,9 +2340,9 @@ export default function NuevoItemPage() {
                                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-green-600 text-sm font-medium">$</span>
                                   <input
                                     type="number"
-                                    value={precioVenta !== "" ? precioVenta : precioFinal.toString()}
+                                    value={precioVenta !== "" ? precioVenta : (precioFinal > 0 ? precioFinal.toString() : "")}
                                     onChange={(e) => handlePrecioFinalChange(e.target.value)}
-                                    className="w-full pl-8 pr-3 py-3 border border-green-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-green-400/50 focus:border-green-400/50 bg-green-50/30 text-green-700 text-sm font-semibold placeholder:text-green-400 transition-all hover:border-green-300"
+                                    className="w-full pl-8 pr-3 py-3 border border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 bg-green-50/50 text-green-700 text-sm font-semibold placeholder:text-green-400 transition-all"
                                     placeholder="0"
                                   />
                                 </div>
@@ -2381,7 +2393,7 @@ export default function NuevoItemPage() {
                                   // Reset SKU to auto-generate based on new title
                                   setSkuUserModified(false)
                                 }}
-                                className="px-4 py-3 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 bg-slate-50/30 text-slate-800 text-sm placeholder:text-slate-400 transition-all hover:border-slate-300"
+                                className="px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-800 text-sm placeholder:text-slate-400 transition-all"
                                 placeholder="Nombre del item"
                               />
                             </div>
@@ -2397,7 +2409,7 @@ export default function NuevoItemPage() {
                                     setSku(e.target.value.toUpperCase())
                                     setSkuUserModified(e.target.value.toUpperCase() !== suggestedSku)
                                   }}
-                                  className="px-4 py-3 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 bg-slate-50/30 text-slate-800 font-mono text-sm placeholder:text-slate-400 transition-all hover:border-slate-300"
+                                  className="px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-800 font-mono text-sm placeholder:text-slate-400 transition-all"
                                   placeholder="Ej: VNO-PROICON-MALB"
                                 />
                                 {!skuUserModified && sku && (
@@ -2414,7 +2426,7 @@ export default function NuevoItemPage() {
                                   type="text"
                                   value={codigoUniversal}
                                   onChange={(e) => setCodigoUniversal(e.target.value)}
-                                  className="px-4 py-3 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 bg-slate-50/30 text-slate-800 font-mono text-sm placeholder:text-slate-400 transition-all hover:border-slate-300"
+                                  className="px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-slate-800 font-mono text-sm placeholder:text-slate-400 transition-all"
                                   placeholder="Ej: 7790001234567"
                                 />
                               </div>
@@ -2514,14 +2526,14 @@ export default function NuevoItemPage() {
                                   value={descripcion}
                                   onChange={(e) => setDescripcion(e.target.value)}
                                   onBlur={() => setEditingDescripcion(false)}
-                                  className="w-full min-h-[120px] px-4 py-3 bg-slate-50/30 border border-slate-200/80 rounded-xl text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-400/50 resize-none text-sm placeholder:text-slate-400 transition-all hover:border-slate-300"
+                                  className="w-full min-h-[120px] px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm placeholder:text-slate-400 transition-all"
                                   placeholder="Agregar descripcion del producto..."
                                   autoFocus
                                 />
                               ) : (
                                 <div
                                   onClick={() => setEditingDescripcion(true)}
-                                  className="w-full min-h-[120px] px-4 py-3 bg-slate-50/30 border border-slate-200/80 rounded-xl text-slate-800 cursor-text hover:border-slate-300 transition-colors text-sm"
+                                  className="w-full min-h-[120px] px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-800 cursor-text hover:border-slate-300 transition-colors text-sm"
                                 >
                                   {descripcion || (
                                     <span className="text-slate-400">Click para agregar descripcion...</span>
