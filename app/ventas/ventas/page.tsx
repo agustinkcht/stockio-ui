@@ -586,8 +586,11 @@ function VentasContent() {
                                       ))}
                                     </div>
 
-                                    {/* Item pricing section: col-span-4 (aligned with outer payment) */}
-                                    <div className="col-span-4 px-4 py-2 space-y-1">
+                                    {/* Spacer: col-span-11 */}
+                                    <div className="col-span-11" />
+
+                                    {/* Item pricing section: col-span-2 (aligned with header total+⋮) */}
+                                    <div className="col-span-2 px-4 py-2 space-y-1">
                                       {venta.items.map((item, idx) => (
                                         <div key={idx} className="flex items-center py-2 h-[74px] justify-end">
                                           <div className="text-right">
@@ -623,8 +626,7 @@ function VentasContent() {
                                       </div>
                                     </div>
 
-                                    {/* Remaining columns: col-span-9 */}
-                                    <div className="col-span-9" />
+                                    {/* No trailing spacer needed — col-span-2 pricing fills to end */}
                                   </div>
                                 </div>
                               )}
