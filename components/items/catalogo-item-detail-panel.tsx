@@ -110,6 +110,17 @@ export function CatalogoItemDetailPanel({
 }: ItemDetailPanelProps) {
   const router = useRouter()
   const { catalogo } = useSettings()
+
+  // Safety check: ensure selectedItem is a valid object, not a string or null
+  if (!selectedItem || typeof selectedItem === 'string') {
+    console.error("[v0] CatalogoItemDetailPanel: selectedItem is invalid:", selectedItem)
+    return (
+      <div className="flex items-center justify-center p-8 text-muted-foreground">
+        Item no encontrado o datos inválidos.
+      </div>
+    )
+  }
+
   const isViewingContainer = selectedItem?.isAgrupador || selectedItem?.hasVariants || false
 
   // Find the parent item that contains this child - prioritize ID match for accuracy
@@ -248,9 +259,11 @@ export function CatalogoItemDetailPanel({
   const [editingSkuPadre, setEditingSkuPadre] = useState(false)
   const [editingCodigoUniversal, setEditingCodigoUniversal] = useState(false)
   // For parent items, use skuPrefix; for standalone, use sku
-  const [skuValue, setSkuValue] = useState(
-    selectedItem.hasVariants ? (selectedItem.skuPrefix || selectedItem.sku || "") : (selectedItem.sku || "")
-  )
+  // Safety check: ensure selectedItem is an object, not a string
+  const [skuValue, setSkuValue] = useState(() => {
+    if (!selectedItem || typeof selectedItem === 'string') return ""
+    return selectedItem.hasVariants ? (selectedItem.skuPrefix || selectedItem.sku || "") : (selectedItem.sku || "")
+  })
   const [codigoUniversalValue, setCodigoUniversalValue] = useState(selectedItem.codigoUniversal || "")
   const [imageView, setImageView] = useState<"imagen" | "descripcion">("imagen")
   const [isCardFlipped, setIsCardFlipped] = useState(false)

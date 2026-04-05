@@ -2588,7 +2588,14 @@ export default function NuevoItemPage() {
                                   }
 
                                   // Add to items and persist to localStorage
-                                  const updatedItems = [newItem, ...items]
+                                  // Filter out any invalid items to prevent corruption
+                                  const validExistingItems = items.filter((item: any) => {
+                                    if (!item || typeof item !== 'object') return false
+                                    if (!item.id && !item.sku) return false
+                                    if (!item.name || item.name.trim() === '') return false
+                                    return true
+                                  })
+                                  const updatedItems = [newItem, ...validExistingItems]
                                   const storageKey = `stockio-items-${currentAccount}`
                                   localStorage.setItem(storageKey, JSON.stringify(updatedItems))
                                   setItems(updatedItems)

@@ -12,6 +12,14 @@ interface DeletedItemWithPosition {
   originalIndex: number
 }
 
+// Helper to validate an item is a proper object with required fields
+const isValidItem = (item: any): boolean => {
+  if (!item || typeof item !== 'object') return false
+  if (!item.id && !item.sku) return false
+  if (!item.name || item.name.trim() === '') return false
+  return true
+}
+
 interface EditedItemState {
   itemSku: string
   parentSku?: string // Track if editing a child (variant)
@@ -71,10 +79,17 @@ export function useItems() {
 
           if (storedItems) {
             const parsedItems = JSON.parse(storedItems)
+            // Filter out invalid items
+            const validItems = parsedItems.filter(isValidItem)
             console.log(
-              `[v0] useItems - Loaded ${parsedItems.length} items from localStorage for account ${currentAccount}`,
+              `[v0] useItems - Loaded ${validItems.length} valid items from localStorage (${parsedItems.length - validItems.length} invalid items filtered out) for account ${currentAccount}`,
             )
-            setItems(parsedItems)
+            // If we filtered out invalid items, save the clean list back
+            if (validItems.length !== parsedItems.length) {
+              localStorage.setItem(storageKey, JSON.stringify(validItems))
+              console.log(`[v0] useItems - Saved cleaned items list to localStorage`)
+            }
+            setItems(validItems)
           } else {
             const INITIAL_ITEMS =
               currentAccount === "noire"
@@ -398,8 +413,10 @@ export function useItems() {
     console.log("[v0] useItems - saveDelete called")
     try {
       if (USE_MOCK_DATA) {
-        localStorage.setItem(getStorageKey(), JSON.stringify(items))
-        console.log("[v0] Updated localStorage after deletion, remaining items:", items.length)
+        // Filter out any invalid items before saving
+        const validItems = items.filter(isValidItem)
+        localStorage.setItem(getStorageKey(), JSON.stringify(validItems))
+        console.log("[v0] Updated localStorage after deletion, remaining valid items:", validItems.length)
         setDeletedItems([])
         setHasUnsavedDeletes(false)
         return
@@ -618,8 +635,10 @@ export function useItems() {
 
     console.log("[v0] useItems - saveEdit called for:", editedItem.itemSku)
 
-    localStorage.setItem(getStorageKey(), JSON.stringify(items))
-    console.log("[v0] useItems - saved edits to localStorage")
+    // Filter out any invalid items before saving
+    const validItems = items.filter(isValidItem)
+    localStorage.setItem(getStorageKey(), JSON.stringify(validItems))
+    console.log("[v0] useItems - saved edits to localStorage, valid items:", validItems.length)
 
     setEditedItem(null)
     setLastUndoneEdit(null)
@@ -628,8 +647,10 @@ export function useItems() {
 
   // Force save current items state to localStorage (for audit mode bulk saves)
   const forceSaveItems = () => {
-    localStorage.setItem(getStorageKey(), JSON.stringify(items))
-    console.log("[v0] useItems - forceSaveItems to localStorage, items count:", items.length)
+    // Filter out any invalid items before saving
+    const validItems = items.filter(isValidItem)
+    localStorage.setItem(getStorageKey(), JSON.stringify(validItems))
+    console.log("[v0] useItems - forceSaveItems to localStorage, valid items count:", validItems.length)
     setEditedItem(null)
     setLastUndoneEdit(null)
     setHasUnsavedEdits(false)
