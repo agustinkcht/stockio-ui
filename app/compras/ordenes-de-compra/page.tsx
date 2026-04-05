@@ -90,7 +90,7 @@ function OrdenesDeCompraContent() {
   const [showNuevaOrdenModal, setShowNuevaOrdenModal] = useState(false)
   const [nuevaOrdenProveedor, setNuevaOrdenProveedor] = useState("")
   const [proveedorDropdownOpen, setProveedorDropdownOpen] = useState(false)
-  const proveedorInputRef = useRef<HTMLInputElement>(null)
+  const proveedorInputRef = useRef<HTMLDivElement>(null)
   
   // Get unique proveedores from items
   const uniqueProveedores = useMemo(() => {

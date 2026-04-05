@@ -63,6 +63,7 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
         id,
         numero: orderNumber,
         fechaCreacion: new Date().toISOString().split("T")[0],
+        proveedorId: "",
         proveedorNombre: proveedorFromQuery,
         estado: "borrador" as EstadoOrdenDeCompra,
         items: [],
