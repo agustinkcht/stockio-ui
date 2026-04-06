@@ -166,11 +166,15 @@ export default function CatalogoPage() {
           }
           editVariantField(parentIdentifier!, itemId, "stock", newStock)
           
-          // Auto-reactivate if was paused due to 0 stock and now has stock
+          // Auto-reactivate if was paused due to 0 stock and now has stock (uses editField for tracking)
           const wasInactive = (variant as any).isActive === false
           const hadNoStock = (parseInt(currentStock.disponible) || 0) <= 0
-          if (wasInactive && hadNoStock && newDisponible > 0 && variant.id) {
-            updateItemsActiveStatus([variant.id], true)
+          if (wasInactive && hadNoStock && newDisponible > 0) {
+            editVariantField(parentIdentifier!, itemId, "isActive", true)
+          }
+          // Auto-pause if stock disponible becomes 0 or less
+          if (newDisponible <= 0 && (variant as any).isActive !== false) {
+            editVariantField(parentIdentifier!, itemId, "isActive", false)
           }
           return
         }
@@ -193,14 +197,18 @@ export default function CatalogoPage() {
       }
       editField(itemId, "stock", newStock)
       
-      // Auto-reactivate if was paused due to 0 stock and now has stock
+      // Auto-reactivate if was paused due to 0 stock and now has stock (uses editField for tracking)
       const wasInactive = item.isActive === false
       const hadNoStock = (parseInt(currentStock.disponible) || 0) <= 0
-      if (wasInactive && hadNoStock && newDisponible > 0 && item.id) {
-        updateItemsActiveStatus([item.id], true)
+      if (wasInactive && hadNoStock && newDisponible > 0) {
+        editField(itemId, "isActive", true)
+      }
+      // Auto-pause if stock disponible becomes 0 or less
+      if (newDisponible <= 0 && item.isActive !== false) {
+        editField(itemId, "isActive", false)
       }
     }
-  }, [items, editField, editVariantField, updateItemsActiveStatus])
+  }, [items, editField, editVariantField])
 
   // Navigation guard for unsaved changes
   const {
