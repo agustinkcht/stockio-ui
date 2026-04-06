@@ -767,9 +767,9 @@ export function ItemCard({
             // NORMAL MODE: Standalone/child items
             <>
               <div
-                className={`col-span-16 flex items-center gap-3 h-full border-r border-slate-100 ${
-                  item.hasVariants || item.isAgrupador ? "border-border" : "border-border"
-                } px-4 cursor-pointer transition-colors`}
+                className={`col-span-16 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors ${
+                  item.hasVariants || item.isAgrupador ? "" : "border-r border-slate-100"
+                }`}
                 onClick={(e) => {
                   e.stopPropagation()
                   onItemClick(item)
@@ -890,15 +890,9 @@ export function ItemCard({
               ) : null}
 
               {item.hasVariants ? (
-                // Parent with variants: empty SKU, Precio, Stock columns (no borders)
-                <div className="col-span-28 h-full flex items-center justify-center px-4">
-                  <span className="text-sm text-container-item-foreground/80">{variantCount} variantes</span>
-                </div>
+                <div className="col-span-28 h-full" />
               ) : item.isAgrupador ? (
-                // Parent agrupador: empty SKU, Precio, Stock columns (no borders)
-                <div className="col-span-28 h-full flex items-center justify-center px-4">
-                  <span className="text-sm text-container-item-foreground/80">{itemCount} items</span>
-                </div>
+                <div className="col-span-28 h-full" />
               ) : (
                 <div
                   className="col-span-10 h-full flex items-center justify-center px-4 cursor-pointer transition-colors hover:bg-slate-50 group/stock"
