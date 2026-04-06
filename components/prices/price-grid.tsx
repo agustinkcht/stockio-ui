@@ -452,26 +452,7 @@ export function PriceGrid({
                 </div>
               </div>
 
-              {/* Ganancia (Profit) - non-editable, last column before actions */}
-              {(() => {
-                const ganancia = itemPricing.precioFinal - itemPricing.costo
-                const isPositive = ganancia >= 0
-                return (
-                  <div
-                    className={`flex items-center justify-center px-2 h-full border-r border-[rgba(202,213,227,0.3)] ${
-                      isPositive ? "bg-emerald-50/40" : "bg-red-50/40"
-                    }`}
-                  >
-                    <span className={`text-sm font-medium tabular-nums ${
-                      isPositive ? "text-emerald-600" : "text-red-600"
-                    }`}>
-                      {isPositive ? "+" : ""}{ganancia.toLocaleString("es-AR")}
-                    </span>
-                  </div>
-                )
-              })()}
-
-              {/* Empty cell for actions alignment */}
+              {/* Empty cell for grid alignment */}
               <div className="h-full" />
             </>
           )}
@@ -609,6 +590,9 @@ export function PriceGrid({
                 <MoreVertical className="w-3 h-3 text-slate-400 group-hover:text-slate-600" />
               </button>
             </div>
+            <div className="flex items-center justify-center px-3 border-r border-[rgba(202,213,227,0.61)]">
+              <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Ganancia</span>
+            </div>
             <div className="flex items-center justify-between px-3 border-r border-[rgba(202,213,227,0.61)]">
               <span className="flex-1 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">IVA</span>
               <button
@@ -628,9 +612,6 @@ export function PriceGrid({
                 <MoreVertical className="w-3 h-3 text-slate-400 group-hover:text-slate-600" />
               </button>
               <span className="flex-1 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">Precio Final</span>
-            </div>
-            <div className="flex items-center justify-center px-3 border-r border-[rgba(202,213,227,0.61)]">
-              <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Ganancia</span>
             </div>
             <div className="flex items-center justify-center">
               <div className="relative">
