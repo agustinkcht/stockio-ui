@@ -831,16 +831,10 @@ export function ItemCard({
                           disabled={!canToggle}
                           className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${
                             isActive 
-                              ? isRowInactive
-                                ? "bg-emerald-200 text-emerald-900 cursor-pointer"
-                                : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 cursor-pointer"
+                              ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 cursor-pointer"
                               : isAutoPaused
-                                ? isRowInactive
-                                  ? "bg-amber-300 text-amber-900 cursor-not-allowed"
-                                  : "bg-amber-200 text-amber-800 cursor-not-allowed"
-                                : isRowInactive
-                                  ? "bg-amber-300 text-amber-900 hover:bg-amber-400 cursor-pointer"
-                                  : "bg-amber-100 text-amber-700 hover:bg-amber-200 cursor-pointer"
+                                ? "bg-amber-100 text-amber-700 cursor-not-allowed"
+                                : "bg-amber-100 text-amber-700 hover:bg-amber-200 cursor-pointer"
                           }`}
                         >
                           {isActive ? "Activo" : "Pausado"}
