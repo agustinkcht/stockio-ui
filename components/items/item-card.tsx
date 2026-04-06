@@ -812,23 +812,25 @@ export function ItemCard({
                       </div>
                     )}
                   </div>
-                  {/* Subtitle: standalone shows only marca, children show nothing */}
+                  {/* Subtitle: standalone/parent shows marca and categoria (if exists), children show nothing */}
                   {!isChild && (
-                    <div className="flex items-center gap-2 mt-0.5">
+                    <div className="flex items-center gap-1 mt-0.5">
                       {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
+                      {item.marca && item.categoria && <span className="text-xs text-muted-foreground">·</span>}
+                      {item.categoria && <span className="text-xs text-muted-foreground">{item.categoria}</span>}
                     </div>
                   )}
                 </div>
               </div>
 
-              {showPrecioColumn ? (
+              {showPrecioColumn && !item.hasVariants && !item.isAgrupador ? (
                 <>
-                  {/* Categoría cell */}
+                  {/* SKU cell - only for standalone/children */}
                   <div
-                    className="col-span-10 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100"
+                    className="col-span-8 h-full flex items-center justify-center px-4 cursor-pointer transition-colors border-r border-slate-100"
                     onClick={(e) => { e.stopPropagation(); onItemClick(item) }}
                   >
-                    <span className="text-sm text-foreground truncate w-full text-center">{item.categoria || parentItem?.categoria || "-"}</span>
+                    <span className="text-xs text-muted-foreground font-mono truncate">{displaySku || "-"}</span>
                   </div>
                   {/* Precio Final cell - clickable to open precio modal */}
                   <div
@@ -851,7 +853,7 @@ export function ItemCard({
                     </div>
                   </div>
                 </>
-              ) : (
+              ) : !showPrecioColumn ? (
                 // Show Atributos column: original behavior
                 <div
                   className="col-span-14 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100"
@@ -885,19 +887,21 @@ export function ItemCard({
                     </div>
                   )}
                 </div>
-              )}
+              ) : null}
 
               {item.hasVariants ? (
-                <div className="col-span-8 h-full flex items-center justify-center px-4">
-                  <span className="text-sm text-container-item-foreground/80">{variantCount} var.</span>
+                // Parent with variants: empty SKU, Precio, Stock columns (no borders)
+                <div className="col-span-28 h-full flex items-center justify-center px-4">
+                  <span className="text-sm text-container-item-foreground/80">{variantCount} variantes</span>
                 </div>
               ) : item.isAgrupador ? (
-                <div className="col-span-8 h-full flex items-center justify-center px-4">
+                // Parent agrupador: empty SKU, Precio, Stock columns (no borders)
+                <div className="col-span-28 h-full flex items-center justify-center px-4">
                   <span className="text-sm text-container-item-foreground/80">{itemCount} items</span>
                 </div>
               ) : (
                 <div
-                  className="col-span-8 h-full flex items-center justify-center px-4 cursor-pointer transition-colors hover:bg-slate-50 group/stock"
+                  className="col-span-10 h-full flex items-center justify-center px-4 cursor-pointer transition-colors hover:bg-slate-50 group/stock"
                   onClick={(e) => {
                     e.stopPropagation()
                     setActiveStockEdit("total")
@@ -913,6 +917,9 @@ export function ItemCard({
                         : "text-muted-foreground"
                   }`}>
                     {item.stock?.disponible ?? 0} <span className="text-xs font-normal opacity-60">disp.</span>
+                    {(item.stock?.reservado ?? 0) > 0 && (
+                      <> {item.stock?.reservado ?? 0} <span className="text-xs font-normal opacity-60">res.</span></>
+                    )}
                   </span>
                 </div>
               )}
