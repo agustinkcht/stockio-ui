@@ -313,8 +313,7 @@ export function ItemCard({
   }
 
   return (
-    <>
-      <div className={marginClass}>
+    <div className={marginClass}>
       <div
         className="flex items-center gap-2 bg-transparent mb-0 mt-0"
         onMouseEnter={handleMouseEnter}
@@ -834,8 +833,8 @@ export function ItemCard({
                             isActive 
                               ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 cursor-pointer"
                               : isAutoPaused
-                                ? "bg-amber-100 text-amber-900 cursor-not-allowed"
-                                : "bg-amber-100 text-amber-900 hover:bg-amber-200 cursor-pointer"
+                                ? "bg-amber-100 text-amber-700 cursor-not-allowed"
+                                : "bg-amber-100 text-amber-700 hover:bg-amber-200 cursor-pointer"
                           }`}
                         >
                           {isActive ? "Activo" : "Pausado"}
@@ -969,7 +968,6 @@ export function ItemCard({
           </DropdownMenu>
         </div>
       </div>
-      </div>
 
       {item.hasVariants && isExpanded && item.variants && (
         <div className={gridSize === "lg" ? "mt-2" : "mt-0"}>
@@ -1000,7 +998,6 @@ export function ItemCard({
                 showPrecioColumn={showPrecioColumn}
                 onUpdatePrecio={onUpdatePrecio}
                 onUpdateStock={onUpdateStock}
-                onUpdateItem={onUpdateItem}
                 stockViewMode={stockViewMode}
               />
             )
@@ -1036,14 +1033,204 @@ export function ItemCard({
                 showPrecioColumn={showPrecioColumn}
                 onUpdatePrecio={onUpdatePrecio}
                 onUpdateStock={onUpdateStock}
-                onUpdateItem={onUpdateItem}
                 stockViewMode={stockViewMode}
               />
             )
           })}
         </div>
       )}
-    </>
+
+      {/* Precio Modal */}
+      {isPrecioModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setIsPrecioModalOpen(false)} />
+          <div className="relative bg-white rounded-xl shadow-xl p-6 w-full max-w-lg mx-4">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">Editar Precio</h3>
+            <div className="grid grid-cols-4 gap-3 mb-6">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Costo</label>
+                <input
+                  type="number"
+                  value={precioModalValues.costo}
+                  onChange={(e) => {
+                    const costo = Number.parseFloat(e.target.value) || 0
+                    const precioFinal = costo * (1 + precioModalValues.margen / 100) * (1 + precioModalValues.iva / 100)
+                    setPrecioModalValues((prev) => ({ ...prev, costo, precioFinal }))
+                  }}
+                  className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Margen %</label>
+                <input
+                  type="number"
+                  value={precioModalValues.margen}
+                  onChange={(e) => {
+                    const margen = Number.parseFloat(e.target.value) || 0
+                    const precioFinal = precioModalValues.costo * (1 + margen / 100) * (1 + precioModalValues.iva / 100)
+                    setPrecioModalValues((prev) => ({ ...prev, margen, precioFinal }))
+                  }}
+                  className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">IVA %</label>
+                <input
+                  type="number"
+                  value={precioModalValues.iva}
+                  onChange={(e) => {
+                    const iva = Number.parseFloat(e.target.value) || 0
+                    const precioFinal = precioModalValues.costo * (1 + precioModalValues.margen / 100) * (1 + iva / 100)
+                    setPrecioModalValues((prev) => ({ ...prev, iva, precioFinal }))
+                  }}
+                  className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-emerald-600 uppercase tracking-wide">Precio Final</label>
+                <input
+                  type="number"
+                  value={precioModalValues.precioFinal}
+                  onChange={(e) => {
+                    const precioFinal = Number.parseFloat(e.target.value) || 0
+                    const base = precioFinal / (1 + precioModalValues.iva / 100)
+                    const margen = precioModalValues.costo > 0 ? ((base / precioModalValues.costo) - 1) * 100 : 0
+                    setPrecioModalValues((prev) => ({ ...prev, precioFinal, margen: Math.round(margen * 100) / 100 }))
+                  }}
+                  className="px-3 py-2 border border-emerald-300 bg-emerald-50 rounded-lg text-sm font-semibold text-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  placeholder="0"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setIsPrecioModalOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors cursor-pointer">
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  onUpdatePrecio?.(item.id, precioModalValues)
+                  setIsPrecioModalOpen(false)
+                }}
+                className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                Aceptar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Stock Modal */}
+      {isStockModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setIsStockModalOpen(false)} />
+          <div className="relative bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">Editar Stock</h3>
+            <div className="space-y-3 mb-6">
+              {/* Total */}
+              <div className="border border-slate-200 rounded-lg bg-slate-50 overflow-hidden">
+                <div onClick={() => setActiveStockEdit("total")} className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${activeStockEdit === "total" ? "bg-slate-100" : "hover:bg-slate-100"}`}>
+                  <div className="flex items-center gap-2">
+                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${activeStockEdit === "total" ? "rotate-0" : "-rotate-90"}`} />
+                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Total</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {activeStockEdit === "total" && (
+                      <button onClick={(e) => { e.stopPropagation(); onUpdateStock?.(item.id || item.sku, "total", Math.max(0, currentStockTotal - 1)) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
+                        <Minus className="w-3 h-3" />
+                      </button>
+                    )}
+                    <span className="text-base font-semibold tabular-nums min-w-[2rem] text-center">{currentStockTotal}</span>
+                    {activeStockEdit === "total" && (
+                      <button onClick={(e) => { e.stopPropagation(); onUpdateStock?.(item.id || item.sku, "total", currentStockTotal + 1) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                {activeStockEdit === "total" && (
+                  <div className="px-4 pb-3 pt-1 border-t border-slate-200 bg-slate-100/50">
+                    <div className="flex items-center gap-2">
+                      <select value={stockModification.total.operation} onChange={(e) => setStockModification((prev) => ({ ...prev, total: { ...prev.total, operation: e.target.value } }))} className="text-xs border border-slate-300 rounded bg-white px-2 py-1.5 cursor-pointer">
+                        <option value="agregar">Agregar</option>
+                        <option value="remover">Remover</option>
+                        <option value="sobreescribir">Sobreescribir</option>
+                      </select>
+                      <input type="number" placeholder="0" value={stockModification.total.value} onChange={(e) => setStockModification((prev) => ({ ...prev, total: { ...prev.total, value: e.target.value } }))} className="w-16 text-sm border border-slate-300 rounded px-2 py-1.5 text-center" />
+                      <span className="text-slate-400 text-sm">→</span>
+                      <span className="text-sm font-medium text-slate-500 tabular-nums min-w-[2rem] text-right">
+                        {stockModification.total.value ? (() => { const v = parseInt(stockModification.total.value || "0"); return stockModification.total.operation === "agregar" ? Math.max(0, currentStockTotal + v) : stockModification.total.operation === "remover" ? Math.max(0, currentStockTotal - v) : Math.max(0, v) })() : currentStockTotal}
+                      </span>
+                      <button onClick={() => { handleStockModificationAccept("total"); setStockModification((prev) => ({ ...prev, total: { operation: "agregar", value: "" } })) }} disabled={!stockModification.total.value} className={`w-7 h-7 rounded border flex items-center justify-center ml-auto ${stockModification.total.value ? "bg-slate-900 text-white border-slate-900 cursor-pointer" : "bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed"}`}>
+                        <Check className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              {/* Reservado */}
+              <div className="border border-slate-200 rounded-lg bg-slate-50 overflow-hidden">
+                <div onClick={() => setActiveStockEdit("reservado")} className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${activeStockEdit === "reservado" ? "bg-slate-100" : "hover:bg-slate-100"}`}>
+                  <div className="flex items-center gap-2">
+                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${activeStockEdit === "reservado" ? "rotate-0" : "-rotate-90"}`} />
+                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Reservado</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {activeStockEdit === "reservado" && (
+                      <button onClick={(e) => { e.stopPropagation(); onUpdateStock?.(item.id || item.sku, "reservado", Math.max(0, currentStockReservado - 1)) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
+                        <Minus className="w-3 h-3" />
+                      </button>
+                    )}
+                    <span className="text-base font-semibold tabular-nums min-w-[2rem] text-center">{currentStockReservado}</span>
+                    {activeStockEdit === "reservado" && (
+                      <button onClick={(e) => { e.stopPropagation(); onUpdateStock?.(item.id || item.sku, "reservado", currentStockReservado + 1) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                {activeStockEdit === "reservado" && (
+                  <div className="px-4 pb-3 pt-1 border-t border-slate-200 bg-slate-100/50">
+                    <div className="flex items-center gap-2">
+                      <select value={stockModification.reservado.operation} onChange={(e) => setStockModification((prev) => ({ ...prev, reservado: { ...prev.reservado, operation: e.target.value } }))} className="text-xs border border-slate-300 rounded bg-white px-2 py-1.5 cursor-pointer">
+                        <option value="agregar">Agregar</option>
+                        <option value="remover">Remover</option>
+                        <option value="sobreescribir">Sobreescribir</option>
+                      </select>
+                      <input type="number" placeholder="0" value={stockModification.reservado.value} onChange={(e) => setStockModification((prev) => ({ ...prev, reservado: { ...prev.reservado, value: e.target.value } }))} className="w-16 text-sm border border-slate-300 rounded px-2 py-1.5 text-center" />
+                      <span className="text-slate-400 text-sm">→</span>
+                      <span className="text-sm font-medium text-slate-500 tabular-nums min-w-[2rem] text-right">
+                        {stockModification.reservado.value ? (() => { const v = parseInt(stockModification.reservado.value || "0"); return stockModification.reservado.operation === "agregar" ? Math.max(0, currentStockReservado + v) : stockModification.reservado.operation === "remover" ? Math.max(0, currentStockReservado - v) : Math.max(0, v) })() : currentStockReservado}
+                      </span>
+                      <button onClick={() => { handleStockModificationAccept("reservado"); setStockModification((prev) => ({ ...prev, reservado: { operation: "agregar", value: "" } })) }} disabled={!stockModification.reservado.value} className={`w-7 h-7 rounded border flex items-center justify-center ml-auto ${stockModification.reservado.value ? "bg-slate-900 text-white border-slate-900 cursor-pointer" : "bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed"}`}>
+                        <Check className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              {/* Disponible - Read only */}
+              <div className="border border-emerald-200 rounded-lg bg-emerald-50/50">
+                <div className="flex items-center justify-between px-4 py-3">
+                  <span className="text-xs font-medium text-emerald-700 uppercase tracking-wide">Disponible</span>
+                  <span className="text-xl font-bold text-emerald-600 tabular-nums">{currentStockTotal - currentStockReservado}</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setIsStockModalOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors cursor-pointer">
+                Cancelar
+              </button>
+              <button onClick={() => setIsStockModalOpen(false)} className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer">
+                Aceptar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
-
