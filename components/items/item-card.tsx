@@ -891,9 +891,9 @@ export function ItemCard({
                         ? "text-red-500"
                         : "text-muted-foreground"
                   }`}>
-                    {item.stock?.disponible ?? 0} <span className="text-xs font-normal opacity-60">disponibles</span>
+                    {item.stock?.disponible ?? 0} <span className="text-xs font-normal opacity-60">disp.</span>
                     {(item.stock?.reservado ?? 0) > 0 && (
-                      <> {item.stock?.reservado ?? 0} <span className="text-xs font-normal opacity-60">reservados</span></>
+                      <> {item.stock?.reservado ?? 0} <span className="text-xs font-normal opacity-60">res.</span></>
                     )}
                   </span>
                 </div>
