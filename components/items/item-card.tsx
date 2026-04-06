@@ -808,18 +808,18 @@ export function ItemCard({
 
               {showPrecioColumn && !item.hasVariants && !item.isAgrupador ? (
                 <>
-                  {/* Estado cell - only for standalone/children */}
+                  {/* Estado cell - for standalone and children */}
                   {(() => {
                     const isActive = item.isActive !== false
                     const hasNoStock = (item.stock?.disponible ?? 0) <= 0
-                    const isAutoPaused = !isActive && hasNoStock
-                    const canToggle = isActive || !isAutoPaused // Can only toggle if active OR manually paused
+                    const isAutoPaused = !isActive && hasNoStock // Auto-paused due to 0 stock disponible
+                    const canToggle = isActive || !isAutoPaused // Can only toggle if active OR manually paused (not auto-paused)
+                    const isRowInactive = !isItemActive
                     
                     return (
                       <div
                         className="col-span-8 h-full flex flex-col items-center justify-center px-2 transition-colors border-r border-slate-100"
                         onClick={(e) => e.stopPropagation()}
-                        style={{ opacity: !isItemActive ? 1.67 : 1 }} // Pass through the parent's opacity-60
                       >
                         <button
                           onClick={(e) => {
@@ -831,18 +831,25 @@ export function ItemCard({
                           disabled={!canToggle}
                           className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${
                             isActive 
-                              ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 cursor-pointer" 
+                              ? isRowInactive
+                                ? "bg-emerald-200 text-emerald-900 cursor-pointer"
+                                : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 cursor-pointer"
                               : isAutoPaused
-                                ? "bg-slate-200 text-slate-600 cursor-not-allowed"
-                                : "bg-amber-100 text-amber-700 hover:bg-amber-200 cursor-pointer"
+                                ? isRowInactive
+                                  ? "bg-amber-300 text-amber-900 cursor-not-allowed"
+                                  : "bg-amber-200 text-amber-800 cursor-not-allowed"
+                                : isRowInactive
+                                  ? "bg-amber-300 text-amber-900 hover:bg-amber-400 cursor-pointer"
+                                  : "bg-amber-100 text-amber-700 hover:bg-amber-200 cursor-pointer"
                           }`}
                         >
                           {isActive ? "Activo" : "Pausado"}
                         </button>
                         {isAutoPaused && (
                           <span 
-                            className="text-[10px] text-slate-500 mt-1 text-center leading-tight"
-                            style={{ opacity: !isItemActive ? 1.67 : 1 }}
+                            className={`text-[10px] mt-1 text-center leading-tight ${
+                              isRowInactive ? "text-amber-800 font-medium" : "text-slate-500"
+                            }`}
                           >
                             Agregá stock para reactivar
                           </span>

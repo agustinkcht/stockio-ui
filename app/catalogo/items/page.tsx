@@ -517,9 +517,22 @@ export default function CatalogoPage() {
                     onBatchDelete={handleBatchDeleteClick}
                     onUpdateStock={handleUpdateStockWithTracking}
                     onUpdatePrecio={handleUpdatePrecio}
-                    onUpdateItem={(item) => {
-                      if (item.id) {
-                        updateItemsActiveStatus([item.id], item.isActive !== false)
+                    onUpdateItem={(updatedItem) => {
+                      // Use editField for tracking changes (deshacer/guardar)
+                      // Check if it's a variant first
+                      for (const parentItem of items) {
+                        if (parentItem.variants) {
+                          const variant = parentItem.variants.find((v: any) => v.id === updatedItem.id || v.sku === updatedItem.sku)
+                          if (variant) {
+                            const parentIdentifier = parentItem.id || parentItem.sku
+                            editVariantField(parentIdentifier!, updatedItem.id || updatedItem.sku!, "isActive", updatedItem.isActive)
+                            return
+                          }
+                        }
+                      }
+                      // Not a variant - use regular editField
+                      if (updatedItem.id) {
+                        editField(updatedItem.id, "isActive", updatedItem.isActive)
                       }
                     }}
                     getSelectedSkus={getSelectedSkus}
