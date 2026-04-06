@@ -809,27 +809,47 @@ export function ItemCard({
               {showPrecioColumn && !item.hasVariants && !item.isAgrupador ? (
                 <>
                   {/* Estado cell - only for standalone/children */}
-                  <div
-                    className="col-span-8 h-full flex items-center justify-center px-2 transition-colors border-r border-slate-100"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <select
-                      value={item.isActive !== false ? "activo" : "pausado"}
-                      onChange={(e) => {
-                        e.stopPropagation()
-                        const newIsActive = e.target.value === "activo"
-                        onUpdateItem?.({ ...item, isActive: newIsActive })
-                      }}
-                      className={`text-xs px-2 py-1 rounded border-0 cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-300 ${
-                        item.isActive !== false 
-                          ? "bg-emerald-50 text-emerald-700" 
-                          : "bg-amber-50 text-amber-700"
-                      }`}
-                    >
-                      <option value="activo">Activo</option>
-                      <option value="pausado">Pausado</option>
-                    </select>
-                  </div>
+                  {(() => {
+                    const isActive = item.isActive !== false
+                    const hasNoStock = (item.stock?.disponible ?? 0) <= 0
+                    const isAutoPaused = !isActive && hasNoStock
+                    const canToggle = isActive || !isAutoPaused // Can only toggle if active OR manually paused
+                    
+                    return (
+                      <div
+                        className="col-span-8 h-full flex flex-col items-center justify-center px-2 transition-colors border-r border-slate-100"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ opacity: !isItemActive ? 1.67 : 1 }} // Pass through the parent's opacity-60
+                      >
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (canToggle) {
+                              onUpdateItem?.({ ...item, isActive: !isActive })
+                            }
+                          }}
+                          disabled={!canToggle}
+                          className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${
+                            isActive 
+                              ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 cursor-pointer" 
+                              : isAutoPaused
+                                ? "bg-slate-200 text-slate-600 cursor-not-allowed"
+                                : "bg-amber-100 text-amber-700 hover:bg-amber-200 cursor-pointer"
+                          }`}
+                        >
+                          {isActive ? "Activo" : "Pausado"}
+                        </button>
+                        {isAutoPaused && (
+                          <span 
+                            className="text-[10px] text-slate-500 mt-1 text-center leading-tight"
+                            style={{ opacity: !isItemActive ? 1.67 : 1 }}
+                          >
+                            Agregá stock para reactivar
+                          </span>
+                        )}
+                      </div>
+                    )
+                  })()}
                   {/* Precio Venta cell - clickable to open precio modal */}
                   <div
                     className="col-span-10 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100 hover:bg-slate-50 group/precio"

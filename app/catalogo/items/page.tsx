@@ -143,6 +143,7 @@ export default function CatalogoPage() {
   }, [items, editField, editVariantField])
 
   // Handle stock updates - uses the built-in tracking from useItems
+  // Auto-reactivates items when stock disponible becomes > 0
   const handleUpdateStockWithTracking = useCallback((itemId: string, field: "total" | "reservado", value: number) => {
     // Check if this is a variant (search by id first, then sku)
     for (const item of items) {
@@ -155,14 +156,22 @@ export default function CatalogoPage() {
           const currentStock = variant.stock || { total: "0", reservado: "0", disponible: "0" }
           const currentTotal = parseInt(currentStock.total) || 0
           const currentReservado = parseInt(currentStock.reservado) || 0
+          const newDisponible = field === "total" 
+            ? (value - currentReservado) 
+            : (currentTotal - value)
           const newStock = {
             total: field === "total" ? value.toString() : currentStock.total,
             reservado: field === "reservado" ? value.toString() : currentStock.reservado,
-            disponible: field === "total" 
-              ? (value - currentReservado).toString() 
-              : (currentTotal - value).toString()
+            disponible: newDisponible.toString()
           }
           editVariantField(parentIdentifier!, itemId, "stock", newStock)
+          
+          // Auto-reactivate if was paused due to 0 stock and now has stock
+          const wasInactive = (variant as any).isActive === false
+          const hadNoStock = (parseInt(currentStock.disponible) || 0) <= 0
+          if (wasInactive && hadNoStock && newDisponible > 0 && variant.id) {
+            updateItemsActiveStatus([variant.id], true)
+          }
           return
         }
       }
@@ -174,16 +183,24 @@ export default function CatalogoPage() {
       const currentStock = item.stock || { total: "0", reservado: "0", disponible: "0" }
       const currentTotal = parseInt(currentStock.total) || 0
       const currentReservado = parseInt(currentStock.reservado) || 0
+      const newDisponible = field === "total" 
+        ? (value - currentReservado) 
+        : (currentTotal - value)
       const newStock = {
         total: field === "total" ? value.toString() : currentStock.total,
         reservado: field === "reservado" ? value.toString() : currentStock.reservado,
-        disponible: field === "total" 
-          ? (value - currentReservado).toString() 
-          : (currentTotal - value).toString()
+        disponible: newDisponible.toString()
       }
       editField(itemId, "stock", newStock)
+      
+      // Auto-reactivate if was paused due to 0 stock and now has stock
+      const wasInactive = item.isActive === false
+      const hadNoStock = (parseInt(currentStock.disponible) || 0) <= 0
+      if (wasInactive && hadNoStock && newDisponible > 0 && item.id) {
+        updateItemsActiveStatus([item.id], true)
+      }
     }
-  }, [items, editField, editVariantField])
+  }, [items, editField, editVariantField, updateItemsActiveStatus])
 
   // Navigation guard for unsaved changes
   const {
