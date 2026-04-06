@@ -617,7 +617,7 @@ export function ItemCard({
               </>
             )
           ) : item.isAgrupador || item.hasVariants ? (
-            // NORMAL MODE: Parent items
+            // NORMAL MODE: Parent items - Item (16) + empty span (28), no borders between columns
             stockViewMode ? (
               // Stock View Mode: Item (8), Categoria (4), Total (4), Reservado (4), Disponible (2)
               <>
@@ -644,17 +644,14 @@ export function ItemCard({
                 <div className="col-span-2 h-full flex items-center justify-center px-1 cursor-pointer" onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}></div>
               </>
             ) : (
-              // Default: Item (16), Categoria (10), Precio (10), Stock (8)
+              // Normal catalogo mode: Item (16) + empty remaining (28), no borders
               <>
-                {/* Item cell - col-span-16, chevron on left instead of thumbnail */}
+                {/* Item cell - no border-r for parent */}
                 <div
-                  className={`col-span-16 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors border-r border-slate-100`}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onToggleExpansion(index)
-                  }}
+                  className="col-span-16 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors"
+                  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
                 >
-                  {/* Chevron instead of thumbnail - match thumbnail size w-12 h-12 */}
+                  {/* Chevron */}
                   <button
                     onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
                     className="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-md hover:bg-slate-100 transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
@@ -672,33 +669,17 @@ export function ItemCard({
                         {item.hasVariants ? `${variantCount} var.` : `${itemCount} items`}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 mt-0.5">
+                    {/* Marca · Categoria */}
+                    <div className="flex items-center gap-1 mt-0.5">
                       {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
+                      {item.marca && item.categoria && <span className="text-xs text-muted-foreground">·</span>}
+                      {item.categoria && <span className="text-xs text-muted-foreground">{item.categoria}</span>}
                     </div>
                   </div>
                 </div>
 
-                {/* Categoría cell */}
-                <div
-                  className="col-span-10 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
-                  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
-                >
-                  <span className="text-sm text-foreground">{item.categoria || "-"}</span>
-                </div>
-
-                {/* Precio Final - blank for parent */}
-                <div
-                  className="col-span-10 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
-                  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
-                >
-                </div>
-
-                {/* Stock Disponible - blank for parent */}
-                <div
-                  className="col-span-8 h-full flex items-center justify-center px-4 cursor-pointer"
-                  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
-                >
-                </div>
+                {/* Empty remaining columns - no borders */}
+                <div className="col-span-28 h-full" />
               </>
             )
           ) : stockViewMode ? (
