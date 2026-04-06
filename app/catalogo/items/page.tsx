@@ -172,6 +172,11 @@ export default function CatalogoPage() {
           if (wasInactive && hadNoStock && newDisponible > 0 && variant.id) {
             updateItemsActiveStatus([variant.id], true)
           }
+          // Auto-pause if stock disponible becomes 0 or negative
+          const isActive = (variant as any).isActive !== false
+          if (isActive && newDisponible <= 0 && variant.id) {
+            updateItemsActiveStatus([variant.id], false)
+          }
           return
         }
       }
@@ -198,6 +203,11 @@ export default function CatalogoPage() {
       const hadNoStock = (parseInt(currentStock.disponible) || 0) <= 0
       if (wasInactive && hadNoStock && newDisponible > 0 && item.id) {
         updateItemsActiveStatus([item.id], true)
+      }
+      // Auto-pause if stock disponible becomes 0 or negative
+      const isActive = item.isActive !== false
+      if (isActive && newDisponible <= 0 && item.id) {
+        updateItemsActiveStatus([item.id], false)
       }
     }
   }, [items, editField, editVariantField, updateItemsActiveStatus])

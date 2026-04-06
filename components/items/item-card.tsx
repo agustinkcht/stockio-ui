@@ -998,6 +998,7 @@ export function ItemCard({
                 showPrecioColumn={showPrecioColumn}
                 onUpdatePrecio={onUpdatePrecio}
                 onUpdateStock={onUpdateStock}
+                onUpdateItem={onUpdateItem}
                 stockViewMode={stockViewMode}
               />
             )
@@ -1033,6 +1034,7 @@ export function ItemCard({
                 showPrecioColumn={showPrecioColumn}
                 onUpdatePrecio={onUpdatePrecio}
                 onUpdateStock={onUpdateStock}
+                onUpdateItem={onUpdateItem}
                 stockViewMode={stockViewMode}
               />
             )
