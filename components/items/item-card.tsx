@@ -153,26 +153,90 @@ export function ItemCard({
     total: { operation: "agregar", value: "" },
     reservado: { operation: "agregar", value: "" },
   })
+  // Pending stock values - only applied on Aceptar
+  const [pendingStockTotal, setPendingStockTotal] = useState<number | null>(null)
+  const [pendingStockReservado, setPendingStockReservado] = useState<number | null>(null)
   const [precioModalValues, setPrecioModalValues] = useState({
     costo: item.precio?.costo || 0,
     margen: item.precio?.margen || 0,
     iva: item.precio?.iva || 0,
     precioFinal: item.precio?.precioFinal || 0,
   })
+  
+  // Computed values for stock modal display (use pending if set, otherwise current)
+  const displayStockTotal = pendingStockTotal !== null ? pendingStockTotal : currentStockTotal
+  const displayStockReservado = pendingStockReservado !== null ? pendingStockReservado : currentStockReservado
+  const displayStockDisponible = displayStockTotal - displayStockReservado
 
   const handleStockModificationAccept = (stockType: "total" | "reservado") => {
     const modification = stockModification[stockType]
     const inputValue = parseInt(modification.value)
     if (isNaN(inputValue) || inputValue < 0) return
-    const currentValue = stockType === "total" ? currentStockTotal : currentStockReservado
+    const currentValue = stockType === "total" ? displayStockTotal : displayStockReservado
     let newValue = currentValue
     if (modification.operation === "agregar") newValue = currentValue + inputValue
     else if (modification.operation === "remover") newValue = Math.max(0, currentValue - inputValue)
     else if (modification.operation === "sobreescribir") newValue = inputValue
-    // Use item.id for variants (children), fallback to sku for standalone items
-    const itemIdentifier = item.id || item.sku
-    onUpdateStock?.(itemIdentifier, stockType, newValue)
+    
+    // Validation rules
+    if (stockType === "total") {
+      // Stock total cannot be negative
+      newValue = Math.max(0, newValue)
+      // Stock total cannot go below stock reservado
+      const reservado = pendingStockReservado !== null ? pendingStockReservado : currentStockReservado
+      newValue = Math.max(reservado, newValue)
+      setPendingStockTotal(newValue)
+    } else {
+      // Stock reservado cannot be negative
+      newValue = Math.max(0, newValue)
+      // Stock reservado cannot be more than stock total (disponible cannot be negative)
+      const total = pendingStockTotal !== null ? pendingStockTotal : currentStockTotal
+      newValue = Math.min(total, newValue)
+      setPendingStockReservado(newValue)
+    }
     setStockModification((prev) => ({ ...prev, [stockType]: { ...prev[stockType], value: "" } }))
+  }
+  
+  // Handle stock increment/decrement in modal with validation
+  const handleModalStockIncrement = (stockType: "total" | "reservado", delta: number) => {
+    const currentValue = stockType === "total" ? displayStockTotal : displayStockReservado
+    let newValue = currentValue + delta
+    
+    if (stockType === "total") {
+      newValue = Math.max(0, newValue)
+      const reservado = pendingStockReservado !== null ? pendingStockReservado : currentStockReservado
+      newValue = Math.max(reservado, newValue)
+      setPendingStockTotal(newValue)
+    } else {
+      newValue = Math.max(0, newValue)
+      const total = pendingStockTotal !== null ? pendingStockTotal : currentStockTotal
+      newValue = Math.min(total, newValue)
+      setPendingStockReservado(newValue)
+    }
+  }
+  
+  // Apply pending stock changes on Aceptar
+  const handleStockModalAccept = () => {
+    const itemIdentifier = item.id || item.sku
+    if (pendingStockTotal !== null) {
+      onUpdateStock?.(itemIdentifier, "total", pendingStockTotal)
+    }
+    if (pendingStockReservado !== null) {
+      onUpdateStock?.(itemIdentifier, "reservado", pendingStockReservado)
+    }
+    // Reset pending state
+    setPendingStockTotal(null)
+    setPendingStockReservado(null)
+    setStockModification({ total: { operation: "agregar", value: "" }, reservado: { operation: "agregar", value: "" } })
+    setIsStockModalOpen(false)
+  }
+  
+  // Cancel stock modal - discard pending changes
+  const handleStockModalCancel = () => {
+    setPendingStockTotal(null)
+    setPendingStockReservado(null)
+    setStockModification({ total: { operation: "agregar", value: "" }, reservado: { operation: "agregar", value: "" } })
+    setIsStockModalOpen(false)
   }
 
   // Handle stock modification
@@ -1128,7 +1192,7 @@ export function ItemCard({
       {/* Stock Modal */}
       {isStockModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setIsStockModalOpen(false)} />
+          <div className="absolute inset-0 bg-black/50" onClick={handleStockModalCancel} />
           <div className="relative bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
             <h3 className="text-lg font-semibold text-slate-900 mb-4">Editar Stock</h3>
             <div className="space-y-3 mb-6">
@@ -1141,13 +1205,13 @@ export function ItemCard({
                   </div>
                   <div className="flex items-center gap-2">
                     {activeStockEdit === "total" && (
-                      <button onClick={(e) => { e.stopPropagation(); onUpdateStock?.(item.id || item.sku, "total", Math.max(0, currentStockTotal - 1)) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
+                      <button onClick={(e) => { e.stopPropagation(); handleModalStockIncrement("total", -1) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
                         <Minus className="w-3 h-3" />
                       </button>
                     )}
-                    <span className="text-base font-semibold tabular-nums min-w-[2rem] text-center">{currentStockTotal}</span>
+                    <span className={`text-base font-semibold tabular-nums min-w-[2rem] text-center ${pendingStockTotal !== null ? "text-blue-600" : ""}`}>{displayStockTotal}</span>
                     {activeStockEdit === "total" && (
-                      <button onClick={(e) => { e.stopPropagation(); onUpdateStock?.(item.id || item.sku, "total", currentStockTotal + 1) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
+                      <button onClick={(e) => { e.stopPropagation(); handleModalStockIncrement("total", 1) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
                         <Plus className="w-3 h-3" />
                       </button>
                     )}
@@ -1161,12 +1225,12 @@ export function ItemCard({
                         <option value="remover">Remover</option>
                         <option value="sobreescribir">Sobreescribir</option>
                       </select>
-                      <input type="number" placeholder="0" value={stockModification.total.value} onChange={(e) => setStockModification((prev) => ({ ...prev, total: { ...prev.total, value: e.target.value } }))} className="w-16 text-sm border border-slate-300 rounded px-2 py-1.5 text-center" />
+                      <input type="number" placeholder="0" min="0" value={stockModification.total.value} onChange={(e) => setStockModification((prev) => ({ ...prev, total: { ...prev.total, value: e.target.value } }))} className="w-16 text-sm border border-slate-300 rounded px-2 py-1.5 text-center" />
                       <span className="text-slate-400 text-sm">→</span>
                       <span className="text-sm font-medium text-slate-500 tabular-nums min-w-[2rem] text-right">
-                        {stockModification.total.value ? (() => { const v = parseInt(stockModification.total.value || "0"); return stockModification.total.operation === "agregar" ? Math.max(0, currentStockTotal + v) : stockModification.total.operation === "remover" ? Math.max(0, currentStockTotal - v) : Math.max(0, v) })() : currentStockTotal}
+                        {stockModification.total.value ? (() => { const v = parseInt(stockModification.total.value || "0"); const reservado = pendingStockReservado !== null ? pendingStockReservado : currentStockReservado; const result = stockModification.total.operation === "agregar" ? displayStockTotal + v : stockModification.total.operation === "remover" ? Math.max(0, displayStockTotal - v) : Math.max(0, v); return Math.max(reservado, result) })() : displayStockTotal}
                       </span>
-                      <button onClick={() => { handleStockModificationAccept("total"); setStockModification((prev) => ({ ...prev, total: { operation: "agregar", value: "" } })) }} disabled={!stockModification.total.value} className={`w-7 h-7 rounded border flex items-center justify-center ml-auto ${stockModification.total.value ? "bg-slate-900 text-white border-slate-900 cursor-pointer" : "bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed"}`}>
+                      <button onClick={() => handleStockModificationAccept("total")} disabled={!stockModification.total.value} className={`w-7 h-7 rounded border flex items-center justify-center ml-auto ${stockModification.total.value ? "bg-slate-900 text-white border-slate-900 cursor-pointer" : "bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed"}`}>
                         <Check className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -1182,13 +1246,13 @@ export function ItemCard({
                   </div>
                   <div className="flex items-center gap-2">
                     {activeStockEdit === "reservado" && (
-                      <button onClick={(e) => { e.stopPropagation(); onUpdateStock?.(item.id || item.sku, "reservado", Math.max(0, currentStockReservado - 1)) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
+                      <button onClick={(e) => { e.stopPropagation(); handleModalStockIncrement("reservado", -1) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
                         <Minus className="w-3 h-3" />
                       </button>
                     )}
-                    <span className="text-base font-semibold tabular-nums min-w-[2rem] text-center">{currentStockReservado}</span>
+                    <span className={`text-base font-semibold tabular-nums min-w-[2rem] text-center ${pendingStockReservado !== null ? "text-blue-600" : ""}`}>{displayStockReservado}</span>
                     {activeStockEdit === "reservado" && (
-                      <button onClick={(e) => { e.stopPropagation(); onUpdateStock?.(item.id || item.sku, "reservado", currentStockReservado + 1) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
+                      <button onClick={(e) => { e.stopPropagation(); handleModalStockIncrement("reservado", 1) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
                         <Plus className="w-3 h-3" />
                       </button>
                     )}
@@ -1202,12 +1266,12 @@ export function ItemCard({
                         <option value="remover">Remover</option>
                         <option value="sobreescribir">Sobreescribir</option>
                       </select>
-                      <input type="number" placeholder="0" value={stockModification.reservado.value} onChange={(e) => setStockModification((prev) => ({ ...prev, reservado: { ...prev.reservado, value: e.target.value } }))} className="w-16 text-sm border border-slate-300 rounded px-2 py-1.5 text-center" />
+                      <input type="number" placeholder="0" min="0" value={stockModification.reservado.value} onChange={(e) => setStockModification((prev) => ({ ...prev, reservado: { ...prev.reservado, value: e.target.value } }))} className="w-16 text-sm border border-slate-300 rounded px-2 py-1.5 text-center" />
                       <span className="text-slate-400 text-sm">→</span>
                       <span className="text-sm font-medium text-slate-500 tabular-nums min-w-[2rem] text-right">
-                        {stockModification.reservado.value ? (() => { const v = parseInt(stockModification.reservado.value || "0"); return stockModification.reservado.operation === "agregar" ? Math.max(0, currentStockReservado + v) : stockModification.reservado.operation === "remover" ? Math.max(0, currentStockReservado - v) : Math.max(0, v) })() : currentStockReservado}
+                        {stockModification.reservado.value ? (() => { const v = parseInt(stockModification.reservado.value || "0"); const total = pendingStockTotal !== null ? pendingStockTotal : currentStockTotal; const result = stockModification.reservado.operation === "agregar" ? displayStockReservado + v : stockModification.reservado.operation === "remover" ? Math.max(0, displayStockReservado - v) : Math.max(0, v); return Math.min(total, result) })() : displayStockReservado}
                       </span>
-                      <button onClick={() => { handleStockModificationAccept("reservado"); setStockModification((prev) => ({ ...prev, reservado: { operation: "agregar", value: "" } })) }} disabled={!stockModification.reservado.value} className={`w-7 h-7 rounded border flex items-center justify-center ml-auto ${stockModification.reservado.value ? "bg-slate-900 text-white border-slate-900 cursor-pointer" : "bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed"}`}>
+                      <button onClick={() => handleStockModificationAccept("reservado")} disabled={!stockModification.reservado.value} className={`w-7 h-7 rounded border flex items-center justify-center ml-auto ${stockModification.reservado.value ? "bg-slate-900 text-white border-slate-900 cursor-pointer" : "bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed"}`}>
                         <Check className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -1215,18 +1279,18 @@ export function ItemCard({
                 )}
               </div>
               {/* Disponible - Read only */}
-              <div className="border border-emerald-200 rounded-lg bg-emerald-50/50">
+              <div className={`border rounded-lg ${displayStockDisponible > 0 ? "border-emerald-200 bg-emerald-50/50" : "border-red-200 bg-red-50/50"}`}>
                 <div className="flex items-center justify-between px-4 py-3">
-                  <span className="text-xs font-medium text-emerald-700 uppercase tracking-wide">Disponible</span>
-                  <span className="text-xl font-bold text-emerald-600 tabular-nums">{currentStockTotal - currentStockReservado}</span>
+                  <span className={`text-xs font-medium uppercase tracking-wide ${displayStockDisponible > 0 ? "text-emerald-700" : "text-red-700"}`}>Disponible</span>
+                  <span className={`text-xl font-bold tabular-nums ${displayStockDisponible > 0 ? "text-emerald-600" : "text-red-600"}`}>{displayStockDisponible}</span>
                 </div>
               </div>
             </div>
             <div className="flex justify-end gap-3">
-              <button onClick={() => setIsStockModalOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors cursor-pointer">
+              <button onClick={handleStockModalCancel} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors cursor-pointer">
                 Cancelar
               </button>
-              <button onClick={() => setIsStockModalOpen(false)} className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer">
+              <button onClick={handleStockModalAccept} className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer">
                 Aceptar
               </button>
             </div>
