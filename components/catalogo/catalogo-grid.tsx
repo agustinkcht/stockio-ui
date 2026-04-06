@@ -32,6 +32,7 @@ interface CatalogoGridProps {
   onBatchDelete?: () => void
   onUpdatePrecio?: (itemId: string, precio: { costo: number; margen: number; iva: number; precioFinal: number }) => void
   onUpdateStock?: (itemSku: string, field: "total" | "reservado", value: number) => void
+  onUpdateItem?: (item: Item) => void
   // Pause/Reactivate items
   onPauseItems?: (itemIds: string[]) => void
   onReactivateItems?: (itemIds: string[]) => void
@@ -61,6 +62,7 @@ export function CatalogoGrid({
   onBatchDelete,
   onUpdatePrecio,
   onUpdateStock,
+  onUpdateItem,
   onPauseItems,
   onReactivateItems,
   getSelectedSkus,
@@ -287,10 +289,10 @@ export function CatalogoGrid({
                   <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Item</span>
                 </div>
                 <div className="col-span-8 flex items-center justify-center py-2 border-solid border-r px-4 mx-0 border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
-                  <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">SKU</span>
+                  <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Estado</span>
                 </div>
                 <div className="col-span-10 flex items-center justify-center py-2 border-solid border-r px-4 mx-0 border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
-                  <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Precio Final</span>
+                  <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Precio Venta</span>
                 </div>
                 <div className="col-span-10 flex items-center justify-center py-2 mx-0 px-0 border-b border-t border-l-0 border-r-0 border-[rgba(202,213,227,0.61)]">
                   <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Stock</span>
@@ -367,6 +369,7 @@ export function CatalogoGrid({
                   showPrecioColumn={true}
                   onUpdatePrecio={onUpdatePrecio}
                   onUpdateStock={onUpdateStock}
+                  onUpdateItem={onUpdateItem}
                 />
               )
             })}

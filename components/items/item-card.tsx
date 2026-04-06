@@ -35,6 +35,7 @@ interface ItemCardProps {
   showPrecioColumn?: boolean
   onUpdatePrecio?: (itemId: string, precio: { costo: number; margen: number; iva: number; precioFinal: number }) => void
   onUpdateStock?: (itemSku: string, field: "total" | "reservado", value: number) => void
+  onUpdateItem?: (item: Item) => void
   stockViewMode?: boolean // When true, uses stock-specific grid layout (cols-22 with stock columns)
 }
 
@@ -89,6 +90,7 @@ export function ItemCard({
   showPrecioColumn = false,
   onUpdatePrecio,
   onUpdateStock,
+  onUpdateItem,
   stockViewMode = false,
 }: ItemCardProps) {
   // Compute full SKU for children: {parentSkuPrefix}-{skuSuffix}
@@ -806,14 +808,29 @@ export function ItemCard({
 
               {showPrecioColumn && !item.hasVariants && !item.isAgrupador ? (
                 <>
-                  {/* SKU cell - only for standalone/children */}
+                  {/* Estado cell - only for standalone/children */}
                   <div
-                    className="col-span-8 h-full flex items-center justify-center px-4 cursor-pointer transition-colors border-r border-slate-100"
-                    onClick={(e) => { e.stopPropagation(); onItemClick(item) }}
+                    className="col-span-8 h-full flex items-center justify-center px-2 transition-colors border-r border-slate-100"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <span className="text-xs text-muted-foreground font-mono truncate">{displaySku || "-"}</span>
+                    <select
+                      value={item.isActive !== false ? "activo" : "pausado"}
+                      onChange={(e) => {
+                        e.stopPropagation()
+                        const newIsActive = e.target.value === "activo"
+                        onUpdateItem?.({ ...item, isActive: newIsActive })
+                      }}
+                      className={`text-xs px-2 py-1 rounded border-0 cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-300 ${
+                        item.isActive !== false 
+                          ? "bg-emerald-50 text-emerald-700" 
+                          : "bg-amber-50 text-amber-700"
+                      }`}
+                    >
+                      <option value="activo">Activo</option>
+                      <option value="pausado">Pausado</option>
+                    </select>
                   </div>
-                  {/* Precio Final cell - clickable to open precio modal */}
+                  {/* Precio Venta cell - clickable to open precio modal */}
                   <div
                     className="col-span-10 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100 hover:bg-slate-50 group/precio"
                     onClick={(e) => {

@@ -500,6 +500,11 @@ export default function CatalogoPage() {
                     onBatchDelete={handleBatchDeleteClick}
                     onUpdateStock={handleUpdateStockWithTracking}
                     onUpdatePrecio={handleUpdatePrecio}
+                    onUpdateItem={(item) => {
+                      if (item.id) {
+                        updateItemsActiveStatus([item.id], item.isActive !== false)
+                      }
+                    }}
                     getSelectedSkus={getSelectedSkus}
                     onPauseItems={(ids) => {
                         updateItemsActiveStatus(ids, false)
