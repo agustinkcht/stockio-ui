@@ -267,7 +267,7 @@ export function PriceGrid({
     return (
       <div key={item.sku || index}>
         <div
-          className={`grid grid-cols-[40px_3fr_1.5fr_1.5fr_1fr_0.8fr_1.5fr_36px] gap-0 ${heightClass} items-center transition-colors border-b border-[rgba(202,213,227,0.61)] ${
+          className={`grid grid-cols-[40px_3fr_1.5fr_1.5fr_1fr_1fr_0.8fr_1.5fr_36px] gap-0 ${heightClass} items-center transition-colors border-b border-[rgba(202,213,227,0.61)] ${
             isHovered ? "bg-gray-50/50" : ""
           } ${isChild ? "bg-slate-50/30" : ""}`}
           onMouseEnter={() => setHoveredId(itemId)}
@@ -358,6 +358,7 @@ export function PriceGrid({
               <div className="h-full border-r border-[rgba(202,213,227,0.3)]" />
               <div className="h-full border-r border-[rgba(202,213,227,0.3)]" />
               <div className="h-full border-r border-[rgba(202,213,227,0.3)]" />
+              <div className="h-full border-r border-[rgba(202,213,227,0.3)]" />
               <div className="h-full" />
             </>
           ) : (
@@ -398,6 +399,25 @@ export function PriceGrid({
                   <span className={`text-[11px] ${itemPricing.margen < 0 ? "text-red-400" : "text-slate-400"}`}>%</span>
                 </div>
               </div>
+
+              {/* Ganancia (Profit) - non-editable, calculated as precioFinal - costo */}
+              {(() => {
+                const ganancia = itemPricing.precioFinal - itemPricing.costo
+                const isPositive = ganancia >= 0
+                return (
+                  <div
+                    className={`flex items-center justify-center px-2 h-full border-r border-[rgba(202,213,227,0.3)] ${
+                      isPositive ? "bg-emerald-50/40" : "bg-red-50/40"
+                    }`}
+                  >
+                    <span className={`text-sm font-medium tabular-nums ${
+                      isPositive ? "text-emerald-600" : "text-red-600"
+                    }`}>
+                      {isPositive ? "+" : ""}{ganancia.toLocaleString("es-AR")}
+                    </span>
+                  </div>
+                )
+              })()}
 
               {/* IVA */}
               <div className="flex items-center justify-center px-2 h-full border-r border-[rgba(202,213,227,0.3)]">
@@ -525,7 +545,7 @@ export function PriceGrid({
         <div className="border border-[rgba(202,213,227,0.61)] rounded-sm">
           {/* Tab Header - sticky */}
           <div className="bg-slate-100 sticky top-0 z-10 rounded-t-sm">
-            <div className="grid grid-cols-[40px_3fr_1.5fr_1.5fr_1fr_0.8fr_1.5fr_36px] h-9">
+            <div className="grid grid-cols-[40px_3fr_1.5fr_1.5fr_1fr_1fr_0.8fr_1.5fr_36px] h-9">
             <div className="flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
               <div className="relative flex items-center justify-center">
                 {selectAllIndeterminate ? (
@@ -569,6 +589,9 @@ export function PriceGrid({
               >
                 <MoreVertical className="w-3 h-3 text-slate-400 group-hover:text-slate-600" />
               </button>
+            </div>
+            <div className="flex items-center justify-center px-3 border-r border-[rgba(202,213,227,0.61)]">
+              <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Ganancia</span>
             </div>
             <div className="flex items-center justify-between px-3 border-r border-[rgba(202,213,227,0.61)]">
               <span className="flex-1 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">IVA</span>
