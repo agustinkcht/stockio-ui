@@ -314,7 +314,7 @@ export function ItemCard({
 
   return (
     <>
-    <div className={marginClass}>
+      <div className={marginClass}>
       <div
         className="flex items-center gap-2 bg-transparent mb-0 mt-0"
         onMouseEnter={handleMouseEnter}
@@ -969,7 +969,7 @@ export function ItemCard({
           </DropdownMenu>
         </div>
       </div>
-    </div>
+      </div>
 
       {item.hasVariants && isExpanded && item.variants && (
         <div className={gridSize === "lg" ? "mt-2" : "mt-0"}>
