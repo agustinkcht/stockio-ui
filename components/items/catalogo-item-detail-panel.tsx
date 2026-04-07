@@ -12,6 +12,7 @@ import { getCategoryImage } from "@/lib/utils/category-images"
 import { generateId } from "@/lib/utils/item-utils"
 import Image from "next/image"
 import { NuevaVarianteModal } from "@/components/modals/nueva-variante-modal"
+import { StockEditModal } from "@/components/modals/stock-edit-modal"
 import { useSettings } from "@/lib/contexts/settings-context"
 // import { Breadcrumb } from "@/components/layout/breadcrumb"
 
@@ -301,49 +302,7 @@ export function CatalogoItemDetailPanel({
     Array<{ key: string; value: string; keyOpen?: boolean; valueOpen?: boolean; inheritValue?: boolean }>
   >(() => getMergedAtributosInformativos(fatherItem?.atributosInformativos, selectedItem?.atributosInformativos))
 
-  const [stockModification, setStockModification] = useState({
-    total: { operation: "agregar", value: "" },
-    reservado: { operation: "agregar", value: "" },
-  })
 
-  const [activeStockEdit, setActiveStockEdit] = useState<"total" | "reservado">("total")
-
-  const [advancedStockEditMode, setAdvancedStockEditMode] = useState(false)
-
-  const [stockSelection, setStockSelection] = useState<{ total: boolean; reservado: boolean }>({
-    total: false,
-    reservado: false,
-  })
-
-  const handleStockModificationAccept = (stockType: "total" | "reservado") => {
-    // Use id first (for newly created items), fallback to sku
-    const itemIdentifier = selectedItem?.id || selectedItem?.sku
-    if (!itemIdentifier) return
-
-    const modification = stockModification[stockType]
-    const inputValue = Number.parseInt(modification.value)
-
-    if (isNaN(inputValue) || inputValue < 0) return
-
-    const currentValue = Number.parseInt(selectedItem?.stock?.[stockType] || "0")
-    let newValue = currentValue
-
-    if (modification.operation === "agregar") {
-      newValue = currentValue + inputValue
-    } else if (modification.operation === "remover") {
-      newValue = Math.max(0, currentValue - inputValue)
-    } else if (modification.operation === "sobreescribir") {
-      newValue = inputValue
-    }
-
-    updateStock(itemIdentifier, stockType, newValue)
-
-    // Clear input after applying
-    setStockModification((prev) => ({
-      ...prev,
-      [stockType]: { ...prev[stockType], value: "" },
-    }))
-  }
 
   // const [history, setHistory] = useState<any[]>([])
   // const [historyIndex, setHistoryIndex] = useState(-1)
@@ -416,11 +375,6 @@ export function CatalogoItemDetailPanel({
   const [expandedMatrixStockModal, setExpandedMatrixStockModal] = useState<{ open: boolean; variant: any | null }>({ open: false, variant: null })
   const [expandedMatrixPrecioValues, setExpandedMatrixPrecioValues] = useState({ costo: 0, margen: 0, iva: 0, precioFinal: 0 })
   const [expandedMatrixStockValues, setExpandedMatrixStockValues] = useState({ total: 0, reservado: 0 })
-  const [expandedMatrixActiveStockEdit, setExpandedMatrixActiveStockEdit] = useState<"total" | "reservado">("total")
-  const [expandedMatrixStockModification, setExpandedMatrixStockModification] = useState({
-    total: { operation: "agregar", value: "" },
-    reservado: { operation: "agregar", value: "" },
-  })
   const [expandedMatrixDescModal, setExpandedMatrixDescModal] = useState<{ open: boolean; variant: any | null; value: string }>({ open: false, variant: null, value: "" })
   const [expandedMatrixMediaModal, setExpandedMatrixMediaModal] = useState<{ open: boolean; variant: any | null }>({ open: false, variant: null })
 
@@ -3548,133 +3502,24 @@ export function CatalogoItemDetailPanel({
       )}
 
       {/* Stock Modal */}
-      {isStockModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setIsStockModalOpen(false)} />
-          <div className="relative bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold text-slate-900 mb-4">Editar Stock</h3>
-
-            <div className="space-y-3 mb-6">
-              {/* Total */}
-              <div className="border border-slate-200 rounded-lg bg-slate-50 overflow-hidden">
-                <div
-                  onClick={() => setActiveStockEdit("total")}
-                  className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${activeStockEdit === "total" ? "bg-slate-100" : "hover:bg-slate-100"
-                    }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${activeStockEdit === "total" ? "rotate-0" : "-rotate-90"}`} />
-                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Total</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {activeStockEdit === "total" && (
-<button onClick={(e) => { e.stopPropagation(); const id = selectedItem?.id || selectedItem?.sku; if (id) updateStock(id, "total", Math.max(0, Number.parseInt(selectedItem?.stock?.total || "0") - 1)) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
-                      <Minus className="w-3 h-3" />
-                    </button>
-                  )}
-                  <span className="text-base font-semibold tabular-nums min-w-[2rem] text-center">{Number.parseInt(selectedItem?.stock?.total || "0")}</span>
-                  {activeStockEdit === "total" && (
-                    <button onClick={(e) => { e.stopPropagation(); const id = selectedItem?.id || selectedItem?.sku; if (id) updateStock(id, "total", Number.parseInt(selectedItem?.stock?.total || "0") + 1) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
-                        <Plus className="w-3 h-3" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-                {activeStockEdit === "total" && (
-                  <div className="px-4 pb-3 pt-1 border-t border-slate-200 bg-slate-100/50">
-                    <div className="flex items-center gap-2">
-                      <select value={stockModification.total.operation} onChange={(e) => setStockModification((prev) => ({ ...prev, total: { ...prev.total, operation: e.target.value } }))} className="text-xs border border-slate-300 rounded bg-white px-2 py-1.5 cursor-pointer">
-                        <option value="agregar">Agregar</option>
-                        <option value="remover">Remover</option>
-                        <option value="sobreescribir">Sobreescribir</option>
-                      </select>
-                      <input type="number" placeholder="0" value={stockModification.total.value} onChange={(e) => setStockModification((prev) => ({ ...prev, total: { ...prev.total, value: e.target.value } }))} className="w-16 text-sm border border-slate-300 rounded px-2 py-1.5 text-center" />
-                      <span className="text-slate-400 text-sm">→</span>
-                      <span className="text-sm font-medium text-slate-500 tabular-nums min-w-[2rem] text-right">
-                        {stockModification.total.value ? (() => { const c = Number.parseInt(selectedItem?.stock?.total || "0"), v = Number.parseInt(stockModification.total.value || "0"); return stockModification.total.operation === "agregar" ? Math.max(0, c + v) : stockModification.total.operation === "remover" ? Math.max(0, c - v) : Math.max(0, v) })() : Number.parseInt(selectedItem?.stock?.total || "0")}
-                      </span>
-                      <button onClick={() => { handleStockModificationAccept("total"); setStockModification((prev) => ({ ...prev, total: { operation: "agregar", value: "" } })) }} disabled={!stockModification.total.value} className={`w-7 h-7 rounded border flex items-center justify-center ml-auto ${stockModification.total.value ? "bg-slate-900 text-white border-slate-900 cursor-pointer" : "bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed"}`}>
-                        <Check className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Reservado */}
-              <div className="border border-slate-200 rounded-lg bg-slate-50 overflow-hidden">
-                <div
-                  onClick={() => setActiveStockEdit("reservado")}
-                  className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${activeStockEdit === "reservado" ? "bg-slate-100" : "hover:bg-slate-100"
-                    }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${activeStockEdit === "reservado" ? "rotate-0" : "-rotate-90"}`} />
-                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Reservado</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {activeStockEdit === "reservado" && (
-<button onClick={(e) => { e.stopPropagation(); const id = selectedItem?.id || selectedItem?.sku; if (id) updateStock(id, "reservado", Math.max(0, Number.parseInt(selectedItem?.stock?.reservado || "0") - 1)) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
-                      <Minus className="w-3 h-3" />
-                    </button>
-                  )}
-                  <span className="text-base font-semibold tabular-nums min-w-[2rem] text-center">{Number.parseInt(selectedItem?.stock?.reservado || "0")}</span>
-                  {activeStockEdit === "reservado" && (
-                    <button onClick={(e) => { e.stopPropagation(); const id = selectedItem?.id || selectedItem?.sku; if (id) updateStock(id, "reservado", Number.parseInt(selectedItem?.stock?.reservado || "0") + 1) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
-                        <Plus className="w-3 h-3" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-                {activeStockEdit === "reservado" && (
-                  <div className="px-4 pb-3 pt-1 border-t border-slate-200 bg-slate-100/50">
-                    <div className="flex items-center gap-2">
-                      <select value={stockModification.reservado.operation} onChange={(e) => setStockModification((prev) => ({ ...prev, reservado: { ...prev.reservado, operation: e.target.value } }))} className="text-xs border border-slate-300 rounded bg-white px-2 py-1.5 cursor-pointer">
-                        <option value="agregar">Agregar</option>
-                        <option value="remover">Remover</option>
-                        <option value="sobreescribir">Sobreescribir</option>
-                      </select>
-                      <input type="number" placeholder="0" value={stockModification.reservado.value} onChange={(e) => setStockModification((prev) => ({ ...prev, reservado: { ...prev.reservado, value: e.target.value } }))} className="w-16 text-sm border border-slate-300 rounded px-2 py-1.5 text-center" />
-                      <span className="text-slate-400 text-sm">→</span>
-                      <span className="text-sm font-medium text-slate-500 tabular-nums min-w-[2rem] text-right">
-                        {stockModification.reservado.value ? (() => { const c = Number.parseInt(selectedItem?.stock?.reservado || "0"), v = Number.parseInt(stockModification.reservado.value || "0"); return stockModification.reservado.operation === "agregar" ? Math.max(0, c + v) : stockModification.reservado.operation === "remover" ? Math.max(0, c - v) : Math.max(0, v) })() : Number.parseInt(selectedItem?.stock?.reservado || "0")}
-                      </span>
-                      <button onClick={() => { handleStockModificationAccept("reservado"); setStockModification((prev) => ({ ...prev, reservado: { operation: "agregar", value: "" } })) }} disabled={!stockModification.reservado.value} className={`w-7 h-7 rounded border flex items-center justify-center ml-auto ${stockModification.reservado.value ? "bg-slate-900 text-white border-slate-900 cursor-pointer" : "bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed"}`}>
-                        <Check className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Disponible - Read only */}
-              <div className="border border-emerald-200 rounded-lg bg-emerald-50/50">
-                <div className="flex items-center justify-between px-4 py-3">
-                  <span className="text-xs font-medium text-emerald-700 uppercase tracking-wide">Disponible</span>
-                  <span className="text-xl font-bold text-emerald-600 tabular-nums">
-                    {Number.parseInt(selectedItem?.stock?.total || "0") - Number.parseInt(selectedItem?.stock?.reservado || "0")}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setIsStockModalOpen(false)}
-                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => setIsStockModalOpen(false)}
-                className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
-              >
-                Aceptar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <StockEditModal
+        isOpen={isStockModalOpen}
+        onClose={() => setIsStockModalOpen(false)}
+        onAccept={(newTotal, newReservado) => {
+          const id = selectedItem?.id || selectedItem?.sku
+          if (id) {
+            if (newTotal !== Number.parseInt(selectedItem?.stock?.total || "0")) {
+              updateStock(id, "total", newTotal)
+            }
+            if (newReservado !== Number.parseInt(selectedItem?.stock?.reservado || "0")) {
+              updateStock(id, "reservado", newReservado)
+            }
+          }
+        }}
+        initialTotal={Number.parseInt(selectedItem?.stock?.total || "0")}
+        initialReservado={Number.parseInt(selectedItem?.stock?.reservado || "0")}
+        itemName={selectedItem?.nombre}
+      />
 
       {/* Expanded Matrix - Precio Modal */}
       {expandedMatrixPrecioModal.open && (
@@ -3768,157 +3613,26 @@ export function CatalogoItemDetailPanel({
       )}
 
       {/* Expanded Matrix - Stock Modal */}
-      {expandedMatrixStockModal.open && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setExpandedMatrixStockModal({ open: false, variant: null })} />
-          <div className="relative bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold text-slate-900 mb-4">Editar Stock</h3>
-            <div className="space-y-3 mb-6">
-              {/* Total */}
-              <div className="border border-slate-200 rounded-lg bg-slate-50 overflow-hidden">
-                <div
-                  onClick={() => setExpandedMatrixActiveStockEdit("total")}
-                  className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${expandedMatrixActiveStockEdit === "total" ? "bg-slate-100" : "hover:bg-slate-100"}`}
-                >
-                  <div className="flex items-center gap-2">
-                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${expandedMatrixActiveStockEdit === "total" ? "rotate-0" : "-rotate-90"}`} />
-                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Total</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {expandedMatrixActiveStockEdit === "total" && (
-                      <button onClick={(e) => { e.stopPropagation(); setExpandedMatrixStockValues(prev => ({ ...prev, total: Math.max(0, prev.total - 1) })) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
-                        <Minus className="w-3 h-3" />
-                      </button>
-                    )}
-                    <span className="text-base font-semibold tabular-nums min-w-[2rem] text-center">{expandedMatrixStockValues.total}</span>
-                    {expandedMatrixActiveStockEdit === "total" && (
-                      <button onClick={(e) => { e.stopPropagation(); setExpandedMatrixStockValues(prev => ({ ...prev, total: prev.total + 1 })) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
-                        <Plus className="w-3 h-3" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-                {expandedMatrixActiveStockEdit === "total" && (
-                  <div className="px-4 pb-3 pt-1 border-t border-slate-200 bg-slate-100/50">
-                    <div className="flex items-center gap-2">
-                      <select value={expandedMatrixStockModification.total.operation} onChange={(e) => setExpandedMatrixStockModification((prev) => ({ ...prev, total: { ...prev.total, operation: e.target.value } }))} className="text-xs border border-slate-300 rounded bg-white px-2 py-1.5 cursor-pointer">
-                        <option value="agregar">Agregar</option>
-                        <option value="remover">Remover</option>
-                        <option value="sobreescribir">Sobreescribir</option>
-                      </select>
-                      <input type="number" placeholder="0" value={expandedMatrixStockModification.total.value} onChange={(e) => setExpandedMatrixStockModification((prev) => ({ ...prev, total: { ...prev.total, value: e.target.value } }))} className="w-16 text-sm border border-slate-300 rounded px-2 py-1.5 text-center" />
-                      <span className="text-slate-400 text-sm">→</span>
-                      <span className="text-sm font-medium text-slate-500 tabular-nums min-w-[2rem] text-right">
-                        {expandedMatrixStockModification.total.value ? (() => { const c = expandedMatrixStockValues.total, v = Number.parseInt(expandedMatrixStockModification.total.value || "0"); return expandedMatrixStockModification.total.operation === "agregar" ? Math.max(0, c + v) : expandedMatrixStockModification.total.operation === "remover" ? Math.max(0, c - v) : Math.max(0, v) })() : expandedMatrixStockValues.total}
-                      </span>
-                      <button onClick={() => {
-                        const v = Number.parseInt(expandedMatrixStockModification.total.value || "0")
-                        let newTotal = expandedMatrixStockValues.total
-                        if (expandedMatrixStockModification.total.operation === "agregar") newTotal = Math.max(0, expandedMatrixStockValues.total + v)
-                        else if (expandedMatrixStockModification.total.operation === "remover") newTotal = Math.max(0, expandedMatrixStockValues.total - v)
-                        else newTotal = Math.max(0, v)
-                        setExpandedMatrixStockValues(prev => ({ ...prev, total: newTotal }))
-                        setExpandedMatrixStockModification((prev) => ({ ...prev, total: { operation: "agregar", value: "" } }))
-                      }} disabled={!expandedMatrixStockModification.total.value} className={`w-7 h-7 rounded border flex items-center justify-center ml-auto ${expandedMatrixStockModification.total.value ? "bg-slate-900 text-white border-slate-900 cursor-pointer" : "bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed"}`}>
-                        <Check className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Reservado */}
-              <div className="border border-slate-200 rounded-lg bg-slate-50 overflow-hidden">
-                <div
-                  onClick={() => setExpandedMatrixActiveStockEdit("reservado")}
-                  className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${expandedMatrixActiveStockEdit === "reservado" ? "bg-slate-100" : "hover:bg-slate-100"}`}
-                >
-                  <div className="flex items-center gap-2">
-                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${expandedMatrixActiveStockEdit === "reservado" ? "rotate-0" : "-rotate-90"}`} />
-                    <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Reservado</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {expandedMatrixActiveStockEdit === "reservado" && (
-                      <button onClick={(e) => { e.stopPropagation(); setExpandedMatrixStockValues(prev => ({ ...prev, reservado: Math.max(0, prev.reservado - 1) })) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
-                        <Minus className="w-3 h-3" />
-                      </button>
-                    )}
-                    <span className="text-base font-semibold tabular-nums min-w-[2rem] text-center">{expandedMatrixStockValues.reservado}</span>
-                    {expandedMatrixActiveStockEdit === "reservado" && (
-                      <button onClick={(e) => { e.stopPropagation(); setExpandedMatrixStockValues(prev => ({ ...prev, reservado: prev.reservado + 1 })) }} className="w-6 h-6 rounded border border-slate-300 hover:bg-slate-200 flex items-center justify-center cursor-pointer">
-                        <Plus className="w-3 h-3" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-                {expandedMatrixActiveStockEdit === "reservado" && (
-                  <div className="px-4 pb-3 pt-1 border-t border-slate-200 bg-slate-100/50">
-                    <div className="flex items-center gap-2">
-                      <select value={expandedMatrixStockModification.reservado.operation} onChange={(e) => setExpandedMatrixStockModification((prev) => ({ ...prev, reservado: { ...prev.reservado, operation: e.target.value } }))} className="text-xs border border-slate-300 rounded bg-white px-2 py-1.5 cursor-pointer">
-                        <option value="agregar">Agregar</option>
-                        <option value="remover">Remover</option>
-                        <option value="sobreescribir">Sobreescribir</option>
-                      </select>
-                      <input type="number" placeholder="0" value={expandedMatrixStockModification.reservado.value} onChange={(e) => setExpandedMatrixStockModification((prev) => ({ ...prev, reservado: { ...prev.reservado, value: e.target.value } }))} className="w-16 text-sm border border-slate-300 rounded px-2 py-1.5 text-center" />
-                      <span className="text-slate-400 text-sm">→</span>
-                      <span className="text-sm font-medium text-slate-500 tabular-nums min-w-[2rem] text-right">
-                        {expandedMatrixStockModification.reservado.value ? (() => { const c = expandedMatrixStockValues.reservado, v = Number.parseInt(expandedMatrixStockModification.reservado.value || "0"); return expandedMatrixStockModification.reservado.operation === "agregar" ? Math.max(0, c + v) : expandedMatrixStockModification.reservado.operation === "remover" ? Math.max(0, c - v) : Math.max(0, v) })() : expandedMatrixStockValues.reservado}
-                      </span>
-                      <button onClick={() => {
-                        const v = Number.parseInt(expandedMatrixStockModification.reservado.value || "0")
-                        let newReservado = expandedMatrixStockValues.reservado
-                        if (expandedMatrixStockModification.reservado.operation === "agregar") newReservado = Math.max(0, expandedMatrixStockValues.reservado + v)
-                        else if (expandedMatrixStockModification.reservado.operation === "remover") newReservado = Math.max(0, expandedMatrixStockValues.reservado - v)
-                        else newReservado = Math.max(0, v)
-                        setExpandedMatrixStockValues(prev => ({ ...prev, reservado: newReservado }))
-                        setExpandedMatrixStockModification((prev) => ({ ...prev, reservado: { operation: "agregar", value: "" } }))
-                      }} disabled={!expandedMatrixStockModification.reservado.value} className={`w-7 h-7 rounded border flex items-center justify-center ml-auto ${expandedMatrixStockModification.reservado.value ? "bg-slate-900 text-white border-slate-900 cursor-pointer" : "bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed"}`}>
-                        <Check className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Disponible - Read only */}
-              <div className="border border-emerald-200 rounded-lg bg-emerald-50/50">
-                <div className="flex items-center justify-between px-4 py-3">
-                  <span className="text-xs font-medium text-emerald-700 uppercase tracking-wide">Disponible</span>
-                  <span className="text-xl font-bold text-emerald-600 tabular-nums">{expandedMatrixStockValues.total - expandedMatrixStockValues.reservado}</span>
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setExpandedMatrixStockModal({ open: false, variant: null })}
-                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => {
-                  if (expandedMatrixStockModal.variant?.id) {
-                    // Convert to strings for data model consistency
-                    const newStock = {
-                      total: expandedMatrixStockValues.total.toString(),
-                      reservado: expandedMatrixStockValues.reservado.toString(),
-                      disponible: (expandedMatrixStockValues.total - expandedMatrixStockValues.reservado).toString(),
-                    }
-                    const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
-                      ov.id === expandedMatrixStockModal.variant.id ? { ...ov, stock: newStock } : ov
-                    )
-                    onFieldChange(selectedItem.id, "variants", updatedVariants)
-                  }
-                  setExpandedMatrixStockModal({ open: false, variant: null })
-                }}
-                className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
-              >
-                Aceptar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <StockEditModal
+        isOpen={expandedMatrixStockModal.open}
+        onClose={() => setExpandedMatrixStockModal({ open: false, variant: null })}
+        onAccept={(newTotal, newReservado) => {
+          if (expandedMatrixStockModal.variant?.id) {
+            const newStock = {
+              total: newTotal.toString(),
+              reservado: newReservado.toString(),
+              disponible: (newTotal - newReservado).toString(),
+            }
+            const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
+              ov.id === expandedMatrixStockModal.variant.id ? { ...ov, stock: newStock } : ov
+            )
+            onFieldChange(selectedItem.id, "variants", updatedVariants)
+          }
+        }}
+        initialTotal={expandedMatrixStockValues.total}
+        initialReservado={expandedMatrixStockValues.reservado}
+        itemName={expandedMatrixStockModal.variant?.nombre || expandedMatrixStockModal.variant?.sku}
+      />
 
       {/* Expanded Matrix - Description Modal */}
       {expandedMatrixDescModal.open && (
