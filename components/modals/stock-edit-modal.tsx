@@ -179,7 +179,7 @@ export function StockEditModal({
             </div>
 
             {/* Advanced operation row - visually linked with blue when active */}
-            <div className={`flex items-center gap-2 p-2.5 rounded-xl border transition-all ${
+            <div className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
               isAdvancedActive 
                 ? "bg-blue-50/70 border-blue-200" 
                 : "bg-slate-50/30 border-slate-100 opacity-50"
@@ -188,7 +188,7 @@ export function StockEditModal({
                 value={operation}
                 onChange={(e) => setOperation(e.target.value as "add" | "remove" | "set")}
                 disabled={!isAdvancedActive}
-                className={`text-xs border rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500/50 ${
+                className={`min-w-[100px] text-sm border rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500/50 ${
                   isAdvancedActive 
                     ? "bg-white border-blue-200 text-slate-700 cursor-pointer" 
                     : "bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed"
@@ -206,7 +206,7 @@ export function StockEditModal({
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && applyOperation()}
                 disabled={!isAdvancedActive}
-                className={`w-16 text-sm border rounded-lg px-2 py-1.5 text-center tabular-nums placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500/50 ${
+                className={`flex-1 text-sm border rounded-lg px-3 py-2 text-center tabular-nums placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500/50 ${
                   isAdvancedActive 
                     ? "bg-white border-blue-200 text-slate-900" 
                     : "bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed"
@@ -215,7 +215,7 @@ export function StockEditModal({
               <button
                 onClick={applyOperation}
                 disabled={!isAdvancedActive || !inputValue || parseInt(inputValue) <= 0}
-                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+                className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all flex-shrink-0 ${
                   isAdvancedActive && inputValue && parseInt(inputValue) > 0
                     ? "bg-blue-600 hover:bg-blue-500 text-white cursor-pointer"
                     : "bg-slate-200 text-slate-400 cursor-not-allowed"
