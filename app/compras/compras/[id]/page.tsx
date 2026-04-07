@@ -549,13 +549,13 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
   if (!compra) {
     return (
       <div className="flex h-screen bg-[#FBFBFB]">
-        <Sidebar
-          items={SIDEBAR_ITEMS}
-          bottomItems={BOTTOM_SIDEBAR_ITEMS}
-          hoveredDropdown={hoveredDropdown}
-          onDropdownMouseEnter={handleDropdownMouseEnter}
-          onDropdownMouseLeave={handleDropdownMouseLeave}
-        />
+  <Sidebar
+  sidebarItems={SIDEBAR_ITEMS}
+  bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
+  hoveredDropdown={hoveredDropdown}
+  onDropdownOpen={handleDropdownMouseEnter}
+  onDropdownClose={handleDropdownMouseLeave}
+/>
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
