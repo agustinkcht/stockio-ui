@@ -104,7 +104,8 @@ export function Sidebar({
             ((item.dropdown && item.dropdown.length > 0) || (item.dropdownItems && item.dropdownItems.length > 0))
 
           return (
-            <div key={index} className={`relative ${isHovered ? "z-[100001]" : "z-[100000]"}`}>
+            <>
+              <div key={index} className={`relative ${isHovered ? "z-[100001]" : "z-[100000]"}`}>
               {/* Module Button */}
               <button
                 className="flex flex-col items-center gap-1 w-full py-2 rounded-lg transition-colors cursor-pointer pt-0 relative z-[100]"
@@ -176,6 +177,12 @@ export function Sidebar({
                 </div>
               )}
             </div>
+
+            {/* Divider */}
+            {item.dividerAfter && (
+              <div className="mx-3 my-1 border-t border-sidebar-foreground/10" />
+            )}
+          </>
           )
         })}
       </nav>

@@ -153,6 +153,7 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     icon: Store,
     label: "Mi Negocio",
     hasDropdown: true,
+    dividerAfter: true,
     dropdown: [
       { label: "Punto de Venta", href: "/mi-negocio/pdv" },
       { label: "Caja", href: "/mi-negocio/caja" },
@@ -177,6 +178,7 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     icon: Users,
     label: "Contactos",
     hasDropdown: true,
+    dividerAfter: true,
     dropdown: [
       { label: "Clientes", href: "/contactos/clientes" },
       { label: "Proveedores", href: "/contactos/proveedores" },
@@ -198,6 +200,7 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     icon: Box,
     label: "Stock",
     hasDropdown: true,
+    dividerAfter: true,
     dropdown: [
       { label: "Stock", href: "/stock/stock" },
     ],

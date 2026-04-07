@@ -131,6 +131,7 @@ export interface SidebarItem {
   dropdown?: DropdownItem[]
   dropdownItems?: string[] // Deprecated, keeping for backward compatibility
   active?: boolean
+  dividerAfter?: boolean
 }
 
 export interface DropdownItem {
