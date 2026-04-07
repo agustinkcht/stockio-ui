@@ -96,16 +96,29 @@ export function Sidebar({
     <div className="h-full flex flex-col z-[99999] bg-white shadow-sm rounded-lg w-20">
       {/* Main Navigation */}
       <nav className="flex-1 space-y-1 px-2 pt-4">
-        {sidebarItems.map((item, index) => {
-          const isHovered = hoveredDropdown === index
-          const isActive = getActiveModule(item)
-          const hasDropdown =
-            item.hasDropdown &&
-            ((item.dropdown && item.dropdown.length > 0) || (item.dropdownItems && item.dropdownItems.length > 0))
+      {sidebarItems.map((item, index) => {
+        const isHovered = hoveredDropdown === index
+        const isActive = getActiveModule(item)
+        const hasDropdown =
+          item.hasDropdown &&
+          ((item.dropdown && item.dropdown.length > 0) || (item.dropdownItems && item.dropdownItems.length > 0))
+        
+        // Determine divider spacing based on position
+        let dividerClass = "mx-3 my-1 border-t border-sidebar-foreground/10"
+        if (item.dividerAfter) {
+          // First divider (after Mi Negocio, index 0): mt-1.5 mb-1.5
+          if (index === 0) {
+            dividerClass = "mx-3 mt-1.5 mb-1.5 border-t border-sidebar-foreground/10"
+          }
+          // Last divider (after Stock, index 6): mt-2 mb-2
+          else if (index === 6) {
+            dividerClass = "mx-3 mt-2 mb-2 border-t border-sidebar-foreground/10"
+          }
+        }
 
-          return (
-            <>
-              <div key={index} className={`relative ${isHovered ? "z-[100001]" : "z-[100000]"}`}>
+        return (
+          <>
+            <div key={index} className={`relative ${isHovered ? "z-[100001]" : "z-[100000]"}`}>
               {/* Module Button */}
               <button
                 className="flex flex-col items-center gap-1 w-full py-2 rounded-lg transition-colors cursor-pointer pt-0 relative z-[100]"
@@ -180,7 +193,7 @@ export function Sidebar({
 
             {/* Divider */}
             {item.dividerAfter && (
-              <div className="mx-3 my-1 border-t border-sidebar-foreground/10" />
+              <div className={dividerClass} />
             )}
           </>
           )
