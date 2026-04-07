@@ -103,18 +103,8 @@ export function Sidebar({
           item.hasDropdown &&
           ((item.dropdown && item.dropdown.length > 0) || (item.dropdownItems && item.dropdownItems.length > 0))
         
-        // Determine divider spacing based on position
-        let dividerClass = "mx-3 my-1 border-t border-sidebar-foreground/10"
-        if (item.dividerAfter) {
-          // First divider (after Mi Negocio, index 0): mt-1.5 mb-1.5
-          if (index === 0) {
-            dividerClass = "mx-3 mt-1.5 mb-1.5 border-t border-sidebar-foreground/10"
-          }
-          // Last divider (after Stock, index 6): mt-2 mb-2
-          else if (index === 6) {
-            dividerClass = "mx-3 mt-2 mb-2 border-t border-sidebar-foreground/10"
-          }
-        }
+        // Divider class with consistent spacing
+        const dividerClass = "mx-3 mt-1.5 mb-1.5 border-t border-sidebar-foreground/10"
 
         return (
           <React.Fragment key={index}>
