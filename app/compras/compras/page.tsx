@@ -9,18 +9,14 @@ import { UserPanel } from "@/components/layout/user-panel"
 import {
   Search,
   ChevronDown,
-  ChevronRight,
   Package,
   Plus,
   ArrowUpDown,
   ListFilterIcon,
   X,
   Check,
-  Minus,
 } from "lucide-react"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
-import { getCategoryImage } from "@/lib/utils/category-images"
-import Image from "next/image"
 import type { OrdenCompra } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { ORDENES_COMPRA } from "@/lib/data/initial-ordenes"
@@ -59,7 +55,7 @@ function ComprasContent() {
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
   const { currentAccount } = useAccount()
   const [searchQuery, setSearchQuery] = useState("")
-  const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set())
+  const [selectedCompras, setSelectedCompras] = useState<Set<string>>(new Set())
   const [compras, setCompras] = useState<OrdenCompra[]>(ORDENES_COMPRA)
 
   const [showOrderModal, setShowOrderModal] = useState(false)
@@ -156,14 +152,19 @@ function ComprasContent() {
     return result
   }, [compras, searchQuery, activeFilters, sortConfig])
 
-  const toggleExpanded = (id: string) => {
-    const newExpanded = new Set(expandedOrders)
-    if (newExpanded.has(id)) {
-      newExpanded.delete(id)
+  const toggleCompraSelection = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    const newSelected = new Set(selectedCompras)
+    if (newSelected.has(id)) {
+      newSelected.delete(id)
     } else {
-      newExpanded.add(id)
+      newSelected.add(id)
     }
-    setExpandedOrders(newExpanded)
+    setSelectedCompras(newSelected)
+  }
+  
+  const handleRowClick = (numero: number) => {
+    router.push(`/compras/compras/C-${numero}`)
   }
 
   const hasActiveFilters = activeFilters.estadoEntrega.length > 0
@@ -360,7 +361,7 @@ function ComprasContent() {
             <div className="px-6">
               <div className="bg-slate-200 border border-[rgba(202,213,227,0.61)] rounded-t-sm">
                 <div className="grid grid-cols-100 h-9">
-                  {/* Chevron spacer */}
+                  {/* Checkbox spacer */}
                   <div className="col-span-3 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
                   </div>
                   {/* ID */}
@@ -401,7 +402,7 @@ function ComprasContent() {
               ) : (
                 <div className="space-y-[1px]">
                   {filteredOrdenes.map((orden) => {
-                    const isExpanded = expandedOrders.has(orden.id)
+                    const isSelected = selectedCompras.has(orden.id)
                     
                     // Calcular estado de entrega: productos recibidos / total productos
                     const totalItems = orden.items.reduce((sum, item) => sum + item.quantity, 0)
@@ -415,32 +416,29 @@ function ComprasContent() {
                     const estadoGeneral = entregaPercent === 100 && orden.estadoPago === 100 ? "Finalizada" : "En curso"
 
                     return (
-                      <div key={orden.id} className="bg-white border-x border-b border-[rgba(202,213,227,0.61)] first:border-t-0">
+                      <div key={orden.id} className={`bg-white border-x border-b border-[rgba(202,213,227,0.61)] first:border-t-0 ${isSelected ? "bg-amber-50/30" : ""}`}>
                         {/* Main Row */}
                         <div
                           className="grid grid-cols-100 min-h-[56px] cursor-pointer hover:bg-gray-50/50 transition-colors"
-                          onClick={() => toggleExpanded(orden.id)}
+                          onClick={() => handleRowClick(orden.numero)}
                         >
-                          {/* Chevron */}
-                          <div className="col-span-3 flex items-center justify-center border-r border-[rgba(202,213,227,0.3)]">
-                            <button className="p-0.5 text-muted-foreground">
-                              {isExpanded ? (
-                                <ChevronDown className="w-4 h-4" />
-                              ) : (
-                                <ChevronRight className="w-4 h-4" />
-                              )}
+                          {/* Checkbox */}
+                          <div 
+                            className="col-span-3 flex items-center justify-center border-r border-[rgba(202,213,227,0.3)]"
+                            onClick={(e) => toggleCompraSelection(orden.id, e)}
+                          >
+                            <button className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                              isSelected 
+                                ? "bg-amber-500 border-amber-500 text-white" 
+                                : "border-slate-300 hover:border-amber-500"
+                            }`}>
+                              {isSelected && <Check className="w-3 h-3" />}
                             </button>
                           </div>
 
                           {/* ID */}
-                          <div 
-                            className="col-span-8 flex flex-col items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)] hover:bg-amber-50/50 transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              router.push(`/compras/compras/C-${orden.numero}`)
-                            }}
-                          >
-                            <span className="text-sm font-medium text-amber-600 hover:text-amber-700 cursor-pointer">C-{orden.numero}</span>
+                          <div className="col-span-8 flex flex-col items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]">
+                            <span className="text-sm font-medium text-gray-900">C-{orden.numero}</span>
                             <span className="text-xs text-muted-foreground">{formatDateShort(orden.fechaCreacion)}</span>
                           </div>
 
@@ -515,70 +513,6 @@ function ComprasContent() {
                             </span>
                           </div>
                         </div>
-
-                        {/* Expanded Items */}
-                        {isExpanded && (
-                          <div className="border-t border-border/30 bg-muted/20">
-                            <div className="px-4 py-2 space-y-1">
-                              {orden.items.map((item, idx) => {
-                                const itemRecibido = item.quantityReceived === item.quantity
-                                const itemParcial = item.quantityReceived > 0 && item.quantityReceived < item.quantity
-                                return (
-                                  <div key={idx} className="grid grid-cols-100 items-center py-2">
-                                    {/* Item Info (leftmost - spans id + estado + proveedor = 38) */}
-                                    <div className="col-span-41 flex items-center gap-3 pl-8">
-                                      <div className="w-10 h-10 rounded bg-muted/50 overflow-hidden flex-shrink-0">
-                                        <Image
-                                          src={getCategoryImage(item.categoria) || "/placeholder.svg"}
-                                          alt={item.name}
-                                          width={40}
-                                          height={40}
-                                          className="w-full h-full object-cover"
-                                        />
-                                      </div>
-                                      <div className="flex-1 min-w-0">
-                                        <p className="text-sm truncate">{item.name}</p>
-                                        <span className="text-xs text-muted-foreground">{item.sku}</span>
-                                      </div>
-                                    </div>
-
-                                    {/* Item Estado Recepcion - alineado con Estado Entrega (19) */}
-                                    <div className="col-span-19 flex items-center justify-center">
-                                      <div className="flex items-center gap-1.5">
-                                        {itemRecibido ? (
-                                          <Check className="w-3.5 h-3.5 text-green-500" />
-                                        ) : itemParcial ? (
-                                          <Minus className="w-3.5 h-3.5 text-amber-500" />
-                                        ) : (
-                                          <Package className="w-3.5 h-3.5 text-gray-400" />
-                                        )}
-                                        <span className={`text-xs font-medium ${
-                                          itemRecibido ? "text-green-600" : 
-                                          itemParcial ? "text-amber-600" : "text-gray-500"
-                                        }`}>
-                                          {item.quantityReceived} de {item.quantity}
-                                        </span>
-                                      </div>
-                                    </div>
-
-                                    {/* Estado Pago placeholder (20) */}
-                                    <div className="col-span-20"></div>
-
-                                    {/* Item Subtotal (rightmost, aligned with importe total = 20) */}
-                                    <div className="col-span-20 flex flex-col items-center justify-center">
-                                      <p className="text-sm font-medium">
-                                        ${item.total.toLocaleString("es-AR", { minimumFractionDigits: 0 })}
-                                      </p>
-                                      <p className="text-xs text-muted-foreground">
-                                        {item.quantity} x ${item.unitPrice.toLocaleString("es-AR")}
-                                      </p>
-                                    </div>
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          </div>
-                        )}
                       </div>
                     )
                   })}
