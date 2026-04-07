@@ -24,7 +24,7 @@ export function StockEditModal({
   const [reservado, setReservado] = useState(initialReservado)
   const [operation, setOperation] = useState<"add" | "remove" | "set">("add")
   const [inputValue, setInputValue] = useState("")
-  const [activeField, setActiveField] = useState<"total" | "reservado">("total")
+  const [activeField, setActiveField] = useState<"total" | "reservado" | null>(null)
 
   // Reset state when modal opens
   useEffect(() => {
@@ -33,7 +33,7 @@ export function StockEditModal({
       setReservado(initialReservado)
       setOperation("add")
       setInputValue("")
-      setActiveField("total")
+      setActiveField(null)
     }
   }, [isOpen, initialTotal, initialReservado])
 
@@ -58,6 +58,7 @@ export function StockEditModal({
   }
 
   const applyOperation = () => {
+    if (!activeField) return
     const value = parseInt(inputValue) || 0
     if (value <= 0) return
 
@@ -87,6 +88,8 @@ export function StockEditModal({
 
   if (!isOpen) return null
 
+  const isAdvancedActive = activeField !== null
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
@@ -107,117 +110,119 @@ export function StockEditModal({
 
         {/* Content */}
         <div className="p-5">
-          {/* Stock rows with visual connector */}
-          <div className="flex gap-3">
-            {/* Left: Connector line */}
-            <div className="flex flex-col items-center pt-6 pb-2">
-              <div className={`w-0.5 h-[52px] transition-colors ${activeField === "total" ? "bg-blue-500" : "bg-slate-200"}`} />
-              <div className={`w-2 h-2 rounded-full transition-colors ${activeField === "total" ? "bg-blue-500" : "bg-slate-200"}`} />
-              <div className={`w-0.5 flex-1 transition-colors ${activeField === "reservado" ? "bg-blue-500" : "bg-slate-200"}`} />
-              <div className={`w-2 h-2 rounded-full transition-colors ${activeField === "reservado" ? "bg-blue-500" : "bg-slate-200"}`} />
-              <div className={`w-0.5 h-[52px] transition-colors ${activeField === "reservado" ? "bg-blue-500" : "bg-slate-200"}`} />
-            </div>
-
-            {/* Right: Stock fields */}
-            <div className="flex-1 space-y-3">
-              {/* Total Row */}
-              <div 
-                className={`flex items-center justify-between p-3 rounded-xl transition-all cursor-pointer border ${
-                  activeField === "total" 
-                    ? "bg-blue-50/50 border-blue-200 ring-1 ring-blue-100" 
-                    : "bg-slate-50/50 border-slate-100 hover:border-slate-200"
-                }`}
-                onClick={() => setActiveField("total")}
-              >
-                <span className={`text-xs font-medium uppercase tracking-wider ${
-                  activeField === "total" ? "text-blue-600" : "text-slate-500"
-                }`}>Total</span>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleIncrement("total", -1) }}
-                    className="w-7 h-7 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 flex items-center justify-center transition-colors"
-                  >
-                    <Minus className="w-3 h-3 text-slate-600" />
-                  </button>
-                  <span className={`text-lg font-semibold tabular-nums min-w-[2.5rem] text-center ${
-                    total !== initialTotal ? "text-blue-600" : "text-slate-900"
-                  }`}>
-                    {total}
-                  </span>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleIncrement("total", 1) }}
-                    className="w-7 h-7 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 flex items-center justify-center transition-colors"
-                  >
-                    <Plus className="w-3 h-3 text-slate-600" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Reservado Row */}
-              <div 
-                className={`flex items-center justify-between p-3 rounded-xl transition-all cursor-pointer border ${
-                  activeField === "reservado" 
-                    ? "bg-blue-50/50 border-blue-200 ring-1 ring-blue-100" 
-                    : "bg-slate-50/50 border-slate-100 hover:border-slate-200"
-                }`}
-                onClick={() => setActiveField("reservado")}
-              >
-                <span className={`text-xs font-medium uppercase tracking-wider ${
-                  activeField === "reservado" ? "text-blue-600" : "text-slate-500"
-                }`}>Reservado</span>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleIncrement("reservado", -1) }}
-                    className="w-7 h-7 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 flex items-center justify-center transition-colors"
-                  >
-                    <Minus className="w-3 h-3 text-slate-600" />
-                  </button>
-                  <span className={`text-lg font-semibold tabular-nums min-w-[2.5rem] text-center ${
-                    reservado !== initialReservado ? "text-blue-600" : "text-slate-900"
-                  }`}>
-                    {reservado}
-                  </span>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleIncrement("reservado", 1) }}
-                    className="w-7 h-7 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 flex items-center justify-center transition-colors"
-                  >
-                    <Plus className="w-3 h-3 text-slate-600" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Quick operation row */}
-              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                <select
-                  value={operation}
-                  onChange={(e) => setOperation(e.target.value as "add" | "remove" | "set")}
-                  className="text-xs bg-white border border-slate-200 text-slate-700 rounded-lg px-2 py-1.5 cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500/50"
-                >
-                  <option value="add">Agregar</option>
-                  <option value="remove">Remover</option>
-                  <option value="set">Fijar en</option>
-                </select>
-                <input
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && applyOperation()}
-                  className="w-16 text-sm bg-white border border-slate-200 text-slate-900 rounded-lg px-2 py-1.5 text-center tabular-nums placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
-                />
+          {/* Stock fields */}
+          <div className="space-y-3">
+            {/* Total Row */}
+            <div 
+              className={`flex items-center justify-between p-3 rounded-xl transition-all cursor-pointer border ${
+                activeField === "total" 
+                  ? "bg-blue-50 border-blue-300 ring-2 ring-blue-200" 
+                  : "bg-slate-50/50 border-slate-100 hover:border-slate-200"
+              }`}
+              onClick={() => setActiveField(activeField === "total" ? null : "total")}
+            >
+              <span className={`text-xs font-medium uppercase tracking-wider ${
+                activeField === "total" ? "text-blue-600" : "text-slate-500"
+              }`}>Total</span>
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={applyOperation}
-                  disabled={!inputValue || parseInt(inputValue) <= 0}
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
-                    inputValue && parseInt(inputValue) > 0
-                      ? "bg-blue-600 hover:bg-blue-500 text-white cursor-pointer"
-                      : "bg-slate-100 text-slate-300 cursor-not-allowed"
-                  }`}
+                  onClick={(e) => { e.stopPropagation(); handleIncrement("total", -1) }}
+                  className="w-7 h-7 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 flex items-center justify-center transition-colors"
                 >
-                  <Check className="w-4 h-4" />
+                  <Minus className="w-3 h-3 text-slate-600" />
+                </button>
+                <span className={`text-lg font-semibold tabular-nums min-w-[2.5rem] text-center ${
+                  total !== initialTotal ? "text-blue-600" : "text-slate-900"
+                }`}>
+                  {total}
+                </span>
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleIncrement("total", 1) }}
+                  className="w-7 h-7 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 flex items-center justify-center transition-colors"
+                >
+                  <Plus className="w-3 h-3 text-slate-600" />
                 </button>
               </div>
+            </div>
+
+            {/* Reservado Row */}
+            <div 
+              className={`flex items-center justify-between p-3 rounded-xl transition-all cursor-pointer border ${
+                activeField === "reservado" 
+                  ? "bg-blue-50 border-blue-300 ring-2 ring-blue-200" 
+                  : "bg-slate-50/50 border-slate-100 hover:border-slate-200"
+              }`}
+              onClick={() => setActiveField(activeField === "reservado" ? null : "reservado")}
+            >
+              <span className={`text-xs font-medium uppercase tracking-wider ${
+                activeField === "reservado" ? "text-blue-600" : "text-slate-500"
+              }`}>Reservado</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleIncrement("reservado", -1) }}
+                  className="w-7 h-7 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 flex items-center justify-center transition-colors"
+                >
+                  <Minus className="w-3 h-3 text-slate-600" />
+                </button>
+                <span className={`text-lg font-semibold tabular-nums min-w-[2.5rem] text-center ${
+                  reservado !== initialReservado ? "text-blue-600" : "text-slate-900"
+                }`}>
+                  {reservado}
+                </span>
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleIncrement("reservado", 1) }}
+                  className="w-7 h-7 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 flex items-center justify-center transition-colors"
+                >
+                  <Plus className="w-3 h-3 text-slate-600" />
+                </button>
+              </div>
+            </div>
+
+            {/* Advanced operation row - visually linked with blue when active */}
+            <div className={`flex items-center gap-2 p-2.5 rounded-xl border transition-all ${
+              isAdvancedActive 
+                ? "bg-blue-50/70 border-blue-200" 
+                : "bg-slate-50/30 border-slate-100 opacity-50"
+            }`}>
+              <select
+                value={operation}
+                onChange={(e) => setOperation(e.target.value as "add" | "remove" | "set")}
+                disabled={!isAdvancedActive}
+                className={`text-xs border rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500/50 ${
+                  isAdvancedActive 
+                    ? "bg-white border-blue-200 text-slate-700 cursor-pointer" 
+                    : "bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed"
+                }`}
+              >
+                <option value="add">Agregar</option>
+                <option value="remove">Remover</option>
+                <option value="set">Fijar en</option>
+              </select>
+              <input
+                type="number"
+                min="0"
+                placeholder="0"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && applyOperation()}
+                disabled={!isAdvancedActive}
+                className={`w-16 text-sm border rounded-lg px-2 py-1.5 text-center tabular-nums placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500/50 ${
+                  isAdvancedActive 
+                    ? "bg-white border-blue-200 text-slate-900" 
+                    : "bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed"
+                }`}
+              />
+              <button
+                onClick={applyOperation}
+                disabled={!isAdvancedActive || !inputValue || parseInt(inputValue) <= 0}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+                  isAdvancedActive && inputValue && parseInt(inputValue) > 0
+                    ? "bg-blue-600 hover:bg-blue-500 text-white cursor-pointer"
+                    : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                }`}
+              >
+                <Check className="w-4 h-4" />
+              </button>
             </div>
           </div>
 
