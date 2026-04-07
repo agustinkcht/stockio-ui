@@ -115,7 +115,7 @@ export default function StockPage() {
     ;(window as any).__auditDiscardHandler?.()
   }
 
-  const breadcrumbs = [{ label: "Inventario" }, { label: "Stock", href: "/inventario/stock" }]
+  const breadcrumbs = [{ label: "Stock" }, { label: "Stock", href: "/stock/stock" }]
 
   const handleUndo = () => {
     const change = changeTracker.undo()

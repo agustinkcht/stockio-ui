@@ -1667,7 +1667,7 @@ export function ItemDetailPanel({
                             onClick={() => {
                               // Navigate to the child item when clicking on the variant row
                               if (displaySku) {
-                                router.push(`/inventario/articulos/${displaySku}`)
+                                router.push(`/stock/stock/${displaySku}`)
                               }
                             }}
                             className="group grid grid-cols-[1fr_minmax(80px,1fr)_28px] items-center hover:bg-accent/50 transition-colors cursor-pointer"

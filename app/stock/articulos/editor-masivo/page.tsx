@@ -238,13 +238,13 @@ export default function EditorMasivoPage() {
 
     const skusJson = sessionStorage.getItem("editor-masivo-skus")
     if (!skusJson) {
-      router.push("/inventario/articulos")
+      router.push("/stock/articulos")
       return
     }
 
     const selectedSkus: string[] = JSON.parse(skusJson)
     if (selectedSkus.length === 0) {
-      router.push("/inventario/articulos")
+      router.push("/stock/articulos")
       return
     }
 
@@ -441,9 +441,9 @@ export default function EditorMasivoPage() {
   }
 
   const breadcrumbs = [
-    { label: "Inventario", href: "/inventario" },
-    { label: "Articulos", href: "/inventario/articulos" },
-    { label: "Editor Masivo", href: "/inventario/articulos/editor-masivo" },
+    { label: "Stock", href: "/stock" },
+    { label: "Articulos", href: "/stock/articulos" },
+    { label: "Editor Masivo", href: "/stock/articulos/editor-masivo" },
   ]
 
   const toggleSection = (sectionId: string) => {

@@ -101,7 +101,7 @@ export default function ItemDetailPage() {
 
   const handleDeleteWithTracking = (item: Item) => {
     deleteItem(item)
-    router.push("/inventario/articulos")
+    router.push("/stock/stock")
   }
 
   const handleNavigateBack = () => {
@@ -113,7 +113,7 @@ export default function ItemDetailPage() {
   }
 
   const handleClose = () => {
-    router.push("/inventario/articulos")
+    router.push("/stock/stock")
   }
 
   const handleFieldChange = (itemSku: string, field: string, value: any) => {
@@ -131,7 +131,7 @@ export default function ItemDetailPage() {
   useEffect(() => {
     if (!selectedItem && items.length > 0) {
       console.log("[v0] Item not found, redirecting. itemParam:", itemParam)
-      router.push("/inventario/articulos")
+      router.push("/stock/stock")
     }
   }, [selectedItem, items, router, itemParam])
 
@@ -143,8 +143,8 @@ export default function ItemDetailPage() {
   }
 
   const breadcrumbs = selectedItem
-    ? [{ label: "Inventario" }, { label: "Artículos", href: "/inventario/articulos" }, { label: selectedItem.name }]
-    : [{ label: "Inventario" }, { label: "Artículos", href: "/inventario/articulos" }]
+    ? [{ label: "Stock" }, { label: "Stock", href: "/stock/stock" }, { label: selectedItem.name }]
+    : [{ label: "Stock" }, { label: "Stock", href: "/stock/stock" }]
 
   if (!selectedItem) {
     return (

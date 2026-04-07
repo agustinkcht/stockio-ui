@@ -41,7 +41,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     console.log("[v0] Switching account to:", account)
     setCurrentAccount(account)
     localStorage.setItem("stockio-current-account", account)
-    router.push("/inventario/articulos")
+    router.push("/catalogo/items")
   }
 
   const logout = () => {

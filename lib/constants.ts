@@ -196,10 +196,10 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
   },
   {
     icon: Box,
-    label: "Inventario",
+    label: "Stock",
     hasDropdown: true,
     dropdown: [
-      { label: "Stock", href: "/inventario/stock" },
+      { label: "Stock", href: "/stock/stock" },
     ],
   },
 ]
