@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef } from "react"
+import React, { useRef } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import type { SidebarItem } from "@/lib/types"
 
@@ -117,8 +117,8 @@ export function Sidebar({
         }
 
         return (
-          <>
-            <div key={index} className={`relative ${isHovered ? "z-[100001]" : "z-[100000]"}`}>
+          <React.Fragment key={index}>
+            <div className={`relative ${isHovered ? "z-[100001]" : "z-[100000]"}`}>
               {/* Module Button */}
               <button
                 className="flex flex-col items-center gap-1 w-full py-2 rounded-lg transition-colors cursor-pointer pt-0 relative z-[100]"
@@ -195,7 +195,7 @@ export function Sidebar({
             {item.dividerAfter && (
               <div className={dividerClass} />
             )}
-          </>
+          </React.Fragment>
           )
         })}
       </nav>
