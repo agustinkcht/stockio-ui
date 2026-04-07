@@ -23,7 +23,6 @@ import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import Image from "next/image"
 import type { OrdenCompra, Item } from "@/lib/types"
-import { Button } from "@/components/ui/button"
 import { ORDENES_COMPRA } from "@/lib/data/initial-ordenes"
 import { useAccount } from "@/lib/contexts/account-context"
 import { useNavigationGuard } from "@/hooks/use-navigation-guard"
@@ -263,6 +262,9 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
     if (!compra) return "En curso"
     return stats.entregaPercent === 100 && pagoPercent === 100 ? "Finalizada" : "En curso"
   }, [compra, stats, pagoPercent])
+  
+  // Check if compra is editable (only when not finalized)
+  const isEditable = estadoGeneral !== "Finalizada"
 
   // Handle item quantity selection for partial receiving
   const handleQuantityChange = (sku: string, quantity: number, maxQuantity: number) => {
@@ -567,96 +569,102 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
   }
 
   return (
-    <div className="flex h-screen bg-[#FBFBFB]" onClick={handleCloseDropdowns}>
-      <Sidebar
-        sidebarItems={SIDEBAR_ITEMS}
-        bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
-        hoveredDropdown={hoveredDropdown}
-        onDropdownOpen={handleDropdownMouseEnter}
-        onDropdownClose={handleDropdownMouseLeave}
-      />
+    <div className="min-h-screen bg-[rgb(243,242,238)]">
+      <div className="px-[6px] py-[6px] flex gap-[6px] h-screen" onClick={handleCloseDropdowns}>
+        <div onClick={(e) => e.stopPropagation()} className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
+          <Sidebar
+            sidebarItems={SIDEBAR_ITEMS}
+            bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
+            hoveredDropdown={hoveredDropdown}
+            onDropdownOpen={handleDropdownMouseEnter}
+            onDropdownClose={handleDropdownMouseLeave}
+          />
+        </div>
 
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <UserPanel />
+        <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
+          {/* Utility Bar - Same as orden de compra detail */}
+          <div className="relative border-b border-border h-[44px] bg-white">
+            <div className="px-4 flex items-center justify-between h-full">
+              <div className="flex items-center">
+                <Breadcrumb items={breadcrumbs} />
+              </div>
 
-        <main className="flex-1 flex flex-col min-h-0 overflow-auto">
-          {/* Breadcrumb */}
-          <div className="px-6 py-4">
-            <Breadcrumb items={breadcrumbs} />
-          </div>
+              <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center gap-3 mt-0">
+                <UserPanel />
+              </div>
 
-          {/* Top Bar */}
-          <div className="px-6 pb-4">
-            <div className="bg-white border border-slate-200/80 rounded-lg">
-              <div className="px-4 py-3 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  {/* ID */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-slate-400 uppercase tracking-wider">Compra</span>
-                    <span className="text-lg font-semibold text-gray-900">C-{compra.numero}</span>
-                  </div>
-                  
-                  {/* Estado Badge */}
-                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                    estadoGeneral === "Finalizada" 
-                      ? "bg-emerald-50 text-emerald-700" 
-                      : "bg-amber-50 text-amber-700"
-                  }`}>
-                    {estadoGeneral}
-                  </span>
-                  
-                  <div className="w-px h-5 bg-slate-200" />
-                  
-                  {/* Proveedor */}
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-sm text-slate-500">Proveedor:</span>
-                    <span className="text-sm font-medium text-gray-800">{compra.proveedorNombre}</span>
-                  </div>
-                  
-                  <div className="w-px h-5 bg-slate-200" />
-                  
-                  {/* Fecha */}
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-sm text-slate-500">Creación:</span>
-                    <span className="text-sm text-gray-700">{formatDateShort(compra.fechaCreacion)}</span>
-                  </div>
-                </div>
+              <div className="flex items-center gap-2">
+                {isEditable && hasUnsavedChanges && (
+                  <>
+                    <button
+                      onClick={handleDiscard}
+                      className="px-4 py-1.5 bg-muted/50 rounded transition-all cursor-pointer text-foreground hover:bg-muted text-sm font-medium"
+                    >
+                      Deshacer
+                    </button>
 
-                <div className="flex items-center gap-2">
-                  {/* Save/Discard buttons when there are changes */}
-                  {hasUnsavedChanges && (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleDiscard}
-                        className="text-red-600 border-red-200 hover:bg-red-50"
-                      >
-                        Deshacer
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={handleSave}
-                        className="bg-green-600 hover:bg-green-700 text-white"
-                      >
-                        Guardar
-                      </Button>
-                      <div className="w-px h-5 bg-slate-200 mx-1" />
-                    </>
-                  )}
-                  
-                  {/* Exportar Button */}
-                  <Button variant="outline" size="sm" className="gap-1.5">
-                    <FileDown className="w-4 h-4" />
-                    Exportar
-                  </Button>
-                </div>
+                    <button
+                      onClick={handleSave}
+                      className="px-4 py-1.5 bg-muted/50 rounded transition-all cursor-pointer text-primary hover:bg-muted text-sm font-medium"
+                    >
+                      Guardar
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
 
+          {/* Main Content */}
+          <main className="flex-1 flex flex-col bg-[rgba(250,251,253,1)] overflow-auto">
+            {/* Order Header */}
+            <div className="px-6 py-4 border-b border-border/20 bg-white">
+              <div className="flex items-center justify-between">
+                {/* Left: Title and info */}
+                <div className="flex items-center gap-6">
+                  {/* Order ID as title with label */}
+                  <div>
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Compra</span>
+                    <div className="flex items-center gap-3">
+                      <h1 className="text-2xl font-bold text-gray-900 tracking-tight">C-{compra.numero}</h1>
+                      <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                        estadoGeneral === "Finalizada" 
+                          ? "bg-emerald-50 text-emerald-700" 
+                          : "bg-amber-50 text-amber-700"
+                      }`}>
+                        {estadoGeneral}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {/* Separator */}
+                  <div className="h-10 w-px bg-border/40" />
+                  
+                  {/* Proveedor */}
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Proveedor</span>
+                    <span className="text-sm font-semibold text-gray-800">{compra.proveedorNombre}</span>
+                  </div>
+                </div>
+
+                {/* Center: Creación */}
+                <div className="flex flex-col items-center">
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider">Creación</span>
+                  <span className="text-sm text-gray-600">{formatDateShort(compra.fechaCreacion)}</span>
+                </div>
+
+                {/* Right: Export button */}
+                <div className="flex items-center gap-2">
+                  <button className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer gap-1.5 shrink-0 px-3 rounded-md flex items-center">
+                    <FileDown className="w-3.5 h-3.5 text-slate-500" />
+                    Exportar
+                  </button>
+                </div>
+              </div>
+            </div>
+
           {/* Resumen Section */}
-          <div className="px-6 pb-4">
+          <div className="px-6 pt-4 pb-4">
             <div className="bg-white border border-slate-200/80 rounded-lg overflow-hidden">
               {/* Resumen Header - Clickable to expand */}
               <button
@@ -678,7 +686,7 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
                     <span className="font-medium text-slate-700">Total: ${calculatedTotal.toLocaleString("es-AR")}</span>
                   </div>
                 </div>
-                {isResumenExpanded && (
+                {isResumenExpanded && isEditable && (
                   <button
                     onClick={(e) => { e.stopPropagation(); setIsEditingResumen(!isEditingResumen) }}
                     className={`text-xs font-medium px-3 py-1 rounded transition-colors ${
@@ -1056,7 +1064,7 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
                       </div>
 
                       {/* Action Bar */}
-                      {selectedCount > 0 && (
+                      {isEditable && selectedCount > 0 && (
                         <div className="px-4 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
                           <span className="text-sm text-slate-600">
                             {selectedUnitsCount} unidad{selectedUnitsCount > 1 ? "es" : ""} de {selectedCount} item{selectedCount > 1 ? "s" : ""}
@@ -1163,19 +1171,21 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
                 </div>
                 
                 {/* Register Payment Button */}
-                <div className="p-4 border-t border-slate-100">
-                  <button
-                    onClick={() => setShowPagoModal(true)}
-                    disabled={pagoPercent === 100}
-                    className={`w-full py-2.5 text-sm font-medium rounded-lg transition-colors ${
-                      pagoPercent === 100
-                        ? "bg-green-100 text-green-700 cursor-not-allowed"
-                        : "bg-amber-500 text-white hover:bg-amber-600"
-                    }`}
-                  >
-                    {pagoPercent === 100 ? "Pago completo" : "Registrar Pago"}
-                  </button>
-                </div>
+                {isEditable && (
+                  <div className="p-4 border-t border-slate-100">
+                    <button
+                      onClick={() => setShowPagoModal(true)}
+                      disabled={pagoPercent === 100}
+                      className={`w-full py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                        pagoPercent === 100
+                          ? "bg-green-100 text-green-700 cursor-not-allowed"
+                          : "bg-amber-500 text-white hover:bg-amber-600"
+                      }`}
+                    >
+                      {pagoPercent === 100 ? "Pago completo" : "Registrar Pago"}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>

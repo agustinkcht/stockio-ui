@@ -171,7 +171,6 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     dropdown: [
       { label: "Compras", href: "/compras/compras" },
       { label: "Ordenes de Compra", href: "/compras/ordenes-de-compra" },
-      { label: "Portal de Compras", href: "/compras/portal-de-compras" },
     ],
   },
   {
