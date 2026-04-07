@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, Suspense, use, useEffect, useCallback } from "react"
+import { useState, useMemo, Suspense, use, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Sidebar } from "@/components/layout/sidebar"
 import { useSidebar } from "@/hooks/use-sidebar"
@@ -22,10 +22,12 @@ import {
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import Image from "next/image"
-import type { OrdenCompra } from "@/lib/types"
+import type { OrdenCompra, Item } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { ORDENES_COMPRA } from "@/lib/data/initial-ordenes"
 import { useAccount } from "@/lib/contexts/account-context"
+import { useNavigationGuard } from "@/hooks/use-navigation-guard"
+import { UnsavedChangesModal } from "@/components/modals/unsaved-changes-modal"
 
 function formatDateShort(dateStr: string): string {
   const date = new Date(dateStr)
@@ -34,11 +36,6 @@ function formatDateShort(dateStr: string): string {
   const month = months[date.getMonth()]
   const year = String(date.getFullYear()).slice(-2)
   return `${day}/${month}/${year}`
-}
-
-function formatDateFull(dateStr: string): string {
-  const date = new Date(dateStr)
-  return date.toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" })
 }
 
 // Type for received items tracking
@@ -62,11 +59,17 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
   const { currentAccount } = useAccount()
 
-  // Storage key for localStorage
-  const getStorageKey = useCallback(() => {
+  // Storage keys for localStorage
+  const getComprasStorageKey = useCallback(() => {
     return `stockio_compras_${currentAccount || "default"}`
   }, [currentAccount])
+  
+  const getItemsStorageKey = useCallback(() => {
+    return `stockio-items-${currentAccount || "default"}`
+  }, [currentAccount])
 
+  // Original state for tracking changes
+  const [originalCompra, setOriginalCompra] = useState<OrdenCompra | null>(null)
   const [compra, setCompra] = useState<OrdenCompra | null>(null)
   const [isResumenExpanded, setIsResumenExpanded] = useState(false)
   const [isEditingResumen, setIsEditingResumen] = useState(false)
@@ -79,7 +82,15 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
     unitPrice: number
     quantity: number
   }>>([])
+  const [originalEditableItems, setOriginalEditableItems] = useState<Array<{
+    sku: string
+    name: string
+    categoria?: string
+    unitPrice: number
+    quantity: number
+  }>>([])
   const [discount, setDiscount] = useState<{ type: "cash" | "percent"; value: number }>({ type: "cash", value: 0 })
+  const [originalDiscount, setOriginalDiscount] = useState<{ type: "cash" | "percent"; value: number }>({ type: "cash", value: 0 })
   
   // Entrega tab state
   const [entregaTab, setEntregaTab] = useState<"pendientes" | "recibidos">("pendientes")
@@ -89,19 +100,45 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
   
   // Received groups (items marked as received with dates)
   const [receivedGroups, setReceivedGroups] = useState<ReceivedGroup[]>([])
+  const [originalReceivedGroups, setOriginalReceivedGroups] = useState<ReceivedGroup[]>([])
   const [expandedReceivedGroups, setExpandedReceivedGroups] = useState<Set<number>>(new Set())
   
   // Payment state
   const [pagos, setPagos] = useState<Pago[]>([])
+  const [originalPagos, setOriginalPagos] = useState<Pago[]>([])
   const [showPagoModal, setShowPagoModal] = useState(false)
   const [newPago, setNewPago] = useState({ amount: "", medioPago: "Transferencia", facturaUrl: "" })
+  
+  // Track if there are unsaved changes
+  const hasUnsavedChanges = useMemo(() => {
+    // Check compra items changes (quantityReceived)
+    if (compra && originalCompra) {
+      const compraChanged = JSON.stringify(compra.items.map(i => ({ sku: i.sku, qr: i.quantityReceived }))) !== 
+                           JSON.stringify(originalCompra.items.map(i => ({ sku: i.sku, qr: i.quantityReceived })))
+      if (compraChanged) return true
+    }
+    
+    // Check editable items changes
+    if (JSON.stringify(editableItems) !== JSON.stringify(originalEditableItems)) return true
+    
+    // Check discount changes
+    if (JSON.stringify(discount) !== JSON.stringify(originalDiscount)) return true
+    
+    // Check received groups changes
+    if (JSON.stringify(receivedGroups) !== JSON.stringify(originalReceivedGroups)) return true
+    
+    // Check pagos changes
+    if (JSON.stringify(pagos) !== JSON.stringify(originalPagos)) return true
+    
+    return false
+  }, [compra, originalCompra, editableItems, originalEditableItems, discount, originalDiscount, receivedGroups, originalReceivedGroups, pagos, originalPagos])
 
   // Load compra from localStorage
   useEffect(() => {
     if (!currentAccount) return
 
     try {
-      const storageKey = getStorageKey()
+      const storageKey = getComprasStorageKey()
       const storedCompras = localStorage.getItem(storageKey)
       const compras: OrdenCompra[] = storedCompras ? JSON.parse(storedCompras) : ORDENES_COMPRA
 
@@ -115,18 +152,22 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
         
       if (found) {
         setCompra(found)
-        setEditableItems(found.items.map(item => ({
+        setOriginalCompra(JSON.parse(JSON.stringify(found)))
+        
+        const items = found.items.map(item => ({
           sku: item.sku,
           name: item.name,
           categoria: item.categoria,
           unitPrice: item.unitPrice,
           quantity: item.quantity,
-        })))
+        }))
+        setEditableItems(items)
+        setOriginalEditableItems(JSON.parse(JSON.stringify(items)))
         
         // Initialize received groups from already received items
         const alreadyReceived = found.items.filter(item => item.quantityReceived > 0)
         if (alreadyReceived.length > 0) {
-          setReceivedGroups([{
+          const groups = [{
             date: found.fechaCreacion,
             items: alreadyReceived.map(item => ({
               sku: item.sku,
@@ -134,24 +175,28 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
               quantity: item.quantityReceived,
               categoria: item.categoria,
             }))
-          }])
+          }]
+          setReceivedGroups(groups)
+          setOriginalReceivedGroups(JSON.parse(JSON.stringify(groups)))
         }
         
         // Initialize pagos from estadoPago percentage
         if (found.estadoPago > 0) {
           const montoPagado = Math.round((found.estadoPago / 100) * found.importeTotal)
-          setPagos([{
+          const initialPagos = [{
             id: "initial",
             date: found.fechaCreacion,
             amount: montoPagado,
             medioPago: "Inicial",
-          }])
+          }]
+          setPagos(initialPagos)
+          setOriginalPagos(JSON.parse(JSON.stringify(initialPagos)))
         }
       }
     } catch (error) {
       console.error("[v0] Error loading compra:", error)
     }
-  }, [currentAccount, getStorageKey, id])
+  }, [currentAccount, getComprasStorageKey, id])
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -256,7 +301,7 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
     }
   }
 
-  // Handle marking selected items as received
+  // Handle marking selected items as received (now just updates local state, doesn't save)
   const handleMarcarRecibido = () => {
     if (!compra || Object.keys(selectedEntregaItems).length === 0) return
 
@@ -284,19 +329,7 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
       }
     })
 
-    const updatedCompra = { ...compra, items: updatedItems }
-    setCompra(updatedCompra)
-
-    // Save to localStorage
-    try {
-      const storageKey = getStorageKey()
-      const storedCompras = localStorage.getItem(storageKey)
-      const compras: OrdenCompra[] = storedCompras ? JSON.parse(storedCompras) : ORDENES_COMPRA
-      const updatedCompras = compras.map(c => c.id === compra.id ? updatedCompra : c)
-      localStorage.setItem(storageKey, JSON.stringify(updatedCompras))
-    } catch (error) {
-      console.error("[v0] Error saving compra:", error)
-    }
+    setCompra({ ...compra, items: updatedItems })
 
     // Clear selection
     setSelectedEntregaItems({})
@@ -347,7 +380,7 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
     setEditableItems(prev => prev.filter((_, i) => i !== index))
   }
   
-  // Handle registering a payment
+  // Handle registering a payment (now just updates local state)
   const handleRegistrarPago = () => {
     const amount = parseFloat(newPago.amount)
     if (isNaN(amount) || amount <= 0) return
@@ -364,26 +397,143 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
     setPagos(prev => [...prev, pago])
     setShowPagoModal(false)
     setNewPago({ amount: "", medioPago: "Transferencia", facturaUrl: "" })
-    
-    // Update compra estadoPago
-    if (compra) {
-      const newTotalPagado = totalPagado + amount
-      const newPagoPercent = Math.min(100, Math.round((newTotalPagado / calculatedTotal) * 100))
-      const updatedCompra = { ...compra, estadoPago: newPagoPercent, importeTotal: calculatedTotal }
-      setCompra(updatedCompra)
-      
-      // Save to localStorage
-      try {
-        const storageKey = getStorageKey()
-        const storedCompras = localStorage.getItem(storageKey)
-        const compras: OrdenCompra[] = storedCompras ? JSON.parse(storedCompras) : ORDENES_COMPRA
-        const updatedCompras = compras.map(c => c.id === compra.id ? updatedCompra : c)
-        localStorage.setItem(storageKey, JSON.stringify(updatedCompras))
-      } catch (error) {
-        console.error("[v0] Error saving compra:", error)
-      }
-    }
   }
+  
+  // Save all changes
+  const handleSave = useCallback(async () => {
+    if (!compra) return
+    
+    try {
+      // Update stock for received items
+      const itemsStorageKey = getItemsStorageKey()
+      const storedItems = localStorage.getItem(itemsStorageKey)
+      
+      if (storedItems) {
+        const items: Item[] = JSON.parse(storedItems)
+        
+        // Calculate the difference in received quantities since last save
+        const originalReceivedBySku: { [sku: string]: number } = {}
+        originalReceivedGroups.forEach(group => {
+          group.items.forEach(item => {
+            originalReceivedBySku[item.sku] = (originalReceivedBySku[item.sku] || 0) + item.quantity
+          })
+        })
+        
+        const currentReceivedBySku: { [sku: string]: number } = {}
+        receivedGroups.forEach(group => {
+          group.items.forEach(item => {
+            currentReceivedBySku[item.sku] = (currentReceivedBySku[item.sku] || 0) + item.quantity
+          })
+        })
+        
+        // Update item stocks for the difference
+        const updatedItems = items.map(item => {
+          // Check if this item or its variants match the compra items
+          if (item.hasVariants && item.variants) {
+            const updatedVariants = item.variants.map(variant => {
+              const fullSku = `${item.skuPrefix}-${variant.skuSuffix}`
+              const originalReceived = originalReceivedBySku[fullSku] || 0
+              const currentReceived = currentReceivedBySku[fullSku] || 0
+              const diff = currentReceived - originalReceived
+              
+              if (diff > 0 && variant.stock) {
+                const currentTotal = parseInt(variant.stock.total || "0", 10)
+                const currentDisponible = parseInt(variant.stock.disponible || "0", 10)
+                return {
+                  ...variant,
+                  stock: {
+                    ...variant.stock,
+                    total: String(currentTotal + diff),
+                    disponible: String(currentDisponible + diff),
+                  }
+                }
+              }
+              return variant
+            })
+            return { ...item, variants: updatedVariants }
+          } else {
+            // Standalone item
+            const sku = item.sku || `${item.skuPrefix}`
+            const originalReceived = originalReceivedBySku[sku] || 0
+            const currentReceived = currentReceivedBySku[sku] || 0
+            const diff = currentReceived - originalReceived
+            
+            if (diff > 0 && item.stock) {
+              const currentTotal = parseInt(item.stock.total || "0", 10)
+              const currentDisponible = parseInt(item.stock.disponible || "0", 10)
+              return {
+                ...item,
+                stock: {
+                  ...item.stock,
+                  total: String(currentTotal + diff),
+                  disponible: String(currentDisponible + diff),
+                }
+              }
+            }
+            return item
+          }
+        })
+        
+        localStorage.setItem(itemsStorageKey, JSON.stringify(updatedItems))
+      }
+      
+      // Save compra changes
+      const newTotalPagado = pagos.reduce((sum, p) => sum + p.amount, 0)
+      const newPagoPercent = calculatedTotal > 0 ? Math.min(100, Math.round((newTotalPagado / calculatedTotal) * 100)) : 0
+      
+      const updatedCompra: OrdenCompra = {
+        ...compra,
+        items: compra.items.map((item, idx) => ({
+          ...item,
+          name: editableItems[idx]?.name || item.name,
+          unitPrice: editableItems[idx]?.unitPrice || item.unitPrice,
+          quantity: editableItems[idx]?.quantity || item.quantity,
+          total: (editableItems[idx]?.unitPrice || item.unitPrice) * (editableItems[idx]?.quantity || item.quantity),
+        })),
+        estadoPago: newPagoPercent,
+        importeTotal: calculatedTotal,
+      }
+      
+      const storageKey = getComprasStorageKey()
+      const storedCompras = localStorage.getItem(storageKey)
+      const compras: OrdenCompra[] = storedCompras ? JSON.parse(storedCompras) : ORDENES_COMPRA
+      const updatedCompras = compras.map(c => c.id === compra.id ? updatedCompra : c)
+      localStorage.setItem(storageKey, JSON.stringify(updatedCompras))
+      
+      // Update original states
+      setOriginalCompra(JSON.parse(JSON.stringify(updatedCompra)))
+      setCompra(updatedCompra)
+      setOriginalEditableItems(JSON.parse(JSON.stringify(editableItems)))
+      setOriginalDiscount(JSON.parse(JSON.stringify(discount)))
+      setOriginalReceivedGroups(JSON.parse(JSON.stringify(receivedGroups)))
+      setOriginalPagos(JSON.parse(JSON.stringify(pagos)))
+      
+    } catch (error) {
+      console.error("[v0] Error saving compra:", error)
+    }
+  }, [compra, editableItems, discount, receivedGroups, pagos, calculatedTotal, getComprasStorageKey, getItemsStorageKey, originalReceivedGroups])
+  
+  // Discard all changes
+  const handleDiscard = useCallback(() => {
+    if (originalCompra) setCompra(JSON.parse(JSON.stringify(originalCompra)))
+    setEditableItems(JSON.parse(JSON.stringify(originalEditableItems)))
+    setDiscount(JSON.parse(JSON.stringify(originalDiscount)))
+    setReceivedGroups(JSON.parse(JSON.stringify(originalReceivedGroups)))
+    setPagos(JSON.parse(JSON.stringify(originalPagos)))
+    setSelectedEntregaItems({})
+  }, [originalCompra, originalEditableItems, originalDiscount, originalReceivedGroups, originalPagos])
+
+  // Navigation guard
+  const {
+    showNavigationModal,
+    handleSaveAndNavigate,
+    handleDiscardAndNavigate,
+    handleCancelNavigation,
+  } = useNavigationGuard({
+    hasUnsavedChanges,
+    onSave: handleSave,
+    onDiscard: handleDiscard,
+  })
 
   const selectedCount = Object.keys(selectedEntregaItems).length
   const selectedUnitsCount = Object.values(selectedEntregaItems).reduce((sum, qty) => sum + qty, 0)
@@ -398,276 +548,255 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
 
   if (!compra) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[rgb(243,242,238)]">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Compra no encontrada</h2>
-          <p className="text-muted-foreground mb-4">La compra que buscas no existe.</p>
-          <Button onClick={() => router.push("/compras/compras")}>
-            Volver a Compras
-          </Button>
+      <div className="flex h-screen bg-[#FBFBFB]">
+        <Sidebar
+          items={SIDEBAR_ITEMS}
+          bottomItems={BOTTOM_SIDEBAR_ITEMS}
+          hoveredDropdown={hoveredDropdown}
+          onDropdownMouseEnter={handleDropdownMouseEnter}
+          onDropdownMouseLeave={handleDropdownMouseLeave}
+        />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">Compra no encontrada</p>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[rgb(243,242,238)]">
-      <div className="px-[6px] py-[6px] flex gap-[6px] h-screen" onClick={handleCloseDropdowns}>
-        <div onClick={(e) => e.stopPropagation()} className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
-          <Sidebar
-            sidebarItems={SIDEBAR_ITEMS}
-            bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
-            hoveredDropdown={hoveredDropdown}
-            onDropdownOpen={handleDropdownMouseEnter}
-            onDropdownClose={handleDropdownMouseLeave}
-          />
-        </div>
+    <div className="flex h-screen bg-[#FBFBFB]" onClick={handleCloseDropdowns}>
+      <Sidebar
+        items={SIDEBAR_ITEMS}
+        bottomItems={BOTTOM_SIDEBAR_ITEMS}
+        hoveredDropdown={hoveredDropdown}
+        onDropdownMouseEnter={handleDropdownMouseEnter}
+        onDropdownMouseLeave={handleDropdownMouseLeave}
+      />
 
-        <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
-          {/* Utility Bar */}
-          <div className="relative border-b border-border h-[44px] bg-white">
-            <div className="px-4 flex items-center justify-between h-full">
-              <div className="flex items-center">
-                <Breadcrumb items={breadcrumbs} />
-              </div>
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <UserPanel />
 
-              <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center gap-3 mt-0">
-                <UserPanel />
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  disabled
-                  className="px-4 py-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground hover:bg-muted text-sm font-medium"
-                  title="Deshacer cambios"
-                >
-                  Deshacer
-                </button>
-
-                <button
-                  disabled
-                  className="px-4 py-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-primary hover:bg-muted text-sm font-medium"
-                  title="Guardar cambios"
-                >
-                  Guardar
-                </button>
-              </div>
-            </div>
+        <main className="flex-1 flex flex-col min-h-0 overflow-auto">
+          {/* Breadcrumb */}
+          <div className="px-6 py-4">
+            <Breadcrumb items={breadcrumbs} />
           </div>
 
-          {/* Main Content */}
-          <main className="flex-1 flex flex-col bg-[rgba(250,251,253,1)] overflow-auto">
-            {/* Header */}
-            <div className="px-6 py-4 border-b border-border/20 bg-white">
-              <div className="flex items-center justify-between">
-                {/* Left: Title and info */}
-                <div className="flex items-center gap-6">
-                  {/* Order ID as title with label */}
-                  <div>
-                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Compra</span>
-                    <div className="flex items-center gap-3">
-                      <h1 className="text-2xl font-bold text-gray-900 tracking-tight">C-{compra.numero}</h1>
-                      <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                        estadoGeneral === "Finalizada" 
-                          ? "bg-emerald-50 text-emerald-700" 
-                          : "bg-amber-50 text-amber-700"
-                      }`}>
-                        {estadoGeneral}
-                      </span>
-                    </div>
+          {/* Top Bar */}
+          <div className="px-6 pb-4">
+            <div className="bg-white border border-slate-200/80 rounded-lg">
+              <div className="px-4 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  {/* ID */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-slate-400 uppercase tracking-wider">Compra</span>
+                    <span className="text-lg font-semibold text-gray-900">C-{compra.numero}</span>
                   </div>
-
-                  {/* Separator */}
-                  <div className="h-10 w-px bg-border/40" />
-
+                  
+                  {/* Estado Badge */}
+                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                    estadoGeneral === "Finalizada" 
+                      ? "bg-emerald-50 text-emerald-700" 
+                      : "bg-amber-50 text-amber-700"
+                  }`}>
+                    {estadoGeneral}
+                  </span>
+                  
+                  <div className="w-px h-5 bg-slate-200" />
+                  
                   {/* Proveedor */}
-                  <div className="flex flex-col">
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Proveedor</span>
-                    <span className="text-sm font-semibold text-gray-800">{compra.proveedorNombre}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm text-slate-500">Proveedor:</span>
+                    <span className="text-sm font-medium text-gray-800">{compra.proveedorNombre}</span>
+                  </div>
+                  
+                  <div className="w-px h-5 bg-slate-200" />
+                  
+                  {/* Fecha */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm text-slate-500">Creación:</span>
+                    <span className="text-sm text-gray-700">{formatDateShort(compra.fechaCreacion)}</span>
                   </div>
                 </div>
 
-                {/* Center: Creación */}
-                <div className="flex flex-col items-center">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider">Creación</span>
-                  <span className="text-sm text-gray-600">{formatDateFull(compra.fechaCreacion)}</span>
-                </div>
-
-                {/* Right: Action buttons */}
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 text-xs gap-1.5"
-                    disabled
-                  >
-                    <FileDown className="w-3.5 h-3.5" />
+                  {/* Save/Discard buttons when there are changes */}
+                  {hasUnsavedChanges && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleDiscard}
+                        className="text-red-600 border-red-200 hover:bg-red-50"
+                      >
+                        Deshacer
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={handleSave}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        Guardar
+                      </Button>
+                      <div className="w-px h-5 bg-slate-200 mx-1" />
+                    </>
+                  )}
+                  
+                  {/* Exportar Button */}
+                  <Button variant="outline" size="sm" className="gap-1.5">
+                    <FileDown className="w-4 h-4" />
                     Exportar
                   </Button>
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Resumen Section */}
-            <div className="px-6 pt-4">
-              <div className="bg-white border border-slate-200/80 rounded-lg">
-                <div 
-                  className="px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-slate-50/50 transition-colors"
-                  onClick={() => setIsResumenExpanded(!isResumenExpanded)}
-                >
-                  <div className="flex items-center gap-6">
-                    <span className="text-sm font-medium text-slate-700">Resumen</span>
-                    <div className="flex items-center gap-4 text-sm text-slate-500">
-                      <span>{editableItems.length} items</span>
-                      <span className="text-slate-300">|</span>
-                      <span>{editableItems.reduce((s, i) => s + i.quantity, 0)} unidades</span>
-                      <span className="text-slate-300">|</span>
-                      <span className="font-medium text-slate-700">
-                        Total: ${calculatedTotal.toLocaleString("es-AR")}
-                      </span>
-                      {discount.value > 0 && (
-                        <>
-                          <span className="text-slate-300">|</span>
-                          <span className="text-emerald-600 text-xs">
-                            -{discount.type === "cash" ? `$${discount.value.toLocaleString("es-AR")}` : `${discount.value}%`} descuento
-                          </span>
-                        </>
-                      )}
-                    </div>
+          {/* Resumen Section */}
+          <div className="px-6 pb-4">
+            <div className="bg-white border border-slate-200/80 rounded-lg overflow-hidden">
+              {/* Resumen Header - Clickable to expand */}
+              <button
+                onClick={() => setIsResumenExpanded(!isResumenExpanded)}
+                className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50/50 transition-colors"
+              >
+                <div className="flex items-center gap-4">
+                  {isResumenExpanded ? (
+                    <ChevronDown className="w-4 h-4 text-slate-400" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                  )}
+                  <span className="text-sm font-medium text-slate-700">Resumen</span>
+                  <div className="flex items-center gap-3 text-sm text-slate-500">
+                    <span>{editableItems.length} items</span>
+                    <span className="text-slate-300">•</span>
+                    <span>{editableItems.reduce((sum, i) => sum + i.quantity, 0)} unidades</span>
+                    <span className="text-slate-300">•</span>
+                    <span className="font-medium text-slate-700">Total: ${calculatedTotal.toLocaleString("es-AR")}</span>
                   </div>
-                  <button className="p-1 text-slate-400">
-                    {isResumenExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                  </button>
                 </div>
-
-                {/* Expanded Content - Order Items */}
                 {isResumenExpanded && (
-                  <div className="border-t border-slate-100">
-                    {/* Header */}
-                    <div className="bg-slate-50 border-b border-slate-100 flex items-center justify-between px-4">
-                      <div className="grid grid-cols-12 flex-1 h-8 text-xs font-medium text-slate-500 uppercase tracking-wider">
-                        <div className="col-span-5 flex items-center">Item</div>
-                        <div className="col-span-2 flex items-center justify-center">Costo Unit.</div>
-                        <div className="col-span-2 flex items-center justify-center">Cantidad</div>
-                        <div className="col-span-2 flex items-center justify-end">Subtotal</div>
-                        <div className="col-span-1 flex items-center justify-center"></div>
-                      </div>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setIsEditingResumen(!isEditingResumen) }}
-                        className="text-xs text-amber-600 hover:text-amber-700 font-medium ml-4"
-                      >
-                        {isEditingResumen ? "Listo" : "Editar"}
-                      </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setIsEditingResumen(!isEditingResumen) }}
+                    className={`text-xs font-medium px-3 py-1 rounded transition-colors ${
+                      isEditingResumen 
+                        ? "bg-amber-100 text-amber-700" 
+                        : "text-amber-600 hover:bg-amber-50"
+                    }`}
+                  >
+                    {isEditingResumen ? "Listo" : "Editar"}
+                  </button>
+                )}
+              </button>
+
+              {/* Resumen Content - Expanded */}
+              {isResumenExpanded && (
+                <div className="border-t border-slate-100">
+                  {/* Items Table */}
+                  <div className="divide-y divide-slate-50">
+                    {/* Header Row */}
+                    <div className="grid grid-cols-12 gap-4 px-4 py-2 bg-slate-50 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      <div className="col-span-5">Item</div>
+                      <div className="col-span-2 text-right">Costo Unitario</div>
+                      <div className="col-span-2 text-center">Cantidad</div>
+                      <div className="col-span-2 text-right">Subtotal</div>
+                      {isEditingResumen && <div className="col-span-1"></div>}
                     </div>
 
-                    {/* Items List */}
-                    <div className="divide-y divide-slate-50">
-                      {editableItems.map((item, idx) => {
-                        const minQty = getMinQuantity(item.sku)
-                        return (
-                          <div key={idx} className="grid grid-cols-12 items-center py-2.5 px-4 hover:bg-slate-50/50">
-                            {/* Item */}
-                            <div className="col-span-5 flex items-center gap-3">
-                              <div className="w-9 h-9 rounded bg-slate-100 overflow-hidden flex-shrink-0">
-                                <Image
-                                  src={getCategoryImage(item.categoria) || "/placeholder.svg"}
-                                  alt={item.name}
-                                  width={36}
-                                  height={36}
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                {isEditingResumen ? (
-                                  <input
-                                    type="text"
-                                    value={item.name}
-                                    onChange={(e) => handleUpdateItem(idx, "name", e.target.value)}
-                                    className="text-sm text-gray-900 w-full border border-slate-200 rounded px-2 py-1"
-                                  />
-                                ) : (
-                                  <p className="text-sm text-gray-900 truncate">{item.name}</p>
-                                )}
+                    {/* Item Rows */}
+                    {editableItems.map((item, idx) => {
+                      const minQty = getMinQuantity(item.sku)
+                      const canDelete = minQty === 0
+                      return (
+                        <div key={idx} className="grid grid-cols-12 gap-4 px-4 py-3 items-center">
+                          <div className="col-span-5 flex items-center gap-3">
+                            <div className="w-8 h-8 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+                              <Image
+                                src={getCategoryImage(item.categoria) || "/placeholder.svg"}
+                                alt={item.name}
+                                width={32}
+                                height={32}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            {isEditingResumen ? (
+                              <input
+                                type="text"
+                                value={item.name}
+                                onChange={(e) => handleUpdateItem(idx, "name", e.target.value)}
+                                className="flex-1 text-sm border border-slate-200 rounded px-2 py-1"
+                              />
+                            ) : (
+                              <div>
+                                <p className="text-sm text-gray-800">{item.name}</p>
                                 <p className="text-xs text-slate-400">{item.sku}</p>
                               </div>
-                            </div>
-
-                            {/* Costo Unit. */}
-                            <div className="col-span-2 flex items-center justify-center">
-                              {isEditingResumen ? (
-                                <div className="flex items-center">
-                                  <span className="text-sm text-slate-400 mr-1">$</span>
-                                  <input
-                                    type="number"
-                                    min="0"
-                                    value={item.unitPrice}
-                                    onChange={(e) => handleUpdateItem(idx, "unitPrice", parseFloat(e.target.value) || 0)}
-                                    className="w-20 text-sm text-center border border-slate-200 rounded px-2 py-1"
-                                  />
-                                </div>
-                              ) : (
-                                <span className="text-sm text-gray-700">
-                                  ${item.unitPrice.toLocaleString("es-AR")}
-                                </span>
-                              )}
-                            </div>
-
-                            {/* Cantidad */}
-                            <div className="col-span-2 flex items-center justify-center">
-                              {isEditingResumen ? (
-                                <div className="flex items-center gap-1">
-                                  <button
-                                    onClick={() => handleUpdateItem(idx, "quantity", item.quantity - 1)}
-                                    disabled={item.quantity <= minQty}
-                                    className="w-6 h-6 rounded border border-slate-200 flex items-center justify-center hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed"
-                                  >
-                                    <Minus className="w-3 h-3" />
-                                  </button>
-                                  <input
-                                    type="number"
-                                    min={minQty}
-                                    value={item.quantity}
-                                    onChange={(e) => handleUpdateItem(idx, "quantity", parseInt(e.target.value) || minQty)}
-                                    className="w-12 text-sm text-center border border-slate-200 rounded px-1 py-1"
-                                  />
-                                  <button
-                                    onClick={() => handleUpdateItem(idx, "quantity", item.quantity + 1)}
-                                    className="w-6 h-6 rounded border border-slate-200 flex items-center justify-center hover:bg-slate-100"
-                                  >
-                                    <Plus className="w-3 h-3" />
-                                  </button>
-                                </div>
-                              ) : (
-                                <span className="text-sm text-gray-700">{item.quantity}</span>
-                              )}
-                            </div>
-
-                            {/* Subtotal */}
-                            <div className="col-span-2 flex items-center justify-end">
-                              <span className="text-sm font-medium text-gray-900">
-                                ${(item.unitPrice * item.quantity).toLocaleString("es-AR")}
-                              </span>
-                            </div>
-
-                            {/* Delete */}
-                            <div className="col-span-1 flex items-center justify-center">
-                              {isEditingResumen && minQty === 0 && (
-                                <button
-                                  onClick={() => handleRemoveItem(idx)}
-                                  className="p-1 text-slate-400 hover:text-red-500 transition-colors"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              )}
-                            </div>
+                            )}
                           </div>
-                        )
-                      })}
-                    </div>
-                    
+                          <div className="col-span-2 text-right">
+                            {isEditingResumen ? (
+                              <input
+                                type="number"
+                                min="0"
+                                value={item.unitPrice}
+                                onChange={(e) => handleUpdateItem(idx, "unitPrice", parseFloat(e.target.value) || 0)}
+                                className="w-24 text-sm text-right border border-slate-200 rounded px-2 py-1"
+                              />
+                            ) : (
+                              <span className="text-sm text-slate-600">${item.unitPrice.toLocaleString("es-AR")}</span>
+                            )}
+                          </div>
+                          <div className="col-span-2 text-center">
+                            {isEditingResumen ? (
+                              <div className="flex items-center justify-center gap-1">
+                                <input
+                                  type="number"
+                                  min={minQty}
+                                  value={item.quantity}
+                                  onChange={(e) => handleUpdateItem(idx, "quantity", parseInt(e.target.value) || minQty)}
+                                  className="w-16 text-sm text-center border border-slate-200 rounded px-2 py-1"
+                                />
+                                {minQty > 0 && (
+                                  <span className="text-xs text-amber-500" title={`Mínimo ${minQty} (ya recibidos)`}>
+                                    min {minQty}
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-sm text-slate-600">{item.quantity}</span>
+                            )}
+                          </div>
+                          <div className="col-span-2 text-right">
+                            <span className="text-sm font-medium text-slate-800">
+                              ${(item.unitPrice * item.quantity).toLocaleString("es-AR")}
+                            </span>
+                          </div>
+                          {isEditingResumen && (
+                            <div className="col-span-1 flex justify-center">
+                              <button
+                                onClick={() => handleRemoveItem(idx)}
+                                disabled={!canDelete}
+                                className={`p-1 rounded transition-colors ${
+                                  canDelete 
+                                    ? "text-red-500 hover:bg-red-50" 
+                                    : "text-slate-300 cursor-not-allowed"
+                                }`}
+                                title={canDelete ? "Eliminar" : "No se puede eliminar (items ya recibidos)"}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+
                     {/* Add Item Button */}
                     {isEditingResumen && (
-                      <div className="px-4 py-2 border-t border-slate-100">
+                      <div className="px-4 py-2">
                         <button
                           onClick={handleAddItem}
                           className="flex items-center gap-1.5 text-sm text-amber-600 hover:text-amber-700 font-medium"
@@ -677,380 +806,380 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
                         </button>
                       </div>
                     )}
-                    
-                    {/* Discount Row */}
-                    {isEditingResumen && (
-                      <div className="px-4 py-3 border-t border-slate-100 bg-slate-50/50">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-slate-600">Descuento</span>
-                          <div className="flex items-center gap-2">
-                            <select
-                              value={discount.type}
-                              onChange={(e) => setDiscount(prev => ({ ...prev, type: e.target.value as "cash" | "percent" }))}
-                              className="text-sm border border-slate-200 rounded px-2 py-1"
-                            >
-                              <option value="cash">$</option>
-                              <option value="percent">%</option>
-                            </select>
-                            <input
-                              type="number"
-                              min="0"
-                              value={discount.value || ""}
-                              onChange={(e) => setDiscount(prev => ({ ...prev, value: parseFloat(e.target.value) || 0 }))}
-                              placeholder="0"
-                              className="w-24 text-sm text-right border border-slate-200 rounded px-2 py-1"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Total Row */}
-                    <div className="bg-slate-50 border-t border-slate-200 py-3 px-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-slate-600">Total</span>
-                        <span className="text-base font-bold text-gray-900">
-                          ${calculatedTotal.toLocaleString("es-AR")}
-                        </span>
-                      </div>
-                    </div>
                   </div>
-                )}
-              </div>
-            </div>
 
-            {/* Estado Section - Two Cards Grid */}
-            <div className="px-6 py-4 flex-1">
-              <div className="grid grid-cols-2 gap-4 h-full">
-                {/* Entrega Card */}
-                <div className="bg-white border border-slate-200/80 rounded-lg flex flex-col">
-                  {/* Card Header */}
-                  <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <h3 className="text-sm font-semibold text-slate-800">Entrega</h3>
-                      <div className="flex items-center gap-2">
-                        <div className="w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                          <div 
-                            className={`h-full rounded-full transition-all ${
-                              stats.entregaPercent === 100 ? "bg-green-500" : 
-                              stats.entregaPercent > 0 ? "bg-amber-500" : "bg-gray-300"
-                            }`}
-                            style={{ width: `${stats.entregaPercent}%` }}
+                  {/* Discount Row (when editing) */}
+                  {isEditingResumen && (
+                    <div className="px-4 py-3 bg-slate-50/50 border-t border-slate-100">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-slate-600">Descuento</span>
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={discount.type}
+                            onChange={(e) => setDiscount(prev => ({ ...prev, type: e.target.value as "cash" | "percent" }))}
+                            className="text-sm border border-slate-200 rounded px-2 py-1"
+                          >
+                            <option value="cash">$</option>
+                            <option value="percent">%</option>
+                          </select>
+                          <input
+                            type="number"
+                            min="0"
+                            value={discount.value || ""}
+                            onChange={(e) => setDiscount(prev => ({ ...prev, value: parseFloat(e.target.value) || 0 }))}
+                            placeholder="0"
+                            className="w-24 text-sm text-right border border-slate-200 rounded px-2 py-1"
                           />
                         </div>
-                        <span className={`text-xs font-medium ${
-                          stats.entregaPercent === 100 ? "text-green-600" : 
-                          stats.entregaPercent > 0 ? "text-amber-600" : "text-gray-500"
-                        }`}>
-                          {stats.entregaPercent}%
-                        </span>
                       </div>
-                    </div>
-                    <span className="text-xs text-slate-400">
-                      {stats.receivedUnidades} de {stats.totalUnidades} uds recibidas
-                    </span>
-                  </div>
-                  
-                  {/* Tabs */}
-                  {totalReceivedItems > 0 && (
-                    <div className="flex border-b border-slate-100">
-                      <button
-                        onClick={() => setEntregaTab("recibidos")}
-                        className={`flex-1 px-4 py-2 text-xs font-medium transition-colors ${
-                          entregaTab === "recibidos" 
-                            ? "text-green-700 border-b-2 border-green-500 bg-green-50/30" 
-                            : "text-slate-500 hover:text-slate-700"
-                        }`}
-                      >
-                        Recibidos ({totalReceivedItems})
-                      </button>
-                      <button
-                        onClick={() => setEntregaTab("pendientes")}
-                        className={`flex-1 px-4 py-2 text-xs font-medium transition-colors ${
-                          entregaTab === "pendientes" 
-                            ? "text-amber-700 border-b-2 border-amber-500 bg-amber-50/30" 
-                            : "text-slate-500 hover:text-slate-700"
-                        }`}
-                      >
-                        Pendientes ({pendingItems.reduce((s, i) => s + i.pendingQuantity, 0)})
-                      </button>
                     </div>
                   )}
 
-                  {/* Card Content */}
-                  <div className="flex-1 overflow-auto">
-                    {/* Recibidos Tab */}
-                    {entregaTab === "recibidos" && totalReceivedItems > 0 && (
-                      <div>
-                        {receivedGroups.map((group, groupIndex) => {
-                          const isExpanded = expandedReceivedGroups.has(groupIndex)
-                          const totalQuantity = group.items.reduce((sum, item) => sum + item.quantity, 0)
-                          return (
-                            <div key={groupIndex} className="border-b border-slate-100 last:border-b-0">
-                              <button
-                                onClick={() => toggleReceivedGroup(groupIndex)}
-                                className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-green-50/50 transition-colors"
-                              >
-                                <div className="flex items-center gap-2">
-                                  {isExpanded ? (
-                                    <ChevronDown className="w-4 h-4 text-green-600" />
-                                  ) : (
-                                    <ChevronRight className="w-4 h-4 text-green-600" />
-                                  )}
-                                  <Check className="w-4 h-4 text-green-500" />
-                                  <span className="text-sm font-medium text-green-700">
-                                    {totalQuantity} uds recibidas el {formatDateShort(group.date)}
-                                  </span>
-                                </div>
-                              </button>
+                  {/* Total Row */}
+                  <div className="bg-slate-50 border-t border-slate-200 py-3 px-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-slate-600">Total</span>
+                      <span className="text-base font-bold text-gray-900">
+                        ${calculatedTotal.toLocaleString("es-AR")}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
 
-                              {isExpanded && (
-                                <div className="bg-green-50/30 divide-y divide-green-100/50">
-                                  {group.items.map((item, itemIndex) => (
-                                    <div 
-                                      key={itemIndex}
-                                      className="flex items-center gap-3 px-4 py-2 pl-10"
-                                    >
-                                      <div className="w-7 h-7 rounded bg-slate-100 overflow-hidden flex-shrink-0">
-                                        <Image
-                                          src={getCategoryImage(item.categoria) || "/placeholder.svg"}
-                                          alt={item.name}
-                                          width={28}
-                                          height={28}
-                                          className="w-full h-full object-cover"
-                                        />
-                                      </div>
-                                      <div className="flex-1 min-w-0">
-                                        <p className="text-sm text-gray-700 truncate">{item.name}</p>
-                                      </div>
-                                      <div className="text-right flex-shrink-0">
-                                        <span className="text-sm text-green-600">{item.quantity}</span>
-                                        <span className="text-xs text-slate-400 ml-1">uds</span>
-                                      </div>
+          {/* Estado Section - Two Cards Grid */}
+          <div className="px-6 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              {/* Entrega Card */}
+              <div className="bg-white border border-slate-200/80 rounded-lg flex flex-col">
+                {/* Card Header */}
+                <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-sm font-semibold text-slate-800">Entrega</h3>
+                    <div className="flex items-center gap-2">
+                      <div className="w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full transition-all ${
+                            stats.entregaPercent === 100 ? "bg-green-500" : 
+                            stats.entregaPercent > 0 ? "bg-amber-500" : "bg-gray-300"
+                          }`}
+                          style={{ width: `${stats.entregaPercent}%` }}
+                        />
+                      </div>
+                      <span className={`text-xs font-medium ${
+                        stats.entregaPercent === 100 ? "text-green-600" : 
+                        stats.entregaPercent > 0 ? "text-amber-600" : "text-gray-500"
+                      }`}>
+                        {stats.entregaPercent}%
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-xs text-slate-400">
+                    {stats.receivedUnidades} de {stats.totalUnidades} uds recibidas
+                  </span>
+                </div>
+                
+                {/* Tabs - only show if there are received items */}
+                {totalReceivedItems > 0 && (
+                  <div className="flex border-b border-slate-100">
+                    <button
+                      onClick={() => setEntregaTab("recibidos")}
+                      className={`flex-1 px-4 py-2 text-xs font-medium transition-colors ${
+                        entregaTab === "recibidos" 
+                          ? "text-green-700 border-b-2 border-green-500 bg-green-50/30" 
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      Recibidos ({totalReceivedItems})
+                    </button>
+                    <button
+                      onClick={() => setEntregaTab("pendientes")}
+                      className={`flex-1 px-4 py-2 text-xs font-medium transition-colors ${
+                        entregaTab === "pendientes" 
+                          ? "text-amber-700 border-b-2 border-amber-500 bg-amber-50/30" 
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      Pendientes ({pendingItems.reduce((s, i) => s + i.pendingQuantity, 0)})
+                    </button>
+                  </div>
+                )}
+
+                {/* Card Content */}
+                <div className="flex-1">
+                  {/* Recibidos Tab */}
+                  {entregaTab === "recibidos" && totalReceivedItems > 0 && (
+                    <div>
+                      {receivedGroups.map((group, groupIndex) => {
+                        const isExpanded = expandedReceivedGroups.has(groupIndex)
+                        const totalQuantity = group.items.reduce((sum, item) => sum + item.quantity, 0)
+                        return (
+                          <div key={groupIndex} className="border-b border-slate-100 last:border-b-0">
+                            <button
+                              onClick={() => toggleReceivedGroup(groupIndex)}
+                              className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-green-50/50 transition-colors"
+                            >
+                              <div className="flex items-center gap-2">
+                                {isExpanded ? (
+                                  <ChevronDown className="w-4 h-4 text-green-600" />
+                                ) : (
+                                  <ChevronRight className="w-4 h-4 text-green-600" />
+                                )}
+                                <Check className="w-4 h-4 text-green-500" />
+                                <span className="text-sm font-medium text-green-700">
+                                  {totalQuantity} uds recibidas el {formatDateShort(group.date)}
+                                </span>
+                              </div>
+                            </button>
+
+                            {isExpanded && (
+                              <div className="bg-green-50/30 divide-y divide-green-100/50">
+                                {group.items.map((item, itemIndex) => (
+                                  <div 
+                                    key={itemIndex}
+                                    className="flex items-center gap-3 px-4 py-2 pl-10"
+                                  >
+                                    <div className="w-7 h-7 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+                                      <Image
+                                        src={getCategoryImage(item.categoria) || "/placeholder.svg"}
+                                        alt={item.name}
+                                        width={28}
+                                        height={28}
+                                        className="w-full h-full object-cover"
+                                      />
                                     </div>
-                                  ))}
-                                </div>
-                              )}
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm text-gray-700 truncate">{item.name}</p>
+                                    </div>
+                                    <div className="text-right flex-shrink-0">
+                                      <span className="text-sm text-green-600">{item.quantity}</span>
+                                      <span className="text-xs text-slate-400 ml-1">uds</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                  
+                  {/* Pendientes Tab */}
+                  {(entregaTab === "pendientes" || totalReceivedItems === 0) && pendingItems.length > 0 && (
+                    <div>
+                      {/* Select All Header */}
+                      <div className="px-4 py-2 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={handleSelectAllPending}
+                            className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                              allPendingSelected 
+                                ? "bg-amber-500 border-amber-500 text-white" 
+                                : somePendingSelected
+                                  ? "bg-amber-200 border-amber-400"
+                                  : "border-slate-300 hover:border-amber-500"
+                            }`}
+                          >
+                            {allPendingSelected && <Check className="w-3 h-3" />}
+                            {somePendingSelected && !allPendingSelected && <div className="w-2 h-0.5 bg-amber-600" />}
+                          </button>
+                          <span className="text-xs font-medium text-slate-600">Pendientes de recibir</span>
+                        </div>
+                        <span className="text-xs text-slate-400">{pendingItems.length} items</span>
+                      </div>
+
+                      {/* Pending Items List */}
+                      <div className="divide-y divide-slate-50">
+                        {pendingItems.map((item) => {
+                          const selectedQty = selectedEntregaItems[item.sku] || 0
+                          const isSelected = selectedQty > 0
+                          return (
+                            <div 
+                              key={item.sku}
+                              className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${isSelected ? "bg-amber-50/50" : "hover:bg-slate-50"}`}
+                            >
+                              <button
+                                onClick={() => toggleItemSelection(item.sku, item.pendingQuantity)}
+                                className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${
+                                  isSelected 
+                                    ? "bg-amber-500 border-amber-500 text-white" 
+                                    : "border-slate-300 hover:border-amber-500"
+                                }`}
+                              >
+                                {isSelected && <Check className="w-3 h-3" />}
+                              </button>
+                              <div className="w-8 h-8 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+                                <Image
+                                  src={getCategoryImage(item.categoria) || "/placeholder.svg"}
+                                  alt={item.name}
+                                  width={32}
+                                  height={32}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm text-gray-800 truncate">{item.name}</p>
+                                <p className="text-xs text-slate-400">{item.sku}</p>
+                              </div>
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                {isSelected ? (
+                                  <div className="flex items-center gap-1">
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); handleQuantityChange(item.sku, selectedQty - 1, item.pendingQuantity) }}
+                                      className="w-6 h-6 rounded border border-slate-200 flex items-center justify-center hover:bg-slate-100"
+                                    >
+                                      <Minus className="w-3 h-3" />
+                                    </button>
+                                    <span className="text-sm font-medium text-amber-700 min-w-[2rem] text-center">{selectedQty}</span>
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); handleQuantityChange(item.sku, selectedQty + 1, item.pendingQuantity) }}
+                                      disabled={selectedQty >= item.pendingQuantity}
+                                      className="w-6 h-6 rounded border border-slate-200 flex items-center justify-center hover:bg-slate-100 disabled:opacity-30"
+                                    >
+                                      <Plus className="w-3 h-3" />
+                                    </button>
+                                    <span className="text-xs text-slate-400">/ {item.pendingQuantity}</span>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <span className="text-sm font-medium text-slate-700">{item.pendingQuantity}</span>
+                                    <span className="text-xs text-slate-400">uds</span>
+                                  </>
+                                )}
+                              </div>
                             </div>
                           )
                         })}
                       </div>
-                    )}
-                    
-                    {/* Pendientes Tab */}
-                    {(entregaTab === "pendientes" || totalReceivedItems === 0) && pendingItems.length > 0 && (
-                      <div>
-                        {/* Select All Header */}
-                        <div className="px-4 py-2 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={handleSelectAllPending}
-                              className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
-                                allPendingSelected 
-                                  ? "bg-amber-500 border-amber-500 text-white" 
-                                  : somePendingSelected
-                                    ? "bg-amber-200 border-amber-400"
-                                    : "border-slate-300 hover:border-amber-500"
-                              }`}
-                            >
-                              {allPendingSelected && <Check className="w-3 h-3" />}
-                              {somePendingSelected && !allPendingSelected && <div className="w-2 h-0.5 bg-amber-600" />}
-                            </button>
-                            <span className="text-xs font-medium text-slate-600">Pendientes de recibir</span>
-                          </div>
-                          <span className="text-xs text-slate-400">{pendingItems.length} items</span>
+
+                      {/* Action Bar */}
+                      {selectedCount > 0 && (
+                        <div className="px-4 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+                          <span className="text-sm text-slate-600">
+                            {selectedUnitsCount} unidad{selectedUnitsCount > 1 ? "es" : ""} de {selectedCount} item{selectedCount > 1 ? "s" : ""}
+                          </span>
+                          <button
+                            onClick={handleMarcarRecibido}
+                            className="px-4 py-1.5 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 transition-colors"
+                          >
+                            Marcar como recibido
+                          </button>
                         </div>
+                      )}
+                    </div>
+                  )}
 
-                        {/* Pending Items List */}
-                        <div className="divide-y divide-slate-50">
-                          {pendingItems.map((item) => {
-                            const selectedQty = selectedEntregaItems[item.sku] || 0
-                            const isSelected = selectedQty > 0
-                            return (
-                              <div 
-                                key={item.sku}
-                                className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${isSelected ? "bg-amber-50/50" : "hover:bg-slate-50"}`}
-                              >
-                                <button
-                                  onClick={() => toggleItemSelection(item.sku, item.pendingQuantity)}
-                                  className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${
-                                    isSelected 
-                                      ? "bg-amber-500 border-amber-500 text-white" 
-                                      : "border-slate-300 hover:border-amber-500"
-                                  }`}
-                                >
-                                  {isSelected && <Check className="w-3 h-3" />}
-                                </button>
-                                <div className="w-8 h-8 rounded bg-slate-100 overflow-hidden flex-shrink-0">
-                                  <Image
-                                    src={getCategoryImage(item.categoria) || "/placeholder.svg"}
-                                    alt={item.name}
-                                    width={32}
-                                    height={32}
-                                    className="w-full h-full object-cover"
-                                  />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm text-gray-800 truncate">{item.name}</p>
-                                  <p className="text-xs text-slate-400">{item.sku}</p>
-                                </div>
-                                <div className="flex items-center gap-2 flex-shrink-0">
-                                  {isSelected ? (
-                                    <div className="flex items-center gap-1">
-                                      <button
-                                        onClick={(e) => { e.stopPropagation(); handleQuantityChange(item.sku, selectedQty - 1, item.pendingQuantity) }}
-                                        className="w-6 h-6 rounded border border-slate-200 flex items-center justify-center hover:bg-slate-100"
-                                      >
-                                        <Minus className="w-3 h-3" />
-                                      </button>
-                                      <span className="text-sm font-medium text-amber-700 min-w-[2rem] text-center">{selectedQty}</span>
-                                      <button
-                                        onClick={(e) => { e.stopPropagation(); handleQuantityChange(item.sku, selectedQty + 1, item.pendingQuantity) }}
-                                        disabled={selectedQty >= item.pendingQuantity}
-                                        className="w-6 h-6 rounded border border-slate-200 flex items-center justify-center hover:bg-slate-100 disabled:opacity-30"
-                                      >
-                                        <Plus className="w-3 h-3" />
-                                      </button>
-                                      <span className="text-xs text-slate-400">/ {item.pendingQuantity}</span>
-                                    </div>
-                                  ) : (
-                                    <>
-                                      <span className="text-sm font-medium text-slate-700">{item.pendingQuantity}</span>
-                                      <span className="text-xs text-slate-400">uds</span>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                            )
-                          })}
-                        </div>
+                  {/* Empty State */}
+                  {pendingItems.length === 0 && totalReceivedItems === 0 && (
+                    <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+                      <Package className="w-10 h-10 mb-2 opacity-50" />
+                      <p className="text-sm">No hay items en esta compra</p>
+                    </div>
+                  )}
 
-                        {/* Action Bar */}
-                        {selectedCount > 0 && (
-                          <div className="px-4 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
-                            <span className="text-sm text-slate-600">
-                              {selectedUnitsCount} unidad{selectedUnitsCount > 1 ? "es" : ""} de {selectedCount} item{selectedCount > 1 ? "s" : ""}
-                            </span>
-                            <button
-                              onClick={handleMarcarRecibido}
-                              className="px-4 py-1.5 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 transition-colors"
-                            >
-                              Marcar como recibido
-                            </button>
-                          </div>
-                        )}
+                  {/* All Received State */}
+                  {pendingItems.length === 0 && totalReceivedItems > 0 && entregaTab === "pendientes" && (
+                    <div className="px-4 py-4 flex items-center gap-2 text-green-600 bg-green-50/50">
+                      <Check className="w-5 h-5" />
+                      <span className="text-sm font-medium">Todos los items han sido recibidos</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Pago Card */}
+              <div className="bg-white border border-slate-200/80 rounded-lg flex flex-col">
+                {/* Card Header */}
+                <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-sm font-semibold text-slate-800">Pago</h3>
+                    <div className="flex items-center gap-2">
+                      <div className="w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full transition-all ${
+                            pagoPercent === 100 ? "bg-green-500" : 
+                            pagoPercent > 0 ? "bg-amber-500" : "bg-gray-300"
+                          }`}
+                          style={{ width: `${pagoPercent}%` }}
+                        />
                       </div>
-                    )}
-
-                    {/* Empty State */}
-                    {pendingItems.length === 0 && totalReceivedItems === 0 && (
-                      <div className="flex flex-col items-center justify-center py-12 text-slate-400">
-                        <Package className="w-10 h-10 mb-2 opacity-50" />
-                        <p className="text-sm">No hay items en esta compra</p>
-                      </div>
-                    )}
-
-                    {/* All Received State */}
-                    {pendingItems.length === 0 && totalReceivedItems > 0 && entregaTab === "pendientes" && (
-                      <div className="px-4 py-4 flex items-center gap-2 text-green-600 bg-green-50/50">
-                        <Check className="w-5 h-5" />
-                        <span className="text-sm font-medium">Todos los items han sido recibidos</span>
-                      </div>
-                    )}
+                      <span className={`text-xs font-medium ${
+                        pagoPercent === 100 ? "text-green-600" : 
+                        pagoPercent > 0 ? "text-amber-600" : "text-gray-500"
+                      }`}>
+                        {pagoPercent}%
+                      </span>
+                    </div>
                   </div>
+                  <span className="text-xs text-slate-400">
+                    ${totalPagado.toLocaleString("es-AR")} de ${calculatedTotal.toLocaleString("es-AR")} pagado
+                  </span>
                 </div>
 
-                {/* Pago Card */}
-                <div className="bg-white border border-slate-200/80 rounded-lg flex flex-col">
-                  {/* Card Header */}
-                  <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <h3 className="text-sm font-semibold text-slate-800">Pago</h3>
-                      <div className="flex items-center gap-2">
-                        <div className="w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                          <div 
-                            className={`h-full rounded-full transition-all ${
-                              pagoPercent === 100 ? "bg-green-500" : 
-                              pagoPercent > 0 ? "bg-amber-500" : "bg-gray-300"
-                            }`}
-                            style={{ width: `${pagoPercent}%` }}
-                          />
-                        </div>
-                        <span className={`text-xs font-medium ${
-                          pagoPercent === 100 ? "text-green-600" : 
-                          pagoPercent > 0 ? "text-amber-600" : "text-gray-500"
-                        }`}>
-                          {pagoPercent}%
-                        </span>
-                      </div>
-                    </div>
-                    <span className="text-xs text-slate-400">
-                      ${totalPagado.toLocaleString("es-AR")} de ${calculatedTotal.toLocaleString("es-AR")} pagado
-                    </span>
-                  </div>
-
-                  {/* Card Content */}
-                  <div className="flex-1 overflow-auto">
-                    {/* Pagos List */}
-                    {pagos.length > 0 && (
-                      <div className="divide-y divide-slate-100">
-                        {pagos.map((pago) => (
-                          <div key={pago.id} className="px-4 py-3 flex items-center gap-4">
-                            <div className="text-xs text-slate-500 w-20">
-                              {formatDateShort(pago.date)}
-                            </div>
-                            <div className="flex-1">
-                              <span className="text-sm font-medium text-slate-800">
-                                ${pago.amount.toLocaleString("es-AR")}
-                              </span>
-                            </div>
-                            <div className="text-xs text-slate-500 w-24">
-                              {pago.medioPago}
-                            </div>
-                            <div className="w-8 flex justify-center">
-                              {pago.facturaUrl ? (
-                                <a href={pago.facturaUrl} target="_blank" rel="noopener noreferrer" className="text-amber-600 hover:text-amber-700">
-                                  <Receipt className="w-4 h-4" />
-                                </a>
-                              ) : (
-                                <button className="text-slate-300 hover:text-slate-400">
-                                  <Upload className="w-4 h-4" />
-                                </button>
-                              )}
-                            </div>
+                {/* Card Content */}
+                <div className="flex-1">
+                  {/* Pagos List */}
+                  {pagos.length > 0 && (
+                    <div className="divide-y divide-slate-100">
+                      {pagos.map((pago) => (
+                        <div key={pago.id} className="px-4 py-3 flex items-center gap-4">
+                          <div className="text-xs text-slate-500 w-20">
+                            {formatDateShort(pago.date)}
                           </div>
-                        ))}
-                      </div>
-                    )}
-                    
-                    {/* Empty State */}
-                    {pagos.length === 0 && (
-                      <div className="flex flex-col items-center justify-center py-8 text-slate-400">
-                        <Receipt className="w-8 h-8 mb-2 opacity-50" />
-                        <p className="text-sm">No hay pagos registrados</p>
-                      </div>
-                    )}
-                  </div>
+                          <div className="flex-1">
+                            <span className="text-sm font-medium text-slate-800">
+                              ${pago.amount.toLocaleString("es-AR")}
+                            </span>
+                          </div>
+                          <div className="text-xs text-slate-500 w-24">
+                            {pago.medioPago}
+                          </div>
+                          <div className="w-8 flex justify-center">
+                            {pago.facturaUrl ? (
+                              <a href={pago.facturaUrl} target="_blank" rel="noopener noreferrer" className="text-amber-600 hover:text-amber-700">
+                                <Receipt className="w-4 h-4" />
+                              </a>
+                            ) : (
+                              <button className="text-slate-300 hover:text-slate-400">
+                                <Upload className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   
-                  {/* Register Payment Button */}
-                  <div className="p-4 border-t border-slate-100">
-                    <button
-                      onClick={() => setShowPagoModal(true)}
-                      disabled={pagoPercent === 100}
-                      className={`w-full py-2.5 text-sm font-medium rounded-lg transition-colors ${
-                        pagoPercent === 100
-                          ? "bg-green-100 text-green-700 cursor-not-allowed"
-                          : "bg-amber-500 text-white hover:bg-amber-600"
-                      }`}
-                    >
-                      {pagoPercent === 100 ? "Pago completo" : "Registrar Pago"}
-                    </button>
-                  </div>
+                  {/* Empty State */}
+                  {pagos.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-8 text-slate-400">
+                      <Receipt className="w-8 h-8 mb-2 opacity-50" />
+                      <p className="text-sm">No hay pagos registrados</p>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Register Payment Button */}
+                <div className="p-4 border-t border-slate-100">
+                  <button
+                    onClick={() => setShowPagoModal(true)}
+                    disabled={pagoPercent === 100}
+                    className={`w-full py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                      pagoPercent === 100
+                        ? "bg-green-100 text-green-700 cursor-not-allowed"
+                        : "bg-amber-500 text-white hover:bg-amber-600"
+                    }`}
+                  >
+                    {pagoPercent === 100 ? "Pago completo" : "Registrar Pago"}
+                  </button>
                 </div>
               </div>
             </div>
-          </main>
-        </div>
+          </div>
+        </main>
       </div>
       
       {/* Pago Modal */}
@@ -1130,6 +1259,14 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
           </div>
         </div>
       )}
+      
+      {/* Unsaved Changes Modal */}
+      <UnsavedChangesModal
+        isOpen={showNavigationModal}
+        onSave={handleSaveAndNavigate}
+        onDiscard={handleDiscardAndNavigate}
+        onCancel={handleCancelNavigation}
+      />
     </div>
   )
 }
