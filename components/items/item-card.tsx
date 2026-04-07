@@ -708,10 +708,8 @@ export function ItemCard({
                   className="col-span-4 h-full flex items-center justify-center px-2 border-r border-slate-100 cursor-pointer hover:bg-slate-50 group/total"
                   onClick={(e) => {
                     e.stopPropagation()
-                  setActiveStockEdit("total")
-                  setStockModification({ total: { operation: "agregar", value: "" }, reservado: { operation: "agregar", value: "" } })
-                  setIsStockModalOpen(true)
-                }}
+                    setIsStockModalOpen(true)
+                  }}
               >
                 <span className="text-sm font-medium tabular-nums text-foreground group-hover/total:text-blue-600 transition-colors">{item.stock?.total ?? 0}</span>
               </div>
@@ -719,8 +717,6 @@ export function ItemCard({
                 className="col-span-4 h-full flex items-center justify-center px-2 border-r border-slate-100 cursor-pointer hover:bg-slate-50 group/reservado"
                 onClick={(e) => {
                   e.stopPropagation()
-                  setActiveStockEdit("reservado")
-                  setStockModification({ total: { operation: "agregar", value: "" }, reservado: { operation: "agregar", value: "" } })
                   setIsStockModalOpen(true)
                 }}
               >
@@ -909,8 +905,6 @@ export function ItemCard({
                   className="col-span-10 h-full flex items-center justify-center px-4 cursor-pointer transition-colors hover:bg-slate-50 group/stock"
                   onClick={(e) => {
                     e.stopPropagation()
-                    setActiveStockEdit("total")
-                    setStockModification({ total: { operation: "agregar", value: "" }, reservado: { operation: "agregar", value: "" } })
                     setIsStockModalOpen(true)
                   }}
                 >
