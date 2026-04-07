@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo, Suspense, useRef, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import { Sidebar } from "@/components/layout/sidebar"
 import { useSidebar } from "@/hooks/use-sidebar"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
@@ -54,6 +55,7 @@ function formatDateShort(dateStr: string): string {
 }
 
 function ComprasContent() {
+  const router = useRouter()
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
   const { currentAccount } = useAccount()
   const [searchQuery, setSearchQuery] = useState("")
@@ -362,15 +364,19 @@ function ComprasContent() {
                   <div className="col-span-3 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
                   </div>
                   {/* ID */}
-                  <div className="col-span-10 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
+                  <div className="col-span-8 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
                     <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">ID</span>
                   </div>
+                  {/* Estado */}
+                  <div className="col-span-10 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
+                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Estado</span>
+                  </div>
                   {/* Proveedor */}
-                  <div className="col-span-25 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
+                  <div className="col-span-20 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
                     <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Proveedor</span>
                   </div>
                   {/* Estado Entrega */}
-                  <div className="col-span-17 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
+                  <div className="col-span-19 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
                     <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Estado Entrega</span>
                   </div>
                   {/* Estado del Pago */}
@@ -378,7 +384,7 @@ function ComprasContent() {
                     <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Estado Pago</span>
                   </div>
                   {/* Importe Total */}
-                  <div className="col-span-25 flex items-center justify-center">
+                  <div className="col-span-20 flex items-center justify-center">
                     <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Importe Total</span>
                   </div>
                 </div>
@@ -401,6 +407,12 @@ function ComprasContent() {
                     const totalItems = orden.items.reduce((sum, item) => sum + item.quantity, 0)
                     const receivedItems = orden.items.reduce((sum, item) => sum + (item.quantityReceived || 0), 0)
                     const entregaPercent = totalItems > 0 ? Math.round((receivedItems / totalItems) * 100) : 0
+                    
+                    // Calcular monto pagado basado en porcentaje
+                    const montoPagado = Math.round((orden.estadoPago / 100) * orden.importeTotal)
+                    
+                    // Estado general: Finalizada si entrega 100% y pago 100%, sino En curso
+                    const estadoGeneral = entregaPercent === 100 && orden.estadoPago === 100 ? "Finalizada" : "En curso"
 
                     return (
                       <div key={orden.id} className="bg-white border-x border-b border-[rgba(202,213,227,0.61)] first:border-t-0">
@@ -421,18 +433,35 @@ function ComprasContent() {
                           </div>
 
                           {/* ID */}
-                          <div className="col-span-10 flex flex-col items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]">
-                            <span className="text-sm font-medium text-gray-900">C-{orden.numero}</span>
+                          <div 
+                            className="col-span-8 flex flex-col items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)] hover:bg-amber-50/50 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              router.push(`/compras/compras/C-${orden.numero}`)
+                            }}
+                          >
+                            <span className="text-sm font-medium text-amber-600 hover:text-amber-700 cursor-pointer">C-{orden.numero}</span>
                             <span className="text-xs text-muted-foreground">{formatDateShort(orden.fechaCreacion)}</span>
                           </div>
 
+                          {/* Estado */}
+                          <div className="col-span-10 flex items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]">
+                            <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                              estadoGeneral === "Finalizada" 
+                                ? "bg-emerald-50 text-emerald-700" 
+                                : "bg-amber-50 text-amber-700"
+                            }`}>
+                              {estadoGeneral}
+                            </span>
+                          </div>
+
                           {/* Proveedor */}
-                          <div className="col-span-25 flex items-center px-4 py-2 border-r border-[rgba(202,213,227,0.3)]">
+                          <div className="col-span-20 flex items-center px-4 py-2 border-r border-[rgba(202,213,227,0.3)]">
                             <span className="text-sm text-gray-700 truncate">{orden.proveedorNombre}</span>
                           </div>
 
                           {/* Estado Entrega - Items recibidos */}
-                          <div className="col-span-17 flex items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]">
+                          <div className="col-span-19 flex flex-col items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]">
                             <div className="flex items-center gap-2">
                               <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                                 <div 
@@ -450,10 +479,13 @@ function ComprasContent() {
                                 {entregaPercent}%
                               </span>
                             </div>
+                            <span className="text-[10px] text-slate-400 mt-0.5">
+                              {receivedItems} de {totalItems} items recibidos
+                            </span>
                           </div>
 
                           {/* Estado del Pago */}
-                          <div className="col-span-20 flex items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]">
+                          <div className="col-span-20 flex flex-col items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]">
                             <div className="flex items-center gap-2">
                               <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                                 <div 
@@ -471,10 +503,13 @@ function ComprasContent() {
                                 {orden.estadoPago}%
                               </span>
                             </div>
+                            <span className="text-[10px] text-slate-400 mt-0.5">
+                              ${montoPagado.toLocaleString("es-AR")} de ${orden.importeTotal.toLocaleString("es-AR")} pagado
+                            </span>
                           </div>
 
                           {/* Importe Total */}
-                          <div className="col-span-25 flex items-center justify-center py-2">
+                          <div className="col-span-20 flex items-center justify-center py-2">
                             <span className="text-sm font-semibold text-gray-900">
                               ${orden.importeTotal.toLocaleString("es-AR", { minimumFractionDigits: 0 })}
                             </span>
@@ -490,8 +525,8 @@ function ComprasContent() {
                                 const itemParcial = item.quantityReceived > 0 && item.quantityReceived < item.quantity
                                 return (
                                   <div key={idx} className="grid grid-cols-100 items-center py-2">
-                                    {/* Item Info (leftmost) */}
-                                    <div className="col-span-53 flex items-center gap-3 pl-8">
+                                    {/* Item Info (leftmost - spans id + estado + proveedor = 38) */}
+                                    <div className="col-span-41 flex items-center gap-3 pl-8">
                                       <div className="w-10 h-10 rounded bg-muted/50 overflow-hidden flex-shrink-0">
                                         <Image
                                           src={getCategoryImage(item.categoria) || "/placeholder.svg"}
@@ -507,8 +542,8 @@ function ComprasContent() {
                                       </div>
                                     </div>
 
-                                    {/* Item Estado Recepcion - alineado con Estado Entrega */}
-                                    <div className="col-span-27 flex items-center justify-center">
+                                    {/* Item Estado Recepcion - alineado con Estado Entrega (19) */}
+                                    <div className="col-span-19 flex items-center justify-center">
                                       <div className="flex items-center gap-1.5">
                                         {itemRecibido ? (
                                           <Check className="w-3.5 h-3.5 text-green-500" />
@@ -521,12 +556,15 @@ function ComprasContent() {
                                           itemRecibido ? "text-green-600" : 
                                           itemParcial ? "text-amber-600" : "text-gray-500"
                                         }`}>
-                                          {item.quantityReceived} de {item.quantity} recibidos
+                                          {item.quantityReceived} de {item.quantity}
                                         </span>
                                       </div>
                                     </div>
 
-                                    {/* Item Subtotal (rightmost, aligned with importe total) */}
+                                    {/* Estado Pago placeholder (20) */}
+                                    <div className="col-span-20"></div>
+
+                                    {/* Item Subtotal (rightmost, aligned with importe total = 20) */}
                                     <div className="col-span-20 flex flex-col items-center justify-center">
                                       <p className="text-sm font-medium">
                                         ${item.total.toLocaleString("es-AR", { minimumFractionDigits: 0 })}
