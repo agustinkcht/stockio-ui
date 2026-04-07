@@ -1189,7 +1189,8 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
               </div>
             </div>
           </div>
-        </main>
+          </main>
+        </div>
       </div>
       
       {/* Pago Modal */}
