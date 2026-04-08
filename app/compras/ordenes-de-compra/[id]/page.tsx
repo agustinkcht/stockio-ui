@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, Suspense, use, useEffect } from "react"
+import { useState, useMemo, Suspense, use, useEffect, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Sidebar } from "@/components/layout/sidebar"
 import { useSidebar } from "@/hooks/use-sidebar"
@@ -16,6 +16,10 @@ import {
   Search,
   Check,
   Minus,
+  Pencil,
+  ArrowRight,
+  Percent,
+  ChevronDown,
 } from "lucide-react"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { getCategoryImage } from "@/lib/utils/category-images"
@@ -26,6 +30,7 @@ import { INITIAL_ITEMS } from "@/lib/data/initial-items"
 import type { Item, OrdenDeCompraItem, OrdenDeCompra, OrdenCompra, OrdenCompraItem } from "@/lib/types"
 import { useOrdenesDeCompra } from "@/hooks/use-ordenes-de-compra"
 import { useAccount } from "@/lib/contexts/account-context"
+import { useItems } from "@/hooks/use-items"
 import { ORDENES_COMPRA } from "@/lib/data/initial-ordenes"
 import { Eye } from "lucide-react"
 
@@ -53,6 +58,32 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
   // Use hooks for data persistence
   const { ordenes, updateOrden, updateEstado } = useOrdenesDeCompra()
   const { currentAccount } = useAccount()
+  const { items: allItems } = useItems()
+  
+  // Proveedor change state
+  const [showProveedorDropdown, setShowProveedorDropdown] = useState(false)
+  const [proveedorSearch, setProveedorSearch] = useState("")
+  const [showProveedorConfirmModal, setShowProveedorConfirmModal] = useState(false)
+  const [pendingProveedor, setPendingProveedor] = useState<string | null>(null)
+  const [isHoveringProveedor, setIsHoveringProveedor] = useState(false)
+  const proveedorDropdownRef = useRef<HTMLDivElement>(null)
+  
+  // Click outside handler for proveedor dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (proveedorDropdownRef.current && !proveedorDropdownRef.current.contains(event.target as Node)) {
+        setShowProveedorDropdown(false)
+      }
+    }
+    if (showProveedorDropdown) {
+      document.addEventListener("mousedown", handleClickOutside)
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [showProveedorDropdown])
+  
+  // Discount state
+  const [itemDiscounts, setItemDiscounts] = useState<{ [idx: number]: { value: number; type: "cash" | "percent" } }>({})
+  const [globalDiscount, setGlobalDiscount] = useState<{ value: number; type: "cash" | "percent" }>({ value: 0, type: "percent" })
 
   // Find orden from ordenes array directly (not via callback during render)
   const foundOrden = useMemo(() => {
@@ -79,6 +110,43 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
   
   // Selection state for empty order item picker
   const [selectedProveedorItems, setSelectedProveedorItems] = useState<{ [id: string]: boolean }>({})
+  
+  // Get unique proveedores from all items
+  const uniqueProveedores = useMemo(() => {
+    const proveedores = new Set<string>()
+    INITIAL_ITEMS.forEach(item => {
+      if (item.proveedor) proveedores.add(item.proveedor)
+    })
+    return Array.from(proveedores).sort()
+  }, [])
+  
+  // Filter proveedores based on search
+  const filteredProveedores = useMemo(() => {
+    if (!proveedorSearch) return uniqueProveedores
+    return uniqueProveedores.filter(p => 
+      p.toLowerCase().includes(proveedorSearch.toLowerCase())
+    )
+  }, [proveedorSearch, uniqueProveedores])
+  
+  // Helper to get stock for an item by SKU
+  const getStockBySku = (sku: string): number => {
+    // First check standalone items
+    const standaloneItem = allItems.find(item => item.sku === sku)
+    if (standaloneItem?.stock?.disponible !== undefined) {
+      return standaloneItem.stock.disponible
+    }
+    
+    // Check variants
+    for (const item of allItems) {
+      if (item.variants) {
+        const variant = item.variants.find(v => v.sku === sku || `${item.skuPrefix}-${v.skuSuffix}` === sku)
+        if (variant?.stock?.disponible !== undefined) {
+          return variant.stock.disponible
+        }
+      }
+    }
+    return 0
+  }
   
   // Get all items (standalone and variants) that match the proveedor - flat list for modal
   const availableItems = useMemo(() => {
@@ -406,6 +474,79 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     setShowAddItemModal(false)
     setNewItemSearch("")
   }
+  
+  // Handle proveedor change request
+  const handleProveedorClick = () => {
+    if (!isEditable) return
+    setProveedorSearch(orden?.proveedorNombre || "")
+    setShowProveedorDropdown(true)
+  }
+  
+  const handleProveedorSelect = (proveedor: string) => {
+    if (!orden || proveedor === orden.proveedorNombre) {
+      setShowProveedorDropdown(false)
+      setProveedorSearch("")
+      return
+    }
+    // Show confirmation modal
+    setPendingProveedor(proveedor)
+    setShowProveedorConfirmModal(true)
+    setShowProveedorDropdown(false)
+  }
+  
+  const handleConfirmProveedorChange = () => {
+    if (!orden || !pendingProveedor) return
+    // Reset the order with new proveedor
+    const resetOrden = {
+      ...orden,
+      proveedorNombre: pendingProveedor,
+      items: [],
+      importeEstimado: 0,
+    }
+    setOrden(resetOrden)
+    updateOrden(orden.id, resetOrden)
+    setShowProveedorConfirmModal(false)
+    setPendingProveedor(null)
+    setProveedorSearch("")
+    setItemDiscounts({})
+    setGlobalDiscount({ value: 0, type: "percent" })
+    setHasChanges(true)
+  }
+  
+  // Handle item discount change
+  const handleItemDiscountChange = (idx: number, value: number, type: "cash" | "percent") => {
+    setItemDiscounts(prev => ({ ...prev, [idx]: { value, type } }))
+    setHasChanges(true)
+  }
+  
+  // Calculate subtotal and total with discounts
+  const calculateTotals = useMemo(() => {
+    if (!orden) return { subtotal: 0, discountAmount: 0, total: 0 }
+    
+    let subtotal = 0
+    orden.items.forEach((item, idx) => {
+      const itemTotal = item.total
+      const discount = itemDiscounts[idx]
+      if (discount && discount.value > 0) {
+        const discountAmount = discount.type === "percent" 
+          ? (itemTotal * discount.value / 100) 
+          : discount.value
+        subtotal += itemTotal - discountAmount
+      } else {
+        subtotal += itemTotal
+      }
+    })
+    
+    let discountAmount = 0
+    if (globalDiscount.value > 0) {
+      discountAmount = globalDiscount.type === "percent" 
+        ? (subtotal * globalDiscount.value / 100) 
+        : globalDiscount.value
+    }
+    
+    const total = subtotal - discountAmount
+    return { subtotal, discountAmount, total }
+  }, [orden, itemDiscounts, globalDiscount])
 
   // Early return for not found - AFTER all hooks
   if (!orden) {
@@ -497,9 +638,53 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                   <div className="h-10 w-px bg-border/40" />
                   
                   {/* Proveedor */}
-                  <div className="flex flex-col">
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Proveedor</span>
-                    <span className="text-sm font-semibold text-gray-800">{orden.proveedorNombre}</span>
+                  <div className="relative" ref={proveedorDropdownRef}>
+                    <div 
+                      className={`flex flex-col ${isEditable ? "cursor-pointer group" : ""}`}
+                      onMouseEnter={() => setIsHoveringProveedor(true)}
+                      onMouseLeave={() => setIsHoveringProveedor(false)}
+                      onClick={handleProveedorClick}
+                    >
+                      <span className="text-[10px] text-slate-400 uppercase tracking-wider">Proveedor</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-semibold text-gray-800">{orden.proveedorNombre}</span>
+                        {isEditable && isHoveringProveedor && (
+                          <Pencil className="w-3 h-3 text-slate-400" />
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Proveedor Dropdown */}
+                    {showProveedorDropdown && (
+                      <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg w-64">
+                        <div className="p-2 border-b border-slate-100">
+                          <input
+                            type="text"
+                            value={proveedorSearch}
+                            onChange={(e) => setProveedorSearch(e.target.value)}
+                            placeholder="Buscar proveedor..."
+                            className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-md focus:outline-none focus:border-amber-400"
+                            autoFocus
+                          />
+                        </div>
+                        <div className="max-h-48 overflow-y-auto py-1">
+                          {filteredProveedores.map((proveedor) => (
+                            <button
+                              key={proveedor}
+                              onClick={() => handleProveedorSelect(proveedor)}
+                              className={`w-full text-left px-3 py-2 text-sm hover:bg-slate-50 transition-colors ${
+                                proveedor === orden.proveedorNombre ? "bg-amber-50 text-amber-700" : "text-gray-700"
+                              }`}
+                            >
+                              {proveedor}
+                            </button>
+                          ))}
+                          {filteredProveedores.length === 0 && (
+                            <p className="px-3 py-2 text-sm text-slate-400">No se encontraron proveedores</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -780,23 +965,37 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                 <>
                   {/* Tab Header */}
                   <div className="bg-slate-100 border border-slate-200/80 rounded-t-md">
-                    <div className="grid grid-cols-12 h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      <div className="col-span-6 flex items-center px-4">Item</div>
-                      <div className="col-span-2 flex items-center justify-center">Costo Unit.</div>
-                      <div className="col-span-2 flex items-center justify-center">Cantidad</div>
-                      <div className="col-span-2 flex items-center justify-end pr-12">Subtotal</div>
+                    <div className="grid grid-cols-[3fr_1fr_1fr_0.5fr_1fr_0.5fr_1fr_1.5fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      <div className="flex items-center px-4">Item</div>
+                      <div className="flex items-center justify-center">Costo Unit.</div>
+                      <div className="flex items-center justify-center">Stock Actual</div>
+                      <div className="flex items-center justify-center"></div>
+                      <div className="flex items-center justify-center">Cantidad</div>
+                      <div className="flex items-center justify-center"></div>
+                      <div className="flex items-center justify-center">Stock Proy.</div>
+                      <div className="flex items-center justify-end pr-4">Subtotal</div>
                     </div>
                   </div>
 
                   {/* Items List */}
                   <div className="bg-white border-x border-slate-200/80">
-                    {orden.items.map((item, idx) => (
+                    {orden.items.map((item, idx) => {
+                      const stockActual = getStockBySku(item.sku)
+                      const stockProyectado = stockActual + item.quantity
+                      const itemDiscount = itemDiscounts[idx]
+                      const itemSubtotal = item.total
+                      const discountAmount = itemDiscount?.value 
+                        ? (itemDiscount.type === "percent" ? itemSubtotal * itemDiscount.value / 100 : itemDiscount.value)
+                        : 0
+                      const finalSubtotal = itemSubtotal - discountAmount
+                      
+                      return (
                       <div
                         key={idx}
-                        className="grid grid-cols-12 items-center py-3 px-4 border-b border-slate-100 last:border-b-0 hover:bg-slate-50/50 transition-colors group"
+                        className="grid grid-cols-[3fr_1fr_1fr_0.5fr_1fr_0.5fr_1fr_1.5fr] items-center py-3 px-4 border-b border-slate-100 last:border-b-0 hover:bg-slate-50/50 transition-colors group"
                       >
                         {/* Item - Thumbnail, Name, SKU */}
-                        <div className="col-span-6 flex items-center gap-3">
+                        <div className="flex items-center gap-3">
                           <div className="w-11 h-11 rounded bg-slate-100 overflow-hidden flex-shrink-0">
                             <Image
                               src={getCategoryImage(item.categoria) || "/placeholder.svg"}
@@ -827,7 +1026,7 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                         </div>
 
                         {/* Costo Unit. */}
-                        <div className="col-span-2 flex items-center justify-center">
+                        <div className="flex items-center justify-center">
                           {isEditable ? (
                             <div className="flex items-center">
                               <span className="text-xs text-slate-400 mr-0.5">$</span>
@@ -835,7 +1034,7 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                                 type="number"
                                 value={item.unitPrice}
                                 onChange={(e) => handlePriceChange(idx, parseInt(e.target.value) || 0)}
-                                className="w-20 text-center text-sm font-medium bg-transparent border border-transparent hover:border-slate-200 focus:border-amber-400 rounded px-2 py-1 focus:outline-none focus:bg-white transition-all"
+                                className="w-16 text-center text-sm font-medium bg-transparent border border-transparent hover:border-slate-200 focus:border-amber-400 rounded px-2 py-1 focus:outline-none focus:bg-white transition-all"
                                 min={0}
                               />
                             </div>
@@ -846,30 +1045,85 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                           )}
                         </div>
 
+                        {/* Stock Actual */}
+                        <div className="flex items-center justify-center">
+                          <span className="text-sm text-slate-600 tabular-nums">{stockActual}</span>
+                        </div>
+                        
+                        {/* Arrow */}
+                        <div className="flex items-center justify-center">
+                          <ArrowRight className="w-3.5 h-3.5 text-slate-300" />
+                        </div>
+
                         {/* Cantidad */}
-                        <div className="col-span-2 flex items-center justify-center">
+                        <div className="flex items-center justify-center">
                           {isEditable ? (
                             <input
                               type="number"
                               value={item.quantity}
                               onChange={(e) => handleQuantityChange(idx, parseInt(e.target.value) || 0)}
-                              className="w-16 text-center text-sm font-medium bg-transparent border border-transparent hover:border-slate-200 focus:border-amber-400 rounded px-2 py-1 focus:outline-none focus:bg-white transition-all"
+                              className="w-14 text-center text-sm font-medium bg-amber-50 border border-amber-200 focus:border-amber-400 rounded px-2 py-1 focus:outline-none transition-all"
                               min={1}
                             />
                           ) : (
                             <span className="text-sm font-medium text-gray-700">{item.quantity}</span>
                           )}
                         </div>
+                        
+                        {/* Arrow */}
+                        <div className="flex items-center justify-center">
+                          <ArrowRight className="w-3.5 h-3.5 text-slate-300" />
+                        </div>
+                        
+                        {/* Stock Proyectado */}
+                        <div className="flex items-center justify-center">
+                          <span className="text-sm font-medium text-emerald-600 tabular-nums">{stockProyectado}</span>
+                        </div>
 
-                        {/* Subtotal */}
-                        <div className="col-span-2 flex items-center justify-end gap-2">
+                        {/* Subtotal with Discount */}
+                        <div className="flex items-center justify-end gap-2">
                           <div className="text-right">
-                            <span className="text-sm font-semibold text-gray-900">
-                              ${item.total.toLocaleString("es-AR")}
-                            </span>
-                            <p className="text-[10px] text-slate-400">
-                              {item.quantity} x ${item.unitPrice.toLocaleString("es-AR")}
-                            </p>
+                            {discountAmount > 0 ? (
+                              <>
+                                <span className="text-sm font-semibold text-gray-900">
+                                  ${finalSubtotal.toLocaleString("es-AR")}
+                                </span>
+                                <p className="text-[10px] text-slate-400 line-through">
+                                  ${itemSubtotal.toLocaleString("es-AR")}
+                                </p>
+                              </>
+                            ) : (
+                              <>
+                                <span className="text-sm font-semibold text-gray-900">
+                                  ${itemSubtotal.toLocaleString("es-AR")}
+                                </span>
+                                <p className="text-[10px] text-slate-400">
+                                  {item.quantity} x ${item.unitPrice.toLocaleString("es-AR")}
+                                </p>
+                              </>
+                            )}
+                            {/* Discount input */}
+                            {isEditable && (
+                              <div className="flex items-center gap-1 mt-1 justify-end">
+                                <input
+                                  type="number"
+                                  placeholder="Dto"
+                                  value={itemDiscount?.value || ""}
+                                  onChange={(e) => handleItemDiscountChange(idx, parseFloat(e.target.value) || 0, itemDiscount?.type || "percent")}
+                                  className="w-12 text-[10px] text-center bg-slate-50 border border-slate-200 rounded px-1 py-0.5 focus:outline-none focus:border-amber-400"
+                                />
+                                <button
+                                  onClick={() => handleItemDiscountChange(idx, itemDiscount?.value || 0, itemDiscount?.type === "percent" ? "cash" : "percent")}
+                                  className={`text-[10px] px-1.5 py-0.5 rounded border transition-colors ${
+                                    itemDiscount?.type === "percent" || !itemDiscount
+                                      ? "bg-amber-50 border-amber-200 text-amber-600"
+                                      : "bg-slate-50 border-slate-200 text-slate-500"
+                                  }`}
+                                >
+                                  {itemDiscount?.type === "cash" ? "$" : "%"}
+                                </button>
+                              </div>
+                            )}
                           </div>
                           {isEditable && (
                             <button
@@ -882,7 +1136,7 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                           )}
                         </div>
                       </div>
-                    ))}
+                    )})}
 
                     {/* Add Item Button - only show when editable */}
                     {isEditable && (
@@ -898,11 +1152,51 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
 
                   {/* Total Row - Part of the grid, closes the table */}
                   <div className="border-t border-b border-x border-slate-200 bg-slate-100 py-4 px-4 rounded-b-md">
-                    <div className="flex items-center justify-end">
+                    <div className="flex items-center justify-end gap-8">
+                      {/* Subtotal Estimado */}
                       <div className="text-right">
+                        <span className="text-[10px] text-slate-400 uppercase tracking-wider">Subtotal</span>
+                        <p className="text-sm text-gray-700">
+                          ${calculateTotals.subtotal.toLocaleString("es-AR")}
+                        </p>
+                      </div>
+                      
+                      {/* Global Discount */}
+                      {isEditable && (
+                        <div className="text-right">
+                          <span className="text-[10px] text-slate-400 uppercase tracking-wider">Descuento</span>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <input
+                              type="number"
+                              placeholder="0"
+                              value={globalDiscount.value || ""}
+                              onChange={(e) => setGlobalDiscount(prev => ({ ...prev, value: parseFloat(e.target.value) || 0 }))}
+                              className="w-16 text-sm text-center bg-white border border-slate-200 rounded px-2 py-1 focus:outline-none focus:border-amber-400"
+                            />
+                            <button
+                              onClick={() => setGlobalDiscount(prev => ({ ...prev, type: prev.type === "percent" ? "cash" : "percent" }))}
+                              className={`text-xs px-2 py-1 rounded border transition-colors ${
+                                globalDiscount.type === "percent"
+                                  ? "bg-amber-50 border-amber-200 text-amber-600"
+                                  : "bg-slate-50 border-slate-200 text-slate-500"
+                              }`}
+                            >
+                              {globalDiscount.type === "cash" ? "$" : "%"}
+                            </button>
+                          </div>
+                          {calculateTotals.discountAmount > 0 && (
+                            <p className="text-xs text-red-500 mt-0.5">
+                              -${calculateTotals.discountAmount.toLocaleString("es-AR")}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* Total Estimado */}
+                      <div className="text-right pl-4 border-l border-slate-300">
                         <span className="text-[10px] text-slate-400 uppercase tracking-wider">Total Estimado</span>
                         <p className="text-xl font-bold text-gray-900">
-                          ${orden.importeEstimado.toLocaleString("es-AR")}
+                          ${calculateTotals.total.toLocaleString("es-AR")}
                         </p>
                       </div>
                     </div>
@@ -1051,6 +1345,49 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                   )}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Proveedor Change Confirmation Modal */}
+      {showProveedorConfirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => {
+              setShowProveedorConfirmModal(false)
+              setPendingProveedor(null)
+            }}
+          />
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            <div className="px-6 py-5">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                ¿Cambiar de proveedor?
+              </h3>
+              <p className="text-sm text-slate-600 mb-1">
+                Estás por cambiar el proveedor de <span className="font-medium">{orden?.proveedorNombre}</span> a <span className="font-medium">{pendingProveedor}</span>.
+              </p>
+              <p className="text-sm text-amber-600 bg-amber-50 px-3 py-2 rounded-md mt-3">
+                La orden de compra se reiniciará y perderás todos los items agregados.
+              </p>
+            </div>
+            <div className="px-6 py-4 bg-slate-50 flex items-center justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowProveedorConfirmModal(false)
+                  setPendingProveedor(null)
+                }}
+                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmProveedorChange}
+                className="px-4 py-2 text-sm font-medium bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors"
+              >
+                Sí, cambiar proveedor
+              </button>
             </div>
           </div>
         </div>
