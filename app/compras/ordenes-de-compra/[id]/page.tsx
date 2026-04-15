@@ -151,7 +151,7 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
   // Get all items (standalone and variants) that match the proveedor - flat list for modal
   const availableItems = useMemo(() => {
     if (!orden) return []
-    const items: Array<{ id: string; name: string; sku: string; categoria?: string; tags?: string[]; precio?: number }> = []
+    const items: Array<{ id: string; name: string; sku: string; categoria?: string; tags?: string[]; precio?: number; stockDisponible?: number; stockReservado?: number }> = []
     
     INITIAL_ITEMS.forEach((item) => {
       if (item.proveedor === orden.proveedorNombre) {
@@ -164,6 +164,8 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
               categoria: variant.categoria || item.categoria,
               tags: variant.atributosPrincipales?.map(a => a.value),
               precio: variant.precio?.costo || 0,
+              stockDisponible: parseInt(variant.stock?.disponible || "0"),
+              stockReservado: parseInt(variant.stock?.reservado || "0"),
             })
           })
         } else {
@@ -173,6 +175,8 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
             sku: item.sku || "",
             categoria: item.categoria,
             precio: item.precio?.costo || 0,
+            stockDisponible: parseInt(item.stock?.disponible || "0"),
+            stockReservado: parseInt(item.stock?.reservado || "0"),
           })
         }
       }
@@ -394,6 +398,19 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
   // All event handlers - defined as arrow functions, safe after hooks
   const handleQuantityChange = (idx: number, newQuantity: number) => {
     if (!orden) return
+    const newItems = orden.items.map((it, i) =>
+      i === idx ? { ...it, quantity: newQuantity, total: newQuantity * it.unitPrice } : it
+    )
+    const newTotal = newItems.reduce((sum, it) => sum + it.total, 0)
+    setOrden({ ...orden, items: newItems, importeEstimado: newTotal })
+    updateOrden(orden.id, { items: newItems, importeEstimado: newTotal })
+    setHasChanges(true)
+  }
+  
+  const handleStockProyectadoChange = (idx: number, newStockProyectado: number, stockActual: number) => {
+    if (!orden) return
+    // Calculate new quantity based on desired stock proyectado
+    const newQuantity = Math.max(0, newStockProyectado - stockActual)
     const newItems = orden.items.map((it, i) =>
       i === idx ? { ...it, quantity: newQuantity, total: newQuantity * it.unitPrice } : it
     )
@@ -755,20 +772,6 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
               </div>
             </div>
 
-            {/* Summary Widget */}
-            <div className="px-6 py-3 border-b border-border/20 bg-slate-50/50">
-              <div className="flex items-center gap-6">
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Resumen:</span>
-                <div className="flex items-center gap-4 text-sm">
-                  <span className="text-gray-700"><span className="font-medium">{orden.items.length}</span> items</span>
-                  <span className="text-slate-300">|</span>
-                  <span className="text-gray-700"><span className="font-medium">{orden.items.reduce((sum, it) => sum + it.quantity, 0)}</span> unidades</span>
-                  <span className="text-slate-300">|</span>
-                  <span className="text-gray-700">Total estimado: <span className="font-semibold text-gray-900">${orden.importeEstimado.toLocaleString("es-AR")}</span></span>
-                </div>
-              </div>
-            </div>
-
             {/* Items Section with Tab Header */}
             <div className="flex-1 overflow-y-auto px-6 pt-4 pb-6">
               {orden.items.length === 0 ? (
@@ -966,14 +969,14 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                   {/* Tab Header */}
                   <div className="bg-slate-100 border border-slate-200/80 rounded-t-md">
                     {isEditable ? (
-                      <div className="grid grid-cols-[2.5fr_1.2fr_1fr_auto_1.2fr_auto_1fr_1.5fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      <div className="grid grid-cols-[2.5fr_1fr_auto_1.2fr_auto_1fr_1.2fr_1.5fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
                         <div className="flex items-center px-4">Item</div>
-                        <div className="flex items-center justify-center">Costo Unitario</div>
                         <div className="flex items-center justify-center">Stock Actual</div>
                         <div className="flex items-center justify-center w-6"></div>
-                        <div className="flex items-center justify-center">Cantidad</div>
+                        <div className="flex items-center justify-center">A Pedir</div>
                         <div className="flex items-center justify-center w-6"></div>
                         <div className="flex items-center justify-center whitespace-nowrap">Stock Proyectado</div>
+                        <div className="flex items-center justify-center">Costo Unitario</div>
                         <div className="flex items-center justify-end pr-4">Subtotal</div>
                       </div>
                     ) : (
@@ -1003,7 +1006,7 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                         key={idx}
                         className={`grid items-center py-3 px-4 border-b border-slate-100 last:border-b-0 hover:bg-slate-50/50 transition-colors group ${
                           isEditable 
-                            ? "grid-cols-[2.5fr_1.2fr_1fr_auto_1.2fr_auto_1fr_1.5fr]" 
+                            ? "grid-cols-[2.5fr_1fr_auto_1.2fr_auto_1fr_1.2fr_1.5fr]" 
                             : "grid-cols-[3fr_1.5fr_1.5fr_2fr]"
                         }`}
                       >
@@ -1038,6 +1041,55 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                           </div>
                         </div>
 
+                        {/* Stock Actual - only when editable */}
+                        {isEditable && (
+                          <>
+                            <div className="flex items-center justify-center">
+                              <span className="text-sm text-slate-600 tabular-nums">{stockActual}</span>
+                            </div>
+                            
+                            {/* Arrow */}
+                            <div className="flex items-center justify-center w-6">
+                              <ArrowRight className="w-3.5 h-3.5 text-slate-300" />
+                            </div>
+                          </>
+                        )}
+
+                        {/* A Pedir (Cantidad) */}
+                        <div className="flex items-center justify-center">
+                          {isEditable ? (
+                            <input
+                              type="number"
+                              value={item.quantity}
+                              onChange={(e) => handleQuantityChange(idx, parseInt(e.target.value) || 0)}
+                              className="w-20 text-center text-sm font-medium bg-blue-50 border border-blue-200 focus:border-blue-400 rounded px-2 py-1 focus:outline-none transition-all"
+                              min={0}
+                            />
+                          ) : (
+                            <span className="text-sm font-medium text-gray-700">{item.quantity}</span>
+                          )}
+                        </div>
+                        
+                        {/* Arrow and Stock Proyectado - only when editable */}
+                        {isEditable && (
+                          <>
+                            <div className="flex items-center justify-center w-6">
+                              <ArrowRight className="w-3.5 h-3.5 text-slate-300" />
+                            </div>
+                            
+                            {/* Stock Proyectado - Editable */}
+                            <div className="flex items-center justify-center">
+                              <input
+                                type="number"
+                                value={stockProyectado}
+                                onChange={(e) => handleStockProyectadoChange(idx, parseInt(e.target.value) || 0, stockActual)}
+                                className="w-20 text-center text-sm font-medium text-emerald-600 bg-emerald-50 border border-emerald-200 focus:border-emerald-400 rounded px-2 py-1 focus:outline-none transition-all"
+                                min={stockActual}
+                              />
+                            </div>
+                          </>
+                        )}
+
                         {/* Costo Unit. */}
                         <div className="flex items-center justify-center">
                           {isEditable ? (
@@ -1057,49 +1109,6 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                             </span>
                           )}
                         </div>
-
-                        {/* Stock Actual - only when editable */}
-                        {isEditable && (
-                          <>
-                            <div className="flex items-center justify-center">
-                              <span className="text-sm text-slate-600 tabular-nums">{stockActual}</span>
-                            </div>
-                            
-                            {/* Arrow */}
-                            <div className="flex items-center justify-center w-6">
-                              <ArrowRight className="w-3.5 h-3.5 text-slate-300" />
-                            </div>
-                          </>
-                        )}
-
-                        {/* Cantidad */}
-                        <div className="flex items-center justify-center">
-                          {isEditable ? (
-                            <input
-                              type="number"
-                              value={item.quantity}
-                              onChange={(e) => handleQuantityChange(idx, parseInt(e.target.value) || 0)}
-                              className="w-20 text-center text-sm font-medium bg-blue-50 border border-blue-200 focus:border-blue-400 rounded px-2 py-1 focus:outline-none transition-all"
-                              min={1}
-                            />
-                          ) : (
-                            <span className="text-sm font-medium text-gray-700">{item.quantity}</span>
-                          )}
-                        </div>
-                        
-                        {/* Arrow and Stock Proyectado - only when editable */}
-                        {isEditable && (
-                          <>
-                            <div className="flex items-center justify-center w-6">
-                              <ArrowRight className="w-3.5 h-3.5 text-slate-300" />
-                            </div>
-                            
-                            {/* Stock Proyectado */}
-                            <div className="flex items-center justify-center">
-                              <span className="text-sm font-medium text-emerald-600 tabular-nums">{stockProyectado}</span>
-                            </div>
-                          </>
-                        )}
 
                         {/* Subtotal with Discount */}
                         <div className="flex items-center justify-end gap-2">
@@ -1252,7 +1261,7 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
           />
           
           {/* Modal */}
-          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden">
             {/* Header */}
             <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
               <h3 className="text-base font-semibold text-gray-900">Agregar Item</h3>
@@ -1275,11 +1284,18 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                   type="text"
                   value={newItemSearch}
                   onChange={(e) => setNewItemSearch(e.target.value)}
-                  placeholder="Buscar item, o escribir una descripción libre"
+                  placeholder="Buscar item, o escribir una descripcion libre"
                   className="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20"
                   autoFocus
                 />
               </div>
+            </div>
+            
+            {/* Tab Header */}
+            <div className="grid grid-cols-[2fr_1fr_1fr] px-4 py-2 bg-slate-50 border-b border-slate-100 text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <span>Item</span>
+              <span className="text-center">Stock</span>
+              <span className="text-right">Costo Unitario</span>
             </div>
             
             {/* Results */}
@@ -1287,38 +1303,55 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
               {newItemSearch.trim() ? (
                 <>
                   {searchResults.length > 0 ? (
-                    <div className="py-2">
+                    <div>
                       {searchResults.map((item) => (
                         <button
                           key={item.id}
-                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left"
+                          className="w-full grid grid-cols-[2fr_1fr_1fr] items-center px-4 py-3 hover:bg-slate-50 transition-colors text-left border-b border-slate-100 last:border-b-0"
                           onClick={() => handleSelectItem(item)}
                         >
-                          <div className="w-10 h-10 rounded bg-slate-100 overflow-hidden flex-shrink-0">
-                            <Image
-                              src={getCategoryImage(item.categoria) || "/placeholder.svg"}
-                              alt={item.name}
-                              width={40}
-                              height={40}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-gray-900 truncate">{item.name}</span>
-                              {item.tags && item.tags.length > 0 && (
-                                <div className="flex items-center gap-1">
-                                  {item.tags.slice(0, 2).map((tag, i) => (
-                                    <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-500">
-                                      {tag}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
+                          {/* Item Info */}
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+                              <Image
+                                src={getCategoryImage(item.categoria) || "/placeholder.svg"}
+                                alt={item.name}
+                                width={40}
+                                height={40}
+                                className="w-full h-full object-cover"
+                              />
                             </div>
-                            <span className="text-xs text-slate-400">{item.sku}</span>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-gray-900 truncate">{item.name}</span>
+                                {item.tags && item.tags.length > 0 && (
+                                  <div className="flex items-center gap-1">
+                                    {item.tags.slice(0, 2).map((tag, i) => (
+                                      <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-500">
+                                        {tag}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                              <span className="text-xs text-slate-400">{item.sku}</span>
+                            </div>
                           </div>
-                          <span className="text-sm font-medium text-gray-700">${item.precio?.toLocaleString("es-AR")}</span>
+                          
+                          {/* Stock Info */}
+                          <div className="text-center">
+                            <span className="text-sm text-slate-600">
+                              {item.stockDisponible || 0} <span className="text-slate-400">disponibles</span>
+                            </span>
+                            {(item.stockReservado || 0) > 0 && (
+                              <p className="text-xs text-slate-400">
+                                ({item.stockReservado} reservados)
+                              </p>
+                            )}
+                          </div>
+                          
+                          {/* Costo */}
+                          <span className="text-sm font-medium text-gray-700 text-right">${item.precio?.toLocaleString("es-AR")}</span>
                         </button>
                       ))}
                     </div>
@@ -1336,39 +1369,56 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                   )}
                 </>
               ) : (
-                <div className="py-2">
-                  <p className="px-4 py-2 text-xs text-slate-400 uppercase tracking-wider">Productos del proveedor</p>
+                <div>
+                  <p className="px-4 py-2 text-xs text-slate-400 uppercase tracking-wider bg-slate-50/50">Productos del proveedor</p>
                   {notSelectedItems.slice(0, 8).map((item) => (
                     <button
                       key={item.id}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left"
+                      className="w-full grid grid-cols-[2fr_1fr_1fr] items-center px-4 py-3 hover:bg-slate-50 transition-colors text-left border-b border-slate-100 last:border-b-0"
                       onClick={() => handleSelectItem(item)}
                     >
-                      <div className="w-10 h-10 rounded bg-slate-100 overflow-hidden flex-shrink-0">
-                        <Image
-                          src={getCategoryImage(item.categoria) || "/placeholder.svg"}
-                          alt={item.name}
-                          width={40}
-                          height={40}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-gray-900 truncate">{item.name}</span>
-                          {item.tags && item.tags.length > 0 && (
-                            <div className="flex items-center gap-1">
-                              {item.tags.slice(0, 2).map((tag, i) => (
-                                <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-500">
-                                  {tag}
-                                </span>
-                              ))}
-                            </div>
-                          )}
+                      {/* Item Info */}
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+                          <Image
+                            src={getCategoryImage(item.categoria) || "/placeholder.svg"}
+                            alt={item.name}
+                            width={40}
+                            height={40}
+                            className="w-full h-full object-cover"
+                          />
                         </div>
-                        <span className="text-xs text-slate-400">{item.sku}</span>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-gray-900 truncate">{item.name}</span>
+                            {item.tags && item.tags.length > 0 && (
+                              <div className="flex items-center gap-1">
+                                {item.tags.slice(0, 2).map((tag, i) => (
+                                  <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-500">
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <span className="text-xs text-slate-400">{item.sku}</span>
+                        </div>
                       </div>
-                      <span className="text-sm font-medium text-gray-700">${item.precio?.toLocaleString("es-AR")}</span>
+                      
+                      {/* Stock Info */}
+                      <div className="text-center">
+                        <span className="text-sm text-slate-600">
+                          {item.stockDisponible || 0} <span className="text-slate-400">disponibles</span>
+                        </span>
+                        {(item.stockReservado || 0) > 0 && (
+                          <p className="text-xs text-slate-400">
+                            ({item.stockReservado} reservados)
+                          </p>
+                        )}
+                      </div>
+                      
+                      {/* Costo */}
+                      <span className="text-sm font-medium text-gray-700 text-right">${item.precio?.toLocaleString("es-AR")}</span>
                     </button>
                   ))}
                   {notSelectedItems.length === 0 && (
