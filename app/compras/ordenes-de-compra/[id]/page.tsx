@@ -111,6 +111,9 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
   // Selection state for empty order item picker
   const [selectedProveedorItems, setSelectedProveedorItems] = useState<{ [id: string]: boolean }>({})
   
+  // State to force show selection view even when items exist
+  const [forceSelectionView, setForceSelectionView] = useState(false)
+  
   // Get unique proveedores from all items
   const uniqueProveedores = useMemo(() => {
     const proveedores = new Set<string>()
@@ -268,6 +271,12 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const handleGenerarCompra = () => {
     if (!orden || selectedProveedorCount === 0) return
     
+    // Create a map of existing items by SKU to preserve their quantities
+    const existingItemsBySku: { [sku: string]: OrdenDeCompraItem } = {}
+    for (const item of orden.items) {
+      existingItemsBySku[item.sku] = item
+    }
+    
     const newItems: OrdenDeCompraItem[] = []
     
     for (const item of proveedorItemsStructured) {
@@ -275,29 +284,41 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
       if (isParent) {
         for (const variant of item.variants!) {
           const id = getItemId(variant)
-          if (selectedProveedorItems[id]) {
-            newItems.push({
-              sku: `${item.skuPrefix}-${variant.skuSuffix}`,
-              name: variant.name || item.name,
-              quantity: 1,
-              unitPrice: variant.precio?.costo || 0,
-              total: variant.precio?.costo || 0,
-              categoria: variant.categoria || item.categoria,
-              tags: variant.atributosPrincipales?.map(a => a.value),
-            })
+          const sku = `${item.skuPrefix}-${variant.skuSuffix}`
+          if (selectedProveedorItems[id] || selectedProveedorItems[sku]) {
+            // If item already exists, preserve its quantity and price
+            if (existingItemsBySku[sku]) {
+              newItems.push(existingItemsBySku[sku])
+            } else {
+              newItems.push({
+                sku,
+                name: variant.name || item.name,
+                quantity: 1,
+                unitPrice: variant.precio?.costo || 0,
+                total: variant.precio?.costo || 0,
+                categoria: variant.categoria || item.categoria,
+                tags: variant.atributosPrincipales?.map(a => a.value),
+              })
+            }
           }
         }
       } else {
         const id = getItemId(item)
-        if (selectedProveedorItems[id]) {
-          newItems.push({
-            sku: item.sku || "",
-            name: item.name,
-            quantity: 1,
-            unitPrice: item.precio?.costo || 0,
-            total: item.precio?.costo || 0,
-            categoria: item.categoria,
-          })
+        const sku = item.sku || ""
+        if (selectedProveedorItems[id] || selectedProveedorItems[sku]) {
+          // If item already exists, preserve its quantity and price
+          if (existingItemsBySku[sku]) {
+            newItems.push(existingItemsBySku[sku])
+          } else {
+            newItems.push({
+              sku,
+              name: item.name,
+              quantity: 1,
+              unitPrice: item.precio?.costo || 0,
+              total: item.precio?.costo || 0,
+              categoria: item.categoria,
+            })
+          }
         }
       }
     }
@@ -308,6 +329,7 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     updateOrden(orden.id, { items: newItems, importeEstimado: newTotal })
     setSelectedProveedorItems({})
     setHasChanges(true)
+    setForceSelectionView(false)
   }
   
   // Filter items based on search
@@ -438,6 +460,14 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     setOrden({ ...orden, items: newItems, importeEstimado: newTotal })
     updateOrden(orden.id, { items: newItems, importeEstimado: newTotal })
     setHasChanges(true)
+  }
+  
+  const handleDeleteAllItems = () => {
+    if (!orden) return
+    setOrden({ ...orden, items: [], importeEstimado: 0 })
+    updateOrden(orden.id, { items: [], importeEstimado: 0 })
+    setHasChanges(true)
+    setItemDiscounts({})
   }
 
   const handleDeshacer = () => {
@@ -774,8 +804,8 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
 
             {/* Items Section with Tab Header */}
             <div className="flex-1 overflow-y-auto px-6 pt-4 pb-6">
-              {orden.items.length === 0 ? (
-                /* Empty State - Proveedor Items Picker */
+              {(orden.items.length === 0 || forceSelectionView) ? (
+                /* Empty State or Selection View - Proveedor Items Picker */
                 <>
                   {/* Tab Header with Select All */}
                   <div className="bg-slate-100 border border-slate-200/80 rounded-t-md">
@@ -969,15 +999,40 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                   {/* Tab Header */}
                   <div className="bg-slate-100 border border-slate-200/80 rounded-t-md">
                     {isEditable ? (
-                      <div className="grid grid-cols-[2.5fr_1fr_auto_1.2fr_auto_1fr_1.2fr_1.5fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
-                        <div className="flex items-center px-4">Item</div>
+                      <div className="grid grid-cols-[2.5fr_1fr_auto_1.2fr_auto_1fr_1.2fr_1.2fr_auto] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        <div className="flex items-center px-4 gap-2">
+                          <span>Item</span>
+                          <button
+                            onClick={() => {
+                              // Pre-select existing items in selection view
+                              const existingSelections: { [id: string]: boolean } = {}
+                              for (const item of orden.items) {
+                                existingSelections[item.sku] = true
+                              }
+                              setSelectedProveedorItems(existingSelections)
+                              setForceSelectionView(true)
+                            }}
+                            className="text-[10px] text-blue-500 hover:text-blue-700 font-normal normal-case tracking-normal hover:underline"
+                          >
+                            ir a seleccion
+                          </button>
+                        </div>
                         <div className="flex items-center justify-center">Stock Actual</div>
                         <div className="flex items-center justify-center w-6"></div>
                         <div className="flex items-center justify-center">A Pedir</div>
                         <div className="flex items-center justify-center w-6"></div>
                         <div className="flex items-center justify-center whitespace-nowrap">Stock Proyectado</div>
                         <div className="flex items-center justify-center">Costo Unitario</div>
-                        <div className="flex items-center justify-end pr-4">Subtotal</div>
+                        <div className="flex items-center justify-center">Subtotal</div>
+                        <div className="flex items-center justify-center w-10">
+                          <button
+                            onClick={handleDeleteAllItems}
+                            className="p-1 rounded hover:bg-red-100 text-slate-400 hover:text-red-500 transition-colors"
+                            title="Eliminar todos"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                     ) : (
                       <div className="grid grid-cols-[3fr_1.5fr_1.5fr_2fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
@@ -1006,7 +1061,7 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                         key={idx}
                         className={`grid items-center py-3 px-4 border-b border-slate-100 last:border-b-0 hover:bg-slate-50/50 transition-colors group ${
                           isEditable 
-                            ? "grid-cols-[2.5fr_1fr_auto_1.2fr_auto_1fr_1.2fr_1.5fr]" 
+                            ? "grid-cols-[2.5fr_1fr_auto_1.2fr_auto_1fr_1.2fr_1.2fr_auto]" 
                             : "grid-cols-[3fr_1.5fr_1.5fr_2fr]"
                         }`}
                       >
@@ -1059,11 +1114,27 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                         <div className="flex items-center justify-center">
                           {isEditable ? (
                             <input
-                              type="number"
-                              value={item.quantity}
-                              onChange={(e) => handleQuantityChange(idx, parseInt(e.target.value) || 0)}
+                              type="text"
+                              inputMode="numeric"
+                              value={item.quantity === 0 ? "" : item.quantity}
+                              onChange={(e) => {
+                                const val = e.target.value
+                                if (val === "" || val === "-") {
+                                  handleQuantityChange(idx, 0)
+                                } else {
+                                  const num = parseInt(val)
+                                  if (!isNaN(num) && num >= 0) {
+                                    handleQuantityChange(idx, num)
+                                  }
+                                }
+                              }}
+                              onBlur={(e) => {
+                                const val = e.target.value
+                                if (val === "" || parseInt(val) < 0 || isNaN(parseInt(val))) {
+                                  handleQuantityChange(idx, 0)
+                                }
+                              }}
                               className="w-20 text-center text-sm font-medium bg-blue-50 border border-blue-200 focus:border-blue-400 rounded px-2 py-1 focus:outline-none transition-all"
-                              min={0}
                             />
                           ) : (
                             <span className="text-sm font-medium text-gray-700">{item.quantity}</span>
@@ -1077,15 +1148,24 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                               <ArrowRight className="w-3.5 h-3.5 text-slate-300" />
                             </div>
                             
-                            {/* Stock Proyectado - Editable */}
+                            {/* Stock Proyectado - Only adjustable via arrows */}
                             <div className="flex items-center justify-center">
-                              <input
-                                type="number"
-                                value={stockProyectado}
-                                onChange={(e) => handleStockProyectadoChange(idx, parseInt(e.target.value) || 0, stockActual)}
-                                className="w-20 text-center text-sm font-medium text-emerald-600 bg-emerald-50 border border-emerald-200 focus:border-emerald-400 rounded px-2 py-1 focus:outline-none transition-all"
-                                min={stockActual}
-                              />
+                              <div className="flex items-center gap-1">
+                                <button
+                                  onClick={() => handleStockProyectadoChange(idx, Math.max(stockActual, stockProyectado - 1), stockActual)}
+                                  className="w-6 h-6 flex items-center justify-center rounded border border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors"
+                                  disabled={stockProyectado <= stockActual}
+                                >
+                                  <Minus className="w-3 h-3" />
+                                </button>
+                                <span className="w-12 text-center text-sm font-medium text-emerald-600 tabular-nums">{stockProyectado}</span>
+                                <button
+                                  onClick={() => handleStockProyectadoChange(idx, stockProyectado + 1, stockActual)}
+                                  className="w-6 h-6 flex items-center justify-center rounded border border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                </button>
+                              </div>
                             </div>
                           </>
                         )}
@@ -1111,8 +1191,8 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                         </div>
 
                         {/* Subtotal with Discount */}
-                        <div className="flex items-center justify-end gap-2">
-                          <div className="text-right">
+                        <div className="flex items-center justify-center">
+                          <div className="text-center">
                             {discountAmount > 0 ? (
                               <>
                                 <span className="text-sm font-semibold text-gray-900">
@@ -1123,18 +1203,13 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                                 </p>
                               </>
                             ) : (
-                              <>
-                                <span className="text-sm font-semibold text-gray-900">
-                                  ${itemSubtotal.toLocaleString("es-AR")}
-                                </span>
-                                <p className="text-[10px] text-slate-400">
-                                  {item.quantity} x ${item.unitPrice.toLocaleString("es-AR")}
-                                </p>
-                              </>
+                              <span className="text-sm font-semibold text-gray-900">
+                                ${itemSubtotal.toLocaleString("es-AR")}
+                              </span>
                             )}
                             {/* Discount input */}
                             {isEditable && (
-                              <div className="flex items-center gap-1 mt-1 justify-end">
+                              <div className="flex items-center gap-1 mt-1 justify-center">
                                 <input
                                   type="number"
                                   placeholder="Dto"
@@ -1155,16 +1230,20 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                               </div>
                             )}
                           </div>
-                          {isEditable && (
+                        </div>
+                        
+                        {/* Trash column - only when editable */}
+                        {isEditable && (
+                          <div className="flex items-center justify-center w-10">
                             <button
                               onClick={() => handleDeleteItem(idx)}
-                              className="p-1.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                              className="p-1.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors"
                               title="Eliminar"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
-                          )}
-                        </div>
+                          </div>
+                        )}
                       </div>
                     )})}
 
@@ -1231,10 +1310,10 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                         {/* Divider */}
                         <div className="w-full border-t border-slate-300 my-1" />
                         
-                        {/* Total Estimado */}
-                        <div className="flex items-center justify-between w-full">
-                          <span className="text-xs text-slate-500 font-medium">Total Estimado</span>
-                          <span className="text-xl font-bold text-gray-900">
+                        {/* Total Estimado - Label and Number stacked */}
+                        <div className="flex flex-col items-end w-full pt-1">
+                          <span className="text-xs text-slate-500 font-medium uppercase tracking-wide">Total Estimado</span>
+                          <span className="text-2xl font-bold text-gray-900 mt-0.5">
                             ${calculateTotals.total.toLocaleString("es-AR")}
                           </span>
                         </div>
