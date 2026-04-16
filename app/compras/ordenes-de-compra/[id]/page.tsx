@@ -256,17 +256,53 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const filteredProveedorItems = useMemo(() => {
     let items = [...proveedorItemsStructured]
     
-    // Apply search filter
+    // Helper: get all searchable fields from an item (similar to catalogo search)
+    const getSearchableFields = (item: any, parentSkuPrefix?: string): string[] => {
+      const fields: string[] = []
+      if (item.name) fields.push(item.name)
+      if (item.sku) fields.push(item.sku)
+      if (item.skuPrefix) fields.push(item.skuPrefix)
+      if (item.skuSuffix) {
+        fields.push(item.skuSuffix)
+        if (parentSkuPrefix) fields.push(`${parentSkuPrefix}-${item.skuSuffix}`)
+      }
+      if (item.marca) fields.push(item.marca)
+      if (item.categoria) fields.push(item.categoria)
+      if (item.proveedor) fields.push(item.proveedor)
+      if (item.modelo) fields.push(item.modelo)
+      if (item.atributosPrincipales) {
+        item.atributosPrincipales.forEach((attr: any) => {
+          fields.push(attr.key)
+          fields.push(attr.value)
+        })
+      }
+      return fields
+    }
+    
+    // Apply search filter (matching catalogo behavior - all words must match)
     if (selectionSearch.trim()) {
-      const search = selectionSearch.toLowerCase()
+      const searchWords = selectionSearch.toLowerCase().trim().split(/\s+/).filter(w => w.length > 0)
+      
       items = items.filter(item => {
-        const nameMatch = item.name.toLowerCase().includes(search)
-        const skuMatch = item.sku?.toLowerCase().includes(search) || item.skuPrefix?.toLowerCase().includes(search)
-        const variantMatch = item.variants?.some(v => 
-          v.name?.toLowerCase().includes(search) || 
-          v.skuSuffix?.toLowerCase().includes(search)
-        )
-        return nameMatch || skuMatch || variantMatch
+        // Get parent searchable fields
+        const parentFields = getSearchableFields(item)
+        const parentText = parentFields.join(" ").toLowerCase()
+        const parentMatches = searchWords.every(word => parentText.includes(word))
+        
+        if (parentMatches) return true
+        
+        // Check variants
+        if (item.variants) {
+          return item.variants.some((v: any) => {
+            const variantFields = getSearchableFields(v, item.skuPrefix)
+            // Include parent name/marca for variant search context
+            const combinedFields = [...parentFields, ...variantFields]
+            const combinedText = combinedFields.join(" ").toLowerCase()
+            return searchWords.every(word => combinedText.includes(word))
+          })
+        }
+        
+        return false
       })
     }
     
@@ -274,7 +310,7 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     if (selectionFilters.categoria) {
       items = items.filter(item => 
         item.categoria === selectionFilters.categoria ||
-        item.variants?.some(v => v.categoria === selectionFilters.categoria)
+        item.variants?.some((v: any) => v.categoria === selectionFilters.categoria)
       )
     }
     
@@ -287,22 +323,18 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     if (selectionFilters.stockRange) {
       items = items.filter(item => {
         const getStock = (i: any) => parseInt(i.stock?.disponible || "0")
-        if (item.hasVariants && item.variants) {
-          return item.variants.some(v => {
-            const stock = getStock(v)
-            if (selectionFilters.stockRange === "sin-stock") return stock === 0
-            if (selectionFilters.stockRange === "bajo") return stock > 0 && stock <= 10
-            if (selectionFilters.stockRange === "medio") return stock > 10 && stock <= 50
-            if (selectionFilters.stockRange === "alto") return stock > 50
-            return true
-          })
-        } else {
-          const stock = getStock(item)
+        const checkStockRange = (stock: number) => {
           if (selectionFilters.stockRange === "sin-stock") return stock === 0
           if (selectionFilters.stockRange === "bajo") return stock > 0 && stock <= 10
           if (selectionFilters.stockRange === "medio") return stock > 10 && stock <= 50
           if (selectionFilters.stockRange === "alto") return stock > 50
           return true
+        }
+        
+        if (item.hasVariants && item.variants) {
+          return item.variants.some((v: any) => checkStockRange(getStock(v)))
+        } else {
+          return checkStockRange(getStock(item))
         }
       })
     }
@@ -311,14 +343,22 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     items.sort((a, b) => {
       if (selectionSort === "name") return a.name.localeCompare(b.name)
       if (selectionSort === "stock") {
-        const stockA = parseInt(a.stock?.disponible || "0")
-        const stockB = parseInt(b.stock?.disponible || "0")
-        return stockA - stockB
+        const getMinStock = (item: any) => {
+          if (item.hasVariants && item.variants) {
+            return Math.min(...item.variants.map((v: any) => parseInt(v.stock?.disponible || "0")))
+          }
+          return parseInt(item.stock?.disponible || "0")
+        }
+        return getMinStock(a) - getMinStock(b)
       }
       if (selectionSort === "precio") {
-        const precioA = a.precio?.costo || 0
-        const precioB = b.precio?.costo || 0
-        return precioA - precioB
+        const getMinPrice = (item: any) => {
+          if (item.hasVariants && item.variants) {
+            return Math.min(...item.variants.map((v: any) => v.precio?.costo || 0))
+          }
+          return item.precio?.costo || 0
+        }
+        return getMinPrice(a) - getMinPrice(b)
       }
       return 0
     })
