@@ -1299,15 +1299,30 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                   {/* Tab Header */}
                   <div className="bg-slate-100 border border-slate-200/80 rounded-t-md">
                     {isEditable ? (
-                      <div className="grid grid-cols-[2.2fr_0.8fr_auto_1fr_auto_0.9fr_1fr_1.4fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      <div className="grid grid-cols-[2fr_0.8fr_auto_1fr_auto_0.9fr_1.1fr_1.5fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
                         <div className="flex items-center px-4 gap-2">
                           <span>Item</span>
                           <button
                             onClick={() => {
                               // Pre-select existing items in selection view
+                              // Need to map SKUs to the correct item IDs used by getItemId
                               const existingSelections: { [id: string]: boolean } = {}
-                              for (const item of orden.items) {
-                                existingSelections[item.sku] = true
+                              for (const orderItem of orden.items) {
+                                // Find the matching item in proveedorItemsStructured to get the correct ID
+                                for (const provItem of proveedorItemsStructured) {
+                                  if (provItem.hasVariants && provItem.variants) {
+                                    for (const variant of provItem.variants) {
+                                      const variantSku = `${provItem.skuPrefix}-${variant.skuSuffix}`
+                                      if (variantSku === orderItem.sku) {
+                                        const id = getItemId(variant)
+                                        if (id) existingSelections[id] = true
+                                      }
+                                    }
+                                  } else if (provItem.sku === orderItem.sku) {
+                                    const id = getItemId(provItem)
+                                    if (id) existingSelections[id] = true
+                                  }
+                                }
                               }
                               setSelectedProveedorItems(existingSelections)
                               setForceSelectionView(true)
@@ -1323,7 +1338,7 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                         <div className="flex items-center justify-center w-6"></div>
                         <div className="flex items-center justify-center whitespace-nowrap">Stock Proy.</div>
                         <div className="flex items-center justify-center">Costo Unit.</div>
-                        <div className="flex items-center justify-center">Subtotal</div>
+                        <div className="flex items-center justify-end pr-4">Subtotal</div>
                       </div>
                     ) : (
                       <div className="grid grid-cols-[3fr_1.5fr_1.5fr_2fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
@@ -1380,7 +1395,7 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                         key={idx}
                         className={`grid items-center py-3 px-4 border-b border-slate-100 last:border-b-0 hover:bg-slate-50/50 transition-colors group ${
                           isEditable 
-                            ? "grid-cols-[2.2fr_0.8fr_auto_1fr_auto_0.9fr_1fr_1.4fr]" 
+                            ? "grid-cols-[2fr_0.8fr_auto_1fr_auto_0.9fr_1.1fr_1.5fr]" 
                             : "grid-cols-[3fr_1.5fr_1.5fr_2fr]"
                         }`}
                       >
@@ -1570,7 +1585,7 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                                   type="number"
                                   value={item.unitPrice}
                                   onChange={(e) => handlePriceChange(idx, parseInt(e.target.value) || 0)}
-                                  className="w-16 text-center text-sm font-medium bg-transparent border border-transparent hover:border-slate-200 focus:border-blue-400 rounded px-1 py-1 focus:outline-none focus:bg-white transition-all"
+                                  className="w-20 text-center text-sm font-medium bg-transparent border border-transparent hover:border-slate-200 focus:border-blue-400 rounded px-1 py-1 focus:outline-none focus:bg-white transition-all"
                                   min={0}
                                 />
                               </div>
@@ -1591,8 +1606,8 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                         </div>
 
                         {/* Subtotal with Discount and Bonificadas */}
-                        <div className="flex items-center justify-center">
-                          <div className="text-center">
+                        <div className="flex items-center justify-end pr-4">
+                          <div className="text-right">
                             {(discountAmount > 0 || bonificadasAmount > 0) ? (
                               <>
                                 <span className="text-sm font-semibold text-gray-900">
@@ -1610,7 +1625,7 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                             {/* Discount input */}
                             {isEditable && (
                               <>
-                                <div className="flex items-center gap-1 mt-1 justify-center">
+                                <div className="flex items-center gap-1 mt-1 justify-end">
                                   <input
                                     type="number"
                                     placeholder="Dto"
@@ -1632,7 +1647,7 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                               
                               {/* Unidades Bonificadas */}
                               {bonificadas?.visible ? (
-                                <div className="flex items-center gap-1 mt-1 justify-center">
+                                <div className="flex items-center gap-1 mt-1 justify-end">
                                   <span className="text-[9px] text-slate-500">Bonif:</span>
                                   <input
                                     type="number"
@@ -1652,7 +1667,7 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                               ) : (
                                 <button
                                   onClick={() => handleToggleBonificadas(idx)}
-                                  className="text-[9px] text-blue-500 hover:text-blue-700 hover:underline mt-1"
+                                  className="text-[9px] text-blue-500 hover:text-blue-700 hover:underline mt-1 block ml-auto"
                                 >
                                   + uds bonificadas
                                 </button>
