@@ -4,6 +4,24 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from "
 
 export type CostoBehavior = "preserveMargen" | "preservePrecioFinal"
 
+export type CondicionIva = "Consumidor Final" | "Responsable Inscripto" | "Monotributista" | "Exento"
+
+export interface MiNegocioSettings {
+  tipo: "particular" | "empresa"
+  nombre: string
+  apellido: string
+  razonSocial: string
+  cuit: string
+  dni: string
+  email: string
+  telefono: string
+  direccion: string
+  ciudad: string
+  provincia: string
+  codigoPostal: string
+  condicionIva: CondicionIva
+}
+
 interface PreciosSettings {
   costoBehavior: CostoBehavior
 }
@@ -13,13 +31,32 @@ interface CatalogoSettings {
 }
 
 interface SettingsContextType {
+  miNegocio: MiNegocioSettings
   precios: PreciosSettings
   catalogo: CatalogoSettings
+  updateMiNegocioSettings: (settings: Partial<MiNegocioSettings>) => void
   updatePreciosSettings: (settings: Partial<PreciosSettings>) => void
   updateCatalogoSettings: (settings: Partial<CatalogoSettings>) => void
 }
 
-const defaultSettings: { precios: PreciosSettings; catalogo: CatalogoSettings } = {
+const defaultMiNegocio: MiNegocioSettings = {
+  tipo: "empresa",
+  nombre: "",
+  apellido: "",
+  razonSocial: "",
+  cuit: "",
+  dni: "",
+  email: "",
+  telefono: "",
+  direccion: "",
+  ciudad: "",
+  provincia: "",
+  codigoPostal: "",
+  condicionIva: "Responsable Inscripto",
+}
+
+const defaultSettings: { miNegocio: MiNegocioSettings; precios: PreciosSettings; catalogo: CatalogoSettings } = {
+  miNegocio: defaultMiNegocio,
   precios: {
     costoBehavior: "preservePrecioFinal", // Default: when editing costo, preserve precio final and modify margen
   },
@@ -31,6 +68,7 @@ const defaultSettings: { precios: PreciosSettings; catalogo: CatalogoSettings } 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined)
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
+  const [miNegocio, setMiNegocio] = useState<MiNegocioSettings>(defaultSettings.miNegocio)
   const [precios, setPrecios] = useState<PreciosSettings>(defaultSettings.precios)
   const [catalogo, setCatalogo] = useState<CatalogoSettings>(defaultSettings.catalogo)
 
@@ -40,6 +78,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     if (stored) {
       try {
         const parsed = JSON.parse(stored)
+        if (parsed.miNegocio) {
+          setMiNegocio({ ...defaultSettings.miNegocio, ...parsed.miNegocio })
+        }
         if (parsed.precios) {
           setPrecios({ ...defaultSettings.precios, ...parsed.precios })
         }
@@ -54,8 +95,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem("stockio-settings", JSON.stringify({ precios, catalogo }))
-  }, [precios, catalogo])
+    localStorage.setItem("stockio-settings", JSON.stringify({ miNegocio, precios, catalogo }))
+  }, [miNegocio, precios, catalogo])
+
+  const updateMiNegocioSettings = (settings: Partial<MiNegocioSettings>) => {
+    setMiNegocio((prev) => ({ ...prev, ...settings }))
+  }
 
   const updatePreciosSettings = (settings: Partial<PreciosSettings>) => {
     setPrecios((prev) => ({ ...prev, ...settings }))
@@ -66,7 +111,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <SettingsContext.Provider value={{ precios, catalogo, updatePreciosSettings, updateCatalogoSettings }}>
+    <SettingsContext.Provider value={{ miNegocio, precios, catalogo, updateMiNegocioSettings, updatePreciosSettings, updateCatalogoSettings }}>
       {children}
     </SettingsContext.Provider>
   )
