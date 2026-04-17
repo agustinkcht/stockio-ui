@@ -102,6 +102,17 @@ export function useOrdenesDeCompra() {
     [updateOrden],
   )
 
+  // Delete an orden
+  const deleteOrden = useCallback(
+    (id: string) => {
+      const updatedOrdenes = ordenes.filter((o) => o.id !== id)
+      setOrdenes(updatedOrdenes)
+      saveOrdenes(updatedOrdenes)
+      console.log(`[useOrdenesDeCompra] Deleted orden: ${id}`)
+    },
+    [ordenes, saveOrdenes],
+  )
+
   // Get a single orden by ID
   const getOrdenById = useCallback(
     (id: string) => {
@@ -116,6 +127,7 @@ export function useOrdenesDeCompra() {
     addOrden,
     updateOrden,
     updateEstado,
+    deleteOrden,
     getOrdenById,
     getNextOrderNumber,
   }

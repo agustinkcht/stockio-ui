@@ -23,7 +23,9 @@ import {
   ChevronUp,
   Filter,
   ArrowUpDown,
+  MoreVertical,
 } from "lucide-react"
+import jsPDF from "jspdf"
 import { StockEditModal } from "@/components/modals/stock-edit-modal"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { getCategoryImage } from "@/lib/utils/category-images"
@@ -60,7 +62,7 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
 
   // Use hooks for data persistence
-  const { ordenes, updateOrden, updateEstado } = useOrdenesDeCompra()
+  const { ordenes, updateOrden, updateEstado, deleteOrden } = useOrdenesDeCompra()
   const { currentAccount } = useAccount()
   const { items: allItems } = useItems()
   
@@ -150,6 +152,11 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
   
   // Unidades bonificadas state
   const [itemBonificadas, setItemBonificadas] = useState<{ [idx: number]: { value: number; visible: boolean } }>({})
+  
+  // Confirmation modals state
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false)
+  const [showLlevarComprasModal, setShowLlevarComprasModal] = useState(false)
+  const [showMoreOptionsMenu, setShowMoreOptionsMenu] = useState(false)
   
   // Get unique proveedores from all items
   const uniqueProveedores = useMemo(() => {
@@ -516,8 +523,14 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     ).slice(0, 6)
   }, [newItemSearch, availableItems])
   
-  // Handle "Llevar a Compras" - converts orden to aceptada and creates a compra
-  const handleLlevarACompras = () => {
+  // Handle "Llevar a Compras" - shows confirmation modal first
+  const handleLlevarAComprasClick = () => {
+    if (!orden || orden.items.length === 0) return
+    setShowLlevarComprasModal(true)
+  }
+  
+  // Confirm "Llevar a Compras" - converts orden to aceptada and creates a compra
+  const handleConfirmLlevarACompras = () => {
     if (!orden || orden.items.length === 0 || !currentAccount) return
     
     // Update orden estado to aceptada
@@ -568,6 +581,7 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     const updatedCompras = [newCompra, ...compras]
     localStorage.setItem(storageKey, JSON.stringify(updatedCompras))
     
+    setShowLlevarComprasModal(false)
     // Navigate to compras
     router.push("/compras/compras")
   }
@@ -575,6 +589,111 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
   // Handle "Ver en Compras" - just navigate
   const handleVerEnCompras = () => {
     router.push("/compras/compras")
+  }
+  
+  // Handle delete orden
+  const handleDeleteOrden = () => {
+    if (!orden) return
+    deleteOrden(orden.id)
+    setShowDeleteConfirmModal(false)
+    router.push("/compras/ordenes-de-compra")
+  }
+  
+  // Export PDF
+  const handleExportPDF = () => {
+    if (!orden) return
+    setShowExportDropdown(false)
+    
+    const doc = new jsPDF()
+    const pageWidth = doc.internal.pageSize.getWidth()
+    
+    // Header
+    doc.setFontSize(20)
+    doc.setFont("helvetica", "bold")
+    doc.text(`Orden de Compra ODC-${orden.numero}`, 14, 20)
+    
+    // Info section
+    doc.setFontSize(10)
+    doc.setFont("helvetica", "normal")
+    doc.text(`Proveedor: ${orden.proveedorNombre}`, 14, 35)
+    doc.text(`Fecha: ${new Date(orden.fechaCreacion).toLocaleDateString("es-AR")}`, 14, 42)
+    doc.text(`Estado: ${orden.estado.charAt(0).toUpperCase() + orden.estado.slice(1)}`, 14, 49)
+    
+    // Table header
+    let yPos = 65
+    doc.setFillColor(240, 240, 240)
+    doc.rect(14, yPos - 5, pageWidth - 28, 10, "F")
+    doc.setFont("helvetica", "bold")
+    doc.text("Item", 16, yPos)
+    doc.text("Cant.", 100, yPos)
+    doc.text("Precio Unit.", 120, yPos)
+    doc.text("Subtotal", 160, yPos)
+    
+    // Table rows
+    doc.setFont("helvetica", "normal")
+    yPos += 10
+    
+    orden.items.forEach((item) => {
+      if (yPos > 270) {
+        doc.addPage()
+        yPos = 20
+      }
+      
+      // Truncate long names
+      const name = item.name.length > 40 ? item.name.substring(0, 37) + "..." : item.name
+      doc.text(name, 16, yPos)
+      doc.text(String(item.quantity), 100, yPos)
+      doc.text(`$${item.unitPrice.toLocaleString("es-AR")}`, 120, yPos)
+      doc.text(`$${item.total.toLocaleString("es-AR")}`, 160, yPos)
+      yPos += 8
+    })
+    
+    // Total
+    yPos += 10
+    doc.setDrawColor(200, 200, 200)
+    doc.line(14, yPos - 5, pageWidth - 14, yPos - 5)
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(12)
+    doc.text(`Total Estimado: $${orden.importeEstimado.toLocaleString("es-AR")}`, pageWidth - 14, yPos, { align: "right" })
+    
+    // Download
+    doc.save(`ODC-${orden.numero}.pdf`)
+  }
+  
+  // Export Text
+  const handleExportText = () => {
+    if (!orden) return
+    setShowExportDropdown(false)
+    
+    let content = `ORDEN DE COMPRA ODC-${orden.numero}\n`
+    content += `${"=".repeat(40)}\n\n`
+    content += `Proveedor: ${orden.proveedorNombre}\n`
+    content += `Fecha: ${new Date(orden.fechaCreacion).toLocaleDateString("es-AR")}\n`
+    content += `Estado: ${orden.estado.charAt(0).toUpperCase() + orden.estado.slice(1)}\n\n`
+    content += `ITEMS\n`
+    content += `${"-".repeat(40)}\n`
+    
+    orden.items.forEach((item, idx) => {
+      content += `${idx + 1}. ${item.name}\n`
+      content += `   SKU: ${item.sku || "N/A"}\n`
+      content += `   Cantidad: ${item.quantity}\n`
+      content += `   Precio Unit.: $${item.unitPrice.toLocaleString("es-AR")}\n`
+      content += `   Subtotal: $${item.total.toLocaleString("es-AR")}\n\n`
+    })
+    
+    content += `${"-".repeat(40)}\n`
+    content += `TOTAL ESTIMADO: $${orden.importeEstimado.toLocaleString("es-AR")}\n`
+    
+    // Create and download file
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `ODC-${orden.numero}.txt`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
   }
 
   // Filter out already selected items - MUST be before early return
@@ -985,20 +1104,14 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                       >
                         <button
                           className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
-                          onClick={() => {
-                            // TODO: Export PDF
-                            setShowExportDropdown(false)
-                          }}
+                          onClick={handleExportPDF}
                         >
                           <FileDown className="w-4 h-4 text-slate-400" />
                           Exportar PDF
                         </button>
                         <button
                           className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
-                          onClick={() => {
-                            // TODO: Export Text
-                            setShowExportDropdown(false)
-                          }}
+                          onClick={handleExportText}
                         >
                           <FileText className="w-4 h-4 text-slate-400" />
                           Exportar Texto
@@ -1016,7 +1129,7 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                     </button>
                   ) : (
                     <button
-                      onClick={handleLlevarACompras}
+                      onClick={handleLlevarAComprasClick}
                       disabled={orden.items.length === 0}
                       className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer gap-1.5 shrink-0 px-3 rounded-md flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                     >
@@ -1024,6 +1137,33 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                       Llevar a Compras
                     </button>
                   )}
+                  
+                  {/* More Options Menu */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowMoreOptionsMenu(!showMoreOptionsMenu)}
+                      className="h-8 w-8 flex items-center justify-center text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer rounded-md"
+                    >
+                      <MoreVertical className="w-4 h-4 text-slate-500" />
+                    </button>
+                    {showMoreOptionsMenu && (
+                      <div
+                        className="absolute top-full right-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[180px]"
+                        onMouseLeave={() => setShowMoreOptionsMenu(false)}
+                      >
+                        <button
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors text-left"
+                          onClick={() => {
+                            setShowMoreOptionsMenu(false)
+                            setShowDeleteConfirmModal(true)
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Eliminar orden de compra
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -2031,6 +2171,70 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                 className="px-4 py-2 text-sm font-medium bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
               >
                 Sí, cambiar proveedor
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowDeleteConfirmModal(false)}
+          />
+          <div className="relative bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">
+              Eliminar orden de compra
+            </h3>
+            <p className="text-sm text-slate-600 mb-6">
+              ¿Estás seguro de que deseas eliminar la orden de compra ODC-{orden?.numero}? Esta acción no se puede deshacer.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteConfirmModal(false)}
+                className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteOrden}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Llevar a Compras Confirmation Modal */}
+      {showLlevarComprasModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowLlevarComprasModal(false)}
+          />
+          <div className="relative bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">
+              Confirmar orden de compra
+            </h3>
+            <p className="text-sm text-slate-600 mb-6">
+              Al continuar, la orden pasará a estado <span className="font-medium text-blue-600">Aceptada</span> y se creará una compra asociada. Podrás seguir editando el contenido desde la sección de Compras.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowLlevarComprasModal(false)}
+                className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmLlevarACompras}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+              >
+                Aceptar
               </button>
             </div>
           </div>
