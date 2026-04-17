@@ -83,7 +83,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       try {
         const parsed = JSON.parse(stored)
         if (parsed.miNegocio) {
-          setMiNegocio({ ...defaultSettings.miNegocio, ...parsed.miNegocio })
+          // Filter out empty string values so defaults are used instead
+          const filteredMiNegocio = Object.fromEntries(
+            Object.entries(parsed.miNegocio).filter(([, value]) => value !== "")
+          )
+          setMiNegocio({ ...defaultSettings.miNegocio, ...filteredMiNegocio })
         }
         if (parsed.precios) {
           setPrecios({ ...defaultSettings.precios, ...parsed.precios })
