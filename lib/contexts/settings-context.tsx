@@ -7,6 +7,8 @@ export type CostoBehavior = "preserveMargen" | "preservePrecioFinal"
 export type CondicionIva = "Consumidor Final" | "Responsable Inscripto" | "Monotributista" | "Exento"
 
 export interface MiNegocioSettings {
+  nombreApp: string
+  fotoUrl: string
   tipo: "particular" | "empresa"
   nombre: string
   apellido: string
@@ -40,18 +42,20 @@ interface SettingsContextType {
 }
 
 const defaultMiNegocio: MiNegocioSettings = {
+  nombreApp: "In Vino Veritas",
+  fotoUrl: "/images/users/invino.jpg",
   tipo: "empresa",
   nombre: "",
   apellido: "",
-  razonSocial: "",
-  cuit: "",
+  razonSocial: "In Vino Veritas",
+  cuit: "30-71456789-2",
   dni: "",
-  email: "",
-  telefono: "",
-  direccion: "",
-  ciudad: "",
-  provincia: "",
-  codigoPostal: "",
+  email: "invino@gmail.com",
+  telefono: "011 4314-6816",
+  direccion: "Av. Ángel T. de Alvear 1245",
+  ciudad: "Don Torcuato",
+  provincia: "Provincia de Buenos Aires",
+  codigoPostal: "B1611ELK",
   condicionIva: "Responsable Inscripto",
 }
 

@@ -1,6 +1,7 @@
 "use client"
 
-import { Settings, DollarSign, ShoppingCart, Package, FolderOpen, Building2, User } from "lucide-react"
+import { Settings, DollarSign, ShoppingCart, Package, FolderOpen, Building2, User, Camera } from "lucide-react"
+import Image from "next/image"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { Sidebar } from "@/components/layout/sidebar"
@@ -92,35 +93,64 @@ export default function AjustesPage() {
                 </div>
                 
                 <div className="px-6 py-5 space-y-5">
-                  {/* Tipo de Negocio */}
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Tipo de Negocio</label>
-                    <div className="flex gap-3">
+                  {/* Photo and App Name */}
+                  <div className="flex items-start gap-5">
+                    {/* Photo */}
+                    <div className="relative group">
+                      <div className="w-20 h-20 rounded-xl overflow-hidden bg-slate-100 border-2 border-slate-200">
+                        {miNegocio.fotoUrl ? (
+                          <Image
+                            src={miNegocio.fotoUrl}
+                            alt="Logo del negocio"
+                            width={80}
+                            height={80}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Building2 className="w-8 h-8 text-slate-400" />
+                          </div>
+                        )}
+                      </div>
                       <button
                         type="button"
-                        onClick={() => updateMiNegocioSettings({ tipo: "particular" })}
-                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
-                          miNegocio.tipo === "particular"
-                            ? "border-slate-900 bg-slate-50"
-                            : "border-slate-200 hover:border-slate-300"
-                        }`}
+                        className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"
+                        onClick={() => {
+                          const url = prompt("URL de la imagen:", miNegocio.fotoUrl)
+                          if (url !== null) updateMiNegocioSettings({ fotoUrl: url })
+                        }}
                       >
-                        <User className="w-5 h-5" />
-                        <span className="font-medium text-sm">Particular</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => updateMiNegocioSettings({ tipo: "empresa" })}
-                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all ${
-                          miNegocio.tipo === "empresa"
-                            ? "border-slate-900 bg-slate-50"
-                            : "border-slate-200 hover:border-slate-300"
-                        }`}
-                      >
-                        <Building2 className="w-5 h-5" />
-                        <span className="font-medium text-sm">Empresa</span>
+                        <Camera className="w-5 h-5 text-white" />
                       </button>
                     </div>
+                    
+                    {/* App Name */}
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">Nombre del Negocio</label>
+                      <input
+                        type="text"
+                        value={miNegocio.nombreApp}
+                        onChange={(e) => updateMiNegocioSettings({ nombreApp: e.target.value })}
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400"
+                        placeholder="Nombre de tu negocio"
+                      />
+                      <p className="text-xs text-slate-500 mt-1">Este nombre aparecerá en la aplicación</p>
+                    </div>
+                  </div>
+
+                  <div className="h-px bg-slate-100" />
+
+                  {/* Tipo de Negocio - Selector */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Tipo de Negocio</label>
+                    <select
+                      value={miNegocio.tipo}
+                      onChange={(e) => updateMiNegocioSettings({ tipo: e.target.value as "particular" | "empresa" })}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 bg-white"
+                    >
+                      <option value="particular">Particular</option>
+                      <option value="empresa">Empresa</option>
+                    </select>
                   </div>
 
                   {/* Razón Social (solo empresa) */}
