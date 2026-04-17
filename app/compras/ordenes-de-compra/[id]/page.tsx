@@ -120,6 +120,9 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
   // State to force show selection view even when items exist
   const [forceSelectionView, setForceSelectionView] = useState(false)
   
+  // Check if we're in selection view (empty order or forced)
+  const isInSelectionView = (orden?.items.length === 0 || forceSelectionView)
+  
   // Item selection view search and filters
   const [selectionSearch, setSelectionSearch] = useState("")
   const [selectionFilters, setSelectionFilters] = useState<{
@@ -129,6 +132,7 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     precioRange: string
   }>({ categoria: "", marca: "", stockRange: "", precioRange: "" })
   const [selectionSort, setSelectionSort] = useState<"name" | "stock" | "precio">("name")
+  const [selectionSortDirection, setSelectionSortDirection] = useState<"asc" | "desc">("asc")
   const [showSelectionFilters, setShowSelectionFilters] = useState(false)
   
   // Stock edit modal state
@@ -287,30 +291,37 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     }
     
     // Apply search filter (matching catalogo behavior - all words must match)
+    // Also filters children to show only matching variants
     if (selectionSearch.trim()) {
       const searchWords = selectionSearch.toLowerCase().trim().split(/\s+/).filter(w => w.length > 0)
       
-      items = items.filter(item => {
+      items = items.map(item => {
         // Get parent searchable fields
         const parentFields = getSearchableFields(item)
         const parentText = parentFields.join(" ").toLowerCase()
         const parentMatches = searchWords.every(word => parentText.includes(word))
         
-        if (parentMatches) return true
+        // If parent matches all terms, return item with all variants
+        if (parentMatches) return item
         
-        // Check variants
-        if (item.variants) {
-          return item.variants.some((v: any) => {
+        // Otherwise, filter variants to only matching ones
+        if (item.variants && item.variants.length > 0) {
+          const matchingVariants = item.variants.filter((v: any) => {
             const variantFields = getSearchableFields(v, item.skuPrefix)
             // Include parent name/marca for variant search context
             const combinedFields = [...parentFields, ...variantFields]
             const combinedText = combinedFields.join(" ").toLowerCase()
             return searchWords.every(word => combinedText.includes(word))
           })
+          
+          if (matchingVariants.length > 0) {
+            // Return item with filtered variants
+            return { ...item, variants: matchingVariants }
+          }
         }
         
-        return false
-      })
+        return null // No match
+      }).filter(Boolean) as typeof items
     }
     
     // Apply categoria filter
@@ -346,32 +357,34 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
       })
     }
     
-    // Apply sorting
+    // Apply sorting with direction
+    const direction = selectionSortDirection === "asc" ? 1 : -1
     items.sort((a, b) => {
-      if (selectionSort === "name") return a.name.localeCompare(b.name)
-      if (selectionSort === "stock") {
+      let result = 0
+      if (selectionSort === "name") {
+        result = a.name.localeCompare(b.name)
+      } else if (selectionSort === "stock") {
         const getMinStock = (item: any) => {
           if (item.hasVariants && item.variants) {
             return Math.min(...item.variants.map((v: any) => parseInt(v.stock?.disponible || "0")))
           }
           return parseInt(item.stock?.disponible || "0")
         }
-        return getMinStock(a) - getMinStock(b)
-      }
-      if (selectionSort === "precio") {
+        result = getMinStock(a) - getMinStock(b)
+      } else if (selectionSort === "precio") {
         const getMinPrice = (item: any) => {
           if (item.hasVariants && item.variants) {
             return Math.min(...item.variants.map((v: any) => v.precio?.costo || 0))
           }
           return item.precio?.costo || 0
         }
-        return getMinPrice(a) - getMinPrice(b)
+        result = getMinPrice(a) - getMinPrice(b)
       }
-      return 0
+      return result * direction
     })
     
     return items
-  }, [proveedorItemsStructured, selectionSearch, selectionFilters, selectionSort])
+  }, [proveedorItemsStructured, selectionSearch, selectionFilters, selectionSort, selectionSortDirection])
   
   // Selection helpers for empty order picker
   const getItemId = (item: any): string => item.id || item.sku || ""
@@ -1088,11 +1101,16 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
 
                 {/* Right: Action buttons */}
                 <div className="flex items-center gap-2">
-                  {/* Exportar Dropdown */}
+                  {/* Exportar Dropdown - only active when not in selection view */}
                   <div className="relative">
                     <button
-                      onClick={() => setShowExportDropdown(!showExportDropdown)}
-                      className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer gap-1.5 shrink-0 px-3 rounded-md flex items-center"
+                      onClick={() => !isInSelectionView && setShowExportDropdown(!showExportDropdown)}
+                      disabled={isInSelectionView}
+                      className={`h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] gap-1.5 shrink-0 px-3 rounded-md flex items-center ${
+                        isInSelectionView 
+                          ? "opacity-50 cursor-not-allowed" 
+                          : "hover:bg-gray-100 cursor-pointer"
+                      }`}
                     >
                       <FileDown className="w-3.5 h-3.5 text-slate-500" />
                       Exportar
@@ -1266,19 +1284,25 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                         )}
                       </div>
                       
-                      {/* Sort Button */}
-                      <div className="relative">
-                        <select
-                          value={selectionSort}
-                          onChange={(e) => setSelectionSort(e.target.value as "name" | "stock" | "precio")}
-                          className="appearance-none pl-3 pr-8 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:border-blue-400 cursor-pointer"
-                        >
-                          <option value="name">Nombre</option>
-                          <option value="stock">Stock</option>
-                          <option value="precio">Precio</option>
-                        </select>
-                        <ArrowUpDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
-                      </div>
+{/* Sort Button */}
+  <div className="flex items-center gap-1">
+  <select
+  value={selectionSort}
+  onChange={(e) => setSelectionSort(e.target.value as "name" | "stock" | "precio")}
+  className="appearance-none pl-3 pr-7 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:border-blue-400 cursor-pointer"
+  >
+  <option value="name">Nombre</option>
+  <option value="stock">Stock</option>
+  <option value="precio">Precio</option>
+  </select>
+  <button
+    onClick={() => setSelectionSortDirection(d => d === "asc" ? "desc" : "asc")}
+    className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+    title={selectionSortDirection === "asc" ? "Orden ascendente" : "Orden descendente"}
+  >
+    <ArrowUpDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${selectionSortDirection === "desc" ? "rotate-180" : ""}`} />
+  </button>
+  </div>
                     </div>
                   </div>
                   
@@ -1479,7 +1503,7 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                   {/* Tab Header */}
                   <div className="bg-slate-100 border border-slate-200/80 rounded-t-md">
                     {isEditable ? (
-                      <div className="grid grid-cols-[2fr_0.8fr_auto_1fr_auto_0.9fr_1.1fr_1.5fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      <div className="grid grid-cols-[1.9fr_0.8fr_auto_1fr_auto_1.1fr_1.1fr_1.5fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
                         <div className="flex items-center px-4 gap-2">
                           <span>Item</span>
                           <button
@@ -1516,7 +1540,7 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                         <div className="flex items-center justify-center w-6"></div>
                         <div className="flex items-center justify-center">A Pedir</div>
                         <div className="flex items-center justify-center w-6"></div>
-                        <div className="flex items-center justify-center whitespace-nowrap">Stock Proy.</div>
+                        <div className="flex items-center justify-center whitespace-nowrap">Stock Proyectado</div>
                         <div className="flex items-center justify-center">Costo Unit.</div>
                         <div className="flex items-center justify-end pr-4">Subtotal</div>
                       </div>
@@ -1575,7 +1599,7 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                         key={idx}
                         className={`grid items-center py-3 px-4 border-b border-slate-100 last:border-b-0 hover:bg-slate-50/50 transition-colors group ${
                           isEditable 
-                            ? "grid-cols-[2fr_0.8fr_auto_1fr_auto_0.9fr_1.1fr_1.5fr]" 
+                            ? "grid-cols-[1.9fr_0.8fr_auto_1fr_auto_1.1fr_1.1fr_1.5fr]" 
                             : "grid-cols-[3fr_1.5fr_1.5fr_2fr]"
                         }`}
                       >
