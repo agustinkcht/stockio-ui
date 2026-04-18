@@ -78,6 +78,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   // Load settings from localStorage on mount
   useEffect(() => {
+    if (typeof window === "undefined") return
+    
     const stored = localStorage.getItem("stockio-settings")
     if (stored) {
       try {
@@ -103,6 +105,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
+    if (typeof window === "undefined") return
     localStorage.setItem("stockio-settings", JSON.stringify({ miNegocio, precios, catalogo }))
   }, [miNegocio, precios, catalogo])
 
