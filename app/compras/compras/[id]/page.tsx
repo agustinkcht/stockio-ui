@@ -120,6 +120,8 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const [itemDiscounts, setItemDiscounts] = useState<{ [idx: number]: { value: number; type: "cash" | "percent" } }>({})
   const [globalDiscount, setGlobalDiscount] = useState<{ value: number; type: "cash" | "percent" }>({ value: 0, type: "percent" })
   const [originalPrices, setOriginalPrices] = useState<{ [idx: number]: number }>({})
+  // State to track "Actualizar costo al recibir" checkbox per item (checked by default when price differs)
+  const [actualizarCostoAlRecibir, setActualizarCostoAlRecibir] = useState<{ [idx: number]: boolean }>({})
   const [itemBonificadas, setItemBonificadas] = useState<{ [idx: number]: { value: number; visible: boolean } }>({})
   const [editingStockProyectado, setEditingStockProyectado] = useState<{ idx: number; value: string } | null>(null)
   const [stockEditModal, setStockEditModal] = useState<{
@@ -595,6 +597,17 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
       updated[idx] = { ...updated[idx], unitPrice: newPrice }
       return updated
     })
+    
+    // Get the precio from precios data to compare
+    const sku = editableItems[idx]?.sku
+    const preciosOriginal = sku ? getPreciosOriginalPrice(sku) : null
+    
+    // Auto-check actualizar if price differs from precios original and not already set
+    if (preciosOriginal !== null && newPrice !== preciosOriginal) {
+      if (actualizarCostoAlRecibir[idx] === undefined) {
+        setActualizarCostoAlRecibir(prev => ({ ...prev, [idx]: true }))
+      }
+    }
   }
   
   // Handle reset price to original
@@ -611,7 +624,30 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
       delete newPrices[idx]
       return newPrices
     })
+    // Also remove the actualizar checkbox state since we're resetting
+    setActualizarCostoAlRecibir(prev => {
+      const newState = { ...prev }
+      delete newState[idx]
+      return newState
+    })
   }
+  
+  // Get the original price from precios data (INITIAL_ITEMS) for a given SKU
+  const getPreciosOriginalPrice = useCallback((sku: string): number | null => {
+    for (const item of INITIAL_ITEMS) {
+      if (item.hasVariants && item.variants) {
+        for (const variant of item.variants) {
+          const variantSku = `${item.skuPrefix}-${variant.skuSuffix}`
+          if (variantSku === sku) {
+            return variant.precio?.costo || null
+          }
+        }
+      } else if (item.sku === sku) {
+        return item.precio?.costo || null
+      }
+    }
+    return null
+  }, [])
   
   // Handle stock proyectado change
   const handleStockProyectadoChange = (idx: number, newStockProyectado: number, stockActual: number) => {
@@ -1100,7 +1136,7 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
                     <>
                       {/* Tab Header */}
                       <div className="bg-slate-100 border-b border-slate-200/80">
-                        <div className="grid grid-cols-[2.5fr_1fr_1.1fr_1.5fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        <div className="grid grid-cols-[2fr_0.8fr_2.2fr_1.2fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
                           <div className="flex items-center px-4 gap-2">
                             <span>Item</span>
                             <button
@@ -1182,7 +1218,7 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
                           return (
                             <div
                               key={idx}
-                              className="grid grid-cols-[2.5fr_1fr_1.1fr_1.5fr] items-center py-3 px-4 border-b border-slate-100 last:border-b-0 hover:bg-slate-50/50 transition-colors group"
+                              className="grid grid-cols-[2fr_0.8fr_2.2fr_1.2fr] items-center py-3 px-4 border-b border-slate-100 last:border-b-0 hover:bg-slate-50/50 transition-colors group"
                             >
                               {/* Item - Thumbnail, Name, SKU + Delete button */}
                               <div className="flex items-center gap-3">
@@ -1256,28 +1292,59 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
                                 </div>
                               </div>
 
-                              {/* Costo Unit. with restablecer */}
+                              {/* Costo Unit. with original, restablecer, and actualizar checkbox */}
                               <div className="flex items-center justify-center">
-                                <div className="flex flex-col items-center">
-                                  <div className="flex items-center">
-                                    <span className="text-xs text-slate-400 mr-0.5">$</span>
-                                    <input
-                                      type="number"
-                                      value={item.unitPrice}
-                                      onChange={(e) => handlePriceChange(idx, parseInt(e.target.value) || 0)}
-                                      className="w-20 text-center text-sm font-medium bg-transparent border border-transparent hover:border-slate-200 focus:border-blue-400 rounded px-1 py-1 focus:outline-none focus:bg-white transition-all"
-                                      min={0}
-                                    />
-                                  </div>
-                                  {isPriceEdited && (
-                                    <button
-                                      onClick={() => handleResetPrice(idx)}
-                                      className="text-[9px] text-blue-500 hover:text-blue-700 hover:underline mt-0.5"
-                                    >
-                                      restablecer
-                                    </button>
-                                  )}
-                                </div>
+                                {(() => {
+                                  const preciosOriginal = getPreciosOriginalPrice(item.sku)
+                                  const pricesDiffer = preciosOriginal !== null && item.unitPrice !== preciosOriginal
+                                  const showActualizarCheckbox = pricesDiffer
+                                  
+                                  return (
+                                    <div className="flex items-center gap-3">
+                                      {/* Price input and original/restablecer */}
+                                      <div className="flex flex-col items-center">
+                                        <div className="flex items-center">
+                                          <span className="text-xs text-slate-400 mr-0.5">$</span>
+                                          <input
+                                            type="number"
+                                            value={item.unitPrice}
+                                            onChange={(e) => handlePriceChange(idx, parseInt(e.target.value) || 0)}
+                                            className="w-20 text-center text-sm font-medium bg-transparent border border-transparent hover:border-slate-200 focus:border-blue-400 rounded px-1 py-1 focus:outline-none focus:bg-white transition-all"
+                                            min={0}
+                                          />
+                                        </div>
+                                        {pricesDiffer && (
+                                          <>
+                                            <span className="text-[9px] text-slate-400 mt-0.5">
+                                              original: ${preciosOriginal?.toLocaleString("es-AR")}
+                                            </span>
+                                            <button
+                                              onClick={() => handleResetPrice(idx)}
+                                              className="text-[9px] text-blue-500 hover:text-blue-700 hover:underline"
+                                            >
+                                              restablecer
+                                            </button>
+                                          </>
+                                        )}
+                                      </div>
+                                      
+                                      {/* Actualizar costo al recibir checkbox */}
+                                      {showActualizarCheckbox && (
+                                        <label className="flex items-center gap-1.5 cursor-pointer">
+                                          <input
+                                            type="checkbox"
+                                            checked={actualizarCostoAlRecibir[idx] !== false}
+                                            onChange={(e) => setActualizarCostoAlRecibir(prev => ({ ...prev, [idx]: e.target.checked }))}
+                                            className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-0 cursor-pointer"
+                                          />
+                                          <span className="text-[9px] text-slate-500 whitespace-nowrap">
+                                            Actualizar costo al recibir
+                                          </span>
+                                        </label>
+                                      )}
+                                    </div>
+                                  )
+                                })()}
                               </div>
 
                               {/* Subtotal with Discount and Bonificadas */}
@@ -1456,7 +1523,34 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
                               <span className="text-sm text-slate-600">{item.quantity}</span>
                             </div>
                             <div className="col-span-2 text-right">
-                              <span className="text-sm text-slate-600">${item.unitPrice.toLocaleString("es-AR")}</span>
+                              {(() => {
+                                const preciosOriginal = getPreciosOriginalPrice(item.sku)
+                                const pricesDiffer = preciosOriginal !== null && item.unitPrice !== preciosOriginal
+                                
+                                return (
+                                  <div className="flex flex-col items-end">
+                                    <span className="text-sm text-slate-600">${item.unitPrice.toLocaleString("es-AR")}</span>
+                                    {pricesDiffer && (
+                                      <>
+                                        <span className="text-[9px] text-slate-400">
+                                          original: ${preciosOriginal?.toLocaleString("es-AR")}
+                                        </span>
+                                        <div className="flex items-center gap-1 mt-0.5">
+                                          <input
+                                            type="checkbox"
+                                            checked={actualizarCostoAlRecibir[idx] !== false}
+                                            disabled
+                                            className="w-3 h-3 rounded border-slate-300 text-blue-600 cursor-not-allowed opacity-60"
+                                          />
+                                          <span className="text-[9px] text-slate-400 whitespace-nowrap">
+                                            Actualizar al recibir
+                                          </span>
+                                        </div>
+                                      </>
+                                    )}
+                                  </div>
+                                )
+                              })()}
                             </div>
                             <div className="col-span-3 text-right">
                               <span className="text-sm font-medium text-slate-800">
