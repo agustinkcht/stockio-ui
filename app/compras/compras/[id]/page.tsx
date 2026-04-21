@@ -10,6 +10,7 @@ import {
   FileDown,
   ChevronDown,
   ChevronRight,
+  ChevronUp,
   Check,
   Package,
   Plus,
@@ -18,15 +19,21 @@ import {
   Upload,
   Receipt,
   X,
+  ArrowRight,
+  Search,
+  Pencil,
 } from "lucide-react"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import Image from "next/image"
-import type { OrdenCompra, Item } from "@/lib/types"
+import type { OrdenCompra, Item, OrdenCompraItem } from "@/lib/types"
 import { ORDENES_COMPRA } from "@/lib/data/initial-ordenes"
+import { INITIAL_ITEMS } from "@/lib/data/initial-items"
 import { useAccount } from "@/lib/contexts/account-context"
 import { useNavigationGuard } from "@/hooks/use-navigation-guard"
 import { UnsavedChangesModal } from "@/components/modals/unsaved-changes-modal"
+import { StockEditModal } from "@/components/modals/stock-edit-modal"
+import { useItems } from "@/hooks/use-items"
 
 function formatDateShort(dateStr: string): string {
   const date = new Date(dateStr)
@@ -57,6 +64,7 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
   const { currentAccount } = useAccount()
+  const { items: allItems } = useItems()
 
   // Storage keys for localStorage
   const getComprasStorageKey = useCallback(() => {
@@ -107,6 +115,28 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const [originalPagos, setOriginalPagos] = useState<Pago[]>([])
   const [showPagoModal, setShowPagoModal] = useState(false)
   const [newPago, setNewPago] = useState({ amount: "", medioPago: "Transferencia", facturaUrl: "" })
+  
+  // New state for grid edit mode (matching ordenes-de-compra)
+  const [itemDiscounts, setItemDiscounts] = useState<{ [idx: number]: { value: number; type: "cash" | "percent" } }>({})
+  const [globalDiscount, setGlobalDiscount] = useState<{ value: number; type: "cash" | "percent" }>({ value: 0, type: "percent" })
+  const [originalPrices, setOriginalPrices] = useState<{ [idx: number]: number }>({})
+  const [itemBonificadas, setItemBonificadas] = useState<{ [idx: number]: { value: number; visible: boolean } }>({})
+  const [editingStockProyectado, setEditingStockProyectado] = useState<{ idx: number; value: string } | null>(null)
+  const [stockEditModal, setStockEditModal] = useState<{
+    isOpen: boolean
+    itemIndex: number
+    sku: string
+    itemName: string
+    total: number
+    reservado: number
+  } | null>(null)
+  const [showAddItemModal, setShowAddItemModal] = useState(false)
+  const [newItemSearch, setNewItemSearch] = useState("")
+  const [forceSelectionView, setForceSelectionView] = useState(false)
+  
+  // Selection view state
+  const [selectionSearch, setSelectionSearch] = useState("")
+  const [selectedProveedorItems, setSelectedProveedorItems] = useState<{ [id: string]: boolean }>({})
   
   // Track if there are unsaved changes
   const hasUnsavedChanges = useMemo(() => {
@@ -265,6 +295,162 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
   
   // Check if compra is editable (only when not finalized)
   const isEditable = estadoGeneral !== "Finalizada"
+  
+  // Check if we're in selection view (empty order or forced)
+  const isInSelectionView = forceSelectionView
+  
+  // Helper to get stock for an item by SKU
+  const getStockBySku = (sku: string): number => {
+    // First check standalone items
+    const standaloneItem = allItems.find(item => item.sku === sku)
+    if (standaloneItem?.stock?.disponible !== undefined) {
+      return parseInt(String(standaloneItem.stock.disponible))
+    }
+    
+    // Check variants
+    for (const item of allItems) {
+      if (item.variants) {
+        const variant = item.variants.find(v => v.sku === sku || `${item.skuPrefix}-${v.skuSuffix}` === sku)
+        if (variant?.stock?.disponible !== undefined) {
+          return parseInt(String(variant.stock.disponible))
+        }
+      }
+    }
+    return 0
+  }
+  
+  // Get available items for adding to the compra (filtered by proveedor)
+  const availableItems = useMemo(() => {
+    if (!compra) return []
+    const items: Array<{ id: string; name: string; sku: string; categoria?: string; tags?: string[]; precio?: number; stockDisponible?: number; stockReservado?: number }> = []
+    
+    INITIAL_ITEMS.forEach((item) => {
+      if (item.proveedor === compra.proveedorNombre) {
+        if (item.hasVariants && item.variants) {
+          item.variants.forEach((variant) => {
+            items.push({
+              id: variant.id,
+              name: variant.name || item.name,
+              sku: `${item.skuPrefix}-${variant.skuSuffix}`,
+              categoria: variant.categoria || item.categoria,
+              tags: variant.atributosPrincipales?.map(a => a.value),
+              precio: variant.precio?.costo || 0,
+              stockDisponible: parseInt(variant.stock?.disponible || "0"),
+              stockReservado: parseInt(variant.stock?.reservado || "0"),
+            })
+          })
+        } else {
+          items.push({
+            id: item.id,
+            name: item.name,
+            sku: item.sku || "",
+            categoria: item.categoria,
+            precio: item.precio?.costo || 0,
+            stockDisponible: parseInt(item.stock?.disponible || "0"),
+            stockReservado: parseInt(item.stock?.reservado || "0"),
+          })
+        }
+      }
+    })
+    return items
+  }, [compra])
+  
+  // Get proveedor items with parent-child structure for the selection view
+  const proveedorItemsStructured = useMemo(() => {
+    if (!compra) return []
+    return INITIAL_ITEMS.filter(item => item.proveedor === compra.proveedorNombre)
+  }, [compra])
+  
+  // Filtered proveedor items for selection view
+  const filteredProveedorItems = useMemo(() => {
+    let items = [...proveedorItemsStructured]
+    
+    if (selectionSearch.trim()) {
+      const searchWords = selectionSearch.toLowerCase().trim().split(/\s+/).filter(w => w.length > 0)
+      
+      items = items.map(item => {
+        const parentText = [item.name, item.sku, item.skuPrefix, item.marca, item.categoria].filter(Boolean).join(" ").toLowerCase()
+        const parentMatches = searchWords.every(word => parentText.includes(word))
+        
+        if (parentMatches) return item
+        
+        if (item.variants && item.variants.length > 0) {
+          const matchingVariants = item.variants.filter((v: any) => {
+            const variantText = [v.name, v.sku, v.skuSuffix, v.categoria, item.name, item.marca].filter(Boolean).join(" ").toLowerCase()
+            return searchWords.every(word => variantText.includes(word))
+          })
+          
+          if (matchingVariants.length > 0) {
+            return { ...item, variants: matchingVariants }
+          }
+        }
+        
+        return null
+      }).filter(Boolean) as typeof items
+    }
+    
+    return items
+  }, [proveedorItemsStructured, selectionSearch])
+  
+  // Selection helpers
+  const getItemId = (item: any): string => item.id || item.sku || ""
+  
+  const getAllSelectableIds = useMemo(() => {
+    const ids: string[] = []
+    for (const item of proveedorItemsStructured) {
+      const isParent = item.hasVariants && item.variants && item.variants.length > 0
+      if (isParent) {
+        for (const child of item.variants!) {
+          const id = getItemId(child)
+          if (id) ids.push(id)
+        }
+      } else {
+        const id = getItemId(item)
+        if (id) ids.push(id)
+      }
+    }
+    return ids
+  }, [proveedorItemsStructured])
+  
+  const selectedProveedorCount = useMemo(() => {
+    return Object.values(selectedProveedorItems).filter(Boolean).length
+  }, [selectedProveedorItems])
+  
+  // Calculate subtotal and total with discounts (for grid view)
+  const calculateTotals = useMemo(() => {
+    if (!compra) return { subtotal: 0, discountAmount: 0, total: 0 }
+    
+    let subtotal = 0
+    editableItems.forEach((item, idx) => {
+      const itemTotal = item.unitPrice * item.quantity
+      const discount = itemDiscounts[idx]
+      const bonificadas = itemBonificadas[idx]
+      const bonificadasAmount = (bonificadas?.value || 0) * item.unitPrice
+      
+      if (discount && discount.value > 0) {
+        const discountAmount = discount.type === "percent" 
+          ? (itemTotal * discount.value / 100) 
+          : discount.value
+        subtotal += itemTotal - discountAmount - bonificadasAmount
+      } else {
+        subtotal += itemTotal - bonificadasAmount
+      }
+    })
+    
+    // Apply global discount
+    let discountAmount = 0
+    if (globalDiscount.value > 0) {
+      discountAmount = globalDiscount.type === "percent"
+        ? (subtotal * globalDiscount.value / 100)
+        : globalDiscount.value
+    }
+    
+    return {
+      subtotal,
+      discountAmount,
+      total: Math.max(0, subtotal - discountAmount)
+    }
+  }, [compra, editableItems, itemDiscounts, globalDiscount, itemBonificadas])
 
   // Handle item quantity selection for partial receiving
   const handleQuantityChange = (sku: string, quantity: number, maxQuantity: number) => {
@@ -380,6 +566,212 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
     const minQty = getMinQuantity(item.sku)
     if (minQty > 0) return // Can't remove if items already received
     setEditableItems(prev => prev.filter((_, i) => i !== index))
+    // Clean up state for deleted item
+    setOriginalPrices(prev => {
+      const newPrices = { ...prev }
+      delete newPrices[index]
+      return newPrices
+    })
+    setItemBonificadas(prev => {
+      const newBonif = { ...prev }
+      delete newBonif[index]
+      return newBonif
+    })
+    setItemDiscounts(prev => {
+      const newDiscounts = { ...prev }
+      delete newDiscounts[index]
+      return newDiscounts
+    })
+  }
+  
+  // Handle price change with original price tracking
+  const handlePriceChange = (idx: number, newPrice: number) => {
+    // Track original price if not already tracked
+    if (originalPrices[idx] === undefined) {
+      setOriginalPrices(prev => ({ ...prev, [idx]: editableItems[idx].unitPrice }))
+    }
+    setEditableItems(prev => {
+      const updated = [...prev]
+      updated[idx] = { ...updated[idx], unitPrice: newPrice }
+      return updated
+    })
+  }
+  
+  // Handle reset price to original
+  const handleResetPrice = (idx: number) => {
+    if (originalPrices[idx] === undefined) return
+    const originalPrice = originalPrices[idx]
+    setEditableItems(prev => {
+      const updated = [...prev]
+      updated[idx] = { ...updated[idx], unitPrice: originalPrice }
+      return updated
+    })
+    setOriginalPrices(prev => {
+      const newPrices = { ...prev }
+      delete newPrices[idx]
+      return newPrices
+    })
+  }
+  
+  // Handle stock proyectado change
+  const handleStockProyectadoChange = (idx: number, newStockProyectado: number, stockActual: number) => {
+    const newQuantity = Math.max(0, newStockProyectado - stockActual)
+    setEditableItems(prev => {
+      const updated = [...prev]
+      updated[idx] = { ...updated[idx], quantity: newQuantity }
+      return updated
+    })
+  }
+  
+  // Handle item discount change
+  const handleItemDiscountChange = (idx: number, value: number, type: "cash" | "percent") => {
+    setItemDiscounts(prev => ({ ...prev, [idx]: { value, type } }))
+  }
+  
+  // Handle bonificadas change
+  const handleBonificadasChange = (idx: number, value: number) => {
+    setItemBonificadas(prev => ({
+      ...prev,
+      [idx]: { ...prev[idx], value: Math.max(0, value), visible: true }
+    }))
+  }
+  
+  // Toggle bonificadas visibility
+  const handleToggleBonificadas = (idx: number) => {
+    setItemBonificadas(prev => {
+      if (prev[idx]?.visible) {
+        // Hide and reset
+        const newBonif = { ...prev }
+        delete newBonif[idx]
+        return newBonif
+      } else {
+        // Show
+        return { ...prev, [idx]: { value: 0, visible: true } }
+      }
+    })
+  }
+  
+  // Handle stock edit modal accept
+  const handleStockEditModalAccept = (newTotal: number, newReservado: number) => {
+    setStockEditModal(null)
+  }
+  
+  // Handle select item from modal
+  const handleSelectItem = (item: typeof availableItems[0]) => {
+    const newItem = {
+      sku: item.sku,
+      name: item.name,
+      unitPrice: item.precio || 0,
+      quantity: 1,
+      categoria: item.categoria,
+    }
+    setEditableItems(prev => [...prev, newItem])
+    setShowAddItemModal(false)
+    setNewItemSearch("")
+  }
+  
+  // Handle add free item
+  const handleAddFreeItem = () => {
+    if (!newItemSearch.trim()) return
+    const newItem = {
+      sku: "",
+      name: newItemSearch,
+      unitPrice: 0,
+      quantity: 1,
+    }
+    setEditableItems(prev => [...prev, newItem])
+    setShowAddItemModal(false)
+    setNewItemSearch("")
+  }
+  
+  // Handle proveedor selection for generating items
+  const handleProveedorItemSelection = (item: any, isChild: boolean = false) => {
+    const isParent = !isChild && item.hasVariants && item.variants && item.variants.length > 0
+    if (isParent) {
+      const childrenIds = item.variants!.map((v: any) => getItemId(v)).filter(Boolean)
+      const allSelected = childrenIds.every((id: string) => selectedProveedorItems[id])
+      const someSelected = childrenIds.some((id: string) => selectedProveedorItems[id])
+      const shouldSelect = !allSelected && !someSelected
+      setSelectedProveedorItems(prev => {
+        const next = { ...prev }
+        for (const id of childrenIds) next[id] = shouldSelect
+        return next
+      })
+    } else {
+      const id = getItemId(item)
+      if (id) {
+        setSelectedProveedorItems(prev => ({ ...prev, [id]: !prev[id] }))
+      }
+    }
+  }
+  
+  const getProveedorSelectionState = (item: any, isChild: boolean = false): { checked: boolean; indeterminate: boolean } => {
+    const isParent = !isChild && item.hasVariants && item.variants && item.variants.length > 0
+    if (isParent) {
+      const childrenIds = item.variants!.map((v: any) => getItemId(v)).filter(Boolean)
+      const allSelected = childrenIds.every((id: string) => selectedProveedorItems[id])
+      const someSelected = childrenIds.some((id: string) => selectedProveedorItems[id])
+      return { checked: allSelected, indeterminate: someSelected && !allSelected }
+    }
+    const id = getItemId(item)
+    return { checked: id ? !!selectedProveedorItems[id] : false, indeterminate: false }
+  }
+  
+  // Handle generating items from selection
+  const handleGenerarItems = () => {
+    if (!compra || selectedProveedorCount === 0) return
+    
+    // Create a map of existing items by SKU
+    const existingItemsBySku: { [sku: string]: typeof editableItems[0] } = {}
+    for (const item of editableItems) {
+      existingItemsBySku[item.sku] = item
+    }
+    
+    const newItems: typeof editableItems = []
+    
+    for (const item of proveedorItemsStructured) {
+      const isParent = item.hasVariants && item.variants && item.variants.length > 0
+      if (isParent) {
+        for (const variant of item.variants!) {
+          const id = getItemId(variant)
+          const sku = `${item.skuPrefix}-${variant.skuSuffix}`
+          if (selectedProveedorItems[id] || selectedProveedorItems[sku]) {
+            if (existingItemsBySku[sku]) {
+              newItems.push(existingItemsBySku[sku])
+            } else {
+              newItems.push({
+                sku,
+                name: variant.name || item.name,
+                quantity: 1,
+                unitPrice: variant.precio?.costo || 0,
+                categoria: variant.categoria || item.categoria,
+              })
+            }
+          }
+        }
+      } else {
+        const id = getItemId(item)
+        const sku = item.sku || ""
+        if (selectedProveedorItems[id] || selectedProveedorItems[sku]) {
+          if (existingItemsBySku[sku]) {
+            newItems.push(existingItemsBySku[sku])
+          } else {
+            newItems.push({
+              sku,
+              name: item.name,
+              quantity: 1,
+              unitPrice: item.precio?.costo || 0,
+              categoria: item.categoria,
+            })
+          }
+        }
+      }
+    }
+    
+    setEditableItems(newItems)
+    setForceSelectionView(false)
+    setSelectedProveedorItems({})
+    setSelectionSearch("")
   }
   
   // Handle registering a payment (now just updates local state)
@@ -703,155 +1095,474 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
               {/* Resumen Content - Expanded */}
               {isResumenExpanded && (
                 <div className="border-t border-slate-100">
-                  {/* Items Table */}
-                  <div className="divide-y divide-slate-50">
-                    {/* Header Row */}
-                    <div className="grid grid-cols-12 gap-4 px-4 py-2 bg-slate-50 text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      <div className="col-span-5">Item</div>
-                      <div className="col-span-2 text-right">Costo Unitario</div>
-                      <div className="col-span-2 text-center">Cantidad</div>
-                      <div className="col-span-2 text-right">Subtotal</div>
-                      {isEditingResumen && <div className="col-span-1"></div>}
-                    </div>
-
-                    {/* Item Rows */}
-                    {editableItems.map((item, idx) => {
-                      const minQty = getMinQuantity(item.sku)
-                      const canDelete = minQty === 0
-                      return (
-                        <div key={idx} className="grid grid-cols-12 gap-4 px-4 py-3 items-center">
-                          <div className="col-span-5 flex items-center gap-3">
-                            <div className="w-8 h-8 rounded bg-slate-100 overflow-hidden flex-shrink-0">
-                              <Image
-                                src={getCategoryImage(item.categoria) || "/placeholder.svg"}
-                                alt={item.name}
-                                width={32}
-                                height={32}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                            {isEditingResumen ? (
-                              <input
-                                type="text"
-                                value={item.name}
-                                onChange={(e) => handleUpdateItem(idx, "name", e.target.value)}
-                                className="flex-1 text-sm border border-slate-200 rounded px-2 py-1"
-                              />
-                            ) : (
-                              <div>
-                                <p className="text-sm text-gray-800">{item.name}</p>
-                                <p className="text-xs text-slate-400">{item.sku}</p>
-                              </div>
-                            )}
+                  {isEditingResumen ? (
+                    /* Edit Mode - Grid matching ordenes-de-compra */
+                    <>
+                      {/* Tab Header */}
+                      <div className="bg-slate-100 border-b border-slate-200/80">
+                        <div className="grid grid-cols-[1.9fr_0.8fr_auto_1fr_auto_1.1fr_1.1fr_1.5fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                          <div className="flex items-center px-4 gap-2">
+                            <span>Item</span>
+                            <button
+                              onClick={() => {
+                                // Pre-select existing items in selection view
+                                const existingSelections: { [id: string]: boolean } = {}
+                                for (const orderItem of editableItems) {
+                                  for (const provItem of proveedorItemsStructured) {
+                                    if (provItem.hasVariants && provItem.variants) {
+                                      for (const variant of provItem.variants) {
+                                        const variantSku = `${provItem.skuPrefix}-${variant.skuSuffix}`
+                                        if (variantSku === orderItem.sku) {
+                                          const id = getItemId(variant)
+                                          if (id) existingSelections[id] = true
+                                        }
+                                      }
+                                    } else if (provItem.sku === orderItem.sku) {
+                                      const id = getItemId(provItem)
+                                      if (id) existingSelections[id] = true
+                                    }
+                                  }
+                                }
+                                setSelectedProveedorItems(existingSelections)
+                                setForceSelectionView(true)
+                              }}
+                              className="text-[10px] text-blue-500 hover:text-blue-700 font-normal normal-case tracking-normal hover:underline"
+                            >
+                              ir a seleccion
+                            </button>
                           </div>
-                          <div className="col-span-2 text-right">
-                            {isEditingResumen ? (
-                              <input
-                                type="number"
-                                min="0"
-                                value={item.unitPrice}
-                                onChange={(e) => handleUpdateItem(idx, "unitPrice", parseFloat(e.target.value) || 0)}
-                                className="w-24 text-sm text-right border border-slate-200 rounded px-2 py-1"
-                              />
-                            ) : (
-                              <span className="text-sm text-slate-600">${item.unitPrice.toLocaleString("es-AR")}</span>
-                            )}
-                          </div>
-                          <div className="col-span-2 text-center">
-                            {isEditingResumen ? (
-                              <div className="flex items-center justify-center gap-1">
-                                <input
-                                  type="number"
-                                  min={minQty}
-                                  value={item.quantity}
-                                  onChange={(e) => handleUpdateItem(idx, "quantity", parseInt(e.target.value) || minQty)}
-                                  className="w-16 text-sm text-center border border-slate-200 rounded px-2 py-1"
-                                />
-                                {minQty > 0 && (
-                                  <span className="text-xs text-amber-500" title={`Mínimo ${minQty} (ya recibidos)`}>
-                                    min {minQty}
-                                  </span>
-                                )}
-                              </div>
-                            ) : (
-                              <span className="text-sm text-slate-600">{item.quantity}</span>
-                            )}
-                          </div>
-                          <div className="col-span-2 text-right">
-                            <span className="text-sm font-medium text-slate-800">
-                              ${(item.unitPrice * item.quantity).toLocaleString("es-AR")}
-                            </span>
-                          </div>
-                          {isEditingResumen && (
-                            <div className="col-span-1 flex justify-center">
-                              <button
-                                onClick={() => handleRemoveItem(idx)}
-                                disabled={!canDelete}
-                                className={`p-1 rounded transition-colors ${
-                                  canDelete 
-                                    ? "text-red-500 hover:bg-red-50" 
-                                    : "text-slate-300 cursor-not-allowed"
-                                }`}
-                                title={canDelete ? "Eliminar" : "No se puede eliminar (items ya recibidos)"}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          )}
+                          <div className="flex items-center justify-center">Stock Actual</div>
+                          <div className="flex items-center justify-center w-6"></div>
+                          <div className="flex items-center justify-center">A Pedir</div>
+                          <div className="flex items-center justify-center w-6"></div>
+                          <div className="flex items-center justify-center whitespace-nowrap">Stock Proyectado</div>
+                          <div className="flex items-center justify-center">Costo Unit.</div>
+                          <div className="flex items-center justify-end pr-4">Subtotal</div>
                         </div>
-                      )
-                    })}
+                      </div>
 
-                    {/* Add Item Button */}
-                    {isEditingResumen && (
-                      <div className="px-4 py-2">
+                      {/* Items List */}
+                      <div className="bg-white">
+                        {editableItems.map((item, idx) => {
+                          const stockActual = Number(getStockBySku(item.sku)) || 0
+                          const stockProyectado = editingStockProyectado?.idx === idx 
+                            ? (parseInt(editingStockProyectado.value) || stockActual)
+                            : stockActual + Number(item.quantity)
+                          const itemDiscount = itemDiscounts[idx]
+                          const bonificadas = itemBonificadas[idx]
+                          const itemSubtotal = item.unitPrice * item.quantity
+                          const discountAmount = itemDiscount?.value 
+                            ? (itemDiscount.type === "percent" ? itemSubtotal * itemDiscount.value / 100 : itemDiscount.value)
+                            : 0
+                          const bonificadasAmount = (bonificadas?.value || 0) * item.unitPrice
+                          const finalSubtotal = Math.max(0, itemSubtotal - discountAmount - bonificadasAmount)
+                          const isPriceEdited = originalPrices[idx] !== undefined && originalPrices[idx] !== item.unitPrice
+                          const minQty = getMinQuantity(item.sku)
+                          const canDelete = minQty === 0
+                          
+                          // Get full stock info for modal
+                          const getFullStockInfo = () => {
+                            for (const stockItem of allItems) {
+                              if (stockItem.variants) {
+                                const variant = stockItem.variants.find(v => v.sku === item.sku || `${stockItem.skuPrefix}-${v.skuSuffix}` === item.sku)
+                                if (variant?.stock) {
+                                  return {
+                                    total: parseInt(variant.stock.disponible || "0") + parseInt(variant.stock.reservado || "0"),
+                                    reservado: parseInt(variant.stock.reservado || "0")
+                                  }
+                                }
+                              }
+                              if (stockItem.sku === item.sku && stockItem.stock) {
+                                return {
+                                  total: parseInt(stockItem.stock.disponible || "0") + parseInt(stockItem.stock.reservado || "0"),
+                                  reservado: parseInt(stockItem.stock.reservado || "0")
+                                }
+                              }
+                            }
+                            return { total: stockActual, reservado: 0 }
+                          }
+                          const stockInfo = getFullStockInfo()
+                          
+                          return (
+                            <div
+                              key={idx}
+                              className="grid grid-cols-[1.9fr_0.8fr_auto_1fr_auto_1.1fr_1.1fr_1.5fr] items-center py-3 px-4 border-b border-slate-100 last:border-b-0 hover:bg-slate-50/50 transition-colors group"
+                            >
+                              {/* Item - Thumbnail, Name, SKU + Delete button */}
+                              <div className="flex items-center gap-3">
+                                <button
+                                  onClick={() => handleRemoveItem(idx)}
+                                  disabled={!canDelete}
+                                  className={`p-1 rounded transition-colors flex-shrink-0 ${
+                                    canDelete 
+                                      ? "hover:bg-red-50 text-slate-300 hover:text-red-500" 
+                                      : "text-slate-200 cursor-not-allowed"
+                                  }`}
+                                  title={canDelete ? "Eliminar" : "No se puede eliminar (items ya recibidos)"}
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                                <div className="w-11 h-11 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+                                  <Image
+                                    src={getCategoryImage(item.categoria) || "/placeholder.svg"}
+                                    alt={item.name}
+                                    width={44}
+                                    height={44}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
+                                  <p className="text-xs text-slate-400 mt-0.5">{item.sku}</p>
+                                </div>
+                              </div>
+
+                              {/* Stock Actual - clickable to open modal */}
+                              <div className="flex items-center justify-center">
+                                <button
+                                  onClick={() => setStockEditModal({
+                                    isOpen: true,
+                                    itemIndex: idx,
+                                    sku: item.sku,
+                                    itemName: item.name,
+                                    total: stockInfo.total,
+                                    reservado: stockInfo.reservado
+                                  })}
+                                  className="text-sm text-slate-600 tabular-nums hover:text-blue-600 hover:underline cursor-pointer transition-colors"
+                                >
+                                  {stockActual}
+                                </button>
+                              </div>
+                              
+                              {/* Arrow */}
+                              <div className="flex items-center justify-center w-6">
+                                <ArrowRight className="w-3.5 h-3.5 text-slate-300" />
+                              </div>
+
+                              {/* A Pedir (Cantidad) with chevrons inside */}
+                              <div className="flex items-center justify-center">
+                                <div className="relative">
+                                  <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    value={item.quantity === 0 ? "" : item.quantity}
+                                    onChange={(e) => {
+                                      const val = e.target.value
+                                      if (val === "" || val === "-") {
+                                        handleUpdateItem(idx, "quantity", Math.max(minQty, 0))
+                                      } else {
+                                        const num = parseInt(val)
+                                        if (!isNaN(num) && num >= 0) {
+                                          handleUpdateItem(idx, "quantity", Math.max(minQty, num))
+                                        }
+                                      }
+                                    }}
+                                    onBlur={(e) => {
+                                      const val = e.target.value
+                                      if (val === "" || parseInt(val) < minQty || isNaN(parseInt(val))) {
+                                        handleUpdateItem(idx, "quantity", minQty)
+                                      }
+                                    }}
+                                    className="w-20 text-center text-sm font-medium bg-blue-50 border border-blue-200 focus:border-blue-400 rounded pl-2 pr-6 py-1 focus:outline-none transition-all"
+                                  />
+                                  <div className="absolute right-1 top-1/2 -translate-y-1/2 flex flex-col">
+                                    <button
+                                      onClick={() => handleUpdateItem(idx, "quantity", item.quantity + 1)}
+                                      className="text-blue-500 hover:text-blue-700 transition-colors"
+                                    >
+                                      <ChevronUp className="w-3 h-3" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleUpdateItem(idx, "quantity", Math.max(minQty, item.quantity - 1))}
+                                      className="text-blue-500 hover:text-blue-700 transition-colors"
+                                    >
+                                      <ChevronDown className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              {/* Arrow */}
+                              <div className="flex items-center justify-center w-6">
+                                <ArrowRight className="w-3.5 h-3.5 text-slate-300" />
+                              </div>
+                              
+                              {/* Stock Proyectado - click to edit, chevrons on right */}
+                              <div className="flex items-center justify-center">
+                                <div className="flex items-center">
+                                  {editingStockProyectado?.idx === idx ? (
+                                    <input
+                                      type="text"
+                                      inputMode="numeric"
+                                      value={editingStockProyectado.value}
+                                      onChange={(e) => setEditingStockProyectado({ idx, value: e.target.value })}
+                                      onBlur={() => {
+                                        const newValue = parseInt(editingStockProyectado.value) || stockActual
+                                        const validValue = Math.max(stockActual, newValue)
+                                        handleStockProyectadoChange(idx, validValue, stockActual)
+                                        setEditingStockProyectado(null)
+                                      }}
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                          const newValue = parseInt(editingStockProyectado.value) || stockActual
+                                          const validValue = Math.max(stockActual, newValue)
+                                          handleStockProyectadoChange(idx, validValue, stockActual)
+                                          setEditingStockProyectado(null)
+                                        } else if (e.key === "Escape") {
+                                          setEditingStockProyectado(null)
+                                        }
+                                      }}
+                                      autoFocus
+                                      className="w-14 text-center text-sm font-medium text-emerald-600 bg-emerald-50 border border-emerald-300 rounded px-1 py-0.5 focus:outline-none focus:border-emerald-400"
+                                    />
+                                  ) : (
+                                    <button
+                                      onClick={() => setEditingStockProyectado({ idx, value: String(stockActual + item.quantity) })}
+                                      className="w-10 text-center text-sm font-medium text-emerald-600 tabular-nums hover:bg-emerald-50 rounded px-1 py-0.5 transition-colors"
+                                    >
+                                      {stockActual + item.quantity}
+                                    </button>
+                                  )}
+                                  <div className="flex flex-col ml-0.5">
+                                    <button
+                                      onClick={() => handleStockProyectadoChange(idx, stockActual + item.quantity + 1, stockActual)}
+                                      className="text-emerald-500 hover:text-emerald-700 transition-colors"
+                                    >
+                                      <ChevronUp className="w-3 h-3" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleStockProyectadoChange(idx, Math.max(stockActual, stockActual + item.quantity - 1), stockActual)}
+                                      className="text-emerald-500 hover:text-emerald-700 transition-colors"
+                                      disabled={item.quantity <= minQty}
+                                    >
+                                      <ChevronDown className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Costo Unit. with restablecer */}
+                              <div className="flex items-center justify-center">
+                                <div className="flex flex-col items-center">
+                                  <div className="flex items-center">
+                                    <span className="text-xs text-slate-400 mr-0.5">$</span>
+                                    <input
+                                      type="number"
+                                      value={item.unitPrice}
+                                      onChange={(e) => handlePriceChange(idx, parseInt(e.target.value) || 0)}
+                                      className="w-20 text-center text-sm font-medium bg-transparent border border-transparent hover:border-slate-200 focus:border-blue-400 rounded px-1 py-1 focus:outline-none focus:bg-white transition-all"
+                                      min={0}
+                                    />
+                                  </div>
+                                  {isPriceEdited && (
+                                    <button
+                                      onClick={() => handleResetPrice(idx)}
+                                      className="text-[9px] text-blue-500 hover:text-blue-700 hover:underline mt-0.5"
+                                    >
+                                      restablecer
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Subtotal with Discount and Bonificadas */}
+                              <div className="flex items-center justify-end pr-4">
+                                <div className="text-right">
+                                  {(discountAmount > 0 || bonificadasAmount > 0) ? (
+                                    <>
+                                      <span className="text-sm font-semibold text-gray-900">
+                                        ${finalSubtotal.toLocaleString("es-AR")}
+                                      </span>
+                                      <p className="text-[10px] text-slate-400 line-through">
+                                        ${itemSubtotal.toLocaleString("es-AR")}
+                                      </p>
+                                    </>
+                                  ) : (
+                                    <span className="text-sm font-semibold text-gray-900">
+                                      ${itemSubtotal.toLocaleString("es-AR")}
+                                    </span>
+                                  )}
+                                  {/* Discount input */}
+                                  <div className="flex items-center gap-1 mt-1 justify-end">
+                                    <input
+                                      type="number"
+                                      placeholder="Dto"
+                                      value={itemDiscount?.value || ""}
+                                      onChange={(e) => handleItemDiscountChange(idx, parseFloat(e.target.value) || 0, itemDiscount?.type || "percent")}
+                                      className="w-12 text-[10px] text-center bg-slate-50 border border-slate-200 rounded px-1 py-0.5 focus:outline-none focus:border-blue-400"
+                                    />
+                                    <button
+                                      onClick={() => handleItemDiscountChange(idx, itemDiscount?.value || 0, itemDiscount?.type === "percent" ? "cash" : "percent")}
+                                      className={`text-[10px] px-1.5 py-0.5 rounded border transition-colors ${
+                                        itemDiscount?.type === "percent" || !itemDiscount
+                                          ? "bg-blue-50 border-blue-200 text-blue-600"
+                                          : "bg-slate-50 border-slate-200 text-slate-500"
+                                      }`}
+                                    >
+                                      {itemDiscount?.type === "cash" ? "$" : "%"}
+                                    </button>
+                                  </div>
+                                  
+                                  {/* Unidades Bonificadas */}
+                                  {bonificadas?.visible ? (
+                                    <div className="flex items-center gap-1 mt-1 justify-end">
+                                      <span className="text-[9px] text-slate-500">Bonif:</span>
+                                      <input
+                                        type="number"
+                                        placeholder="0"
+                                        value={bonificadas.value || ""}
+                                        onChange={(e) => handleBonificadasChange(idx, parseInt(e.target.value) || 0)}
+                                        className="w-10 text-[10px] text-center bg-emerald-50 border border-emerald-200 rounded px-1 py-0.5 focus:outline-none focus:border-emerald-400"
+                                      />
+                                      <span className="text-[9px] text-slate-400">uds</span>
+                                      <button
+                                        onClick={() => handleToggleBonificadas(idx)}
+                                        className="text-slate-400 hover:text-red-500 transition-colors ml-0.5"
+                                      >
+                                        <X className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      onClick={() => handleToggleBonificadas(idx)}
+                                      className="text-[9px] text-blue-500 hover:text-blue-700 hover:underline mt-1 block ml-auto"
+                                    >
+                                      + uds bonificadas
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })}
+
+                        {/* Add Item Button */}
                         <button
-                          onClick={handleAddItem}
-                          className="flex items-center gap-1.5 text-sm text-amber-600 hover:text-amber-700 font-medium"
+                          className="w-full py-4 text-sm text-slate-400 hover:text-blue-600 hover:bg-blue-50/30 transition-colors flex items-center justify-center gap-2 border-t border-dashed border-slate-200 cursor-pointer"
+                          onClick={() => setShowAddItemModal(true)}
                         >
                           <Plus className="w-4 h-4" />
                           Agregar item
                         </button>
                       </div>
-                    )}
-                  </div>
 
-                  {/* Discount Row (when editing) */}
-                  {isEditingResumen && (
-                    <div className="px-4 py-3 bg-slate-50/50 border-t border-slate-100">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-slate-600">Descuento</span>
-                        <div className="flex items-center gap-2">
-                          <select
-                            value={discount.type}
-                            onChange={(e) => setDiscount(prev => ({ ...prev, type: e.target.value as "cash" | "percent" }))}
-                            className="text-sm border border-slate-200 rounded px-2 py-1"
-                          >
-                            <option value="cash">$</option>
-                            <option value="percent">%</option>
-                          </select>
-                          <input
-                            type="number"
-                            min="0"
-                            value={discount.value || ""}
-                            onChange={(e) => setDiscount(prev => ({ ...prev, value: parseFloat(e.target.value) || 0 }))}
-                            placeholder="0"
-                            className="w-24 text-sm text-right border border-slate-200 rounded px-2 py-1"
-                          />
+                      {/* Total Row - Part of the grid, closes the table */}
+                      <div className="border-t border-slate-200 bg-slate-100 py-4 px-4">
+                        <div className="flex justify-end">
+                          <div className="flex flex-col items-end gap-2 min-w-[180px]">
+                            {/* Subtotal Estimado */}
+                            <div className="flex items-center justify-between w-full">
+                              <span className="text-xs text-slate-500">Subtotal</span>
+                              <span className="text-sm text-gray-700">
+                                ${calculateTotals.subtotal.toLocaleString("es-AR")}
+                              </span>
+                            </div>
+                            
+                            {/* Global Discount */}
+                            <div className="flex items-center justify-between w-full">
+                              <span className="text-xs text-slate-500">Descuento</span>
+                              <div className="flex items-center gap-1.5">
+                                <input
+                                  type="number"
+                                  placeholder="0"
+                                  value={globalDiscount.value || ""}
+                                  onChange={(e) => setGlobalDiscount(prev => ({ ...prev, value: parseFloat(e.target.value) || 0 }))}
+                                  className="w-14 text-sm text-center bg-white border border-slate-200 rounded px-2 py-1 focus:outline-none focus:border-blue-400"
+                                />
+                                <button
+                                  onClick={() => setGlobalDiscount(prev => ({ ...prev, type: prev.type === "percent" ? "cash" : "percent" }))}
+                                  className={`text-xs px-2 py-1 rounded border transition-colors ${
+                                    globalDiscount.type === "percent"
+                                      ? "bg-blue-50 border-blue-200 text-blue-600"
+                                      : "bg-slate-50 border-slate-200 text-slate-500"
+                                  }`}
+                                >
+                                  {globalDiscount.type === "cash" ? "$" : "%"}
+                                </button>
+                              </div>
+                            </div>
+                            
+                            {/* Discount amount if applied */}
+                            {calculateTotals.discountAmount > 0 && (
+                              <div className="flex items-center justify-between w-full">
+                                <span className="text-xs text-slate-400"></span>
+                                <span className="text-xs text-red-500">
+                                  -${calculateTotals.discountAmount.toLocaleString("es-AR")}
+                                </span>
+                              </div>
+                            )}
+                            
+                            {/* Divider */}
+                            <div className="w-full border-t border-slate-300 my-1" />
+                            
+                            {/* Total Estimado - Label and Number stacked */}
+                            <div className="flex flex-col items-end w-full pt-1">
+                              <span className="text-xs text-slate-500 font-medium uppercase tracking-wide">Total Estimado</span>
+                              <span className="text-2xl font-bold text-gray-900 mt-0.5">
+                                ${calculateTotals.total.toLocaleString("es-AR")}
+                              </span>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    </>
+                  ) : (
+                    /* View Mode - Simple table */
+                    <>
+                      {/* Items Table */}
+                      <div className="divide-y divide-slate-50">
+                        {/* Header Row */}
+                        <div className="grid grid-cols-12 gap-4 px-4 py-2 bg-slate-50 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                          <div className="col-span-5">Item</div>
+                          <div className="col-span-2 text-right">Costo Unitario</div>
+                          <div className="col-span-2 text-center">Cantidad</div>
+                          <div className="col-span-3 text-right">Subtotal</div>
+                        </div>
 
-                  {/* Total Row */}
-                  <div className="bg-slate-50 border-t border-slate-200 py-3 px-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-slate-600">Total</span>
-                      <span className="text-base font-bold text-gray-900">
-                        ${calculatedTotal.toLocaleString("es-AR")}
-                      </span>
-                    </div>
-                  </div>
+                        {/* Item Rows */}
+                        {editableItems.map((item, idx) => (
+                          <div key={idx} className="grid grid-cols-12 gap-4 px-4 py-3 items-center">
+                            <div className="col-span-5 flex items-center gap-3">
+                              <div className="w-8 h-8 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+                                <Image
+                                  src={getCategoryImage(item.categoria) || "/placeholder.svg"}
+                                  alt={item.name}
+                                  width={32}
+                                  height={32}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              <div>
+                                <p className="text-sm text-gray-800">{item.name}</p>
+                                <p className="text-xs text-slate-400">{item.sku}</p>
+                              </div>
+                            </div>
+                            <div className="col-span-2 text-right">
+                              <span className="text-sm text-slate-600">${item.unitPrice.toLocaleString("es-AR")}</span>
+                            </div>
+                            <div className="col-span-2 text-center">
+                              <span className="text-sm text-slate-600">{item.quantity}</span>
+                            </div>
+                            <div className="col-span-3 text-right">
+                              <span className="text-sm font-medium text-slate-800">
+                                ${(item.unitPrice * item.quantity).toLocaleString("es-AR")}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Total Row */}
+                      <div className="bg-slate-50 border-t border-slate-200 py-3 px-4">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-slate-600">Total</span>
+                          <span className="text-base font-bold text-gray-900">
+                            ${calculatedTotal.toLocaleString("es-AR")}
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -1278,6 +1989,341 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
         onDiscard={handleDiscardAndNavigate}
         onCancel={handleCancelNavigation}
       />
+      
+      {/* Stock Edit Modal */}
+      {stockEditModal && (
+        <StockEditModal
+          isOpen={stockEditModal.isOpen}
+          onClose={() => setStockEditModal(null)}
+          onAccept={handleStockEditModalAccept}
+          initialTotal={stockEditModal.total}
+          initialReservado={stockEditModal.reservado}
+          itemName={stockEditModal.itemName}
+        />
+      )}
+
+      {/* Add Item Modal */}
+      {showAddItemModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => {
+              setShowAddItemModal(false)
+              setNewItemSearch("")
+            }}
+          />
+          
+          {/* Modal */}
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden">
+            {/* Header */}
+            <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+              <h3 className="text-base font-semibold text-gray-900">Agregar Item</h3>
+              <button
+                onClick={() => {
+                  setShowAddItemModal(false)
+                  setNewItemSearch("")
+                }}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Search */}
+            <div className="px-5 py-3 border-b border-slate-100">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar item o escribir nombre..."
+                  value={newItemSearch}
+                  onChange={(e) => setNewItemSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-400 transition-colors"
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            {/* Items List */}
+            <div className="max-h-80 overflow-auto">
+              {availableItems
+                .filter(item => 
+                  !newItemSearch || 
+                  item.name.toLowerCase().includes(newItemSearch.toLowerCase()) ||
+                  item.sku.toLowerCase().includes(newItemSearch.toLowerCase())
+                )
+                .filter(item => !editableItems.some(ei => ei.sku === item.sku))
+                .map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => handleSelectItem(item)}
+                    className="w-full px-5 py-3 flex items-center gap-4 hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-b-0"
+                  >
+                    <div className="w-10 h-10 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+                      <Image
+                        src={getCategoryImage(item.categoria) || "/placeholder.svg"}
+                        alt={item.name}
+                        width={40}
+                        height={40}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className="text-sm font-medium text-gray-900">{item.name}</p>
+                      <p className="text-xs text-slate-400">{item.sku}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-gray-700">
+                        ${(item.precio || 0).toLocaleString("es-AR")}
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        {item.stockDisponible} disponibles
+                      </p>
+                    </div>
+                  </button>
+                ))}
+
+              {/* No results / free text option */}
+              {availableItems.filter(item => 
+                !newItemSearch || 
+                item.name.toLowerCase().includes(newItemSearch.toLowerCase()) ||
+                item.sku.toLowerCase().includes(newItemSearch.toLowerCase())
+              ).filter(item => !editableItems.some(ei => ei.sku === item.sku)).length === 0 && newItemSearch && (
+                <button
+                  onClick={handleAddFreeItem}
+                  className="w-full px-5 py-4 flex items-center gap-3 hover:bg-blue-50 transition-colors text-left"
+                >
+                  <div className="w-10 h-10 rounded bg-blue-100 flex items-center justify-center flex-shrink-0">
+                    <Plus className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-blue-700">
+                      Agregar &quot;{newItemSearch}&quot;
+                    </p>
+                    <p className="text-xs text-slate-400">Item libre (sin SKU)</p>
+                  </div>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Selection View Modal */}
+      {isInSelectionView && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => {
+              setForceSelectionView(false)
+              setSelectedProveedorItems({})
+              setSelectionSearch("")
+            }}
+          />
+          
+          {/* Modal */}
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-4xl mx-4 overflow-hidden max-h-[85vh] flex flex-col">
+            {/* Header */}
+            <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
+              <div>
+                <h3 className="text-base font-semibold text-gray-900">Seleccionar Items</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Productos de {compra?.proveedorNombre}</p>
+              </div>
+              <button
+                onClick={() => {
+                  setForceSelectionView(false)
+                  setSelectedProveedorItems({})
+                  setSelectionSearch("")
+                }}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Search */}
+            <div className="px-5 py-3 border-b border-slate-100 flex-shrink-0">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar productos..."
+                  value={selectionSearch}
+                  onChange={(e) => setSelectionSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-400 transition-colors"
+                />
+              </div>
+            </div>
+
+            {/* Items Grid */}
+            <div className="flex-1 overflow-auto">
+              {/* Grid Header */}
+              <div className="bg-slate-100 border-b border-slate-200 sticky top-0 z-10">
+                <div className="grid grid-cols-12 h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  <div className="col-span-1 flex items-center justify-center">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 rounded border-slate-300 accent-blue-600"
+                      checked={selectedProveedorCount === getAllSelectableIds.length && getAllSelectableIds.length > 0}
+                      onChange={() => {
+                        if (selectedProveedorCount === getAllSelectableIds.length) {
+                          setSelectedProveedorItems({})
+                        } else {
+                          const all: { [id: string]: boolean } = {}
+                          getAllSelectableIds.forEach(id => all[id] = true)
+                          setSelectedProveedorItems(all)
+                        }
+                      }}
+                    />
+                  </div>
+                  <div className="col-span-5 flex items-center px-4">Item</div>
+                  <div className="col-span-3 flex items-center justify-center">Stock</div>
+                  <div className="col-span-3 flex items-center justify-center">Costo Unitario</div>
+                </div>
+              </div>
+
+              {/* Items */}
+              <div className="divide-y divide-slate-100">
+                {filteredProveedorItems.map((item) => {
+                  const isParent = item.hasVariants && item.variants && item.variants.length > 0
+                  const parentState = getProveedorSelectionState(item)
+                  
+                  return (
+                    <div key={item.id}>
+                      {/* Parent Row */}
+                      <div
+                        className={`grid grid-cols-12 items-center py-3 px-4 cursor-pointer transition-colors ${
+                          isParent ? "bg-slate-50/50 hover:bg-slate-100/50" : "hover:bg-slate-50"
+                        }`}
+                        onClick={() => handleProveedorItemSelection(item)}
+                      >
+                        <div className="col-span-1 flex items-center justify-center">
+                          <input
+                            type="checkbox"
+                            className="w-4 h-4 rounded border-slate-300 accent-blue-600"
+                            checked={parentState.checked}
+                            ref={(el) => {
+                              if (el) el.indeterminate = parentState.indeterminate
+                            }}
+                            onChange={() => {}}
+                          />
+                        </div>
+                        <div className="col-span-5 flex items-center gap-3 px-4">
+                          <div className="w-10 h-10 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+                            <Image
+                              src={getCategoryImage(item.categoria) || "/placeholder.svg"}
+                              alt={item.name}
+                              width={40}
+                              height={40}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div>
+                            <p className={`text-sm text-gray-900 ${isParent ? "font-semibold" : "font-medium"}`}>
+                              {item.name}
+                            </p>
+                            <p className="text-xs text-slate-400">
+                              {isParent ? `${item.variants?.length} variantes` : (item.sku || item.skuPrefix)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="col-span-3 flex items-center justify-center">
+                          {!isParent && (
+                            <span className="text-sm text-slate-600">
+                              {parseInt(item.stock?.disponible || "0")} disponibles
+                            </span>
+                          )}
+                        </div>
+                        <div className="col-span-3 flex items-center justify-center">
+                          {!isParent && (
+                            <span className="text-sm font-medium text-gray-700">
+                              ${(item.precio?.costo || 0).toLocaleString("es-AR")}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Children Rows */}
+                      {isParent && item.variants?.map((variant: any) => {
+                        const childState = getProveedorSelectionState(variant, true)
+                        return (
+                          <div
+                            key={variant.id}
+                            className="grid grid-cols-12 items-center py-2.5 px-4 pl-12 hover:bg-slate-50 cursor-pointer transition-colors border-t border-slate-50"
+                            onClick={() => handleProveedorItemSelection(variant, true)}
+                          >
+                            <div className="col-span-1 flex items-center justify-center">
+                              <input
+                                type="checkbox"
+                                className="w-4 h-4 rounded border-slate-300 accent-blue-600"
+                                checked={childState.checked}
+                                onChange={() => {}}
+                              />
+                            </div>
+                            <div className="col-span-5 flex items-center gap-3 px-4">
+                              <div className="w-8 h-8 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+                                <Image
+                                  src={getCategoryImage(variant.categoria || item.categoria) || "/placeholder.svg"}
+                                  alt={variant.name || item.name}
+                                  width={32}
+                                  height={32}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm text-gray-800">{variant.name || item.name}</p>
+                                  {variant.atributosPrincipales?.map((attr: any, i: number) => (
+                                    <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-600">
+                                      {attr.value}
+                                    </span>
+                                  ))}
+                                </div>
+                                <p className="text-xs text-slate-400">{item.skuPrefix}-{variant.skuSuffix}</p>
+                              </div>
+                            </div>
+                            <div className="col-span-3 flex items-center justify-center">
+                              <span className="text-sm text-slate-600">
+                                {parseInt(variant.stock?.disponible || "0")} disponibles
+                              </span>
+                            </div>
+                            <div className="col-span-3 flex items-center justify-center">
+                              <span className="text-sm font-medium text-gray-700">
+                                ${(variant.precio?.costo || 0).toLocaleString("es-AR")}
+                              </span>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-slate-200 bg-slate-100 py-4 px-4 flex-shrink-0">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-500">
+                  {selectedProveedorCount > 0 
+                    ? `${selectedProveedorCount} item${selectedProveedorCount > 1 ? "s" : ""} seleccionado${selectedProveedorCount > 1 ? "s" : ""}`
+                    : "Selecciona los items para la compra"
+                  }
+                </span>
+                <button
+                  onClick={handleGenerarItems}
+                  disabled={selectedProveedorCount === 0}
+                  className="px-5 py-2 bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Aplicar selección
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
