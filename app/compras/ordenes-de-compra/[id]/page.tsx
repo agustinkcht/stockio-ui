@@ -1503,7 +1503,7 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                   {/* Tab Header */}
                   <div className="bg-slate-100 border border-slate-200/80 rounded-t-md">
                     {isEditable ? (
-                      <div className="grid grid-cols-[1.9fr_0.8fr_auto_1fr_auto_1.1fr_1.1fr_1.5fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      <div className="grid grid-cols-[2.5fr_1fr_1.1fr_1.5fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
                         <div className="flex items-center px-4 gap-2">
                           <span>Item</span>
                           <button
@@ -1536,19 +1536,15 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                             ir a seleccion
                           </button>
                         </div>
-                        <div className="flex items-center justify-center">Stock Actual</div>
-                        <div className="flex items-center justify-center w-6"></div>
-                        <div className="flex items-center justify-center">A Pedir</div>
-                        <div className="flex items-center justify-center w-6"></div>
-                        <div className="flex items-center justify-center whitespace-nowrap">Stock Proyectado</div>
+                        <div className="flex items-center justify-center">Cantidad</div>
                         <div className="flex items-center justify-center">Costo Unit.</div>
                         <div className="flex items-center justify-end pr-4">Subtotal</div>
                       </div>
                     ) : (
                       <div className="grid grid-cols-[3fr_1.5fr_1.5fr_2fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
                         <div className="flex items-center px-4">Item</div>
-                        <div className="flex items-center justify-center">Costo Unitario</div>
                         <div className="flex items-center justify-center">Cantidad</div>
+                        <div className="flex items-center justify-center">Costo Unitario</div>
                         <div className="flex items-center justify-end pr-4">Subtotal</div>
                       </div>
                     )}
@@ -1599,7 +1595,7 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                         key={idx}
                         className={`grid items-center py-3 px-4 border-b border-slate-100 last:border-b-0 hover:bg-slate-50/50 transition-colors group ${
                           isEditable 
-                            ? "grid-cols-[1.9fr_0.8fr_auto_1fr_auto_1.1fr_1.1fr_1.5fr]" 
+                            ? "grid-cols-[2.5fr_1fr_1.1fr_1.5fr]" 
                             : "grid-cols-[3fr_1.5fr_1.5fr_2fr]"
                         }`}
                       >
@@ -1643,33 +1639,7 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                           </div>
                         </div>
 
-                        {/* Stock Actual - clickable to open modal */}
-                        {isEditable && (
-                          <>
-                            <div className="flex items-center justify-center">
-                              <button
-                                onClick={() => setStockEditModal({
-                                  isOpen: true,
-                                  itemIndex: idx,
-                                  sku: item.sku,
-                                  itemName: item.name,
-                                  total: stockInfo.total,
-                                  reservado: stockInfo.reservado
-                                })}
-                                className="text-sm text-slate-600 tabular-nums hover:text-blue-600 hover:underline cursor-pointer transition-colors"
-                              >
-                                {stockActual}
-                              </button>
-                            </div>
-                            
-                            {/* Arrow */}
-                            <div className="flex items-center justify-center w-6">
-                              <ArrowRight className="w-3.5 h-3.5 text-slate-300" />
-                            </div>
-                          </>
-                        )}
-
-                        {/* A Pedir (Cantidad) with chevrons inside */}
+                        {/* Cantidad with chevrons inside (edit mode) / Cantidad (view mode - now first) */}
                         <div className="flex items-center justify-center">
                           {isEditable ? (
                             <div className="relative">
@@ -1715,71 +1685,8 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                             <span className="text-sm font-medium text-gray-700">{item.quantity}</span>
                           )}
                         </div>
-                        
-                        {/* Arrow and Stock Proyectado - editable on click */}
-                        {isEditable && (
-                          <>
-                            <div className="flex items-center justify-center w-6">
-                              <ArrowRight className="w-3.5 h-3.5 text-slate-300" />
-                            </div>
-                            
-                            {/* Stock Proyectado - click to edit, chevrons on right */}
-                            <div className="flex items-center justify-center">
-                              <div className="flex items-center">
-                                {editingStockProyectado?.idx === idx ? (
-                                  <input
-                                    type="text"
-                                    inputMode="numeric"
-                                    value={editingStockProyectado.value}
-                                    onChange={(e) => setEditingStockProyectado({ idx, value: e.target.value })}
-                                    onBlur={() => {
-                                      const newValue = parseInt(editingStockProyectado.value) || stockActual
-                                      const validValue = Math.max(stockActual, newValue)
-                                      handleStockProyectadoChange(idx, validValue, stockActual)
-                                      setEditingStockProyectado(null)
-                                    }}
-                                    onKeyDown={(e) => {
-                                      if (e.key === "Enter") {
-                                        const newValue = parseInt(editingStockProyectado.value) || stockActual
-                                        const validValue = Math.max(stockActual, newValue)
-                                        handleStockProyectadoChange(idx, validValue, stockActual)
-                                        setEditingStockProyectado(null)
-                                      } else if (e.key === "Escape") {
-                                        setEditingStockProyectado(null)
-                                      }
-                                    }}
-                                    autoFocus
-                                    className="w-14 text-center text-sm font-medium text-emerald-600 bg-emerald-50 border border-emerald-300 rounded px-1 py-0.5 focus:outline-none focus:border-emerald-400"
-                                  />
-                                ) : (
-                                  <button
-                                    onClick={() => setEditingStockProyectado({ idx, value: String(stockActual + item.quantity) })}
-                                    className="w-10 text-center text-sm font-medium text-emerald-600 tabular-nums hover:bg-emerald-50 rounded px-1 py-0.5 transition-colors"
-                                  >
-                                    {stockActual + item.quantity}
-                                  </button>
-                                )}
-                                <div className="flex flex-col ml-0.5">
-                                  <button
-                                    onClick={() => handleStockProyectadoChange(idx, stockActual + item.quantity + 1, stockActual)}
-                                    className="text-emerald-500 hover:text-emerald-700 transition-colors"
-                                  >
-                                    <ChevronUp className="w-3 h-3" />
-                                  </button>
-                                  <button
-                                    onClick={() => handleStockProyectadoChange(idx, Math.max(stockActual, stockActual + item.quantity - 1), stockActual)}
-                                    className="text-emerald-500 hover:text-emerald-700 transition-colors"
-                                    disabled={item.quantity <= 0}
-                                  >
-                                    <ChevronDown className="w-3 h-3" />
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          </>
-                        )}
 
-                        {/* Costo Unit. with restablecer */}
+                        {/* Costo Unit. with restablecer (edit mode) / Costo Unitario (view mode - now second) */}
                         <div className="flex items-center justify-center">
                           {isEditable ? (
                             <div className="flex flex-col items-center">
