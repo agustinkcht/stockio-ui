@@ -158,7 +158,7 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const [massCostoType, setMassCostoType] = useState<"set" | "add" | "subtract" | "addPercent" | "subtractPercent">("set")
   
   // Editing descripcion libre items
-  const [editingLibreItem, setEditingLibreItem] = useState<{ idx: number; field: "name" | "sku"; value: string } | null>(null)
+  const [editingLibreItem, setEditingLibreItem] = useState<{ idx: number; field: "name" | "sku" | "marca" | "categoria"; value: string } | null>(null)
   
   // Click outside handler for mass action dropdowns
   useEffect(() => {
@@ -508,15 +508,11 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     setModalFilters({ categoria: "", marca: "", stockRange: "" })
   }
   
-  // Handle updating descripcion libre item name or sku
-  const handleUpdateLibreItem = (idx: number, field: "name" | "sku", value: string) => {
+  // Handle updating descripcion libre item name, sku, marca, or categoria
+  const handleUpdateLibreItem = (idx: number, field: "name" | "sku" | "marca" | "categoria", value: string) => {
     if (!orden) return
     const newItems = [...orden.items]
-    if (field === "name") {
-      newItems[idx] = { ...newItems[idx], name: value }
-    } else {
-      newItems[idx] = { ...newItems[idx], sku: value }
-    }
+    newItems[idx] = { ...newItems[idx], [field]: value }
     setOrden({ ...orden, items: newItems })
     updateOrden(orden.id, { items: newItems })
     setHasChanges(true)
@@ -1484,12 +1480,64 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                             <p className="text-xs text-slate-400 mt-0.5">sku: {item.sku || "Sin SKU"}</p>
                           )}
                           
-                          {/* Marca . Categoria */}
-                          {(item.marca || item.categoria) && (
-                            <p className="text-xs text-slate-400 mt-0.5">
-                              {item.marca || "Sin marca"} . {item.categoria || "Sin categoria"}
-                            </p>
-                          )}
+                          {/* Marca · Categoria */}
+                          {item.isDescripcionLibre && isEditable ? (
+                            <div className="flex items-center gap-1 mt-0.5">
+                              {/* Editable Marca */}
+                              {editingLibreItem?.idx === idx && editingLibreItem?.field === "marca" ? (
+                                <input
+                                  type="text"
+                                  value={editingLibreItem.value}
+                                  onChange={(e) => setEditingLibreItem({ idx, field: "marca", value: e.target.value })}
+                                  onBlur={() => handleUpdateLibreItem(idx, "marca", editingLibreItem.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") handleUpdateLibreItem(idx, "marca", editingLibreItem.value)
+                                    if (e.key === "Escape") setEditingLibreItem(null)
+                                  }}
+                                  autoFocus
+                                  className="text-xs text-slate-600 bg-blue-50 border border-blue-200 rounded px-1 py-0.5 focus:outline-none focus:border-blue-400 w-20"
+                                  placeholder="Marca"
+                                />
+                              ) : (
+                                <button
+                                  onClick={() => setEditingLibreItem({ idx, field: "marca", value: item.marca || "" })}
+                                  className="text-xs text-slate-400 hover:text-blue-600 hover:underline cursor-pointer transition-colors"
+                                >
+                                  {item.marca || <span className="italic">marca</span>}
+                                </button>
+                              )}
+                              <span className="text-xs text-slate-300">·</span>
+                              {/* Editable Categoria */}
+                              {editingLibreItem?.idx === idx && editingLibreItem?.field === "categoria" ? (
+                                <input
+                                  type="text"
+                                  value={editingLibreItem.value}
+                                  onChange={(e) => setEditingLibreItem({ idx, field: "categoria", value: e.target.value })}
+                                  onBlur={() => handleUpdateLibreItem(idx, "categoria", editingLibreItem.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") handleUpdateLibreItem(idx, "categoria", editingLibreItem.value)
+                                    if (e.key === "Escape") setEditingLibreItem(null)
+                                  }}
+                                  autoFocus
+                                  className="text-xs text-slate-600 bg-blue-50 border border-blue-200 rounded px-1 py-0.5 focus:outline-none focus:border-blue-400 w-20"
+                                  placeholder="Categoria"
+                                />
+                              ) : (
+                                <button
+                                  onClick={() => setEditingLibreItem({ idx, field: "categoria", value: item.categoria || "" })}
+                                  className="text-xs text-slate-400 hover:text-blue-600 hover:underline cursor-pointer transition-colors"
+                                >
+                                  {item.categoria || <span className="italic">categoria</span>}
+                                </button>
+                              )}
+                            </div>
+                          ) : (item.marca || item.categoria) ? (
+                            <div className="flex items-center gap-1 mt-0.5">
+                              {item.marca && <span className="text-xs text-slate-400">{item.marca}</span>}
+                              {item.marca && item.categoria && <span className="text-xs text-slate-300">·</span>}
+                              {item.categoria && <span className="text-xs text-slate-400">{item.categoria}</span>}
+                            </div>
+                          ) : null}
                         </div>
                       </div>
 
