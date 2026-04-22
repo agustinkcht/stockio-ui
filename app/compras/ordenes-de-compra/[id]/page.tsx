@@ -111,19 +111,12 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
   // Check if order is editable (only borrador state)
   const isEditable = orden?.estado === "borrador"
   
-  // New item modal state
+  // New item modal state - now contains full selection view
   const [showAddItemModal, setShowAddItemModal] = useState(false)
-  const [newItemSearch, setNewItemSearch] = useState("")
   const [showExportDropdown, setShowExportDropdown] = useState(false)
   
-  // Selection state for empty order item picker
+  // Selection state for item picker modal
   const [selectedProveedorItems, setSelectedProveedorItems] = useState<{ [id: string]: boolean }>({})
-  
-  // State to force show selection view even when items exist
-  const [forceSelectionView, setForceSelectionView] = useState(false)
-  
-  // Check if we're in selection view (empty order or forced)
-  const isInSelectionView = (orden?.items.length === 0 || forceSelectionView)
   
   // Item selection view search and filters
   const [selectionSearch, setSelectionSearch] = useState("")
@@ -521,22 +514,22 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     const newTotal = newItems.reduce((sum, it) => sum + it.total, 0)
     const updatedOrden = { ...orden, items: newItems, importeEstimado: newTotal }
     setOrden(updatedOrden)
-    updateOrden(orden.id, { items: newItems, importeEstimado: newTotal })
-    setSelectedProveedorItems({})
-    setHasChanges(true)
-    setForceSelectionView(false)
+  updateOrden(orden.id, { items: newItems, importeEstimado: newTotal })
+  setSelectedProveedorItems({})
+  setHasChanges(true)
+  setShowAddItemModal(false)
   }
   
-  // Filter items based on search
+  // Filter items based on search for free text adding
   const searchResults = useMemo(() => {
-    if (!newItemSearch.trim()) return []
-    const search = newItemSearch.toLowerCase()
-    return availableItems.filter(
-      (item) =>
-        item.name.toLowerCase().includes(search) ||
-        item.sku.toLowerCase().includes(search)
-    ).slice(0, 6)
-  }, [newItemSearch, availableItems])
+  if (!selectionSearch.trim()) return []
+  const search = selectionSearch.toLowerCase()
+  return availableItems.filter(
+  (item) =>
+  item.name.toLowerCase().includes(search) ||
+  item.sku.toLowerCase().includes(search)
+  ).slice(0, 6)
+  }, [selectionSearch, availableItems])
   
   // Handle "Llevar a Compras" - shows confirmation modal first
   const handleLlevarAComprasClick = () => {
@@ -832,10 +825,10 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
 
   const handleDeshacer = () => {
     // Reset to the stored version from ordenes array
-    setOrden(foundOrden)
-    setHasChanges(false)
-    setShowAddItemModal(false)
-    setNewItemSearch("")
+  setOrden(foundOrden)
+  setHasChanges(false)
+  setShowAddItemModal(false)
+  setSelectionSearch("")
   }
 
   const handleGuardar = () => {
@@ -859,17 +852,17 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     const newItems = [...orden.items, newItem]
     const newTotal = newItems.reduce((sum, it) => sum + it.total, 0)
     setOrden({ ...orden, items: newItems, importeEstimado: newTotal })
-    updateOrden(orden.id, { items: newItems, importeEstimado: newTotal })
-    setHasChanges(true)
-    setShowAddItemModal(false)
-    setNewItemSearch("")
+  updateOrden(orden.id, { items: newItems, importeEstimado: newTotal })
+  setHasChanges(true)
+  setShowAddItemModal(false)
+  setSelectionSearch("")
   }
 
   const handleAddFreeItem = () => {
-    if (!orden || !newItemSearch.trim()) return
-    const newItem: OrdenDeCompraItem = {
-      sku: "",
-      name: newItemSearch,
+  if (!orden || !selectionSearch.trim()) return
+  const newItem: OrdenDeCompraItem = {
+  sku: "",
+  name: selectionSearch,
       quantity: 1,
       unitPrice: 0,
       total: 0,
@@ -879,7 +872,7 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     updateOrden(orden.id, { items: newItems })
     setHasChanges(true)
     setShowAddItemModal(false)
-    setNewItemSearch("")
+    setSelectionSearch("")
   }
   
   // Handle proveedor change request
@@ -1103,13 +1096,13 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
 
                 {/* Right: Action buttons */}
                 <div className="flex items-center gap-2">
-                  {/* Exportar Dropdown - only active when not in selection view */}
+                  {/* Exportar Dropdown - only active when there are items */}
                   <div className="relative">
                     <button
-                      onClick={() => !isInSelectionView && setShowExportDropdown(!showExportDropdown)}
-                      disabled={isInSelectionView}
+                      onClick={() => orden.items.length > 0 && setShowExportDropdown(!showExportDropdown)}
+                      disabled={orden.items.length === 0}
                       className={`h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] gap-1.5 shrink-0 px-3 rounded-md flex items-center ${
-                        isInSelectionView 
+                        orden.items.length === 0 
                           ? "opacity-50 cursor-not-allowed" 
                           : "hover:bg-gray-100 cursor-pointer"
                       }`}
@@ -1190,352 +1183,8 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
 
             {/* Items Section with Tab Header */}
             <div className="flex-1 overflow-y-auto px-6 pt-4 pb-6">
-              {(orden.items.length === 0 || forceSelectionView) ? (
-                /* Empty State or Selection View - Proveedor Items Picker */
-                <>
-                  {/* Search and Filters Bar */}
-                  <div className="bg-white border border-slate-200/80 rounded-t-md border-b-0">
-                    <div className="flex items-center gap-3 p-3">
-                      {/* Search Input */}
-                      <div className="flex-1 relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <input
-                          type="text"
-                          value={selectionSearch}
-                          onChange={(e) => setSelectionSearch(e.target.value)}
-                          placeholder="Buscar items..."
-                          className="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20"
-                        />
-                      </div>
-                      
-                      {/* Filter Button */}
-                      <div className="relative">
-                        <button
-                          onClick={() => setShowSelectionFilters(!showSelectionFilters)}
-                          className={`flex items-center gap-1.5 px-3 py-2 text-sm border rounded-lg transition-colors ${
-                            Object.values(selectionFilters).some(v => v)
-                              ? "border-blue-300 bg-blue-50 text-blue-600"
-                              : "border-slate-200 text-slate-600 hover:bg-slate-50"
-                          }`}
-                        >
-                          <Filter className="w-4 h-4" />
-                          Filtrar
-                        </button>
-                        
-                        {/* Filters Dropdown */}
-                        {showSelectionFilters && (
-                          <div className="absolute top-full right-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg w-64 p-3">
-                            <div className="space-y-3">
-                              {/* Categoria Filter */}
-                              <div>
-                                <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Categoría</label>
-                                <select
-                                  value={selectionFilters.categoria}
-                                  onChange={(e) => setSelectionFilters(prev => ({ ...prev, categoria: e.target.value }))}
-                                  className="w-full mt-1 px-2 py-1.5 text-sm border border-slate-200 rounded-md focus:outline-none focus:border-blue-400"
-                                >
-                                  <option value="">Todas</option>
-                                  {uniqueCategorias.map(cat => (
-                                    <option key={cat} value={cat}>{cat}</option>
-                                  ))}
-                                </select>
-                              </div>
-                              
-                              {/* Marca Filter */}
-                              <div>
-                                <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Marca</label>
-                                <select
-                                  value={selectionFilters.marca}
-                                  onChange={(e) => setSelectionFilters(prev => ({ ...prev, marca: e.target.value }))}
-                                  className="w-full mt-1 px-2 py-1.5 text-sm border border-slate-200 rounded-md focus:outline-none focus:border-blue-400"
-                                >
-                                  <option value="">Todas</option>
-                                  {uniqueMarcas.map(marca => (
-                                    <option key={marca} value={marca}>{marca}</option>
-                                  ))}
-                                </select>
-                              </div>
-                              
-                              {/* Stock Filter */}
-                              <div>
-                                <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Stock</label>
-                                <select
-                                  value={selectionFilters.stockRange}
-                                  onChange={(e) => setSelectionFilters(prev => ({ ...prev, stockRange: e.target.value }))}
-                                  className="w-full mt-1 px-2 py-1.5 text-sm border border-slate-200 rounded-md focus:outline-none focus:border-blue-400"
-                                >
-                                  <option value="">Todos</option>
-                                  <option value="sin-stock">Sin stock</option>
-                                  <option value="bajo">Bajo (1-10)</option>
-                                  <option value="medio">Medio (11-50)</option>
-                                  <option value="alto">Alto (50+)</option>
-                                </select>
-                              </div>
-                              
-                              {/* Clear Filters */}
-                              {Object.values(selectionFilters).some(v => v) && (
-                                <button
-                                  onClick={() => setSelectionFilters({ categoria: "", marca: "", stockRange: "", precioRange: "" })}
-                                  className="w-full text-xs text-blue-600 hover:text-blue-700 py-1"
-                                >
-                                  Limpiar filtros
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      
-{/* Sort Button */}
-  <div className="flex items-center gap-1">
-  <select
-  value={selectionSort}
-  onChange={(e) => setSelectionSort(e.target.value as "name" | "stock" | "precio")}
-  className="appearance-none pl-3 pr-7 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:border-blue-400 cursor-pointer"
-  >
-  <option value="name">Nombre</option>
-  <option value="stock">Stock</option>
-  <option value="precio">Precio</option>
-  </select>
-  <button
-    onClick={() => setSelectionSortDirection(d => d === "asc" ? "desc" : "asc")}
-    className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
-    title={selectionSortDirection === "asc" ? "Orden ascendente" : "Orden descendente"}
-  >
-    <ArrowUpDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${selectionSortDirection === "desc" ? "rotate-180" : ""}`} />
-  </button>
-  </div>
-                    </div>
-                  </div>
-                  
-                  {/* Tab Header with Select All */}
-                  <div className="bg-slate-100 border-x border-slate-200/80">
-                    <div className="grid grid-cols-[3fr_1fr_1fr_1.2fr_1.2fr_0.5fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      <div className="flex items-center px-4 gap-3">
-                        {/* Select All Checkbox */}
-                        <button
-                          onClick={handleSelectAllProveedorItems}
-                          className="w-4 h-4 rounded border border-slate-300 flex items-center justify-center hover:border-blue-500 transition-colors bg-white"
-                        >
-                          {selectAllActive && <Check className="w-3 h-3 text-blue-600" />}
-                          {selectAllIndeterminate && <Minus className="w-3 h-3 text-blue-600" />}
-                        </button>
-                        <span>Item</span>
-                      </div>
-                      <div className="flex items-center justify-center">Stock</div>
-                      <div className="flex items-center justify-center whitespace-nowrap">Stock Mín.</div>
-                      <div className="flex items-center justify-center">Costo Unit.</div>
-                      <div className="flex items-center justify-center">Precio Venta</div>
-                      <div></div>
-                    </div>
-                  </div>
-
-                  {/* Proveedor Items List */}
-                  <div className="bg-white border-x border-slate-200/80">
-                    {filteredProveedorItems.length === 0 ? (
-                      <div className="py-12 text-center">
-                        <p className="text-sm text-slate-500">
-                          {selectionSearch || Object.values(selectionFilters).some(v => v)
-                            ? "No hay items que coincidan con los filtros"
-                            : "No hay items asociados a este proveedor"
-                          }
-                        </p>
-                      </div>
-                    ) : (
-                      filteredProveedorItems.map((item, idx) => {
-                        const isParent = item.hasVariants && item.variants && item.variants.length > 0
-                        const selectionState = getProveedorSelectionState(item)
-                        
-                        return (
-                          <div key={idx}>
-                            {/* Parent/Standalone Row */}
-                            <div
-                              className={`grid grid-cols-[3fr_1fr_1fr_1.2fr_1.2fr_0.5fr] items-center py-3 px-4 border-b border-slate-100 hover:bg-slate-50/50 transition-colors cursor-pointer ${
-                                selectionState.checked || selectionState.indeterminate ? "bg-blue-50/30" : ""
-                              }`}
-                              onClick={() => handleProveedorItemSelection(item)}
-                            >
-                              {/* Checkbox + Item */}
-                              <div className="flex items-center gap-3">
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); handleProveedorItemSelection(item) }}
-className="w-4 h-4 rounded border border-slate-300 flex items-center justify-center hover:border-blue-500 transition-colors bg-white flex-shrink-0"
-                                  >
-                                  {selectionState.checked && <Check className="w-3 h-3 text-blue-600" />}
-                                  {selectionState.indeterminate && <Minus className="w-3 h-3 text-blue-600" />}
-                                </button>
-                                <div className="w-10 h-10 rounded bg-slate-100 overflow-hidden flex-shrink-0">
-                                  <Image
-                                    src={getCategoryImage(item.categoria) || "/placeholder.svg"}
-                                    alt={item.name}
-                                    width={40}
-                                    height={40}
-                                    className="w-full h-full object-cover"
-                                  />
-                                </div>
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-1.5">
-                                    <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
-                                    {isParent && (
-                                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-500">
-                                        {item.variants!.length} var.
-                                      </span>
-                                    )}
-                                  </div>
-                                  <p className="text-xs text-slate-400">
-                                    {[item.marca, item.categoria].filter(Boolean).join(" · ")}
-                                  </p>
-                                </div>
-                              </div>
-
-                              {/* Stock */}
-                              <div className="flex items-center justify-center">
-                                {!isParent && (
-                                  <span className="text-sm text-slate-600 tabular-nums">
-                                    {parseInt(item.stock?.disponible || "0")}
-                                  </span>
-                                )}
-                              </div>
-
-                              {/* Stock Mínimo */}
-                              <div className="flex items-center justify-center">
-                                {!isParent && (
-                                  <span className="text-sm text-slate-400 tabular-nums">
-                                    {item.stockMinimo || stock.stockMinimoPorDefecto}
-                                  </span>
-                                )}
-                              </div>
-
-                              {/* Costo Unitario */}
-                              <div className="flex items-center justify-center">
-                                {!isParent && (
-                                  <span className="text-sm font-medium text-gray-700">
-                                    ${(item.precio?.costo || 0).toLocaleString("es-AR")}
-                                  </span>
-                                )}
-                              </div>
-
-                              {/* Precio Venta */}
-                              <div className="flex items-center justify-center">
-                                {!isParent && (
-                                  <span className="text-sm text-slate-600">
-                                    ${(item.precio?.precioFinal || 0).toLocaleString("es-AR")}
-                                  </span>
-                                )}
-                              </div>
-
-                              {/* Empty column */}
-                              <div></div>
-                            </div>
-
-                            {/* Children Rows */}
-                            {isParent && item.variants!.map((variant, vIdx) => {
-                              const childSelectionState = getProveedorSelectionState(variant, true)
-                              return (
-                                <div
-                                  key={vIdx}
-                                  className={`grid grid-cols-[3fr_1fr_1fr_1.2fr_1.2fr_0.5fr] items-center py-2.5 px-4 border-b border-slate-100 hover:bg-slate-50/50 transition-colors cursor-pointer pl-12 ${
-                                    childSelectionState.checked ? "bg-blue-50/30" : ""
-                                  }`}
-                                  onClick={() => handleProveedorItemSelection(variant, true)}
-                                >
-                                  {/* Checkbox + Item */}
-                                  <div className="flex items-center gap-3">
-                                    <button
-                                      onClick={(e) => { e.stopPropagation(); handleProveedorItemSelection(variant, true) }}
-className="w-4 h-4 rounded border border-slate-300 flex items-center justify-center hover:border-blue-500 transition-colors bg-white flex-shrink-0"
-                                  >
-                                  {childSelectionState.checked && <Check className="w-3 h-3 text-blue-600" />}
-                                    </button>
-                                    <div className="w-8 h-8 rounded bg-slate-100 overflow-hidden flex-shrink-0">
-                                      <Image
-                                        src={getCategoryImage(variant.categoria || item.categoria) || "/placeholder.svg"}
-                                        alt={variant.name || item.name}
-                                        width={32}
-                                        height={32}
-                                        className="w-full h-full object-cover"
-                                      />
-                                    </div>
-                                    <div className="min-w-0">
-                                      <div className="flex items-center gap-2">
-                                        <p className="text-sm text-gray-700 truncate">{variant.name || item.name}</p>
-                                        {variant.atributosPrincipales && variant.atributosPrincipales.length > 0 && (
-                                          <div className="flex items-center gap-1">
-                                            {variant.atributosPrincipales.map((attr, i) => (
-                                              <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-500">
-                                                {attr.value}
-                                              </span>
-                                            ))}
-                                          </div>
-                                        )}
-                                      </div>
-                                      <p className="text-xs text-slate-400">
-                                        {[item.marca, variant.categoria || item.categoria].filter(Boolean).join(" · ")}
-                                      </p>
-                                    </div>
-                                  </div>
-
-                                  {/* Stock */}
-                                  <div className="flex items-center justify-center">
-                                    <span className="text-sm text-slate-600 tabular-nums">
-                                      {parseInt(variant.stock?.disponible || "0")}
-                                    </span>
-                                  </div>
-
-                                  {/* Stock Mínimo */}
-                                  <div className="flex items-center justify-center">
-                                    <span className="text-sm text-slate-400 tabular-nums">
-                                      {variant.stockMinimo || stock.stockMinimoPorDefecto}
-                                    </span>
-                                  </div>
-
-                                  {/* Costo Unitario */}
-                                  <div className="flex items-center justify-center">
-                                    <span className="text-sm font-medium text-gray-700">
-                                      ${(variant.precio?.costo || 0).toLocaleString("es-AR")}
-                                    </span>
-                                  </div>
-
-                                  {/* Precio Venta */}
-                                  <div className="flex items-center justify-center">
-                                    <span className="text-sm text-slate-600">
-                                      ${(variant.precio?.precioFinal || 0).toLocaleString("es-AR")}
-                                    </span>
-                                  </div>
-
-                                  {/* Empty column */}
-                                  <div></div>
-                                </div>
-                              )
-                            })}
-                          </div>
-                        )
-                      })
-                    )}
-                  </div>
-
-                  {/* Bottom Row - Seguir Button */}
-                  <div className="border-t border-b border-x border-slate-200 bg-slate-100 py-4 px-4 rounded-b-md">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-slate-500">
-                        {selectedProveedorCount > 0 
-                          ? `${selectedProveedorCount} item${selectedProveedorCount > 1 ? "s" : ""} seleccionado${selectedProveedorCount > 1 ? "s" : ""}`
-                          : "Selecciona los items para la orden"
-                        }
-                      </span>
-                      <button
-                        onClick={handleGenerarCompra}
-                        disabled={selectedProveedorCount === 0}
-                        className="px-5 py-2 bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Seguir
-                      </button>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                /* Normal State - Order Items Grid */
-                <>
+              {/* Order Items Grid - Always show */}
+              <>
                   {/* Tab Header */}
                   <div className="bg-slate-100 border border-slate-200/80 rounded-t-md">
                     {isEditable ? (
@@ -1565,11 +1214,11 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                                 }
                               }
                               setSelectedProveedorItems(existingSelections)
-                              setForceSelectionView(true)
+                              setShowAddItemModal(true)
                             }}
                             className="text-[10px] text-blue-500 hover:text-blue-700 font-normal normal-case tracking-normal hover:underline"
                           >
-                            ir a seleccion
+                            editar seleccion
                           </button>
                         </div>
                         <div className="flex items-center justify-center">Stock Actual</div>
@@ -1592,7 +1241,33 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
 
                   {/* Items List */}
                   <div className="bg-white border-x border-slate-200/80">
-                    {orden.items.map((item, idx) => {
+                    {orden.items.length === 0 ? (
+                      /* Empty State */
+                      <div className="py-16 text-center">
+                        <div className="flex flex-col items-center gap-4">
+                          <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">
+                            <ShoppingCart className="w-8 h-8 text-slate-400" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-slate-600 mb-1">No hay items en esta orden</p>
+                            <p className="text-xs text-slate-400">Agrega items para comenzar</p>
+                          </div>
+                          {isEditable && (
+                            <button
+                              onClick={() => {
+                                setSelectedProveedorItems({})
+                                setShowAddItemModal(true)
+                              }}
+                              className="mt-2 inline-flex items-center gap-2 px-6 py-3 bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors shadow-sm"
+                            >
+                              <Plus className="w-5 h-5" />
+                              Agregar Items
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                    orden.items.map((item, idx) => {
                       const stockActual = Number(getStockBySku(item.sku)) || 0
                       const stockProyectado = editingStockProyectado?.idx === idx 
                         ? (parseInt(editingStockProyectado.value) || stockActual)
@@ -1917,13 +1592,17 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                           </div>
                         </div>
                       </div>
-                    )})}
+                    )})
+                    )}
 
-                    {/* Add Item Button - only show when editable */}
-                    {isEditable && (
+                    {/* Add Item Button - only show when editable and items exist */}
+                    {isEditable && orden.items.length > 0 && (
                       <button
                         className="w-full py-4 text-sm text-slate-400 hover:text-blue-600 hover:bg-blue-50/30 transition-colors flex items-center justify-center gap-2 border-t border-dashed border-slate-200 cursor-pointer"
-                        onClick={() => setShowAddItemModal(true)}
+                        onClick={() => {
+                          setSelectedProveedorItems({})
+                          setShowAddItemModal(true)
+                        }}
                       >
                         <Plus className="w-4 h-4" />
                         Agregar item
@@ -2012,7 +1691,7 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
   />
   )}
 
-      {/* Add Item Modal */}
+      {/* Add Item Modal - Full Selection View */}
       {showAddItemModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           {/* Backdrop */}
@@ -2020,19 +1699,21 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => {
               setShowAddItemModal(false)
-              setNewItemSearch("")
+              setSelectionSearch("")
+              setShowSelectionFilters(false)
             }}
           />
           
           {/* Modal */}
-          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden">
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-4xl mx-4 overflow-hidden flex flex-col max-h-[85vh]">
             {/* Header */}
-            <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
-              <h3 className="text-base font-semibold text-gray-900">Agregar Item</h3>
+            <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
+              <h3 className="text-base font-semibold text-gray-900">Agregar Items</h3>
               <button
                 onClick={() => {
                   setShowAddItemModal(false)
-                  setNewItemSearch("")
+                  setSelectionSearch("")
+                  setShowSelectionFilters(false)
                 }}
                 className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
               >
@@ -2040,156 +1721,359 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
               </button>
             </div>
             
-            {/* Search */}
-            <div className="p-4 border-b border-slate-100">
-              <div className="relative">
+            {/* Search and Filters Bar */}
+            <div className="flex items-center gap-3 p-4 border-b border-slate-100 flex-shrink-0">
+              {/* Search Input */}
+              <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type="text"
-                  value={newItemSearch}
-                  onChange={(e) => setNewItemSearch(e.target.value)}
-                  placeholder="Buscar item, o escribir una descripcion libre"
+                  value={selectionSearch}
+                  onChange={(e) => setSelectionSearch(e.target.value)}
+                  placeholder="Buscar items o escribir descripcion libre..."
                   className="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20"
                   autoFocus
                 />
               </div>
-            </div>
-            
-            {/* Tab Header */}
-            <div className="grid grid-cols-[2fr_1fr_1fr] px-4 py-2 bg-slate-50 border-b border-slate-100 text-xs font-medium text-slate-500 uppercase tracking-wider">
-              <span>Item</span>
-              <span className="text-center">Stock</span>
-              <span className="text-right">Costo Unitario</span>
-            </div>
-            
-            {/* Results */}
-            <div className="max-h-80 overflow-y-auto">
-              {newItemSearch.trim() ? (
-                <>
-                  {searchResults.length > 0 ? (
-                    <div>
-                      {searchResults.map((item) => (
-                        <button
-                          key={item.id}
-                          className="w-full grid grid-cols-[2fr_1fr_1fr] items-center px-4 py-3 hover:bg-slate-50 transition-colors text-left border-b border-slate-100 last:border-b-0"
-                          onClick={() => handleSelectItem(item)}
+              
+              {/* Filter Button */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowSelectionFilters(!showSelectionFilters)}
+                  className={`flex items-center gap-1.5 px-3 py-2.5 text-sm border rounded-lg transition-colors ${
+                    Object.values(selectionFilters).some(v => v)
+                      ? "border-blue-300 bg-blue-50 text-blue-600"
+                      : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  <Filter className="w-4 h-4" />
+                  Filtrar
+                </button>
+                
+                {/* Filters Dropdown */}
+                {showSelectionFilters && (
+                  <div className="absolute top-full right-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg w-64 p-3">
+                    <div className="space-y-3">
+                      {/* Categoria Filter */}
+                      <div>
+                        <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Categoría</label>
+                        <select
+                          value={selectionFilters.categoria}
+                          onChange={(e) => setSelectionFilters(prev => ({ ...prev, categoria: e.target.value }))}
+                          className="w-full mt-1 px-2 py-1.5 text-sm border border-slate-200 rounded-md focus:outline-none focus:border-blue-400"
                         >
-                          {/* Item Info */}
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded bg-slate-100 overflow-hidden flex-shrink-0">
-                              <Image
-                                src={getCategoryImage(item.categoria) || "/placeholder.svg"}
-                                alt={item.name}
-                                width={40}
-                                height={40}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium text-gray-900 truncate">{item.name}</span>
-                                {item.tags && item.tags.length > 0 && (
-                                  <div className="flex items-center gap-1">
-                                    {item.tags.slice(0, 2).map((tag, i) => (
-                                      <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-500">
-                                        {tag}
-                                      </span>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                              <span className="text-xs text-slate-400">{item.sku}</span>
-                            </div>
-                          </div>
-                          
-                          {/* Stock Info */}
-                          <div className="text-center">
-                            <span className="text-sm text-slate-600">
-                              {item.stockDisponible || 0} <span className="text-slate-400">disponibles</span>
-                            </span>
-                            {(item.stockReservado || 0) > 0 && (
-                              <p className="text-xs text-slate-400">
-                                ({item.stockReservado} reservados)
-                              </p>
-                            )}
-                          </div>
-                          
-                          {/* Costo */}
-                          <span className="text-sm font-medium text-gray-700 text-right">${item.precio?.toLocaleString("es-AR")}</span>
+                          <option value="">Todas</option>
+                          {uniqueCategorias.map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))}
+                        </select>
+                      </div>
+                      
+                      {/* Marca Filter */}
+                      <div>
+                        <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Marca</label>
+                        <select
+                          value={selectionFilters.marca}
+                          onChange={(e) => setSelectionFilters(prev => ({ ...prev, marca: e.target.value }))}
+                          className="w-full mt-1 px-2 py-1.5 text-sm border border-slate-200 rounded-md focus:outline-none focus:border-blue-400"
+                        >
+                          <option value="">Todas</option>
+                          {uniqueMarcas.map(marca => (
+                            <option key={marca} value={marca}>{marca}</option>
+                          ))}
+                        </select>
+                      </div>
+                      
+                      {/* Stock Filter */}
+                      <div>
+                        <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Stock</label>
+                        <select
+                          value={selectionFilters.stockRange}
+                          onChange={(e) => setSelectionFilters(prev => ({ ...prev, stockRange: e.target.value }))}
+                          className="w-full mt-1 px-2 py-1.5 text-sm border border-slate-200 rounded-md focus:outline-none focus:border-blue-400"
+                        >
+                          <option value="">Todos</option>
+                          <option value="sin-stock">Sin stock</option>
+                          <option value="bajo">Bajo (1-10)</option>
+                          <option value="medio">Medio (11-50)</option>
+                          <option value="alto">Alto (50+)</option>
+                        </select>
+                      </div>
+                      
+                      {/* Clear Filters */}
+                      {Object.values(selectionFilters).some(v => v) && (
+                        <button
+                          onClick={() => setSelectionFilters({ categoria: "", marca: "", stockRange: "", precioRange: "" })}
+                          className="w-full text-xs text-blue-600 hover:text-blue-700 py-1"
+                        >
+                          Limpiar filtros
                         </button>
-                      ))}
+                      )}
                     </div>
-                  ) : (
-                    <div className="py-8 text-center">
-                      <p className="text-sm text-slate-500 mb-3">No se encontraron items</p>
+                  </div>
+                )}
+              </div>
+              
+              {/* Sort Button */}
+              <div className="flex items-center gap-1">
+                <select
+                  value={selectionSort}
+                  onChange={(e) => setSelectionSort(e.target.value as "name" | "stock" | "precio")}
+                  className="appearance-none pl-3 pr-7 py-2.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:border-blue-400 cursor-pointer"
+                >
+                  <option value="name">Nombre</option>
+                  <option value="stock">Stock</option>
+                  <option value="precio">Precio</option>
+                </select>
+                <button
+                  onClick={() => setSelectionSortDirection(d => d === "asc" ? "desc" : "asc")}
+                  className="p-2.5 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                  title={selectionSortDirection === "asc" ? "Orden ascendente" : "Orden descendente"}
+                >
+                  <ArrowUpDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${selectionSortDirection === "desc" ? "rotate-180" : ""}`} />
+                </button>
+              </div>
+            </div>
+            
+            {/* Tab Header with Select All */}
+            <div className="bg-slate-100 flex-shrink-0">
+              <div className="grid grid-cols-[3fr_1fr_1fr_1.2fr_1.2fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                <div className="flex items-center px-4 gap-3">
+                  {/* Select All Checkbox */}
+                  <button
+                    onClick={handleSelectAllProveedorItems}
+                    className="w-4 h-4 rounded border border-slate-300 flex items-center justify-center hover:border-blue-500 transition-colors bg-white"
+                  >
+                    {selectAllActive && <Check className="w-3 h-3 text-blue-600" />}
+                    {selectAllIndeterminate && <Minus className="w-3 h-3 text-blue-600" />}
+                  </button>
+                  <span>Item</span>
+                </div>
+                <div className="flex items-center justify-center">Stock</div>
+                <div className="flex items-center justify-center whitespace-nowrap">Stock Mín.</div>
+                <div className="flex items-center justify-center">Costo Unit.</div>
+                <div className="flex items-center justify-center">Precio Venta</div>
+              </div>
+            </div>
+
+            {/* Items List */}
+            <div className="flex-1 overflow-y-auto bg-white">
+              {filteredProveedorItems.length === 0 ? (
+                <div className="py-12 text-center">
+                  {selectionSearch.trim() && !searchResults.length ? (
+                    <>
+                      <p className="text-sm text-slate-500 mb-4">No se encontraron items que coincidan</p>
                       <button
                         className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
                         onClick={handleAddFreeItem}
                       >
                         <Plus className="w-4 h-4" />
-                        Agregar &quot;{newItemSearch}&quot; como item
+                        Agregar &quot;{selectionSearch}&quot; como item
                       </button>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div>
-                  <p className="px-4 py-2 text-xs text-slate-400 uppercase tracking-wider bg-slate-50/50">Productos del proveedor</p>
-                  {notSelectedItems.slice(0, 8).map((item) => (
-                    <button
-                      key={item.id}
-                      className="w-full grid grid-cols-[2fr_1fr_1fr] items-center px-4 py-3 hover:bg-slate-50 transition-colors text-left border-b border-slate-100 last:border-b-0"
-                      onClick={() => handleSelectItem(item)}
-                    >
-                      {/* Item Info */}
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded bg-slate-100 overflow-hidden flex-shrink-0">
-                          <Image
-                            src={getCategoryImage(item.categoria) || "/placeholder.svg"}
-                            alt={item.name}
-                            width={40}
-                            height={40}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-gray-900 truncate">{item.name}</span>
-                            {item.tags && item.tags.length > 0 && (
-                              <div className="flex items-center gap-1">
-                                {item.tags.slice(0, 2).map((tag, i) => (
-                                  <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-500">
-                                    {tag}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                          <span className="text-xs text-slate-400">{item.sku}</span>
-                        </div>
-                      </div>
-                      
-                      {/* Stock Info */}
-                      <div className="text-center">
-                        <span className="text-sm text-slate-600">
-                          {item.stockDisponible || 0} <span className="text-slate-400">disponibles</span>
-                        </span>
-                        {(item.stockReservado || 0) > 0 && (
-                          <p className="text-xs text-slate-400">
-                            ({item.stockReservado} reservados)
-                          </p>
-                        )}
-                      </div>
-                      
-                      {/* Costo */}
-                      <span className="text-sm font-medium text-gray-700 text-right">${item.precio?.toLocaleString("es-AR")}</span>
-                    </button>
-                  ))}
-                  {notSelectedItems.length === 0 && (
-                    <p className="px-4 py-6 text-sm text-slate-400 text-center">Todos los productos ya fueron agregados</p>
+                    </>
+                  ) : (
+                    <p className="text-sm text-slate-500">
+                      {Object.values(selectionFilters).some(v => v)
+                        ? "No hay items que coincidan con los filtros"
+                        : "No hay items asociados a este proveedor"
+                      }
+                    </p>
                   )}
                 </div>
+              ) : (
+                filteredProveedorItems.map((item, idx) => {
+                  const isParent = item.hasVariants && item.variants && item.variants.length > 0
+                  const selectionState = getProveedorSelectionState(item)
+                  
+                  return (
+                    <div key={idx}>
+                      {/* Parent/Standalone Row */}
+                      <div
+                        className={`grid grid-cols-[3fr_1fr_1fr_1.2fr_1.2fr] items-center py-3 px-4 border-b border-slate-100 hover:bg-slate-50/50 transition-colors cursor-pointer ${
+                          selectionState.checked || selectionState.indeterminate ? "bg-blue-50/30" : ""
+                        }`}
+                        onClick={() => handleProveedorItemSelection(item)}
+                      >
+                        {/* Checkbox + Item */}
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleProveedorItemSelection(item) }}
+                            className="w-4 h-4 rounded border border-slate-300 flex items-center justify-center hover:border-blue-500 transition-colors bg-white flex-shrink-0"
+                          >
+                            {selectionState.checked && <Check className="w-3 h-3 text-blue-600" />}
+                            {selectionState.indeterminate && <Minus className="w-3 h-3 text-blue-600" />}
+                          </button>
+                          <div className="w-10 h-10 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+                            <Image
+                              src={getCategoryImage(item.categoria) || "/placeholder.svg"}
+                              alt={item.name}
+                              width={40}
+                              height={40}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
+                              {isParent && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-500">
+                                  {item.variants!.length} var.
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-slate-400">
+                              {[item.marca, item.categoria].filter(Boolean).join(" · ")}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Stock */}
+                        <div className="flex items-center justify-center">
+                          {!isParent && (
+                            <span className="text-sm text-slate-600 tabular-nums">
+                              {parseInt(item.stock?.disponible || "0")}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Stock Mínimo */}
+                        <div className="flex items-center justify-center">
+                          {!isParent && (
+                            <span className="text-sm text-slate-400 tabular-nums">
+                              {item.stockMinimo || stock.stockMinimoPorDefecto}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Costo Unitario */}
+                        <div className="flex items-center justify-center">
+                          {!isParent && (
+                            <span className="text-sm font-medium text-gray-700">
+                              ${(item.precio?.costo || 0).toLocaleString("es-AR")}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Precio Venta */}
+                        <div className="flex items-center justify-center">
+                          {!isParent && (
+                            <span className="text-sm text-slate-600">
+                              ${(item.precio?.precioFinal || 0).toLocaleString("es-AR")}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Children Rows */}
+                      {isParent && item.variants!.map((variant, vIdx) => {
+                        const childSelectionState = getProveedorSelectionState(variant, true)
+                        return (
+                          <div
+                            key={vIdx}
+                            className={`grid grid-cols-[3fr_1fr_1fr_1.2fr_1.2fr] items-center py-2.5 px-4 border-b border-slate-100 hover:bg-slate-50/50 transition-colors cursor-pointer pl-12 ${
+                              childSelectionState.checked ? "bg-blue-50/30" : ""
+                            }`}
+                            onClick={() => handleProveedorItemSelection(variant, true)}
+                          >
+                            {/* Checkbox + Item */}
+                            <div className="flex items-center gap-3">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleProveedorItemSelection(variant, true) }}
+                                className="w-4 h-4 rounded border border-slate-300 flex items-center justify-center hover:border-blue-500 transition-colors bg-white flex-shrink-0"
+                              >
+                                {childSelectionState.checked && <Check className="w-3 h-3 text-blue-600" />}
+                              </button>
+                              <div className="w-8 h-8 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+                                <Image
+                                  src={getCategoryImage(variant.categoria || item.categoria) || "/placeholder.svg"}
+                                  alt={variant.name || item.name}
+                                  width={32}
+                                  height={32}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm text-gray-700 truncate">{variant.name || item.name}</p>
+                                  {variant.atributosPrincipales && variant.atributosPrincipales.length > 0 && (
+                                    <div className="flex items-center gap-1">
+                                      {variant.atributosPrincipales.map((attr, i) => (
+                                        <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-500">
+                                          {attr.value}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                                <p className="text-xs text-slate-400">
+                                  {[item.marca, variant.categoria || item.categoria].filter(Boolean).join(" · ")}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Stock */}
+                            <div className="flex items-center justify-center">
+                              <span className="text-sm text-slate-600 tabular-nums">
+                                {parseInt(variant.stock?.disponible || "0")}
+                              </span>
+                            </div>
+
+                            {/* Stock Mínimo */}
+                            <div className="flex items-center justify-center">
+                              <span className="text-sm text-slate-400 tabular-nums">
+                                {variant.stockMinimo || stock.stockMinimoPorDefecto}
+                              </span>
+                            </div>
+
+                            {/* Costo Unitario */}
+                            <div className="flex items-center justify-center">
+                              <span className="text-sm font-medium text-gray-700">
+                                ${(variant.precio?.costo || 0).toLocaleString("es-AR")}
+                              </span>
+                            </div>
+
+                            {/* Precio Venta */}
+                            <div className="flex items-center justify-center">
+                              <span className="text-sm text-slate-600">
+                                ${(variant.precio?.precioFinal || 0).toLocaleString("es-AR")}
+                              </span>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )
+                })
               )}
+            </div>
+
+            {/* Bottom Row - Selection Count and Confirm Button */}
+            <div className="border-t border-slate-200 bg-slate-50 py-4 px-5 flex items-center justify-between flex-shrink-0">
+              <span className="text-sm text-slate-500">
+                {selectedProveedorCount > 0 
+                  ? `${selectedProveedorCount} item${selectedProveedorCount > 1 ? "s" : ""} seleccionado${selectedProveedorCount > 1 ? "s" : ""}`
+                  : "Selecciona los items para agregar"
+                }
+              </span>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => {
+                    setShowAddItemModal(false)
+                    setSelectionSearch("")
+                    setShowSelectionFilters(false)
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleGenerarCompra}
+                  disabled={selectedProveedorCount === 0}
+                  className="px-5 py-2 bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Agregar Items
+                </button>
+              </div>
             </div>
           </div>
         </div>
