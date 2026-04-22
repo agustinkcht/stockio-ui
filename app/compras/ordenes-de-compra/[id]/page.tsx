@@ -1431,7 +1431,7 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                         </div>
                       </div>
                     </div>
-                  )})}
+                  ))}
 
                 {/* Add Item Button - only show when editable and has items */}
                 {isEditable && orden.items.length > 0 && (
