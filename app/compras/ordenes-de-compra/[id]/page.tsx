@@ -1656,9 +1656,8 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
             </div>
           </main>
         </div>
-      </div>
 
-  {/* Stock Edit Modal */}
+      {/* Stock Edit Modal */}
   {stockEditModal && (
   <StockEditModal
   isOpen={stockEditModal.isOpen}
