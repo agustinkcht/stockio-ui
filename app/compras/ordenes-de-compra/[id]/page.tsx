@@ -1110,7 +1110,8 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                   </div>
                 ) : (
                   /* Items Grid */
-                  orden.items.map((item, idx) => {
+                  <>
+                  {orden.items.map((item, idx) => {
                     const stockActual = Number(getStockBySku(item.sku)) || 0
                     const itemDiscount = itemDiscounts[idx]
                     const bonificadas = itemBonificadas[idx]
@@ -1431,7 +1432,7 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                         </div>
                       </div>
                     </div>
-                  ))}
+                  )})}
 
                 {/* Add Item Button - only show when editable and has items */}
                 {isEditable && orden.items.length > 0 && (
@@ -1442,6 +1443,8 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                     <Plus className="w-4 h-4" />
                     Agregar item
                   </button>
+                )}
+                </>
                 )}
               </div>
 
