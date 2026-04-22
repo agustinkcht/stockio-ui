@@ -81,22 +81,6 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [showProveedorDropdown])
   
-  // Click outside handler for mass action dropdowns
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement
-      if (!target.closest('[data-mass-menu]')) {
-        setShowAPedirMassMenu(false)
-        setShowProyectadoMassMenu(false)
-        setShowCostoMassMenu(false)
-      }
-    }
-    if (showAPedirMassMenu || showProyectadoMassMenu || showCostoMassMenu) {
-      document.addEventListener("mousedown", handleClickOutside)
-    }
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [showAPedirMassMenu, showProyectadoMassMenu, showCostoMassMenu])
-  
   // Discount state
   const [itemDiscounts, setItemDiscounts] = useState<{ [idx: number]: { value: number; type: "cash" | "percent" } }>({})
   const [globalDiscount, setGlobalDiscount] = useState<{ value: number; type: "cash" | "percent" }>({ value: 0, type: "percent" })
@@ -175,6 +159,22 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
   
   // Editing descripcion libre items
   const [editingLibreItem, setEditingLibreItem] = useState<{ idx: number; field: "name" | "sku"; value: string } | null>(null)
+  
+  // Click outside handler for mass action dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      if (!target.closest('[data-mass-menu]')) {
+        setShowAPedirMassMenu(false)
+        setShowProyectadoMassMenu(false)
+        setShowCostoMassMenu(false)
+      }
+    }
+    if (showAPedirMassMenu || showProyectadoMassMenu || showCostoMassMenu) {
+      document.addEventListener("mousedown", handleClickOutside)
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [showAPedirMassMenu, showProyectadoMassMenu, showCostoMassMenu])
   
   // Get unique proveedores from all items
   const uniqueProveedores = useMemo(() => {
