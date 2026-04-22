@@ -344,6 +344,25 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
       })
     }
     
+    // Filter out items already in the orden
+    const existingSkus = new Set(orden?.items.map(i => i.sku) || [])
+    items = items.map(item => {
+      if (item.hasVariants && item.variants) {
+        // For parent items with variants, filter out already-added variants
+        const remainingVariants = item.variants.filter((v: any) => {
+          const sku = `${item.skuPrefix}-${v.skuSuffix}`
+          return !existingSkus.has(sku)
+        })
+        // If all variants are already added, exclude the parent entirely
+        if (remainingVariants.length === 0) return null
+        return { ...item, variants: remainingVariants }
+      } else {
+        // For standalone items, exclude if already added
+        if (existingSkus.has(item.sku)) return null
+        return item
+      }
+    }).filter(Boolean) as typeof items
+    
     // Apply sorting
     const direction = modalSortDirection === "asc" ? 1 : -1
     items.sort((a, b) => {
@@ -371,7 +390,7 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     })
     
     return items
-  }, [proveedorItemsStructured, modalSearch, modalFilters, modalSort, modalSortDirection])
+  }, [proveedorItemsStructured, modalSearch, modalFilters, modalSort, modalSortDirection, orden?.items])
   
   // Check if search has no results (for "descripcion libre" feature)
   const hasNoSearchResults = useMemo(() => {
