@@ -13,7 +13,7 @@ const condicionesIva: CondicionIva[] = ["Consumidor Final", "Responsable Inscrip
 
 export default function AjustesPage() {
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
-  const { miNegocio, precios, catalogo, updateMiNegocioSettings, updatePreciosSettings, updateCatalogoSettings } = useSettings()
+  const { miNegocio, precios, catalogo, stock, updateMiNegocioSettings, updatePreciosSettings, updateCatalogoSettings, updateStockSettings } = useSettings()
 
   const handleCostoBehaviorChange = (behavior: CostoBehavior) => {
     updatePreciosSettings({ costoBehavior: behavior })
@@ -448,20 +448,37 @@ export default function AjustesPage() {
                 </div>
               </section>
 
-              {/* Inventario Section */}
+              {/* Stock Section */}
               <section className="bg-white rounded-2xl border border-slate-200/60 overflow-hidden">
                 <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
                     <Package className="w-4 h-4 text-amber-600" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">Inventario</h2>
-                    <p className="text-xs text-slate-500">Configuración de gestión de stock</p>
+                    <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">Stock</h2>
+                    <p className="text-xs text-slate-500">Configuración de gestión de inventario</p>
                   </div>
                 </div>
                 
-                <div className="px-6 py-8 flex items-center justify-center">
-                  <p className="text-sm text-slate-400">Próximamente</p>
+                <div className="px-6 py-5">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">Stock Mínimo por Defecto</label>
+                      <p className="text-xs text-slate-400 mb-3">
+                        Cantidad mínima de stock deseada. Al llegar a este nivel, se muestra una alerta para re-abastecer.
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="number"
+                          min="0"
+                          value={stock.stockMinimoPorDefecto}
+                          onChange={(e) => updateStockSettings({ stockMinimoPorDefecto: Math.max(0, parseInt(e.target.value) || 0) })}
+                          className="w-24 px-3 py-2 border border-slate-200 rounded-lg text-sm text-center font-medium focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400"
+                        />
+                        <span className="text-sm text-slate-500">unidades</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </section>
             </div>

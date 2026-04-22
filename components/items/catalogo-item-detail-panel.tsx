@@ -110,7 +110,7 @@ export function CatalogoItemDetailPanel({
   isExpanded = true,
 }: ItemDetailPanelProps) {
   const router = useRouter()
-  const { catalogo } = useSettings()
+  const { catalogo, stock } = useSettings()
 
   // Safety check: ensure selectedItem is a valid object, not a string or null
   if (!selectedItem || typeof selectedItem === 'string') {
@@ -3519,6 +3519,7 @@ export function CatalogoItemDetailPanel({
         initialTotal={Number.parseInt(selectedItem?.stock?.total || "0")}
         initialReservado={Number.parseInt(selectedItem?.stock?.reservado || "0")}
         itemName={selectedItem?.nombre}
+        stockMinimo={stock?.stockMinimo}
       />
 
       {/* Expanded Matrix - Precio Modal */}
@@ -3632,6 +3633,7 @@ export function CatalogoItemDetailPanel({
         initialTotal={expandedMatrixStockValues.total}
         initialReservado={expandedMatrixStockValues.reservado}
         itemName={expandedMatrixStockModal.variant?.nombre || expandedMatrixStockModal.variant?.sku}
+        stockMinimo={stock?.stockMinimo}
       />
 
       {/* Expanded Matrix - Description Modal */}

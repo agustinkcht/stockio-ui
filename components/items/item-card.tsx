@@ -7,6 +7,7 @@ import type { Item } from "@/lib/types"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import { StockEditModal } from "@/components/modals/stock-edit-modal"
+import { useSettings } from "@/lib/contexts/settings-context"
 
 interface AuditStockChange {
   total: number
@@ -94,6 +95,8 @@ export function ItemCard({
   onUpdateItem,
   stockViewMode = false,
 }: ItemCardProps) {
+  const { stock } = useSettings()
+  
   // Compute full SKU for children: {parentSkuPrefix}-{skuSuffix}
   // For standalone items, use sku directly
   // For parent items, display skuPrefix (the "sku padre")
@@ -1111,7 +1114,7 @@ export function ItemCard({
         </div>
       )}
 
-      {/* Stock Modal */}
+{/* Stock Modal */}
       <StockEditModal
         isOpen={isStockModalOpen}
         onClose={() => setIsStockModalOpen(false)}
@@ -1119,6 +1122,7 @@ export function ItemCard({
         initialTotal={currentStockTotal}
         initialReservado={currentStockReservado}
         itemName={item.nombre}
+        stockMinimo={stock?.stockMinimo}
       />
     </div>
   )

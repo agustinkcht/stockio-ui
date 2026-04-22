@@ -32,13 +32,19 @@ interface CatalogoSettings {
   incluirVencimiento: boolean
 }
 
+interface StockSettings {
+  stockMinimoPorDefecto: number
+}
+
 interface SettingsContextType {
   miNegocio: MiNegocioSettings
   precios: PreciosSettings
   catalogo: CatalogoSettings
+  stock: StockSettings
   updateMiNegocioSettings: (settings: Partial<MiNegocioSettings>) => void
   updatePreciosSettings: (settings: Partial<PreciosSettings>) => void
   updateCatalogoSettings: (settings: Partial<CatalogoSettings>) => void
+  updateStockSettings: (settings: Partial<StockSettings>) => void
 }
 
 const defaultMiNegocio: MiNegocioSettings = {
@@ -59,13 +65,16 @@ const defaultMiNegocio: MiNegocioSettings = {
   condicionIva: "Responsable Inscripto",
 }
 
-const defaultSettings: { miNegocio: MiNegocioSettings; precios: PreciosSettings; catalogo: CatalogoSettings } = {
+const defaultSettings: { miNegocio: MiNegocioSettings; precios: PreciosSettings; catalogo: CatalogoSettings; stock: StockSettings } = {
   miNegocio: defaultMiNegocio,
   precios: {
     costoBehavior: "preservePrecioFinal", // Default: when editing costo, preserve precio final and modify margen
   },
   catalogo: {
     incluirVencimiento: false, // Default: don't show vencimiento toggle in items
+  },
+  stock: {
+    stockMinimoPorDefecto: 1, // Default: stock mínimo of 1
   },
 }
 
@@ -75,6 +84,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [miNegocio, setMiNegocio] = useState<MiNegocioSettings>(defaultSettings.miNegocio)
   const [precios, setPrecios] = useState<PreciosSettings>(defaultSettings.precios)
   const [catalogo, setCatalogo] = useState<CatalogoSettings>(defaultSettings.catalogo)
+  const [stock, setStock] = useState<StockSettings>(defaultSettings.stock)
 
   // Load settings from localStorage on mount
   useEffect(() => {
@@ -95,6 +105,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         if (parsed.catalogo) {
           setCatalogo({ ...defaultSettings.catalogo, ...parsed.catalogo })
         }
+        if (parsed.stock) {
+          setStock({ ...defaultSettings.stock, ...parsed.stock })
+        }
       } catch (e) {
         console.error("Failed to parse settings from localStorage")
       }
@@ -103,8 +116,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem("stockio-settings", JSON.stringify({ miNegocio, precios, catalogo }))
-  }, [miNegocio, precios, catalogo])
+    localStorage.setItem("stockio-settings", JSON.stringify({ miNegocio, precios, catalogo, stock }))
+  }, [miNegocio, precios, catalogo, stock])
 
   const updateMiNegocioSettings = (settings: Partial<MiNegocioSettings>) => {
     setMiNegocio((prev) => ({ ...prev, ...settings }))
@@ -118,8 +131,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setCatalogo((prev) => ({ ...prev, ...settings }))
   }
 
+  const updateStockSettings = (settings: Partial<StockSettings>) => {
+    setStock((prev) => ({ ...prev, ...settings }))
+  }
+
   return (
-    <SettingsContext.Provider value={{ miNegocio, precios, catalogo, updateMiNegocioSettings, updatePreciosSettings, updateCatalogoSettings }}>
+    <SettingsContext.Provider value={{ miNegocio, precios, catalogo, stock, updateMiNegocioSettings, updatePreciosSettings, updateCatalogoSettings, updateStockSettings }}>
       {children}
     </SettingsContext.Provider>
   )

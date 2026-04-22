@@ -30,6 +30,7 @@ import type { OrdenCompra, Item, OrdenCompraItem } from "@/lib/types"
 import { ORDENES_COMPRA } from "@/lib/data/initial-ordenes"
 import { INITIAL_ITEMS } from "@/lib/data/initial-items"
 import { useAccount } from "@/lib/contexts/account-context"
+import { useSettings } from "@/lib/contexts/settings-context"
 import { useNavigationGuard } from "@/hooks/use-navigation-guard"
 import { UnsavedChangesModal } from "@/components/modals/unsaved-changes-modal"
 import { StockEditModal } from "@/components/modals/stock-edit-modal"
@@ -65,6 +66,7 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
   const { currentAccount } = useAccount()
   const { items: allItems } = useItems()
+  const { stock } = useSettings()
 
   // Storage keys for localStorage
   const getComprasStorageKey = useCallback(() => {
@@ -1999,17 +2001,18 @@ function CompraDetailContent({ params }: { params: Promise<{ id: string }> }) {
         onCancel={handleCancelNavigation}
       />
       
-      {/* Stock Edit Modal */}
-      {stockEditModal && (
-        <StockEditModal
-          isOpen={stockEditModal.isOpen}
-          onClose={() => setStockEditModal(null)}
-          onAccept={handleStockEditModalAccept}
-          initialTotal={stockEditModal.total}
-          initialReservado={stockEditModal.reservado}
-          itemName={stockEditModal.itemName}
-        />
-      )}
+  {/* Stock Edit Modal */}
+  {stockEditModal && (
+  <StockEditModal
+  isOpen={stockEditModal.isOpen}
+  onClose={() => setStockEditModal(null)}
+  onAccept={handleStockEditModalAccept}
+  initialTotal={stockEditModal.total}
+  initialReservado={stockEditModal.reservado}
+  itemName={stockEditModal.itemName}
+  stockMinimo={stock.stockMinimoPorDefecto}
+  />
+  )}
 
       {/* Add Item Modal */}
       {showAddItemModal && (

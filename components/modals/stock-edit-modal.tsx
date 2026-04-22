@@ -10,6 +10,7 @@ interface StockEditModalProps {
   initialTotal: number
   initialReservado: number
   itemName?: string
+  stockMinimo?: number
 }
 
 export function StockEditModal({
@@ -19,6 +20,7 @@ export function StockEditModal({
   initialTotal,
   initialReservado,
   itemName,
+  stockMinimo = 1,
 }: StockEditModalProps) {
   const [total, setTotal] = useState(initialTotal)
   const [reservado, setReservado] = useState(initialReservado)
@@ -234,11 +236,16 @@ export function StockEditModal({
                 ? "bg-amber-50 border border-amber-200"
                 : "bg-red-50 border border-red-200"
           }`}>
-            <span className={`text-xs font-medium uppercase tracking-wider ${
-              disponible > 0 ? "text-emerald-600" : disponible === 0 ? "text-amber-600" : "text-red-600"
-            }`}>
-              Disponible
-            </span>
+            <div className="flex flex-col">
+              <span className={`text-xs font-medium uppercase tracking-wider ${
+                disponible > 0 ? "text-emerald-600" : disponible === 0 ? "text-amber-600" : "text-red-600"
+              }`}>
+                Disponible
+              </span>
+              <span className="text-[10px] text-slate-400 mt-0.5">
+                Stock Mínimo: {stockMinimo}
+              </span>
+            </div>
             <span className={`text-2xl font-bold tabular-nums ${
               disponible > 0 ? "text-emerald-600" : disponible === 0 ? "text-amber-600" : "text-red-600"
             }`}>

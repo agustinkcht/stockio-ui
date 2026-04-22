@@ -36,6 +36,7 @@ import { INITIAL_ITEMS } from "@/lib/data/initial-items"
 import type { Item, OrdenDeCompraItem, OrdenDeCompra, OrdenCompra, OrdenCompraItem } from "@/lib/types"
 import { useOrdenesDeCompra } from "@/hooks/use-ordenes-de-compra"
 import { useAccount } from "@/lib/contexts/account-context"
+import { useSettings } from "@/lib/contexts/settings-context"
 import { useItems } from "@/hooks/use-items"
 import { ORDENES_COMPRA } from "@/lib/data/initial-ordenes"
 import { Eye } from "lucide-react"
@@ -65,6 +66,7 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const { ordenes, updateOrden, updateEstado, deleteOrden } = useOrdenesDeCompra()
   const { currentAccount } = useAccount()
   const { items: allItems } = useItems()
+  const { stock } = useSettings()
   
   // Proveedor change state
   const [showProveedorDropdown, setShowProveedorDropdown] = useState(false)
@@ -1308,8 +1310,8 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                   
                   {/* Tab Header with Select All */}
                   <div className="bg-slate-100 border-x border-slate-200/80">
-                    <div className="grid grid-cols-12 h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      <div className="col-span-5 flex items-center px-4 gap-3">
+                    <div className="grid grid-cols-[3fr_1fr_1fr_1.2fr_1.2fr_0.5fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      <div className="flex items-center px-4 gap-3">
                         {/* Select All Checkbox */}
                         <button
                           onClick={handleSelectAllProveedorItems}
@@ -1320,9 +1322,11 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                         </button>
                         <span>Item</span>
                       </div>
-                      <div className="col-span-2 flex items-center justify-center">Stock</div>
-                      <div className="col-span-3 flex items-center justify-center">Costo Unitario</div>
-                      <div className="col-span-2"></div>
+                      <div className="flex items-center justify-center">Stock</div>
+                      <div className="flex items-center justify-center whitespace-nowrap">Stock Mín.</div>
+                      <div className="flex items-center justify-center">Costo Unit.</div>
+                      <div className="flex items-center justify-center">Precio Venta</div>
+                      <div></div>
                     </div>
                   </div>
 
@@ -1346,13 +1350,13 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                           <div key={idx}>
                             {/* Parent/Standalone Row */}
                             <div
-                              className={`grid grid-cols-12 items-center py-3 px-4 border-b border-slate-100 hover:bg-slate-50/50 transition-colors cursor-pointer ${
+                              className={`grid grid-cols-[3fr_1fr_1fr_1.2fr_1.2fr_0.5fr] items-center py-3 px-4 border-b border-slate-100 hover:bg-slate-50/50 transition-colors cursor-pointer ${
                                 selectionState.checked || selectionState.indeterminate ? "bg-blue-50/30" : ""
                               }`}
                               onClick={() => handleProveedorItemSelection(item)}
                             >
                               {/* Checkbox + Item */}
-                              <div className="col-span-5 flex items-center gap-3">
+                              <div className="flex items-center gap-3">
                                 <button
                                   onClick={(e) => { e.stopPropagation(); handleProveedorItemSelection(item) }}
 className="w-4 h-4 rounded border border-slate-300 flex items-center justify-center hover:border-blue-500 transition-colors bg-white flex-shrink-0"
@@ -1385,16 +1389,25 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                               </div>
 
                               {/* Stock */}
-                              <div className="col-span-2 flex items-center justify-center">
+                              <div className="flex items-center justify-center">
                                 {!isParent && (
-                                  <span className="text-sm text-slate-600">
-                                    {parseInt(item.stock?.disponible || "0")} <span className="text-slate-400">disponibles</span>
+                                  <span className="text-sm text-slate-600 tabular-nums">
+                                    {parseInt(item.stock?.disponible || "0")}
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Stock Mínimo */}
+                              <div className="flex items-center justify-center">
+                                {!isParent && (
+                                  <span className="text-sm text-slate-400 tabular-nums">
+                                    {item.stockMinimo || stock.stockMinimoPorDefecto}
                                   </span>
                                 )}
                               </div>
 
                               {/* Costo Unitario */}
-                              <div className="col-span-3 flex items-center justify-center">
+                              <div className="flex items-center justify-center">
                                 {!isParent && (
                                   <span className="text-sm font-medium text-gray-700">
                                     ${(item.precio?.costo || 0).toLocaleString("es-AR")}
@@ -1402,8 +1415,17 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                                 )}
                               </div>
 
+                              {/* Precio Venta */}
+                              <div className="flex items-center justify-center">
+                                {!isParent && (
+                                  <span className="text-sm text-slate-600">
+                                    ${(item.precio?.venta || 0).toLocaleString("es-AR")}
+                                  </span>
+                                )}
+                              </div>
+
                               {/* Empty column */}
-                              <div className="col-span-2"></div>
+                              <div></div>
                             </div>
 
                             {/* Children Rows */}
@@ -1412,13 +1434,13 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                               return (
                                 <div
                                   key={vIdx}
-                                  className={`grid grid-cols-12 items-center py-2.5 px-4 border-b border-slate-100 hover:bg-slate-50/50 transition-colors cursor-pointer pl-12 ${
+                                  className={`grid grid-cols-[3fr_1fr_1fr_1.2fr_1.2fr_0.5fr] items-center py-2.5 px-4 border-b border-slate-100 hover:bg-slate-50/50 transition-colors cursor-pointer pl-12 ${
                                     childSelectionState.checked ? "bg-blue-50/30" : ""
                                   }`}
                                   onClick={() => handleProveedorItemSelection(variant, true)}
                                 >
                                   {/* Checkbox + Item */}
-                                  <div className="col-span-5 flex items-center gap-3">
+                                  <div className="flex items-center gap-3">
                                     <button
                                       onClick={(e) => { e.stopPropagation(); handleProveedorItemSelection(variant, true) }}
 className="w-4 h-4 rounded border border-slate-300 flex items-center justify-center hover:border-blue-500 transition-colors bg-white flex-shrink-0"
@@ -1454,21 +1476,35 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                                   </div>
 
                                   {/* Stock */}
-                                  <div className="col-span-2 flex items-center justify-center">
-                                    <span className="text-sm text-slate-600">
-                                      {parseInt(variant.stock?.disponible || "0")} <span className="text-slate-400">disponibles</span>
+                                  <div className="flex items-center justify-center">
+                                    <span className="text-sm text-slate-600 tabular-nums">
+                                      {parseInt(variant.stock?.disponible || "0")}
+                                    </span>
+                                  </div>
+
+                                  {/* Stock Mínimo */}
+                                  <div className="flex items-center justify-center">
+                                    <span className="text-sm text-slate-400 tabular-nums">
+                                      {variant.stockMinimo || stock.stockMinimoPorDefecto}
                                     </span>
                                   </div>
 
                                   {/* Costo Unitario */}
-                                  <div className="col-span-3 flex items-center justify-center">
+                                  <div className="flex items-center justify-center">
                                     <span className="text-sm font-medium text-gray-700">
                                       ${(variant.precio?.costo || 0).toLocaleString("es-AR")}
                                     </span>
                                   </div>
 
+                                  {/* Precio Venta */}
+                                  <div className="flex items-center justify-center">
+                                    <span className="text-sm text-slate-600">
+                                      ${(variant.precio?.venta || 0).toLocaleString("es-AR")}
+                                    </span>
+                                  </div>
+
                                   {/* Empty column */}
-                                  <div className="col-span-2"></div>
+                                  <div></div>
                                 </div>
                               )
                             })}
@@ -1963,17 +1999,18 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
         </div>
       </div>
 
-      {/* Stock Edit Modal */}
-      {stockEditModal && (
-        <StockEditModal
-          isOpen={stockEditModal.isOpen}
-          onClose={() => setStockEditModal(null)}
-          onAccept={handleStockEditModalAccept}
-          initialTotal={stockEditModal.total}
-          initialReservado={stockEditModal.reservado}
-          itemName={stockEditModal.itemName}
-        />
-      )}
+  {/* Stock Edit Modal */}
+  {stockEditModal && (
+  <StockEditModal
+  isOpen={stockEditModal.isOpen}
+  onClose={() => setStockEditModal(null)}
+  onAccept={handleStockEditModalAccept}
+  initialTotal={stockEditModal.total}
+  initialReservado={stockEditModal.reservado}
+  itemName={stockEditModal.itemName}
+  stockMinimo={stock.stockMinimoPorDefecto}
+  />
+  )}
 
       {/* Add Item Modal */}
       {showAddItemModal && (
