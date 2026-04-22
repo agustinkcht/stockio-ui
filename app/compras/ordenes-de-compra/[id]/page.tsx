@@ -81,6 +81,22 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [showProveedorDropdown])
   
+  // Click outside handler for mass action dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      if (!target.closest('[data-mass-menu]')) {
+        setShowAPedirMassMenu(false)
+        setShowProyectadoMassMenu(false)
+        setShowCostoMassMenu(false)
+      }
+    }
+    if (showAPedirMassMenu || showProyectadoMassMenu || showCostoMassMenu) {
+      document.addEventListener("mousedown", handleClickOutside)
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [showAPedirMassMenu, showProyectadoMassMenu, showCostoMassMenu])
+  
   // Discount state
   const [itemDiscounts, setItemDiscounts] = useState<{ [idx: number]: { value: number; type: "cash" | "percent" } }>({})
   const [globalDiscount, setGlobalDiscount] = useState<{ value: number; type: "cash" | "percent" }>({ value: 0, type: "percent" })
@@ -147,6 +163,18 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false)
   const [showLlevarComprasModal, setShowLlevarComprasModal] = useState(false)
   const [showMoreOptionsMenu, setShowMoreOptionsMenu] = useState(false)
+  
+  // Mass actions dropdowns state
+  const [showAPedirMassMenu, setShowAPedirMassMenu] = useState(false)
+  const [showProyectadoMassMenu, setShowProyectadoMassMenu] = useState(false)
+  const [showCostoMassMenu, setShowCostoMassMenu] = useState(false)
+  const [massAPedirValue, setMassAPedirValue] = useState("")
+  const [massProyectadoValue, setMassProyectadoValue] = useState("")
+  const [massCostoValue, setMassCostoValue] = useState("")
+  const [massCostoType, setMassCostoType] = useState<"set" | "add" | "subtract" | "addPercent" | "subtractPercent">("set")
+  
+  // Editing descripcion libre items
+  const [editingLibreItem, setEditingLibreItem] = useState<{ idx: number; field: "name" | "sku"; value: string } | null>(null)
   
   // Get unique proveedores from all items
   const uniqueProveedores = useMemo(() => {
@@ -427,6 +455,7 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
               unitPrice: variant.precio?.costo || 0,
               total: variant.precio?.costo || 0,
               categoria: variant.categoria || item.categoria,
+              marca: variant.marca || item.marca,
               tags: variant.atributosPrincipales?.map(a => a.value),
             })
           }
@@ -442,6 +471,7 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
             unitPrice: item.precio?.costo || 0,
             total: item.precio?.costo || 0,
             categoria: item.categoria,
+            marca: item.marca,
           })
         }
       }
@@ -467,6 +497,7 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
       quantity: 1,
       unitPrice: 0,
       total: 0,
+      isDescripcionLibre: true,
     }
     const newItems = [...orden.items, newItem]
     setOrden({ ...orden, items: newItems })
@@ -475,6 +506,96 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     setShowAddItemModal(false)
     setModalSearch("")
     setModalFilters({ categoria: "", marca: "", stockRange: "" })
+  }
+  
+  // Handle updating descripcion libre item name or sku
+  const handleUpdateLibreItem = (idx: number, field: "name" | "sku", value: string) => {
+    if (!orden) return
+    const newItems = [...orden.items]
+    if (field === "name") {
+      newItems[idx] = { ...newItems[idx], name: value }
+    } else {
+      newItems[idx] = { ...newItems[idx], sku: value }
+    }
+    setOrden({ ...orden, items: newItems })
+    updateOrden(orden.id, { items: newItems })
+    setHasChanges(true)
+    setEditingLibreItem(null)
+  }
+  
+  // Mass actions handlers
+  const handleApplyMassAPedir = () => {
+    if (!orden || !massAPedirValue) return
+    const value = parseInt(massAPedirValue) || 0
+    const newItems = orden.items.map(item => ({
+      ...item,
+      quantity: value,
+      total: value * item.unitPrice
+    }))
+    const newTotal = newItems.reduce((sum, it) => sum + it.total, 0)
+    setOrden({ ...orden, items: newItems, importeEstimado: newTotal })
+    updateOrden(orden.id, { items: newItems, importeEstimado: newTotal })
+    setHasChanges(true)
+    setShowAPedirMassMenu(false)
+    setMassAPedirValue("")
+  }
+  
+  const handleApplyMassProyectado = () => {
+    if (!orden || !massProyectadoValue) return
+    const targetValue = parseInt(massProyectadoValue) || 0
+    const newItems = orden.items.map(item => {
+      const stockActual = Number(getStockBySku(item.sku)) || 0
+      const newQuantity = Math.max(0, targetValue - stockActual)
+      return {
+        ...item,
+        quantity: newQuantity,
+        total: newQuantity * item.unitPrice
+      }
+    })
+    const newTotal = newItems.reduce((sum, it) => sum + it.total, 0)
+    setOrden({ ...orden, items: newItems, importeEstimado: newTotal })
+    updateOrden(orden.id, { items: newItems, importeEstimado: newTotal })
+    setHasChanges(true)
+    setShowProyectadoMassMenu(false)
+    setMassProyectadoValue("")
+  }
+  
+  const handleApplyMassCosto = () => {
+    if (!orden || !massCostoValue) return
+    const value = parseFloat(massCostoValue) || 0
+    const newItems = orden.items.map(item => {
+      let newPrice = item.unitPrice
+      switch (massCostoType) {
+        case "set":
+          newPrice = value
+          break
+        case "add":
+          newPrice = item.unitPrice + value
+          break
+        case "subtract":
+          newPrice = Math.max(0, item.unitPrice - value)
+          break
+        case "addPercent":
+          newPrice = item.unitPrice * (1 + value / 100)
+          break
+        case "subtractPercent":
+          newPrice = item.unitPrice * (1 - value / 100)
+          break
+      }
+      newPrice = Math.round(newPrice)
+      return {
+        ...item,
+        unitPrice: newPrice,
+        total: item.quantity * newPrice
+      }
+    })
+    const newTotal = newItems.reduce((sum, it) => sum + it.total, 0)
+    setOrden({ ...orden, items: newItems, importeEstimado: newTotal })
+    updateOrden(orden.id, { items: newItems, importeEstimado: newTotal })
+    setHasChanges(true)
+    setShowCostoMassMenu(false)
+    setMassCostoValue("")
+    setMassCostoType("set")
   }
   
   // Handle "Llevar a Compras" - shows confirmation modal first
@@ -1070,10 +1191,121 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                     </div>
                     <div className="flex items-center justify-center">Stock Actual</div>
                     <div className="flex items-center justify-center w-6"></div>
-                    <div className="flex items-center justify-center">A Pedir</div>
+                    
+                    {/* A Pedir with mass action */}
+                    <div className="flex items-center justify-center gap-1 relative" data-mass-menu>
+                      <span>A Pedir</span>
+                      <button
+                        onClick={() => { setShowAPedirMassMenu(!showAPedirMassMenu); setShowProyectadoMassMenu(false); setShowCostoMassMenu(false) }}
+                        className="p-0.5 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
+                      >
+                        <MoreVertical className="w-3.5 h-3.5" />
+                      </button>
+                      {showAPedirMassMenu && (
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg p-3 z-50 min-w-[180px]">
+                          <p className="text-[10px] text-slate-500 mb-2 normal-case tracking-normal font-normal">Aplicar a todos los items</p>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              placeholder="Cantidad"
+                              value={massAPedirValue}
+                              onChange={(e) => setMassAPedirValue(e.target.value)}
+                              className="flex-1 text-sm px-2 py-1.5 border border-slate-200 rounded focus:outline-none focus:border-blue-400"
+                              min={0}
+                            />
+                            <button
+                              onClick={handleApplyMassAPedir}
+                              disabled={!massAPedirValue}
+                              className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              Aplicar
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
                     <div className="flex items-center justify-center w-6"></div>
-                    <div className="flex items-center justify-center whitespace-nowrap">Stock Proyectado</div>
-                    <div className="flex items-center justify-center">Costo Unit.</div>
+                    
+                    {/* Stock Proyectado with mass action */}
+                    <div className="flex items-center justify-center gap-1 relative" data-mass-menu>
+                      <span className="whitespace-nowrap">Stock Proyectado</span>
+                      <button
+                        onClick={() => { setShowProyectadoMassMenu(!showProyectadoMassMenu); setShowAPedirMassMenu(false); setShowCostoMassMenu(false) }}
+                        className="p-0.5 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
+                      >
+                        <MoreVertical className="w-3.5 h-3.5" />
+                      </button>
+                      {showProyectadoMassMenu && (
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg p-3 z-50 min-w-[180px]">
+                          <p className="text-[10px] text-slate-500 mb-2 normal-case tracking-normal font-normal">Fijar stock proyectado a</p>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              placeholder="Stock"
+                              value={massProyectadoValue}
+                              onChange={(e) => setMassProyectadoValue(e.target.value)}
+                              className="flex-1 text-sm px-2 py-1.5 border border-slate-200 rounded focus:outline-none focus:border-blue-400"
+                              min={0}
+                            />
+                            <button
+                              onClick={handleApplyMassProyectado}
+                              disabled={!massProyectadoValue}
+                              className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              Aplicar
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Costo Unit. with mass action */}
+                    <div className="flex items-center justify-center gap-1 relative" data-mass-menu>
+                      <span>Costo Unit.</span>
+                      <button
+                        onClick={() => { setShowCostoMassMenu(!showCostoMassMenu); setShowAPedirMassMenu(false); setShowProyectadoMassMenu(false) }}
+                        className="p-0.5 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
+                      >
+                        <MoreVertical className="w-3.5 h-3.5" />
+                      </button>
+                      {showCostoMassMenu && (
+                        <div className="absolute top-full right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg p-3 z-50 min-w-[220px]">
+                          <p className="text-[10px] text-slate-500 mb-2 normal-case tracking-normal font-normal">Modificar costo de todos</p>
+                          <div className="flex flex-col gap-2">
+                            <select
+                              value={massCostoType}
+                              onChange={(e) => setMassCostoType(e.target.value as any)}
+                              className="text-sm px-2 py-1.5 border border-slate-200 rounded focus:outline-none focus:border-blue-400"
+                            >
+                              <option value="set">Reemplazar por $</option>
+                              <option value="add">Agregar $</option>
+                              <option value="subtract">Disminuir $</option>
+                              <option value="addPercent">Agregar %</option>
+                              <option value="subtractPercent">Disminuir %</option>
+                            </select>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="number"
+                                placeholder={massCostoType.includes("Percent") ? "%" : "$"}
+                                value={massCostoValue}
+                                onChange={(e) => setMassCostoValue(e.target.value)}
+                                className="flex-1 text-sm px-2 py-1.5 border border-slate-200 rounded focus:outline-none focus:border-blue-400"
+                                min={0}
+                              />
+                              <button
+                                onClick={handleApplyMassCosto}
+                                disabled={!massCostoValue}
+                                className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                Aplicar
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
                     <div className="flex items-center justify-end pr-4">Subtotal</div>
                   </div>
                 ) : (
@@ -1175,8 +1407,33 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                           />
                         </div>
                         <div className="min-w-0">
+                          {/* Item Name - editable for descripcion libre items */}
                           <div className="flex items-center gap-2">
-                            <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
+                            {item.isDescripcionLibre && isEditable ? (
+                              editingLibreItem?.idx === idx && editingLibreItem?.field === "name" ? (
+                                <input
+                                  type="text"
+                                  value={editingLibreItem.value}
+                                  onChange={(e) => setEditingLibreItem({ idx, field: "name", value: e.target.value })}
+                                  onBlur={() => handleUpdateLibreItem(idx, "name", editingLibreItem.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") handleUpdateLibreItem(idx, "name", editingLibreItem.value)
+                                    if (e.key === "Escape") setEditingLibreItem(null)
+                                  }}
+                                  autoFocus
+                                  className="text-sm font-medium text-gray-900 bg-blue-50 border border-blue-200 rounded px-1 py-0.5 focus:outline-none focus:border-blue-400 w-full"
+                                />
+                              ) : (
+                                <button
+                                  onClick={() => setEditingLibreItem({ idx, field: "name", value: item.name })}
+                                  className="text-sm font-medium text-gray-900 truncate hover:text-blue-600 hover:underline cursor-pointer transition-colors text-left"
+                                >
+                                  {item.name}
+                                </button>
+                              )
+                            ) : (
+                              <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
+                            )}
                             {item.tags && item.tags.length > 0 && (
                               <div className="flex items-center gap-1">
                                 {item.tags.map((tag, i) => (
@@ -1189,8 +1446,50 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                                 ))}
                               </div>
                             )}
+                            {item.isDescripcionLibre && (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-medium">
+                                Libre
+                              </span>
+                            )}
                           </div>
-                          <p className="text-xs text-slate-400 mt-0.5">{item.sku || "Sin SKU"}</p>
+                          
+                          {/* SKU - editable for descripcion libre items */}
+                          {item.isDescripcionLibre && isEditable ? (
+                            editingLibreItem?.idx === idx && editingLibreItem?.field === "sku" ? (
+                              <div className="flex items-center gap-1 mt-0.5">
+                                <span className="text-xs text-slate-400">sku:</span>
+                                <input
+                                  type="text"
+                                  value={editingLibreItem.value}
+                                  onChange={(e) => setEditingLibreItem({ idx, field: "sku", value: e.target.value })}
+                                  onBlur={() => handleUpdateLibreItem(idx, "sku", editingLibreItem.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") handleUpdateLibreItem(idx, "sku", editingLibreItem.value)
+                                    if (e.key === "Escape") setEditingLibreItem(null)
+                                  }}
+                                  autoFocus
+                                  className="text-xs text-slate-600 bg-blue-50 border border-blue-200 rounded px-1 py-0.5 focus:outline-none focus:border-blue-400"
+                                  placeholder="Agregar SKU"
+                                />
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setEditingLibreItem({ idx, field: "sku", value: item.sku || "" })}
+                                className="text-xs text-slate-400 mt-0.5 hover:text-blue-600 hover:underline cursor-pointer transition-colors text-left"
+                              >
+                                sku: {item.sku || <span className="italic">agregar</span>}
+                              </button>
+                            )
+                          ) : (
+                            <p className="text-xs text-slate-400 mt-0.5">sku: {item.sku || "Sin SKU"}</p>
+                          )}
+                          
+                          {/* Marca . Categoria */}
+                          {(item.marca || item.categoria) && (
+                            <p className="text-xs text-slate-400 mt-0.5">
+                              {item.marca || "Sin marca"} . {item.categoria || "Sin categoria"}
+                            </p>
+                          )}
                         </div>
                       </div>
 

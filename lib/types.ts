@@ -405,8 +405,10 @@ export interface OrdenDeCompraItem {
   unitPrice: number
   total: number
   categoria?: string
+  marca?: string
   thumbnail?: string
   tags?: string[] // For child item tags (e.g., variant attributes)
+  isDescripcionLibre?: boolean // Whether this is a free description item (not from inventory)
 }
 
 export interface OrdenDeCompra {
