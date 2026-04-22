@@ -1419,7 +1419,7 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                               <div className="flex items-center justify-center">
                                 {!isParent && (
                                   <span className="text-sm text-slate-600">
-                                    ${(item.precio?.venta || 0).toLocaleString("es-AR")}
+                                    ${(item.precio?.precioFinal || 0).toLocaleString("es-AR")}
                                   </span>
                                 )}
                               </div>
@@ -1499,7 +1499,7 @@ className="w-4 h-4 rounded border border-slate-300 flex items-center justify-cen
                                   {/* Precio Venta */}
                                   <div className="flex items-center justify-center">
                                     <span className="text-sm text-slate-600">
-                                      ${(variant.precio?.venta || 0).toLocaleString("es-AR")}
+                                      ${(variant.precio?.precioFinal || 0).toLocaleString("es-AR")}
                                     </span>
                                   </div>
 
