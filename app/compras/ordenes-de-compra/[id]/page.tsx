@@ -211,6 +211,24 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
     return 0
   }
   
+  // Helper to get marca for an item by SKU (lookup from items data if not stored in orden item)
+  const getMarcaBySku = (sku: string): string | undefined => {
+    const standaloneItem = allItems.find(item => item.sku === sku)
+    if (standaloneItem?.marca) {
+      return standaloneItem.marca
+    }
+    
+    for (const item of allItems) {
+      if (item.variants) {
+        const variant = item.variants.find(v => v.sku === sku || `${item.skuPrefix}-${v.skuSuffix}` === sku)
+        if (variant) {
+          return variant.marca || item.marca
+        }
+      }
+    }
+    return undefined
+  }
+  
   // Get proveedor items with parent-child structure for the modal
   const proveedorItemsStructured = useMemo(() => {
     if (!orden) return []
@@ -1531,13 +1549,17 @@ function OrdenDetailContent({ params }: { params: Promise<{ id: string }> }) {
                                 </button>
                               )}
                             </div>
-                          ) : (item.marca || item.categoria) ? (
-                            <div className="flex items-center gap-1 mt-0.5">
-                              {item.marca && <span className="text-xs text-slate-400">{item.marca}</span>}
-                              {item.marca && item.categoria && <span className="text-xs text-slate-300">·</span>}
-                              {item.categoria && <span className="text-xs text-slate-400">{item.categoria}</span>}
-                            </div>
-                          ) : null}
+                          ) : (() => {
+                            // For non-libre items, lookup marca from items data if not stored
+                            const displayMarca = item.marca || getMarcaBySku(item.sku)
+                            return (displayMarca || item.categoria) ? (
+                              <div className="flex items-center gap-1 mt-0.5">
+                                {displayMarca && <span className="text-xs text-slate-400">{displayMarca}</span>}
+                                {displayMarca && item.categoria && <span className="text-xs text-slate-300">·</span>}
+                                {item.categoria && <span className="text-xs text-slate-400">{item.categoria}</span>}
+                              </div>
+                            ) : null
+                          })()}
                         </div>
                       </div>
 
