@@ -75,8 +75,8 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [showClienteDropdown])
   
-  // Discount state
-  const [itemDiscounts, setItemDiscounts] = useState<{ [idx: number]: { value: number; type: "cash" | "percent" } }>({})
+  // Ajuste state (mode: "add" for surcharge, "subtract" for discount)
+  const [itemAjustes, setItemAjustes] = useState<{ [idx: number]: { value: number; type: "cash" | "percent"; mode: "add" | "subtract" } }>({})
   const [globalDiscount, setGlobalDiscount] = useState<{ value: number; type: "cash" | "percent" }>({ value: 0, type: "percent" })
 
   const foundPresupuesto = useMemo(() => {
@@ -457,11 +457,20 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
   
   const estadoStyle = estadoColors[presupuesto.estado]
 
-  // Calculate totals
-  const subtotal = presupuesto.items.reduce((sum, item) => sum + item.total, 0)
-  const discountAmount = globalDiscount.type === "percent" 
-    ? subtotal * (globalDiscount.value / 100) 
-    : globalDiscount.value
+  // Calculate totals with ajustes applied
+  const subtotal = presupuesto.items.reduce((sum, item, idx) => {
+    const ajuste = itemAjustes[idx] || { value: 0, type: "percent", mode: "subtract" }
+    const ajusteAmt = ajuste.type === "percent" 
+      ? item.unitPrice * (ajuste.value / 100) 
+      : ajuste.value
+    const adjustedUnitPrice = ajuste.mode === "subtract" 
+      ? Math.max(0, item.unitPrice - ajusteAmt)
+      : item.unitPrice + ajusteAmt
+    return sum + (item.quantity * adjustedUnitPrice)
+  }, 0)
+  const discountAmount = globalDiscount.type === "percent"
+  ? subtotal * (globalDiscount.value / 100)
+  : globalDiscount.value
   const finalTotal = Math.max(0, subtotal - discountAmount)
 
   return (
@@ -620,8 +629,9 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                 {/* Grid Header */}
                 <div className="bg-slate-100 border-b border-slate-200/80 rounded-t-lg">
                   {isEditable ? (
-                    <div className="grid grid-cols-[2fr_1fr_auto_1fr_1.2fr_1.5fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      <div className="flex items-center px-4">Item</div>
+                    <div className="grid grid-cols-[auto_0.8fr_2fr_1.2fr_1.2fr_1.5fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      {/* Delete column - empty header */}
+                      <div className="flex items-center justify-center w-10"></div>
                       
                       {/* Cantidad with mass action */}
                       <div className="flex items-center justify-center gap-1 relative" data-mass-menu>
@@ -656,7 +666,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                         )}
                       </div>
                       
-                      <div className="flex items-center justify-center w-6"></div>
+                      <div className="flex items-center px-4">Item</div>
                       
                       {/* Precio with mass action */}
                       <div className="flex items-center justify-center gap-1 relative" data-mass-menu>
@@ -704,14 +714,15 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                         )}
                       </div>
                       
-                      <div className="flex items-center justify-center">Descuento</div>
+                      <div className="flex items-center justify-center">Ajuste</div>
                       <div className="flex items-center justify-end pr-4">Subtotal</div>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-[3fr_1.5fr_1.5fr_2fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    <div className="grid grid-cols-[0.8fr_2.5fr_1.2fr_1.2fr_1.5fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      <div className="flex items-center justify-center">Cantidad</div>
                       <div className="flex items-center px-4">Item</div>
                       <div className="flex items-center justify-center">Precio Unit.</div>
-                      <div className="flex items-center justify-center">Cantidad</div>
+                      <div className="flex items-center justify-center">Ajuste</div>
                       <div className="flex items-center justify-end pr-4">Subtotal</div>
                     </div>
                   )}
@@ -737,25 +748,58 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                   <>
                   {presupuesto.items.map((item, idx) => {
                     const displayMarca = item.marca || getMarcaBySku(item.sku)
-                    const discount = itemDiscounts[idx] || { value: 0, type: "percent" }
-                    const itemSubtotal = item.total
-                    const discountAmt = discount.type === "percent" ? itemSubtotal * (discount.value / 100) : discount.value
-                    const finalItemTotal = Math.max(0, itemSubtotal - discountAmt)
+                    const ajuste = itemAjustes[idx] || { value: 0, type: "percent", mode: "subtract" }
+                    // Calculate adjusted unit price
+                    const ajusteAmt = ajuste.type === "percent" 
+                      ? item.unitPrice * (ajuste.value / 100) 
+                      : ajuste.value
+                    const adjustedUnitPrice = ajuste.mode === "subtract" 
+                      ? Math.max(0, item.unitPrice - ajusteAmt)
+                      : item.unitPrice + ajusteAmt
+                    const finalItemTotal = Math.max(0, item.quantity * adjustedUnitPrice)
                     
                     return (
                       <div key={idx} className="border-b border-slate-100 last:border-b-0">
                         {isEditable ? (
-                          <div className="grid grid-cols-[2fr_1fr_auto_1fr_1.2fr_1.5fr] min-h-[72px]">
+                          <div className="grid grid-cols-[auto_0.8fr_2fr_1.2fr_1.2fr_1.5fr] min-h-[72px]">
+                            {/* Delete button */}
+                            <div className="flex items-center justify-center w-10">
+                              <button
+                                onClick={() => handleRemoveItem(idx)}
+                                className="p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                            
+                            {/* Cantidad */}
+                            <div className="flex items-center justify-center">
+                              <div className="flex items-center border border-slate-200 rounded overflow-hidden">
+                                <button
+                                  onClick={() => handleQuantityChange(idx, item.quantity - 1)}
+                                  className="p-1.5 hover:bg-slate-100 text-slate-400"
+                                >
+                                  <Minus className="w-3 h-3" />
+                                </button>
+                                <input
+                                  type="number"
+                                  value={item.quantity || ""}
+                                  placeholder="0"
+                                  onChange={(e) => handleQuantityChange(idx, parseInt(e.target.value) || 0)}
+                                  onFocus={(e) => { if (item.quantity === 0) e.target.value = "" }}
+                                  className="w-12 text-center text-sm py-1 border-x border-slate-200 focus:outline-none placeholder:text-slate-300"
+                                />
+                                <button
+                                  onClick={() => handleQuantityChange(idx, item.quantity + 1)}
+                                  className="p-1.5 hover:bg-slate-100 text-slate-400"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                </button>
+                              </div>
+                            </div>
+                            
                             {/* Item Info */}
                             <div className="flex items-center gap-3 px-4 py-3">
-                              {isEditable && (
-                                <button
-                                  onClick={() => handleRemoveItem(idx)}
-                                  className="p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors"
-                                >
-                                  <X className="w-4 h-4" />
-                                </button>
-                              )}
                               <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                                 <Image
                                   src={getCategoryImage(item.categoria || "")}
@@ -816,74 +860,64 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                               </div>
                             </div>
                             
-                            {/* Cantidad */}
-                            <div className="flex items-center justify-center">
-                              <div className="flex items-center border border-slate-200 rounded overflow-hidden">
-                                <button
-                                  onClick={() => handleQuantityChange(idx, item.quantity - 1)}
-                                  className="p-1.5 hover:bg-slate-100 text-slate-400"
-                                >
-                                  <Minus className="w-3 h-3" />
-                                </button>
-                                <input
-                                  type="number"
-                                  value={item.quantity}
-                                  onChange={(e) => handleQuantityChange(idx, parseInt(e.target.value) || 0)}
-                                  className="w-12 text-center text-sm py-1 border-x border-slate-200 focus:outline-none"
-                                />
-                                <button
-                                  onClick={() => handleQuantityChange(idx, item.quantity + 1)}
-                                  className="p-1.5 hover:bg-slate-100 text-slate-400"
-                                >
-                                  <Plus className="w-3 h-3" />
-                                </button>
-                              </div>
-                            </div>
-                            
-                            {/* Arrow */}
-                            <div className="flex items-center justify-center w-6 text-slate-300">→</div>
-                            
                             {/* Precio */}
                             <div className="flex items-center justify-center">
                               <div className="flex items-center gap-1">
                                 <span className="text-slate-400 text-sm">$</span>
                                 <input
                                   type="number"
-                                  value={item.unitPrice}
+                                  value={item.unitPrice || ""}
+                                  placeholder="0"
                                   onChange={(e) => handlePriceChange(idx, parseFloat(e.target.value) || 0)}
-                                  className="w-20 text-center text-sm py-1.5 border border-slate-200 rounded focus:outline-none focus:border-blue-400"
+                                  onFocus={(e) => { if (item.unitPrice === 0) e.target.value = "" }}
+                                  className="w-20 text-center text-sm py-1.5 border border-slate-200 rounded focus:outline-none focus:border-blue-400 placeholder:text-slate-300"
                                 />
                               </div>
                             </div>
                             
-                            {/* Descuento */}
+                            {/* Ajuste */}
                             <div className="flex items-center justify-center gap-1">
+                              {/* Mode toggle: - or + */}
+                              <button
+                                onClick={() => setItemAjustes(prev => ({
+                                  ...prev,
+                                  [idx]: { ...ajuste, mode: ajuste.mode === "subtract" ? "add" : "subtract" }
+                                }))}
+                                className={`w-6 h-6 flex items-center justify-center rounded border transition-colors ${
+                                  ajuste.mode === "subtract" 
+                                    ? "border-red-200 bg-red-50 text-red-500" 
+                                    : "border-emerald-200 bg-emerald-50 text-emerald-500"
+                                }`}
+                                title={ajuste.mode === "subtract" ? "Descuento" : "Recargo"}
+                              >
+                                {ajuste.mode === "subtract" ? <Minus className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+                              </button>
                               <input
                                 type="number"
-                                placeholder="Dto"
-                                value={discount.value || ""}
-                                onChange={(e) => setItemDiscounts(prev => ({
+                                placeholder="0"
+                                value={ajuste.value || ""}
+                                onChange={(e) => setItemAjustes(prev => ({
                                   ...prev,
-                                  [idx]: { ...discount, value: parseFloat(e.target.value) || 0 }
+                                  [idx]: { ...ajuste, value: parseFloat(e.target.value) || 0 }
                                 }))}
-                                className="w-14 text-center text-xs py-1 border border-slate-200 rounded focus:outline-none focus:border-blue-400"
+                                className="w-12 text-center text-xs py-1 border border-slate-200 rounded focus:outline-none focus:border-blue-400 placeholder:text-slate-300"
                               />
                               <div className="flex border border-slate-200 rounded overflow-hidden">
                                 <button
-                                  onClick={() => setItemDiscounts(prev => ({
+                                  onClick={() => setItemAjustes(prev => ({
                                     ...prev,
-                                    [idx]: { ...discount, type: "cash" }
+                                    [idx]: { ...ajuste, type: "cash" }
                                   }))}
-                                  className={`px-1.5 py-1 text-xs ${discount.type === "cash" ? "bg-blue-50 text-blue-600" : "text-slate-400"}`}
+                                  className={`px-1.5 py-1 text-xs ${ajuste.type === "cash" ? "bg-blue-50 text-blue-600" : "text-slate-400"}`}
                                 >
                                   $
                                 </button>
                                 <button
-                                  onClick={() => setItemDiscounts(prev => ({
+                                  onClick={() => setItemAjustes(prev => ({
                                     ...prev,
-                                    [idx]: { ...discount, type: "percent" }
+                                    [idx]: { ...ajuste, type: "percent" }
                                   }))}
-                                  className={`px-1.5 py-1 text-xs ${discount.type === "percent" ? "bg-blue-50 text-blue-600" : "text-slate-400"}`}
+                                  className={`px-1.5 py-1 text-xs ${ajuste.type === "percent" ? "bg-blue-50 text-blue-600" : "text-slate-400"}`}
                                 >
                                   %
                                 </button>
@@ -891,14 +925,20 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                             </div>
                             
                             {/* Subtotal */}
-                            <div className="flex items-center justify-end pr-4">
+                            <div className="flex flex-col items-end justify-center pr-4">
+                              <span className="text-[11px] text-slate-400">
+                                {item.quantity} x ${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}
+                              </span>
                               <span className="text-sm font-semibold text-slate-900">
-                                ${finalItemTotal.toLocaleString("es-AR")}
+                                ${Math.round(finalItemTotal).toLocaleString("es-AR")}
                               </span>
                             </div>
                           </div>
                         ) : (
-                          <div className="grid grid-cols-[3fr_1.5fr_1.5fr_2fr] min-h-[56px]">
+                          <div className="grid grid-cols-[0.8fr_2.5fr_1.2fr_1.2fr_1.5fr] min-h-[56px]">
+                            <div className="flex items-center justify-center">
+                              <span className="text-sm text-slate-700">{item.quantity}</span>
+                            </div>
                             <div className="flex items-center gap-3 px-4 py-3">
                               <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center overflow-hidden">
                                 <Image
@@ -918,10 +958,19 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                               <span className="text-sm text-slate-700">${item.unitPrice.toLocaleString("es-AR")}</span>
                             </div>
                             <div className="flex items-center justify-center">
-                              <span className="text-sm text-slate-700">{item.quantity}</span>
+                              {ajuste.value > 0 ? (
+                                <span className={`text-sm ${ajuste.mode === "subtract" ? "text-red-500" : "text-emerald-500"}`}>
+                                  {ajuste.mode === "subtract" ? "-" : "+"}{ajuste.value}{ajuste.type === "percent" ? "%" : "$"}
+                                </span>
+                              ) : (
+                                <span className="text-sm text-slate-300">-</span>
+                              )}
                             </div>
-                            <div className="flex items-center justify-end pr-4">
-                              <span className="text-sm font-semibold text-slate-900">${item.total.toLocaleString("es-AR")}</span>
+                            <div className="flex flex-col items-end justify-center pr-4">
+                              <span className="text-[11px] text-slate-400">
+                                {item.quantity} x ${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}
+                              </span>
+                              <span className="text-sm font-semibold text-slate-900">${Math.round(finalItemTotal).toLocaleString("es-AR")}</span>
                             </div>
                           </div>
                         )}
