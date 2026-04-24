@@ -423,3 +423,37 @@ export interface OrdenDeCompra {
   importeEstimado: number
   compraId?: string
 }
+
+// ===== PRESUPUESTOS =====
+
+export type EstadoPresupuesto = "borrador" | "aceptado" | "rechazado"
+
+export interface PresupuestoItem {
+  sku: string
+  name: string
+  quantity: number
+  unitPrice: number
+  total: number
+  categoria?: string
+  marca?: string
+  thumbnail?: string
+  tags?: string[]
+  isDescripcionLibre?: boolean
+}
+
+export interface Presupuesto {
+  id: string
+  numero: number
+  fechaCreacion: string
+  fechaModificacion?: string
+  fechaValidez?: string
+  clienteId: string
+  clienteNombre: string
+  estado: EstadoPresupuesto
+  items: PresupuestoItem[]
+  importeTotal: number
+  descuento?: number
+  descuentoTipo?: "percent" | "fixed"
+  observaciones?: string
+  ventaId?: string
+}

@@ -163,7 +163,10 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     icon: Receipt,
     label: "Ventas",
     hasDropdown: true,
-    dropdown: [{ label: "Ventas", href: "/ventas/ventas" }],
+    dropdown: [
+      { label: "Ventas", href: "/ventas/ventas" },
+      { label: "Presupuestos", href: "/ventas/presupuestos" },
+    ],
   },
   {
     icon: Wallet,
