@@ -1237,7 +1237,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                   </span>
                                   
                                   <span className="text-sm font-medium text-slate-500 whitespace-nowrap">
-                                    {stock} disponible
+                                    {stock} {stock === 1 ? "disponible" : "disponibles"}
                                   </span>
                                   
                                   {/* Cantidad controls */}
@@ -1325,7 +1325,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                         </span>
                         
                         <span className="text-sm font-medium text-slate-500 whitespace-nowrap">
-                          {stock} disponible
+                          {stock} {stock === 1 ? "disponible" : "disponibles"}
                         </span>
                         
                         {/* Cantidad controls */}
