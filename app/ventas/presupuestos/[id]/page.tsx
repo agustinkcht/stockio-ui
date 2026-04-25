@@ -800,10 +800,10 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                             
                             {/* Cantidad */}
                             <div className="flex flex-col items-center justify-center">
-                              <div className="flex items-center border border-slate-200 rounded overflow-hidden">
+                              <div className="flex items-center border border-slate-200 rounded-full px-1 py-0.5 bg-white">
                                 <button
                                   onClick={() => handleQuantityChange(idx, item.quantity - 1)}
-                                  className="p-1.5 hover:bg-slate-100 text-slate-400"
+                                  className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors"
                                 >
                                   <Minus className="w-3 h-3" />
                                 </button>
@@ -813,11 +813,11 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                   placeholder="0"
                                   onChange={(e) => handleQuantityChange(idx, parseInt(e.target.value) || 0)}
                                   onFocus={(e) => { if (item.quantity === 0) e.target.value = "" }}
-                                  className="w-12 text-center text-sm py-1 border-x border-slate-200 focus:outline-none placeholder:text-slate-300"
+                                  className="w-10 text-center text-sm py-1 focus:outline-none placeholder:text-slate-300 bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 />
                                 <button
                                   onClick={() => handleQuantityChange(idx, item.quantity + 1)}
-                                  className="p-1.5 hover:bg-slate-100 text-slate-400"
+                                  className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors"
                                 >
                                   <Plus className="w-3 h-3" />
                                 </button>
@@ -908,22 +908,36 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                             <div className="flex items-center justify-center w-6 text-slate-300">→</div>
                             
                             {/* Ajuste */}
-                            <div className="flex items-center justify-center gap-1">
-                              {/* Mode toggle: - or + */}
-                              <button
-                                onClick={() => setItemAjustes(prev => ({
-                                  ...prev,
-                                  [idx]: { ...ajuste, mode: ajuste.mode === "subtract" ? "add" : "subtract" }
-                                }))}
-                                className={`w-6 h-6 flex items-center justify-center rounded border transition-colors ${
-                                  ajuste.mode === "subtract" 
-                                    ? "border-red-200 bg-red-50 text-red-500" 
-                                    : "border-emerald-200 bg-emerald-50 text-emerald-500"
-                                }`}
-                                title={ajuste.mode === "subtract" ? "Descuento" : "Recargo"}
-                              >
-                                {ajuste.mode === "subtract" ? <Minus className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
-                              </button>
+                            <div className="flex items-center justify-center gap-1.5">
+                              {/* Mode toggle: descuento or aumento */}
+                              <div className="flex border border-slate-200 rounded overflow-hidden text-[10px]">
+                                <button
+                                  onClick={() => setItemAjustes(prev => ({
+                                    ...prev,
+                                    [idx]: { ...ajuste, mode: "subtract" }
+                                  }))}
+                                  className={`px-1.5 py-1 transition-colors ${
+                                    ajuste.mode === "subtract" 
+                                      ? "bg-red-50 text-red-600" 
+                                      : "text-slate-400 hover:bg-slate-50"
+                                  }`}
+                                >
+                                  descuento
+                                </button>
+                                <button
+                                  onClick={() => setItemAjustes(prev => ({
+                                    ...prev,
+                                    [idx]: { ...ajuste, mode: "add" }
+                                  }))}
+                                  className={`px-1.5 py-1 transition-colors ${
+                                    ajuste.mode === "add" 
+                                      ? "bg-emerald-50 text-emerald-600" 
+                                      : "text-slate-400 hover:bg-slate-50"
+                                  }`}
+                                >
+                                  aumento
+                                </button>
+                              </div>
                               <input
                                 type="number"
                                 placeholder="0"
@@ -932,7 +946,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                   ...prev,
                                   [idx]: { ...ajuste, value: parseFloat(e.target.value) || 0 }
                                 }))}
-                                className="w-12 text-center text-xs py-1 border border-slate-200 rounded focus:outline-none focus:border-blue-400 placeholder:text-slate-300"
+                                className="w-10 text-center text-xs py-1 border border-slate-200 rounded focus:outline-none focus:border-blue-400 placeholder:text-slate-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               />
                               <div className="flex border border-slate-200 rounded overflow-hidden">
                                 <button
@@ -1187,13 +1201,13 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                   
                                   {/* Cantidad controls */}
                                   <div className="flex flex-col items-end">
-                                    <div className="flex items-center border border-slate-200 rounded overflow-hidden bg-white">
+                                    <div className="flex items-center border border-slate-200 rounded-full px-1 py-0.5 bg-white">
                                       <button
                                         onClick={() => setModalItemQuantities(prev => ({
                                           ...prev,
                                           [variantSku]: Math.max(0, (prev[variantSku] || 0) - 1)
                                         }))}
-                                        className="p-1.5 hover:bg-slate-100 text-slate-400"
+                                        className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors"
                                       >
                                         <Minus className="w-3 h-3" />
                                       </button>
@@ -1205,14 +1219,14 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                           const val = Math.max(0, parseInt(e.target.value) || 0)
                                           setModalItemQuantities(prev => ({ ...prev, [variantSku]: val }))
                                         }}
-                                        className="w-10 text-center text-sm py-1 border-x border-slate-200 focus:outline-none placeholder:text-slate-300"
+                                        className="w-8 text-center text-sm py-1 focus:outline-none placeholder:text-slate-300 bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                       />
                                       <button
                                         onClick={() => setModalItemQuantities(prev => ({
                                           ...prev,
                                           [variantSku]: (prev[variantSku] || 0) + 1
                                         }))}
-                                        className="p-1.5 hover:bg-slate-100 text-slate-400"
+                                        className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors"
                                       >
                                         <Plus className="w-3 h-3" />
                                       </button>
@@ -1267,13 +1281,13 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                         
                         {/* Cantidad controls */}
                         <div className="flex flex-col items-end">
-                          <div className="flex items-center border border-slate-200 rounded overflow-hidden bg-white">
+                          <div className="flex items-center border border-slate-200 rounded-full px-1 py-0.5 bg-white">
                             <button
                               onClick={() => setModalItemQuantities(prev => ({
                                 ...prev,
                                 [sku]: Math.max(0, (prev[sku] || 0) - 1)
                               }))}
-                              className="p-1.5 hover:bg-slate-100 text-slate-400"
+                              className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors"
                             >
                               <Minus className="w-3 h-3" />
                             </button>
@@ -1285,14 +1299,14 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                 const val = Math.max(0, parseInt(e.target.value) || 0)
                                 setModalItemQuantities(prev => ({ ...prev, [sku]: val }))
                               }}
-                              className="w-10 text-center text-sm py-1 border-x border-slate-200 focus:outline-none placeholder:text-slate-300"
+                              className="w-8 text-center text-sm py-1 focus:outline-none placeholder:text-slate-300 bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             />
                             <button
                               onClick={() => setModalItemQuantities(prev => ({
                                 ...prev,
                                 [sku]: (prev[sku] || 0) + 1
                               }))}
-                              className="p-1.5 hover:bg-slate-100 text-slate-400"
+                              className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors"
                             >
                               <Plus className="w-3 h-3" />
                             </button>
