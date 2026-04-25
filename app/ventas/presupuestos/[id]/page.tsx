@@ -1195,31 +1195,38 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                               />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-slate-900 truncate">{item.name}</p>
-                              <div className="flex items-center gap-2 mt-0.5">
-                                <p className="text-xs text-slate-400">{item.variants?.length} variantes</p>
-                                {item.marca && (
-                                  <span className="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded">{item.marca}</span>
-                                )}
-                                {item.categoria && (
-                                  <span className="text-[10px] px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded">{item.categoria}</span>
-                                )}
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-medium text-slate-900 truncate">{item.name}</p>
+                                <span className="text-xs text-slate-400">{item.variants?.length} variantes</span>
                               </div>
+                              <p className="text-xs text-slate-400 mt-0.5">
+                                {item.marca}{item.marca && item.categoria && " · "}{item.categoria}
+                              </p>
                             </div>
                           </div>
                           <div className="divide-y divide-slate-100">
-                            {item.variants?.map((variant: any) => {
+                            {item.variants?.map((variant: any, variantIdx: number) => {
                               const variantSku = `${item.skuPrefix}-${variant.skuSuffix}`
                               const stock = parseInt(variant.stock?.disponible || "0")
                               const quantity = modalItemQuantities[variantSku] || 0
                               const hasQuantity = quantity > 0
                               const exceedsStock = quantity > stock
+                              const isLastChild = variantIdx === (item.variants?.length || 0) - 1
                               
                               return (
                                 <div
                                   key={variantSku}
-                                  className={`flex items-center gap-4 px-4 py-2.5 transition-colors ${hasQuantity ? "bg-blue-50/50 border-l-2 border-l-blue-400" : "hover:bg-slate-50 border-l-2 border-l-transparent"}`}
+                                  className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${isLastChild ? "rounded-bl-lg" : ""} ${hasQuantity ? `bg-blue-50/50 border-l-2 border-l-blue-400 ${isLastChild ? "rounded-bl-lg" : ""}` : "hover:bg-slate-50 border-l-2 border-l-transparent"}`}
                                 >
+                                  <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                    <Image
+                                      src={getCategoryImage(item.categoria || "")}
+                                      alt={variant.name || item.name}
+                                      width={32}
+                                      height={32}
+                                      className="object-cover"
+                                    />
+                                  </div>
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
                                       <p className="text-sm text-slate-700 truncate">{variant.name || item.name}</p>
@@ -1308,16 +1315,11 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                         </div>
                         
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-medium text-slate-900 truncate">{item.name}</p>
-                            {item.marca && (
-                              <span className="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded">{item.marca}</span>
-                            )}
-                            {item.categoria && (
-                              <span className="text-[10px] px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded">{item.categoria}</span>
-                            )}
-                          </div>
-                          <p className="text-xs text-slate-400">sku: {item.sku || "Sin SKU"}</p>
+                          <p className="text-sm font-medium text-slate-900 truncate">{item.name}</p>
+                          <p className="text-xs text-slate-400">
+                            {item.marca}{item.marca && item.categoria && " · "}{item.categoria}
+                            {(item.marca || item.categoria) && " · "}sku: {item.sku || "Sin SKU"}
+                          </p>
                         </div>
                         
                         <span className="text-sm font-medium text-slate-900 whitespace-nowrap">
