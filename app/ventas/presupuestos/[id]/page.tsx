@@ -25,6 +25,7 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
+  Eye,
 } from "lucide-react"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { getCategoryImage } from "@/lib/utils/category-images"
@@ -79,6 +80,14 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
   const [itemAjustes, setItemAjustes] = useState<{ [idx: number]: { value: number; type: "cash" | "percent"; mode: "add" | "subtract" } }>({})
   const [itemIvas, setItemIvas] = useState<{ [idx: number]: number }>({})
   const [globalDiscount, setGlobalDiscount] = useState<{ value: number; type: "cash" | "percent" }>({ value: 0, type: "percent" })
+  const [showGlobalDiscount, setShowGlobalDiscount] = useState(false)
+  const [showIvaColumn, setShowIvaColumn] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("presupuesto_show_iva") === "true"
+    }
+    return false
+  })
+  const [showColumnMenu, setShowColumnMenu] = useState(false)
 
   const foundPresupuesto = useMemo(() => {
     return presupuestos.find(p => p.id === id) || null
@@ -92,6 +101,20 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
       setPresupuesto(foundPresupuesto)
     }
   }, [foundPresupuesto])
+  
+  useEffect(() => {
+    localStorage.setItem("presupuesto_show_iva", showIvaColumn.toString())
+  }, [showIvaColumn])
+  
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (showColumnMenu && !(e.target as HTMLElement).closest("[data-column-menu]")) {
+        setShowColumnMenu(false)
+      }
+    }
+    document.addEventListener("click", handleClickOutside)
+    return () => document.removeEventListener("click", handleClickOutside)
+  }, [showColumnMenu])
   
   const isEditable = presupuesto?.estado === "borrador"
   
@@ -658,9 +681,35 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                 {/* Grid Header */}
                 <div className="bg-slate-100 border-b border-slate-200/80 rounded-t-lg">
                   {isEditable ? (
-                    <div className="grid grid-cols-[auto_0.8fr_2fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    <div className={`grid ${showIvaColumn ? "grid-cols-[auto_auto_0.8fr_2fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr]" : "grid-cols-[auto_auto_0.8fr_2fr_1fr_auto_1.2fr_auto_1.2fr]"} h-9 text-xs font-medium text-slate-500 uppercase tracking-wider`}>
                       {/* Delete column - empty header */}
                       <div className="flex items-center justify-center w-10"></div>
+                      
+                      {/* Eye icon for column visibility */}
+                      <div className="flex items-center justify-center w-8 relative" data-column-menu>
+                        <button
+                          onClick={() => setShowColumnMenu(!showColumnMenu)}
+                          className="p-1 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                        </button>
+                        {showColumnMenu && (
+                          <div className="absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-10 min-w-[140px]">
+                            <label className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-xs text-slate-600 normal-case tracking-normal font-normal">
+                              <input
+                                type="checkbox"
+                                checked={showIvaColumn}
+                                onChange={(e) => {
+                                  setShowIvaColumn(e.target.checked)
+                                  setShowColumnMenu(false)
+                                }}
+                                className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                              />
+                              Mostrar IVA
+                            </label>
+                          </div>
+                        )}
+                      </div>
                       
                       {/* Cantidad with mass action */}
                       <div className="flex items-center justify-center gap-1 relative" data-mass-menu>
@@ -748,25 +797,33 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                       
                       <div className="flex items-center justify-center">Ajuste</div>
                       
-                      {/* Arrow between Ajuste and IVA */}
-                      <div className="flex items-center justify-center w-6 text-slate-300">→</div>
+                      {showIvaColumn && (
+                        <>
+                          {/* Arrow between Ajuste and IVA */}
+                          <div className="flex items-center justify-center w-6 text-slate-300">→</div>
+                          
+                          <div className="flex items-center justify-center">IVA Cont.</div>
+                        </>
+                      )}
                       
-                      <div className="flex items-center justify-center">IVA Cont.</div>
-                      
-                      {/* Arrow between IVA and Subtotal */}
+                      {/* Arrow between Ajuste/IVA and Subtotal */}
                       <div className="flex items-center justify-center w-6 text-slate-300">→</div>
                       
                       <div className="flex items-center justify-end pr-4">Subtotal</div>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-[0.8fr_2.5fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    <div className={`grid ${showIvaColumn ? "grid-cols-[0.8fr_2.5fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr]" : "grid-cols-[0.8fr_2.5fr_1fr_auto_1.2fr_auto_1.2fr]"} h-9 text-xs font-medium text-slate-500 uppercase tracking-wider`}>
                       <div className="flex items-center justify-center">Cantidad</div>
                       <div className="flex items-center px-4">Item</div>
                       <div className="flex items-center justify-center">Precio Unit.</div>
                       <div className="flex items-center justify-center w-6 text-slate-300">→</div>
                       <div className="flex items-center justify-center">Ajuste</div>
-                      <div className="flex items-center justify-center w-6 text-slate-300">→</div>
-                      <div className="flex items-center justify-center">IVA Cont.</div>
+                      {showIvaColumn && (
+                        <>
+                          <div className="flex items-center justify-center w-6 text-slate-300">→</div>
+                          <div className="flex items-center justify-center">IVA Cont.</div>
+                        </>
+                      )}
                       <div className="flex items-center justify-center w-6 text-slate-300">→</div>
                       <div className="flex items-center justify-end pr-4">Subtotal</div>
                     </div>
@@ -808,16 +865,19 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                     return (
                       <div key={idx} className="border-b border-slate-100 last:border-b-0">
                         {isEditable ? (
-                          <div className="grid grid-cols-[auto_0.8fr_2fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr] min-h-[72px]">
+                          <div className={`grid ${showIvaColumn ? "grid-cols-[auto_auto_0.8fr_2fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr]" : "grid-cols-[auto_auto_0.8fr_2fr_1fr_auto_1.2fr_auto_1.2fr]"} min-h-[72px]`}>
                             {/* Delete button */}
                             <div className="flex items-center justify-center w-10">
                               <button
                                 onClick={() => handleRemoveItem(idx)}
-                                className="p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors"
+                                className="p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors cursor-pointer"
                               >
                                 <X className="w-4 h-4" />
                               </button>
                             </div>
+                            
+                            {/* Eye icon column - empty in rows */}
+                            <div className="w-8"></div>
                             
                             {/* Cantidad */}
                             <div className="flex flex-col items-center justify-center">
@@ -936,11 +996,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                   ...prev,
                                   [idx]: { ...ajuste, mode: ajuste.mode === "subtract" ? "add" : "subtract" }
                                 }))}
-                                className={`px-2 py-1 text-[10px] border rounded transition-colors min-w-[62px] cursor-pointer ${
-                                  ajuste.mode === "subtract" 
-                                    ? "border-red-200 bg-red-50 text-red-600" 
-                                    : "border-emerald-200 bg-emerald-50 text-emerald-600"
-                                }`}
+                                className="px-2 py-1 text-[10px] border border-slate-800 bg-slate-900 text-white rounded transition-colors min-w-[62px] cursor-pointer hover:bg-slate-800"
                               >
                                 {ajuste.mode === "subtract" ? "descuento" : "aumento"}
                               </button>
@@ -976,21 +1032,25 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                               </div>
                             </div>
                             
-                            {/* Arrow */}
-                            <div className="flex items-center justify-center w-6 text-slate-300">→</div>
-                            
-                            {/* IVA Contenido */}
-                            <div className="flex items-center justify-center">
-                              <select
-                                value={itemIvas[idx] ?? getIvaBySku(item.sku)}
-                                onChange={(e) => setItemIvas(prev => ({ ...prev, [idx]: parseInt(e.target.value) }))}
-                                className="text-xs py-1 px-2 border border-slate-200 rounded focus:outline-none focus:border-blue-400 cursor-pointer bg-white"
-                              >
-                                <option value={0}>0%</option>
-                                <option value={10}>10%</option>
-                                <option value={21}>21%</option>
-                              </select>
-                            </div>
+                            {showIvaColumn && (
+                              <>
+                                {/* Arrow */}
+                                <div className="flex items-center justify-center w-6 text-slate-300">→</div>
+                                
+                                {/* IVA Contenido */}
+                                <div className="flex items-center justify-center">
+                                  <select
+                                    value={itemIvas[idx] ?? getIvaBySku(item.sku)}
+                                    onChange={(e) => setItemIvas(prev => ({ ...prev, [idx]: parseInt(e.target.value) }))}
+                                    className="text-xs py-1 px-2 border border-slate-200 rounded focus:outline-none focus:border-blue-400 cursor-pointer bg-white"
+                                  >
+                                    <option value={0}>0%</option>
+                                    <option value={10}>10%</option>
+                                    <option value={21}>21%</option>
+                                  </select>
+                                </div>
+                              </>
+                            )}
                             
                             {/* Arrow */}
                             <div className="flex items-center justify-center w-6 text-slate-300">→</div>
@@ -1006,7 +1066,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                             </div>
                           </div>
                         ) : (
-                          <div className="grid grid-cols-[0.8fr_2.5fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr] min-h-[56px]">
+                          <div className={`grid ${showIvaColumn ? "grid-cols-[0.8fr_2.5fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr]" : "grid-cols-[0.8fr_2.5fr_1fr_auto_1.2fr_auto_1.2fr]"} min-h-[56px]`}>
                             <div className="flex items-center justify-center">
                               <span className="text-sm text-slate-700">{item.quantity}</span>
                             </div>
@@ -1038,10 +1098,14 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                 <span className="text-sm text-slate-300">-</span>
                               )}
                             </div>
-                            <div className="flex items-center justify-center w-6 text-slate-300">→</div>
-                            <div className="flex items-center justify-center">
-                              <span className="text-sm text-slate-700">{itemIvas[idx] ?? getIvaBySku(item.sku)}%</span>
-                            </div>
+                            {showIvaColumn && (
+                              <>
+                                <div className="flex items-center justify-center w-6 text-slate-300">→</div>
+                                <div className="flex items-center justify-center">
+                                  <span className="text-sm text-slate-700">{itemIvas[idx] ?? getIvaBySku(item.sku)}%</span>
+                                </div>
+                              </>
+                            )}
                             <div className="flex items-center justify-center w-6 text-slate-300">→</div>
                             <div className="flex flex-col items-end justify-center pr-4">
                               <span className="text-[11px] text-slate-400">
@@ -1072,31 +1136,52 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                 {presupuesto.items.length > 0 && (
                   <div className="border-t border-slate-200 bg-slate-50/50 rounded-b-lg">
                     <div className="px-4 py-4 flex justify-end">
-                      <div className="w-72 space-y-2">
+                      <div className="w-80 space-y-2">
                         <div className="flex justify-between text-sm">
                           <span className="text-slate-500">Subtotal</span>
                           <span className="text-slate-700">${subtotal.toLocaleString("es-AR")}</span>
                         </div>
-                        {isEditable && (
+                        
+                        {isEditable && !showGlobalDiscount && (
+                          <button
+                            onClick={() => setShowGlobalDiscount(true)}
+                            className="text-sm text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
+                          >
+                            + Agregar descuento
+                          </button>
+                        )}
+                        
+                        {isEditable && showGlobalDiscount && (
                           <div className="flex justify-between items-center text-sm">
-                            <span className="text-slate-500">Descuento</span>
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => {
+                                  setShowGlobalDiscount(false)
+                                  setGlobalDiscount({ value: 0, type: "percent" })
+                                }}
+                                className="p-0.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                              <span className="text-slate-500">Descuento</span>
+                            </div>
                             <div className="flex items-center gap-2">
                               <input
                                 type="number"
                                 value={globalDiscount.value || ""}
                                 onChange={(e) => setGlobalDiscount(prev => ({ ...prev, value: parseFloat(e.target.value) || 0 }))}
-                                className="w-16 text-right text-sm px-2 py-1 border border-slate-200 rounded focus:outline-none focus:border-blue-400"
+                                className="w-16 text-right text-sm px-2 py-1 border border-slate-200 rounded focus:outline-none focus:border-blue-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               />
                               <div className="flex border border-slate-200 rounded overflow-hidden">
                                 <button
                                   onClick={() => setGlobalDiscount(prev => ({ ...prev, type: "cash" }))}
-                                  className={`px-2 py-1 text-xs ${globalDiscount.type === "cash" ? "bg-blue-50 text-blue-600" : "text-slate-400"}`}
+                                  className={`px-2 py-1 text-xs cursor-pointer ${globalDiscount.type === "cash" ? "bg-blue-50 text-blue-600" : "text-slate-400"}`}
                                 >
                                   $
                                 </button>
                                 <button
                                   onClick={() => setGlobalDiscount(prev => ({ ...prev, type: "percent" }))}
-                                  className={`px-2 py-1 text-xs ${globalDiscount.type === "percent" ? "bg-blue-50 text-blue-600" : "text-slate-400"}`}
+                                  className={`px-2 py-1 text-xs cursor-pointer ${globalDiscount.type === "percent" ? "bg-blue-50 text-blue-600" : "text-slate-400"}`}
                                 >
                                   %
                                 </button>
@@ -1104,9 +1189,17 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                             </div>
                           </div>
                         )}
+                        
+                        {discountAmount > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-red-500">Descuento</span>
+                            <span className="text-red-500">-${Math.round(discountAmount).toLocaleString("es-AR")}</span>
+                          </div>
+                        )}
+                        
                         <div className="flex justify-between text-base font-semibold pt-2 border-t border-slate-200">
                           <span className="text-slate-700">Total</span>
-                          <span className="text-slate-900">${finalTotal.toLocaleString("es-AR")}</span>
+                          <span className="text-slate-900">${Math.round(finalTotal).toLocaleString("es-AR")}</span>
                         </div>
                       </div>
                     </div>
