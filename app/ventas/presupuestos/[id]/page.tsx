@@ -768,6 +768,8 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                       ? Math.max(0, item.unitPrice - ajusteAmt)
                       : item.unitPrice + ajusteAmt
                     const finalItemTotal = Math.max(0, item.quantity * adjustedUnitPrice)
+                    const stockDisponible = getStockBySku(item.sku)
+                    const exceedsStock = !item.isDescripcionLibre && item.quantity > stockDisponible
                     
                     return (
                       <div key={idx} className="border-b border-slate-100 last:border-b-0">
@@ -784,7 +786,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                             </div>
                             
                             {/* Cantidad */}
-                            <div className="flex items-center justify-center">
+                            <div className="flex flex-col items-center justify-center">
                               <div className="flex items-center border border-slate-200 rounded overflow-hidden">
                                 <button
                                   onClick={() => handleQuantityChange(idx, item.quantity - 1)}
@@ -807,6 +809,9 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                   <Plus className="w-3 h-3" />
                                 </button>
                               </div>
+                              {exceedsStock && (
+                                <span className="text-[10px] text-red-500 mt-0.5 text-center leading-tight">Supera stock disponible</span>
+                              )}
                             </div>
                             
                             {/* Item Info */}
@@ -1124,14 +1129,8 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                     const itemId = getItemId(item)
                     
                     if (hasVariants) {
-                      // Check if any variant has quantity
-                      const hasAnyQuantity = item.variants?.some((v: any) => {
-                        const sku = `${item.skuPrefix}-${v.skuSuffix}`
-                        return (modalItemQuantities[sku] || 0) > 0
-                      })
-                      
                       return (
-                        <div key={itemId} className={`border rounded-lg transition-colors ${hasAnyQuantity ? "border-blue-200 bg-blue-50/30" : "border-slate-100"}`}>
+                        <div key={itemId} className="border border-slate-100 rounded-lg">
                           <div className="px-4 py-3 bg-slate-50/50 flex items-center gap-3 rounded-t-lg">
                             <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden">
                               <Image
@@ -1153,45 +1152,13 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                               const stock = parseInt(variant.stock?.disponible || "0")
                               const quantity = modalItemQuantities[variantSku] || 0
                               const hasQuantity = quantity > 0
+                              const exceedsStock = quantity > stock
                               
                               return (
                                 <div
                                   key={variantSku}
-                                  className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${hasQuantity ? "bg-blue-50/50" : "hover:bg-slate-50"}`}
+                                  className={`flex items-center gap-4 px-4 py-2.5 transition-colors ${hasQuantity ? "bg-blue-50/50 border-l-2 border-l-blue-400" : "hover:bg-slate-50 border-l-2 border-l-transparent"}`}
                                 >
-                                  {/* Cantidad controls */}
-                                  <div className="flex items-center border border-slate-200 rounded overflow-hidden bg-white">
-                                    <button
-                                      onClick={() => setModalItemQuantities(prev => ({
-                                        ...prev,
-                                        [variantSku]: Math.max(0, (prev[variantSku] || 0) - 1)
-                                      }))}
-                                      className="p-1.5 hover:bg-slate-100 text-slate-400"
-                                    >
-                                      <Minus className="w-3 h-3" />
-                                    </button>
-                                    <input
-                                      type="number"
-                                      value={quantity || ""}
-                                      placeholder="0"
-                                      onChange={(e) => {
-                                        const val = Math.min(stock, Math.max(0, parseInt(e.target.value) || 0))
-                                        setModalItemQuantities(prev => ({ ...prev, [variantSku]: val }))
-                                      }}
-                                      className="w-10 text-center text-sm py-1 border-x border-slate-200 focus:outline-none placeholder:text-slate-300"
-                                    />
-                                    <button
-                                      onClick={() => setModalItemQuantities(prev => ({
-                                        ...prev,
-                                        [variantSku]: Math.min(stock, (prev[variantSku] || 0) + 1)
-                                      }))}
-                                      disabled={quantity >= stock}
-                                      className="p-1.5 hover:bg-slate-100 text-slate-400 disabled:opacity-30 disabled:cursor-not-allowed"
-                                    >
-                                      <Plus className="w-3 h-3" />
-                                    </button>
-                                  </div>
-                                  
                                   <div className="flex-1 min-w-0">
                                     <p className="text-sm text-slate-700 truncate">{variant.name || item.name}</p>
                                     <p className="text-xs text-slate-400">sku: {variantSku}</p>
@@ -1201,9 +1168,46 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                     ${(variant.precio?.precioFinal || 0).toLocaleString("es-AR")}
                                   </span>
                                   
-                                  <span className="text-xs text-slate-400 whitespace-nowrap w-16 text-right">
-                                    {stock} disp.
+                                  <span className="text-sm font-medium text-slate-500 whitespace-nowrap">
+                                    {stock} disponible
                                   </span>
+                                  
+                                  {/* Cantidad controls */}
+                                  <div className="flex flex-col items-end">
+                                    <div className="flex items-center border border-slate-200 rounded overflow-hidden bg-white">
+                                      <button
+                                        onClick={() => setModalItemQuantities(prev => ({
+                                          ...prev,
+                                          [variantSku]: Math.max(0, (prev[variantSku] || 0) - 1)
+                                        }))}
+                                        className="p-1.5 hover:bg-slate-100 text-slate-400"
+                                      >
+                                        <Minus className="w-3 h-3" />
+                                      </button>
+                                      <input
+                                        type="number"
+                                        value={quantity || ""}
+                                        placeholder="0"
+                                        onChange={(e) => {
+                                          const val = Math.max(0, parseInt(e.target.value) || 0)
+                                          setModalItemQuantities(prev => ({ ...prev, [variantSku]: val }))
+                                        }}
+                                        className="w-10 text-center text-sm py-1 border-x border-slate-200 focus:outline-none placeholder:text-slate-300"
+                                      />
+                                      <button
+                                        onClick={() => setModalItemQuantities(prev => ({
+                                          ...prev,
+                                          [variantSku]: (prev[variantSku] || 0) + 1
+                                        }))}
+                                        className="p-1.5 hover:bg-slate-100 text-slate-400"
+                                      >
+                                        <Plus className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                    {exceedsStock && (
+                                      <span className="text-[10px] text-red-500 mt-0.5">Supera stock disponible</span>
+                                    )}
+                                  </div>
                                 </div>
                               )
                             })}
@@ -1216,47 +1220,15 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                     const stock = parseInt(item.stock?.disponible || "0")
                     const quantity = modalItemQuantities[sku] || 0
                     const hasQuantity = quantity > 0
+                    const exceedsStock = quantity > stock
                     
                     return (
                       <div
                         key={itemId}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-lg border transition-colors ${
+                        className={`flex items-center gap-4 px-4 py-3 rounded-lg border transition-colors ${
                           hasQuantity ? "border-blue-200 bg-blue-50/50" : "border-slate-100 hover:bg-slate-50"
                         }`}
                       >
-                        {/* Cantidad controls */}
-                        <div className="flex items-center border border-slate-200 rounded overflow-hidden bg-white">
-                          <button
-                            onClick={() => setModalItemQuantities(prev => ({
-                              ...prev,
-                              [sku]: Math.max(0, (prev[sku] || 0) - 1)
-                            }))}
-                            className="p-1.5 hover:bg-slate-100 text-slate-400"
-                          >
-                            <Minus className="w-3 h-3" />
-                          </button>
-                          <input
-                            type="number"
-                            value={quantity || ""}
-                            placeholder="0"
-                            onChange={(e) => {
-                              const val = Math.min(stock, Math.max(0, parseInt(e.target.value) || 0))
-                              setModalItemQuantities(prev => ({ ...prev, [sku]: val }))
-                            }}
-                            className="w-10 text-center text-sm py-1 border-x border-slate-200 focus:outline-none placeholder:text-slate-300"
-                          />
-                          <button
-                            onClick={() => setModalItemQuantities(prev => ({
-                              ...prev,
-                              [sku]: Math.min(stock, (prev[sku] || 0) + 1)
-                            }))}
-                            disabled={quantity >= stock}
-                            className="p-1.5 hover:bg-slate-100 text-slate-400 disabled:opacity-30 disabled:cursor-not-allowed"
-                          >
-                            <Plus className="w-3 h-3" />
-                          </button>
-                        </div>
-                        
                         <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                           <Image
                             src={getCategoryImage(item.categoria || "")}
@@ -1276,9 +1248,46 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                           ${(item.precio?.precioFinal || 0).toLocaleString("es-AR")}
                         </span>
                         
-                        <span className="text-xs text-slate-400 whitespace-nowrap w-16 text-right">
-                          {stock} disp.
+                        <span className="text-sm font-medium text-slate-500 whitespace-nowrap">
+                          {stock} disponible
                         </span>
+                        
+                        {/* Cantidad controls */}
+                        <div className="flex flex-col items-end">
+                          <div className="flex items-center border border-slate-200 rounded overflow-hidden bg-white">
+                            <button
+                              onClick={() => setModalItemQuantities(prev => ({
+                                ...prev,
+                                [sku]: Math.max(0, (prev[sku] || 0) - 1)
+                              }))}
+                              className="p-1.5 hover:bg-slate-100 text-slate-400"
+                            >
+                              <Minus className="w-3 h-3" />
+                            </button>
+                            <input
+                              type="number"
+                              value={quantity || ""}
+                              placeholder="0"
+                              onChange={(e) => {
+                                const val = Math.max(0, parseInt(e.target.value) || 0)
+                                setModalItemQuantities(prev => ({ ...prev, [sku]: val }))
+                              }}
+                              className="w-10 text-center text-sm py-1 border-x border-slate-200 focus:outline-none placeholder:text-slate-300"
+                            />
+                            <button
+                              onClick={() => setModalItemQuantities(prev => ({
+                                ...prev,
+                                [sku]: (prev[sku] || 0) + 1
+                              }))}
+                              className="p-1.5 hover:bg-slate-100 text-slate-400"
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
+                          </div>
+                          {exceedsStock && (
+                            <span className="text-[10px] text-red-500 mt-0.5">Supera stock disponible</span>
+                          )}
+                        </div>
                       </div>
                     )
                   })}
