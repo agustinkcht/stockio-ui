@@ -77,6 +77,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
   
   // Ajuste state (mode: "add" for surcharge, "subtract" for discount)
   const [itemAjustes, setItemAjustes] = useState<{ [idx: number]: { value: number; type: "cash" | "percent"; mode: "add" | "subtract" } }>({})
+  const [itemIvas, setItemIvas] = useState<{ [idx: number]: number }>({})
   const [globalDiscount, setGlobalDiscount] = useState<{ value: number; type: "cash" | "percent" }>({ value: 0, type: "percent" })
 
   const foundPresupuesto = useMemo(() => {
@@ -186,6 +187,19 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
       }
     }
     return 0
+  }
+  
+  const getIvaBySku = (sku: string): number => {
+    const standaloneItem = allItems.find(item => item.sku === sku)
+    if (standaloneItem?.precio?.iva !== undefined) return standaloneItem.precio.iva
+    
+    for (const item of allItems) {
+      if (item.variants) {
+        const variant = item.variants.find((v: any) => v.sku === sku || `${item.skuPrefix}-${v.skuSuffix}` === sku)
+        if (variant?.precio?.iva !== undefined) return variant.precio.iva
+      }
+    }
+    return 21 // Default IVA
   }
 
   // Get items for the modal (all catalog items)
@@ -644,7 +658,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                 {/* Grid Header */}
                 <div className="bg-slate-100 border-b border-slate-200/80 rounded-t-lg">
                   {isEditable ? (
-                    <div className="grid grid-cols-[auto_0.8fr_2fr_1.2fr_auto_1.2fr_auto_1.5fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    <div className="grid grid-cols-[auto_0.8fr_2fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
                       {/* Delete column - empty header */}
                       <div className="flex items-center justify-center w-10"></div>
                       
@@ -734,18 +748,25 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                       
                       <div className="flex items-center justify-center">Ajuste</div>
                       
-                      {/* Arrow between Ajuste and Subtotal */}
+                      {/* Arrow between Ajuste and IVA */}
+                      <div className="flex items-center justify-center w-6 text-slate-300">→</div>
+                      
+                      <div className="flex items-center justify-center">IVA Cont.</div>
+                      
+                      {/* Arrow between IVA and Subtotal */}
                       <div className="flex items-center justify-center w-6 text-slate-300">→</div>
                       
                       <div className="flex items-center justify-end pr-4">Subtotal</div>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-[0.8fr_2.5fr_1.2fr_auto_1.2fr_auto_1.5fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    <div className="grid grid-cols-[0.8fr_2.5fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
                       <div className="flex items-center justify-center">Cantidad</div>
                       <div className="flex items-center px-4">Item</div>
                       <div className="flex items-center justify-center">Precio Unit.</div>
                       <div className="flex items-center justify-center w-6 text-slate-300">→</div>
                       <div className="flex items-center justify-center">Ajuste</div>
+                      <div className="flex items-center justify-center w-6 text-slate-300">→</div>
+                      <div className="flex items-center justify-center">IVA Cont.</div>
                       <div className="flex items-center justify-center w-6 text-slate-300">→</div>
                       <div className="flex items-center justify-end pr-4">Subtotal</div>
                     </div>
@@ -787,7 +808,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                     return (
                       <div key={idx} className="border-b border-slate-100 last:border-b-0">
                         {isEditable ? (
-                          <div className="grid grid-cols-[auto_0.8fr_2fr_1.2fr_auto_1.2fr_auto_1.5fr] min-h-[72px]">
+                          <div className="grid grid-cols-[auto_0.8fr_2fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr] min-h-[72px]">
                             {/* Delete button */}
                             <div className="flex items-center justify-center w-10">
                               <button
@@ -803,7 +824,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                               <div className="flex items-center border border-slate-200 rounded-full px-1 py-0.5 bg-white">
                                 <button
                                   onClick={() => handleQuantityChange(idx, item.quantity - 1)}
-                                  className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors"
+                                  className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors cursor-pointer"
                                 >
                                   <Minus className="w-3 h-3" />
                                 </button>
@@ -817,7 +838,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                 />
                                 <button
                                   onClick={() => handleQuantityChange(idx, item.quantity + 1)}
-                                  className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors"
+                                  className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors cursor-pointer"
                                 >
                                   <Plus className="w-3 h-3" />
                                 </button>
@@ -915,7 +936,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                   ...prev,
                                   [idx]: { ...ajuste, mode: ajuste.mode === "subtract" ? "add" : "subtract" }
                                 }))}
-                                className={`px-2 py-1 text-[10px] border rounded transition-colors min-w-[62px] ${
+                                className={`px-2 py-1 text-[10px] border rounded transition-colors min-w-[62px] cursor-pointer ${
                                   ajuste.mode === "subtract" 
                                     ? "border-red-200 bg-red-50 text-red-600" 
                                     : "border-emerald-200 bg-emerald-50 text-emerald-600"
@@ -939,7 +960,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                     ...prev,
                                     [idx]: { ...ajuste, type: "cash" }
                                   }))}
-                                  className={`px-1.5 py-1 text-xs ${ajuste.type === "cash" ? "bg-blue-50 text-blue-600" : "text-slate-400"}`}
+                                  className={`px-1.5 py-1 text-xs cursor-pointer ${ajuste.type === "cash" ? "bg-blue-50 text-blue-600" : "text-slate-400"}`}
                                 >
                                   $
                                 </button>
@@ -948,11 +969,27 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                     ...prev,
                                     [idx]: { ...ajuste, type: "percent" }
                                   }))}
-                                  className={`px-1.5 py-1 text-xs ${ajuste.type === "percent" ? "bg-blue-50 text-blue-600" : "text-slate-400"}`}
+                                  className={`px-1.5 py-1 text-xs cursor-pointer ${ajuste.type === "percent" ? "bg-blue-50 text-blue-600" : "text-slate-400"}`}
                                 >
                                   %
                                 </button>
                               </div>
+                            </div>
+                            
+                            {/* Arrow */}
+                            <div className="flex items-center justify-center w-6 text-slate-300">→</div>
+                            
+                            {/* IVA Contenido */}
+                            <div className="flex items-center justify-center">
+                              <select
+                                value={itemIvas[idx] ?? getIvaBySku(item.sku)}
+                                onChange={(e) => setItemIvas(prev => ({ ...prev, [idx]: parseInt(e.target.value) }))}
+                                className="text-xs py-1 px-2 border border-slate-200 rounded focus:outline-none focus:border-blue-400 cursor-pointer bg-white"
+                              >
+                                <option value={0}>0%</option>
+                                <option value={10}>10%</option>
+                                <option value={21}>21%</option>
+                              </select>
                             </div>
                             
                             {/* Arrow */}
@@ -969,7 +1006,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                             </div>
                           </div>
                         ) : (
-                          <div className="grid grid-cols-[0.8fr_2.5fr_1.2fr_auto_1.2fr_auto_1.5fr] min-h-[56px]">
+                          <div className="grid grid-cols-[0.8fr_2.5fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr] min-h-[56px]">
                             <div className="flex items-center justify-center">
                               <span className="text-sm text-slate-700">{item.quantity}</span>
                             </div>
@@ -1000,6 +1037,10 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                               ) : (
                                 <span className="text-sm text-slate-300">-</span>
                               )}
+                            </div>
+                            <div className="flex items-center justify-center w-6 text-slate-300">→</div>
+                            <div className="flex items-center justify-center">
+                              <span className="text-sm text-slate-700">{itemIvas[idx] ?? getIvaBySku(item.sku)}%</span>
                             </div>
                             <div className="flex items-center justify-center w-6 text-slate-300">→</div>
                             <div className="flex flex-col items-end justify-center pr-4">
@@ -1192,7 +1233,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                           ...prev,
                                           [variantSku]: Math.max(0, (prev[variantSku] || 0) - 1)
                                         }))}
-                                        className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors"
+                                        className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors cursor-pointer"
                                       >
                                         <Minus className="w-3 h-3" />
                                       </button>
@@ -1211,7 +1252,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                           ...prev,
                                           [variantSku]: (prev[variantSku] || 0) + 1
                                         }))}
-                                        className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors"
+                                        className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors cursor-pointer"
                                       >
                                         <Plus className="w-3 h-3" />
                                       </button>
@@ -1272,7 +1313,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                 ...prev,
                                 [sku]: Math.max(0, (prev[sku] || 0) - 1)
                               }))}
-                              className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors"
+                              className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors cursor-pointer"
                             >
                               <Minus className="w-3 h-3" />
                             </button>
@@ -1291,7 +1332,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                 ...prev,
                                 [sku]: (prev[sku] || 0) + 1
                               }))}
-                              className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors"
+                              className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors cursor-pointer"
                             >
                               <Plus className="w-3 h-3" />
                             </button>
