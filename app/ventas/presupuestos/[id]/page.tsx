@@ -1185,18 +1185,26 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                       return (
                         <div key={itemId} className="border border-slate-100 rounded-lg">
                           <div className="px-4 py-3 bg-slate-50/50 flex items-center gap-3 rounded-t-lg">
-                            <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden">
+                            <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                               <Image
                                 src={getCategoryImage(item.categoria || "")}
                                 alt={item.name}
-                                width={32}
-                                height={32}
+                                width={40}
+                                height={40}
                                 className="object-cover"
                               />
                             </div>
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-slate-900">{item.name}</p>
-                              <p className="text-xs text-slate-400">{item.variants?.length} variantes</p>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-slate-900 truncate">{item.name}</p>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <p className="text-xs text-slate-400">{item.variants?.length} variantes</p>
+                                {item.marca && (
+                                  <span className="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded">{item.marca}</span>
+                                )}
+                                {item.categoria && (
+                                  <span className="text-[10px] px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded">{item.categoria}</span>
+                                )}
+                              </div>
                             </div>
                           </div>
                           <div className="divide-y divide-slate-100">
@@ -1213,7 +1221,14 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                   className={`flex items-center gap-4 px-4 py-2.5 transition-colors ${hasQuantity ? "bg-blue-50/50 border-l-2 border-l-blue-400" : "hover:bg-slate-50 border-l-2 border-l-transparent"}`}
                                 >
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-sm text-slate-700 truncate">{variant.name || item.name}</p>
+                                    <div className="flex items-center gap-2">
+                                      <p className="text-sm text-slate-700 truncate">{variant.name || item.name}</p>
+                                      {variant.atributosPrincipales?.map((attr: any, i: number) => (
+                                        <span key={i} className="text-[10px] px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded whitespace-nowrap">
+                                          {attr.value}
+                                        </span>
+                                      ))}
+                                    </div>
                                     <p className="text-xs text-slate-400">sku: {variantSku}</p>
                                   </div>
                                   
@@ -1293,7 +1308,15 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                         </div>
                         
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-900 truncate">{item.name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium text-slate-900 truncate">{item.name}</p>
+                            {item.marca && (
+                              <span className="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded">{item.marca}</span>
+                            )}
+                            {item.categoria && (
+                              <span className="text-[10px] px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded">{item.categoria}</span>
+                            )}
+                          </div>
                           <p className="text-xs text-slate-400">sku: {item.sku || "Sin SKU"}</p>
                         </div>
                         
