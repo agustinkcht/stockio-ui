@@ -509,21 +509,34 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
   
   const estadoStyle = estadoColors[presupuesto.estado]
 
-  // Calculate totals with ajustes applied
-  const subtotal = presupuesto.items.reduce((sum, item, idx) => {
+  // Calculate raw subtotal (without any discounts)
+  const rawSubtotal = presupuesto.items.reduce((sum, item) => {
+    return sum + (item.quantity * item.unitPrice)
+  }, 0)
+  
+  // Calculate subtotal with item-level ajustes applied
+  const subtotalWithAjustes = presupuesto.items.reduce((sum, item, idx) => {
     const ajuste = itemAjustes[idx] || { value: 0, type: "percent", mode: "subtract" }
-    const ajusteAmt = ajuste.type === "percent" 
-      ? item.unitPrice * (ajuste.value / 100) 
+    const ajusteAmt = ajuste.type === "percent"
+      ? item.unitPrice * (ajuste.value / 100)
       : ajuste.value
-    const adjustedUnitPrice = ajuste.mode === "subtract" 
+    const adjustedUnitPrice = ajuste.mode === "subtract"
       ? Math.max(0, item.unitPrice - ajusteAmt)
       : item.unitPrice + ajusteAmt
     return sum + (item.quantity * adjustedUnitPrice)
   }, 0)
-  const discountAmount = globalDiscount.type === "percent"
-  ? subtotal * (globalDiscount.value / 100)
-  : globalDiscount.value
-  const finalTotal = Math.max(0, subtotal - discountAmount)
+  
+  // Calculate item-level discount amount
+  const itemDiscountAmount = rawSubtotal - subtotalWithAjustes
+  
+  const globalDiscountAmount = globalDiscount.type === "percent"
+    ? subtotalWithAjustes * (globalDiscount.value / 100)
+    : globalDiscount.value
+  
+  // Total discount (item-level + global)
+  const totalDiscountAmount = itemDiscountAmount + globalDiscountAmount
+  
+  const finalTotal = Math.max(0, subtotalWithAjustes - globalDiscountAmount)
 
   return (
     <div className="min-h-screen bg-[rgb(243,242,238)]">
@@ -681,12 +694,9 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                 {/* Grid Header */}
                 <div className="bg-slate-100 border-b border-slate-200/80 rounded-t-lg">
                   {isEditable ? (
-                    <div className={`grid ${showIvaColumn ? "grid-cols-[auto_auto_0.8fr_2fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr]" : "grid-cols-[auto_auto_0.8fr_2fr_1fr_auto_1.2fr_auto_1.2fr]"} h-9 text-xs font-medium text-slate-500 uppercase tracking-wider`}>
-                      {/* Delete column - empty header */}
-                      <div className="flex items-center justify-center w-10"></div>
-                      
-                      {/* Eye icon for column visibility */}
-                      <div className="flex items-center justify-center w-8 relative" data-column-menu>
+                    <div className={`grid ${showIvaColumn ? "grid-cols-[auto_0.8fr_2fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr]" : "grid-cols-[auto_0.8fr_2fr_1fr_auto_1.2fr_auto_1.2fr]"} h-9 text-xs font-medium text-slate-500 uppercase tracking-wider`}>
+                      {/* Eye icon for column visibility - shares column with X delete buttons */}
+                      <div className="flex items-center justify-center w-10 relative" data-column-menu>
                         <button
                           onClick={() => setShowColumnMenu(!showColumnMenu)}
                           className="p-1 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
@@ -865,7 +875,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                     return (
                       <div key={idx} className="border-b border-slate-100 last:border-b-0">
                         {isEditable ? (
-                          <div className={`grid ${showIvaColumn ? "grid-cols-[auto_auto_0.8fr_2fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr]" : "grid-cols-[auto_auto_0.8fr_2fr_1fr_auto_1.2fr_auto_1.2fr]"} min-h-[72px]`}>
+                          <div className={`grid ${showIvaColumn ? "grid-cols-[auto_0.8fr_2fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr]" : "grid-cols-[auto_0.8fr_2fr_1fr_auto_1.2fr_auto_1.2fr]"} min-h-[72px]`}>
                             {/* Delete button */}
                             <div className="flex items-center justify-center w-10">
                               <button
@@ -875,9 +885,6 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                 <X className="w-4 h-4" />
                               </button>
                             </div>
-                            
-                            {/* Eye icon column - empty in rows */}
-                            <div className="w-8"></div>
                             
                             {/* Cantidad */}
                             <div className="flex flex-col items-center justify-center">
@@ -1139,7 +1146,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                       <div className="w-80 space-y-2">
                         <div className="flex justify-between text-sm">
                           <span className="text-slate-500">Subtotal</span>
-                          <span className="text-slate-700">${subtotal.toLocaleString("es-AR")}</span>
+                          <span className="text-slate-700">${Math.round(rawSubtotal).toLocaleString("es-AR")}</span>
                         </div>
                         
                         {isEditable && !showGlobalDiscount && (
@@ -1163,7 +1170,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                               >
                                 <X className="w-3.5 h-3.5" />
                               </button>
-                              <span className="text-slate-500">Descuento</span>
+                              <span className="text-slate-500">Descuento global</span>
                             </div>
                             <div className="flex items-center gap-2">
                               <input
@@ -1190,10 +1197,10 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                           </div>
                         )}
                         
-                        {discountAmount > 0 && (
+                        {totalDiscountAmount > 0 && (
                           <div className="flex justify-between text-sm">
                             <span className="text-red-500">Descuento</span>
-                            <span className="text-red-500">-${Math.round(discountAmount).toLocaleString("es-AR")}</span>
+                            <span className="text-red-500">-${Math.round(totalDiscountAmount).toLocaleString("es-AR")}</span>
                           </div>
                         )}
                         
