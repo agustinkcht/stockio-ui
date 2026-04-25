@@ -910,34 +910,19 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                             {/* Ajuste */}
                             <div className="flex items-center justify-center gap-1.5">
                               {/* Mode toggle: descuento or aumento */}
-                              <div className="flex border border-slate-200 rounded overflow-hidden text-[10px]">
-                                <button
-                                  onClick={() => setItemAjustes(prev => ({
-                                    ...prev,
-                                    [idx]: { ...ajuste, mode: "subtract" }
-                                  }))}
-                                  className={`px-1.5 py-1 transition-colors ${
-                                    ajuste.mode === "subtract" 
-                                      ? "bg-red-50 text-red-600" 
-                                      : "text-slate-400 hover:bg-slate-50"
-                                  }`}
-                                >
-                                  descuento
-                                </button>
-                                <button
-                                  onClick={() => setItemAjustes(prev => ({
-                                    ...prev,
-                                    [idx]: { ...ajuste, mode: "add" }
-                                  }))}
-                                  className={`px-1.5 py-1 transition-colors ${
-                                    ajuste.mode === "add" 
-                                      ? "bg-emerald-50 text-emerald-600" 
-                                      : "text-slate-400 hover:bg-slate-50"
-                                  }`}
-                                >
-                                  aumento
-                                </button>
-                              </div>
+                              <button
+                                onClick={() => setItemAjustes(prev => ({
+                                  ...prev,
+                                  [idx]: { ...ajuste, mode: ajuste.mode === "subtract" ? "add" : "subtract" }
+                                }))}
+                                className={`px-2 py-1 text-[10px] border rounded transition-colors min-w-[62px] ${
+                                  ajuste.mode === "subtract" 
+                                    ? "border-red-200 bg-red-50 text-red-600" 
+                                    : "border-emerald-200 bg-emerald-50 text-emerald-600"
+                                }`}
+                              >
+                                {ajuste.mode === "subtract" ? "descuento" : "aumento"}
+                              </button>
                               <input
                                 type="number"
                                 placeholder="0"
