@@ -96,7 +96,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
   
   const [showAddItemModal, setShowAddItemModal] = useState(false)
   const [showExportDropdown, setShowExportDropdown] = useState(false)
-  const [selectedModalItems, setSelectedModalItems] = useState<{ [id: string]: boolean }>({})
+  const [modalItemQuantities, setModalItemQuantities] = useState<{ [sku: string]: number }>({})
   const [modalSearch, setModalSearch] = useState("")
   const [modalFilters, setModalFilters] = useState<{
     categoria: string
@@ -259,15 +259,16 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
       
       if (isParent) {
         for (const variant of item.variants!) {
-          const itemId = getItemId(variant)
           const sku = `${item.skuPrefix}-${variant.skuSuffix}`
-          if ((selectedModalItems[itemId] || selectedModalItems[sku]) && !existingSkus.has(sku)) {
+          const quantity = modalItemQuantities[sku] || 0
+          if (quantity > 0 && !existingSkus.has(sku)) {
+            const unitPrice = variant.precio?.precioFinal || 0
             newItems.push({
               sku,
               name: variant.name || item.name,
-              quantity: 1,
-              unitPrice: variant.precio?.precioFinal || 0,
-              total: variant.precio?.precioFinal || 0,
+              quantity,
+              unitPrice,
+              total: quantity * unitPrice,
               categoria: variant.categoria || item.categoria,
               marca: variant.marca || item.marca,
               tags: variant.atributosPrincipales?.map(a => a.value),
@@ -275,15 +276,16 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
           }
         }
       } else {
-        const itemId = getItemId(item)
         const sku = item.sku || ""
-        if ((selectedModalItems[itemId] || selectedModalItems[sku]) && !existingSkus.has(sku)) {
+        const quantity = modalItemQuantities[sku] || 0
+        if (quantity > 0 && !existingSkus.has(sku)) {
+          const unitPrice = item.precio?.precioFinal || 0
           newItems.push({
             sku,
             name: item.name,
-            quantity: 1,
-            unitPrice: item.precio?.precioFinal || 0,
-            total: item.precio?.precioFinal || 0,
+            quantity,
+            unitPrice,
+            total: quantity * unitPrice,
             categoria: item.categoria,
             marca: item.marca,
           })
@@ -300,7 +302,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
     }
     
     setShowAddItemModal(false)
-    setSelectedModalItems({})
+    setModalItemQuantities({})
     setModalSearch("")
   }
   
@@ -629,7 +631,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                 {/* Grid Header */}
                 <div className="bg-slate-100 border-b border-slate-200/80 rounded-t-lg">
                   {isEditable ? (
-                    <div className="grid grid-cols-[auto_0.8fr_2fr_1.2fr_1.2fr_1.5fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    <div className="grid grid-cols-[auto_0.8fr_2fr_1.2fr_auto_1.2fr_auto_1.5fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
                       {/* Delete column - empty header */}
                       <div className="flex items-center justify-center w-10"></div>
                       
@@ -714,15 +716,24 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                         )}
                       </div>
                       
+                      {/* Arrow between Precio and Ajuste */}
+                      <div className="flex items-center justify-center w-6 text-slate-300">→</div>
+                      
                       <div className="flex items-center justify-center">Ajuste</div>
+                      
+                      {/* Arrow between Ajuste and Subtotal */}
+                      <div className="flex items-center justify-center w-6 text-slate-300">→</div>
+                      
                       <div className="flex items-center justify-end pr-4">Subtotal</div>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-[0.8fr_2.5fr_1.2fr_1.2fr_1.5fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    <div className="grid grid-cols-[0.8fr_2.5fr_1.2fr_auto_1.2fr_auto_1.5fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
                       <div className="flex items-center justify-center">Cantidad</div>
                       <div className="flex items-center px-4">Item</div>
                       <div className="flex items-center justify-center">Precio Unit.</div>
+                      <div className="flex items-center justify-center w-6 text-slate-300">→</div>
                       <div className="flex items-center justify-center">Ajuste</div>
+                      <div className="flex items-center justify-center w-6 text-slate-300">→</div>
                       <div className="flex items-center justify-end pr-4">Subtotal</div>
                     </div>
                   )}
@@ -761,7 +772,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                     return (
                       <div key={idx} className="border-b border-slate-100 last:border-b-0">
                         {isEditable ? (
-                          <div className="grid grid-cols-[auto_0.8fr_2fr_1.2fr_1.2fr_1.5fr] min-h-[72px]">
+                          <div className="grid grid-cols-[auto_0.8fr_2fr_1.2fr_auto_1.2fr_auto_1.5fr] min-h-[72px]">
                             {/* Delete button */}
                             <div className="flex items-center justify-center w-10">
                               <button
@@ -875,6 +886,9 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                               </div>
                             </div>
                             
+                            {/* Arrow */}
+                            <div className="flex items-center justify-center w-6 text-slate-300">→</div>
+                            
                             {/* Ajuste */}
                             <div className="flex items-center justify-center gap-1">
                               {/* Mode toggle: - or + */}
@@ -924,6 +938,9 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                               </div>
                             </div>
                             
+                            {/* Arrow */}
+                            <div className="flex items-center justify-center w-6 text-slate-300">→</div>
+                            
                             {/* Subtotal */}
                             <div className="flex flex-col items-end justify-center pr-4">
                               <span className="text-[11px] text-slate-400">
@@ -935,7 +952,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                             </div>
                           </div>
                         ) : (
-                          <div className="grid grid-cols-[0.8fr_2.5fr_1.2fr_1.2fr_1.5fr] min-h-[56px]">
+                          <div className="grid grid-cols-[0.8fr_2.5fr_1.2fr_auto_1.2fr_auto_1.5fr] min-h-[56px]">
                             <div className="flex items-center justify-center">
                               <span className="text-sm text-slate-700">{item.quantity}</span>
                             </div>
@@ -957,6 +974,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                             <div className="flex items-center justify-center">
                               <span className="text-sm text-slate-700">${item.unitPrice.toLocaleString("es-AR")}</span>
                             </div>
+                            <div className="flex items-center justify-center w-6 text-slate-300">→</div>
                             <div className="flex items-center justify-center">
                               {ajuste.value > 0 ? (
                                 <span className={`text-sm ${ajuste.mode === "subtract" ? "text-red-500" : "text-emerald-500"}`}>
@@ -966,6 +984,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                 <span className="text-sm text-slate-300">-</span>
                               )}
                             </div>
+                            <div className="flex items-center justify-center w-6 text-slate-300">→</div>
                             <div className="flex flex-col items-end justify-center pr-4">
                               <span className="text-[11px] text-slate-400">
                                 {item.quantity} x ${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}
@@ -1105,9 +1124,15 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                     const itemId = getItemId(item)
                     
                     if (hasVariants) {
+                      // Check if any variant has quantity
+                      const hasAnyQuantity = item.variants?.some((v: any) => {
+                        const sku = `${item.skuPrefix}-${v.skuSuffix}`
+                        return (modalItemQuantities[sku] || 0) > 0
+                      })
+                      
                       return (
-                        <div key={itemId} className="border border-slate-100 rounded-lg">
-                          <div className="px-4 py-3 bg-slate-50/50 flex items-center gap-3">
+                        <div key={itemId} className={`border rounded-lg transition-colors ${hasAnyQuantity ? "border-blue-200 bg-blue-50/30" : "border-slate-100"}`}>
+                          <div className="px-4 py-3 bg-slate-50/50 flex items-center gap-3 rounded-t-lg">
                             <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden">
                               <Image
                                 src={getCategoryImage(item.categoria || "")}
@@ -1125,33 +1150,61 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                           <div className="divide-y divide-slate-100">
                             {item.variants?.map((variant: any) => {
                               const variantSku = `${item.skuPrefix}-${variant.skuSuffix}`
-                              const variantId = variant.sku || variantSku
-                              const isSelected = selectedModalItems[variantId] || selectedModalItems[variantSku]
+                              const stock = parseInt(variant.stock?.disponible || "0")
+                              const quantity = modalItemQuantities[variantSku] || 0
+                              const hasQuantity = quantity > 0
                               
                               return (
-                                <label
-                                  key={variantId}
-                                  className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-slate-50 transition-colors ${isSelected ? "bg-blue-50/50" : ""}`}
+                                <div
+                                  key={variantSku}
+                                  className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${hasQuantity ? "bg-blue-50/50" : "hover:bg-slate-50"}`}
                                 >
-                                  <input
-                                    type="checkbox"
-                                    checked={isSelected}
-                                    onChange={() => {
-                                      setSelectedModalItems(prev => ({
+                                  {/* Cantidad controls */}
+                                  <div className="flex items-center border border-slate-200 rounded overflow-hidden bg-white">
+                                    <button
+                                      onClick={() => setModalItemQuantities(prev => ({
                                         ...prev,
-                                        [variantSku]: !isSelected
-                                      }))
-                                    }}
-                                    className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                                  />
-                                  <div className="flex-1">
-                                    <p className="text-sm text-slate-700">{variant.name || item.name}</p>
+                                        [variantSku]: Math.max(0, (prev[variantSku] || 0) - 1)
+                                      }))}
+                                      className="p-1.5 hover:bg-slate-100 text-slate-400"
+                                    >
+                                      <Minus className="w-3 h-3" />
+                                    </button>
+                                    <input
+                                      type="number"
+                                      value={quantity || ""}
+                                      placeholder="0"
+                                      onChange={(e) => {
+                                        const val = Math.min(stock, Math.max(0, parseInt(e.target.value) || 0))
+                                        setModalItemQuantities(prev => ({ ...prev, [variantSku]: val }))
+                                      }}
+                                      className="w-10 text-center text-sm py-1 border-x border-slate-200 focus:outline-none placeholder:text-slate-300"
+                                    />
+                                    <button
+                                      onClick={() => setModalItemQuantities(prev => ({
+                                        ...prev,
+                                        [variantSku]: Math.min(stock, (prev[variantSku] || 0) + 1)
+                                      }))}
+                                      disabled={quantity >= stock}
+                                      className="p-1.5 hover:bg-slate-100 text-slate-400 disabled:opacity-30 disabled:cursor-not-allowed"
+                                    >
+                                      <Plus className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                  
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm text-slate-700 truncate">{variant.name || item.name}</p>
                                     <p className="text-xs text-slate-400">sku: {variantSku}</p>
                                   </div>
-                                  <span className="text-sm font-medium text-slate-900">
+                                  
+                                  <span className="text-sm font-medium text-slate-900 whitespace-nowrap">
                                     ${(variant.precio?.precioFinal || 0).toLocaleString("es-AR")}
                                   </span>
-                                </label>
+                                  
+                                  <span className="text-xs text-slate-400 whitespace-nowrap w-16 text-right">
+                                    {stock} disp.
+                                  </span>
+                                </div>
                               )
                             })}
                           </div>
@@ -1159,26 +1212,52 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                       )
                     }
                     
-                    const isSelected = selectedModalItems[itemId] || selectedModalItems[item.sku || ""]
+                    const sku = item.sku || ""
+                    const stock = parseInt(item.stock?.disponible || "0")
+                    const quantity = modalItemQuantities[sku] || 0
+                    const hasQuantity = quantity > 0
+                    
                     return (
-                      <label
+                      <div
                         key={itemId}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer border transition-colors ${
-                          isSelected ? "border-blue-200 bg-blue-50/50" : "border-slate-100 hover:bg-slate-50"
+                        className={`flex items-center gap-3 px-4 py-3 rounded-lg border transition-colors ${
+                          hasQuantity ? "border-blue-200 bg-blue-50/50" : "border-slate-100 hover:bg-slate-50"
                         }`}
                       >
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => {
-                            setSelectedModalItems(prev => ({
+                        {/* Cantidad controls */}
+                        <div className="flex items-center border border-slate-200 rounded overflow-hidden bg-white">
+                          <button
+                            onClick={() => setModalItemQuantities(prev => ({
                               ...prev,
-                              [item.sku || itemId]: !isSelected
-                            }))
-                          }}
-                          className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                        />
-                        <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center overflow-hidden">
+                              [sku]: Math.max(0, (prev[sku] || 0) - 1)
+                            }))}
+                            className="p-1.5 hover:bg-slate-100 text-slate-400"
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <input
+                            type="number"
+                            value={quantity || ""}
+                            placeholder="0"
+                            onChange={(e) => {
+                              const val = Math.min(stock, Math.max(0, parseInt(e.target.value) || 0))
+                              setModalItemQuantities(prev => ({ ...prev, [sku]: val }))
+                            }}
+                            className="w-10 text-center text-sm py-1 border-x border-slate-200 focus:outline-none placeholder:text-slate-300"
+                          />
+                          <button
+                            onClick={() => setModalItemQuantities(prev => ({
+                              ...prev,
+                              [sku]: Math.min(stock, (prev[sku] || 0) + 1)
+                            }))}
+                            disabled={quantity >= stock}
+                            className="p-1.5 hover:bg-slate-100 text-slate-400 disabled:opacity-30 disabled:cursor-not-allowed"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
+                        
+                        <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                           <Image
                             src={getCategoryImage(item.categoria || "")}
                             alt={item.name}
@@ -1187,14 +1266,20 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                             className="object-cover"
                           />
                         </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-slate-900">{item.name}</p>
+                        
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-900 truncate">{item.name}</p>
                           <p className="text-xs text-slate-400">sku: {item.sku || "Sin SKU"}</p>
                         </div>
-                        <span className="text-sm font-medium text-slate-900">
+                        
+                        <span className="text-sm font-medium text-slate-900 whitespace-nowrap">
                           ${(item.precio?.precioFinal || 0).toLocaleString("es-AR")}
                         </span>
-                      </label>
+                        
+                        <span className="text-xs text-slate-400 whitespace-nowrap w-16 text-right">
+                          {stock} disp.
+                        </span>
+                      </div>
                     )
                   })}
                 </div>
@@ -1203,14 +1288,21 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
             
             {/* Footer */}
             <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between bg-slate-50 rounded-b-xl">
-              <span className="text-sm text-slate-500">
-                {Object.values(selectedModalItems).filter(Boolean).length} items seleccionados
-              </span>
+              {(() => {
+                const itemsWithQuantity = Object.entries(modalItemQuantities).filter(([, qty]) => qty > 0)
+                const totalItems = itemsWithQuantity.length
+                const totalUnits = itemsWithQuantity.reduce((sum, [, qty]) => sum + qty, 0)
+                return (
+                  <span className="text-sm text-slate-500">
+                    {totalItems > 0 ? `${totalItems} items (${totalUnits} unidades)` : "Ningún item seleccionado"}
+                  </span>
+                )
+              })()}
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => {
                     setShowAddItemModal(false)
-                    setSelectedModalItems({})
+                    setModalItemQuantities({})
                     setModalSearch("")
                   }}
                   className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900"
@@ -1219,10 +1311,10 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                 </button>
                 <button
                   onClick={handleAddSelectedItems}
-                  disabled={Object.values(selectedModalItems).filter(Boolean).length === 0}
+                  disabled={Object.values(modalItemQuantities).filter(q => q > 0).length === 0}
                   className="px-5 py-2 bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Agregar seleccionados
+                  Agregar items
                 </button>
               </div>
             </div>
