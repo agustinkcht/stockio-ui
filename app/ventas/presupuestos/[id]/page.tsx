@@ -174,6 +174,19 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
     }
     return undefined
   }
+  
+  const getStockBySku = (sku: string): number => {
+    const standaloneItem = allItems.find(item => item.sku === sku)
+    if (standaloneItem?.stock?.disponible) return parseInt(standaloneItem.stock.disponible) || 0
+    
+    for (const item of allItems) {
+      if (item.variants) {
+        const variant = item.variants.find((v: any) => v.sku === sku || `${item.skuPrefix}-${v.skuSuffix}` === sku)
+        if (variant?.stock?.disponible) return parseInt(variant.stock.disponible) || 0
+      }
+    }
+    return 0
+  }
 
   // Get items for the modal (all catalog items)
   const catalogItems = useMemo(() => {
