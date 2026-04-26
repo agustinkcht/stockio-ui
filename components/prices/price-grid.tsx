@@ -299,16 +299,28 @@ export function PriceGrid({
 
           {/* Item column */}
           <div className="col-span-12 flex items-center gap-2 px-4 min-w-0 h-full border-r border-[rgba(202,213,227,0.3)]">
-            {isParent ? (
-              <button
-                onClick={() => toggleVariantExpansion(index)}
-                className="text-slate-500 hover:text-slate-800 cursor-pointer shrink-0 w-4"
-              >
-                {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-            ) : (
-              <div className="w-4 shrink-0" /> /* Spacer to align with parent chevron */
-            )}
+            {/* Fixed width container for chevron/thumbnail alignment */}
+            <div className="w-8 h-8 flex items-center justify-center shrink-0">
+              {isParent ? (
+                <button
+                  onClick={() => toggleVariantExpansion(index)}
+                  className="text-slate-500 hover:text-slate-800 cursor-pointer"
+                >
+                  {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                </button>
+              ) : (
+                <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden">
+                  <Image
+                    src={getCategoryImage(item.categoria || "")}
+                    alt={item.name}
+                    width={32}
+                    height={32}
+                    className="object-cover"
+                  />
+                </div>
+              )}
+            </div>
+            {/* Item info - starts at same position for all types */}
             <div className="flex-1 min-w-0">
               {isParent ? (
                 <>
@@ -320,54 +332,32 @@ export function PriceGrid({
                   </div>
                 </>
               ) : isChild ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-                    <Image
-                      src={getCategoryImage(item.categoria || "")}
-                      alt={item.name}
-                      width={28}
-                      height={28}
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-sm font-medium text-slate-800 truncate">{item.name}</span>
-                    {item.atributosPrincipales && item.atributosPrincipales.length > 0 && (
-                      <div className="flex items-center gap-1 flex-shrink-0">
-                        {item.atributosPrincipales.map((attr, idx) => (
-                          attr.value && (
-                            <span
-                              key={idx}
-                              className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 text-slate-600 rounded"
-                            >
-                              {attr.value}
-                            </span>
-                          )
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-sm font-medium text-slate-800 truncate">{item.name}</span>
+                  {item.atributosPrincipales && item.atributosPrincipales.length > 0 && (
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      {item.atributosPrincipales.map((attr, idx) => (
+                        attr.value && (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 text-slate-600 rounded"
+                          >
+                            {attr.value}
+                          </span>
+                        )
+                      ))}
+                    </div>
+                  )}
                 </div>
               ) : (
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-                    <Image
-                      src={getCategoryImage(item.categoria || "")}
-                      alt={item.name}
-                      width={32}
-                      height={32}
-                      className="object-cover"
-                    />
+                <>
+                  <div className="text-sm font-semibold text-slate-900 truncate">{getFullTitle(item)}</div>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    {item.marca && <span className="text-[11px] text-slate-400">{item.marca}</span>}
+                    {item.marca && item.categoria && <span className="text-[11px] text-slate-300">·</span>}
+                    {item.categoria && <span className="text-[11px] text-slate-400">{item.categoria}</span>}
                   </div>
-                  <div className="min-w-0">
-                    <div className="text-sm font-semibold text-slate-900 truncate">{getFullTitle(item)}</div>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      {item.marca && <span className="text-[11px] text-slate-400">{item.marca}</span>}
-                      {item.marca && item.categoria && <span className="text-[11px] text-slate-300">·</span>}
-                      {item.categoria && <span className="text-[11px] text-slate-400">{item.categoria}</span>}
-                    </div>
-                  </div>
-                </div>
+                </>
               )}
             </div>
           </div>
@@ -450,9 +440,12 @@ export function PriceGrid({
                       min="0"
                     />
                   ) : (
-                    <span className="text-sm font-medium text-blue-700 tabular-nums">
-                      {itemPricing.precioFinal ? Math.round(itemPricing.precioFinal / 1.21).toLocaleString("es-AR") : "0"}
-                    </span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm font-medium text-blue-700 tabular-nums">
+                        {itemPricing.precioFinal ? Math.round(itemPricing.precioFinal / 1.21).toLocaleString("es-AR") : "0"}
+                      </span>
+                      <span className="text-[10px] text-slate-400">+ iva</span>
+                    </div>
                   )}
                 </div>
               </div>
@@ -478,21 +471,23 @@ export function PriceGrid({
 
   return (
     <div className="flex-1 flex flex-col bg-slate-50 overflow-hidden">
-      {/* Superior Card - Empty placeholder like ODC detail */}
-      <div className="px-6 pt-6 pb-4">
-        <div className="bg-white border border-[rgba(202,213,227,0.61)] rounded-lg shadow-sm">
-          <div className="px-6 py-5 flex items-center gap-4">
-            {/* Empty placeholder - can add content here later */}
-          </div>
+      {/* Superior Bar - Full width like ODC detail, empty */}
+      <div className="bg-white border-b border-[rgba(202,213,227,0.61)]">
+        <div className="px-6 py-5 flex items-center gap-4">
+          {/* Empty placeholder - can add content here later */}
         </div>
       </div>
 
       {/* Scrollable container with sticky header */}
-      <div className="flex-1 overflow-y-auto px-6 pb-6">
+      <div className="flex-1 overflow-y-auto px-6 py-6">
         <div className="border border-[rgba(202,213,227,0.61)] rounded-lg overflow-hidden">
           {/* Toolbar - integrated with grid */}
           <div className="bg-white border-b border-[rgba(202,213,227,0.61)]">
-            <div className="px-4 py-3 flex items-center justify-center gap-4">
+            <div className="px-4 py-3 flex items-center gap-4">
+              {/* Left spacer for centering */}
+              <div className="flex-1" />
+              
+              {/* Centered search bar */}
               <div className="flex-1 max-w-md relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-black opacity-100 z-10" />
                 <input
@@ -513,7 +508,8 @@ export function PriceGrid({
                 )}
               </div>
 
-              <div className="flex items-center gap-2 flex-shrink-0">
+              {/* Right side buttons */}
+              <div className="flex-1 flex items-center justify-end gap-2">
                 <div className="relative" ref={orderRef}>
                   <button
                     onClick={() => setShowOrderModal(true)}

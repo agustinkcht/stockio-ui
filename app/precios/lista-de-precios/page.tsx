@@ -263,7 +263,9 @@ export default function ListaDePreciosPage() {
       switch (type) {
         case "costo": {
           let newCosto: number
-          if (operation === "aumentar") {
+          if (operation === "fijar_en") {
+            newCosto = unit === "%" ? pricing.costo * (value / 100) : value
+          } else if (operation === "aumentar") {
             newCosto = unit === "%" 
               ? pricing.costo * (1 + value / 100)
               : pricing.costo + value
@@ -286,7 +288,9 @@ export default function ListaDePreciosPage() {
 
         case "precioFinal": {
           let newPrecioFinal: number
-          if (operation === "aumentar") {
+          if (operation === "fijar_en") {
+            newPrecioFinal = unit === "%" ? pricing.precioFinal * (value / 100) : value
+          } else if (operation === "aumentar") {
             newPrecioFinal = unit === "%" 
               ? pricing.precioFinal * (1 + value / 100)
               : pricing.precioFinal + value
@@ -305,7 +309,7 @@ export default function ListaDePreciosPage() {
           // Only apply margen changes if there's a costo
           if (pricing.costo === 0) break
           let newMargen: number
-          if (operation === "reemplazar") {
+          if (operation === "fijar_en" || operation === "reemplazar") {
             newMargen = value
           } else if (operation === "aumentar") {
             newMargen = pricing.margen + value

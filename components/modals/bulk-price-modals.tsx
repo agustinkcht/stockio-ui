@@ -55,16 +55,11 @@ export function BulkPriceModal({ isOpen, onClose, onApply, itemCount, title, typ
   }
 
   const getOperationOptions = () => {
-    if (type === "margen") {
-      return [
-        { value: "aumentar", label: "Aumentar" },
-        { value: "disminuir", label: "Disminuir" },
-        { value: "reemplazar", label: "Reemplazar" },
-      ]
-    }
+    // All types (costo, margen, precioFinal) have the same options
     return [
       { value: "aumentar", label: "Aumentar" },
       { value: "disminuir", label: "Disminuir" },
+      { value: "fijar_en", label: "Fijar en" },
     ]
   }
 
