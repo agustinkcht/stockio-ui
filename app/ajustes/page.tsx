@@ -350,7 +350,7 @@ export default function AjustesPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <span className="text-sm font-medium text-slate-800 block">
-                            Preservar precio final y modificar margen
+                            Modificar margen, preservar precio final
                           </span>
                           <span className="text-xs text-slate-500 block mt-0.5">
                             El precio de venta se mantiene fijo, el margen se ajusta según el nuevo costo.
