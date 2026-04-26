@@ -72,6 +72,8 @@ export function PriceGrid({
   const [bulkModalType, setBulkModalType] = useState<BulkModalType>(null)
   const [showFilterModal, setShowFilterModal] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
+  const [precioFinalMode, setPrecioFinalMode] = useState<"con_iva" | "sin_iva">("con_iva")
+  const [showPrecioModeDropdown, setShowPrecioModeDropdown] = useState(false)
 
   const [activeFilters, setActiveFilters] = useState<FilterConfig>({
     tipos: [],
@@ -208,8 +210,10 @@ export function PriceGrid({
       if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
         setShowFilterModal(false)
       }
-      if (accionRef.current && !accionRef.current.contains(event.target as Node)) {
-        setShowAccionDropdown(false)
+      // Close precio mode dropdown if clicking outside
+      const target = event.target as HTMLElement
+      if (!target.closest("[data-precio-dropdown]")) {
+        setShowPrecioModeDropdown(false)
       }
     }
 
@@ -433,17 +437,23 @@ export function PriceGrid({
               <div className="col-span-6 flex items-center justify-center px-3 h-full bg-blue-50/30">
                 <div className="flex items-center gap-1 w-full">
                   <span className="text-[11px] text-blue-500">$</span>
-                  <input
-                    type="number"
-                    value={itemPricing.precioFinal || ""}
-                    onChange={(e) =>
-                      updatePricingField(itemKey, "precioFinal", Number.parseFloat(e.target.value) || 0, itemPricing)
-                    }
-                    className="w-full text-sm font-medium text-blue-700 bg-transparent border-0 focus:outline-none focus:bg-blue-50 rounded px-1 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    placeholder="0"
-                    step="1"
-                    min="0"
-                  />
+                  {precioFinalMode === "con_iva" ? (
+                    <input
+                      type="number"
+                      value={itemPricing.precioFinal || ""}
+                      onChange={(e) =>
+                        updatePricingField(itemKey, "precioFinal", Number.parseFloat(e.target.value) || 0, itemPricing)
+                      }
+                      className="w-full text-sm font-medium text-blue-700 bg-transparent border-0 focus:outline-none focus:bg-blue-50 rounded px-1 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      placeholder="0"
+                      step="1"
+                      min="0"
+                    />
+                  ) : (
+                    <span className="text-sm font-medium text-blue-700 tabular-nums">
+                      {itemPricing.precioFinal ? Math.round(itemPricing.precioFinal / 1.21).toLocaleString("es-AR") : "0"}
+                    </span>
+                  )}
                 </div>
               </div>
             </>
@@ -468,21 +478,21 @@ export function PriceGrid({
 
   return (
     <div className="flex-1 flex flex-col bg-slate-50 overflow-hidden">
-      {/* Superior Tab - Empty placeholder */}
-      <div className="px-6 pt-6">
-        <div className="bg-white border border-b-0 border-[rgba(202,213,227,0.61)] rounded-t-lg">
-          <div className="px-4 py-3 flex items-center gap-4">
-            <span className="text-sm font-medium text-slate-400">Lista de Precios</span>
+      {/* Superior Card - Empty placeholder like ODC detail */}
+      <div className="px-6 pt-6 pb-4">
+        <div className="bg-white border border-[rgba(202,213,227,0.61)] rounded-lg shadow-sm">
+          <div className="px-6 py-5 flex items-center gap-4">
+            {/* Empty placeholder - can add content here later */}
           </div>
         </div>
       </div>
 
       {/* Scrollable container with sticky header */}
       <div className="flex-1 overflow-y-auto px-6 pb-6">
-        <div className="border border-[rgba(202,213,227,0.61)] rounded-b-lg overflow-hidden">
+        <div className="border border-[rgba(202,213,227,0.61)] rounded-lg overflow-hidden">
           {/* Toolbar - integrated with grid */}
           <div className="bg-white border-b border-[rgba(202,213,227,0.61)]">
-            <div className="px-4 py-3 flex items-center justify-between gap-4">
+            <div className="px-4 py-3 flex items-center justify-center gap-4">
               <div className="flex-1 max-w-md relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-black opacity-100 z-10" />
                 <input
@@ -625,16 +635,51 @@ export function PriceGrid({
                 <MoreVertical className="w-3 h-3 text-slate-400 group-hover:text-slate-600" />
               </button>
             </div>
-            <div className="col-span-6 flex items-center justify-between px-3">
-              <button
-                onClick={() => setBulkModalType("precioFinal")}
-                className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors group cursor-pointer"
-                title="Modificar precio final en lote"
-              >
-                <MoreVertical className="w-3 h-3 text-slate-400 group-hover:text-slate-600" />
-              </button>
-              <span className="flex-1 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">Precio Final</span>
-              <div className="w-5" />
+            <div className="col-span-6 flex items-center justify-center px-3 gap-2 relative" data-precio-dropdown>
+              <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">
+                Precio Final {precioFinalMode === "sin_iva" && "(sin IVA)"}
+              </span>
+              <div className="relative">
+                <button
+                  onClick={() => setShowPrecioModeDropdown(!showPrecioModeDropdown)}
+                  className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors group cursor-pointer"
+                  title="Opciones de precio final"
+                >
+                  <MoreVertical className="w-3 h-3 text-slate-400 group-hover:text-slate-600" />
+                </button>
+                {showPrecioModeDropdown && (
+                  <div className="absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-20 min-w-[120px]">
+                    <button
+                      onClick={() => {
+                        setPrecioFinalMode("con_iva")
+                        setShowPrecioModeDropdown(false)
+                      }}
+                      className={`w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 transition-colors cursor-pointer ${precioFinalMode === "con_iva" ? "font-medium text-blue-600" : "text-slate-700"}`}
+                    >
+                      Con IVA
+                    </button>
+                    <button
+                      onClick={() => {
+                        setPrecioFinalMode("sin_iva")
+                        setShowPrecioModeDropdown(false)
+                      }}
+                      className={`w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 transition-colors cursor-pointer ${precioFinalMode === "sin_iva" ? "font-medium text-blue-600" : "text-slate-700"}`}
+                    >
+                      Sin IVA
+                    </button>
+                    <div className="border-t border-slate-100 my-1" />
+                    <button
+                      onClick={() => {
+                        setBulkModalType("precioFinal")
+                        setShowPrecioModeDropdown(false)
+                      }}
+                      className="w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 transition-colors cursor-pointer text-slate-700"
+                    >
+                      Editar en lote
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
             </div>
           </div>
