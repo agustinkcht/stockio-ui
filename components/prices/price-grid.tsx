@@ -2,6 +2,8 @@
 
 import type { Item, ItemVariant, SortFactorConfig, FilterConfig } from "@/lib/types"
 import { Plus, ArrowUpDown, ListFilterIcon, Search, X, ChevronDown, ChevronRight, Copy, Grid3x3, Minus, MoreVertical } from "lucide-react"
+import { getCategoryImage } from "@/lib/utils/category-images"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useRef, useState, useEffect, useMemo, useCallback } from "react"
@@ -64,13 +66,11 @@ export function PriceGrid({
   const { precios: preciosSettings } = useSettings()
   const orderRef = useRef<HTMLDivElement>(null)
   const filterRef = useRef<HTMLDivElement>(null)
-  const accionRef = useRef<HTMLDivElement>(null)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
 
   const [showOrderModal, setShowOrderModal] = useState(false)
   const [bulkModalType, setBulkModalType] = useState<BulkModalType>(null)
   const [showFilterModal, setShowFilterModal] = useState(false)
-  const [showAccionDropdown, setShowAccionDropdown] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
 
   const [activeFilters, setActiveFilters] = useState<FilterConfig>({
@@ -316,11 +316,20 @@ export function PriceGrid({
                   </div>
                 </>
               ) : isChild ? (
-                <>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-slate-800">{item.name}</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    <Image
+                      src={getCategoryImage(item.categoria || "")}
+                      alt={item.name}
+                      width={28}
+                      height={28}
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-sm font-medium text-slate-800 truncate">{item.name}</span>
                     {item.atributosPrincipales && item.atributosPrincipales.length > 0 && (
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 flex-shrink-0">
                         {item.atributosPrincipales.map((attr, idx) => (
                           attr.value && (
                             <span
@@ -334,16 +343,27 @@ export function PriceGrid({
                       </div>
                     )}
                   </div>
-                </>
+                </div>
               ) : (
-                <>
-                  <div className="text-sm font-semibold text-slate-900 truncate">{getFullTitle(item)}</div>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    {item.marca && <span className="text-[11px] text-slate-400">{item.marca}</span>}
-                    {item.marca && item.categoria && <span className="text-[11px] text-slate-300">·</span>}
-                    {item.categoria && <span className="text-[11px] text-slate-400">{item.categoria}</span>}
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    <Image
+                      src={getCategoryImage(item.categoria || "")}
+                      alt={item.name}
+                      width={32}
+                      height={32}
+                      className="object-cover"
+                    />
                   </div>
-                </>
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-slate-900 truncate">{getFullTitle(item)}</div>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      {item.marca && <span className="text-[11px] text-slate-400">{item.marca}</span>}
+                      {item.marca && item.categoria && <span className="text-[11px] text-slate-300">·</span>}
+                      {item.categoria && <span className="text-[11px] text-slate-400">{item.categoria}</span>}
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
           </div>
@@ -367,7 +387,7 @@ export function PriceGrid({
                     onChange={(e) =>
                       updatePricingField(itemKey, "costo", Number.parseFloat(e.target.value) || 0, itemPricing)
                     }
-                    className="w-full text-sm text-slate-700 bg-transparent border-0 focus:outline-none focus:bg-slate-50 rounded px-1 tabular-nums"
+                    className="w-full text-sm text-slate-700 bg-transparent border-0 focus:outline-none focus:bg-slate-50 rounded px-1 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     placeholder="0"
                     step="1"
                   />
@@ -419,7 +439,7 @@ export function PriceGrid({
                     onChange={(e) =>
                       updatePricingField(itemKey, "precioFinal", Number.parseFloat(e.target.value) || 0, itemPricing)
                     }
-                    className="w-full text-sm font-medium text-blue-700 bg-transparent border-0 focus:outline-none focus:bg-blue-50 rounded px-1 tabular-nums"
+                    className="w-full text-sm font-medium text-blue-700 bg-transparent border-0 focus:outline-none focus:bg-blue-50 rounded px-1 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     placeholder="0"
                     step="1"
                     min="0"
@@ -448,75 +468,111 @@ export function PriceGrid({
 
   return (
     <div className="flex-1 flex flex-col bg-slate-50 overflow-hidden">
-      <div className="px-6 pt-6 pb-4">
-        <div className="bg-white border border-border/40 rounded-lg shadow-sm">
-          <div className="px-4 py-3 flex items-center justify-between gap-4">
-            <div className="relative" ref={accionRef}>
-              <Button
-                onClick={() => setShowAccionDropdown(!showAccionDropdown)}
-                variant="ghost"
-                size="sm"
-                className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer gap-1.5 shrink-0"
-              >
-                <Plus className="w-3.5 h-3.5 text-blue-600" />
-                Acción 1
-              </Button>
-            </div>
-
-            <div className="flex-1 max-w-md relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-black opacity-100 z-10" />
-              <input
-                type="text"
-                placeholder="Buscar artículos..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-8 pl-9 pr-9 border shadow-sm rounded-md text-xs placeholder:text-gray-600 text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 bg-white backdrop-blur-sm transition-all duration-300 border-[rgba(202,213,227,0.842391304347826)]"
-              />
-              {searchTerm && (
-                <button
-                  onClick={() => setSearchTerm("")}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors z-10"
-                  title="Limpiar búsqueda"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-
-            <div className="flex items-center gap-0 flex-shrink-0">
-              <div className="relative mr-3" ref={orderRef}>
-                <button
-                  onClick={() => setShowOrderModal(true)}
-                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors group cursor-pointer border border-gray-200/40 shadow-sm mr-[-4px]"
-                  title="Ordenar"
-                >
-                  <ArrowUpDown className="w-4 h-4 text-gray-600 group-hover:text-gray-900" />
-                </button>
-              </div>
-
-              <div className="relative" ref={filterRef}>
-                <button
-                  onClick={() => setShowFilterModal(true)}
-                  className={`w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors group cursor-pointer border shadow-sm mr-2 ${
-                    hasActiveFilters ? "border-blue-500 bg-blue-50" : "border-gray-200/40"
-                  }`}
-                  title="Filtros"
-                >
-                  <ListFilterIcon
-                    className={`w-4 h-4 ${hasActiveFilters ? "text-blue-600" : "text-gray-600 group-hover:text-gray-900"}`}
-                  />
-                </button>
-              </div>
-            </div>
+      {/* Superior Tab - Empty placeholder */}
+      <div className="px-6 pt-6">
+        <div className="bg-white border border-b-0 border-[rgba(202,213,227,0.61)] rounded-t-lg">
+          <div className="px-4 py-3 flex items-center gap-4">
+            <span className="text-sm font-medium text-slate-400">Lista de Precios</span>
           </div>
         </div>
       </div>
 
       {/* Scrollable container with sticky header */}
       <div className="flex-1 overflow-y-auto px-6 pb-6">
-        <div className="border border-[rgba(202,213,227,0.61)] rounded-sm">
+        <div className="border border-[rgba(202,213,227,0.61)] rounded-b-lg overflow-hidden">
+          {/* Toolbar - integrated with grid */}
+          <div className="bg-white border-b border-[rgba(202,213,227,0.61)]">
+            <div className="px-4 py-3 flex items-center justify-between gap-4">
+              <div className="flex-1 max-w-md relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-black opacity-100 z-10" />
+                <input
+                  type="text"
+                  placeholder="Buscar artículos..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full h-8 pl-9 pr-9 border shadow-sm rounded-md text-xs placeholder:text-gray-600 text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 bg-white backdrop-blur-sm transition-all duration-300 border-[rgba(202,213,227,0.842391304347826)]"
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm("")}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors z-10 cursor-pointer"
+                    title="Limpiar búsqueda"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="relative" ref={orderRef}>
+                  <button
+                    onClick={() => setShowOrderModal(true)}
+                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors group cursor-pointer border border-gray-200/40 shadow-sm"
+                    title="Ordenar"
+                  >
+                    <ArrowUpDown className="w-4 h-4 text-gray-600 group-hover:text-gray-900" />
+                  </button>
+                </div>
+
+                <div className="relative" ref={filterRef}>
+                  <button
+                    onClick={() => setShowFilterModal(true)}
+                    className={`w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors group cursor-pointer border shadow-sm ${
+                      hasActiveFilters ? "border-blue-500 bg-blue-50" : "border-gray-200/40"
+                    }`}
+                    title="Filtros"
+                  >
+                    <ListFilterIcon
+                      className={`w-4 h-4 ${hasActiveFilters ? "text-blue-600" : "text-gray-600 group-hover:text-gray-900"}`}
+                    />
+                  </button>
+                </div>
+
+                <div className="relative">
+                  <button
+                    onClick={() => setGridSizeDropdownOpen(!gridSizeDropdownOpen)}
+                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors group cursor-pointer border border-gray-200/40 shadow-sm"
+                    title="Tamaño de grilla"
+                  >
+                    <Grid3x3 className="w-4 h-4 text-gray-600 group-hover:text-gray-900" />
+                  </button>
+                  {gridSizeDropdownOpen && (
+                    <div className="absolute right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-20 min-w-[100px]">
+                      <button
+                        onClick={() => {
+                          setGridSize("sm")
+                          setGridSizeDropdownOpen(false)
+                        }}
+                        className={`w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 transition-colors cursor-pointer ${gridSize === "sm" ? "font-medium text-blue-600" : "text-slate-700"}`}
+                      >
+                        Pequeño
+                      </button>
+                      <button
+                        onClick={() => {
+                          setGridSize("md")
+                          setGridSizeDropdownOpen(false)
+                        }}
+                        className={`w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 transition-colors cursor-pointer ${gridSize === "md" ? "font-medium text-blue-600" : "text-slate-700"}`}
+                      >
+                        Mediano
+                      </button>
+                      <button
+                        onClick={() => {
+                          setGridSize("lg")
+                          setGridSizeDropdownOpen(false)
+                        }}
+                        className={`w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 transition-colors cursor-pointer ${gridSize === "lg" ? "font-medium text-blue-600" : "text-slate-700"}`}
+                      >
+                        Grande
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
           {/* Tab Header - sticky */}
-          <div className="bg-slate-100 sticky top-0 z-10 rounded-t-sm">
+          <div className="bg-slate-100 sticky top-0 z-10">
             <div className="grid grid-cols-32 h-9">
             <div className="col-span-2 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
               <div className="relative flex items-center justify-center">
@@ -578,46 +634,7 @@ export function PriceGrid({
                 <MoreVertical className="w-3 h-3 text-slate-400 group-hover:text-slate-600" />
               </button>
               <span className="flex-1 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">Precio Final</span>
-              <div className="relative">
-                <button
-                  onClick={() => setGridSizeDropdownOpen(!gridSizeDropdownOpen)}
-                  className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors group cursor-pointer"
-                  title="Tamaño de grilla"
-                >
-                  <Grid3x3 className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-700" />
-                </button>
-                {gridSizeDropdownOpen && (
-                  <div className="absolute right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-10 min-w-[80px]">
-                    <button
-                      onClick={() => {
-                        setGridSize("sm")
-                        setGridSizeDropdownOpen(false)
-                      }}
-                      className={`w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 transition-colors ${gridSize === "sm" ? "font-medium text-blue-600" : "text-slate-700"}`}
-                    >
-                      Pequeño
-                    </button>
-                    <button
-                      onClick={() => {
-                        setGridSize("md")
-                        setGridSizeDropdownOpen(false)
-                      }}
-                      className={`w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 transition-colors ${gridSize === "md" ? "font-medium text-blue-600" : "text-slate-700"}`}
-                    >
-                      Mediano
-                    </button>
-                    <button
-                      onClick={() => {
-                        setGridSize("lg")
-                        setGridSizeDropdownOpen(false)
-                      }}
-                      className={`w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 transition-colors ${gridSize === "lg" ? "font-medium text-blue-600" : "text-slate-700"}`}
-                    >
-                      Grande
-                    </button>
-                  </div>
-                )}
-              </div>
+              <div className="w-5" />
             </div>
             </div>
           </div>
