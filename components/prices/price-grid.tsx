@@ -100,21 +100,23 @@ export function PriceGrid({
 
   // Get all visible SKUs (from sorted and filtered items)
   const getVisibleSkus = useCallback((itemList: Item[]): string[] => {
-    const ids: string[] = []
+    const skus: string[] = []
     for (const item of itemList) {
       const isParent = (item.variants && item.variants.length > 0) || (item.items && item.items.length > 0)
       if (isParent) {
         const children = item.variants || item.items || []
         for (const child of children) {
-          const id = (child as any).id || (child as any).sku
-          if (id) ids.push(id)
+          // Prefer sku over id for consistency with lookup functions
+          const sku = (child as any).sku || (child as any).id
+          if (sku) skus.push(sku)
         }
       } else {
-        const id = (item as any).id || item.sku
-        if (id) ids.push(id)
+        // Prefer sku over id for consistency with lookup functions
+        const sku = item.sku || (item as any).id
+        if (sku) skus.push(sku)
       }
     }
-    return ids
+    return skus
   }, [])
 
   // Get target SKUs for bulk edit (selected items take priority over visible items)

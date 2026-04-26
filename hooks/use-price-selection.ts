@@ -10,35 +10,37 @@ interface SelectionState {
 export function usePriceSelection(items: Item[]) {
   const [selectedItems, setSelectedItems] = useState<SelectionState>({})
 
-  // Resolve the stable identifier for any item — always prefer id
+  // Resolve the stable identifier for any item — always prefer sku for consistency with lookup functions
   const getItemId = useCallback((item: any): string | undefined => {
-    return item.id || item.sku
+    return item.sku || item.id
   }, [])
 
-  // Get all selectable IDs (children IDs for parents, own ID for standalone)
+  // Get all selectable SKUs (children SKUs for parents, own SKU for standalone)
   const getAllIds = useCallback((itemList: Item[]): string[] => {
-    const ids: string[] = []
+    const skus: string[] = []
     for (const item of itemList) {
       const isParent = (item.variants && item.variants.length > 0) || (item.items && item.items.length > 0)
       if (isParent) {
         const children = item.variants || item.items || []
         for (const child of children) {
-          const id = (child as any).id || (child as any).sku
-          if (id) ids.push(id)
+          // Prefer sku over id for consistency with lookup functions
+          const sku = (child as any).sku || (child as any).id
+          if (sku) skus.push(sku)
         }
       } else {
-        const id = (item as any).id || item.sku
-        if (id) ids.push(id)
+        // Prefer sku over id for consistency with lookup functions
+        const sku = item.sku || (item as any).id
+        if (sku) skus.push(sku)
       }
     }
-    return ids
+    return skus
   }, [])
 
-  // Get children IDs for a parent item
+  // Get children SKUs for a parent item
   const getChildrenIds = useCallback((item: Item): string[] => {
     const children = item.variants || item.items || []
     return children
-      .map((child) => (child as any).id || (child as any).sku)
+      .map((child) => (child as any).sku || (child as any).id)
       .filter(Boolean) as string[]
   }, [])
 

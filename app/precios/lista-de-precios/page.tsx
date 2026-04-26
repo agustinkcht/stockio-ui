@@ -171,16 +171,19 @@ export default function ListaDePreciosPage() {
     }
   }
 
-  // Helper to find if SKU is a variant and get parent SKU
-  const findItemBySku = (sku: string): { isVariant: boolean; parentSku?: string } => {
+  // Helper to find if SKU/ID is a variant and get parent SKU
+  const findItemBySku = (skuOrId: string): { isVariant: boolean; parentSku?: string } => {
     for (const item of items) {
-      if (item.sku === sku) {
+      // Check both id and sku for top-level items
+      if (item.sku === skuOrId || item.id === skuOrId) {
         return { isVariant: false }
       }
       if (item.variants) {
-        const variant = item.variants.find((v: any) => v.sku === sku)
+        // Check both sku and id for variants
+        const variant = item.variants.find((v: any) => v.sku === skuOrId || v.id === skuOrId)
         if (variant) {
-          return { isVariant: true, parentSku: item.sku }
+          // Return parent's sku or id
+          return { isVariant: true, parentSku: item.sku || item.id }
         }
       }
     }
@@ -198,10 +201,11 @@ export default function ListaDePreciosPage() {
     return Math.round((precioFinal / costo - 1) * 1000) / 10
   }
 
-  // Get item pricing data by SKU
-  const getItemPricingBySku = (sku: string): { costo: number; margen: number; iva: number; precioFinal: number } | null => {
+  // Get item pricing data by SKU or ID
+  const getItemPricingBySku = (skuOrId: string): { costo: number; margen: number; iva: number; precioFinal: number } | null => {
     for (const item of items) {
-      if (item.sku === sku) {
+      // Check both sku and id for top-level items
+      if (item.sku === skuOrId || item.id === skuOrId) {
         // Check if item has precio object
         if (item.precio) {
           return {
@@ -219,7 +223,8 @@ export default function ListaDePreciosPage() {
         return { costo, margen, iva, precioFinal }
       }
       if (item.variants) {
-        const variant = item.variants.find((v: any) => v.sku === sku)
+        // Check both sku and id for variants
+        const variant = item.variants.find((v: any) => v.sku === skuOrId || v.id === skuOrId)
         if (variant) {
           // Check if variant has precio object
           if (variant.precio) {
@@ -343,7 +348,7 @@ export default function ListaDePreciosPage() {
   }
 
   const handleItemClick = (item: Item) => {
-    console.log("[v0] Item clicked in precios view:", item.titulo)
+    // Handle item click if needed
   }
 
   const toggleVariantExpansion = (index: number) => {
