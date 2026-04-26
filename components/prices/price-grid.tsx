@@ -619,6 +619,7 @@ export function PriceGrid({
                 )}
               </div>
             </div>
+            </div>
           </div>
 
           {/* Grid Content */}
