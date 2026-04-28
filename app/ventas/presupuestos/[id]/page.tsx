@@ -66,21 +66,26 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
   const [isHoveringCliente, setIsHoveringCliente] = useState(false)
   const clienteDropdownRef = useRef<HTMLDivElement>(null)
   const [showNuevoClienteModal, setShowNuevoClienteModal] = useState(false)
+  const [showEstadoDropdown, setShowEstadoDropdown] = useState(false)
+  const estadoDropdownRef = useRef<HTMLDivElement>(null)
   
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (clienteDropdownRef.current && !clienteDropdownRef.current.contains(event.target as Node)) {
         setShowClienteDropdown(false)
       }
+      if (estadoDropdownRef.current && !estadoDropdownRef.current.contains(event.target as Node)) {
+        setShowEstadoDropdown(false)
+      }
     }
-    if (showClienteDropdown) {
+    if (showClienteDropdown || showEstadoDropdown) {
       document.addEventListener("mousedown", handleClickOutside)
     }
     return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [showClienteDropdown])
+  }, [showClienteDropdown, showEstadoDropdown])
   
-  // Ajuste state (mode: "add" for surcharge, "subtract" for discount)
-  const [itemAjustes, setItemAjustes] = useState<{ [idx: number]: { value: number; type: "cash" | "percent"; mode: "add" | "subtract" } }>({})
+  // Promoción state (always discount - percent, cash, or unit)
+  const [itemAjustes, setItemAjustes] = useState<{ [idx: number]: { value: number; type: "percent" | "cash" | "unit" } }>({})
   const [itemIvas, setItemIvas] = useState<{ [idx: number]: number }>({})
   const [globalDiscount, setGlobalDiscount] = useState<{ value: number; type: "cash" | "percent" }>({ value: 0, type: "percent" })
   const [showGlobalDiscount, setShowGlobalDiscount] = useState(false)
@@ -532,16 +537,23 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
     return sum + (item.quantity * item.unitPrice)
   }, 0)
   
-  // Calculate subtotal with item-level ajustes applied
+  // Calculate subtotal with item-level promociones applied
   const subtotalWithAjustes = presupuesto.items.reduce((sum, item, idx) => {
-    const ajuste = itemAjustes[idx] || { value: 0, type: "percent", mode: "subtract" }
-    const ajusteAmt = ajuste.type === "percent"
-      ? item.unitPrice * (ajuste.value / 100)
-      : ajuste.value
-    const adjustedUnitPrice = ajuste.mode === "subtract"
-      ? Math.max(0, item.unitPrice - ajusteAmt)
-      : item.unitPrice + ajusteAmt
-    return sum + (item.quantity * adjustedUnitPrice)
+    const ajuste = itemAjustes[idx] || { value: 0, type: "percent" }
+    
+    if (ajuste.type === "unit") {
+      // Unit discount: reduce quantity by discount units (max is item.quantity)
+      const discountUnits = Math.min(ajuste.value, item.quantity)
+      const effectiveQuantity = Math.max(0, item.quantity - discountUnits)
+      return sum + (effectiveQuantity * item.unitPrice)
+    } else {
+      // Percent or cash discount on unit price
+      const ajusteAmt = ajuste.type === "percent"
+        ? item.unitPrice * (ajuste.value / 100)
+        : ajuste.value
+      const adjustedUnitPrice = Math.max(0, item.unitPrice - ajusteAmt)
+      return sum + (item.quantity * adjustedUnitPrice)
+    }
   }, 0)
   
   // Calculate item-level discount amount
@@ -690,31 +702,49 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                   <div className="h-10 w-px bg-border/40" />
                   
                   {/* Estado */}
-                  <div className="flex flex-col">
+                  <div className="relative flex flex-col" ref={estadoDropdownRef}>
                     <span className="text-[10px] text-slate-400 uppercase tracking-wider">Estado</span>
-                    <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => isEditable && setShowEstadoDropdown(!showEstadoDropdown)}
+                      className={`flex items-center gap-1.5 ${isEditable ? "cursor-pointer" : ""}`}
+                    >
                       <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${estadoStyle.bg} ${estadoStyle.text}`}>
                         {estadoLabels[presupuesto.estado]}
                       </span>
-                      {isEditable && (
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => handleEstadoChange("aceptado")}
-                            className="p-1 rounded hover:bg-emerald-50 text-emerald-600 transition-colors"
-                            title="Marcar como aceptado"
-                          >
-                            <Check className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleEstadoChange("rechazado")}
-                            className="p-1 rounded hover:bg-red-50 text-red-600 transition-colors"
-                            title="Marcar como rechazado"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                      {isEditable && <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${showEstadoDropdown ? "rotate-180" : ""}`} />}
+                    </button>
+                    
+                    {showEstadoDropdown && (
+                      <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[140px]">
+                        <button
+                          onClick={() => { handleEstadoChange("borrador"); setShowEstadoDropdown(false) }}
+                          className={`w-full text-left px-3 py-2 text-sm hover:bg-slate-50 transition-colors ${presupuesto.estado === "borrador" ? "bg-slate-50 font-medium" : ""}`}
+                        >
+                          <span className="inline-flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-amber-400" />
+                            Borrador
+                          </span>
+                        </button>
+                        <button
+                          onClick={() => { handleEstadoChange("aceptado"); setShowEstadoDropdown(false) }}
+                          className={`w-full text-left px-3 py-2 text-sm hover:bg-slate-50 transition-colors ${presupuesto.estado === "aceptado" ? "bg-slate-50 font-medium" : ""}`}
+                        >
+                          <span className="inline-flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                            Aceptado
+                          </span>
+                        </button>
+                        <button
+                          onClick={() => { handleEstadoChange("rechazado"); setShowEstadoDropdown(false) }}
+                          className={`w-full text-left px-3 py-2 text-sm hover:bg-slate-50 transition-colors ${presupuesto.estado === "rechazado" ? "bg-slate-50 font-medium" : ""}`}
+                        >
+                          <span className="inline-flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-red-500" />
+                            Rechazado
+                          </span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="h-10 w-px bg-border/40" />
@@ -864,21 +894,20 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                         )}
                       </div>
                       
-                      {/* Arrow between Precio and Ajuste */}
+{/* Arrow between Precio and Promoción */}
                       <div className="flex items-center justify-center w-6 text-slate-300">→</div>
-                      
-                      <div className="flex items-center justify-center">Ajuste</div>
+                      <div className="flex items-center justify-center">Promoción</div>
                       
                       {showIvaColumn && (
                         <>
-                          {/* Arrow between Ajuste and IVA */}
+                          {/* Arrow between Promoción and IVA */}
                           <div className="flex items-center justify-center w-6 text-slate-300">→</div>
                           
                           <div className="flex items-center justify-center">IVA Cont.</div>
                         </>
                       )}
                       
-                      {/* Arrow between Ajuste/IVA and Subtotal */}
+                      {/* Arrow between Promoción/IVA and Subtotal */}
                       <div className="flex items-center justify-center w-6 text-slate-300">→</div>
                       
                       <div className="flex items-center justify-end pr-4">Subtotal</div>
@@ -889,7 +918,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                       <div className="flex items-center px-4">Item</div>
                       <div className="flex items-center justify-center">Precio Unit.</div>
                       <div className="flex items-center justify-center w-6 text-slate-300">→</div>
-                      <div className="flex items-center justify-center">Ajuste</div>
+                      <div className="flex items-center justify-center">Promoción</div>
                       {showIvaColumn && (
                         <>
                           <div className="flex items-center justify-center w-6 text-slate-300">→</div>
@@ -922,15 +951,27 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                   <>
                   {presupuesto.items.map((item, idx) => {
                     const displayMarca = item.marca || getMarcaBySku(item.sku)
-                    const ajuste = itemAjustes[idx] || { value: 0, type: "percent", mode: "subtract" }
-                    // Calculate adjusted unit price
-                    const ajusteAmt = ajuste.type === "percent" 
-                      ? item.unitPrice * (ajuste.value / 100) 
-                      : ajuste.value
-                    const adjustedUnitPrice = ajuste.mode === "subtract" 
-                      ? Math.max(0, item.unitPrice - ajusteAmt)
-                      : item.unitPrice + ajusteAmt
-                    const finalItemTotal = Math.max(0, item.quantity * adjustedUnitPrice)
+                    const ajuste = itemAjustes[idx] || { value: 0, type: "percent" }
+                    
+                    // Calculate values based on promoción type
+                    let adjustedUnitPrice = item.unitPrice
+                    let effectiveQuantity = item.quantity
+                    let finalItemTotal = 0
+                    
+                    if (ajuste.type === "unit") {
+                      // Unit discount: reduce quantity
+                      const discountUnits = Math.min(ajuste.value, item.quantity)
+                      effectiveQuantity = Math.max(0, item.quantity - discountUnits)
+                      finalItemTotal = effectiveQuantity * item.unitPrice
+                    } else {
+                      // Percent or cash discount on unit price
+                      const ajusteAmt = ajuste.type === "percent" 
+                        ? item.unitPrice * (ajuste.value / 100) 
+                        : ajuste.value
+                      adjustedUnitPrice = Math.max(0, item.unitPrice - ajusteAmt)
+                      finalItemTotal = item.quantity * adjustedUnitPrice
+                    }
+                    
                     const stockDisponible = getStockBySku(item.sku)
                     const exceedsStock = !item.isDescripcionLibre && item.quantity > stockDisponible
                     
@@ -1057,29 +1098,37 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                             {/* Arrow */}
                             <div className="flex items-center justify-center w-6 text-slate-300">→</div>
                             
-                            {/* Ajuste */}
+                            {/* Promoción */}
                             <div className="flex items-center justify-center gap-1.5">
-                              {/* Mode toggle: descuento or aumento */}
-                              <button
-                                onClick={() => setItemAjustes(prev => ({
-                                  ...prev,
-                                  [idx]: { ...ajuste, mode: ajuste.mode === "subtract" ? "add" : "subtract" }
-                                }))}
-                                className="px-2 py-1 text-[10px] border border-slate-800 bg-slate-900 text-white rounded transition-colors min-w-[62px] cursor-pointer hover:bg-slate-800"
-                              >
-                                {ajuste.mode === "subtract" ? "descuento" : "aumento"}
-                              </button>
                               <input
                                 type="number"
                                 placeholder="0"
+                                min="0"
+                                max={ajuste.type === "unit" ? item.quantity : undefined}
                                 value={ajuste.value || ""}
-                                onChange={(e) => setItemAjustes(prev => ({
-                                  ...prev,
-                                  [idx]: { ...ajuste, value: parseFloat(e.target.value) || 0 }
-                                }))}
-                                className="w-10 text-center text-xs py-1 border border-slate-200 rounded focus:outline-none focus:border-blue-400 placeholder:text-slate-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                onChange={(e) => {
+                                  let val = parseFloat(e.target.value) || 0
+                                  // Limit unit discount to quantity
+                                  if (ajuste.type === "unit" && val > item.quantity) {
+                                    val = item.quantity
+                                  }
+                                  setItemAjustes(prev => ({
+                                    ...prev,
+                                    [idx]: { ...ajuste, value: val }
+                                  }))
+                                }}
+                                className="w-12 text-center text-xs py-1 border border-slate-200 rounded focus:outline-none focus:border-blue-400 placeholder:text-slate-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               />
                               <div className="flex border border-slate-200 rounded overflow-hidden">
+                                <button
+                                  onClick={() => setItemAjustes(prev => ({
+                                    ...prev,
+                                    [idx]: { ...ajuste, type: "percent" }
+                                  }))}
+                                  className={`px-1.5 py-1 text-xs cursor-pointer ${ajuste.type === "percent" ? "bg-blue-50 text-blue-600" : "text-slate-400"}`}
+                                >
+                                  %
+                                </button>
                                 <button
                                   onClick={() => setItemAjustes(prev => ({
                                     ...prev,
@@ -1092,11 +1141,12 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                 <button
                                   onClick={() => setItemAjustes(prev => ({
                                     ...prev,
-                                    [idx]: { ...ajuste, type: "percent" }
+                                    [idx]: { ...ajuste, type: "unit", value: Math.min(ajuste.value, item.quantity) }
                                   }))}
-                                  className={`px-1.5 py-1 text-xs cursor-pointer ${ajuste.type === "percent" ? "bg-blue-50 text-blue-600" : "text-slate-400"}`}
+                                  className={`px-1.5 py-1 text-xs cursor-pointer ${ajuste.type === "unit" ? "bg-blue-50 text-blue-600" : "text-slate-400"}`}
+                                  title="Unidades"
                                 >
-                                  %
+                                  <Package className="w-3 h-3" />
                                 </button>
                               </div>
                             </div>
@@ -1126,12 +1176,65 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                             
                             {/* Subtotal */}
                             <div className="flex flex-col items-end justify-center pr-4">
-                              <span className="text-[11px] text-slate-400">
-                                {item.quantity} x ${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}
-                              </span>
-                              <span className="text-sm font-semibold text-slate-900">
-                                ${Math.round(finalItemTotal).toLocaleString("es-AR")}
-                              </span>
+                              {ajuste.value > 0 ? (
+                                // With promoción applied
+                                ajuste.type === "unit" ? (
+                                  // Unit discount
+                                  <>
+                                    <span className="text-xs font-medium text-slate-700">
+                                      {item.quantity} × ${Math.round(item.unitPrice).toLocaleString("es-AR")}
+                                    </span>
+                                    <span className="text-[10px] text-orange-600 font-medium">
+                                      -{Math.min(ajuste.value, item.quantity)} unidad{Math.min(ajuste.value, item.quantity) > 1 ? "es" : ""} OFF
+                                    </span>
+                                    <span className="text-base font-bold text-slate-900">
+                                      ${Math.round(finalItemTotal).toLocaleString("es-AR")}
+                                    </span>
+                                  </>
+                                ) : ajuste.type === "percent" ? (
+                                  // Percent discount
+                                  <>
+                                    <span className="text-[10px] text-slate-400 line-through">
+                                      {item.quantity} × ${Math.round(item.unitPrice).toLocaleString("es-AR")}
+                                    </span>
+                                    <span className="text-[10px] text-red-500 font-medium">
+                                      {ajuste.value}% OFF
+                                    </span>
+                                    <span className="text-xs font-medium text-slate-700">
+                                      {item.quantity} × ${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}
+                                    </span>
+                                    <span className="text-base font-bold text-slate-900">
+                                      ${Math.round(finalItemTotal).toLocaleString("es-AR")}
+                                    </span>
+                                  </>
+                                ) : (
+                                  // Cash discount
+                                  <>
+                                    <span className="text-[10px] text-slate-400 line-through">
+                                      {item.quantity} × ${Math.round(item.unitPrice).toLocaleString("es-AR")}
+                                    </span>
+                                    <span className="text-[10px] text-red-500 font-medium">
+                                      -${ajuste.value.toLocaleString("es-AR")} OFF c/u
+                                    </span>
+                                    <span className="text-xs font-medium text-slate-700">
+                                      {item.quantity} × ${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}
+                                    </span>
+                                    <span className="text-base font-bold text-slate-900">
+                                      ${Math.round(finalItemTotal).toLocaleString("es-AR")}
+                                    </span>
+                                  </>
+                                )
+                              ) : (
+                                // No promoción
+                                <>
+                                  <span className="text-xs font-medium text-slate-600">
+                                    {item.quantity} × ${Math.round(item.unitPrice).toLocaleString("es-AR")}
+                                  </span>
+                                  <span className="text-base font-bold text-slate-900">
+                                    ${Math.round(finalItemTotal).toLocaleString("es-AR")}
+                                  </span>
+                                </>
+                              )}
                             </div>
                           </div>
                         ) : (
@@ -1160,8 +1263,8 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                             <div className="flex items-center justify-center w-6 text-slate-300">→</div>
                             <div className="flex items-center justify-center">
                               {ajuste.value > 0 ? (
-                                <span className={`text-sm ${ajuste.mode === "subtract" ? "text-red-500" : "text-emerald-500"}`}>
-                                  {ajuste.mode === "subtract" ? "-" : "+"}{ajuste.value}{ajuste.type === "percent" ? "%" : "$"}
+                                <span className="text-sm text-red-500">
+                                  -{ajuste.value}{ajuste.type === "percent" ? "%" : ajuste.type === "unit" ? " u." : "$"}
                                 </span>
                               ) : (
                                 <span className="text-sm text-slate-300">-</span>
@@ -1177,10 +1280,61 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                             )}
                             <div className="flex items-center justify-center w-6 text-slate-300">→</div>
                             <div className="flex flex-col items-end justify-center pr-4">
-                              <span className="text-[11px] text-slate-400">
-                                {item.quantity} x ${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}
-                              </span>
-                              <span className="text-sm font-semibold text-slate-900">${Math.round(finalItemTotal).toLocaleString("es-AR")}</span>
+                              {ajuste.value > 0 ? (
+                                // With promoción applied
+                                ajuste.type === "unit" ? (
+                                  <>
+                                    <span className="text-xs font-medium text-slate-700">
+                                      {item.quantity} × ${Math.round(item.unitPrice).toLocaleString("es-AR")}
+                                    </span>
+                                    <span className="text-[10px] text-orange-600 font-medium">
+                                      -{Math.min(ajuste.value, item.quantity)} unidad{Math.min(ajuste.value, item.quantity) > 1 ? "es" : ""} OFF
+                                    </span>
+                                    <span className="text-base font-bold text-slate-900">
+                                      ${Math.round(finalItemTotal).toLocaleString("es-AR")}
+                                    </span>
+                                  </>
+                                ) : ajuste.type === "percent" ? (
+                                  <>
+                                    <span className="text-[10px] text-slate-400 line-through">
+                                      {item.quantity} × ${Math.round(item.unitPrice).toLocaleString("es-AR")}
+                                    </span>
+                                    <span className="text-[10px] text-red-500 font-medium">
+                                      {ajuste.value}% OFF
+                                    </span>
+                                    <span className="text-xs font-medium text-slate-700">
+                                      {item.quantity} × ${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}
+                                    </span>
+                                    <span className="text-base font-bold text-slate-900">
+                                      ${Math.round(finalItemTotal).toLocaleString("es-AR")}
+                                    </span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span className="text-[10px] text-slate-400 line-through">
+                                      {item.quantity} × ${Math.round(item.unitPrice).toLocaleString("es-AR")}
+                                    </span>
+                                    <span className="text-[10px] text-red-500 font-medium">
+                                      -${ajuste.value.toLocaleString("es-AR")} OFF c/u
+                                    </span>
+                                    <span className="text-xs font-medium text-slate-700">
+                                      {item.quantity} × ${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}
+                                    </span>
+                                    <span className="text-base font-bold text-slate-900">
+                                      ${Math.round(finalItemTotal).toLocaleString("es-AR")}
+                                    </span>
+                                  </>
+                                )
+                              ) : (
+                                <>
+                                  <span className="text-xs font-medium text-slate-600">
+                                    {item.quantity} × ${Math.round(item.unitPrice).toLocaleString("es-AR")}
+                                  </span>
+                                  <span className="text-base font-bold text-slate-900">
+                                    ${Math.round(finalItemTotal).toLocaleString("es-AR")}
+                                  </span>
+                                </>
+                              )}
                             </div>
                           </div>
                         )}
