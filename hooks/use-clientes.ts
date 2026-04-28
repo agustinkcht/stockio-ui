@@ -48,9 +48,12 @@ export function useClientes() {
     localStorage.setItem(storageKey, JSON.stringify(newClientes))
   }
 
-  const addCliente = (cliente: Cliente) => {
-    const newClientes = [...clientes, cliente]
+  const addCliente = (clienteData: Omit<Cliente, "id" | "transactionCount">): Cliente => {
+    const id = `CLI-${Date.now()}`
+    const newCliente: Cliente = { id, transactionCount: 0, ...clienteData }
+    const newClientes = [...clientes, newCliente]
     saveClientes(newClientes)
+    return newCliente
   }
 
   const updateCliente = (id: string, updates: Partial<Cliente>) => {

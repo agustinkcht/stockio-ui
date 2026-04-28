@@ -36,6 +36,8 @@ import { INITIAL_ITEMS } from "@/lib/data/initial-items"
 import { usePresupuestos } from "@/hooks/use-presupuestos"
 import { useItems } from "@/hooks/use-items"
 import { useClientes } from "@/hooks/use-clientes"
+import { NuevoClienteModal } from "@/components/modals/nuevo-cliente-modal"
+import type { Cliente } from "@/lib/data/clientes"
 
 const estadoLabels: Record<EstadoPresupuesto, string> = {
   borrador: "Borrador",
@@ -56,13 +58,14 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
 
   const { presupuestos, updatePresupuesto, deletePresupuesto } = usePresupuestos()
   const { items: allItems } = useItems()
-  const { clientes } = useClientes()
+  const { clientes, addCliente } = useClientes()
   
   // Cliente change state
   const [showClienteDropdown, setShowClienteDropdown] = useState(false)
   const [clienteSearch, setClienteSearch] = useState("")
   const [isHoveringCliente, setIsHoveringCliente] = useState(false)
   const clienteDropdownRef = useRef<HTMLDivElement>(null)
+  const [showNuevoClienteModal, setShowNuevoClienteModal] = useState(false)
   
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -158,7 +161,12 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
   }, [showCantidadMassMenu, showPrecioMassMenu])
   
   const uniqueClientes = useMemo(() => {
-    return clientes.map(c => c.nombre).sort()
+    return clientes.map(c => {
+      if (c.tipo === "empresa" && c.razonSocial) {
+        return c.razonSocial
+      }
+      return `${c.nombre} ${c.apellido}`.trim()
+    }).sort()
   }, [clientes])
   
   const filteredClientes = useMemo(() => {
@@ -478,6 +486,16 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
     setHasChanges(true)
   }
   
+  const handleSaveNuevoCliente = (clienteData: Omit<Cliente, "id">) => {
+    const newCliente = addCliente(clienteData)
+    // Select the new client for this presupuesto
+    const clienteName = clienteData.tipo === "empresa" && clienteData.razonSocial 
+      ? clienteData.razonSocial 
+      : `${clienteData.nombre} ${clienteData.apellido}`.trim()
+    handleClienteChange(clienteName)
+    setShowNuevoClienteModal(false)
+  }
+  
   const handleDeletePresupuesto = () => {
     if (!presupuesto) return
     deletePresupuesto(presupuesto.id)
@@ -552,7 +570,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
         </div>
 
         <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
-          {/* Header */}
+          {/* Utility Bar */}
           <div className="relative border-b border-border h-[44px] bg-white">
             <div className="px-4 flex items-center justify-between h-full">
               <div className="flex items-center">
@@ -563,127 +581,171 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => router.push("/ventas/presupuestos")}
-                  className="px-4 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors"
+                  disabled={!hasChanges}
+                  className="px-4 py-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground hover:bg-muted text-sm font-medium"
                 >
-                  Volver
+                  Deshacer
+                </button>
+                <button
+                  disabled={!hasChanges}
+                  className="px-4 py-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-primary hover:bg-muted text-sm font-medium"
+                >
+                  Guardar
                 </button>
               </div>
             </div>
           </div>
 
           <main className="flex-1 flex flex-col bg-[rgba(250,251,253,1)] overflow-hidden">
-            {/* Top Bar - Presupuesto Info */}
-            <div className="px-6 pt-6 pb-4">
-              <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm">
-                <div className="px-5 py-4 flex items-center justify-between">
-                  <div className="flex items-center gap-6">
-                    {/* ID */}
-                    <div>
-                      <span className="text-xs text-slate-400 uppercase tracking-wider">Presupuesto</span>
-                      <p className="text-lg font-semibold text-slate-900">{presupuesto.id}</p>
+            {/* Order Header - styled like ODC */}
+            <div className="px-6 py-4 border-b border-border/20 bg-white">
+              <div className="flex items-center justify-between">
+                {/* Left: Title and info */}
+                <div className="flex items-center gap-6">
+                  {/* Presupuesto ID */}
+                  <div>
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Presupuesto</span>
+                    <div className="flex items-center gap-3">
+                      <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{presupuesto.id}</h1>
+                    </div>
+                  </div>
+                  
+                  <div className="h-10 w-px bg-border/40" />
+                  
+                  {/* Cliente */}
+                  <div className="relative" ref={clienteDropdownRef}>
+                    <div 
+                      className={`flex flex-col ${isEditable ? "cursor-pointer group" : ""}`}
+                      onMouseEnter={() => setIsHoveringCliente(true)}
+                      onMouseLeave={() => setIsHoveringCliente(false)}
+                      onClick={() => isEditable && setShowClienteDropdown(!showClienteDropdown)}
+                    >
+                      <span className="text-[10px] text-slate-400 uppercase tracking-wider">Cliente</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-semibold text-gray-800">{presupuesto.clienteNombre}</span>
+                        {isEditable && <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${showClienteDropdown ? "rotate-180" : ""}`} />}
+                      </div>
                     </div>
                     
-                    {/* Cliente */}
-                    <div className="relative" ref={clienteDropdownRef}>
-                      <span className="text-xs text-slate-400 uppercase tracking-wider">Cliente</span>
-                      {isEditable ? (
-                        <button
-                          onClick={() => setShowClienteDropdown(!showClienteDropdown)}
-                          onMouseEnter={() => setIsHoveringCliente(true)}
-                          onMouseLeave={() => setIsHoveringCliente(false)}
-                          className="flex items-center gap-1.5 text-lg font-semibold text-slate-900 hover:text-blue-600 transition-colors"
-                        >
-                          {presupuesto.clienteNombre}
-                          <ChevronDown className={`w-4 h-4 transition-transform ${showClienteDropdown ? "rotate-180" : ""}`} />
-                        </button>
-                      ) : (
-                        <p className="text-lg font-semibold text-slate-900">{presupuesto.clienteNombre}</p>
-                      )}
-                      
-                      {showClienteDropdown && (
-                        <div className="absolute top-full left-0 mt-2 bg-white border border-slate-200 rounded-lg shadow-lg z-50 w-64">
-                          <div className="p-2 border-b border-slate-100">
+                    {/* Cliente Dropdown */}
+                    {showClienteDropdown && (
+                      <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg w-64">
+                        <div className="p-2 border-b border-slate-100">
+                          <div className="relative">
+                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                             <input
                               type="text"
-                              placeholder="Buscar cliente..."
                               value={clienteSearch}
                               onChange={(e) => setClienteSearch(e.target.value)}
-                              className="w-full px-3 py-1.5 text-sm border border-slate-200 rounded focus:outline-none focus:border-blue-400"
+                              placeholder="Buscar cliente..."
+                              className="w-full pl-8 pr-3 py-1.5 text-sm border border-slate-200 rounded-md focus:outline-none focus:border-blue-400"
+                              autoFocus
                             />
                           </div>
-                          <div className="max-h-48 overflow-y-auto py-1">
-                            {filteredClientes.map((cliente) => (
+                        </div>
+                        <div className="max-h-48 overflow-y-auto py-1">
+                          {/* Consumidor Final - always first */}
+                          <button
+                            onClick={() => handleClienteChange("Consumidor Final")}
+                            className={`w-full text-left px-3 py-2 text-sm hover:bg-slate-50 transition-colors ${
+                              presupuesto.clienteNombre === "Consumidor Final" ? "bg-blue-50 text-blue-700 font-medium" : "text-slate-700"
+                            }`}
+                          >
+                            Consumidor Final
+                          </button>
+                          
+                          {/* Nuevo Cliente option */}
+                          <button
+                            onClick={() => {
+                              setShowClienteDropdown(false)
+                              setShowNuevoClienteModal(true)
+                            }}
+                            className="w-full text-left px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 transition-colors font-medium"
+                          >
+                            + Nuevo cliente
+                          </button>
+                          
+                          {/* Separator */}
+                          <div className="h-px bg-slate-200 my-1" />
+                          
+                          {/* Saved clients (alphabetically sorted, excluding "Consumidor Final") */}
+                          {filteredClientes
+                            .filter(c => c !== "Consumidor Final")
+                            .map((cliente) => (
                               <button
                                 key={cliente}
                                 onClick={() => handleClienteChange(cliente)}
-                                className={`w-full px-3 py-2 text-left text-sm hover:bg-blue-50 transition-colors ${
+                                className={`w-full text-left px-3 py-2 text-sm hover:bg-slate-50 transition-colors ${
                                   presupuesto.clienteNombre === cliente ? "bg-blue-50 text-blue-700 font-medium" : "text-slate-700"
                                 }`}
                               >
                                 {cliente}
                               </button>
                             ))}
-                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="h-10 w-px bg-border/40" />
+                  
+                  {/* Estado */}
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Estado</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${estadoStyle.bg} ${estadoStyle.text}`}>
+                        {estadoLabels[presupuesto.estado]}
+                      </span>
+                      {isEditable && (
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleEstadoChange("aceptado")}
+                            className="p-1 rounded hover:bg-emerald-50 text-emerald-600 transition-colors"
+                            title="Marcar como aceptado"
+                          >
+                            <Check className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleEstadoChange("rechazado")}
+                            className="p-1 rounded hover:bg-red-50 text-red-600 transition-colors"
+                            title="Marcar como rechazado"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
                         </div>
                       )}
                     </div>
-                    
-                    {/* Estado */}
-                    <div>
-                      <span className="text-xs text-slate-400 uppercase tracking-wider">Estado</span>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${estadoStyle.bg}`}>
-                          {presupuesto.estado === "borrador" && <Clock className={`w-3.5 h-3.5 ${estadoStyle.text}`} />}
-                          {presupuesto.estado === "aceptado" && <CheckCircle2 className={`w-3.5 h-3.5 ${estadoStyle.text}`} />}
-                          {presupuesto.estado === "rechazado" && <XCircle className={`w-3.5 h-3.5 ${estadoStyle.text}`} />}
-                          <span className={`text-xs font-medium ${estadoStyle.text}`}>
-                            {estadoLabels[presupuesto.estado]}
-                          </span>
-                        </div>
-                        {isEditable && (
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => handleEstadoChange("aceptado")}
-                              className="p-1 rounded hover:bg-emerald-50 text-emerald-600 transition-colors"
-                              title="Marcar como aceptado"
-                            >
-                              <Check className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleEstadoChange("rechazado")}
-                              className="p-1 rounded hover:bg-red-50 text-red-600 transition-colors"
-                              title="Marcar como rechazado"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
                   </div>
                   
-                  {/* Actions */}
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 text-xs gap-1.5 text-slate-600 hover:text-slate-900"
-                    >
-                      <FileDown className="w-3.5 h-3.5" />
-                      Exportar PDF
-                    </Button>
-                    
-                    {isEditable && (
-                      <button
-                        onClick={() => setShowDeleteConfirmModal(true)}
-                        className="p-2 rounded hover:bg-red-50 text-red-500 transition-colors"
-                        title="Eliminar presupuesto"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
+                  <div className="h-10 w-px bg-border/40" />
+                  
+                  {/* Fecha Creación */}
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Fecha Creación</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      {new Date(presupuesto.fechaCreacion).toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" })}
+                    </span>
                   </div>
+                </div>
+
+                {/* Right: Action buttons */}
+                <div className="flex items-center gap-2">
+                  <button
+                    className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] gap-1.5 shrink-0 px-3 rounded-md flex items-center hover:bg-gray-100 cursor-pointer"
+                  >
+                    <FileDown className="w-3.5 h-3.5 text-slate-500" />
+                    Exportar
+                  </button>
+                  
+                  {isEditable && (
+                    <button
+                      onClick={() => setShowDeleteConfirmModal(true)}
+                      className="p-2 rounded hover:bg-red-50 text-red-500 transition-colors"
+                      title="Eliminar presupuesto"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -1536,6 +1598,13 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
           </div>
         </div>
       )}
+      
+      {/* Nuevo Cliente Modal */}
+      <NuevoClienteModal
+        isOpen={showNuevoClienteModal}
+        onClose={() => setShowNuevoClienteModal(false)}
+        onSave={handleSaveNuevoCliente}
+      />
     </div>
   )
 }

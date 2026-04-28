@@ -16,7 +16,6 @@ import {
   FileText,
   FileDown,
   MoreVertical,
-  ChevronDown,
   CheckCircle2,
   Clock,
   XCircle,
@@ -27,7 +26,6 @@ import { Breadcrumb } from "@/components/layout/breadcrumb"
 import type { EstadoPresupuesto } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { usePresupuestos } from "@/hooks/use-presupuestos"
-import { useClientes } from "@/hooks/use-clientes"
 
 const estadoLabels: Record<EstadoPresupuesto, string> = {
   borrador: "Borrador",
@@ -84,48 +82,20 @@ function PresupuestosContent() {
   const filterRef = useRef<HTMLDivElement>(null)
   const exportRef = useRef<HTMLDivElement>(null)
   
-  const { presupuestos, addPresupuesto, getNextPresupuestoNumber } = usePresupuestos()
-  const { clientes } = useClientes()
+  const { presupuestos, addPresupuesto } = usePresupuestos()
   
-  // Nueva Presupuesto Modal state
-  const [showNuevoPresupuestoModal, setShowNuevoPresupuestoModal] = useState(false)
-  const [nuevoPresupuestoCliente, setNuevoPresupuestoCliente] = useState("")
-  const [clienteDropdownOpen, setClienteDropdownOpen] = useState(false)
-  const clienteInputRef = useRef<HTMLDivElement>(null)
-  
-  // Get unique clientes
-  const uniqueClientes = useMemo(() => {
-    return clientes.map(c => c.nombre).sort()
-  }, [clientes])
-  
-  // Filter clientes based on input
-  const filteredClientes = useMemo(() => {
-    if (!nuevoPresupuestoCliente) return uniqueClientes
-    return uniqueClientes.filter(c => 
-      c.toLowerCase().includes(nuevoPresupuestoCliente.toLowerCase())
-    )
-  }, [nuevoPresupuestoCliente, uniqueClientes])
-  
-  // Generate next presupuesto ID
-  const nextPresupuestoNumber = getNextPresupuestoNumber()
-  const nextPresupuestoId = `PRE-${nextPresupuestoNumber}`
-  
-  // Handle creating new presupuesto
-  const handleCreatePresupuesto = () => {
-    if (!nuevoPresupuestoCliente.trim()) return
-    
+  // Handle creating new presupuesto - direct creation without modal
+  const handleNuevoPresupuesto = () => {
     const newPresupuesto = addPresupuesto({
       fechaCreacion: new Date().toISOString().split("T")[0],
       clienteId: "",
-      clienteNombre: nuevoPresupuestoCliente.trim(),
+      clienteNombre: "Consumidor Final",
       estado: "borrador" as EstadoPresupuesto,
       items: [],
       importeTotal: 0,
     })
     
     router.push(`/ventas/presupuestos/${newPresupuesto.id}`)
-    setShowNuevoPresupuestoModal(false)
-    setNuevoPresupuestoCliente("")
   }
 
   const [activeFilters, setActiveFilters] = useState<FilterConfig>({
@@ -155,12 +125,9 @@ function PresupuestosContent() {
     }
   }, [])
   
-  // Close cliente dropdown when clicking outside
+  // Close export dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (clienteInputRef.current && !clienteInputRef.current.contains(event.target as Node)) {
-        setClienteDropdownOpen(false)
-      }
       if (exportRef.current && !exportRef.current.contains(event.target as Node)) {
         setShowExportDropdown(false)
       }
@@ -291,7 +258,7 @@ function PresupuestosContent() {
                   {/* Left: Nuevo Presupuesto Button + Selection Actions */}
                   <div className="flex items-center gap-3 shrink-0">
                     <Button
-                      onClick={() => setShowNuevoPresupuestoModal(true)}
+                      onClick={handleNuevoPresupuesto}
                       variant="ghost"
                       size="sm"
                       className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer gap-1.5 shrink-0"
@@ -637,117 +604,6 @@ function PresupuestosContent() {
           </main>
         </div>
       </div>
-      
-      {/* Nuevo Presupuesto Modal */}
-      {showNuevoPresupuestoModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100010]">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
-            {/* Header */}
-            <div className="px-6 py-4 border-b border-slate-200 rounded-t-xl">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg font-semibold text-slate-900">Nuevo Presupuesto</h2>
-                  <p className="text-sm text-slate-500 mt-0.5">ID: <span className="font-medium text-blue-600">{nextPresupuestoId}</span></p>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowNuevoPresupuestoModal(false)
-                    setNuevoPresupuestoCliente("")
-                    setClienteDropdownOpen(false)
-                  }}
-                  className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
-                >
-                  <X className="w-5 h-5 text-slate-500" />
-                </button>
-              </div>
-            </div>
-            
-            {/* Content */}
-            <div className="px-6 py-5 min-h-[280px]">
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Cliente</label>
-                  <div className="relative" ref={clienteInputRef}>
-                    <input
-                      type="text"
-                      value={nuevoPresupuestoCliente}
-                      onChange={(e) => {
-                        setNuevoPresupuestoCliente(e.target.value)
-                        setClienteDropdownOpen(true)
-                      }}
-                      onFocus={() => setClienteDropdownOpen(true)}
-                      placeholder="Buscar o escribir cliente..."
-                      className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 text-sm"
-                    />
-                    <button
-                      onClick={() => setClienteDropdownOpen(!clienteDropdownOpen)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-100 rounded"
-                    >
-                      <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${clienteDropdownOpen ? "rotate-180" : ""}`} />
-                    </button>
-                    
-                    {/* Dropdown */}
-                    {clienteDropdownOpen && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto z-10">
-                        {filteredClientes.length > 0 ? (
-                          filteredClientes.map((cliente) => (
-                            <button
-                              key={cliente}
-                              onClick={() => {
-                                setNuevoPresupuestoCliente(cliente)
-                                setClienteDropdownOpen(false)
-                              }}
-                              className={`w-full px-4 py-2 text-left text-sm hover:bg-blue-50 transition-colors ${
-                                nuevoPresupuestoCliente === cliente ? "bg-blue-50 text-blue-700 font-medium" : "text-slate-700"
-                              }`}
-                            >
-                              {cliente}
-                            </button>
-                          ))
-                        ) : (
-                          <div className="px-4 py-3 text-sm text-slate-500">
-                            {nuevoPresupuestoCliente ? (
-                              <span>Crear presupuesto para: <span className="font-medium text-slate-700">&quot;{nuevoPresupuestoCliente}&quot;</span></span>
-                            ) : (
-                              <span>No hay clientes</span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  {nuevoPresupuestoCliente && !uniqueClientes.includes(nuevoPresupuestoCliente) && (
-                    <p className="text-xs text-blue-600 mt-1.5">
-                      Se creará un presupuesto con un nuevo cliente
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-            
-            {/* Footer */}
-            <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3 rounded-b-xl">
-              <button
-                onClick={() => {
-                  setShowNuevoPresupuestoModal(false)
-                  setNuevoPresupuestoCliente("")
-                  setClienteDropdownOpen(false)
-                }}
-                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleCreatePresupuesto}
-                disabled={!nuevoPresupuestoCliente.trim()}
-                className="px-5 py-2 bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Crear Presupuesto
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
