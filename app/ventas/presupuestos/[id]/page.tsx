@@ -37,8 +37,10 @@ import { INITIAL_ITEMS } from "@/lib/data/initial-items"
 import { usePresupuestos } from "@/hooks/use-presupuestos"
 import { useItems } from "@/hooks/use-items"
 import { useClientes } from "@/hooks/use-clientes"
+import { useVentas } from "@/hooks/use-ventas"
 import { NuevoClienteModal } from "@/components/modals/nuevo-cliente-modal"
 import type { Cliente } from "@/lib/data/clientes"
+import jsPDF from "jspdf"
 
 const estadoLabels: Record<EstadoPresupuesto, string> = {
   borrador: "Borrador",
@@ -60,6 +62,12 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
   const { presupuestos, updatePresupuesto, deletePresupuesto } = usePresupuestos()
   const { items: allItems } = useItems()
   const { clientes, addCliente } = useClientes()
+  const { addVenta } = useVentas()
+  
+  // Track mousedown target for selection
+  const mouseDownTargetRef = useRef<EventTarget | null>(null)
+  // Track if persisted state has been loaded (prevents premature overwrite)
+  const isLoadedRef = useRef(false)
   
   // Cliente change state
   const [showClienteDropdown, setShowClienteDropdown] = useState(false)
@@ -110,7 +118,23 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
   const [hasChanges, setHasChanges] = useState(false)
   
   useEffect(() => {
-    if (foundPresupuesto) {
+    if (foundPresupuesto && !isLoadedRef.current) {
+      setPresupuesto(foundPresupuesto)
+      // Restore persisted detail-page state
+      if (foundPresupuesto.itemAjustes) setItemAjustes(foundPresupuesto.itemAjustes)
+      if (foundPresupuesto.itemIvas) setItemIvas(foundPresupuesto.itemIvas)
+      if (foundPresupuesto.globalDiscount) {
+        setGlobalDiscount(foundPresupuesto.globalDiscount)
+        setShowGlobalDiscount(foundPresupuesto.globalDiscount.value > 0)
+      }
+      if (typeof foundPresupuesto.envio === "number") {
+        setEnvioAmount(foundPresupuesto.envio)
+        setShowEnvio(foundPresupuesto.envio > 0)
+      }
+      if (foundPresupuesto.customCharges) setCustomCharges(foundPresupuesto.customCharges)
+      isLoadedRef.current = true
+    } else if (foundPresupuesto) {
+      // Subsequent updates (e.g., from updatePresupuesto on item changes) - just update presupuesto reference
       setPresupuesto(foundPresupuesto)
     }
   }, [foundPresupuesto])
@@ -118,6 +142,19 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
   useEffect(() => {
     localStorage.setItem("presupuesto_show_iva", showIvaColumn.toString())
   }, [showIvaColumn])
+  
+  // Persist itemAjustes, itemIvas, globalDiscount, envio, customCharges to the presupuesto
+  useEffect(() => {
+    if (!presupuesto || !isLoadedRef.current) return
+    updatePresupuesto(presupuesto.id, {
+      itemAjustes,
+      itemIvas,
+      globalDiscount: showGlobalDiscount ? globalDiscount : { value: 0, type: "percent" },
+      envio: showEnvio ? envioAmount : 0,
+      customCharges,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [itemAjustes, itemIvas, globalDiscount, showGlobalDiscount, envioAmount, showEnvio, customCharges])
   
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -669,6 +706,133 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
     deletePresupuesto(presupuesto.id)
     router.push("/ventas/presupuestos")
   }
+  
+  // Export PDF
+  const handleExportPDF = () => {
+    if (!presupuesto) return
+    setShowExportDropdown(false)
+    
+    const doc = new jsPDF()
+    const pageWidth = doc.internal.pageSize.getWidth()
+    
+    doc.setFontSize(20)
+    doc.setFont("helvetica", "bold")
+    doc.text(`Presupuesto PRE-${presupuesto.numero}`, 14, 20)
+    
+    doc.setFontSize(10)
+    doc.setFont("helvetica", "normal")
+    doc.text(`Cliente: ${presupuesto.clienteNombre}`, 14, 35)
+    doc.text(`Fecha: ${new Date(presupuesto.fechaCreacion).toLocaleDateString("es-AR")}`, 14, 42)
+    doc.text(`Estado: ${presupuesto.estado.charAt(0).toUpperCase() + presupuesto.estado.slice(1)}`, 14, 49)
+    
+    let yPos = 65
+    doc.setFillColor(240, 240, 240)
+    doc.rect(14, yPos - 5, pageWidth - 28, 10, "F")
+    doc.setFont("helvetica", "bold")
+    doc.text("Item", 16, yPos)
+    doc.text("Cant.", 100, yPos)
+    doc.text("Precio Unit.", 120, yPos)
+    doc.text("Subtotal", 160, yPos)
+    
+    doc.setFont("helvetica", "normal")
+    yPos += 10
+    
+    presupuesto.items.forEach((item) => {
+      if (yPos > 270) {
+        doc.addPage()
+        yPos = 20
+      }
+      
+      const name = item.name.length > 40 ? item.name.substring(0, 37) + "..." : item.name
+      doc.text(name, 16, yPos)
+      doc.text(String(item.quantity), 100, yPos)
+      doc.text(`$${item.unitPrice.toLocaleString("es-AR")}`, 120, yPos)
+      doc.text(`$${item.total.toLocaleString("es-AR")}`, 160, yPos)
+      yPos += 8
+    })
+    
+    yPos += 10
+    doc.setDrawColor(200, 200, 200)
+    doc.line(14, yPos - 5, pageWidth - 14, yPos - 5)
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(12)
+    doc.text(`Total: $${Math.round(finalTotal).toLocaleString("es-AR")}`, pageWidth - 14, yPos, { align: "right" })
+    
+    doc.save(`PRE-${presupuesto.numero}.pdf`)
+  }
+  
+  // Export Text
+  const handleExportText = () => {
+    if (!presupuesto) return
+    setShowExportDropdown(false)
+    
+    let content = `PRESUPUESTO PRE-${presupuesto.numero}\n`
+    content += `${"=".repeat(40)}\n\n`
+    content += `Cliente: ${presupuesto.clienteNombre}\n`
+    content += `Fecha: ${new Date(presupuesto.fechaCreacion).toLocaleDateString("es-AR")}\n`
+    content += `Estado: ${presupuesto.estado.charAt(0).toUpperCase() + presupuesto.estado.slice(1)}\n\n`
+    content += `ITEMS\n`
+    content += `${"-".repeat(40)}\n`
+    
+    presupuesto.items.forEach((item, idx) => {
+      content += `${idx + 1}. ${item.name}\n`
+      content += `   SKU: ${item.sku || "N/A"}\n`
+      content += `   Cantidad: ${item.quantity}\n`
+      content += `   Precio Unit.: $${item.unitPrice.toLocaleString("es-AR")}\n`
+      content += `   Subtotal: $${item.total.toLocaleString("es-AR")}\n\n`
+    })
+    
+    content += `${"-".repeat(40)}\n`
+    content += `TOTAL: $${Math.round(finalTotal).toLocaleString("es-AR")}\n`
+    
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `PRE-${presupuesto.numero}.txt`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+  
+  // Llevar a ventas - converts presupuesto to aceptado and creates a venta
+  const handleLlevarAVentas = () => {
+    if (!presupuesto || presupuesto.items.length === 0) return
+    
+    const now = new Date()
+    const newVenta = addVenta({
+      fecha: now.toISOString().split("T")[0],
+      hora: now.toTimeString().split(" ")[0].substring(0, 5),
+      clienteId: presupuesto.clienteId,
+      clienteNombre: presupuesto.clienteNombre,
+      items: presupuesto.items.map(item => ({
+        sku: item.sku,
+        name: item.name,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        discount: 0,
+        discountType: "percent" as const,
+        total: item.total,
+        categoria: item.categoria,
+      })),
+      subtotal: rawSubtotal,
+      descuento: showGlobalDiscount ? globalDiscount.value : 0,
+      descuentoTipo: showGlobalDiscount ? (globalDiscount.type === "cash" ? "fixed" : "percent") : "percent",
+      total: finalTotal,
+      metodoPago: "efectivo",
+      estado: "completada",
+      vendedor: "—",
+    })
+    
+    updatePresupuesto(presupuesto.id, { estado: "aceptado", ventaId: newVenta.id })
+    router.push("/ventas/ventas")
+  }
+  
+  // Ver en ventas - just navigate
+  const handleVerEnVentas = () => {
+    router.push("/ventas/ventas")
+  }
 
   const breadcrumbs = [
     { label: "Ventas" },
@@ -926,22 +1090,90 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
 
                 {/* Right: Action buttons */}
                 <div className="flex items-center gap-2">
-                  <button
-                    className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] gap-1.5 shrink-0 px-3 rounded-md flex items-center hover:bg-gray-100 cursor-pointer"
-                  >
-                    <FileDown className="w-3.5 h-3.5 text-slate-500" />
-                    Exportar
-                  </button>
-                  
-                  {isEditable && (
+                  {/* Export dropdown */}
+                  <div className="relative">
                     <button
-                      onClick={() => setShowDeleteConfirmModal(true)}
-                      className="p-2 rounded hover:bg-red-50 text-red-500 transition-colors"
-                      title="Eliminar presupuesto"
+                      onClick={() => setShowExportDropdown(!showExportDropdown)}
+                      disabled={presupuesto.items.length === 0}
+                      className={`h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] gap-1.5 shrink-0 px-3 rounded-md flex items-center ${
+                        presupuesto.items.length === 0
+                          ? "opacity-50 cursor-not-allowed"
+                          : "hover:bg-gray-100 cursor-pointer"
+                      }`}
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <FileDown className="w-3.5 h-3.5 text-slate-500" />
+                      Exportar
+                    </button>
+                    {showExportDropdown && (
+                      <div
+                        className="absolute top-full right-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[140px]"
+                        onMouseLeave={() => setShowExportDropdown(false)}
+                      >
+                        <button
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                          onClick={handleExportPDF}
+                        >
+                          <FileDown className="w-4 h-4 text-slate-400" />
+                          Exportar PDF
+                        </button>
+                        <button
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                          onClick={handleExportText}
+                        >
+                          <FileText className="w-4 h-4 text-slate-400" />
+                          Exportar Texto
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Llevar a ventas / Ver en ventas */}
+                  {presupuesto.estado === "borrador" && (
+                    <button
+                      onClick={handleLlevarAVentas}
+                      disabled={presupuesto.items.length === 0}
+                      className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer gap-1.5 shrink-0 px-3 rounded-md flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Receipt className="w-3.5 h-3.5 text-blue-600" />
+                      Llevar a ventas
                     </button>
                   )}
+                  {presupuesto.estado === "aceptado" && (
+                    <button
+                      onClick={handleVerEnVentas}
+                      className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer gap-1.5 shrink-0 px-3 rounded-md flex items-center"
+                    >
+                      <Eye className="w-3.5 h-3.5 text-slate-500" />
+                      Ver en ventas
+                    </button>
+                  )}
+                  
+                  {/* More Options Menu */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowMoreOptionsMenu(!showMoreOptionsMenu)}
+                      className="h-8 w-8 flex items-center justify-center text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer rounded-md"
+                    >
+                      <MoreVertical className="w-4 h-4 text-slate-500" />
+                    </button>
+                    {showMoreOptionsMenu && (
+                      <div
+                        className="absolute top-full right-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[200px]"
+                        onMouseLeave={() => setShowMoreOptionsMenu(false)}
+                      >
+                        <button
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors text-left"
+                          onClick={() => {
+                            setShowMoreOptionsMenu(false)
+                            setShowDeleteConfirmModal(true)
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Eliminar Presupuesto
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1267,13 +1499,19 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                     return (
                       <div 
                         key={idx} 
-                        className={`border-b border-slate-100 last:border-b-0 cursor-pointer transition-colors ${selectedItemIndices.has(idx) ? "bg-blue-50/50 border-l-2 border-l-blue-400" : "hover:bg-slate-50/50"}`}
+                        className={`border-b border-slate-100 last:border-b-0 transition-colors ${isEditable ? "cursor-pointer" : ""} ${selectedItemIndices.has(idx) ? "bg-blue-50/50 border-l-2 border-l-blue-400" : isEditable ? "hover:bg-slate-50/50" : ""}`}
+                        onMouseDown={(e) => {
+                          mouseDownTargetRef.current = e.target
+                        }}
                         onClick={(e) => {
-                          // Only toggle selection if clicking on the row itself, not on inputs/buttons
+                          // Only allow selection in borrador
+                          if (!isEditable) return
                           const target = e.target as HTMLElement
-                          if (!target.closest('input') && !target.closest('button') && !target.closest('select')) {
-                            toggleItemSelection(idx)
-                          }
+                          // The click must end on a non-interactive element (not input/button/select)
+                          if (target.closest('input') || target.closest('button') || target.closest('select') || target.closest('textarea')) return
+                          // The click must have started on the same target (not a drag from an interactive element)
+                          if (mouseDownTargetRef.current !== e.target) return
+                          toggleItemSelection(idx)
                         }}
                       >
                         {isEditable ? (

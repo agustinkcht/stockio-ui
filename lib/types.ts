@@ -456,4 +456,10 @@ export interface Presupuesto {
   descuentoTipo?: "percent" | "fixed"
   observaciones?: string
   ventaId?: string
+  // Persisted detail-page state
+  itemAjustes?: Record<number, { value: number; type: "percent" | "cash" | "unit" }>
+  itemIvas?: Record<number, number>
+  globalDiscount?: { value: number; type: "cash" | "percent" }
+  envio?: number
+  customCharges?: { id: number; label: string; value: number }[]
 }
