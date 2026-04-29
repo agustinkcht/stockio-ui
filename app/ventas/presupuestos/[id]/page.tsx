@@ -1681,7 +1681,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                       {isEditable && !showGlobalDiscount && (
                         <button
                           onClick={() => setShowGlobalDiscount(true)}
-                          className="text-sm text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
+                          className="block w-full text-left text-sm text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
                         >
                           + Agregar descuento
                         </button>
@@ -1737,7 +1737,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                       {isEditable && !showEnvio && (
                         <button
                           onClick={() => setShowEnvio(true)}
-                          className="text-sm text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
+                          className="block w-full text-left text-sm text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
                         >
                           + Agregar envío
                         </button>
@@ -1825,7 +1825,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                       {isEditable && (
                         <button
                           onClick={() => setCustomCharges(prev => [...prev, { id: Date.now(), label: "Otro", value: 0 }])}
-                          className="text-sm text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
+                          className="block w-full text-left text-sm text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
                         >
                           + Agregar otro
                         </button>
