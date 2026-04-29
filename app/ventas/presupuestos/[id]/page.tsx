@@ -26,6 +26,7 @@ import {
   CheckCircle2,
   XCircle,
   Eye,
+  Pencil,
 } from "lucide-react"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { getCategoryImage } from "@/lib/utils/category-images"
@@ -150,6 +151,12 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
   const [massPrecioType, setMassPrecioType] = useState<"set" | "add" | "subtract" | "addPercent" | "subtractPercent">("set")
   
   const [editingLibreItem, setEditingLibreItem] = useState<{ idx: number; field: "name" | "sku" | "marca" | "categoria"; value: string } | null>(null)
+  
+  // Selection state for bulk actions
+  const [selectedItemIndices, setSelectedItemIndices] = useState<Set<number>>(new Set())
+  
+  // Individual price adjustment modal
+  const [showIndividualPriceModal, setShowIndividualPriceModal] = useState<{ idx: number; value: string; type: "set" | "add" | "subtract" | "addPercent" | "subtractPercent" } | null>(null)
   
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -519,6 +526,64 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
     setHasChanges(true)
   }
   
+  // Selection helpers
+  const toggleItemSelection = (idx: number) => {
+    setSelectedItemIndices(prev => {
+      const next = new Set(prev)
+      if (next.has(idx)) {
+        next.delete(idx)
+      } else {
+        next.add(idx)
+      }
+      return next
+    })
+  }
+  
+  const toggleSelectAll = () => {
+    if (!presupuesto) return
+    if (selectedItemIndices.size === presupuesto.items.length) {
+      setSelectedItemIndices(new Set())
+    } else {
+      setSelectedItemIndices(new Set(presupuesto.items.map((_, i) => i)))
+    }
+  }
+  
+  const isAllSelected = presupuesto && presupuesto.items.length > 0 && selectedItemIndices.size === presupuesto.items.length
+  const isSomeSelected = selectedItemIndices.size > 0 && !isAllSelected
+  
+  // Individual price adjustment
+  const handleApplyIndividualPrice = () => {
+    if (!presupuesto || !showIndividualPriceModal) return
+    const { idx, value, type } = showIndividualPriceModal
+    const numValue = parseFloat(value) || 0
+    if (numValue === 0) return
+    
+    const newItems = [...presupuesto.items]
+    const item = newItems[idx]
+    let newPrice = item.unitPrice
+    
+    if (type === "set") {
+      newPrice = numValue
+    } else if (type === "add") {
+      newPrice = item.unitPrice + numValue
+    } else if (type === "subtract") {
+      newPrice = item.unitPrice - numValue
+    } else if (type === "addPercent") {
+      newPrice = item.unitPrice * (1 + numValue / 100)
+    } else if (type === "subtractPercent") {
+      newPrice = item.unitPrice * (1 - numValue / 100)
+    }
+    
+    newPrice = Math.max(0, Math.round(newPrice))
+    newItems[idx] = { ...item, unitPrice: newPrice, total: item.quantity * newPrice }
+    
+    const newTotal = newItems.reduce((sum, it) => sum + it.total, 0)
+    setPresupuesto({ ...presupuesto, items: newItems, importeTotal: newTotal })
+    updatePresupuesto(presupuesto.id, { items: newItems, importeTotal: newTotal })
+    setHasChanges(true)
+    setShowIndividualPriceModal(null)
+  }
+  
   const handleEstadoChange = (newEstado: EstadoPresupuesto) => {
     if (!presupuesto) return
     setPresupuesto({ ...presupuesto, estado: newEstado })
@@ -830,31 +895,18 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                 {/* Grid Header */}
                 <div className="bg-slate-100 border-b border-slate-200/80 rounded-t-lg">
                   {isEditable ? (
-                    <div className={`grid ${showIvaColumn ? "grid-cols-[auto_0.8fr_2fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr]" : "grid-cols-[auto_0.8fr_2fr_1fr_auto_1.2fr_auto_1.2fr]"} h-9 text-xs font-medium text-slate-500 uppercase tracking-wider`}>
-                      {/* Eye icon for column visibility - shares column with X delete buttons */}
-                      <div className="flex items-center justify-center w-10 relative" data-column-menu>
+                    <div className={`grid ${showIvaColumn ? "grid-cols-[auto_0.8fr_2fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr_auto_auto]" : "grid-cols-[auto_0.8fr_2fr_1fr_auto_1.2fr_auto_1.2fr_auto_auto]"} h-9 text-xs font-medium text-slate-500 uppercase tracking-wider`}>
+                      {/* Select all checkbox */}
+                      <div className="flex items-center justify-center w-10">
                         <button
-                          onClick={() => setShowColumnMenu(!showColumnMenu)}
-                          className="p-1 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                          onClick={toggleSelectAll}
+                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors cursor-pointer ${
+                            isAllSelected ? "bg-blue-500 border-blue-500" : isSomeSelected ? "bg-blue-500/50 border-blue-500" : "border-slate-300 hover:border-slate-400"
+                          }`}
                         >
-                          <Eye className="w-3.5 h-3.5" />
+                          {isAllSelected && <Check className="w-3 h-3 text-white" />}
+                          {isSomeSelected && <Minus className="w-3 h-3 text-white" />}
                         </button>
-                        {showColumnMenu && (
-                          <div className="absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-10 min-w-[140px]">
-                            <label className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-xs text-slate-600 normal-case tracking-normal font-normal">
-                              <input
-                                type="checkbox"
-                                checked={showIvaColumn}
-                                onChange={(e) => {
-                                  setShowIvaColumn(e.target.checked)
-                                  setShowColumnMenu(false)
-                                }}
-                                className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                              />
-                              Mostrar IVA
-                            </label>
-                          </div>
-                        )}
                       </div>
                       
                       {/* Cantidad with mass action */}
@@ -954,7 +1006,36 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                       {/* Arrow between Promoción/IVA and Subtotal */}
                       <div className="flex items-center justify-center w-6 text-slate-300">→</div>
                       
-                      <div className="flex items-center justify-end pr-4">Subtotal</div>
+                      <div className="flex items-center justify-end">Subtotal</div>
+                      
+                      {/* Eye icon for column visibility */}
+                      <div className="flex items-center justify-center w-10 relative" data-column-menu>
+                        <button
+                          onClick={() => setShowColumnMenu(!showColumnMenu)}
+                          className="p-1 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                        </button>
+                        {showColumnMenu && (
+                          <div className="absolute top-full right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-10 min-w-[140px]">
+                            <label className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-xs text-slate-600 normal-case tracking-normal font-normal">
+                              <input
+                                type="checkbox"
+                                checked={showIvaColumn}
+                                onChange={(e) => {
+                                  setShowIvaColumn(e.target.checked)
+                                  setShowColumnMenu(false)
+                                }}
+                                className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                              />
+                              Mostrar IVA
+                            </label>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Empty column for X delete button alignment */}
+                      <div className="w-10" />
                     </div>
                   ) : (
                     <div className={`grid ${showIvaColumn ? "grid-cols-[0.8fr_2.5fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr]" : "grid-cols-[0.8fr_2.5fr_1fr_auto_1.2fr_auto_1.2fr]"} h-9 text-xs font-medium text-slate-500 uppercase tracking-wider`}>
@@ -1020,16 +1101,18 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                     const exceedsStock = !item.isDescripcionLibre && item.quantity > stockDisponible
                     
                     return (
-                      <div key={idx} className="border-b border-slate-100 last:border-b-0">
+                      <div key={idx} className={`border-b border-slate-100 last:border-b-0 ${selectedItemIndices.has(idx) ? "bg-blue-50/30" : ""}`}>
                         {isEditable ? (
-                          <div className={`grid ${showIvaColumn ? "grid-cols-[auto_0.8fr_2fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr]" : "grid-cols-[auto_0.8fr_2fr_1fr_auto_1.2fr_auto_1.2fr]"} min-h-[72px]`}>
-                            {/* Delete button */}
+                          <div className={`grid ${showIvaColumn ? "grid-cols-[auto_0.8fr_2fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr_auto_auto]" : "grid-cols-[auto_0.8fr_2fr_1fr_auto_1.2fr_auto_1.2fr_auto_auto]"} min-h-[72px]`}>
+                            {/* Selection checkbox */}
                             <div className="flex items-center justify-center w-10">
                               <button
-                                onClick={() => handleRemoveItem(idx)}
-                                className="p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors cursor-pointer"
+                                onClick={() => toggleItemSelection(idx)}
+                                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors cursor-pointer ${
+                                  selectedItemIndices.has(idx) ? "bg-blue-500 border-blue-500" : "border-slate-300 hover:border-slate-400"
+                                }`}
                               >
-                                <X className="w-4 h-4" />
+                                {selectedItemIndices.has(idx) && <Check className="w-3 h-3 text-white" />}
                               </button>
                             </div>
                             
@@ -1125,7 +1208,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                             </div>
                             
                             {/* Precio */}
-                            <div className="flex items-center justify-center">
+                            <div className="flex items-center justify-center gap-1">
                               <div className="flex items-center gap-1">
                                 <span className="text-slate-400 text-sm">$</span>
                                 <input
@@ -1137,6 +1220,13 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                   className="w-20 text-center text-sm py-1.5 border border-slate-200 rounded focus:outline-none focus:border-blue-400 placeholder:text-slate-300"
                                 />
                               </div>
+                              <button
+                                onClick={() => setShowIndividualPriceModal({ idx, value: "", type: "set" })}
+                                className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                                title="Ajustar precio"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
                             </div>
                             
                             {/* Arrow */}
@@ -1219,7 +1309,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                             <div className="flex items-center justify-center w-6 text-slate-300">→</div>
                             
                             {/* Subtotal */}
-                            <div className="flex flex-col items-end justify-center pr-4">
+                            <div className="flex flex-col items-end justify-center">
                               {ajuste.value > 0 ? (
                                 // With promoción applied
                                 ajuste.type === "unit" ? (
@@ -1279,6 +1369,19 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                   </span>
                                 </>
                               )}
+                            </div>
+                            
+                            {/* Empty column for Eye alignment */}
+                            <div className="w-10" />
+                            
+                            {/* Delete button */}
+                            <div className="flex items-center justify-center w-10">
+                              <button
+                                onClick={() => handleRemoveItem(idx)}
+                                className="p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors cursor-pointer"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
                             </div>
                           </div>
                         ) : (
@@ -1704,6 +1807,62 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                   Agregar items
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Individual Price Adjustment Modal */}
+      {showIndividualPriceModal && presupuesto && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100010]">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-xs mx-4">
+            <div className="px-5 py-4 border-b border-slate-200">
+              <h3 className="text-sm font-semibold text-slate-900">Ajustar precio</h3>
+              <p className="text-xs text-slate-500 mt-1">
+                {presupuesto.items[showIndividualPriceModal.idx]?.name}
+              </p>
+              <p className="text-xs text-slate-400">
+                Precio actual: ${presupuesto.items[showIndividualPriceModal.idx]?.unitPrice.toLocaleString("es-AR")}
+              </p>
+            </div>
+            <div className="px-5 py-4">
+              <div className="flex flex-col gap-3">
+                <select
+                  value={showIndividualPriceModal.type}
+                  onChange={(e) => setShowIndividualPriceModal({ ...showIndividualPriceModal, type: e.target.value as any })}
+                  className="text-sm px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-400"
+                >
+                  <option value="set">Reemplazar por $</option>
+                  <option value="add">Agregar $</option>
+                  <option value="subtract">Disminuir $</option>
+                  <option value="addPercent">Agregar %</option>
+                  <option value="subtractPercent">Disminuir %</option>
+                </select>
+                <input
+                  type="number"
+                  placeholder={showIndividualPriceModal.type.includes("Percent") ? "%" : "$"}
+                  value={showIndividualPriceModal.value}
+                  onChange={(e) => setShowIndividualPriceModal({ ...showIndividualPriceModal, value: e.target.value })}
+                  className="text-sm px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-400"
+                  min={0}
+                  autoFocus
+                />
+              </div>
+            </div>
+            <div className="px-5 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2 rounded-b-xl">
+              <button
+                onClick={() => setShowIndividualPriceModal(null)}
+                className="px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleApplyIndividualPrice}
+                disabled={!showIndividualPriceModal.value}
+                className="px-4 py-1.5 bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
+              >
+                Aplicar
+              </button>
             </div>
           </div>
         </div>
