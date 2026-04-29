@@ -1667,7 +1667,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                         {/* Item card */}
                         <div className={`flex-1 flex items-center gap-4 px-4 py-3 rounded-lg border transition-colors ${
                           hasQuantity ? "border-blue-200 bg-blue-50/50" : "border-slate-100 hover:bg-slate-50"
-                        }`}
+                        }`}>
                           <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                             <Image
                               src={getCategoryImage(item.categoria || "")}
