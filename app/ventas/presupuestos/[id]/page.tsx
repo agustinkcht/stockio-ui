@@ -128,7 +128,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
   
   const [showAddItemModal, setShowAddItemModal] = useState(false)
   const [showExportDropdown, setShowExportDropdown] = useState(false)
-  const [modalItemQuantities, setModalItemQuantities] = useState<{ [sku: string]: number }>({})
+  const [selectedModalSkus, setSelectedModalSkus] = useState<Set<string>>(new Set())
   const [modalSearch, setModalSearch] = useState("")
   const [modalFilters, setModalFilters] = useState<{
     categoria: string
@@ -323,15 +323,14 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
       if (isParent) {
         for (const variant of item.variants!) {
           const sku = `${item.skuPrefix}-${variant.skuSuffix}`
-          const quantity = modalItemQuantities[sku] || 0
-          if (quantity > 0 && !existingSkus.has(sku)) {
+          if (selectedModalSkus.has(sku) && !existingSkus.has(sku)) {
             const unitPrice = variant.precio?.precioFinal || 0
             newItems.push({
               sku,
               name: variant.name || item.name,
-              quantity,
+              quantity: 1,
               unitPrice,
-              total: quantity * unitPrice,
+              total: unitPrice,
               categoria: variant.categoria || item.categoria,
               marca: variant.marca || item.marca,
               tags: variant.atributosPrincipales?.map(a => a.value),
@@ -340,15 +339,14 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
         }
       } else {
         const sku = item.sku || ""
-        const quantity = modalItemQuantities[sku] || 0
-        if (quantity > 0 && !existingSkus.has(sku)) {
+        if (selectedModalSkus.has(sku) && !existingSkus.has(sku)) {
           const unitPrice = item.precio?.precioFinal || 0
           newItems.push({
             sku,
             name: item.name,
-            quantity,
+            quantity: 1,
             unitPrice,
-            total: quantity * unitPrice,
+            total: unitPrice,
             categoria: item.categoria,
             marca: item.marca,
           })
@@ -365,8 +363,54 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
     }
     
     setShowAddItemModal(false)
-    setModalItemQuantities({})
+    setSelectedModalSkus(new Set())
     setModalSearch("")
+  }
+  
+  // Toggle selection for a single SKU
+  const toggleModalSku = (sku: string) => {
+    setSelectedModalSkus(prev => {
+      const next = new Set(prev)
+      if (next.has(sku)) {
+        next.delete(sku)
+      } else {
+        next.add(sku)
+      }
+      return next
+    })
+  }
+  
+  // Toggle all variants of a parent item
+  const toggleParentSelection = (item: CatalogItem) => {
+    if (!item.variants) return
+    const variantSkus = item.variants.map(v => `${item.skuPrefix}-${v.skuSuffix}`)
+    const allSelected = variantSkus.every(sku => selectedModalSkus.has(sku))
+    
+    setSelectedModalSkus(prev => {
+      const next = new Set(prev)
+      if (allSelected) {
+        // Deselect all
+        variantSkus.forEach(sku => next.delete(sku))
+      } else {
+        // Select all
+        variantSkus.forEach(sku => next.add(sku))
+      }
+      return next
+    })
+  }
+  
+  // Check if all variants of a parent are selected
+  const areAllVariantsSelected = (item: CatalogItem) => {
+    if (!item.variants) return false
+    return item.variants.every(v => selectedModalSkus.has(`${item.skuPrefix}-${v.skuSuffix}`))
+  }
+  
+  // Check if some (but not all) variants are selected
+  const areSomeVariantsSelected = (item: CatalogItem) => {
+    if (!item.variants) return false
+    const variantSkus = item.variants.map(v => `${item.skuPrefix}-${v.skuSuffix}`)
+    const selectedCount = variantSkus.filter(sku => selectedModalSkus.has(sku)).length
+    return selectedCount > 0 && selectedCount < variantSkus.length
   }
   
   const handleAddFreeItem = () => {
@@ -1447,7 +1491,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
               <button
                 onClick={() => {
                   setShowAddItemModal(false)
-                  setSelectedModalItems({})
+                  setSelectedModalSkus(new Set())
                   setModalSearch("")
                 }}
                 className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
@@ -1498,9 +1542,22 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                     const itemId = getItemId(item)
                     
                     if (hasVariants) {
+                      const allSelected = areAllVariantsSelected(item)
+                      const someSelected = areSomeVariantsSelected(item)
+                      
                       return (
                         <div key={itemId} className="border border-slate-100 rounded-lg">
-                          <div className="px-4 py-3 bg-slate-50/50 flex items-center gap-3 rounded-t-lg">
+                          <div 
+                            className="px-4 py-3 bg-slate-50/50 flex items-center gap-3 rounded-t-lg cursor-pointer hover:bg-slate-100/50 transition-colors"
+                            onClick={() => toggleParentSelection(item)}
+                          >
+                            {/* Checkbox */}
+                            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                              allSelected ? "bg-blue-500 border-blue-500" : someSelected ? "bg-blue-500/50 border-blue-500" : "border-slate-300"
+                            }`}>
+                              {allSelected && <Check className="w-3 h-3 text-white" />}
+                              {someSelected && !allSelected && <Minus className="w-3 h-3 text-white" />}
+                            </div>
                             <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                               <Image
                                 src={getCategoryImage(item.categoria || "")}
@@ -1524,16 +1581,21 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                             {item.variants?.map((variant: any, variantIdx: number) => {
                               const variantSku = `${item.skuPrefix}-${variant.skuSuffix}`
                               const stock = parseInt(variant.stock?.disponible || "0")
-                              const quantity = modalItemQuantities[variantSku] || 0
-                              const hasQuantity = quantity > 0
-                              const exceedsStock = quantity > stock
+                              const isSelected = selectedModalSkus.has(variantSku)
                               const isLastChild = variantIdx === (item.variants?.length || 0) - 1
                               
                               return (
                                 <div
                                   key={variantSku}
-                                  className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${isLastChild ? "rounded-bl-lg" : ""} ${hasQuantity ? `bg-blue-50/50 border-l-2 border-l-blue-400 ${isLastChild ? "rounded-bl-lg" : ""}` : "hover:bg-slate-50 border-l-2 border-l-transparent"}`}
+                                  onClick={() => toggleModalSku(variantSku)}
+                                  className={`flex items-center gap-3 ml-6 px-4 py-2.5 cursor-pointer transition-colors ${isLastChild ? "rounded-b-lg" : ""} ${isSelected ? "bg-blue-50/50" : "hover:bg-slate-50"}`}
                                 >
+                                  {/* Checkbox */}
+                                  <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                                    isSelected ? "bg-blue-500 border-blue-500" : "border-slate-300"
+                                  }`}>
+                                    {isSelected && <Check className="w-2.5 h-2.5 text-white" />}
+                                  </div>
                                   <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                                     <Image
                                       src={getCategoryImage(item.categoria || "")}
@@ -1552,7 +1614,6 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                         </span>
                                       ))}
                                     </div>
-                                    <p className="text-xs text-slate-400">sku: {variantSku}</p>
                                   </div>
                                   
                                   <span className="text-sm font-medium text-slate-900 whitespace-nowrap">
@@ -1562,43 +1623,6 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                   <span className="text-sm font-medium text-slate-500 whitespace-nowrap">
                                     {stock} {stock === 1 ? "disponible" : "disponibles"}
                                   </span>
-                                  
-                                  {/* Cantidad controls */}
-                                  <div className="flex flex-col items-end">
-                                    <div className="flex items-center border border-slate-200 rounded-full px-1 py-0.5 bg-white">
-                                      <button
-                                        onClick={() => setModalItemQuantities(prev => ({
-                                          ...prev,
-                                          [variantSku]: Math.max(0, (prev[variantSku] || 0) - 1)
-                                        }))}
-                                        className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors cursor-pointer"
-                                      >
-                                        <Minus className="w-3 h-3" />
-                                      </button>
-                                      <input
-                                        type="number"
-                                        value={quantity || ""}
-                                        placeholder="0"
-                                        onChange={(e) => {
-                                          const val = Math.max(0, parseInt(e.target.value) || 0)
-                                          setModalItemQuantities(prev => ({ ...prev, [variantSku]: val }))
-                                        }}
-                                        className="w-8 text-center text-sm py-1 focus:outline-none placeholder:text-slate-300 bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                      />
-                                      <button
-                                        onClick={() => setModalItemQuantities(prev => ({
-                                          ...prev,
-                                          [variantSku]: (prev[variantSku] || 0) + 1
-                                        }))}
-                                        className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors cursor-pointer"
-                                      >
-                                        <Plus className="w-3 h-3" />
-                                      </button>
-                                    </div>
-                                    {exceedsStock && (
-                                      <span className="text-[10px] text-red-500 mt-0.5">Supera stock disponible</span>
-                                    )}
-                                  </div>
                                 </div>
                               )
                             })}
@@ -1609,17 +1633,22 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                     
                     const sku = item.sku || ""
                     const stock = parseInt(item.stock?.disponible || "0")
-                    const quantity = modalItemQuantities[sku] || 0
-                    const hasQuantity = quantity > 0
-                    const exceedsStock = quantity > stock
+                    const isSelected = selectedModalSkus.has(sku)
                     
                     return (
                       <div
                         key={itemId}
-                        className={`flex items-center gap-4 px-4 py-3 rounded-lg border transition-colors ${
-                          hasQuantity ? "border-blue-200 bg-blue-50/50" : "border-slate-100 hover:bg-slate-50"
+                        onClick={() => toggleModalSku(sku)}
+                        className={`flex items-center gap-4 px-4 py-3 rounded-lg border cursor-pointer transition-colors ${
+                          isSelected ? "border-blue-200 bg-blue-50/50" : "border-slate-100 hover:bg-slate-50"
                         }`}
                       >
+                        {/* Checkbox */}
+                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                          isSelected ? "bg-blue-500 border-blue-500" : "border-slate-300"
+                        }`}>
+                          {isSelected && <Check className="w-3 h-3 text-white" />}
+                        </div>
                         <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                           <Image
                             src={getCategoryImage(item.categoria || "")}
@@ -1634,7 +1663,6 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                           <p className="text-sm font-medium text-slate-900 truncate">{item.name}</p>
                           <p className="text-xs text-slate-400">
                             {item.marca}{item.marca && item.categoria && " · "}{item.categoria}
-                            {(item.marca || item.categoria) && " · "}sku: {item.sku || "Sin SKU"}
                           </p>
                         </div>
                         
@@ -1645,43 +1673,6 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                         <span className="text-sm font-medium text-slate-500 whitespace-nowrap">
                           {stock} {stock === 1 ? "disponible" : "disponibles"}
                         </span>
-                        
-                        {/* Cantidad controls */}
-                        <div className="flex flex-col items-end">
-                          <div className="flex items-center border border-slate-200 rounded-full px-1 py-0.5 bg-white">
-                            <button
-                              onClick={() => setModalItemQuantities(prev => ({
-                                ...prev,
-                                [sku]: Math.max(0, (prev[sku] || 0) - 1)
-                              }))}
-                              className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors cursor-pointer"
-                            >
-                              <Minus className="w-3 h-3" />
-                            </button>
-                            <input
-                              type="number"
-                              value={quantity || ""}
-                              placeholder="0"
-                              onChange={(e) => {
-                                const val = Math.max(0, parseInt(e.target.value) || 0)
-                                setModalItemQuantities(prev => ({ ...prev, [sku]: val }))
-                              }}
-                              className="w-8 text-center text-sm py-1 focus:outline-none placeholder:text-slate-300 bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            />
-                            <button
-                              onClick={() => setModalItemQuantities(prev => ({
-                                ...prev,
-                                [sku]: (prev[sku] || 0) + 1
-                              }))}
-                              className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors cursor-pointer"
-                            >
-                              <Plus className="w-3 h-3" />
-                            </button>
-                          </div>
-                          {exceedsStock && (
-                            <span className="text-[10px] text-red-500 mt-0.5">Supera stock disponible</span>
-                          )}
-                        </div>
                       </div>
                     )
                   })}
@@ -1691,21 +1682,14 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
             
             {/* Footer */}
             <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between bg-slate-50 rounded-b-xl">
-              {(() => {
-                const itemsWithQuantity = Object.entries(modalItemQuantities).filter(([, qty]) => qty > 0)
-                const totalItems = itemsWithQuantity.length
-                const totalUnits = itemsWithQuantity.reduce((sum, [, qty]) => sum + qty, 0)
-                return (
-                  <span className="text-sm text-slate-500">
-                    {totalItems > 0 ? `${totalItems} items (${totalUnits} unidades)` : "Ningún item seleccionado"}
-                  </span>
-                )
-              })()}
+              <span className="text-sm text-slate-500">
+                {selectedModalSkus.size > 0 ? `${selectedModalSkus.size} item${selectedModalSkus.size > 1 ? "s" : ""} seleccionado${selectedModalSkus.size > 1 ? "s" : ""}` : "Ningún item seleccionado"}
+              </span>
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => {
                     setShowAddItemModal(false)
-                    setModalItemQuantities({})
+                    setSelectedModalSkus(new Set())
                     setModalSearch("")
                   }}
                   className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900"
@@ -1714,7 +1698,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                 </button>
                 <button
                   onClick={handleAddSelectedItems}
-                  disabled={Object.values(modalItemQuantities).filter(q => q > 0).length === 0}
+                  disabled={selectedModalSkus.size === 0}
                   className="px-5 py-2 bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Agregar items
