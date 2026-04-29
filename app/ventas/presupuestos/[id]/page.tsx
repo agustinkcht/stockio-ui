@@ -1499,13 +1499,13 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                     
                     if (hasVariants) {
                       return (
-                        <div key={itemId} className="border border-slate-100 rounded-lg">
-                          {/* Parent header - uses same grid for alignment */}
-                          <div className="grid grid-cols-8 gap-2 items-center py-3 bg-slate-50/50 rounded-t-lg">
-                            {/* Empty col 1 - reserved for +/- controls */}
-                            <div className="col-span-1" />
-                            {/* Parent content - cols 2-8 */}
-                            <div className="col-span-7 flex items-center gap-3 pr-4">
+                        <div key={itemId}>
+                          {/* Parent header - flex with placeholder for alignment */}
+                          <div className="flex items-center gap-2 py-2 pl-2">
+                            {/* Empty placeholder - same width as controls */}
+                            <div className="w-[70px] flex-shrink-0" />
+                            {/* Parent card */}
+                            <div className="flex-1 flex items-center gap-3 px-4 py-3 bg-slate-50/50 border border-slate-100 rounded-lg">
                               <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                                 <Image
                                   src={getCategoryImage(item.categoria || "")}
@@ -1526,7 +1526,8 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                               </div>
                             </div>
                           </div>
-                          <div className="divide-y divide-slate-100">
+                          {/* Variants */}
+                          <div>
                             {item.variants?.map((variant: any, variantIdx: number) => {
                               const variantSku = `${item.skuPrefix}-${variant.skuSuffix}`
                               const stock = parseInt(variant.stock?.disponible || "0")
@@ -1538,10 +1539,10 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                               return (
                                 <div
                                   key={variantSku}
-                                  className={`grid grid-cols-8 gap-2 items-center py-2.5 transition-colors ${isLastChild ? "rounded-bl-lg" : ""} ${hasQuantity ? `bg-blue-50/50` : "hover:bg-slate-50"}`}
+                                  className="flex items-center gap-2 py-1 pl-2"
                                 >
-                                  {/* Cantidad controls - col 1 */}
-                                  <div className="col-span-1 flex flex-col items-center justify-center pl-2">
+                                  {/* Cantidad controls - outside the card */}
+                                  <div className="flex flex-col items-center justify-center w-[70px] flex-shrink-0">
                                     <div className="flex items-center border border-slate-200 rounded-full px-1 py-0.5 bg-white">
                                       <button
                                         onClick={() => setModalItemQuantities(prev => ({
@@ -1577,8 +1578,8 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                     )}
                                   </div>
                                   
-                                  {/* Item content - cols 2-8 */}
-                                  <div className="col-span-7 flex items-center gap-3 pr-4">
+                                  {/* Item card - with indent for hierarchy */}
+                                  <div className={`flex-1 flex items-center gap-3 px-3 py-2 ml-2 rounded-md transition-colors ${hasQuantity ? "bg-blue-50/50 border border-blue-200" : "hover:bg-slate-50 border border-transparent"}`}>
                                     <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                                       <Image
                                         src={getCategoryImage(item.categoria || "")}
@@ -1624,12 +1625,10 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                     return (
                       <div
                         key={itemId}
-                        className={`grid grid-cols-8 gap-2 items-center py-3 rounded-lg border transition-colors ${
-                          hasQuantity ? "border-blue-200 bg-blue-50/50" : "border-slate-100 hover:bg-slate-50"
-                        }`}
+                        className="flex items-center gap-2 py-1 pl-2"
                       >
-                        {/* Cantidad controls - col 1 */}
-                        <div className="col-span-1 flex flex-col items-center justify-center pl-2">
+                        {/* Cantidad controls - outside the card */}
+                        <div className="flex flex-col items-center justify-center w-[70px] flex-shrink-0">
                           <div className="flex items-center border border-slate-200 rounded-full px-1 py-0.5 bg-white">
                             <button
                               onClick={() => setModalItemQuantities(prev => ({
@@ -1665,8 +1664,10 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                           )}
                         </div>
                         
-                        {/* Item content - cols 2-8 */}
-                        <div className="col-span-7 flex items-center gap-4 pr-4">
+                        {/* Item card */}
+                        <div className={`flex-1 flex items-center gap-4 px-4 py-3 rounded-lg border transition-colors ${
+                          hasQuantity ? "border-blue-200 bg-blue-50/50" : "border-slate-100 hover:bg-slate-50"
+                        }`}>
                           <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                             <Image
                               src={getCategoryImage(item.categoria || "")}
