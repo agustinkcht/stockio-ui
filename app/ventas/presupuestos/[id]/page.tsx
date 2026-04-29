@@ -1807,16 +1807,11 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                       return (
                         <div key={itemId} className="border border-slate-100 rounded-lg">
                           <div 
-                            className="px-4 py-3 bg-slate-50/50 flex items-center gap-3 rounded-t-lg cursor-pointer hover:bg-slate-100/50 transition-colors"
+                            className={`px-4 py-3 flex items-center gap-3 rounded-t-lg cursor-pointer transition-colors ${
+                              allSelected ? "bg-blue-50/50" : someSelected ? "bg-blue-50/30" : "bg-slate-50/50 hover:bg-slate-100/50"
+                            }`}
                             onClick={() => toggleParentSelection(item)}
                           >
-                            {/* Checkbox */}
-                            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-                              allSelected ? "bg-blue-500 border-blue-500" : someSelected ? "bg-blue-500/50 border-blue-500" : "border-slate-300"
-                            }`}>
-                              {allSelected && <Check className="w-3 h-3 text-white" />}
-                              {someSelected && !allSelected && <Minus className="w-3 h-3 text-white" />}
-                            </div>
                             <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                               <Image
                                 src={getCategoryImage(item.categoria || "")}
@@ -1847,14 +1842,8 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                 <div
                                   key={variantSku}
                                   onClick={() => toggleModalSku(variantSku)}
-                                  className={`flex items-center gap-3 ml-6 px-4 py-2.5 cursor-pointer transition-colors ${isLastChild ? "rounded-b-lg" : ""} ${isSelected ? "bg-blue-50/50" : "hover:bg-slate-50"}`}
+                                  className={`flex items-center gap-3 ml-6 px-4 py-2.5 cursor-pointer transition-colors ${isLastChild ? "rounded-b-lg" : ""} ${isSelected ? "bg-blue-50/50 border-l-2 border-l-blue-400" : "hover:bg-slate-50"}`}
                                 >
-                                  {/* Checkbox */}
-                                  <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-                                    isSelected ? "bg-blue-500 border-blue-500" : "border-slate-300"
-                                  }`}>
-                                    {isSelected && <Check className="w-2.5 h-2.5 text-white" />}
-                                  </div>
                                   <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                                     <Image
                                       src={getCategoryImage(item.categoria || "")}
@@ -1899,15 +1888,9 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                         key={itemId}
                         onClick={() => toggleModalSku(sku)}
                         className={`flex items-center gap-4 px-4 py-3 rounded-lg border cursor-pointer transition-colors ${
-                          isSelected ? "border-blue-200 bg-blue-50/50" : "border-slate-100 hover:bg-slate-50"
+                          isSelected ? "border-blue-200 bg-blue-50/50 border-l-2 border-l-blue-400" : "border-slate-100 hover:bg-slate-50"
                         }`}
                       >
-                        {/* Checkbox */}
-                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-                          isSelected ? "bg-blue-500 border-blue-500" : "border-slate-300"
-                        }`}>
-                          {isSelected && <Check className="w-3 h-3 text-white" />}
-                        </div>
                         <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                           <Image
                             src={getCategoryImage(item.categoria || "")}
