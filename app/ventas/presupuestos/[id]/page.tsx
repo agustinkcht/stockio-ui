@@ -941,54 +941,46 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
 
             {/* Items Grid */}
             <div className="flex-1 overflow-y-auto px-6 pb-6 mt-4">
-              <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm">
-                {/* Secciones flap above grid */}
-                {isEditable && (
-                  <div className="flex items-center justify-between px-2 pt-2">
-                    <div className="relative" data-section-menu>
-                      <button
-                        onClick={() => setShowSectionMenu(!showSectionMenu)}
-                        className="flex items-center gap-1.5 px-2 py-1 text-xs text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded transition-colors"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>Secciones</span>
-                        <ChevronDown className="w-3 h-3" />
-                      </button>
-                      {showSectionMenu && (
-                        <div className="absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-50 min-w-[160px]">
-                          <label className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-xs text-slate-600">
-                            <input
-                              type="checkbox"
-                              checked={showPromocionColumn}
-                              onChange={(e) => setShowPromocionColumn(e.target.checked)}
-                              className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                            />
-                            Promoción
-                          </label>
-                          <label className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-xs text-slate-600">
-                            <input
-                              type="checkbox"
-                              checked={showIvaColumn}
-                              onChange={(e) => setShowIvaColumn(e.target.checked)}
-                              className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                            />
-                            IVA
-                          </label>
-                        </div>
-                      )}
-                    </div>
-                    {/* Bulk delete button when items selected */}
-                    {selectedItemIndices.size > 0 && (
-                      <button
-                        onClick={handleBulkDelete}
-                        className="flex items-center gap-1.5 px-2 py-1 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>Eliminar {selectedItemIndices.size}</span>
-                      </button>
+              {/* Action buttons above grid */}
+              {isEditable && (
+                <div className="flex items-center gap-2 mb-2">
+                  {/* Secciones button */}
+                  <div className="relative" data-section-menu>
+                    <button
+                      onClick={() => setShowSectionMenu(!showSectionMenu)}
+                      className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] gap-1.5 shrink-0 px-3 rounded-md flex items-center hover:bg-gray-100 cursor-pointer"
+                    >
+                      <Eye className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Secciones</span>
+                      <ChevronDown className="w-3 h-3 text-slate-400" />
+                    </button>
+                    {showSectionMenu && (
+                      <div className="absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-50 min-w-[140px]">
+                        <label className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-xs text-slate-600">
+                          <input
+                            type="checkbox"
+                            checked={showIvaColumn}
+                            onChange={(e) => setShowIvaColumn(e.target.checked)}
+                            className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                          />
+                          IVA
+                        </label>
+                      </div>
                     )}
                   </div>
-                )}
+                  {/* Bulk delete button when items selected */}
+                  {selectedItemIndices.size > 0 && (
+                    <button
+                      onClick={handleBulkDelete}
+                      className="h-8 text-xs transition-colors border shadow-sm border-red-200 bg-red-50 gap-1.5 shrink-0 px-3 rounded-md flex items-center hover:bg-red-100 cursor-pointer text-red-600"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Eliminar {selectedItemIndices.size}</span>
+                    </button>
+                  )}
+                </div>
+              )}
+              <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm">
                 {/* Grid Header */}
                 <div className="bg-slate-100 border-b border-slate-200/80 rounded-t-lg">
                   {isEditable ? (
