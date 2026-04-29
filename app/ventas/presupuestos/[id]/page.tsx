@@ -1500,24 +1500,30 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                     if (hasVariants) {
                       return (
                         <div key={itemId} className="border border-slate-100 rounded-lg">
-                          <div className="px-4 py-3 bg-slate-50/50 flex items-center gap-3 rounded-t-lg">
-                            <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-                              <Image
-                                src={getCategoryImage(item.categoria || "")}
-                                alt={item.name}
-                                width={40}
-                                height={40}
-                                className="object-cover"
-                              />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <p className="text-sm font-medium text-slate-900 truncate">{item.name}</p>
-                                <span className="text-xs text-slate-400">{item.variants?.length} variantes</span>
+                          {/* Parent header - uses same grid for alignment */}
+                          <div className="grid grid-cols-8 gap-2 items-center py-3 bg-slate-50/50 rounded-t-lg">
+                            {/* Empty col 1 - reserved for +/- controls */}
+                            <div className="col-span-1" />
+                            {/* Parent content - cols 2-8 */}
+                            <div className="col-span-7 flex items-center gap-3 pr-4">
+                              <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                <Image
+                                  src={getCategoryImage(item.categoria || "")}
+                                  alt={item.name}
+                                  width={40}
+                                  height={40}
+                                  className="object-cover"
+                                />
                               </div>
-                              <p className="text-xs text-slate-400 mt-0.5">
-                                {item.marca}{item.marca && item.categoria && " · "}{item.categoria}
-                              </p>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-medium text-slate-900 truncate">{item.name}</p>
+                                  <span className="text-xs text-slate-400">{item.variants?.length} variantes</span>
+                                </div>
+                                <p className="text-xs text-slate-400 mt-0.5">
+                                  {item.marca}{item.marca && item.categoria && " · "}{item.categoria}
+                                </p>
+                              </div>
                             </div>
                           </div>
                           <div className="divide-y divide-slate-100">
