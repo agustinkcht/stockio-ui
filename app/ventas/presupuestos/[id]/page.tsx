@@ -90,6 +90,10 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
   const [itemIvas, setItemIvas] = useState<{ [idx: number]: number }>({})
   const [globalDiscount, setGlobalDiscount] = useState<{ value: number; type: "cash" | "percent" }>({ value: 0, type: "percent" })
   const [showGlobalDiscount, setShowGlobalDiscount] = useState(false)
+  const [showEnvio, setShowEnvio] = useState(false)
+  const [envioAmount, setEnvioAmount] = useState(0)
+  const [customCharges, setCustomCharges] = useState<{ id: number; label: string; value: number }[]>([])
+  const [editingCustomChargeId, setEditingCustomChargeId] = useState<number | null>(null)
   const [showIvaColumn, setShowIvaColumn] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("presupuesto_show_iva") === "true"
@@ -725,7 +729,10 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
   // Total discount (item-level + global)
   const totalDiscountAmount = itemDiscountAmount + globalDiscountAmount
   
-  const finalTotal = Math.max(0, subtotalWithAjustes - globalDiscountAmount)
+  // Calculate additional charges (envio + custom)
+  const totalAdditionalCharges = (showEnvio ? envioAmount : 0) + customCharges.reduce((sum, c) => sum + c.value, 0)
+  
+  const finalTotal = Math.max(0, subtotalWithAjustes - globalDiscountAmount + totalAdditionalCharges)
 
   return (
     <div className="min-h-screen bg-[rgb(243,242,238)]">
@@ -1658,80 +1665,180 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                   </>
                 )}
                 
-                {/* Totals */}
-                {presupuesto.items.length > 0 && (
-                  <div className="border-t border-slate-200 bg-slate-50/50 rounded-b-lg">
-                    <div className="px-4 py-4 flex justify-end">
-                      <div className="w-80 space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-slate-500">Subtotal</span>
-                          <span className="text-slate-700">${Math.round(rawSubtotal).toLocaleString("es-AR")}</span>
+              </div>
+              
+              {/* Totals Card - Separate from grid */}
+              {presupuesto.items.length > 0 && (
+                <div className="flex justify-end mt-3">
+                  <div className="w-1/2 bg-white border border-slate-200/60 rounded-lg shadow-sm p-4">
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-500">Subtotal</span>
+                        <span className="text-slate-700">${Math.round(rawSubtotal).toLocaleString("es-AR")}</span>
+                      </div>
+                      
+                      {/* Descuento global */}
+                      {isEditable && !showGlobalDiscount && (
+                        <button
+                          onClick={() => setShowGlobalDiscount(true)}
+                          className="text-sm text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
+                        >
+                          + Agregar descuento
+                        </button>
+                      )}
+                      
+                      {isEditable && showGlobalDiscount && (
+                        <div className="flex justify-between items-center text-sm">
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => {
+                                setShowGlobalDiscount(false)
+                                setGlobalDiscount({ value: 0, type: "percent" })
+                              }}
+                              className="p-0.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                            <span className="text-slate-500">Descuento global</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              value={globalDiscount.value || ""}
+                              onChange={(e) => setGlobalDiscount(prev => ({ ...prev, value: parseFloat(e.target.value) || 0 }))}
+                              className="w-16 text-right text-sm px-2 py-1 border border-slate-200 rounded focus:outline-none focus:border-blue-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                            <div className="flex border border-slate-200 rounded overflow-hidden">
+                              <button
+                                onClick={() => setGlobalDiscount(prev => ({ ...prev, type: "cash" }))}
+                                className={`px-2 py-1 text-xs cursor-pointer ${globalDiscount.type === "cash" ? "bg-blue-50 text-blue-600" : "text-slate-400"}`}
+                              >
+                                $
+                              </button>
+                              <button
+                                onClick={() => setGlobalDiscount(prev => ({ ...prev, type: "percent" }))}
+                                className={`px-2 py-1 text-xs cursor-pointer ${globalDiscount.type === "percent" ? "bg-blue-50 text-blue-600" : "text-slate-400"}`}
+                              >
+                                %
+                              </button>
+                            </div>
+                          </div>
                         </div>
-                        
-                        {isEditable && !showGlobalDiscount && (
-                          <button
-                            onClick={() => setShowGlobalDiscount(true)}
-                            className="text-sm text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
-                          >
-                            + Agregar descuento
-                          </button>
-                        )}
-                        
-                        {isEditable && showGlobalDiscount && (
-                          <div className="flex justify-between items-center text-sm">
-                            <div className="flex items-center gap-1">
+                      )}
+                      
+                      {totalDiscountAmount > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-red-500">Descuento</span>
+                          <span className="text-red-500">-${Math.round(totalDiscountAmount).toLocaleString("es-AR")}</span>
+                        </div>
+                      )}
+                      
+                      {/* Envío */}
+                      {isEditable && !showEnvio && (
+                        <button
+                          onClick={() => setShowEnvio(true)}
+                          className="text-sm text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
+                        >
+                          + Agregar envío
+                        </button>
+                      )}
+                      
+                      {showEnvio && (
+                        <div className="flex justify-between items-center text-sm">
+                          <div className="flex items-center gap-1">
+                            {isEditable && (
                               <button
                                 onClick={() => {
-                                  setShowGlobalDiscount(false)
-                                  setGlobalDiscount({ value: 0, type: "percent" })
+                                  setShowEnvio(false)
+                                  setEnvioAmount(0)
                                 }}
                                 className="p-0.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
                               >
                                 <X className="w-3.5 h-3.5" />
                               </button>
-                              <span className="text-slate-500">Descuento global</span>
-                            </div>
-                            <div className="flex items-center gap-2">
+                            )}
+                            <span className="text-slate-500">Envío</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-slate-400 text-sm">$</span>
+                            {isEditable ? (
                               <input
                                 type="number"
-                                value={globalDiscount.value || ""}
-                                onChange={(e) => setGlobalDiscount(prev => ({ ...prev, value: parseFloat(e.target.value) || 0 }))}
-                                className="w-16 text-right text-sm px-2 py-1 border border-slate-200 rounded focus:outline-none focus:border-blue-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                value={envioAmount || ""}
+                                onChange={(e) => setEnvioAmount(parseFloat(e.target.value) || 0)}
+                                className="w-20 text-right text-sm px-2 py-1 border border-slate-200 rounded focus:outline-none focus:border-blue-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               />
-                              <div className="flex border border-slate-200 rounded overflow-hidden">
-                                <button
-                                  onClick={() => setGlobalDiscount(prev => ({ ...prev, type: "cash" }))}
-                                  className={`px-2 py-1 text-xs cursor-pointer ${globalDiscount.type === "cash" ? "bg-blue-50 text-blue-600" : "text-slate-400"}`}
-                                >
-                                  $
-                                </button>
-                                <button
-                                  onClick={() => setGlobalDiscount(prev => ({ ...prev, type: "percent" }))}
-                                  className={`px-2 py-1 text-xs cursor-pointer ${globalDiscount.type === "percent" ? "bg-blue-50 text-blue-600" : "text-slate-400"}`}
-                                >
-                                  %
-                                </button>
-                              </div>
-                            </div>
+                            ) : (
+                              <span className="text-slate-700">{envioAmount.toLocaleString("es-AR")}</span>
+                            )}
                           </div>
-                        )}
-                        
-                        {totalDiscountAmount > 0 && (
-                          <div className="flex justify-between text-sm">
-                            <span className="text-red-500">Descuento</span>
-                            <span className="text-red-500">-${Math.round(totalDiscountAmount).toLocaleString("es-AR")}</span>
-                          </div>
-                        )}
-                        
-                        <div className="flex justify-between text-base font-semibold pt-2 border-t border-slate-200">
-                          <span className="text-slate-700">Total</span>
-                          <span className="text-slate-900">${Math.round(finalTotal).toLocaleString("es-AR")}</span>
                         </div>
+                      )}
+                      
+                      {/* Custom charges */}
+                      {customCharges.map((charge) => (
+                        <div key={charge.id} className="flex justify-between items-center text-sm">
+                          <div className="flex items-center gap-1">
+                            {isEditable && (
+                              <button
+                                onClick={() => setCustomCharges(prev => prev.filter(c => c.id !== charge.id))}
+                                className="p-0.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                            {isEditable && editingCustomChargeId === charge.id ? (
+                              <input
+                                type="text"
+                                value={charge.label}
+                                onChange={(e) => setCustomCharges(prev => prev.map(c => c.id === charge.id ? { ...c, label: e.target.value } : c))}
+                                onBlur={() => setEditingCustomChargeId(null)}
+                                onKeyDown={(e) => e.key === "Enter" && setEditingCustomChargeId(null)}
+                                className="text-sm px-1 py-0.5 border border-slate-200 rounded focus:outline-none focus:border-blue-400 w-24"
+                                autoFocus
+                              />
+                            ) : (
+                              <span 
+                                className={`text-slate-500 ${isEditable ? "cursor-pointer hover:text-slate-700" : ""}`}
+                                onClick={() => isEditable && setEditingCustomChargeId(charge.id)}
+                              >
+                                {charge.label || "Otro"}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-slate-400 text-sm">$</span>
+                            {isEditable ? (
+                              <input
+                                type="number"
+                                value={charge.value || ""}
+                                onChange={(e) => setCustomCharges(prev => prev.map(c => c.id === charge.id ? { ...c, value: parseFloat(e.target.value) || 0 } : c))}
+                                className="w-20 text-right text-sm px-2 py-1 border border-slate-200 rounded focus:outline-none focus:border-blue-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              />
+                            ) : (
+                              <span className="text-slate-700">{charge.value.toLocaleString("es-AR")}</span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {isEditable && (
+                        <button
+                          onClick={() => setCustomCharges(prev => [...prev, { id: Date.now(), label: "Otro", value: 0 }])}
+                          className="text-sm text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
+                        >
+                          + Agregar otro
+                        </button>
+                      )}
+                      
+                      <div className="flex justify-between text-base font-semibold pt-2 border-t border-slate-200">
+                        <span className="text-slate-700">Total</span>
+                        <span className="text-slate-900">${Math.round(finalTotal).toLocaleString("es-AR")}</span>
                       </div>
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </main>
         </div>
