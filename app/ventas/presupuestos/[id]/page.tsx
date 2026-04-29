@@ -146,9 +146,18 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
   // Mass actions
   const [showCantidadMassMenu, setShowCantidadMassMenu] = useState(false)
   const [showPrecioMassMenu, setShowPrecioMassMenu] = useState(false)
+  const [showPromocionMassMenu, setShowPromocionMassMenu] = useState(false)
+  const [showIvaMassMenu, setShowIvaMassMenu] = useState(false)
   const [massCantidadValue, setMassCantidadValue] = useState("")
   const [massPrecioValue, setMassPrecioValue] = useState("")
   const [massPrecioType, setMassPrecioType] = useState<"set" | "add" | "subtract" | "addPercent" | "subtractPercent">("set")
+  const [massPromocionValue, setMassPromocionValue] = useState("")
+  const [massPromocionType, setMassPromocionType] = useState<"percent" | "cash" | "unit">("percent")
+  const [massIvaValue, setMassIvaValue] = useState("")
+  
+  // Column visibility
+  const [showPromocionColumn, setShowPromocionColumn] = useState(true)
+  const [showSectionMenu, setShowSectionMenu] = useState(false)
   
   const [editingLibreItem, setEditingLibreItem] = useState<{ idx: number; field: "name" | "sku" | "marca" | "categoria"; value: string } | null>(null)
   
@@ -164,9 +173,14 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
       if (!target.closest('[data-mass-menu]')) {
         setShowCantidadMassMenu(false)
         setShowPrecioMassMenu(false)
+        setShowPromocionMassMenu(false)
+        setShowIvaMassMenu(false)
+      }
+      if (!target.closest('[data-section-menu]')) {
+        setShowSectionMenu(false)
       }
     }
-    if (showCantidadMassMenu || showPrecioMassMenu) {
+    if (showCantidadMassMenu || showPrecioMassMenu || showPromocionMassMenu || showIvaMassMenu || showSectionMenu) {
       document.addEventListener("mousedown", handleClickOutside)
     }
     return () => document.removeEventListener("mousedown", handleClickOutside)
@@ -493,6 +507,48 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
     setShowPrecioMassMenu(false)
     setMassPrecioValue("")
     setMassPrecioType("set")
+  }
+  
+  const handleApplyMassPromocion = () => {
+    if (!presupuesto) return
+    const value = parseFloat(massPromocionValue) || 0
+    const hasSelection = selectedItemIndices.size > 0
+    
+    const newAjustes = { ...itemAjustes }
+    presupuesto.items.forEach((item, idx) => {
+      if (hasSelection && !selectedItemIndices.has(idx)) return
+      // For unit type, limit to quantity
+      const adjustedValue = massPromocionType === "unit" ? Math.min(value, item.quantity) : value
+      newAjustes[idx] = { type: massPromocionType, value: adjustedValue }
+    })
+    setItemAjustes(newAjustes)
+    setShowPromocionMassMenu(false)
+    setMassPromocionValue("")
+  }
+  
+  const handleApplyMassIva = () => {
+    if (!presupuesto) return
+    const value = parseFloat(massIvaValue) || 0
+    const hasSelection = selectedItemIndices.size > 0
+    
+    const newIva = { ...itemIvas }
+    presupuesto.items.forEach((_, idx) => {
+      if (hasSelection && !selectedItemIndices.has(idx)) return
+      newIva[idx] = value
+    })
+    setItemIvas(newIva)
+    setShowIvaMassMenu(false)
+    setMassIvaValue("")
+  }
+  
+  const handleBulkDelete = () => {
+    if (!presupuesto || selectedItemIndices.size === 0) return
+    const newItems = presupuesto.items.filter((_, idx) => !selectedItemIndices.has(idx))
+    const newTotal = newItems.reduce((sum, it) => sum + it.total, 0)
+    setPresupuesto({ ...presupuesto, items: newItems, importeTotal: newTotal })
+    updatePresupuesto(presupuesto.id, { items: newItems, importeTotal: newTotal })
+    setHasChanges(true)
+    setSelectedItemIndices(new Set())
   }
 
   const handleRemoveItem = (idx: number) => {
@@ -886,10 +942,57 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
             {/* Items Grid */}
             <div className="flex-1 overflow-y-auto px-6 pb-6 mt-4">
               <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm">
+                {/* Secciones flap above grid */}
+                {isEditable && (
+                  <div className="flex items-center justify-between px-2 pt-2">
+                    <div className="relative" data-section-menu>
+                      <button
+                        onClick={() => setShowSectionMenu(!showSectionMenu)}
+                        className="flex items-center gap-1.5 px-2 py-1 text-xs text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded transition-colors"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Secciones</span>
+                        <ChevronDown className="w-3 h-3" />
+                      </button>
+                      {showSectionMenu && (
+                        <div className="absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-50 min-w-[160px]">
+                          <label className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-xs text-slate-600">
+                            <input
+                              type="checkbox"
+                              checked={showPromocionColumn}
+                              onChange={(e) => setShowPromocionColumn(e.target.checked)}
+                              className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                            />
+                            Promoción
+                          </label>
+                          <label className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-xs text-slate-600">
+                            <input
+                              type="checkbox"
+                              checked={showIvaColumn}
+                              onChange={(e) => setShowIvaColumn(e.target.checked)}
+                              className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                            />
+                            IVA
+                          </label>
+                        </div>
+                      )}
+                    </div>
+                    {/* Bulk delete button when items selected */}
+                    {selectedItemIndices.size > 0 && (
+                      <button
+                        onClick={handleBulkDelete}
+                        className="flex items-center gap-1.5 px-2 py-1 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Eliminar {selectedItemIndices.size}</span>
+                      </button>
+                    )}
+                  </div>
+                )}
                 {/* Grid Header */}
                 <div className="bg-slate-100 border-b border-slate-200/80 rounded-t-lg">
                   {isEditable ? (
-                    <div className={`grid ${showIvaColumn ? "grid-cols-[0.8fr_2fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr_auto_auto]" : "grid-cols-[0.8fr_2fr_1fr_auto_1.2fr_auto_1.2fr_auto_auto]"} h-9 text-xs font-medium text-slate-500 uppercase tracking-wider`}>
+                    <div className={`grid ${showIvaColumn && showPromocionColumn ? "grid-cols-[0.8fr_2fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr_auto]" : showPromocionColumn ? "grid-cols-[0.8fr_2fr_1fr_auto_1.2fr_auto_1.2fr_auto]" : showIvaColumn ? "grid-cols-[0.8fr_2fr_1fr_auto_0.8fr_auto_1.2fr_auto]" : "grid-cols-[0.8fr_2fr_1fr_auto_1.2fr_auto]"} h-9 text-xs font-medium text-slate-500 uppercase tracking-wider`}>
                       {/* Cantidad with mass action */}
                       <div className="flex items-center justify-center gap-1 relative" data-mass-menu>
                         <span>Cantidad</span>
@@ -975,51 +1078,128 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                         )}
                       </div>
                       
-{/* Arrow between Precio and Promoción */}
+                      {/* Arrow between Precio and Promoción/IVA/Subtotal */}
                       <div className="flex items-center justify-center w-6 text-slate-300">→</div>
-                      <div className="flex items-center justify-center">Promoción</div>
+                      
+                      {showPromocionColumn && (
+                        <>
+                          {/* Promoción with mass action */}
+                          <div className="flex items-center justify-center gap-1 relative" data-mass-menu>
+                            <span>Promoción</span>
+                            <button
+                              onClick={() => { 
+                                setShowPromocionMassMenu(!showPromocionMassMenu)
+                                setShowCantidadMassMenu(false)
+                                setShowPrecioMassMenu(false)
+                                setShowIvaMassMenu(false)
+                              }}
+                              className="p-0.5 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                              <MoreVertical className="w-3.5 h-3.5" />
+                            </button>
+                            {showPromocionMassMenu && (
+                              <div className="absolute top-full right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg p-3 z-50 min-w-[200px]">
+                                <p className="text-[10px] text-slate-500 mb-2 normal-case tracking-normal font-normal">
+                                  Modificar promoción de {selectedItemIndices.size > 0 ? `${selectedItemIndices.size} item${selectedItemIndices.size > 1 ? "s" : ""}` : "todos"}
+                                </p>
+                                <div className="flex flex-col gap-2">
+                                  <div className="flex border border-slate-200 rounded overflow-hidden">
+                                    <button
+                                      onClick={() => setMassPromocionType("percent")}
+                                      className={`flex-1 px-2 py-1.5 text-xs cursor-pointer ${massPromocionType === "percent" ? "bg-blue-50 text-blue-600" : "text-slate-500 hover:bg-slate-50"}`}
+                                    >
+                                      %
+                                    </button>
+                                    <button
+                                      onClick={() => setMassPromocionType("cash")}
+                                      className={`flex-1 px-2 py-1.5 text-xs cursor-pointer ${massPromocionType === "cash" ? "bg-blue-50 text-blue-600" : "text-slate-500 hover:bg-slate-50"}`}
+                                    >
+                                      $
+                                    </button>
+                                    <button
+                                      onClick={() => setMassPromocionType("unit")}
+                                      className={`flex-1 px-2 py-1.5 text-xs cursor-pointer ${massPromocionType === "unit" ? "bg-blue-50 text-blue-600" : "text-slate-500 hover:bg-slate-50"}`}
+                                      title="Unidades"
+                                    >
+                                      U
+                                    </button>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      type="number"
+                                      placeholder={massPromocionType === "percent" ? "%" : massPromocionType === "cash" ? "$" : "Unidades"}
+                                      value={massPromocionValue}
+                                      onChange={(e) => setMassPromocionValue(e.target.value)}
+                                      className="flex-1 text-sm px-2 py-1.5 border border-slate-200 rounded focus:outline-none focus:border-blue-400"
+                                      min={0}
+                                    />
+                                    <button
+                                      onClick={handleApplyMassPromocion}
+                                      className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
+                                    >
+                                      Aplicar
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {showIvaColumn && (
+                            <div className="flex items-center justify-center w-6 text-slate-300">→</div>
+                          )}
+                        </>
+                      )}
                       
                       {showIvaColumn && (
                         <>
-                          {/* Arrow between Promoción and IVA */}
-                          <div className="flex items-center justify-center w-6 text-slate-300">→</div>
-                          
-                          <div className="flex items-center justify-center">IVA Cont.</div>
+                          {/* IVA with mass action */}
+                          <div className="flex items-center justify-center gap-1 relative" data-mass-menu>
+                            <span>IVA Cont.</span>
+                            <button
+                              onClick={() => { 
+                                setShowIvaMassMenu(!showIvaMassMenu)
+                                setShowCantidadMassMenu(false)
+                                setShowPrecioMassMenu(false)
+                                setShowPromocionMassMenu(false)
+                              }}
+                              className="p-0.5 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                              <MoreVertical className="w-3.5 h-3.5" />
+                            </button>
+                            {showIvaMassMenu && (
+                              <div className="absolute top-full right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg p-3 z-50 min-w-[180px]">
+                                <p className="text-[10px] text-slate-500 mb-2 normal-case tracking-normal font-normal">
+                                  Modificar IVA de {selectedItemIndices.size > 0 ? `${selectedItemIndices.size} item${selectedItemIndices.size > 1 ? "s" : ""}` : "todos"}
+                                </p>
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="number"
+                                    placeholder="%"
+                                    value={massIvaValue}
+                                    onChange={(e) => setMassIvaValue(e.target.value)}
+                                    className="flex-1 text-sm px-2 py-1.5 border border-slate-200 rounded focus:outline-none focus:border-blue-400"
+                                    min={0}
+                                  />
+                                  <button
+                                    onClick={handleApplyMassIva}
+                                    className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
+                                  >
+                                    Aplicar
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </>
                       )}
                       
                       {/* Arrow between Promoción/IVA and Subtotal */}
                       <div className="flex items-center justify-center w-6 text-slate-300">→</div>
                       
-                      <div className="flex items-center justify-end">Subtotal</div>
+                      <div className="flex items-center justify-end pr-2">Subtotal</div>
                       
-                      {/* Eye icon for column visibility */}
-                      <div className="flex items-center justify-center w-10 relative" data-column-menu>
-                        <button
-                          onClick={() => setShowColumnMenu(!showColumnMenu)}
-                          className="p-1 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                        </button>
-                        {showColumnMenu && (
-                          <div className="absolute top-full right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-10 min-w-[140px]">
-                            <label className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-xs text-slate-600 normal-case tracking-normal font-normal">
-                              <input
-                                type="checkbox"
-                                checked={showIvaColumn}
-                                onChange={(e) => {
-                                  setShowIvaColumn(e.target.checked)
-                                  setShowColumnMenu(false)
-                                }}
-                                className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                              />
-                              Mostrar IVA
-                            </label>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Empty column for X delete button alignment */}
+                      {/* X delete button column */}
                       <div className="w-10" />
                     </div>
                   ) : (
@@ -1098,7 +1278,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                         }}
                       >
                         {isEditable ? (
-                          <div className={`grid ${showIvaColumn ? "grid-cols-[0.8fr_2fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr_auto_auto]" : "grid-cols-[0.8fr_2fr_1fr_auto_1.2fr_auto_1.2fr_auto_auto]"} min-h-[72px]`}>
+                          <div className={`grid ${showIvaColumn && showPromocionColumn ? "grid-cols-[0.8fr_2fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr_auto]" : showPromocionColumn ? "grid-cols-[0.8fr_2fr_1fr_auto_1.2fr_auto_1.2fr_auto]" : showIvaColumn ? "grid-cols-[0.8fr_2fr_1fr_auto_0.8fr_auto_1.2fr_auto]" : "grid-cols-[0.8fr_2fr_1fr_auto_1.2fr_auto]"} min-h-[72px]`}>
                             {/* Cantidad */}
                             <div className="flex flex-col items-center justify-center">
                               <div className="flex items-center border border-slate-200 rounded-full px-1 py-0.5 bg-white">
@@ -1216,6 +1396,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                             <div className="flex items-center justify-center w-6 text-slate-300">→</div>
                             
                             {/* Promoción */}
+                            {showPromocionColumn && (
                             <div className="flex items-center justify-center gap-1.5">
                               <input
                                 type="number"
@@ -1267,11 +1448,14 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                 </button>
                               </div>
                             </div>
+                            )}
                             
                             {showIvaColumn && (
                               <>
-                                {/* Arrow */}
-                                <div className="flex items-center justify-center w-6 text-slate-300">→</div>
+                                {/* Arrow between Promocion and IVA */}
+                                {showPromocionColumn && (
+                                  <div className="flex items-center justify-center w-6 text-slate-300">→</div>
+                                )}
                                 
                                 {/* IVA Contenido */}
                                 <div className="flex items-center justify-center">
@@ -1353,9 +1537,6 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                 </>
                               )}
                             </div>
-                            
-                            {/* Empty column for Eye alignment */}
-                            <div className="w-10" />
                             
                             {/* Delete button */}
                             <div className="flex items-center justify-center w-10">
