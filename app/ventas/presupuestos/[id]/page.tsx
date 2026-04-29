@@ -1842,7 +1842,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                 <div
                                   key={variantSku}
                                   onClick={() => toggleModalSku(variantSku)}
-                                  className={`flex items-center gap-3 ml-6 px-4 py-2.5 cursor-pointer transition-colors ${isLastChild ? "rounded-b-lg" : ""} ${isSelected ? "bg-blue-50/50 border-l-2 border-l-blue-400" : "hover:bg-slate-50"}`}
+                                  className={`flex items-center gap-3 pl-10 pr-4 py-2.5 cursor-pointer transition-colors ${isLastChild ? "rounded-b-lg" : ""} ${isSelected ? "bg-blue-50/50 border-l-2 border-l-blue-400" : "hover:bg-slate-50"}`}
                                 >
                                   <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                                     <Image
