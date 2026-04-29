@@ -1500,24 +1500,30 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                     if (hasVariants) {
                       return (
                         <div key={itemId} className="border border-slate-100 rounded-lg">
-                          <div className="px-4 py-3 bg-slate-50/50 flex items-center gap-3 rounded-t-lg">
-                            <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-                              <Image
-                                src={getCategoryImage(item.categoria || "")}
-                                alt={item.name}
-                                width={40}
-                                height={40}
-                                className="object-cover"
-                              />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <p className="text-sm font-medium text-slate-900 truncate">{item.name}</p>
-                                <span className="text-xs text-slate-400">{item.variants?.length} variantes</span>
+                          {/* Parent header - uses same grid for alignment */}
+                          <div className="grid grid-cols-8 gap-2 items-center py-3 bg-slate-50/50 rounded-t-lg">
+                            {/* Empty col 1 - reserved for +/- controls */}
+                            <div className="col-span-1" />
+                            {/* Parent content - cols 2-8 */}
+                            <div className="col-span-7 flex items-center gap-3 pr-4">
+                              <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                <Image
+                                  src={getCategoryImage(item.categoria || "")}
+                                  alt={item.name}
+                                  width={40}
+                                  height={40}
+                                  className="object-cover"
+                                />
                               </div>
-                              <p className="text-xs text-slate-400 mt-0.5">
-                                {item.marca}{item.marca && item.categoria && " · "}{item.categoria}
-                              </p>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-medium text-slate-900 truncate">{item.name}</p>
+                                  <span className="text-xs text-slate-400">{item.variants?.length} variantes</span>
+                                </div>
+                                <p className="text-xs text-slate-400 mt-0.5">
+                                  {item.marca}{item.marca && item.categoria && " · "}{item.categoria}
+                                </p>
+                              </div>
                             </div>
                           </div>
                           <div className="divide-y divide-slate-100">
@@ -1532,48 +1538,19 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                               return (
                                 <div
                                   key={variantSku}
-                                  className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${isLastChild ? "rounded-bl-lg" : ""} ${hasQuantity ? `bg-blue-50/50 border-l-2 border-l-blue-400 ${isLastChild ? "rounded-bl-lg" : ""}` : "hover:bg-slate-50 border-l-2 border-l-transparent"}`}
+                                  className={`grid grid-cols-8 gap-2 items-center py-2.5 transition-colors ${isLastChild ? "rounded-bl-lg" : ""} ${hasQuantity ? `bg-blue-50/50` : "hover:bg-slate-50"}`}
                                 >
-                                  <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-                                    <Image
-                                      src={getCategoryImage(item.categoria || "")}
-                                      alt={variant.name || item.name}
-                                      width={32}
-                                      height={32}
-                                      className="object-cover"
-                                    />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2">
-                                      <p className="text-sm text-slate-700 truncate">{variant.name || item.name}</p>
-                                      {variant.atributosPrincipales?.map((attr: any, i: number) => (
-                                        <span key={i} className="text-[10px] px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded whitespace-nowrap">
-                                          {attr.value}
-                                        </span>
-                                      ))}
-                                    </div>
-                                    <p className="text-xs text-slate-400">sku: {variantSku}</p>
-                                  </div>
-                                  
-                                  <span className="text-sm font-medium text-slate-900 whitespace-nowrap">
-                                    ${(variant.precio?.precioFinal || 0).toLocaleString("es-AR")}
-                                  </span>
-                                  
-                                  <span className="text-sm font-medium text-slate-500 whitespace-nowrap">
-                                    {stock} {stock === 1 ? "disponible" : "disponibles"}
-                                  </span>
-                                  
-                                  {/* Cantidad controls */}
-                                  <div className="flex flex-col items-end">
+                                  {/* Cantidad controls - col 1 */}
+                                  <div className="col-span-1 flex flex-col items-center justify-center pl-2">
                                     <div className="flex items-center border border-slate-200 rounded-full px-1 py-0.5 bg-white">
                                       <button
                                         onClick={() => setModalItemQuantities(prev => ({
                                           ...prev,
-                                          [variantSku]: Math.max(0, (prev[variantSku] || 0) - 1)
+                                          [variantSku]: (prev[variantSku] || 0) + 1
                                         }))}
-                                        className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors cursor-pointer"
+                                        className="w-5 h-5 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors cursor-pointer"
                                       >
-                                        <Minus className="w-3 h-3" />
+                                        <Plus className="w-2.5 h-2.5" />
                                       </button>
                                       <input
                                         type="number"
@@ -1583,21 +1560,52 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                           const val = Math.max(0, parseInt(e.target.value) || 0)
                                           setModalItemQuantities(prev => ({ ...prev, [variantSku]: val }))
                                         }}
-                                        className="w-8 text-center text-sm py-1 focus:outline-none placeholder:text-slate-300 bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                        className="w-6 text-center text-xs py-0.5 focus:outline-none placeholder:text-slate-300 bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                       />
                                       <button
                                         onClick={() => setModalItemQuantities(prev => ({
                                           ...prev,
-                                          [variantSku]: (prev[variantSku] || 0) + 1
+                                          [variantSku]: Math.max(0, (prev[variantSku] || 0) - 1)
                                         }))}
-                                        className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors cursor-pointer"
+                                        className="w-5 h-5 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors cursor-pointer"
                                       >
-                                        <Plus className="w-3 h-3" />
+                                        <Minus className="w-2.5 h-2.5" />
                                       </button>
                                     </div>
                                     {exceedsStock && (
-                                      <span className="text-[10px] text-red-500 mt-0.5">Supera stock disponible</span>
+                                      <span className="text-[9px] text-red-500 mt-0.5">Supera stock</span>
                                     )}
+                                  </div>
+                                  
+                                  {/* Item content - cols 2-8 */}
+                                  <div className="col-span-7 flex items-center gap-3 pr-4">
+                                    <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                      <Image
+                                        src={getCategoryImage(item.categoria || "")}
+                                        alt={variant.name || item.name}
+                                        width={32}
+                                        height={32}
+                                        className="object-cover"
+                                      />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2">
+                                        <p className="text-sm text-slate-700 truncate">{variant.name || item.name}</p>
+                                        {variant.atributosPrincipales?.map((attr: any, i: number) => (
+                                          <span key={i} className="text-[10px] px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded whitespace-nowrap">
+                                            {attr.value}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                    
+                                    <span className="text-sm font-medium text-slate-900 whitespace-nowrap">
+                                      ${(variant.precio?.precioFinal || 0).toLocaleString("es-AR")}
+                                    </span>
+                                    
+                                    <span className="text-sm font-medium text-slate-500 whitespace-nowrap">
+                                      {stock} {stock === 1 ? "disponible" : "disponibles"}
+                                    </span>
                                   </div>
                                 </div>
                               )
@@ -1616,47 +1624,21 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                     return (
                       <div
                         key={itemId}
-                        className={`flex items-center gap-4 px-4 py-3 rounded-lg border transition-colors ${
+                        className={`grid grid-cols-8 gap-2 items-center py-3 rounded-lg border transition-colors ${
                           hasQuantity ? "border-blue-200 bg-blue-50/50" : "border-slate-100 hover:bg-slate-50"
                         }`}
                       >
-                        <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-                          <Image
-                            src={getCategoryImage(item.categoria || "")}
-                            alt={item.name}
-                            width={40}
-                            height={40}
-                            className="object-cover"
-                          />
-                        </div>
-                        
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-900 truncate">{item.name}</p>
-                          <p className="text-xs text-slate-400">
-                            {item.marca}{item.marca && item.categoria && " · "}{item.categoria}
-                            {(item.marca || item.categoria) && " · "}sku: {item.sku || "Sin SKU"}
-                          </p>
-                        </div>
-                        
-                        <span className="text-sm font-medium text-slate-900 whitespace-nowrap">
-                          ${(item.precio?.precioFinal || 0).toLocaleString("es-AR")}
-                        </span>
-                        
-                        <span className="text-sm font-medium text-slate-500 whitespace-nowrap">
-                          {stock} {stock === 1 ? "disponible" : "disponibles"}
-                        </span>
-                        
-                        {/* Cantidad controls */}
-                        <div className="flex flex-col items-end">
+                        {/* Cantidad controls - col 1 */}
+                        <div className="col-span-1 flex flex-col items-center justify-center pl-2">
                           <div className="flex items-center border border-slate-200 rounded-full px-1 py-0.5 bg-white">
                             <button
                               onClick={() => setModalItemQuantities(prev => ({
                                 ...prev,
-                                [sku]: Math.max(0, (prev[sku] || 0) - 1)
+                                [sku]: (prev[sku] || 0) + 1
                               }))}
-                              className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors cursor-pointer"
+                              className="w-5 h-5 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors cursor-pointer"
                             >
-                              <Minus className="w-3 h-3" />
+                              <Plus className="w-2.5 h-2.5" />
                             </button>
                             <input
                               type="number"
@@ -1666,21 +1648,49 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                 const val = Math.max(0, parseInt(e.target.value) || 0)
                                 setModalItemQuantities(prev => ({ ...prev, [sku]: val }))
                               }}
-                              className="w-8 text-center text-sm py-1 focus:outline-none placeholder:text-slate-300 bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              className="w-6 text-center text-xs py-0.5 focus:outline-none placeholder:text-slate-300 bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             />
                             <button
                               onClick={() => setModalItemQuantities(prev => ({
                                 ...prev,
-                                [sku]: (prev[sku] || 0) + 1
+                                [sku]: Math.max(0, (prev[sku] || 0) - 1)
                               }))}
-                              className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors cursor-pointer"
+                              className="w-5 h-5 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors cursor-pointer"
                             >
-                              <Plus className="w-3 h-3" />
+                              <Minus className="w-2.5 h-2.5" />
                             </button>
                           </div>
                           {exceedsStock && (
-                            <span className="text-[10px] text-red-500 mt-0.5">Supera stock disponible</span>
+                            <span className="text-[9px] text-red-500 mt-0.5">Supera stock</span>
                           )}
+                        </div>
+                        
+                        {/* Item content - cols 2-8 */}
+                        <div className="col-span-7 flex items-center gap-4 pr-4">
+                          <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                            <Image
+                              src={getCategoryImage(item.categoria || "")}
+                              alt={item.name}
+                              width={40}
+                              height={40}
+                              className="object-cover"
+                            />
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-slate-900 truncate">{item.name}</p>
+                            <p className="text-xs text-slate-400">
+                              {item.marca}{item.marca && item.categoria && " · "}{item.categoria}
+                            </p>
+                          </div>
+                          
+                          <span className="text-sm font-medium text-slate-900 whitespace-nowrap">
+                            ${(item.precio?.precioFinal || 0).toLocaleString("es-AR")}
+                          </span>
+                          
+                          <span className="text-sm font-medium text-slate-500 whitespace-nowrap">
+                            {stock} {stock === 1 ? "disponible" : "disponibles"}
+                          </span>
                         </div>
                       </div>
                     )
