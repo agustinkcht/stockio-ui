@@ -448,15 +448,19 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
     setEditingLibreItem(null)
   }
   
-  // Mass actions
+  // Mass actions - apply to selected items only if any are selected, otherwise all
   const handleApplyMassCantidad = () => {
     if (!presupuesto || !massCantidadValue) return
     const value = parseInt(massCantidadValue) || 0
-    const newItems = presupuesto.items.map(item => ({
-      ...item,
-      quantity: value,
-      total: value * item.unitPrice
-    }))
+    const hasSelection = selectedItemIndices.size > 0
+    const newItems = presupuesto.items.map((item, idx) => {
+      if (hasSelection && !selectedItemIndices.has(idx)) return item
+      return {
+        ...item,
+        quantity: value,
+        total: value * item.unitPrice
+      }
+    })
     const newTotal = newItems.reduce((sum, it) => sum + it.total, 0)
     setPresupuesto({ ...presupuesto, items: newItems, importeTotal: newTotal })
     updatePresupuesto(presupuesto.id, { items: newItems, importeTotal: newTotal })
@@ -468,7 +472,9 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
   const handleApplyMassPrecio = () => {
     if (!presupuesto || !massPrecioValue) return
     const value = parseFloat(massPrecioValue) || 0
-    const newItems = presupuesto.items.map(item => {
+    const hasSelection = selectedItemIndices.size > 0
+    const newItems = presupuesto.items.map((item, idx) => {
+      if (hasSelection && !selectedItemIndices.has(idx)) return item
       let newPrice = item.unitPrice
       switch (massPrecioType) {
         case "set": newPrice = value; break
@@ -538,18 +544,6 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
       return next
     })
   }
-  
-  const toggleSelectAll = () => {
-    if (!presupuesto) return
-    if (selectedItemIndices.size === presupuesto.items.length) {
-      setSelectedItemIndices(new Set())
-    } else {
-      setSelectedItemIndices(new Set(presupuesto.items.map((_, i) => i)))
-    }
-  }
-  
-  const isAllSelected = presupuesto && presupuesto.items.length > 0 && selectedItemIndices.size === presupuesto.items.length
-  const isSomeSelected = selectedItemIndices.size > 0 && !isAllSelected
   
   // Individual price adjustment
   const handleApplyIndividualPrice = () => {
@@ -890,25 +884,12 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
             </div>
 
             {/* Items Grid */}
-            <div className="flex-1 overflow-y-auto px-6 pb-6">
+            <div className="flex-1 overflow-y-auto px-6 pb-6 mt-4">
               <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm">
                 {/* Grid Header */}
                 <div className="bg-slate-100 border-b border-slate-200/80 rounded-t-lg">
                   {isEditable ? (
-                    <div className={`grid ${showIvaColumn ? "grid-cols-[auto_0.8fr_2fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr_auto_auto]" : "grid-cols-[auto_0.8fr_2fr_1fr_auto_1.2fr_auto_1.2fr_auto_auto]"} h-9 text-xs font-medium text-slate-500 uppercase tracking-wider`}>
-                      {/* Select all checkbox */}
-                      <div className="flex items-center justify-center w-10">
-                        <button
-                          onClick={toggleSelectAll}
-                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors cursor-pointer ${
-                            isAllSelected ? "bg-blue-500 border-blue-500" : isSomeSelected ? "bg-blue-500/50 border-blue-500" : "border-slate-300 hover:border-slate-400"
-                          }`}
-                        >
-                          {isAllSelected && <Check className="w-3 h-3 text-white" />}
-                          {isSomeSelected && <Minus className="w-3 h-3 text-white" />}
-                        </button>
-                      </div>
-                      
+                    <div className={`grid ${showIvaColumn ? "grid-cols-[0.8fr_2fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr_auto_auto]" : "grid-cols-[0.8fr_2fr_1fr_auto_1.2fr_auto_1.2fr_auto_auto]"} h-9 text-xs font-medium text-slate-500 uppercase tracking-wider`}>
                       {/* Cantidad with mass action */}
                       <div className="flex items-center justify-center gap-1 relative" data-mass-menu>
                         <span>Cantidad</span>
@@ -920,7 +901,9 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                         </button>
                         {showCantidadMassMenu && (
                           <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg p-3 z-50 min-w-[180px]">
-                            <p className="text-[10px] text-slate-500 mb-2 normal-case tracking-normal font-normal">Aplicar a todos</p>
+                            <p className="text-[10px] text-slate-500 mb-2 normal-case tracking-normal font-normal">
+                              Modificar cantidad de {selectedItemIndices.size > 0 ? `${selectedItemIndices.size} item${selectedItemIndices.size > 1 ? "s" : ""}` : "todos"}
+                            </p>
                             <div className="flex items-center gap-2">
                               <input
                                 type="number"
@@ -955,7 +938,9 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                         </button>
                         {showPrecioMassMenu && (
                           <div className="absolute top-full right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg p-3 z-50 min-w-[220px]">
-                            <p className="text-[10px] text-slate-500 mb-2 normal-case tracking-normal font-normal">Modificar precio de todos</p>
+                            <p className="text-[10px] text-slate-500 mb-2 normal-case tracking-normal font-normal">
+                              Modificar precio de {selectedItemIndices.size > 0 ? `${selectedItemIndices.size} item${selectedItemIndices.size > 1 ? "s" : ""}` : "todos"}
+                            </p>
                             <div className="flex flex-col gap-2">
                               <select
                                 value={massPrecioType}
@@ -1101,21 +1086,19 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                     const exceedsStock = !item.isDescripcionLibre && item.quantity > stockDisponible
                     
                     return (
-                      <div key={idx} className={`border-b border-slate-100 last:border-b-0 ${selectedItemIndices.has(idx) ? "bg-blue-50/30" : ""}`}>
+                      <div 
+                        key={idx} 
+                        className={`border-b border-slate-100 last:border-b-0 cursor-pointer transition-colors ${selectedItemIndices.has(idx) ? "bg-blue-50/50 border-l-2 border-l-blue-400" : "hover:bg-slate-50/50"}`}
+                        onClick={(e) => {
+                          // Only toggle selection if clicking on the row itself, not on inputs/buttons
+                          const target = e.target as HTMLElement
+                          if (!target.closest('input') && !target.closest('button') && !target.closest('select')) {
+                            toggleItemSelection(idx)
+                          }
+                        }}
+                      >
                         {isEditable ? (
-                          <div className={`grid ${showIvaColumn ? "grid-cols-[auto_0.8fr_2fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr_auto_auto]" : "grid-cols-[auto_0.8fr_2fr_1fr_auto_1.2fr_auto_1.2fr_auto_auto]"} min-h-[72px]`}>
-                            {/* Selection checkbox */}
-                            <div className="flex items-center justify-center w-10">
-                              <button
-                                onClick={() => toggleItemSelection(idx)}
-                                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors cursor-pointer ${
-                                  selectedItemIndices.has(idx) ? "bg-blue-500 border-blue-500" : "border-slate-300 hover:border-slate-400"
-                                }`}
-                              >
-                                {selectedItemIndices.has(idx) && <Check className="w-3 h-3 text-white" />}
-                              </button>
-                            </div>
-                            
+                          <div className={`grid ${showIvaColumn ? "grid-cols-[0.8fr_2fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr_auto_auto]" : "grid-cols-[0.8fr_2fr_1fr_auto_1.2fr_auto_1.2fr_auto_auto]"} min-h-[72px]`}>
                             {/* Cantidad */}
                             <div className="flex flex-col items-center justify-center">
                               <div className="flex items-center border border-slate-200 rounded-full px-1 py-0.5 bg-white">
