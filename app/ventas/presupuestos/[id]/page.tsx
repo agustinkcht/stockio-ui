@@ -1223,7 +1223,10 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                 {/* Grid Header */}
                 <div className="bg-slate-100 border-b border-slate-200/80 rounded-t-lg">
                   {isEditable ? (
-                    <div className={`grid ${showIvaColumn && showPromocionColumn ? "grid-cols-[0.8fr_2fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr_auto]" : showPromocionColumn ? "grid-cols-[0.8fr_2fr_1fr_auto_1.2fr_auto_1.2fr_auto]" : showIvaColumn ? "grid-cols-[0.8fr_2fr_1fr_auto_0.8fr_auto_1.2fr_auto]" : "grid-cols-[0.8fr_2fr_1fr_auto_1.2fr_auto]"} h-9 text-xs font-medium text-slate-500 uppercase tracking-wider`}>
+                    <div className={`grid ${showIvaColumn && showPromocionColumn ? "grid-cols-[2fr_0.8fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr_auto]" : showPromocionColumn ? "grid-cols-[2fr_0.8fr_1fr_auto_1.2fr_auto_1.2fr_auto]" : showIvaColumn ? "grid-cols-[2fr_0.8fr_1fr_auto_0.8fr_auto_1.2fr_auto]" : "grid-cols-[2fr_0.8fr_1fr_auto_1.2fr_auto]"} h-9 text-xs font-medium text-slate-500 uppercase tracking-wider`}>
+                      {/* Item */}
+                      <div className="flex items-center px-4">Item</div>
+                      
                       {/* Cantidad with mass action */}
                       <div className="flex items-center justify-center gap-1 relative" data-mass-menu>
                         <span>Cantidad</span>
@@ -1258,8 +1261,6 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                           </div>
                         )}
                       </div>
-                      
-                      <div className="flex items-center px-4">Item</div>
                       
                       {/* Precio with mass action */}
                       <div className="flex items-center justify-center gap-1 relative" data-mass-menu>
@@ -1434,9 +1435,9 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                       <div className="w-10" />
                     </div>
                   ) : (
-                    <div className={`grid ${showIvaColumn ? "grid-cols-[0.8fr_2.5fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr]" : "grid-cols-[0.8fr_2.5fr_1fr_auto_1.2fr_auto_1.2fr]"} h-9 text-xs font-medium text-slate-500 uppercase tracking-wider`}>
-                      <div className="flex items-center justify-center">Cantidad</div>
+                    <div className={`grid ${showIvaColumn ? "grid-cols-[2.5fr_0.8fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr]" : "grid-cols-[2.5fr_0.8fr_1fr_auto_1.2fr_auto_1.2fr]"} h-9 text-xs font-medium text-slate-500 uppercase tracking-wider`}>
                       <div className="flex items-center px-4">Item</div>
+                      <div className="flex items-center justify-center">Cantidad</div>
                       <div className="flex items-center justify-center">Precio Unit.</div>
                       <div className="flex items-center justify-center w-6 text-slate-300">→</div>
                       <div className="flex items-center justify-center">Promoción</div>
@@ -1515,36 +1516,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                         }}
                       >
                         {isEditable ? (
-                          <div className={`grid ${showIvaColumn && showPromocionColumn ? "grid-cols-[0.8fr_2fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr_auto]" : showPromocionColumn ? "grid-cols-[0.8fr_2fr_1fr_auto_1.2fr_auto_1.2fr_auto]" : showIvaColumn ? "grid-cols-[0.8fr_2fr_1fr_auto_0.8fr_auto_1.2fr_auto]" : "grid-cols-[0.8fr_2fr_1fr_auto_1.2fr_auto]"} min-h-[72px]`}>
-                            {/* Cantidad */}
-                            <div className="flex flex-col items-center justify-center">
-                              <div className="flex items-center border border-slate-200 rounded-full px-1 py-0.5 bg-white">
-                                <button
-                                  onClick={() => handleQuantityChange(idx, item.quantity - 1)}
-                                  className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors cursor-pointer"
-                                >
-                                  <Minus className="w-3 h-3" />
-                                </button>
-                                <input
-                                  type="number"
-                                  value={item.quantity || ""}
-                                  placeholder="0"
-                                  onChange={(e) => handleQuantityChange(idx, parseInt(e.target.value) || 0)}
-                                  onFocus={(e) => { if (item.quantity === 0) e.target.value = "" }}
-                                  className="w-10 text-center text-sm py-1 focus:outline-none placeholder:text-slate-300 bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                />
-                                <button
-                                  onClick={() => handleQuantityChange(idx, item.quantity + 1)}
-                                  className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors cursor-pointer"
-                                >
-                                  <Plus className="w-3 h-3" />
-                                </button>
-                              </div>
-                              {exceedsStock && (
-                                <span className="text-[10px] text-red-500 mt-0.5 text-center leading-tight">Supera stock disponible</span>
-                              )}
-                            </div>
-                            
+                          <div className={`grid ${showIvaColumn && showPromocionColumn ? "grid-cols-[2fr_0.8fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr_auto]" : showPromocionColumn ? "grid-cols-[2fr_0.8fr_1fr_auto_1.2fr_auto_1.2fr_auto]" : showIvaColumn ? "grid-cols-[2fr_0.8fr_1fr_auto_0.8fr_auto_1.2fr_auto]" : "grid-cols-[2fr_0.8fr_1fr_auto_1.2fr_auto]"} min-h-[72px]`}>
                             {/* Item Info */}
                             <div className="flex items-center gap-3 px-4 py-3">
                               <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
@@ -1605,6 +1577,35 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                   </div>
                                 )}
                               </div>
+                            </div>
+                            
+                            {/* Cantidad */}
+                            <div className="flex flex-col items-center justify-center">
+                              <div className="flex items-center border border-slate-200 rounded-full px-1 py-0.5 bg-white">
+                                <button
+                                  onClick={() => handleQuantityChange(idx, item.quantity - 1)}
+                                  className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors cursor-pointer"
+                                >
+                                  <Minus className="w-3 h-3" />
+                                </button>
+                                <input
+                                  type="number"
+                                  value={item.quantity || ""}
+                                  placeholder="0"
+                                  onChange={(e) => handleQuantityChange(idx, parseInt(e.target.value) || 0)}
+                                  onFocus={(e) => { if (item.quantity === 0) e.target.value = "" }}
+                                  className="w-10 text-center text-sm py-1 focus:outline-none placeholder:text-slate-300 bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                />
+                                <button
+                                  onClick={() => handleQuantityChange(idx, item.quantity + 1)}
+                                  className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors cursor-pointer"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                </button>
+                              </div>
+                              {exceedsStock && (
+                                <span className="text-[10px] text-red-500 mt-0.5 text-center leading-tight">Supera stock disponible</span>
+                              )}
                             </div>
                             
                             {/* Precio */}
@@ -1786,10 +1787,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                             </div>
                           </div>
                         ) : (
-                          <div className={`grid ${showIvaColumn ? "grid-cols-[0.8fr_2.5fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr]" : "grid-cols-[0.8fr_2.5fr_1fr_auto_1.2fr_auto_1.2fr]"} min-h-[56px]`}>
-                            <div className="flex items-center justify-center">
-                              <span className="text-sm text-slate-700">{item.quantity}</span>
-                            </div>
+                          <div className={`grid ${showIvaColumn ? "grid-cols-[2.5fr_0.8fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr]" : "grid-cols-[2.5fr_0.8fr_1fr_auto_1.2fr_auto_1.2fr]"} min-h-[56px]`}>
                             <div className="flex items-center gap-3 px-4 py-3">
                               <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center overflow-hidden">
                                 <Image
@@ -1804,6 +1802,9 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                                 <p className="text-sm font-medium text-gray-900">{item.name}</p>
                                 <p className="text-xs text-slate-400">sku: {item.sku || "Sin SKU"}</p>
                               </div>
+                            </div>
+                            <div className="flex items-center justify-center">
+                              <span className="text-sm text-slate-700">{item.quantity}</span>
                             </div>
                             <div className="flex items-center justify-center">
                               <span className="text-sm text-slate-700">${item.unitPrice.toLocaleString("es-AR")}</span>
@@ -1910,75 +1911,69 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                 <div className="flex justify-end mt-3">
                   <div className="w-1/2 bg-white border border-slate-200/60 rounded-lg shadow-sm p-4">
                     <div className="space-y-2">
+                      {/* Subtotal */}
                       <div className="flex justify-between text-sm">
                         <span className="text-slate-500">Subtotal</span>
                         <span className="text-slate-700">${Math.round(rawSubtotal).toLocaleString("es-AR")}</span>
                       </div>
                       
-                      {/* Descuento global */}
-                      {isEditable && !showGlobalDiscount && (
-                        <button
-                          onClick={() => setShowGlobalDiscount(true)}
-                          className="block w-full text-left text-sm text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
-                        >
-                          + Agregar descuento
-                        </button>
+                      {/* Promociones (item-level discount amount) */}
+                      {itemDiscountAmount > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-red-500">Promociones</span>
+                          <span className="text-red-500">-${Math.round(itemDiscountAmount).toLocaleString("es-AR")}</span>
+                        </div>
                       )}
                       
-                      {isEditable && showGlobalDiscount && (
+                      {/* Additional items column (Descuento Global, Envío, Otro) */}
+                      {showGlobalDiscount && (
                         <div className="flex justify-between items-center text-sm">
                           <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => {
-                                setShowGlobalDiscount(false)
-                                setGlobalDiscount({ value: 0, type: "percent" })
-                              }}
-                              className="p-0.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
+                            {isEditable && (
+                              <button
+                                onClick={() => {
+                                  setShowGlobalDiscount(false)
+                                  setGlobalDiscount({ value: 0, type: "percent" })
+                                }}
+                                className="p-0.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            )}
                             <span className="text-slate-500">Descuento global</span>
+                            {!isEditable && globalDiscountAmount > 0 && (
+                              <span className="text-xs text-slate-400">
+                                ({globalDiscount.type === "cash" ? `$${globalDiscount.value.toLocaleString("es-AR")}` : `${globalDiscount.value}%`})
+                              </span>
+                            )}
                           </div>
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="number"
-                              value={globalDiscount.value || ""}
-                              onChange={(e) => setGlobalDiscount(prev => ({ ...prev, value: parseFloat(e.target.value) || 0 }))}
-                              className="w-16 text-right text-sm px-2 py-1 border border-slate-200 rounded focus:outline-none focus:border-blue-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            />
-                            <div className="flex border border-slate-200 rounded overflow-hidden">
-                              <button
-                                onClick={() => setGlobalDiscount(prev => ({ ...prev, type: "cash" }))}
-                                className={`px-2 py-1 text-xs cursor-pointer ${globalDiscount.type === "cash" ? "bg-blue-50 text-blue-600" : "text-slate-400"}`}
-                              >
-                                $
-                              </button>
-                              <button
-                                onClick={() => setGlobalDiscount(prev => ({ ...prev, type: "percent" }))}
-                                className={`px-2 py-1 text-xs cursor-pointer ${globalDiscount.type === "percent" ? "bg-blue-50 text-blue-600" : "text-slate-400"}`}
-                              >
-                                %
-                              </button>
+                          {isEditable ? (
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="number"
+                                value={globalDiscount.value || ""}
+                                onChange={(e) => setGlobalDiscount(prev => ({ ...prev, value: parseFloat(e.target.value) || 0 }))}
+                                className="w-16 text-right text-sm px-2 py-1 border border-slate-200 rounded focus:outline-none focus:border-blue-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              />
+                              <div className="flex border border-slate-200 rounded overflow-hidden">
+                                <button
+                                  onClick={() => setGlobalDiscount(prev => ({ ...prev, type: "cash" }))}
+                                  className={`px-2 py-1 text-xs cursor-pointer ${globalDiscount.type === "cash" ? "bg-blue-50 text-blue-600" : "text-slate-400"}`}
+                                >
+                                  $
+                                </button>
+                                <button
+                                  onClick={() => setGlobalDiscount(prev => ({ ...prev, type: "percent" }))}
+                                  className={`px-2 py-1 text-xs cursor-pointer ${globalDiscount.type === "percent" ? "bg-blue-50 text-blue-600" : "text-slate-400"}`}
+                                >
+                                  %
+                                </button>
+                              </div>
                             </div>
-                          </div>
+                          ) : (
+                            <span className="text-red-500">-${Math.round(globalDiscountAmount).toLocaleString("es-AR")}</span>
+                          )}
                         </div>
-                      )}
-                      
-                      {totalDiscountAmount > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-red-500">Descuento</span>
-                          <span className="text-red-500">-${Math.round(totalDiscountAmount).toLocaleString("es-AR")}</span>
-                        </div>
-                      )}
-                      
-                      {/* Envío */}
-                      {isEditable && !showEnvio && (
-                        <button
-                          onClick={() => setShowEnvio(true)}
-                          className="block w-full text-left text-sm text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
-                        >
-                          + Agregar envío
-                        </button>
                       )}
                       
                       {showEnvio && (
@@ -2013,7 +2008,6 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                         </div>
                       )}
                       
-                      {/* Custom charges */}
                       {customCharges.map((charge) => (
                         <div key={charge.id} className="flex justify-between items-center text-sm">
                           <div className="flex items-center gap-1">
@@ -2060,15 +2054,38 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
                         </div>
                       ))}
                       
-                      {isEditable && (
-                        <button
-                          onClick={() => setCustomCharges(prev => [...prev, { id: Date.now(), label: "Otro", value: 0 }])}
-                          className="block w-full text-left text-sm text-blue-600 hover:text-blue-700 hover:underline cursor-pointer"
-                        >
-                          + Agregar otro
-                        </button>
+                      {/* Agregar tags - only the ones not yet added */}
+                      {isEditable && (!showGlobalDiscount || !showEnvio || customCharges.length === 0) && (
+                        <div className="flex items-center gap-2 flex-wrap pt-1">
+                          <span className="text-xs text-slate-400">Agregar:</span>
+                          {!showGlobalDiscount && (
+                            <button
+                              onClick={() => setShowGlobalDiscount(true)}
+                              className="text-xs px-2 py-0.5 rounded-full border border-slate-200 text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 transition-colors cursor-pointer"
+                            >
+                              Descuento Global
+                            </button>
+                          )}
+                          {!showEnvio && (
+                            <button
+                              onClick={() => setShowEnvio(true)}
+                              className="text-xs px-2 py-0.5 rounded-full border border-slate-200 text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 transition-colors cursor-pointer"
+                            >
+                              Envío
+                            </button>
+                          )}
+                          {customCharges.length === 0 && (
+                            <button
+                              onClick={() => setCustomCharges([{ id: Date.now(), label: "Otro", value: 0 }])}
+                              className="text-xs px-2 py-0.5 rounded-full border border-slate-200 text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 transition-colors cursor-pointer"
+                            >
+                              Otro
+                            </button>
+                          )}
+                        </div>
                       )}
                       
+                      {/* Total */}
                       <div className="flex justify-between text-base font-semibold pt-2 border-t border-slate-200">
                         <span className="text-slate-700">Total</span>
                         <span className="text-slate-900">${Math.round(finalTotal).toLocaleString("es-AR")}</span>
