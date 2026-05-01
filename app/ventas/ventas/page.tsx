@@ -20,6 +20,8 @@ import {
   XCircle,
   Receipt,
   ReceiptText,
+  Check,
+  Minus,
 } from "lucide-react"
 import { VENTAS } from "@/lib/data/ventas"
 import type { Venta } from "@/lib/types"
@@ -66,8 +68,11 @@ export default function VentasPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [showSectionMenu])
 
+  const allSelected = selectedVentas.size === VENTAS.length && VENTAS.length > 0
+  const someSelected = selectedVentas.size > 0 && selectedVentas.size < VENTAS.length
+
   const toggleSelectAll = () => {
-    if (selectedVentas.size === VENTAS.length) {
+    if (allSelected) {
       setSelectedVentas(new Set())
     } else {
       setSelectedVentas(new Set(VENTAS.map((v) => v.id)))
@@ -143,7 +148,9 @@ export default function VentasPage() {
                   <div className="flex flex-col">
                     <span className="text-[10px] text-slate-400 uppercase tracking-wider">Estado</span>
                     <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-slate-100 text-slate-400">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                      <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-slate-100 text-slate-400">
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                      </span>
                     </div>
                   </div>
 
@@ -158,7 +165,6 @@ export default function VentasPage() {
 
                 {/* Right: Action buttons */}
                 <div className="flex items-center gap-2">
-                  {/* Export */}
                   <button
                     disabled
                     className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] gap-1.5 shrink-0 px-3 rounded-md flex items-center opacity-50 cursor-not-allowed"
@@ -166,8 +172,6 @@ export default function VentasPage() {
                     <FileDown className="w-3.5 h-3.5 text-slate-500" />
                     Exportar
                   </button>
-
-                  {/* More Options */}
                   <button
                     disabled
                     className="h-8 w-8 flex items-center justify-center text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] rounded-md opacity-50 cursor-not-allowed"
@@ -181,7 +185,7 @@ export default function VentasPage() {
             {/* Items Grid */}
             <div className="flex-1 overflow-y-auto px-6 pb-6 mt-4">
               {/* Secciones + right-side actions */}
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div className="relative" ref={sectionMenuRef}>
                     <button
@@ -226,175 +230,161 @@ export default function VentasPage() {
                 </div>
               </div>
 
-              {/* Grid */}
-              <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm overflow-hidden">
-                {/* Grid Header */}
-                <div className="bg-slate-100 border-b border-slate-200/80">
-                  <div className="grid grid-cols-100 h-9">
-                    {/* Checkbox / select all */}
-                    <div className="col-span-4 flex items-center justify-center border-r border-slate-200/60">
-                      <input
-                        type="checkbox"
-                        checked={selectedVentas.size === VENTAS.length && VENTAS.length > 0}
-                        onChange={toggleSelectAll}
-                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                      />
-                    </div>
-                    {/* ID */}
-                    <div className="col-span-8 flex items-center justify-center border-r border-slate-200/60">
-                      <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">ID</span>
-                    </div>
-                    {/* Estado */}
-                    <div className="col-span-8 flex items-center justify-center border-r border-slate-200/60">
-                      <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Estado</span>
-                    </div>
-                    {/* Cliente */}
-                    <div className="col-span-28 flex items-center justify-center border-r border-slate-200/60">
-                      <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Cliente</span>
-                    </div>
-                    {/* Items */}
-                    <div className="col-span-18 flex items-center justify-center border-r border-slate-200/60">
-                      <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Items</span>
-                    </div>
-                    {/* Facturación */}
-                    <div className="col-span-12 flex items-center justify-center border-r border-slate-200/60">
-                      <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Facturación</span>
-                    </div>
-                    {/* Total */}
-                    <div className="col-span-18 flex items-center justify-center border-r border-slate-200/60">
-                      <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Total</span>
-                    </div>
-                    {/* More */}
-                    <div className="col-span-4 flex items-center justify-center" />
-                  </div>
-                </div>
-
-                {/* Grid Body */}
-                <div>
-                  {VENTAS.map((venta) => {
-                    const estadoStyle = estadoColors[venta.estado]
-                    const EstadoIcon = estadoStyle.icon
-                    const totalItems = venta.items.reduce((sum, it) => sum + it.quantity, 0)
-                    const isSelected = selectedVentas.has(venta.id)
-                    const isFacturada = !!venta.facturaEmitida
-
-                    return (
-                      <div
-                        key={venta.id}
-                        className={`border-b border-slate-200/60 last:border-b-0 transition-colors ${
-                          isSelected ? "bg-blue-50/40" : "hover:bg-slate-50/50"
-                        }`}
+              {/* Floating Tab Header - only select-all */}
+              <div className="mb-2">
+                <div className="grid grid-cols-100 h-9">
+                  <div className="col-span-4 flex items-center justify-center bg-white border border-slate-200/60 rounded-md shadow-sm">
+                    {someSelected ? (
+                      <button
+                        onClick={toggleSelectAll}
+                        className="h-4 w-4 flex items-center justify-center rounded-sm bg-primary border border-primary cursor-pointer"
+                        aria-label="Deseleccionar todo"
                       >
-                        <div className="grid grid-cols-100 min-h-[56px]">
-                          {/* Checkbox */}
-                          <div
-                            className="col-span-4 flex items-center justify-center py-2 border-r border-slate-200/30"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              toggleSelectVenta(venta.id)
-                            }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => {}}
-                              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                            />
-                          </div>
+                        <Minus className="w-3 h-3 text-primary-foreground" />
+                      </button>
+                    ) : allSelected ? (
+                      <button
+                        onClick={toggleSelectAll}
+                        className="h-4 w-4 flex items-center justify-center rounded-sm bg-primary border border-primary cursor-pointer hover:bg-primary/90"
+                        aria-label="Deseleccionar todo"
+                      >
+                        <Check className="w-3 h-3 text-primary-foreground" />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={toggleSelectAll}
+                        className="h-4 w-4 transition-colors cursor-pointer flex items-center justify-center rounded-sm bg-white border border-slate-300 hover:border-muted-foreground"
+                        aria-label="Seleccionar todo"
+                      />
+                    )}
+                  </div>
+                  <div className="col-span-96" />
+                </div>
+              </div>
 
-                          {/* ID */}
-                          <div className="col-span-8 flex flex-col items-center justify-center py-2 border-r border-slate-200/30">
-                            <span className="text-sm font-medium text-slate-900">{venta.id}</span>
-                            <span className="text-xs text-slate-400">{formatDateShort(venta.fecha)}</span>
-                          </div>
+              {/* Floating Rows */}
+              <div className="flex flex-col gap-2">
+                {VENTAS.map((venta) => {
+                  const estadoStyle = estadoColors[venta.estado]
+                  const EstadoIcon = estadoStyle.icon
+                  const totalItems = venta.items.reduce((sum, it) => sum + it.quantity, 0)
+                  const isSelected = selectedVentas.has(venta.id)
+                  const isFacturada = !!venta.facturaEmitida
 
-                          {/* Estado */}
-                          <div className="col-span-8 flex items-center justify-center py-2 border-r border-slate-200/30">
-                            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${estadoStyle.bg}`}>
-                              <EstadoIcon className={`w-3.5 h-3.5 ${estadoStyle.text}`} />
-                              <span className={`text-xs font-medium ${estadoStyle.text}`}>
-                                {estadoLabels[venta.estado]}
-                              </span>
-                            </div>
-                          </div>
+                  return (
+                    <div
+                      key={venta.id}
+                      className={`bg-white border rounded-md shadow-sm transition-colors ${
+                        isSelected
+                          ? "border-blue-300 bg-blue-50/40"
+                          : "border-slate-200/60 hover:border-slate-300"
+                      }`}
+                    >
+                      <div className="grid grid-cols-100 min-h-[56px]">
+                        {/* Checkbox */}
+                        <div
+                          className="col-span-4 flex items-center justify-center py-2"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            toggleSelectVenta(venta.id)
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => {}}
+                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                          />
+                        </div>
 
-                          {/* Cliente */}
-                          <div className="col-span-28 flex items-center px-4 py-2 border-r border-slate-200/30">
-                            <span className="text-sm font-semibold text-slate-800 truncate">
-                              {venta.clienteNombre}
+                        {/* ID */}
+                        <div className="col-span-8 flex flex-col items-center justify-center py-2">
+                          <span className="text-sm font-medium text-slate-900">{venta.id}</span>
+                          <span className="text-xs text-slate-400">{formatDateShort(venta.fecha)}</span>
+                        </div>
+
+                        {/* Estado */}
+                        <div className="col-span-8 flex items-center justify-center py-2">
+                          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${estadoStyle.bg}`}>
+                            <EstadoIcon className={`w-3.5 h-3.5 ${estadoStyle.text}`} />
+                            <span className={`text-xs font-medium ${estadoStyle.text}`}>
+                              {estadoLabels[venta.estado]}
                             </span>
-                          </div>
-
-                          {/* Items */}
-                          <div className="col-span-18 flex items-center justify-center py-2 border-r border-slate-200/30">
-                            <div className="flex items-center gap-1.5">
-                              <Package className="w-3.5 h-3.5 text-slate-400" />
-                              <span className="text-sm text-slate-700">{venta.items.length}</span>
-                            </div>
-                            <span className="text-xs text-slate-400 ml-1">({totalItems} u.)</span>
-                          </div>
-
-                          {/* Facturación */}
-                          <div className="col-span-12 flex items-center justify-center py-2 border-r border-slate-200/30">
-                            <div
-                              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${
-                                isFacturada ? "bg-blue-50" : "bg-slate-100"
-                              }`}
-                            >
-                              {isFacturada ? (
-                                <Receipt className="w-3.5 h-3.5 text-blue-600" />
-                              ) : (
-                                <ReceiptText className="w-3.5 h-3.5 text-slate-500" />
-                              )}
-                              <span
-                                className={`text-xs font-medium ${
-                                  isFacturada ? "text-blue-600" : "text-slate-500"
-                                }`}
-                              >
-                                {isFacturada ? "Facturada" : "Sin facturar"}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Total */}
-                          <div className="col-span-18 flex items-center justify-center py-2 border-r border-slate-200/30">
-                            <span className="text-sm font-semibold text-slate-900">
-                              ${venta.total.toLocaleString("es-AR", { minimumFractionDigits: 0 })}
-                            </span>
-                          </div>
-
-                          {/* More Options */}
-                          <div
-                            className="col-span-4 flex items-center justify-center py-2 relative"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <button
-                              className="p-1.5 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
-                              onClick={() => setOpenMoreMenu(openMoreMenu === venta.id ? null : venta.id)}
-                            >
-                              <MoreVertical className="w-4 h-4" />
-                            </button>
-
-                            {openMoreMenu === venta.id && (
-                              <div
-                                className="absolute top-full right-2 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[160px]"
-                                onMouseLeave={() => setOpenMoreMenu(null)}
-                              >
-                                <button
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
-                                  onClick={() => setOpenMoreMenu(null)}
-                                >
-                                  <FileDown className="w-4 h-4 text-slate-400" />
-                                  Exportar PDF
-                                </button>
-                              </div>
-                            )}
                           </div>
                         </div>
+
+                        {/* Cliente */}
+                        <div className="col-span-28 flex items-center px-4 py-2">
+                          <span className="text-sm font-semibold text-slate-800 truncate">{venta.clienteNombre}</span>
+                        </div>
+
+                        {/* Items */}
+                        <div className="col-span-18 flex items-center justify-center py-2">
+                          <div className="flex items-center gap-1.5">
+                            <Package className="w-3.5 h-3.5 text-slate-400" />
+                            <span className="text-sm text-slate-700">{venta.items.length}</span>
+                          </div>
+                          <span className="text-xs text-slate-400 ml-1">({totalItems} u.)</span>
+                        </div>
+
+                        {/* Facturación */}
+                        <div className="col-span-12 flex items-center justify-center py-2">
+                          <div
+                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${
+                              isFacturada ? "bg-blue-50" : "bg-slate-100"
+                            }`}
+                          >
+                            {isFacturada ? (
+                              <Receipt className="w-3.5 h-3.5 text-blue-600" />
+                            ) : (
+                              <ReceiptText className="w-3.5 h-3.5 text-slate-500" />
+                            )}
+                            <span
+                              className={`text-xs font-medium ${isFacturada ? "text-blue-600" : "text-slate-500"}`}
+                            >
+                              {isFacturada ? "Facturada" : "Sin facturar"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Total */}
+                        <div className="col-span-18 flex items-center justify-center py-2">
+                          <span className="text-sm font-semibold text-slate-900">
+                            ${venta.total.toLocaleString("es-AR", { minimumFractionDigits: 0 })}
+                          </span>
+                        </div>
+
+                        {/* More Options */}
+                        <div
+                          className="col-span-4 flex items-center justify-center py-2 relative"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <button
+                            className="p-1.5 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                            onClick={() => setOpenMoreMenu(openMoreMenu === venta.id ? null : venta.id)}
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </button>
+
+                          {openMoreMenu === venta.id && (
+                            <div
+                              className="absolute top-full right-2 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[160px]"
+                              onMouseLeave={() => setOpenMoreMenu(null)}
+                            >
+                              <button
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                                onClick={() => setOpenMoreMenu(null)}
+                              >
+                                <FileDown className="w-4 h-4 text-slate-400" />
+                                Exportar PDF
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    )
-                  })}
-                </div>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           </main>
