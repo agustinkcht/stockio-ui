@@ -13,7 +13,6 @@ import {
   ListFilter,
   ArrowUpDown,
   LayoutGrid,
-  Package,
   CheckCircle2,
   Clock,
   XCircle,
@@ -24,7 +23,8 @@ import {
   Search,
 } from "lucide-react"
 import { VENTAS } from "@/lib/data/ventas"
-import type { Venta } from "@/lib/types"
+import type { Venta, VentaItem, PaymentMethod } from "@/lib/types"
+import { getCategoryImage } from "@/lib/utils/category-images"
 
 const estadoLabels: Record<Venta["estado"], string> = {
   completada: "Completada",
@@ -38,13 +38,28 @@ const estadoColors: Record<Venta["estado"], { bg: string; text: string; icon: ty
   cancelada: { bg: "bg-red-50", text: "text-red-600", icon: XCircle },
 }
 
-function formatDateShort(dateStr: string): string {
+const monthsAbbr = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
+
+function formatVentaDateTime(dateStr: string, hora: string): string {
   const date = new Date(dateStr)
   const day = date.getDate()
-  const months = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
-  const month = months[date.getMonth()]
-  const year = String(date.getFullYear()).slice(-2)
-  return `${day}/${month}/${year}`
+  const month = monthsAbbr[date.getMonth()]
+  return `${day} ${month} ${hora}`
+}
+
+function getOrigen(metodoPago: PaymentMethod): string {
+  return metodoPago === "posnet" ? "Punto de Venta" : "Manual"
+}
+
+function getPagoPercent(estado: Venta["estado"]): number {
+  if (estado === "completada") return 100
+  if (estado === "pendiente") return 50
+  return 0
+}
+
+function getEntregaPercent(estado: Venta["estado"]): number {
+  if (estado === "completada") return 100
+  return 0
 }
 
 export default function VentasPage() {
@@ -223,7 +238,7 @@ export default function VentasPage() {
                     {someSelected ? (
                       <button
                         onClick={toggleSelectAll}
-                        className="h-4 w-4 flex items-center justify-center bg-primary border border-primary cursor-pointer"
+                        className="h-4 w-4 flex items-center justify-center rounded-sm bg-primary border border-primary cursor-pointer"
                         aria-label="Deseleccionar todo"
                       >
                         <Minus className="w-3 h-3 text-primary-foreground" />
@@ -231,7 +246,7 @@ export default function VentasPage() {
                     ) : allSelected ? (
                       <button
                         onClick={toggleSelectAll}
-                        className="h-4 w-4 flex items-center justify-center bg-primary border border-primary cursor-pointer hover:bg-primary/90"
+                        className="h-4 w-4 flex items-center justify-center rounded-sm bg-primary border border-primary cursor-pointer hover:bg-primary/90"
                         aria-label="Deseleccionar todo"
                       >
                         <Check className="w-3 h-3 text-primary-foreground" />
@@ -239,7 +254,7 @@ export default function VentasPage() {
                     ) : (
                       <button
                         onClick={toggleSelectAll}
-                        className="h-4 w-4 transition-colors cursor-pointer flex items-center justify-center bg-white border border-slate-300 hover:border-muted-foreground"
+                        className="h-4 w-4 transition-colors cursor-pointer flex items-center justify-center rounded-sm bg-white border border-slate-300 hover:border-muted-foreground"
                         aria-label="Seleccionar todo"
                       />
                     )}
@@ -253,9 +268,12 @@ export default function VentasPage() {
                 {VENTAS.map((venta) => {
                   const estadoStyle = estadoColors[venta.estado]
                   const EstadoIcon = estadoStyle.icon
-                  const totalItems = venta.items.reduce((sum, it) => sum + it.quantity, 0)
                   const isSelected = selectedVentas.has(venta.id)
                   const isFacturada = !!venta.facturaEmitida
+                  const isMulti = venta.items.length > 1
+                  const firstItem: VentaItem | undefined = venta.items[0]
+                  const pagoPct = getPagoPercent(venta.estado)
+                  const entregaPct = getEntregaPercent(venta.estado)
 
                   return (
                     <div
@@ -266,10 +284,11 @@ export default function VentasPage() {
                           : "border-slate-200/60 hover:border-slate-300"
                       }`}
                     >
-                      <div className="grid grid-cols-100 min-h-[56px]">
-                        {/* Checkbox */}
+                      {/* TOP ROW */}
+                      <div className="grid grid-cols-100 min-h-[44px] pt-2">
+                        {/* Selector + vertical line */}
                         <div
-                          className="col-span-4 flex items-center justify-center py-2"
+                          className="col-span-4 flex items-center justify-center border-r border-slate-200/70"
                           onClick={(e) => {
                             e.stopPropagation()
                             toggleSelectVenta(venta.id)
@@ -279,75 +298,44 @@ export default function VentasPage() {
                             type="checkbox"
                             checked={isSelected}
                             onChange={() => {}}
-                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                            className="w-4 h-4 rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                           />
                         </div>
 
                         {/* ID */}
-                        <div className="col-span-8 flex flex-col items-center justify-center py-2">
-                          <span className="text-sm font-medium text-slate-900">{venta.id}</span>
-                          <span className="text-xs text-slate-400">{formatDateShort(venta.fecha)}</span>
+                        <div className="col-span-16 flex items-center justify-center px-2">
+                          <span className="text-sm font-semibold text-slate-900 truncate">{venta.id}</span>
                         </div>
 
-                        {/* Estado */}
-                        <div className="col-span-8 flex items-center justify-center py-2">
-                          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${estadoStyle.bg}`}>
-                            <EstadoIcon className={`w-3.5 h-3.5 ${estadoStyle.text}`} />
-                            <span className={`text-xs font-medium ${estadoStyle.text}`}>
-                              {estadoLabels[venta.estado]}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Cliente */}
-                        <div className="col-span-28 flex items-center px-4 py-2">
-                          <span className="text-sm font-semibold text-slate-800 truncate">{venta.clienteNombre}</span>
-                        </div>
-
-                        {/* Items */}
-                        <div className="col-span-18 flex items-center justify-center py-2">
-                          <div className="flex items-center gap-1.5">
-                            <Package className="w-3.5 h-3.5 text-slate-400" />
-                            <span className="text-sm text-slate-700">{venta.items.length}</span>
-                          </div>
-                          <span className="text-xs text-slate-400 ml-1">({totalItems} u.)</span>
-                        </div>
-
-                        {/* Facturación */}
-                        <div className="col-span-12 flex items-center justify-center py-2">
-                          <div
-                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${
-                              isFacturada ? "bg-blue-50" : "bg-slate-100"
-                            }`}
-                          >
-                            {isFacturada ? (
-                              <Receipt className="w-3.5 h-3.5 text-blue-600" />
-                            ) : (
-                              <ReceiptText className="w-3.5 h-3.5 text-slate-500" />
-                            )}
-                            <span
-                              className={`text-xs font-medium ${isFacturada ? "text-blue-600" : "text-slate-500"}`}
-                            >
-                              {isFacturada ? "Facturada" : "Sin facturar"}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Total */}
-                        <div className="col-span-18 flex items-center justify-center py-2">
-                          <span className="text-sm font-semibold text-slate-900">
-                            ${venta.total.toLocaleString("es-AR", { minimumFractionDigits: 0 })}
+                        {/* Fecha */}
+                        <div className="col-span-16 flex items-center justify-center px-2">
+                          <span className="text-xs text-slate-600 truncate">
+                            {formatVentaDateTime(venta.fecha, venta.hora)}
                           </span>
                         </div>
 
-                        {/* More Options */}
+                        {/* Origen */}
+                        <div className="col-span-16 flex items-center justify-center px-2">
+                          <span className="text-xs text-slate-600 truncate">{getOrigen(venta.metodoPago)}</span>
+                        </div>
+
+                        {/* Empty 20 */}
+                        <div className="col-span-20" />
+
+                        {/* Cliente */}
+                        <div className="col-span-24 flex items-center px-3">
+                          <span className="text-sm font-semibold text-slate-800 truncate">{venta.clienteNombre}</span>
+                        </div>
+
+                        {/* More options + vertical line on its left */}
                         <div
-                          className="col-span-4 flex items-center justify-center py-2 relative"
+                          className="col-span-4 flex items-center justify-center border-l border-slate-200/70 relative"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <button
                             className="p-1.5 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
                             onClick={() => setOpenMoreMenu(openMoreMenu === venta.id ? null : venta.id)}
+                            aria-label="Más opciones"
                           >
                             <MoreVertical className="w-4 h-4" />
                           </button>
@@ -367,6 +355,115 @@ export default function VentasPage() {
                             </div>
                           )}
                         </div>
+                      </div>
+
+                      {/* MIDDLE ROW */}
+                      <div className="grid grid-cols-100 min-h-[40px]">
+                        {/* Empty 4 (selector harmony) */}
+                        <div className="col-span-4" />
+
+                        {/* Estado */}
+                        <div className="col-span-16 flex items-center justify-center px-2">
+                          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${estadoStyle.bg}`}>
+                            <EstadoIcon className={`w-3.5 h-3.5 ${estadoStyle.text}`} />
+                            <span className={`text-xs font-medium ${estadoStyle.text}`}>
+                              {estadoLabels[venta.estado]}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Pago % */}
+                        <div className="col-span-16 flex items-center justify-center px-2">
+                          <span className="text-xs text-slate-600">Pago {pagoPct}%</span>
+                        </div>
+
+                        {/* Entrega % */}
+                        <div className="col-span-16 flex items-center justify-center px-2">
+                          <span className="text-xs text-slate-600">Entrega {entregaPct}%</span>
+                        </div>
+
+                        {/* Empty 20 */}
+                        <div className="col-span-20" />
+
+                        {/* Facturación */}
+                        <div className="col-span-24 flex items-center px-3">
+                          <div
+                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${
+                              isFacturada ? "bg-blue-50" : "bg-slate-100"
+                            }`}
+                          >
+                            {isFacturada ? (
+                              <Receipt className="w-3.5 h-3.5 text-blue-600" />
+                            ) : (
+                              <ReceiptText className="w-3.5 h-3.5 text-slate-500" />
+                            )}
+                            <span
+                              className={`text-xs font-medium ${isFacturada ? "text-blue-600" : "text-slate-500"}`}
+                            >
+                              {isFacturada ? "Facturada" : "Sin facturar"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Empty 4 (more options harmony) */}
+                        <div className="col-span-4" />
+                      </div>
+
+                      {/* BOTTOM ROW - product(s) inset */}
+                      <div className="grid grid-cols-100 pt-2 pb-2">
+                        {/* Outside left padding */}
+                        <div className="col-span-4" />
+
+                        {/* Item content (48 cols) - rounded-l */}
+                        <div className="col-span-48 bg-slate-50 rounded-l-md py-2.5 pl-3 pr-2 flex items-center gap-3">
+                          {isMulti ? (
+                            <>
+                              <div className="flex items-center -space-x-2 shrink-0">
+                                {venta.items.slice(0, 3).map((it, idx) => (
+                                  <div
+                                    key={`${venta.id}-thumb-${idx}`}
+                                    className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden shadow-sm"
+                                    style={{ zIndex: 10 - idx }}
+                                  >
+                                    <img
+                                      src={getCategoryImage(it.categoria) || "/placeholder.svg"}
+                                      alt={it.categoria || "Producto"}
+                                      className="w-5 h-5 object-contain opacity-70"
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                              <span className="text-sm text-slate-700 truncate">
+                                {venta.items.length} productos
+                              </span>
+                            </>
+                          ) : firstItem ? (
+                            <>
+                              <div className="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                                <img
+                                  src={getCategoryImage(firstItem.categoria) || "/placeholder.svg"}
+                                  alt={firstItem.categoria || "Producto"}
+                                  className="w-5 h-5 object-contain opacity-70"
+                                />
+                              </div>
+                              <div className="min-w-0 flex flex-col">
+                                <span className="text-sm font-medium text-slate-800 truncate">{firstItem.name}</span>
+                                {firstItem.categoria && (
+                                  <span className="text-xs text-slate-500 truncate">{firstItem.categoria}</span>
+                                )}
+                              </div>
+                            </>
+                          ) : null}
+                        </div>
+
+                        {/* Empty 20 - middle of inset */}
+                        <div className="col-span-20 bg-slate-50" />
+
+                        {/* Empty 24 - right of inset, rounded-r */}
+                        <div className="col-span-24 bg-slate-50 rounded-r-md" />
+
+                        {/* Outside right padding */}
+                        <div className="col-span-4" />
                       </div>
                     </div>
                   )
