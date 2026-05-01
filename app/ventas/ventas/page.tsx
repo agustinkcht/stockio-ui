@@ -171,29 +171,27 @@ export default function VentasPage() {
             {/* Items Grid */}
             <div className="flex-1 overflow-y-auto px-6 pb-6 mt-4">
               {/* Search + Período + right-side actions */}
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="h-8 flex items-center gap-2 px-3 rounded-md border shadow-sm border-[rgba(228,230,235,0.6)] bg-white w-[260px]">
-                    <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Buscar"
-                      className="flex-1 bg-transparent text-xs text-slate-700 placeholder:text-slate-400 outline-none"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] gap-1.5 shrink-0 px-3 rounded-md flex items-center hover:bg-gray-100 cursor-pointer"
-                  >
-                    <span>Período</span>
-                    <ChevronDown className="w-3 h-3 text-slate-400" />
-                  </button>
+              <div className="flex items-center mb-3 gap-2">
+                <div className="w-[30%] h-8 flex items-center gap-2 px-3 rounded-md border shadow-sm border-[rgba(228,230,235,0.6)] bg-white">
+                  <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Buscar"
+                    className="flex-1 bg-transparent text-xs text-slate-700 placeholder:text-slate-400 outline-none"
+                  />
                 </div>
+                <button
+                  type="button"
+                  className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] gap-1.5 shrink-0 px-3 rounded-md flex items-center hover:bg-gray-100 cursor-pointer"
+                >
+                  <span>Período</span>
+                  <ChevronDown className="w-3 h-3 text-slate-400" />
+                </button>
 
                 {/* Right: Filtrar / Ordenar / Grilla */}
-                <div className="flex items-center gap-2">
+                <div className="ml-auto flex items-center gap-2">
                   <button
                     type="button"
                     className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] gap-1.5 shrink-0 px-3 rounded-md flex items-center hover:bg-gray-100 cursor-pointer"
@@ -220,12 +218,12 @@ export default function VentasPage() {
 
               {/* Floating Tab Header - spans full width, hosts batch actions */}
               <div className="mb-2">
-                <div className="grid grid-cols-100 h-9 bg-white border border-slate-200/60 rounded-md shadow-sm">
+                <div className="grid grid-cols-100 h-9 bg-slate-100 border border-slate-200/80 rounded-md shadow-sm">
                   <div className="col-span-4 flex items-center justify-center">
                     {someSelected ? (
                       <button
                         onClick={toggleSelectAll}
-                        className="h-4 w-4 flex items-center justify-center rounded-sm bg-primary border border-primary cursor-pointer"
+                        className="h-4 w-4 flex items-center justify-center bg-primary border border-primary cursor-pointer"
                         aria-label="Deseleccionar todo"
                       >
                         <Minus className="w-3 h-3 text-primary-foreground" />
@@ -233,7 +231,7 @@ export default function VentasPage() {
                     ) : allSelected ? (
                       <button
                         onClick={toggleSelectAll}
-                        className="h-4 w-4 flex items-center justify-center rounded-sm bg-primary border border-primary cursor-pointer hover:bg-primary/90"
+                        className="h-4 w-4 flex items-center justify-center bg-primary border border-primary cursor-pointer hover:bg-primary/90"
                         aria-label="Deseleccionar todo"
                       >
                         <Check className="w-3 h-3 text-primary-foreground" />
@@ -241,12 +239,12 @@ export default function VentasPage() {
                     ) : (
                       <button
                         onClick={toggleSelectAll}
-                        className="h-4 w-4 transition-colors cursor-pointer flex items-center justify-center rounded-sm bg-white border border-slate-300 hover:border-muted-foreground"
+                        className="h-4 w-4 transition-colors cursor-pointer flex items-center justify-center bg-white border border-slate-300 hover:border-muted-foreground"
                         aria-label="Seleccionar todo"
                       />
                     )}
                   </div>
-                  <div className="col-span-96 flex items-center border-l border-slate-200/60" />
+                  <div className="col-span-96 flex items-center border-l border-slate-200/80" />
                 </div>
               </div>
 
