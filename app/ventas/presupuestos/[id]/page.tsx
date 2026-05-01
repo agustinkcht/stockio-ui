@@ -826,12 +826,12 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
     })
     
     updatePresupuesto(presupuesto.id, { estado: "aceptado", ventaId: newVenta.id })
-    router.push("/ventas/ventas")
+    router.push("/ventas/ventasb")
   }
   
   // Ver en ventas - just navigate
   const handleVerEnVentas = () => {
-    router.push("/ventas/ventas")
+    router.push("/ventas/ventasb")
   }
 
   const breadcrumbs = [
