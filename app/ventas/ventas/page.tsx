@@ -285,7 +285,7 @@ export default function VentasPage() {
                       }`}
                     >
                       {/* TOP ROW */}
-                      <div className="grid grid-cols-100 min-h-[44px] pt-2">
+                      <div className="grid grid-cols-100 min-h-[44px] pt-2 border-b border-slate-200/70">
                         {/* Selector + vertical line */}
                         <div
                           className="col-span-4 flex items-center justify-center border-r border-slate-200/70"
@@ -303,24 +303,26 @@ export default function VentasPage() {
                         </div>
 
                         {/* ID */}
-                        <div className="col-span-16 flex items-center justify-center px-2">
+                        <div className="col-span-16 flex items-center justify-start px-3 border-r border-slate-200/70">
                           <span className="text-sm font-semibold text-slate-900 truncate">{venta.id}</span>
                         </div>
 
                         {/* Fecha */}
-                        <div className="col-span-16 flex items-center justify-center px-2">
+                        <div className="col-span-16 flex items-center justify-start px-3 border-r border-slate-200/70">
                           <span className="text-xs text-slate-600 truncate">
                             {formatVentaDateTime(venta.fecha, venta.hora)}
                           </span>
                         </div>
 
                         {/* Origen */}
-                        <div className="col-span-16 flex items-center justify-center px-2">
-                          <span className="text-xs text-slate-600 truncate">{getOrigen(venta.metodoPago)}</span>
+                        <div className="col-span-16 flex items-center justify-start px-3 border-r border-slate-200/70">
+                          <span className="text-sm font-medium text-slate-700 truncate">
+                            {getOrigen(venta.metodoPago)}
+                          </span>
                         </div>
 
                         {/* Empty 20 */}
-                        <div className="col-span-20" />
+                        <div className="col-span-20 border-r border-slate-200/70" />
 
                         {/* Cliente */}
                         <div className="col-span-24 flex items-center px-3">
@@ -373,13 +375,13 @@ export default function VentasPage() {
                         </div>
 
                         {/* Pago % */}
-                        <div className="col-span-16 flex items-center justify-center px-2">
-                          <span className="text-xs text-slate-600">Pago {pagoPct}%</span>
+                        <div className="col-span-16 flex items-center justify-start px-3">
+                          <span className="text-xs font-semibold text-slate-700">Pago {pagoPct}%</span>
                         </div>
 
                         {/* Entrega % */}
-                        <div className="col-span-16 flex items-center justify-center px-2">
-                          <span className="text-xs text-slate-600">Entrega {entregaPct}%</span>
+                        <div className="col-span-16 flex items-center justify-start px-3">
+                          <span className="text-sm font-semibold text-slate-700">Entrega {entregaPct}%</span>
                         </div>
 
                         {/* Empty 20 */}
