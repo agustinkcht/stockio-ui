@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState } from "react"
 import { Sidebar } from "@/components/layout/sidebar"
 import { useSidebar } from "@/hooks/use-sidebar"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
@@ -10,7 +10,6 @@ import {
   ChevronDown,
   FileDown,
   MoreVertical,
-  Eye,
   ListFilter,
   ArrowUpDown,
   LayoutGrid,
@@ -22,6 +21,7 @@ import {
   ReceiptText,
   Check,
   Minus,
+  Search,
 } from "lucide-react"
 import { VENTAS } from "@/lib/data/ventas"
 import type { Venta } from "@/lib/types"
@@ -50,23 +50,9 @@ function formatDateShort(dateStr: string): string {
 export default function VentasPage() {
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
 
-  const [showSectionMenu, setShowSectionMenu] = useState(false)
-  const sectionMenuRef = useRef<HTMLDivElement>(null)
-
   const [selectedVentas, setSelectedVentas] = useState<Set<string>>(new Set())
   const [openMoreMenu, setOpenMoreMenu] = useState<string | null>(null)
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (sectionMenuRef.current && !sectionMenuRef.current.contains(event.target as Node)) {
-        setShowSectionMenu(false)
-      }
-    }
-    if (showSectionMenu) {
-      document.addEventListener("mousedown", handleClickOutside)
-    }
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [showSectionMenu])
+  const [searchQuery, setSearchQuery] = useState("")
 
   const allSelected = selectedVentas.size === VENTAS.length && VENTAS.length > 0
   const someSelected = selectedVentas.size > 0 && selectedVentas.size < VENTAS.length
@@ -184,24 +170,26 @@ export default function VentasPage() {
 
             {/* Items Grid */}
             <div className="flex-1 overflow-y-auto px-6 pb-6 mt-4">
-              {/* Secciones + right-side actions */}
+              {/* Search + Período + right-side actions */}
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <div className="relative" ref={sectionMenuRef}>
-                    <button
-                      onClick={() => setShowSectionMenu(!showSectionMenu)}
-                      className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] gap-1.5 shrink-0 px-3 rounded-md flex items-center hover:bg-gray-100 cursor-pointer"
-                    >
-                      <Eye className="w-3.5 h-3.5 text-slate-500" />
-                      <span>Secciones</span>
-                      <ChevronDown className="w-3 h-3 text-slate-400" />
-                    </button>
-                    {showSectionMenu && (
-                      <div className="absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-50 min-w-[140px]">
-                        <div className="px-3 py-1.5 text-xs text-slate-400">Sin secciones</div>
-                      </div>
-                    )}
+                  <div className="h-8 flex items-center gap-2 px-3 rounded-md border shadow-sm border-[rgba(228,230,235,0.6)] bg-white w-[260px]">
+                    <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Buscar"
+                      className="flex-1 bg-transparent text-xs text-slate-700 placeholder:text-slate-400 outline-none"
+                    />
                   </div>
+                  <button
+                    type="button"
+                    className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] gap-1.5 shrink-0 px-3 rounded-md flex items-center hover:bg-gray-100 cursor-pointer"
+                  >
+                    <span>Período</span>
+                    <ChevronDown className="w-3 h-3 text-slate-400" />
+                  </button>
                 </div>
 
                 {/* Right: Filtrar / Ordenar / Grilla */}
@@ -230,10 +218,10 @@ export default function VentasPage() {
                 </div>
               </div>
 
-              {/* Floating Tab Header - only select-all */}
+              {/* Floating Tab Header - spans full width, hosts batch actions */}
               <div className="mb-2">
-                <div className="grid grid-cols-100 h-9">
-                  <div className="col-span-4 flex items-center justify-center bg-white border border-slate-200/60 rounded-md shadow-sm">
+                <div className="grid grid-cols-100 h-9 bg-white border border-slate-200/60 rounded-md shadow-sm">
+                  <div className="col-span-4 flex items-center justify-center">
                     {someSelected ? (
                       <button
                         onClick={toggleSelectAll}
@@ -258,7 +246,7 @@ export default function VentasPage() {
                       />
                     )}
                   </div>
-                  <div className="col-span-96" />
+                  <div className="col-span-96 flex items-center border-l border-slate-200/60" />
                 </div>
               </div>
 
