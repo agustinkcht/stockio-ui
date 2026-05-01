@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, Fragment } from "react"
 import { Sidebar } from "@/components/layout/sidebar"
 import { useSidebar } from "@/hooks/use-sidebar"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
@@ -8,6 +8,7 @@ import { UserPanel } from "@/components/layout/user-panel"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import {
   ChevronDown,
+  ChevronRight,
   FileDown,
   MoreVertical,
   ListFilter,
@@ -44,7 +45,8 @@ function formatVentaDateTime(dateStr: string, hora: string): string {
   const date = new Date(dateStr)
   const day = date.getDate()
   const month = monthsAbbr[date.getMonth()]
-  return `${day} ${month} ${hora}`
+  // Extra spacing between parts
+  return `${day}\u00A0\u00A0${month}\u00A0\u00A0${hora}`
 }
 
 function getOrigen(metodoPago: PaymentMethod): string {
@@ -68,6 +70,17 @@ export default function VentasPage() {
   const [selectedVentas, setSelectedVentas] = useState<Set<string>>(new Set())
   const [openMoreMenu, setOpenMoreMenu] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
+  const [expandedVentas, setExpandedVentas] = useState<Set<string>>(new Set())
+
+  const toggleExpandVenta = (id: string) => {
+    const next = new Set(expandedVentas)
+    if (next.has(id)) {
+      next.delete(id)
+    } else {
+      next.add(id)
+    }
+    setExpandedVentas(next)
+  }
 
   const allSelected = selectedVentas.size === VENTAS.length && VENTAS.length > 0
   const someSelected = selectedVentas.size > 0 && selectedVentas.size < VENTAS.length
@@ -309,7 +322,7 @@ export default function VentasPage() {
 
                         {/* Fecha */}
                         <div className="col-span-16 flex items-center justify-start px-3 border-r border-slate-200/70">
-                          <span className="text-xs text-slate-600 truncate">
+                          <span className="text-sm text-slate-600 truncate">
                             {formatVentaDateTime(venta.fecha, venta.hora)}
                           </span>
                         </div>
@@ -365,7 +378,7 @@ export default function VentasPage() {
                         <div className="col-span-4" />
 
                         {/* Estado */}
-                        <div className="col-span-16 flex items-center justify-center px-2">
+                        <div className="col-span-16 flex items-center justify-start px-3">
                           <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${estadoStyle.bg}`}>
                             <EstadoIcon className={`w-3.5 h-3.5 ${estadoStyle.text}`} />
                             <span className={`text-xs font-medium ${estadoStyle.text}`}>
@@ -412,61 +425,157 @@ export default function VentasPage() {
                       </div>
 
                       {/* BOTTOM ROW - product(s) inset */}
-                      <div className="grid grid-cols-100 pt-2 pb-2">
-                        {/* Outside left padding */}
-                        <div className="col-span-4" />
+                      {(() => {
+                        const isExpanded = expandedVentas.has(venta.id) && isMulti
+                        const totalUnits = venta.items.reduce((sum, it) => sum + it.quantity, 0)
+                        const lastItemIdx = venta.items.length - 1
 
-                        {/* Item content (48 cols) - rounded-l */}
-                        <div className="col-span-48 bg-slate-50 rounded-l-md py-2.5 pl-3 pr-2 flex items-center gap-3">
-                          {isMulti ? (
-                            <>
-                              <div className="flex items-center -space-x-2 shrink-0">
-                                {venta.items.slice(0, 3).map((it, idx) => (
-                                  <div
-                                    key={`${venta.id}-thumb-${idx}`}
-                                    className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden shadow-sm"
-                                    style={{ zIndex: 10 - idx }}
-                                  >
+                        return (
+                          <div className="grid grid-cols-100 pt-2 pb-2">
+                            {/* Outside left padding */}
+                            <div className="col-span-4" />
+
+                            {/* Item content (48 cols) */}
+                            <div
+                              className={`col-span-48 bg-slate-50 ${
+                                isExpanded ? "rounded-tl-md" : "rounded-l-md"
+                              } py-2.5 pl-3 pr-2 flex items-center gap-2`}
+                            >
+                              {isMulti && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    toggleExpandVenta(venta.id)
+                                  }}
+                                  className="p-0.5 rounded hover:bg-slate-200 text-slate-500 transition-colors shrink-0"
+                                  aria-label={isExpanded ? "Colapsar productos" : "Expandir productos"}
+                                >
+                                  {isExpanded ? (
+                                    <ChevronDown className="w-4 h-4" />
+                                  ) : (
+                                    <ChevronRight className="w-4 h-4" />
+                                  )}
+                                </button>
+                              )}
+
+                              {isMulti ? (
+                                <>
+                                  <div className="flex items-center -space-x-2 shrink-0">
+                                    {venta.items.slice(0, 3).map((it, idx) => (
+                                      <div
+                                        key={`${venta.id}-thumb-${idx}`}
+                                        className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden shadow-sm"
+                                        style={{ zIndex: 10 - idx }}
+                                      >
+                                        <img
+                                          src={getCategoryImage(it.categoria) || "/placeholder.svg"}
+                                          alt={it.categoria || "Producto"}
+                                          className="w-5 h-5 object-contain opacity-70"
+                                        />
+                                      </div>
+                                    ))}
+                                  </div>
+                                  <span className="text-sm text-slate-700 truncate">
+                                    {venta.items.length} productos
+                                  </span>
+                                </>
+                              ) : firstItem ? (
+                                <>
+                                  <div className="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
                                     <img
-                                      src={getCategoryImage(it.categoria) || "/placeholder.svg"}
-                                      alt={it.categoria || "Producto"}
+                                      src={getCategoryImage(firstItem.categoria) || "/placeholder.svg"}
+                                      alt={firstItem.categoria || "Producto"}
                                       className="w-5 h-5 object-contain opacity-70"
                                     />
                                   </div>
-                                ))}
-                              </div>
-                              <span className="text-sm text-slate-700 truncate">
-                                {venta.items.length} productos
+                                  <div className="min-w-0 flex flex-col">
+                                    <span className="text-sm font-medium text-slate-800 truncate">
+                                      {firstItem.name}
+                                    </span>
+                                    {firstItem.categoria && (
+                                      <span className="text-xs text-slate-500 truncate">{firstItem.categoria}</span>
+                                    )}
+                                  </div>
+                                </>
+                              ) : null}
+                            </div>
+
+                            {/* Units (20 cols) */}
+                            <div className="col-span-20 bg-slate-50 flex items-center px-3">
+                              <span className="text-xs text-slate-600">{totalUnits} unidades</span>
+                            </div>
+
+                            {/* Total (24 cols) */}
+                            <div
+                              className={`col-span-24 bg-slate-50 ${
+                                isExpanded ? "rounded-tr-md" : "rounded-r-md"
+                              } flex items-center px-3`}
+                            >
+                              <span className="text-sm font-semibold text-slate-800">
+                                ${venta.total.toLocaleString("es-AR")}
                               </span>
-                            </>
-                          ) : firstItem ? (
-                            <>
-                              <div className="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
-                                <img
-                                  src={getCategoryImage(firstItem.categoria) || "/placeholder.svg"}
-                                  alt={firstItem.categoria || "Producto"}
-                                  className="w-5 h-5 object-contain opacity-70"
-                                />
-                              </div>
-                              <div className="min-w-0 flex flex-col">
-                                <span className="text-sm font-medium text-slate-800 truncate">{firstItem.name}</span>
-                                {firstItem.categoria && (
-                                  <span className="text-xs text-slate-500 truncate">{firstItem.categoria}</span>
-                                )}
-                              </div>
-                            </>
-                          ) : null}
-                        </div>
+                            </div>
 
-                        {/* Empty 20 - middle of inset */}
-                        <div className="col-span-20 bg-slate-50" />
+                            {/* Outside right padding */}
+                            <div className="col-span-4" />
 
-                        {/* Empty 24 - right of inset, rounded-r */}
-                        <div className="col-span-24 bg-slate-50 rounded-r-md" />
+                            {/* Expanded item rows */}
+                            {isExpanded &&
+                              venta.items.map((item, idx) => {
+                                const isLast = idx === lastItemIdx
+                                return (
+                                  <Fragment key={`${venta.id}-exp-${idx}`}>
+                                    <div className="col-span-4" />
 
-                        {/* Outside right padding */}
-                        <div className="col-span-4" />
-                      </div>
+                                    {/* Item info (48) */}
+                                    <div
+                                      className={`col-span-48 bg-slate-50 px-3 py-2 border-t border-slate-200/60 flex items-start gap-3 ${
+                                        isLast ? "rounded-bl-md" : ""
+                                      }`}
+                                    >
+                                      <div className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                                        <img
+                                          src={getCategoryImage(item.categoria) || "/placeholder.svg"}
+                                          alt={item.categoria || "Producto"}
+                                          className="w-4 h-4 object-contain opacity-70"
+                                        />
+                                      </div>
+                                      <div className="min-w-0 flex flex-col">
+                                        <span className="text-sm font-medium text-slate-800 truncate">
+                                          {item.name}
+                                        </span>
+                                        {item.categoria && (
+                                          <span className="text-xs text-slate-500 truncate">{item.categoria}</span>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {/* Units (20) */}
+                                    <div className="col-span-20 bg-slate-50 px-3 py-2 border-t border-slate-200/60 flex items-center">
+                                      <span className="text-xs text-slate-600">{item.quantity} unidades</span>
+                                    </div>
+
+                                    {/* Subtotal (24) - n x unit price + total below */}
+                                    <div
+                                      className={`col-span-24 bg-slate-50 px-3 py-2 border-t border-slate-200/60 flex flex-col justify-center ${
+                                        isLast ? "rounded-br-md" : ""
+                                      }`}
+                                    >
+                                      <span className="text-[11px] text-slate-400 leading-tight">
+                                        {item.quantity} x ${item.unitPrice.toLocaleString("es-AR")}
+                                      </span>
+                                      <span className="text-sm font-semibold text-slate-800 leading-tight">
+                                        ${item.total.toLocaleString("es-AR")}
+                                      </span>
+                                    </div>
+
+                                    <div className="col-span-4" />
+                                  </Fragment>
+                                )
+                              })}
+                          </div>
+                        )
+                      })()}
                     </div>
                   )
                 })}
