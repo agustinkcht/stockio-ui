@@ -53,6 +53,15 @@ function getOrigen(metodoPago: PaymentMethod): string {
   return metodoPago === "posnet" ? "Punto de Venta" : "Manual"
 }
 
+// Deterministic pseudo-random delivery method based on venta id
+function getDelivery(id: string): "Envío" | "Retiro en Tienda" {
+  let hash = 0
+  for (let i = 0; i < id.length; i++) {
+    hash = (hash * 31 + id.charCodeAt(i)) >>> 0
+  }
+  return hash % 2 === 0 ? "Envío" : "Retiro en Tienda"
+}
+
 function getPagoPercent(estado: Venta["estado"]): number {
   if (estado === "completada") return 100
   if (estado === "pendiente") return 50
@@ -334,8 +343,10 @@ export default function VentasPage() {
                           </span>
                         </div>
 
-                        {/* Empty 20 */}
-                        <div className="col-span-20 border-r border-slate-200/70" />
+                        {/* Delivery */}
+                        <div className="col-span-20 flex items-center justify-start px-3 border-r border-slate-200/70">
+                          <span className="text-sm font-medium text-slate-700 truncate">{getDelivery(venta.id)}</span>
+                        </div>
 
                         {/* Cliente */}
                         <div className="col-span-24 flex items-center px-3">
@@ -387,14 +398,18 @@ export default function VentasPage() {
                           </div>
                         </div>
 
-                        {/* Pago % */}
+                        {/* Pago % - only when en curso (pendiente) */}
                         <div className="col-span-16 flex items-center justify-start px-3">
-                          <span className="text-xs font-semibold text-slate-700">Pago {pagoPct}%</span>
+                          {venta.estado === "pendiente" && (
+                            <span className="text-xs font-semibold text-slate-700">Pago {pagoPct}%</span>
+                          )}
                         </div>
 
-                        {/* Entrega % */}
+                        {/* Entrega % - only when en curso (pendiente) */}
                         <div className="col-span-16 flex items-center justify-start px-3">
-                          <span className="text-sm font-semibold text-slate-700">Entrega {entregaPct}%</span>
+                          {venta.estado === "pendiente" && (
+                            <span className="text-xs font-semibold text-slate-700">Entrega {entregaPct}%</span>
+                          )}
                         </div>
 
                         {/* Empty 20 */}
@@ -402,22 +417,20 @@ export default function VentasPage() {
 
                         {/* Facturación */}
                         <div className="col-span-24 flex items-center px-3">
-                          <div
-                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${
-                              isFacturada ? "bg-blue-50" : "bg-slate-100"
-                            }`}
-                          >
-                            {isFacturada ? (
+                          {isFacturada ? (
+                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50">
                               <Receipt className="w-3.5 h-3.5 text-blue-600" />
-                            ) : (
-                              <ReceiptText className="w-3.5 h-3.5 text-slate-500" />
-                            )}
-                            <span
-                              className={`text-xs font-medium ${isFacturada ? "text-blue-600" : "text-slate-500"}`}
+                              <span className="text-xs font-medium text-blue-600">Facturada</span>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
                             >
-                              {isFacturada ? "Facturada" : "Sin facturar"}
-                            </span>
-                          </div>
+                              <ReceiptText className="w-3.5 h-3.5 text-slate-500" />
+                              <span className="text-xs font-medium text-slate-600">Ver ticket detalle</span>
+                            </button>
+                          )}
                         </div>
 
                         {/* Empty 4 (more options harmony) */}
