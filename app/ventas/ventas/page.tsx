@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, Fragment } from "react"
+import { useState, useEffect, useRef, Fragment } from "react"
+import { useRouter } from "next/navigation"
 import { Sidebar } from "@/components/layout/sidebar"
 import { useSidebar } from "@/hooks/use-sidebar"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
@@ -19,8 +20,6 @@ import {
   XCircle,
   Receipt,
   ReceiptText,
-  Check,
-  Minus,
   Search,
   Plus,
 } from "lucide-react"
@@ -69,6 +68,8 @@ function getEntregaPercent(estado: Venta["estado"]): number {
 
 export default function VentasPage() {
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
+  const router = useRouter()
+  const allCheckboxRef = useRef<HTMLInputElement>(null)
 
   const [selectedVentas, setSelectedVentas] = useState<Set<string>>(new Set())
   const [openMoreMenu, setOpenMoreMenu] = useState<string | null>(null)
@@ -88,6 +89,12 @@ export default function VentasPage() {
 
   const allSelected = selectedVentas.size === VENTAS.length && VENTAS.length > 0
   const someSelected = selectedVentas.size > 0 && selectedVentas.size < VENTAS.length
+
+  useEffect(() => {
+    if (allCheckboxRef.current) {
+      allCheckboxRef.current.indeterminate = someSelected
+    }
+  }, [someSelected])
 
   const toggleSelectAll = () => {
     if (allSelected) {
@@ -142,9 +149,9 @@ export default function VentasPage() {
               <div className="flex items-center">
                 <button
                   type="button"
-                  className="h-12 px-5 text-base font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-md flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer"
+                  className="h-11 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-md flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer"
                 >
-                  <Plus className="w-5 h-5 text-slate-700" strokeWidth={2.25} />
+                  <Plus className="w-4 h-4 text-slate-700" strokeWidth={2.25} />
                   Nueva Venta
                 </button>
               </div>
@@ -202,29 +209,14 @@ export default function VentasPage() {
               <div className="mb-2">
                 <div className="grid grid-cols-100 h-9 bg-slate-100 border border-slate-200/80 rounded-md shadow-sm">
                   <div className="col-span-4 flex items-center justify-center">
-                    {someSelected ? (
-                      <button
-                        onClick={toggleSelectAll}
-                        className="h-4 w-4 flex items-center justify-center rounded-sm bg-primary border border-primary cursor-pointer"
-                        aria-label="Deseleccionar todo"
-                      >
-                        <Minus className="w-3 h-3 text-primary-foreground" />
-                      </button>
-                    ) : allSelected ? (
-                      <button
-                        onClick={toggleSelectAll}
-                        className="h-4 w-4 flex items-center justify-center rounded-sm bg-primary border border-primary cursor-pointer hover:bg-primary/90"
-                        aria-label="Deseleccionar todo"
-                      >
-                        <Check className="w-3 h-3 text-primary-foreground" />
-                      </button>
-                    ) : (
-                      <button
-                        onClick={toggleSelectAll}
-                        className="h-4 w-4 transition-colors cursor-pointer flex items-center justify-center rounded-sm bg-white border border-slate-300 hover:border-muted-foreground"
-                        aria-label="Seleccionar todo"
-                      />
-                    )}
+                    <input
+                      ref={allCheckboxRef}
+                      type="checkbox"
+                      checked={allSelected}
+                      onChange={toggleSelectAll}
+                      aria-label={allSelected ? "Deseleccionar todo" : "Seleccionar todo"}
+                      className="w-4 h-4 rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
                   </div>
                   <div className="col-span-96 flex items-center border-l border-slate-200/80" />
                 </div>
@@ -245,7 +237,8 @@ export default function VentasPage() {
                   return (
                     <div
                       key={venta.id}
-                      className={`bg-white border rounded-md shadow-sm transition-colors ${
+                      onClick={() => router.push(`/ventas/ventas/${venta.id}`)}
+                      className={`bg-white border rounded-md shadow-sm transition-colors cursor-pointer ${
                         isSelected
                           ? "border-blue-300 bg-blue-50/40"
                           : "border-slate-200/60 hover:border-slate-300"
@@ -368,6 +361,7 @@ export default function VentasPage() {
                           ) : (
                             <button
                               type="button"
+                              onClick={(e) => e.stopPropagation()}
                               className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
                             >
                               <ReceiptText className="w-3.5 h-3.5 text-slate-500" />
@@ -388,7 +382,7 @@ export default function VentasPage() {
                         const firstItemDisplay = firstItem ? getVentaItemDisplay(firstItem) : null
 
                         return (
-                          <div className="grid grid-cols-100 pt-2 pb-2">
+                          <div className="grid grid-cols-100 pt-2 pb-2" onClick={(e) => e.stopPropagation()}>
                             {/* Outside left padding */}
                             <div className="col-span-4" />
 
