@@ -26,6 +26,8 @@ import {
 import { VENTAS } from "@/lib/data/ventas"
 import type { Venta, VentaItem, PaymentMethod } from "@/lib/types"
 import { getCategoryImage } from "@/lib/utils/category-images"
+import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
+import { VentaItemDetailModal } from "@/components/ventas/venta-item-detail-modal"
 
 const estadoLabels: Record<Venta["estado"], string> = {
   completada: "Completada",
@@ -53,15 +55,6 @@ function getOrigen(metodoPago: PaymentMethod): string {
   return metodoPago === "posnet" ? "Punto de Venta" : "Manual"
 }
 
-// Deterministic pseudo-random delivery method based on venta id
-function getDelivery(id: string): "Envío" | "Retiro en Tienda" {
-  let hash = 0
-  for (let i = 0; i < id.length; i++) {
-    hash = (hash * 31 + id.charCodeAt(i)) >>> 0
-  }
-  return hash % 2 === 0 ? "Envío" : "Retiro en Tienda"
-}
-
 function getPagoPercent(estado: Venta["estado"]): number {
   if (estado === "completada") return 100
   if (estado === "pendiente") return 50
@@ -80,6 +73,7 @@ export default function VentasPage() {
   const [openMoreMenu, setOpenMoreMenu] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [expandedVentas, setExpandedVentas] = useState<Set<string>>(new Set())
+  const [viewingItem, setViewingItem] = useState<VentaItem | null>(null)
 
   const toggleExpandVenta = (id: string) => {
     const next = new Set(expandedVentas)
@@ -337,16 +331,14 @@ export default function VentasPage() {
                         </div>
 
                         {/* Origen */}
-                        <div className="col-span-16 flex items-center justify-start px-3 border-r border-slate-200/70">
+                        <div className="col-span-16 flex items-center justify-start px-3">
                           <span className="text-sm font-medium text-slate-700 truncate">
                             {getOrigen(venta.metodoPago)}
                           </span>
                         </div>
 
-                        {/* Delivery */}
-                        <div className="col-span-20 flex items-center justify-start px-3 border-r border-slate-200/70">
-                          <span className="text-sm font-medium text-slate-700 truncate">{getDelivery(venta.id)}</span>
-                        </div>
+                        {/* Empty 20 (was delivery) */}
+                        <div className="col-span-20" />
 
                         {/* Cliente */}
                         <div className="col-span-24 flex items-center px-3">
@@ -442,6 +434,7 @@ export default function VentasPage() {
                         const isExpanded = expandedVentas.has(venta.id) && isMulti
                         const totalUnits = venta.items.reduce((sum, it) => sum + it.quantity, 0)
                         const lastItemIdx = venta.items.length - 1
+                        const firstItemDisplay = firstItem ? getVentaItemDisplay(firstItem) : null
 
                         return (
                           <div className="grid grid-cols-100 pt-2 pb-2">
@@ -492,24 +485,49 @@ export default function VentasPage() {
                                     {venta.items.length} productos
                                   </span>
                                 </>
-                              ) : firstItem ? (
-                                <>
+                              ) : firstItem && firstItemDisplay ? (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setViewingItem(firstItem)
+                                  }}
+                                  className="flex items-center gap-3 min-w-0 text-left rounded hover:bg-slate-100/70 transition-colors -m-0.5 p-0.5 cursor-pointer"
+                                >
                                   <div className="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
                                     <img
-                                      src={getCategoryImage(firstItem.categoria) || "/placeholder.svg"}
-                                      alt={firstItem.categoria || "Producto"}
+                                      src={getCategoryImage(firstItemDisplay.categoria) || "/placeholder.svg"}
+                                      alt={firstItemDisplay.categoria || "Producto"}
                                       className="w-5 h-5 object-contain opacity-70"
                                     />
                                   </div>
                                   <div className="min-w-0 flex flex-col">
-                                    <span className="text-sm font-medium text-slate-800 truncate">
-                                      {firstItem.name}
-                                    </span>
-                                    {firstItem.categoria && (
-                                      <span className="text-xs text-slate-500 truncate">{firstItem.categoria}</span>
+                                    <div className="flex items-center gap-1.5 min-w-0">
+                                      <span className="text-sm font-medium text-slate-800 truncate">
+                                        {firstItemDisplay.name}
+                                      </span>
+                                      {firstItemDisplay.tags.length > 0 && (
+                                        <div className="flex items-center gap-1 shrink-0">
+                                          {firstItemDisplay.tags.map((tag, i) => (
+                                            <span
+                                              key={i}
+                                              className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-600 whitespace-nowrap"
+                                            >
+                                              {tag}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                    {(firstItemDisplay.marca || firstItemDisplay.categoria) && (
+                                      <div className="flex items-center gap-1 mt-0.5 text-xs text-slate-500 truncate">
+                                        {firstItemDisplay.marca && <span>{firstItemDisplay.marca}</span>}
+                                        {firstItemDisplay.marca && firstItemDisplay.categoria && <span>·</span>}
+                                        {firstItemDisplay.categoria && <span>{firstItemDisplay.categoria}</span>}
+                                      </div>
                                     )}
                                   </div>
-                                </>
+                                </button>
                               ) : null}
                             </div>
 
@@ -532,35 +550,70 @@ export default function VentasPage() {
                             {/* Outside right padding */}
                             <div className="col-span-4" />
 
-                            {/* Expanded item rows */}
+                            {/* Expanded item rows: 4 / 32 / 16 / 20 / 24 / 4 */}
                             {isExpanded &&
                               venta.items.map((item, idx) => {
                                 const isLast = idx === lastItemIdx
+                                const itemDisplay = getVentaItemDisplay(item)
                                 return (
                                   <Fragment key={`${venta.id}-exp-${idx}`}>
                                     <div className="col-span-4" />
 
-                                    {/* Item info (48) */}
+                                    {/* Item info (32) - clickable */}
                                     <div
-                                      className={`col-span-48 bg-slate-50 px-3 py-2 border-t border-slate-200/60 flex items-start gap-3 ${
+                                      className={`col-span-32 bg-slate-50 border-t border-slate-200/60 ${
                                         isLast ? "rounded-bl-md" : ""
                                       }`}
                                     >
-                                      <div className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
-                                        <img
-                                          src={getCategoryImage(item.categoria) || "/placeholder.svg"}
-                                          alt={item.categoria || "Producto"}
-                                          className="w-4 h-4 object-contain opacity-70"
-                                        />
-                                      </div>
-                                      <div className="min-w-0 flex flex-col">
-                                        <span className="text-sm font-medium text-slate-800 truncate">
-                                          {item.name}
-                                        </span>
-                                        {item.categoria && (
-                                          <span className="text-xs text-slate-500 truncate">{item.categoria}</span>
-                                        )}
-                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          setViewingItem(item)
+                                        }}
+                                        className="w-full px-3 py-2 flex items-start gap-3 text-left rounded hover:bg-slate-100/70 transition-colors cursor-pointer"
+                                      >
+                                        <div className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                                          <img
+                                            src={getCategoryImage(itemDisplay.categoria) || "/placeholder.svg"}
+                                            alt={itemDisplay.categoria || "Producto"}
+                                            className="w-4 h-4 object-contain opacity-70"
+                                          />
+                                        </div>
+                                        <div className="min-w-0 flex flex-col">
+                                          <div className="flex items-center gap-1.5 min-w-0">
+                                            <span className="text-sm font-medium text-slate-800 truncate">
+                                              {itemDisplay.name}
+                                            </span>
+                                            {itemDisplay.tags.length > 0 && (
+                                              <div className="flex items-center gap-1 shrink-0">
+                                                {itemDisplay.tags.map((tag, i) => (
+                                                  <span
+                                                    key={i}
+                                                    className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-600 whitespace-nowrap"
+                                                  >
+                                                    {tag}
+                                                  </span>
+                                                ))}
+                                              </div>
+                                            )}
+                                          </div>
+                                          {(itemDisplay.marca || itemDisplay.categoria) && (
+                                            <div className="flex items-center gap-1 mt-0.5 text-xs text-slate-500 truncate">
+                                              {itemDisplay.marca && <span>{itemDisplay.marca}</span>}
+                                              {itemDisplay.marca && itemDisplay.categoria && <span>·</span>}
+                                              {itemDisplay.categoria && <span>{itemDisplay.categoria}</span>}
+                                            </div>
+                                          )}
+                                        </div>
+                                      </button>
+                                    </div>
+
+                                    {/* Unit price (16) */}
+                                    <div className="col-span-16 bg-slate-50 px-3 py-2 border-t border-slate-200/60 flex items-center">
+                                      <span className="text-xs text-slate-600">
+                                        ${item.unitPrice.toLocaleString("es-AR")}
+                                      </span>
                                     </div>
 
                                     {/* Units (20) */}
@@ -597,6 +650,10 @@ export default function VentasPage() {
           </main>
         </div>
       </div>
+
+      {viewingItem && (
+        <VentaItemDetailModal ventaItem={viewingItem} onClose={() => setViewingItem(null)} />
+      )}
     </div>
   )
 }
