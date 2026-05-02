@@ -22,6 +22,7 @@ import {
   Check,
   Minus,
   Search,
+  Plus,
 } from "lucide-react"
 import { VENTAS } from "@/lib/data/ventas"
 import type { Venta, VentaItem, PaymentMethod } from "@/lib/types"
@@ -136,66 +137,16 @@ export default function VentasPage() {
           </div>
 
           <main className="flex-1 flex flex-col bg-[rgba(250,251,253,1)] overflow-hidden">
-            {/* Toolbar - styled like presupuesto detail (empty) */}
+            {/* Toolbar */}
             <div className="px-6 py-4 border-b border-border/20 bg-white">
-              <div className="flex items-center justify-between">
-                {/* Left: Title and info */}
-                <div className="flex items-center gap-6">
-                  {/* Venta */}
-                  <div>
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Venta</span>
-                    <div className="flex items-center gap-3">
-                      <h1 className="text-2xl font-bold text-gray-900 tracking-tight">&nbsp;</h1>
-                    </div>
-                  </div>
-
-                  <div className="h-10 w-px bg-border/40" />
-
-                  {/* Cliente */}
-                  <div className="flex flex-col">
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Cliente</span>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm font-semibold text-gray-800">&nbsp;</span>
-                    </div>
-                  </div>
-
-                  <div className="h-10 w-px bg-border/40" />
-
-                  {/* Estado */}
-                  <div className="flex flex-col">
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Estado</span>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-slate-100 text-slate-400">
-                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="h-10 w-px bg-border/40" />
-
-                  {/* Fecha Creación */}
-                  <div className="flex flex-col">
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Fecha Creación</span>
-                    <span className="text-sm font-medium text-gray-700">&nbsp;</span>
-                  </div>
-                </div>
-
-                {/* Right: Action buttons */}
-                <div className="flex items-center gap-2">
-                  <button
-                    disabled
-                    className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] gap-1.5 shrink-0 px-3 rounded-md flex items-center opacity-50 cursor-not-allowed"
-                  >
-                    <FileDown className="w-3.5 h-3.5 text-slate-500" />
-                    Exportar
-                  </button>
-                  <button
-                    disabled
-                    className="h-8 w-8 flex items-center justify-center text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] rounded-md opacity-50 cursor-not-allowed"
-                  >
-                    <MoreVertical className="w-4 h-4 text-slate-500" />
-                  </button>
-                </div>
+              <div className="flex items-center">
+                <button
+                  type="button"
+                  className="h-12 px-5 text-base font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-md flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer"
+                >
+                  <Plus className="w-5 h-5 text-slate-700" strokeWidth={2.25} />
+                  Nueva Venta
+                </button>
               </div>
             </div>
 
