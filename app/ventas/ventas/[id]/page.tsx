@@ -282,11 +282,10 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
               <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm">
                 {/* Grid Header */}
                 <div className="bg-slate-100 border-b border-slate-200/80 rounded-t-lg">
-                  <div className="grid grid-cols-[2.5fr_0.8fr_1fr_auto_1.2fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                  <div className="grid grid-cols-[2.5fr_0.8fr_1fr_1.2fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
                     <div className="flex items-center px-4">Item</div>
                     <div className="flex items-center justify-center">Cantidad</div>
                     <div className="flex items-center justify-center">Precio Unit.</div>
-                    <div className="flex items-center justify-center w-6 text-slate-300">→</div>
                     <div className="flex items-center justify-center pr-4">Promoción</div>
                   </div>
                 </div>
@@ -314,25 +313,25 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         onClick={() => setViewingItem(item)}
                         className="border-b border-slate-100 last:border-b-0 transition-colors hover:bg-slate-50/50 cursor-pointer"
                       >
-                        <div className="grid grid-cols-[2.5fr_0.8fr_1fr_auto_1.2fr] min-h-[72px]">
+                        <div className="grid grid-cols-[2.5fr_0.8fr_1fr_1.2fr] h-[56px]">
                           {/* Item Info */}
-                          <div className="flex items-center gap-3 px-4 py-3">
-                            <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                          <div className="flex items-center gap-3 px-4">
+                            <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                               <Image
                                 src={getCategoryImage(display.categoria || "") || "/placeholder.svg"}
                                 alt={item.name}
-                                width={40}
-                                height={40}
+                                width={32}
+                                height={32}
                                 className="object-cover"
                               />
                             </div>
                             <div className="min-w-0">
-                              <div className="flex items-center gap-2">
-                                <p className="text-sm font-medium text-gray-900 truncate">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 truncate leading-tight">
                                   {display.name}
                                 </p>
                                 {display.tags.length > 0 && (
-                                  <div className="flex items-center gap-1">
+                                  <div className="flex items-center gap-1 shrink-0">
                                     {display.tags.map((tag, i) => (
                                       <span
                                         key={i}
@@ -344,17 +343,16 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                                   </div>
                                 )}
                               </div>
-                              <p className="text-xs text-slate-400 mt-0.5">sku: {item.sku || "Sin SKU"}</p>
                               {(display.marca || display.categoria) && (
                                 <div className="flex items-center gap-1 mt-0.5">
                                   {display.marca && (
-                                    <span className="text-xs text-slate-400">{display.marca}</span>
+                                    <span className="text-xs text-slate-400 leading-tight">{display.marca}</span>
                                   )}
                                   {display.marca && display.categoria && (
                                     <span className="text-xs text-slate-300">·</span>
                                   )}
                                   {display.categoria && (
-                                    <span className="text-xs text-slate-400">{display.categoria}</span>
+                                    <span className="text-xs text-slate-400 leading-tight">{display.categoria}</span>
                                   )}
                                 </div>
                               )}
@@ -383,7 +381,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                                     : `-$${item.discount.toLocaleString("es-AR")}`}
                                 </span>
                                 <span className="text-[10px] text-slate-400 leading-tight">
-                                  → ${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}
+                                  ${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}
                                 </span>
                               </>
                             ) : (
@@ -404,11 +402,11 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm overflow-hidden">
 
                     {/* ── Subtotal section (collapsible) ── */}
-                    {/* Header row — same height as grid header */}
+                    {/* Header row — same h-9 as grid header, plain white */}
                     <button
                       type="button"
                       onClick={() => setSubtotalExpanded(!subtotalExpanded)}
-                      className="w-full h-9 bg-slate-100 border-b border-slate-200/80 flex items-center justify-between px-4 hover:bg-slate-200/60 transition-colors cursor-pointer rounded-t-lg"
+                      className="w-full h-9 bg-slate-100 border-b border-slate-200/80 flex items-center justify-between px-4 hover:bg-slate-200/40 transition-colors cursor-pointer rounded-t-lg"
                     >
                       <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Subtotal</span>
                       <div className="flex items-center gap-2">
@@ -422,7 +420,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       </div>
                     </button>
 
-                    {/* Per-item subtotal rows — each min-h-[72px] to align with grid rows */}
+                    {/* Per-item subtotal rows — h-[56px] matches grid rows exactly */}
                     {subtotalExpanded && venta.items.map((item, idx) => {
                       const baseGross = item.unitPrice * item.quantity
                       const discountAmount =
@@ -436,7 +434,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       return (
                         <div
                           key={`subtotal-row-${idx}`}
-                          className="border-b border-slate-100 last:border-b-0 min-h-[72px] flex flex-col items-end justify-center px-4 gap-0.5"
+                          className="border-b border-slate-100 last:border-b-0 h-[56px] flex flex-col items-end justify-center px-4 gap-0.5"
                         >
                           <span className="text-[11px] text-slate-400 tabular-nums leading-tight">
                             {item.quantity} × ${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}
@@ -490,19 +488,15 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       </div>
                     </div>
 
-                    {/* ── Meta footer ── */}
-                    <div className="px-4 py-2.5 border-t border-slate-100 space-y-1 bg-slate-50/40">
-                      <div className="flex justify-between text-[11px]">
-                        <span className="text-slate-400">Vendedor</span>
-                        <span className="text-slate-600">{venta.vendedor}</span>
-                      </div>
-                      {venta.observaciones && (
+                    {/* ── Observaciones footer (only if present) ── */}
+                    {venta.observaciones && (
+                      <div className="px-4 py-2.5 border-t border-slate-100 bg-slate-50/40">
                         <div className="flex justify-between text-[11px] gap-3">
                           <span className="text-slate-400 shrink-0">Observaciones</span>
                           <span className="text-slate-600 text-right">{venta.observaciones}</span>
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
