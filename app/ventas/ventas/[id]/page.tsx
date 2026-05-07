@@ -176,14 +176,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
                   <div className="h-10 w-px bg-border/40" />
 
-                  {/* Cliente */}
-                  <div className="flex flex-col">
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Cliente</span>
-                    <span className="text-sm font-semibold text-gray-800">{venta.clienteNombre}</span>
-                  </div>
-
-                  <div className="h-10 w-px bg-border/40" />
-
                   {/* Estado */}
                   <div className="flex flex-col">
                     <span className="text-[10px] text-slate-400 uppercase tracking-wider">Estado</span>
@@ -206,6 +198,14 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       {fechaCreacion}
                       <span className="text-slate-400"> · {venta.hora}</span>
                     </span>
+                  </div>
+
+                  <div className="h-10 w-px bg-border/40" />
+
+                  {/* Cliente */}
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Cliente</span>
+                    <span className="text-sm font-semibold text-gray-800">{venta.clienteNombre}</span>
                   </div>
 
                   <div className="h-10 w-px bg-border/40" />
