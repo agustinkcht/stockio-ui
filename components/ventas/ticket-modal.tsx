@@ -5,8 +5,8 @@ import { X, Download } from "lucide-react"
 import jsPDF from "jspdf"
 import type { Venta } from "@/lib/types"
 
-const BUSINESS_NAME = "Stockio"
-const BUSINESS_SUBTITLE = "Sistema de Gestión"
+const BUSINESS_NAME = "In Vino Veritas"
+const BUSINESS_FOOTER = "DOCUMENTO NO VÁLIDO COMO FACTURA"
 
 const monthsAbbr = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
 
@@ -47,24 +47,17 @@ export function TicketModal({ venta, onClose }: TicketModalProps) {
     let y = 12
 
     // Business header
-    doc.setFont("helvetica", "normal")
-    doc.setFontSize(9)
-    doc.setTextColor(100, 100, 100)
-    doc.text(BUSINESS_NAME, pageWidth / 2, y, { align: "center" })
-    y += 5
-
-    doc.setFontSize(14)
     doc.setFont("helvetica", "bold")
+    doc.setFontSize(14)
     doc.setTextColor(30, 30, 30)
     doc.text(BUSINESS_NAME, pageWidth / 2, y, { align: "center" })
-    y += 6
+    y += 8
 
+    // Date left-aligned
     doc.setFontSize(7)
     doc.setFont("helvetica", "normal")
     doc.setTextColor(130, 130, 130)
-    doc.text(formatTicketDate(venta.fecha, venta.hora), pageWidth / 2, y, { align: "center" })
-    y += 4
-    doc.text(venta.clienteNombre, pageWidth / 2, y, { align: "center" })
+    doc.text(formatTicketDate(venta.fecha, venta.hora), 4, y)
     y += 5
 
     // Dashed divider
@@ -129,9 +122,9 @@ export function TicketModal({ venta, onClose }: TicketModalProps) {
 
     // Footer
     doc.setFont("helvetica", "normal")
-    doc.setFontSize(7.5)
-    doc.setTextColor(100, 100, 100)
-    doc.text("¡Gracias por tu preferencia!", pageWidth / 2, y, { align: "center" })
+    doc.setFontSize(7)
+    doc.setTextColor(140, 140, 140)
+    doc.text("DOCUMENTO NO VÁLIDO COMO FACTURA", pageWidth / 2, y, { align: "center" })
 
     // Resize page height
     const finalPageHeight = y + 10
@@ -169,16 +162,14 @@ export function TicketModal({ venta, onClose }: TicketModalProps) {
         <div className="px-6 pt-6 pb-4 font-mono">
           {/* Business header */}
           <div className="text-center mb-4">
-            <p className="text-[10px] text-slate-400 uppercase tracking-widest">{BUSINESS_SUBTITLE}</p>
-            <p className="text-2xl font-bold text-slate-900 tracking-tight leading-tight mt-0.5">{BUSINESS_NAME}</p>
-            <p className="text-[11px] text-slate-500 mt-1.5">
-              {formatTicketDate(venta.fecha, venta.hora)}
-            </p>
-            <p className="text-[11px] text-slate-500">{venta.clienteNombre}</p>
+            <p className="text-2xl font-bold text-slate-900 tracking-tight leading-tight">{BUSINESS_NAME}</p>
           </div>
 
-          {/* Dashed divider */}
-          <div className="border-t border-dashed border-slate-300 my-3" />
+          {/* Date left-aligned, then dashed divider */}
+          <p className="text-[11px] text-slate-500 mb-2">
+            {formatTicketDate(venta.fecha, venta.hora)}
+          </p>
+          <div className="border-t border-dashed border-slate-300 mb-3" />
 
           {/* Items */}
           <div className="flex flex-col gap-3 mb-3">
@@ -225,7 +216,7 @@ export function TicketModal({ venta, onClose }: TicketModalProps) {
           </div>
 
           {/* Footer */}
-          <p className="text-center text-[11px] text-slate-400 mt-4 mb-1">¡Gracias por tu preferencia!</p>
+          <p className="text-center text-[10px] text-slate-400 mt-4 mb-1 uppercase tracking-wide">{BUSINESS_FOOTER}</p>
         </div>
 
         {/* Descargar PDF button */}
