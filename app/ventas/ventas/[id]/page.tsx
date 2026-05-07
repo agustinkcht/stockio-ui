@@ -20,7 +20,6 @@ import {
   XCircle,
   Truck,
   Wallet,
-  ScanLine,
 } from "lucide-react"
 import Image from "next/image"
 import { VENTAS } from "@/lib/data/ventas"
@@ -61,8 +60,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const [showExportDropdown, setShowExportDropdown] = useState(false)
   const [showMoreOptionsMenu, setShowMoreOptionsMenu] = useState(false)
   const [viewingItem, setViewingItem] = useState<VentaItem | null>(null)
-  const [entregaMode, setEntregaMode] = useState(false)
-  const [rightMode, setRightMode] = useState<"resumen" | "cobro">("resumen")
+
   const exportDropdownRef = useRef<HTMLDivElement>(null)
   const moreMenuRef = useRef<HTMLDivElement>(null)
 
@@ -298,254 +296,124 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
               </div>
             </div>
 
-            {/* Items Grid + Totals side by side */}
-            <div className="flex-1 overflow-y-auto px-6 pb-6 mt-4">
+            <div className="flex-1 overflow-y-auto px-6 pb-6 mt-4 space-y-4">
+
+              {/* Row 1: Items grid + Resumen */}
               <div className="grid grid-cols-3 gap-4 items-start">
 
-              {/* Left: Items card (col-span-2) */}
-              <div className="col-span-2">
-              <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm overflow-hidden">
-
-                {/* ── Entrega header ── */}
-                <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Truck className={`w-4 h-4 ${entregaPct === 100 ? "text-emerald-500" : entregaPct > 0 ? "text-amber-500" : "text-slate-400"}`} />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-slate-800">
-                          {entregaPct === 100 ? "Entregado" : entregaPct > 0 ? "Entrega parcial" : "Pendiente de entrega"}
-                        </span>
-                        <span className={`text-xs font-semibold tabular-nums ${entregaPct === 100 ? "text-emerald-600" : entregaPct > 0 ? "text-amber-600" : "text-slate-400"}`}>
-                          {entregaPct}%
-                        </span>
+                {/* Items card (col-span-2) */}
+                <div className="col-span-2">
+                  <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm overflow-hidden">
+                    {/* Grid Header */}
+                    <div className="bg-slate-100 border-b border-slate-200/80">
+                      <div className="grid grid-cols-[2.5fr_0.7fr_1.2fr_1.2fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        <div className="flex items-center px-4">Item</div>
+                        <div className="flex items-center justify-center">Cantidad</div>
+                        <div className="flex items-center justify-center">Precio Unit.</div>
+                        <div className="flex items-center justify-end pr-4">Subtotal</div>
                       </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <div className="w-32 h-1 bg-slate-200 rounded-full overflow-hidden">
+                    </div>
+
+                    {/* Items */}
+                    {venta.items.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-16">
+                        <Package className="w-12 h-12 text-slate-200 mb-3" />
+                        <p className="text-slate-500 mb-1">Sin items</p>
+                        <p className="text-xs text-slate-400">Esta venta no tiene items asociados</p>
+                      </div>
+                    ) : (
+                      venta.items.map((item, idx) => {
+                        const display = getVentaItemDisplay(item)
+                        const baseGross = item.unitPrice * item.quantity
+                        const discountAmount =
+                          item.discountType === "percent"
+                            ? baseGross * (item.discount / 100)
+                            : item.discount * item.quantity
+                        const adjustedUnitPrice = Math.max(0, item.unitPrice - (discountAmount / Math.max(item.quantity, 1)))
+
+                        return (
                           <div
-                            className={`h-full rounded-full transition-all ${entregaPct === 100 ? "bg-emerald-500" : entregaPct > 0 ? "bg-amber-400" : "bg-slate-300"}`}
-                            style={{ width: `${entregaPct}%` }}
-                          />
-                        </div>
-                        <span className="text-[10px] text-slate-400 tabular-nums">{entregadasUnidades} / {totalUnidades} uds</span>
-                      </div>
-                    </div>
-                  </div>
-                  {/* Toggle entrega mode */}
-                  <button
-                    type="button"
-                    onClick={() => setEntregaMode(!entregaMode)}
-                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
-                      entregaMode
-                        ? "bg-slate-900 text-white"
-                        : "bg-slate-100 text-slate-500 hover:bg-slate-200"
-                    }`}
-                  >
-                    <ScanLine className="w-3.5 h-3.5" />
-                    {entregaMode ? "Ver detalle" : "Ver entrega"}
-                  </button>
-                </div>
-
-                {/* ── Grid Header ── */}
-                <div className="bg-slate-100 border-b border-slate-200/80">
-                  {entregaMode ? (
-                    <div className="grid grid-cols-[2.5fr_0.7fr_1fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      <div className="flex items-center px-4">Item</div>
-                      <div className="flex items-center justify-center">Cantidad</div>
-                      <div className="flex items-center justify-center pr-4">Entregado</div>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-[2.5fr_0.7fr_1.2fr_1.2fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      <div className="flex items-center px-4">Item</div>
-                      <div className="flex items-center justify-center">Cantidad</div>
-                      <div className="flex items-center justify-center">Precio Unit.</div>
-                      <div className="flex items-center justify-end pr-4">Subtotal</div>
-                    </div>
-                  )}
-                </div>
-
-                {/* ── Items ── */}
-                {venta.items.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16">
-                    <Package className="w-12 h-12 text-slate-200 mb-3" />
-                    <p className="text-slate-500 mb-1">Sin items</p>
-                    <p className="text-xs text-slate-400">Esta venta no tiene items asociados</p>
-                  </div>
-                ) : (
-                  venta.items.map((item, idx) => {
-                    const display = getVentaItemDisplay(item)
-                    const baseGross = item.unitPrice * item.quantity
-                    const discountAmount =
-                      item.discountType === "percent"
-                        ? baseGross * (item.discount / 100)
-                        : item.discount * item.quantity
-                    const adjustedUnitPrice = Math.max(0, item.unitPrice - (discountAmount / Math.max(item.quantity, 1)))
-                    const delivered = itemEntregaMap.get(idx) ?? 0
-                    const itemPct = item.quantity === 0 ? 0 : Math.round((delivered / item.quantity) * 100)
-
-                    return (
-                      <div
-                        key={`${venta.id}-item-${idx}`}
-                        onClick={() => setViewingItem(item)}
-                        className="border-b border-slate-100 last:border-b-0 transition-colors hover:bg-slate-50/50 cursor-pointer"
-                      >
-                        {entregaMode ? (
-                          <div className="grid grid-cols-[2.5fr_0.7fr_1fr] h-[56px]">
-                            {/* Item Info */}
-                            <div className="flex items-center gap-3 px-4">
-                              <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-                                <Image src={getCategoryImage(display.categoria || "") || "/placeholder.svg"} alt={item.name} width={32} height={32} className="object-cover" />
-                              </div>
-                              <div className="min-w-0">
-                                <p className="text-sm font-medium text-gray-900 truncate leading-tight">{display.name}</p>
-                                {(display.marca || display.categoria) && (
-                                  <div className="flex items-center gap-1 mt-0.5">
-                                    {display.marca && <span className="text-xs text-slate-400 leading-tight">{display.marca}</span>}
-                                    {display.marca && display.categoria && <span className="text-xs text-slate-300">·</span>}
-                                    {display.categoria && <span className="text-xs text-slate-400 leading-tight">{display.categoria}</span>}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            {/* Cantidad col */}
-                            <div className="flex items-center justify-center">
-                              <span className="text-sm text-slate-700 tabular-nums">{item.quantity}</span>
-                            </div>
-                            {/* Entregado col */}
-                            <div className="flex flex-col items-center justify-center pr-4 gap-1">
-                              {itemPct === 100 ? (
-                                <div className="flex items-center gap-1.5">
-                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                                  <span className="text-sm font-medium text-emerald-700 tabular-nums">{item.quantity}</span>
+                            key={`${venta.id}-item-${idx}`}
+                            onClick={() => setViewingItem(item)}
+                            className="border-b border-slate-100 last:border-b-0 transition-colors hover:bg-slate-50/50 cursor-pointer"
+                          >
+                            <div className="grid grid-cols-[2.5fr_0.7fr_1.2fr_1.2fr] h-[56px]">
+                              {/* Item Info */}
+                              <div className="flex items-center gap-3 px-4">
+                                <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                  <Image src={getCategoryImage(display.categoria || "") || "/placeholder.svg"} alt={item.name} width={32} height={32} className="object-cover" />
                                 </div>
-                              ) : (
-                                <>
-                                  <div className="flex items-baseline gap-1 tabular-nums">
-                                    <span className={`text-sm font-semibold ${delivered > 0 ? "text-amber-600" : "text-slate-400"}`}>{delivered}</span>
-                                    <span className="text-xs text-slate-400">/ {item.quantity}</span>
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-1.5 min-w-0">
+                                    <p className="text-sm font-medium text-gray-900 truncate leading-tight">{display.name}</p>
+                                    {display.tags.length > 0 && (
+                                      <div className="flex items-center gap-1 shrink-0">
+                                        {display.tags.map((tag, i) => (
+                                          <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-600 whitespace-nowrap">{tag}</span>
+                                        ))}
+                                      </div>
+                                    )}
                                   </div>
-                                  <div className="w-14 h-1 bg-slate-200 rounded-full overflow-hidden">
-                                    <div className={`h-full rounded-full ${delivered > 0 ? "bg-amber-400" : "bg-slate-300"}`} style={{ width: `${itemPct}%` }} />
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="grid grid-cols-[2.5fr_0.7fr_1.2fr_1.2fr] h-[56px]">
-                            {/* Item Info */}
-                            <div className="flex items-center gap-3 px-4">
-                              <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-                                <Image src={getCategoryImage(display.categoria || "") || "/placeholder.svg"} alt={item.name} width={32} height={32} className="object-cover" />
-                              </div>
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-1.5 min-w-0">
-                                  <p className="text-sm font-medium text-gray-900 truncate leading-tight">{display.name}</p>
-                                  {display.tags.length > 0 && (
-                                    <div className="flex items-center gap-1 shrink-0">
-                                      {display.tags.map((tag, i) => (
-                                        <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-600 whitespace-nowrap">{tag}</span>
-                                      ))}
+                                  {(display.marca || display.categoria) && (
+                                    <div className="flex items-center gap-1 mt-0.5">
+                                      {display.marca && <span className="text-xs text-slate-400 leading-tight">{display.marca}</span>}
+                                      {display.marca && display.categoria && <span className="text-xs text-slate-300">·</span>}
+                                      {display.categoria && <span className="text-xs text-slate-400 leading-tight">{display.categoria}</span>}
                                     </div>
                                   )}
                                 </div>
-                                {(display.marca || display.categoria) && (
-                                  <div className="flex items-center gap-1 mt-0.5">
-                                    {display.marca && <span className="text-xs text-slate-400 leading-tight">{display.marca}</span>}
-                                    {display.marca && display.categoria && <span className="text-xs text-slate-300">·</span>}
-                                    {display.categoria && <span className="text-xs text-slate-400 leading-tight">{display.categoria}</span>}
-                                  </div>
+                              </div>
+                              {/* Cantidad */}
+                              <div className="flex items-center justify-center">
+                                <span className="text-sm text-slate-700 tabular-nums">{item.quantity}</span>
+                              </div>
+                              {/* Precio Unit */}
+                              <div className="flex flex-col items-center justify-center gap-0.5">
+                                {item.discount > 0 ? (
+                                  <>
+                                    <span className="text-[10px] text-slate-400 line-through tabular-nums leading-tight">${item.unitPrice.toLocaleString("es-AR")}</span>
+                                    <span className="text-[10px] text-red-500 font-medium leading-tight">
+                                      {item.discountType === "percent" ? `${item.discount}% OFF` : `-$${item.discount.toLocaleString("es-AR")} OFF`}
+                                    </span>
+                                    <span className="text-sm text-slate-800 font-medium tabular-nums leading-tight">${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}</span>
+                                  </>
+                                ) : (
+                                  <span className="text-sm text-slate-700 tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
                                 )}
                               </div>
-                            </div>
-                            {/* Cantidad */}
-                            <div className="flex items-center justify-center">
-                              <span className="text-sm text-slate-700 tabular-nums">{item.quantity}</span>
-                            </div>
-                            {/* Precio Unit — with strikethrough + discount badge if applicable */}
-                            <div className="flex flex-col items-center justify-center gap-0.5">
-                              {item.discount > 0 ? (
-                                <>
-                                  <span className="text-[10px] text-slate-400 line-through tabular-nums leading-tight">
-                                    ${item.unitPrice.toLocaleString("es-AR")}
-                                  </span>
-                                  <span className="text-[10px] text-red-500 font-medium leading-tight">
-                                    {item.discountType === "percent"
-                                      ? `${item.discount}% OFF`
-                                      : `-$${item.discount.toLocaleString("es-AR")} OFF`}
-                                  </span>
-                                  <span className="text-sm text-slate-800 font-medium tabular-nums leading-tight">
-                                    ${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}
-                                  </span>
-                                </>
-                              ) : (
-                                <span className="text-sm text-slate-700 tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
-                              )}
-                            </div>
-                            {/* Subtotal */}
-                            <div className="flex flex-col items-end justify-center pr-4 gap-0.5">
-                              {item.discount > 0 && (
-                                <span className="text-[10px] text-slate-400 line-through tabular-nums leading-tight">
-                                  ${(item.unitPrice * item.quantity).toLocaleString("es-AR")}
-                                </span>
-                              )}
-                              <span className="text-sm font-semibold text-slate-900 tabular-nums leading-tight">
-                                ${item.total.toLocaleString("es-AR")}
-                              </span>
+                              {/* Subtotal */}
+                              <div className="flex flex-col items-end justify-center pr-4 gap-0.5">
+                                {item.discount > 0 && (
+                                  <span className="text-[10px] text-slate-400 line-through tabular-nums leading-tight">${(item.unitPrice * item.quantity).toLocaleString("es-AR")}</span>
+                                )}
+                                <span className="text-sm font-semibold text-slate-900 tabular-nums leading-tight">${item.total.toLocaleString("es-AR")}</span>
+                              </div>
                             </div>
                           </div>
-                        )}
+                        )
+                      })
+                    )}
+                  </div>
+                </div>
+
+                {/* Resumen card (col-span-1) */}
+                {venta.items.length > 0 && (
+                  <div className="col-span-1">
+                    <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm overflow-hidden">
+                      <div className="bg-slate-100 border-b border-slate-200/80 h-9 flex items-center px-4">
+                        <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Resumen</span>
                       </div>
-                    )
-                  })
-                )}
-              </div>
-              </div>{/* end col-span-2 */}
-
-              {/* Right: Resumen / Cobro card (col-span-1) */}
-              {venta.items.length > 0 && (
-                <div className="col-span-1">
-                  <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm overflow-hidden">
-
-                    {/* ── Mode toggle header ── */}
-                    <div className="h-9 bg-slate-100 border-b border-slate-200/80 flex items-center px-1 gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setRightMode("resumen")}
-                        className={`flex-1 h-7 rounded text-[11px] font-medium transition-colors ${rightMode === "resumen" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
-                      >
-                        Resumen
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setRightMode("cobro")}
-                        className={`flex-1 h-7 rounded text-[11px] font-medium transition-colors flex items-center justify-center gap-1.5 ${rightMode === "cobro" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
-                      >
-                        <Wallet className="w-3 h-3" />
-                        Cobro
-                        <span className={`text-[10px] font-semibold tabular-nums ${pagoPct === 100 ? "text-emerald-600" : pagoPct > 0 ? "text-amber-600" : "text-slate-400"}`}>
-                          {pagoPct}%
-                        </span>
-                      </button>
-                    </div>
-
-                    {rightMode === "resumen" ? (
-                      /* ── Resumen view ── */
                       <div className="px-4 py-3 space-y-2">
-                        {/* Subtotal — plain row like the others */}
                         <div className="flex justify-between text-sm">
                           <span className="text-slate-500">Subtotal</span>
                           <span className="text-slate-700 tabular-nums">${Math.round(venta.subtotal).toLocaleString("es-AR")}</span>
                         </div>
-
-                        {/* Promociones */}
                         {itemDiscountAmount > 0 && (
                           <div className="flex justify-between text-sm">
                             <span className="text-red-500">Promociones</span>
                             <span className="text-red-500 tabular-nums">−${Math.round(itemDiscountAmount).toLocaleString("es-AR")}</span>
                           </div>
                         )}
-
-                        {/* Descuento global */}
                         {venta.descuento > 0 && (
                           <div className="flex justify-between text-sm">
                             <span className="text-slate-500">
@@ -559,76 +427,143 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             </span>
                           </div>
                         )}
-
-                        {/* Total */}
                         <div className="flex justify-between text-sm font-semibold pt-2 border-t border-slate-200">
                           <span className="text-slate-800">Total</span>
                           <span className="text-slate-900 tabular-nums">${Math.round(venta.total).toLocaleString("es-AR")}</span>
                         </div>
-
-                        {/* Observaciones */}
                         {venta.observaciones && (
-                          <div className="pt-2 border-t border-slate-100">
-                            <div className="flex justify-between text-[11px] gap-3">
-                              <span className="text-slate-400 shrink-0">Observaciones</span>
-                              <span className="text-slate-600 text-right">{venta.observaciones}</span>
-                            </div>
+                          <div className="pt-2 border-t border-slate-100 flex justify-between text-[11px] gap-3">
+                            <span className="text-slate-400 shrink-0">Observaciones</span>
+                            <span className="text-slate-600 text-right">{venta.observaciones}</span>
                           </div>
                         )}
                       </div>
-                    ) : (
-                      /* ── Cobro view ── */
-                      <div>
-                        {/* Status + bar */}
-                        <div className="px-4 pt-4 pb-3 border-b border-slate-100">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-semibold text-slate-800">
-                              {pagoPct === 100 ? "Cobro completo" : pagoPct > 0 ? "Cobro parcial" : "Sin cobro"}
-                            </span>
-                            <span className={`text-sm font-bold tabular-nums ${pagoPct === 100 ? "text-emerald-600" : pagoPct > 0 ? "text-amber-600" : "text-slate-400"}`}>
-                              {pagoPct}%
-                            </span>
-                          </div>
-                          <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Row 2: Entrega + Cobro */}
+              {venta.items.length > 0 && (
+                <div className="grid grid-cols-3 gap-4 items-start">
+
+                  {/* Entrega card (col-span-2) */}
+                  <div className="col-span-2">
+                    <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm overflow-hidden">
+                      {/* Header */}
+                      <div className="bg-slate-100 border-b border-slate-200/80 h-9 flex items-center justify-between px-4">
+                        <div className="flex items-center gap-2">
+                          <Truck className={`w-3.5 h-3.5 ${entregaPct === 100 ? "text-emerald-500" : entregaPct > 0 ? "text-amber-500" : "text-slate-400"}`} />
+                          <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Entrega</span>
+                          <span className={`text-xs font-semibold tabular-nums ${entregaPct === 100 ? "text-emerald-600" : entregaPct > 0 ? "text-amber-600" : "text-slate-400"}`}>
+                            {entregaPct}%
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-24 h-1 bg-slate-200 rounded-full overflow-hidden">
                             <div
-                              className={`h-full rounded-full transition-all ${pagoPct === 100 ? "bg-emerald-500" : pagoPct > 0 ? "bg-amber-400" : "bg-slate-300"}`}
-                              style={{ width: `${pagoPct}%` }}
+                              className={`h-full rounded-full transition-all ${entregaPct === 100 ? "bg-emerald-500" : entregaPct > 0 ? "bg-amber-400" : "bg-slate-300"}`}
+                              style={{ width: `${entregaPct}%` }}
                             />
                           </div>
-                        </div>
-
-                        {/* Cobrado / Restante */}
-                        <div className="px-4 py-3 border-b border-slate-100 flex justify-between">
-                          <div className="flex flex-col gap-0.5">
-                            <span className="text-[10px] text-slate-400 uppercase tracking-wide">Cobrado</span>
-                            <span className="text-sm font-semibold text-slate-800 tabular-nums">${montoCobrado.toLocaleString("es-AR")}</span>
-                          </div>
-                          {montoRestante > 0 && (
-                            <div className="flex flex-col gap-0.5 items-end">
-                              <span className="text-[10px] text-slate-400 uppercase tracking-wide">Restante</span>
-                              <span className="text-sm font-semibold text-amber-600 tabular-nums">${montoRestante.toLocaleString("es-AR")}</span>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Medio + Total */}
-                        <div className="px-4 py-3 space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-slate-500">Medio de pago</span>
-                            <span className="text-slate-700 font-medium">{metodoPagoLabels[venta.metodoPago]}</span>
-                          </div>
-                          <div className="flex justify-between text-sm font-semibold pt-2 border-t border-slate-200">
-                            <span className="text-slate-800">Total</span>
-                            <span className="text-slate-900 tabular-nums">${Math.round(venta.total).toLocaleString("es-AR")}</span>
-                          </div>
+                          <span className="text-[10px] text-slate-400 tabular-nums">{entregadasUnidades} / {totalUnidades} uds</span>
                         </div>
                       </div>
-                    )}
+                      {/* Per-item entrega grid */}
+                      <div className="bg-slate-100/50 border-b border-slate-200/80">
+                        <div className="grid grid-cols-[2.5fr_0.7fr_1fr] h-8 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                          <div className="flex items-center px-4">Item</div>
+                          <div className="flex items-center justify-center">Cantidad</div>
+                          <div className="flex items-center justify-center pr-4">Entregado</div>
+                        </div>
+                      </div>
+                      {venta.items.map((item, idx) => {
+                        const display = getVentaItemDisplay(item)
+                        const delivered = itemEntregaMap.get(idx) ?? 0
+                        const itemPct = item.quantity === 0 ? 0 : Math.round((delivered / item.quantity) * 100)
+                        return (
+                          <div key={`entrega-${idx}`} className="border-b border-slate-100 last:border-b-0">
+                            <div className="grid grid-cols-[2.5fr_0.7fr_1fr] h-[48px]">
+                              <div className="flex items-center gap-2 px-4">
+                                <p className="text-sm text-slate-700 truncate leading-tight">{display.name}</p>
+                              </div>
+                              <div className="flex items-center justify-center">
+                                <span className="text-sm text-slate-700 tabular-nums">{item.quantity}</span>
+                              </div>
+                              <div className="flex flex-col items-center justify-center pr-4 gap-1">
+                                {itemPct === 100 ? (
+                                  <div className="flex items-center gap-1.5">
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                                    <span className="text-sm font-medium text-emerald-700 tabular-nums">{item.quantity}</span>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <div className="flex items-baseline gap-1 tabular-nums">
+                                      <span className={`text-sm font-semibold ${delivered > 0 ? "text-amber-600" : "text-slate-400"}`}>{delivered}</span>
+                                      <span className="text-xs text-slate-400">/ {item.quantity}</span>
+                                    </div>
+                                    <div className="w-14 h-1 bg-slate-200 rounded-full overflow-hidden">
+                                      <div className={`h-full rounded-full ${delivered > 0 ? "bg-amber-400" : "bg-slate-300"}`} style={{ width: `${itemPct}%` }} />
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
+
+                  {/* Cobro card (col-span-1) */}
+                  <div className="col-span-1">
+                    <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm overflow-hidden">
+                      {/* Header */}
+                      <div className="bg-slate-100 border-b border-slate-200/80 h-9 flex items-center justify-between px-4">
+                        <div className="flex items-center gap-2">
+                          <Wallet className={`w-3.5 h-3.5 ${pagoPct === 100 ? "text-emerald-500" : pagoPct > 0 ? "text-amber-500" : "text-slate-400"}`} />
+                          <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Cobro</span>
+                          <span className={`text-xs font-semibold tabular-nums ${pagoPct === 100 ? "text-emerald-600" : pagoPct > 0 ? "text-amber-600" : "text-slate-400"}`}>
+                            {pagoPct}%
+                          </span>
+                        </div>
+                        <div className="w-16 h-1 bg-slate-200 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${pagoPct === 100 ? "bg-emerald-500" : pagoPct > 0 ? "bg-amber-400" : "bg-slate-300"}`}
+                            style={{ width: `${pagoPct}%` }}
+                          />
+                        </div>
+                      </div>
+                      {/* Cobrado / Restante */}
+                      <div className="px-4 py-3 border-b border-slate-100 flex justify-between">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[10px] text-slate-400 uppercase tracking-wide">Cobrado</span>
+                          <span className="text-sm font-semibold text-slate-800 tabular-nums">${montoCobrado.toLocaleString("es-AR")}</span>
+                        </div>
+                        {montoRestante > 0 && (
+                          <div className="flex flex-col gap-0.5 items-end">
+                            <span className="text-[10px] text-slate-400 uppercase tracking-wide">Restante</span>
+                            <span className="text-sm font-semibold text-amber-600 tabular-nums">${montoRestante.toLocaleString("es-AR")}</span>
+                          </div>
+                        )}
+                      </div>
+                      {/* Medio + Total */}
+                      <div className="px-4 py-3 space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-500">Medio</span>
+                          <span className="text-slate-700 font-medium">{metodoPagoLabels[venta.metodoPago]}</span>
+                        </div>
+                        <div className="flex justify-between text-sm font-semibold pt-2 border-t border-slate-200">
+                          <span className="text-slate-800">Total</span>
+                          <span className="text-slate-900 tabular-nums">${Math.round(venta.total).toLocaleString("es-AR")}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
               )}
 
-              </div>{/* end grid grid-cols-3 */}
             </div>
           </main>
         </div>
