@@ -18,10 +18,6 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
-  Truck,
-  Wallet,
-  Plus,
-  Check,
 } from "lucide-react"
 import Image from "next/image"
 import { VENTAS } from "@/lib/data/ventas"
@@ -29,12 +25,6 @@ import type { Venta, VentaItem } from "@/lib/types"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import { VentaItemDetailModal } from "@/components/ventas/venta-item-detail-modal"
-import {
-  getVentaCobros,
-  getVentaItemEntregas,
-  getEntregaTotals,
-  getCobroTotals,
-} from "@/lib/utils/venta-derived-state"
 
 const estadoLabels: Record<Venta["estado"], string> = {
   completada: "Completada",
@@ -126,12 +116,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
       it.discountType === "percent" ? baseGross * (it.discount / 100) : it.discount * it.quantity
     return sum + discount
   }, 0)
-
-  // Derived cobro & entrega state (mocked deterministically; would come from backend)
-  const cobros = getVentaCobros(venta)
-  const cobroTotals = getCobroTotals(venta, cobros)
-  const entregaMap = getVentaItemEntregas(venta)
-  const entregaTotals = getEntregaTotals(venta, entregaMap)
 
   const breadcrumbs = [
     { label: "Ventas" },
@@ -293,49 +277,11 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
               {/* Left: Items grid (col-span-2) */}
               <div className="col-span-2">
               <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm">
-                {/* Entrega progress strip */}
-                <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between rounded-t-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2">
-                      <Truck className="w-4 h-4 text-slate-500" />
-                      <h3 className="text-sm font-semibold text-slate-800">Entrega</h3>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-24 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all ${
-                            entregaTotals.percent === 100
-                              ? "bg-emerald-500"
-                              : entregaTotals.percent > 0
-                                ? "bg-amber-500"
-                                : "bg-slate-300"
-                          }`}
-                          style={{ width: `${entregaTotals.percent}%` }}
-                        />
-                      </div>
-                      <span
-                        className={`text-xs font-semibold tabular-nums ${
-                          entregaTotals.percent === 100
-                            ? "text-emerald-600"
-                            : entregaTotals.percent > 0
-                              ? "text-amber-600"
-                              : "text-slate-400"
-                        }`}
-                      >
-                        {entregaTotals.percent}%
-                      </span>
-                    </div>
-                  </div>
-                  <span className="text-xs text-slate-400 tabular-nums">
-                    {entregaTotals.deliveredUnidades} de {entregaTotals.totalUnidades} uds entregadas
-                  </span>
-                </div>
-
                 {/* Grid Header */}
-                <div className="bg-slate-50 border-b border-slate-200/80">
-                  <div className="grid grid-cols-[2.5fr_0.9fr_1fr_auto_1.2fr_auto_1.2fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                <div className="bg-slate-100 border-b border-slate-200/80 rounded-t-lg">
+                  <div className="grid grid-cols-[2.5fr_0.8fr_1fr_auto_1.2fr_auto_1.2fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
                     <div className="flex items-center px-4">Item</div>
-                    <div className="flex items-center justify-center">Cant. / Entrega</div>
+                    <div className="flex items-center justify-center">Cantidad</div>
                     <div className="flex items-center justify-center">Precio Unit.</div>
                     <div className="flex items-center justify-center w-6 text-slate-300">→</div>
                     <div className="flex items-center justify-center">Promoción</div>
@@ -361,23 +307,13 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         : item.discount * item.quantity
                     const adjustedUnitPrice = Math.max(0, item.unitPrice - (discountAmount / Math.max(item.quantity, 1)))
 
-                    const delivered = entregaMap.get(`${item.sku}-${idx}`) ?? 0
-                    const itemPercent =
-                      item.quantity === 0 ? 0 : Math.round((delivered / item.quantity) * 100)
-                    const accent =
-                      itemPercent === 100
-                        ? "border-l-emerald-400"
-                        : itemPercent > 0
-                          ? "border-l-amber-400"
-                          : "border-l-slate-200"
-
                     return (
                       <div
                         key={`${venta.id}-item-${idx}`}
                         onClick={() => setViewingItem(item)}
-                        className={`border-b border-slate-100 last:border-b-0 transition-colors hover:bg-slate-50/50 cursor-pointer border-l-2 ${accent}`}
+                        className="border-b border-slate-100 last:border-b-0 transition-colors hover:bg-slate-50/50 cursor-pointer"
                       >
-                        <div className="grid grid-cols-[2.5fr_0.9fr_1fr_auto_1.2fr_auto_1.2fr] min-h-[72px]">
+                        <div className="grid grid-cols-[2.5fr_0.8fr_1fr_auto_1.2fr_auto_1.2fr] min-h-[72px]">
                           {/* Item Info */}
                           <div className="flex items-center gap-3 px-4 py-3">
                             <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
@@ -424,40 +360,9 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             </div>
                           </div>
 
-                          {/* Cantidad / Entrega */}
-                          <div className="flex flex-col items-center justify-center gap-1 px-2">
-                            {itemPercent === 100 ? (
-                              <div className="flex items-center gap-1.5">
-                                <Check className="w-3.5 h-3.5 text-emerald-500" />
-                                <span className="text-sm text-slate-700 tabular-nums">
-                                  {item.quantity}
-                                </span>
-                                <span className="text-[10px] text-slate-400">uds</span>
-                              </div>
-                            ) : (
-                              <>
-                                <div className="flex items-baseline gap-1 tabular-nums">
-                                  <span
-                                    className={`text-sm font-medium ${
-                                      itemPercent > 0 ? "text-amber-600" : "text-slate-400"
-                                    }`}
-                                  >
-                                    {delivered}
-                                  </span>
-                                  <span className="text-xs text-slate-400">/</span>
-                                  <span className="text-sm text-slate-700">{item.quantity}</span>
-                                  <span className="text-[10px] text-slate-400 ml-0.5">uds</span>
-                                </div>
-                                <div className="w-14 h-1 bg-slate-200 rounded-full overflow-hidden">
-                                  <div
-                                    className={`h-full rounded-full transition-all ${
-                                      itemPercent > 0 ? "bg-amber-400" : "bg-slate-300"
-                                    }`}
-                                    style={{ width: `${itemPercent}%` }}
-                                  />
-                                </div>
-                              </>
-                            )}
+                          {/* Cantidad */}
+                          <div className="flex items-center justify-center">
+                            <span className="text-sm text-slate-700">{item.quantity}</span>
                           </div>
 
                           {/* Precio Unit */}
@@ -508,95 +413,35 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
               </div>
               </div>{/* end col-span-2 items grid wrapper */}
 
-              {/* Right: Cobro & Total card (col-span-1) */}
+              {/* Right: Totals card (col-span-1) */}
               {venta.items.length > 0 && (
                 <div className="col-span-1">
-                  <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm flex flex-col">
-                    {/* Cobro progress strip */}
-                    <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between rounded-t-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2">
-                          <Wallet className="w-4 h-4 text-slate-500" />
-                          <h3 className="text-sm font-semibold text-slate-800">Cobro</h3>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-20 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                            <div
-                              className={`h-full rounded-full transition-all ${
-                                cobroTotals.percent === 100
-                                  ? "bg-emerald-500"
-                                  : cobroTotals.percent > 0
-                                    ? "bg-amber-500"
-                                    : "bg-slate-300"
-                              }`}
-                              style={{ width: `${cobroTotals.percent}%` }}
-                            />
-                          </div>
-                          <span
-                            className={`text-xs font-semibold tabular-nums ${
-                              cobroTotals.percent === 100
-                                ? "text-emerald-600"
-                                : cobroTotals.percent > 0
-                                  ? "text-amber-600"
-                                  : "text-slate-400"
-                            }`}
-                          >
-                            {cobroTotals.percent}%
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Cobros list */}
-                    {cobros.length > 0 ? (
-                      <div className="divide-y divide-slate-100">
-                        {cobros.map((cobro) => (
-                          <div key={cobro.id} className="px-4 py-2.5 flex items-center gap-3">
-                            <div className="text-[11px] text-slate-500 tabular-nums w-14 shrink-0">
-                              {new Date(cobro.date).toLocaleDateString("es-AR", {
-                                day: "2-digit",
-                                month: "short",
-                              })}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="text-sm font-medium text-slate-800 tabular-nums">
-                                ${cobro.amount.toLocaleString("es-AR")}
-                              </div>
-                              <div className="text-[10px] text-slate-400 capitalize">
-                                {metodoPagoLabels[cobro.medioPago]}
-                              </div>
-                            </div>
-                            <Receipt className="w-3.5 h-3.5 text-slate-300" />
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="px-4 py-3 text-center">
-                        <p className="text-[11px] text-slate-400">Sin cobros registrados</p>
-                      </div>
-                    )}
-
-                    {/* Financial breakdown */}
-                    <div className="px-4 py-3 border-t border-slate-100 space-y-1.5 bg-slate-50/40">
-                      <div className="flex justify-between text-xs">
+                  <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm p-4">
+                    <div className="space-y-2">
+                      {/* Subtotal */}
+                      <div className="flex justify-between text-sm">
                         <span className="text-slate-500">Subtotal</span>
-                        <span className="text-slate-700 tabular-nums">
+                        <span className="text-slate-700">
                           ${Math.round(venta.subtotal).toLocaleString("es-AR")}
                         </span>
                       </div>
+
+                      {/* Promociones */}
                       {itemDiscountAmount > 0 && (
-                        <div className="flex justify-between text-xs">
+                        <div className="flex justify-between text-sm">
                           <span className="text-red-500">Promociones</span>
-                          <span className="text-red-500 tabular-nums">
+                          <span className="text-red-500">
                             -${Math.round(itemDiscountAmount).toLocaleString("es-AR")}
                           </span>
                         </div>
                       )}
+
+                      {/* Descuento global */}
                       {venta.descuento > 0 && (
-                        <div className="flex justify-between text-xs">
+                        <div className="flex justify-between text-sm">
                           <span className="text-slate-500">
-                            Descuento
-                            <span className="text-[10px] text-slate-400 ml-1">
+                            Descuento global
+                            <span className="text-xs text-slate-400 ml-1">
                               (
                               {venta.descuentoTipo === "percent"
                                 ? `${venta.descuento}%`
@@ -604,7 +449,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                               )
                             </span>
                           </span>
-                          <span className="text-red-500 tabular-nums">
+                          <span className="text-red-500">
                             -$
                             {Math.round(
                               venta.descuentoTipo === "percent"
@@ -614,59 +459,28 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                           </span>
                         </div>
                       )}
-                      <div className="flex justify-between text-sm font-semibold pt-1.5 border-t border-slate-200">
+
+                      {/* Total */}
+                      <div className="flex justify-between text-base font-semibold pt-2 border-t border-slate-200">
                         <span className="text-slate-700">Total</span>
-                        <span className="text-slate-900 tabular-nums">
+                        <span className="text-slate-900">
                           ${Math.round(venta.total).toLocaleString("es-AR")}
                         </span>
                       </div>
-                      {cobroTotals.restante > 0 && (
-                        <div className="flex justify-between text-[11px] pt-0.5">
-                          <span className="text-slate-400">Restante por cobrar</span>
-                          <span className="text-amber-600 font-medium tabular-nums">
-                            ${cobroTotals.restante.toLocaleString("es-AR")}
-                          </span>
-                        </div>
-                      )}
-                    </div>
 
-                    {/* Registrar Cobro CTA */}
-                    <div className="px-4 py-3 border-t border-slate-100">
-                      <button
-                        type="button"
-                        disabled={cobroTotals.percent === 100}
-                        className={`w-full h-9 text-xs font-medium rounded-md transition-colors flex items-center justify-center gap-1.5 ${
-                          cobroTotals.percent === 100
-                            ? "bg-emerald-50 text-emerald-700 cursor-not-allowed"
-                            : "bg-slate-900 text-white hover:bg-slate-800 cursor-pointer"
-                        }`}
-                      >
-                        {cobroTotals.percent === 100 ? (
-                          <>
-                            <Check className="w-3.5 h-3.5" />
-                            Cobrado
-                          </>
-                        ) : (
-                          <>
-                            <Plus className="w-3.5 h-3.5" />
-                            Registrar Cobro
-                          </>
+                      {/* Vendedor / Observaciones */}
+                      <div className="pt-3 mt-2 border-t border-slate-100 space-y-1">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-slate-400">Vendedor</span>
+                          <span className="text-slate-600">{venta.vendedor}</span>
+                        </div>
+                        {venta.observaciones && (
+                          <div className="flex justify-between text-xs gap-3">
+                            <span className="text-slate-400 shrink-0">Observaciones</span>
+                            <span className="text-slate-600 text-right">{venta.observaciones}</span>
+                          </div>
                         )}
-                      </button>
-                    </div>
-
-                    {/* Vendedor / Observaciones footer */}
-                    <div className="px-4 py-2.5 border-t border-slate-100 space-y-1">
-                      <div className="flex justify-between text-[11px]">
-                        <span className="text-slate-400">Vendedor</span>
-                        <span className="text-slate-600">{venta.vendedor}</span>
                       </div>
-                      {venta.observaciones && (
-                        <div className="flex justify-between text-[11px] gap-3">
-                          <span className="text-slate-400 shrink-0">Observaciones</span>
-                          <span className="text-slate-600 text-right">{venta.observaciones}</span>
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
