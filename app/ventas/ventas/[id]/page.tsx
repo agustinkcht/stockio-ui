@@ -13,8 +13,6 @@ import {
   Receipt,
   ReceiptText,
   ChevronLeft,
-  ChevronDown,
-  ChevronRight,
   MoreVertical,
   Package,
   Clock,
@@ -63,8 +61,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const [showExportDropdown, setShowExportDropdown] = useState(false)
   const [showMoreOptionsMenu, setShowMoreOptionsMenu] = useState(false)
   const [viewingItem, setViewingItem] = useState<VentaItem | null>(null)
-  const [subtotalExpanded, setSubtotalExpanded] = useState(false)
   const [entregaMode, setEntregaMode] = useState(false)
+  const [rightMode, setRightMode] = useState<"resumen" | "cobro">("resumen")
   const exportDropdownRef = useRef<HTMLDivElement>(null)
   const moreMenuRef = useRef<HTMLDivElement>(null)
 
@@ -350,16 +348,17 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                 {/* ── Grid Header ── */}
                 <div className="bg-slate-100 border-b border-slate-200/80">
                   {entregaMode ? (
-                    <div className="grid grid-cols-[2.5fr_1fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    <div className="grid grid-cols-[2.5fr_0.7fr_1fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
                       <div className="flex items-center px-4">Item</div>
-                      <div className="flex items-center justify-center pr-4">Entrega</div>
+                      <div className="flex items-center justify-center">Cantidad</div>
+                      <div className="flex items-center justify-center pr-4">Entregado</div>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-[2.5fr_0.8fr_1fr_1.2fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    <div className="grid grid-cols-[2.5fr_0.7fr_1.2fr_1.2fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
                       <div className="flex items-center px-4">Item</div>
                       <div className="flex items-center justify-center">Cantidad</div>
                       <div className="flex items-center justify-center">Precio Unit.</div>
-                      <div className="flex items-center justify-center pr-4">Promoción</div>
+                      <div className="flex items-center justify-end pr-4">Subtotal</div>
                     </div>
                   )}
                 </div>
@@ -390,7 +389,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         className="border-b border-slate-100 last:border-b-0 transition-colors hover:bg-slate-50/50 cursor-pointer"
                       >
                         {entregaMode ? (
-                          <div className="grid grid-cols-[2.5fr_1fr] h-[56px]">
+                          <div className="grid grid-cols-[2.5fr_0.7fr_1fr] h-[56px]">
                             {/* Item Info */}
                             <div className="flex items-center gap-3 px-4">
                               <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
@@ -407,12 +406,16 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                                 )}
                               </div>
                             </div>
-                            {/* Entrega col */}
+                            {/* Cantidad col */}
+                            <div className="flex items-center justify-center">
+                              <span className="text-sm text-slate-700 tabular-nums">{item.quantity}</span>
+                            </div>
+                            {/* Entregado col */}
                             <div className="flex flex-col items-center justify-center pr-4 gap-1">
                               {itemPct === 100 ? (
                                 <div className="flex items-center gap-1.5">
                                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                                  <span className="text-sm font-medium text-emerald-700 tabular-nums">{item.quantity} uds</span>
+                                  <span className="text-sm font-medium text-emerald-700 tabular-nums">{item.quantity}</span>
                                 </div>
                               ) : (
                                 <>
@@ -428,7 +431,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             </div>
                           </div>
                         ) : (
-                          <div className="grid grid-cols-[2.5fr_0.8fr_1fr_1.2fr] h-[56px]">
+                          <div className="grid grid-cols-[2.5fr_0.7fr_1.2fr_1.2fr] h-[56px]">
                             {/* Item Info */}
                             <div className="flex items-center gap-3 px-4">
                               <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
@@ -456,24 +459,38 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             </div>
                             {/* Cantidad */}
                             <div className="flex items-center justify-center">
-                              <span className="text-sm text-slate-700">{item.quantity}</span>
+                              <span className="text-sm text-slate-700 tabular-nums">{item.quantity}</span>
                             </div>
-                            {/* Precio Unit */}
-                            <div className="flex items-center justify-center">
-                              <span className="text-sm text-slate-700">${item.unitPrice.toLocaleString("es-AR")}</span>
-                            </div>
-                            {/* Promoción */}
-                            <div className="flex flex-col items-center justify-center pr-4">
+                            {/* Precio Unit — with strikethrough + discount badge if applicable */}
+                            <div className="flex flex-col items-center justify-center gap-0.5">
                               {item.discount > 0 ? (
                                 <>
-                                  <span className="text-sm text-red-500">
-                                    {item.discountType === "percent" ? `-${item.discount}%` : `-$${item.discount.toLocaleString("es-AR")}`}
+                                  <span className="text-[10px] text-slate-400 line-through tabular-nums leading-tight">
+                                    ${item.unitPrice.toLocaleString("es-AR")}
                                   </span>
-                                  <span className="text-[10px] text-slate-400 leading-tight">${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}</span>
+                                  <span className="text-[10px] text-red-500 font-medium leading-tight">
+                                    {item.discountType === "percent"
+                                      ? `${item.discount}% OFF`
+                                      : `-$${item.discount.toLocaleString("es-AR")} OFF`}
+                                  </span>
+                                  <span className="text-sm text-slate-800 font-medium tabular-nums leading-tight">
+                                    ${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}
+                                  </span>
                                 </>
                               ) : (
-                                <span className="text-xs text-slate-300">—</span>
+                                <span className="text-sm text-slate-700 tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
                               )}
+                            </div>
+                            {/* Subtotal */}
+                            <div className="flex flex-col items-end justify-center pr-4 gap-0.5">
+                              {item.discount > 0 && (
+                                <span className="text-[10px] text-slate-400 line-through tabular-nums leading-tight">
+                                  ${(item.unitPrice * item.quantity).toLocaleString("es-AR")}
+                                </span>
+                              )}
+                              <span className="text-sm font-semibold text-slate-900 tabular-nums leading-tight">
+                                ${item.total.toLocaleString("es-AR")}
+                              </span>
                             </div>
                           </div>
                         )}
@@ -484,141 +501,126 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
               </div>
               </div>{/* end col-span-2 */}
 
-              {/* Right: Cobro + Totals card (col-span-1) */}
+              {/* Right: Resumen / Cobro card (col-span-1) */}
               {venta.items.length > 0 && (
                 <div className="col-span-1">
                   <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm overflow-hidden">
 
-                    {/* ── Cobro header ── */}
-                    <div className="px-4 py-3 border-b border-slate-100">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <Wallet className={`w-4 h-4 ${pagoPct === 100 ? "text-emerald-500" : pagoPct > 0 ? "text-amber-500" : "text-slate-400"}`} />
-                          <span className="text-sm font-semibold text-slate-800">
-                            {pagoPct === 100 ? "Cobro completo" : pagoPct > 0 ? "Cobro parcial" : "Sin cobro"}
-                          </span>
-                          <span className={`text-xs font-semibold tabular-nums ${pagoPct === 100 ? "text-emerald-600" : pagoPct > 0 ? "text-amber-600" : "text-slate-400"}`}>
-                            {pagoPct}%
-                          </span>
+                    {/* ── Mode toggle header ── */}
+                    <div className="h-9 bg-slate-100 border-b border-slate-200/80 flex items-center px-1 gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setRightMode("resumen")}
+                        className={`flex-1 h-7 rounded text-[11px] font-medium transition-colors ${rightMode === "resumen" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                      >
+                        Resumen
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setRightMode("cobro")}
+                        className={`flex-1 h-7 rounded text-[11px] font-medium transition-colors flex items-center justify-center gap-1.5 ${rightMode === "cobro" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                      >
+                        <Wallet className="w-3 h-3" />
+                        Cobro
+                        <span className={`text-[10px] font-semibold tabular-nums ${pagoPct === 100 ? "text-emerald-600" : pagoPct > 0 ? "text-amber-600" : "text-slate-400"}`}>
+                          {pagoPct}%
+                        </span>
+                      </button>
+                    </div>
+
+                    {rightMode === "resumen" ? (
+                      /* ── Resumen view ── */
+                      <div className="px-4 py-3 space-y-2">
+                        {/* Subtotal — plain row like the others */}
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-500">Subtotal</span>
+                          <span className="text-slate-700 tabular-nums">${Math.round(venta.subtotal).toLocaleString("es-AR")}</span>
                         </div>
-                      </div>
-                      <div className="w-full h-1 bg-slate-200 rounded-full overflow-hidden mb-3">
-                        <div
-                          className={`h-full rounded-full transition-all ${pagoPct === 100 ? "bg-emerald-500" : pagoPct > 0 ? "bg-amber-400" : "bg-slate-300"}`}
-                          style={{ width: `${pagoPct}%` }}
-                        />
-                      </div>
-                      <div className="flex justify-between text-[11px]">
-                        <div className="flex flex-col gap-0.5">
-                          <span className="text-slate-400">Cobrado</span>
-                          <span className="font-semibold text-slate-800 tabular-nums">${montoCobrado.toLocaleString("es-AR")}</span>
+
+                        {/* Promociones */}
+                        {itemDiscountAmount > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-red-500">Promociones</span>
+                            <span className="text-red-500 tabular-nums">−${Math.round(itemDiscountAmount).toLocaleString("es-AR")}</span>
+                          </div>
+                        )}
+
+                        {/* Descuento global */}
+                        {venta.descuento > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-slate-500">
+                              Descuento
+                              <span className="text-[10px] text-slate-400 ml-1">
+                                ({venta.descuentoTipo === "percent" ? `${venta.descuento}%` : `$${venta.descuento.toLocaleString("es-AR")}`})
+                              </span>
+                            </span>
+                            <span className="text-red-500 tabular-nums">
+                              −${Math.round(venta.descuentoTipo === "percent" ? venta.subtotal * (venta.descuento / 100) : venta.descuento).toLocaleString("es-AR")}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Total */}
+                        <div className="flex justify-between text-sm font-semibold pt-2 border-t border-slate-200">
+                          <span className="text-slate-800">Total</span>
+                          <span className="text-slate-900 tabular-nums">${Math.round(venta.total).toLocaleString("es-AR")}</span>
                         </div>
-                        {montoRestante > 0 && (
-                          <div className="flex flex-col gap-0.5 items-end">
-                            <span className="text-slate-400">Restante</span>
-                            <span className="font-semibold text-amber-600 tabular-nums">${montoRestante.toLocaleString("es-AR")}</span>
+
+                        {/* Observaciones */}
+                        {venta.observaciones && (
+                          <div className="pt-2 border-t border-slate-100">
+                            <div className="flex justify-between text-[11px] gap-3">
+                              <span className="text-slate-400 shrink-0">Observaciones</span>
+                              <span className="text-slate-600 text-right">{venta.observaciones}</span>
+                            </div>
                           </div>
                         )}
                       </div>
-                      <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                        <span className="text-slate-400">Medio</span>
-                        <span className="text-slate-700 font-medium">{metodoPagoLabels[venta.metodoPago]}</span>
-                      </div>
-                    </div>
-
-                    {/* ── Subtotal section (collapsible) ── */}
-                    {/* Header row — same h-9 as grid header */}
-                    <button
-                      type="button"
-                      onClick={() => setSubtotalExpanded(!subtotalExpanded)}
-                      className="w-full h-9 bg-slate-100 border-b border-slate-200/80 flex items-center justify-between px-4 hover:bg-slate-200/40 transition-colors cursor-pointer rounded-t-lg"
-                    >
-                      <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Subtotal</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-slate-700 tabular-nums">
-                          ${Math.round(venta.subtotal).toLocaleString("es-AR")}
-                        </span>
-                        {subtotalExpanded
-                          ? <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                          : <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                        }
-                      </div>
-                    </button>
-
-                    {/* Per-item subtotal rows — h-[56px] matches grid rows exactly */}
-                    {subtotalExpanded && venta.items.map((item, idx) => {
-                      const baseGross = item.unitPrice * item.quantity
-                      const discountAmount =
-                        item.discountType === "percent"
-                          ? baseGross * (item.discount / 100)
-                          : item.discount * item.quantity
-                      const adjustedUnitPrice = Math.max(
-                        0,
-                        item.unitPrice - discountAmount / Math.max(item.quantity, 1),
-                      )
-                      return (
-                        <div
-                          key={`subtotal-row-${idx}`}
-                          className="border-b border-slate-100 last:border-b-0 h-[56px] flex flex-col items-end justify-center px-4 gap-0.5"
-                        >
-                          <span className="text-[11px] text-slate-400 tabular-nums leading-tight">
-                            {item.quantity} × ${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}
-                          </span>
-                          <span className="text-sm font-semibold text-slate-800 tabular-nums leading-tight">
-                            ${item.total.toLocaleString("es-AR")}
-                          </span>
-                        </div>
-                      )
-                    })}
-
-                    {/* ── Financial breakdown ── */}
-                    <div className="px-4 py-3 space-y-1.5 border-t border-slate-100">
-                      {/* Promociones */}
-                      {itemDiscountAmount > 0 && (
-                        <div className="flex justify-between text-xs">
-                          <span className="text-red-500">Promociones</span>
-                          <span className="text-red-500 tabular-nums">
-                            −${Math.round(itemDiscountAmount).toLocaleString("es-AR")}
-                          </span>
-                        </div>
-                      )}
-
-                      {/* Descuento global */}
-                      {venta.descuento > 0 && (
-                        <div className="flex justify-between text-xs">
-                          <span className="text-slate-500">
-                            Descuento
-                            <span className="text-[10px] text-slate-400 ml-1">
-                              ({venta.descuentoTipo === "percent"
-                                ? `${venta.descuento}%`
-                                : `$${venta.descuento.toLocaleString("es-AR")}`})
+                    ) : (
+                      /* ── Cobro view ── */
+                      <div>
+                        {/* Status + bar */}
+                        <div className="px-4 pt-4 pb-3 border-b border-slate-100">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-semibold text-slate-800">
+                              {pagoPct === 100 ? "Cobro completo" : pagoPct > 0 ? "Cobro parcial" : "Sin cobro"}
                             </span>
-                          </span>
-                          <span className="text-red-500 tabular-nums">
-                            −${Math.round(
-                              venta.descuentoTipo === "percent"
-                                ? venta.subtotal * (venta.descuento / 100)
-                                : venta.descuento,
-                            ).toLocaleString("es-AR")}
-                          </span>
+                            <span className={`text-sm font-bold tabular-nums ${pagoPct === 100 ? "text-emerald-600" : pagoPct > 0 ? "text-amber-600" : "text-slate-400"}`}>
+                              {pagoPct}%
+                            </span>
+                          </div>
+                          <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all ${pagoPct === 100 ? "bg-emerald-500" : pagoPct > 0 ? "bg-amber-400" : "bg-slate-300"}`}
+                              style={{ width: `${pagoPct}%` }}
+                            />
+                          </div>
                         </div>
-                      )}
 
-                      {/* Total */}
-                      <div className="flex justify-between text-sm font-semibold pt-1.5 border-t border-slate-200">
-                        <span className="text-slate-700">Total</span>
-                        <span className="text-slate-900 tabular-nums">
-                          ${Math.round(venta.total).toLocaleString("es-AR")}
-                        </span>
-                      </div>
-                    </div>
+                        {/* Cobrado / Restante */}
+                        <div className="px-4 py-3 border-b border-slate-100 flex justify-between">
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-[10px] text-slate-400 uppercase tracking-wide">Cobrado</span>
+                            <span className="text-sm font-semibold text-slate-800 tabular-nums">${montoCobrado.toLocaleString("es-AR")}</span>
+                          </div>
+                          {montoRestante > 0 && (
+                            <div className="flex flex-col gap-0.5 items-end">
+                              <span className="text-[10px] text-slate-400 uppercase tracking-wide">Restante</span>
+                              <span className="text-sm font-semibold text-amber-600 tabular-nums">${montoRestante.toLocaleString("es-AR")}</span>
+                            </div>
+                          )}
+                        </div>
 
-                    {/* ── Observaciones footer (only if present) ── */}
-                    {venta.observaciones && (
-                      <div className="px-4 py-2.5 border-t border-slate-100 bg-slate-50/40">
-                        <div className="flex justify-between text-[11px] gap-3">
-                          <span className="text-slate-400 shrink-0">Observaciones</span>
-                          <span className="text-slate-600 text-right">{venta.observaciones}</span>
+                        {/* Medio + Total */}
+                        <div className="px-4 py-3 space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-slate-500">Medio de pago</span>
+                            <span className="text-slate-700 font-medium">{metodoPagoLabels[venta.metodoPago]}</span>
+                          </div>
+                          <div className="flex justify-between text-sm font-semibold pt-2 border-t border-slate-200">
+                            <span className="text-slate-800">Total</span>
+                            <span className="text-slate-900 tabular-nums">${Math.round(venta.total).toLocaleString("es-AR")}</span>
+                          </div>
                         </div>
                       </div>
                     )}
