@@ -28,6 +28,8 @@ import type { Venta, VentaItem, PaymentMethod } from "@/lib/types"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import { VentaItemDetailModal } from "@/components/ventas/venta-item-detail-modal"
+import { ClienteModal } from "@/components/ventas/cliente-modal"
+import { TicketModal } from "@/components/ventas/ticket-modal"
 
 const estadoLabels: Record<Venta["estado"], string> = {
   completada: "Completada",
@@ -76,6 +78,8 @@ export default function VentasPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [expandedVentas, setExpandedVentas] = useState<Set<string>>(new Set())
   const [viewingItem, setViewingItem] = useState<VentaItem | null>(null)
+  const [viewingClienteId, setViewingClienteId] = useState<string | null>(null)
+  const [viewingTicketVenta, setViewingTicketVenta] = useState<Venta | null>(null)
 
   const toggleExpandVenta = (id: string) => {
     const next = new Set(expandedVentas)
@@ -286,7 +290,16 @@ export default function VentasPage() {
 
                         {/* Cliente */}
                         <div className="col-span-24 flex items-center px-3">
-                          <span className="text-sm font-semibold text-slate-800 truncate">{venta.clienteNombre}</span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setViewingClienteId(venta.clienteId)
+                            }}
+                            className="text-sm font-semibold text-slate-800 truncate hover:text-blue-600 hover:underline transition-colors cursor-pointer text-left"
+                          >
+                            {venta.clienteNombre}
+                          </button>
                         </div>
 
                         {/* More options + vertical line on its left */}
@@ -325,9 +338,9 @@ export default function VentasPage() {
                         <div className="col-span-4" />
 
                         {/* Estado */}
-                        <div className="col-span-10 flex items-center justify-start px-3">
-                          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${estadoStyle.bg}`}>
-                            <EstadoIcon className={`w-3.5 h-3.5 ${estadoStyle.text}`} />
+                        <div className="col-span-10 flex items-center justify-start pl-0">
+                          <div className={`flex items-center gap-1.5 px-3 py-2 rounded-md ${estadoStyle.bg} w-full`}>
+                            <EstadoIcon className={`w-3.5 h-3.5 ${estadoStyle.text} shrink-0`} />
                             <span className={`text-xs font-medium ${estadoStyle.text}`}>
                               {estadoLabels[venta.estado]}
                             </span>
@@ -361,7 +374,10 @@ export default function VentasPage() {
                           ) : (
                             <button
                               type="button"
-                              onClick={(e) => e.stopPropagation()}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setViewingTicketVenta(venta)
+                              }}
                               className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
                             >
                               <ReceiptText className="w-3.5 h-3.5 text-slate-500" />
@@ -598,6 +614,14 @@ export default function VentasPage() {
 
       {viewingItem && (
         <VentaItemDetailModal ventaItem={viewingItem} onClose={() => setViewingItem(null)} />
+      )}
+
+      {viewingClienteId && (
+        <ClienteModal clienteId={viewingClienteId} onClose={() => setViewingClienteId(null)} />
+      )}
+
+      {viewingTicketVenta && (
+        <TicketModal venta={viewingTicketVenta} onClose={() => setViewingTicketVenta(null)} />
       )}
     </div>
   )
