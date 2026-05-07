@@ -12,7 +12,6 @@ import {
   FileText,
   Receipt,
   ReceiptText,
-  Search,
   ChevronLeft,
   MoreVertical,
   Package,
@@ -54,7 +53,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
   const [showExportDropdown, setShowExportDropdown] = useState(false)
   const [showMoreOptionsMenu, setShowMoreOptionsMenu] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
   const [viewingItem, setViewingItem] = useState<VentaItem | null>(null)
   const exportDropdownRef = useRef<HTMLDivElement>(null)
   const moreMenuRef = useRef<HTMLDivElement>(null)
@@ -111,17 +109,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
     month: "short",
     year: "numeric",
   })
-
-  const filteredItems = useMemo(() => {
-    if (!searchQuery.trim()) return venta.items
-    const q = searchQuery.toLowerCase()
-    return venta.items.filter(
-      (it) =>
-        it.name.toLowerCase().includes(q) ||
-        it.sku.toLowerCase().includes(q) ||
-        (it.categoria || "").toLowerCase().includes(q),
-    )
-  }, [venta.items, searchQuery])
 
   const itemDiscountAmount = venta.items.reduce((sum, it) => {
     const baseGross = it.unitPrice * it.quantity
@@ -283,22 +270,12 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
               </div>
             </div>
 
-            {/* Items Grid */}
+            {/* Items Grid + Totals side by side */}
             <div className="flex-1 overflow-y-auto px-6 pb-6 mt-4">
-              {/* Search */}
-              <div className="flex items-center mb-3 gap-2">
-                <div className="w-[30%] h-8 flex items-center gap-2 px-3 rounded-md border shadow-sm border-[rgba(228,230,235,0.6)] bg-white">
-                  <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Buscar item"
-                    className="flex-1 bg-transparent text-xs text-slate-700 placeholder:text-slate-400 outline-none"
-                  />
-                </div>
-              </div>
+              <div className="grid grid-cols-3 gap-4 items-start">
 
+              {/* Left: Items grid (col-span-2) */}
+              <div className="col-span-2">
               <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm">
                 {/* Grid Header */}
                 <div className="bg-slate-100 border-b border-slate-200/80 rounded-t-lg">
@@ -314,20 +291,14 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                 </div>
 
                 {/* Items */}
-                {filteredItems.length === 0 ? (
+                {venta.items.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16">
                     <Package className="w-12 h-12 text-slate-200 mb-3" />
-                    <p className="text-slate-500 mb-1">
-                      {searchQuery ? "Sin resultados" : "Sin items"}
-                    </p>
-                    <p className="text-xs text-slate-400">
-                      {searchQuery
-                        ? "Intentá con otro término de búsqueda"
-                        : "Esta venta no tiene items asociados"}
-                    </p>
+                    <p className="text-slate-500 mb-1">Sin items</p>
+                    <p className="text-xs text-slate-400">Esta venta no tiene items asociados</p>
                   </div>
                 ) : (
-                  filteredItems.map((item, idx) => {
+                  venta.items.map((item, idx) => {
                     const display = getVentaItemDisplay(item)
                     const baseGross = item.unitPrice * item.quantity
                     const discountAmount =
@@ -440,11 +411,12 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   })
                 )}
               </div>
+              </div>{/* end col-span-2 items grid wrapper */}
 
-              {/* Totals Card */}
+              {/* Right: Totals card (col-span-1) */}
               {venta.items.length > 0 && (
-                <div className="flex justify-end mt-3">
-                  <div className="w-1/2 bg-white border border-slate-200/60 rounded-lg shadow-sm p-4">
+                <div className="col-span-1">
+                  <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm p-4">
                     <div className="space-y-2">
                       {/* Subtotal */}
                       <div className="flex justify-between text-sm">
@@ -513,6 +485,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   </div>
                 </div>
               )}
+
+              </div>{/* end grid grid-cols-3 */}
             </div>
           </main>
         </div>
