@@ -263,26 +263,26 @@ export default function VentasPage() {
                         </div>
 
                         {/* ID */}
-                        <div className="col-span-16 flex items-center justify-start px-3 border-r border-slate-200/70">
+                        <div className="col-span-10 flex items-center justify-start px-3 border-r border-slate-200/70">
                           <span className="text-sm font-semibold text-slate-900 truncate">{venta.id}</span>
                         </div>
 
                         {/* Fecha */}
-                        <div className="col-span-16 flex items-center justify-start px-3 border-r border-slate-200/70">
+                        <div className="col-span-10 flex items-center justify-start px-3 border-r border-slate-200/70">
                           <span className="text-sm text-slate-600 truncate">
                             {formatVentaDateTime(venta.fecha, venta.hora)}
                           </span>
                         </div>
 
                         {/* Origen */}
-                        <div className="col-span-16 flex items-center justify-start px-3">
+                        <div className="col-span-10 flex items-center justify-start px-3">
                           <span className="text-sm font-medium text-slate-700 truncate">
                             {getOrigen(venta.metodoPago)}
                           </span>
                         </div>
 
-                        {/* Empty 20 (was delivery) */}
-                        <div className="col-span-20" />
+                        {/* Empty 38 (was 20) */}
+                        <div className="col-span-38" />
 
                         {/* Cliente */}
                         <div className="col-span-24 flex items-center px-3">
@@ -325,7 +325,7 @@ export default function VentasPage() {
                         <div className="col-span-4" />
 
                         {/* Estado */}
-                        <div className="col-span-16 flex items-center justify-start px-3">
+                        <div className="col-span-10 flex items-center justify-start px-3">
                           <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${estadoStyle.bg}`}>
                             <EstadoIcon className={`w-3.5 h-3.5 ${estadoStyle.text}`} />
                             <span className={`text-xs font-medium ${estadoStyle.text}`}>
@@ -335,21 +335,21 @@ export default function VentasPage() {
                         </div>
 
                         {/* Pago % - only when en curso (pendiente) */}
-                        <div className="col-span-16 flex items-center justify-start px-3">
+                        <div className="col-span-10 flex items-center justify-start px-3">
                           {venta.estado === "pendiente" && (
                             <span className="text-xs font-semibold text-slate-700">Pago {pagoPct}%</span>
                           )}
                         </div>
 
                         {/* Entrega % - only when en curso (pendiente) */}
-                        <div className="col-span-16 flex items-center justify-start px-3">
+                        <div className="col-span-10 flex items-center justify-start px-3">
                           {venta.estado === "pendiente" && (
                             <span className="text-xs font-semibold text-slate-700">Entrega {entregaPct}%</span>
                           )}
                         </div>
 
-                        {/* Empty 20 */}
-                        <div className="col-span-20" />
+                        {/* Empty 38 */}
+                        <div className="col-span-38" />
 
                         {/* Facturación */}
                         <div className="col-span-24 flex items-center px-3">
