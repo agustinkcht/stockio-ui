@@ -23,7 +23,7 @@ import {
 } from "lucide-react"
 import Image from "next/image"
 import { VENTAS } from "@/lib/data/ventas"
-import type { Venta, VentaItem } from "@/lib/types"
+import type { Venta, VentaItem, PaymentMethod } from "@/lib/types"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import { VentaItemDetailModal } from "@/components/ventas/venta-item-detail-modal"
@@ -44,6 +44,10 @@ const metodoPagoLabels: Record<Venta["metodoPago"], string> = {
   efectivo: "Efectivo",
   posnet: "Posnet",
   transferencia: "Transferencia",
+}
+
+function getOrigen(metodoPago: PaymentMethod): string {
+  return metodoPago === "posnet" ? "Punto de Venta" : "Manual"
 }
 
 export default function VentaDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -176,17 +180,12 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
                   <div className="h-10 w-px bg-border/40" />
 
-                  {/* Estado */}
+                  {/* Origen */}
                   <div className="flex flex-col">
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Estado</span>
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className={`text-xs font-medium px-2.5 py-1 rounded-full inline-flex items-center gap-1.5 ${estadoStyle.bg} ${estadoStyle.text}`}
-                      >
-                        <EstadoIcon className="w-3 h-3" />
-                        {estadoLabels[venta.estado]}
-                      </span>
-                    </div>
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Origen</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      {getOrigen(venta.metodoPago)}
+                    </span>
                   </div>
 
                   <div className="h-10 w-px bg-border/40" />
@@ -202,20 +201,25 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
                   <div className="h-10 w-px bg-border/40" />
 
-                  {/* Cliente */}
+                  {/* Estado */}
                   <div className="flex flex-col">
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Cliente</span>
-                    <span className="text-sm font-semibold text-gray-800">{venta.clienteNombre}</span>
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Estado</span>
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className={`text-xs font-medium px-2.5 py-1 rounded-full inline-flex items-center gap-1.5 ${estadoStyle.bg} ${estadoStyle.text}`}
+                      >
+                        <EstadoIcon className="w-3 h-3" />
+                        {estadoLabels[venta.estado]}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="h-10 w-px bg-border/40" />
 
-                  {/* Método de pago */}
+                  {/* Cliente */}
                   <div className="flex flex-col">
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Método</span>
-                    <span className="text-sm font-medium text-gray-700">
-                      {metodoPagoLabels[venta.metodoPago]}
-                    </span>
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Cliente</span>
+                    <span className="text-sm font-semibold text-gray-800">{venta.clienteNombre}</span>
                   </div>
                 </div>
 
