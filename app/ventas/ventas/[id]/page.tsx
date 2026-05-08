@@ -509,60 +509,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
               {venta.items.length > 0 && (
                 <div className="col-span-1 flex flex-col gap-4">
 
-                  {/* ── Cobro card ── */}
-                  <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm overflow-hidden">
-                    {/* Status header */}
-                    <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Wallet className={`w-4 h-4 ${pagoPct === 100 ? "text-emerald-500" : pagoPct > 0 ? "text-amber-500" : "text-slate-400"}`} />
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold text-slate-800">
-                              {pagoPct === 100 ? "Cobro completo" : pagoPct > 0 ? "Cobro parcial" : "Sin cobro"}
-                            </span>
-                            <span className={`text-xs font-semibold tabular-nums ${pagoPct === 100 ? "text-emerald-600" : pagoPct > 0 ? "text-amber-600" : "text-slate-400"}`}>
-                              {pagoPct}%
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 mt-1">
-                            <div className="w-32 h-1 bg-slate-200 rounded-full overflow-hidden">
-                              <div
-                                className={`h-full rounded-full transition-all ${pagoPct === 100 ? "bg-emerald-500" : pagoPct > 0 ? "bg-amber-400" : "bg-slate-300"}`}
-                                style={{ width: `${pagoPct}%` }}
-                              />
-                            </div>
-                            <span className="text-[10px] text-slate-400 tabular-nums">
-                              ${montoCobrado.toLocaleString("es-AR")} / ${Math.round(venta.total).toLocaleString("es-AR")}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    {/* Cobro rows */}
-                    <div className="p-3">
-                      <div className="rounded-md border border-slate-200/80 overflow-hidden">
-                        <div className="bg-slate-100 border-b border-slate-200/80 h-9 flex items-center justify-between px-3">
-                          <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Cobros</span>
-                        </div>
-                        {montoCobrado > 0 ? (
-                          <div className="h-[48px] flex items-center px-3 gap-3">
-                            <span className="text-xs text-slate-400 tabular-nums shrink-0">
-                              {new Date(venta.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}
-                            </span>
-                            <span className="text-sm font-semibold text-slate-900 tabular-nums flex-1">
-                              ${montoCobrado.toLocaleString("es-AR")}
-                            </span>
-                            <span className="text-xs text-slate-500 shrink-0">{metodoPagoLabels[venta.metodoPago]}</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center justify-center py-6">
-                            <span className="text-xs text-slate-400">Sin cobros registrados</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
                   {/* ── Resumen card ── */}
                   <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm overflow-hidden">
                     <div className="bg-slate-100 border-b border-slate-200/80 h-9 flex items-center px-4">
@@ -603,6 +549,54 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         </div>
                       )}
                     </div>
+                  </div>
+
+                  {/* ── Cobro card ── */}
+                  <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm overflow-hidden">
+                    {/* Status header */}
+                    <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-3">
+                      <Wallet className={`w-4 h-4 ${pagoPct === 100 ? "text-emerald-500" : pagoPct > 0 ? "text-amber-500" : "text-slate-400"}`} />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-slate-800">
+                            {pagoPct === 100 ? "Cobro completo" : pagoPct > 0 ? "Cobro parcial" : "Sin cobro"}
+                          </span>
+                          <span className={`text-xs font-semibold tabular-nums ${pagoPct === 100 ? "text-emerald-600" : pagoPct > 0 ? "text-amber-600" : "text-slate-400"}`}>
+                            {pagoPct}%
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className="w-32 h-1 bg-slate-200 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all ${pagoPct === 100 ? "bg-emerald-500" : pagoPct > 0 ? "bg-amber-400" : "bg-slate-300"}`}
+                              style={{ width: `${pagoPct}%` }}
+                            />
+                          </div>
+                          <span className="text-[10px] text-slate-400 tabular-nums">
+                            ${montoCobrado.toLocaleString("es-AR")} / ${Math.round(venta.total).toLocaleString("es-AR")}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    {/* Cobro rows — flat, same style as resumen */}
+                    <div className="bg-slate-100 border-b border-slate-200/80 h-9 flex items-center px-4">
+                      <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Cobros</span>
+                    </div>
+                    {montoCobrado > 0 ? (
+                      <div className="h-[48px] flex items-center px-4 gap-3 border-b border-slate-100 last:border-b-0">
+                        <span className="text-xs text-slate-400 tabular-nums shrink-0">
+                          {new Date(venta.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}
+                        </span>
+                        <span className="text-sm font-semibold text-slate-900 tabular-nums flex-1">
+                          ${montoCobrado.toLocaleString("es-AR")}
+                        </span>
+                        <span className="text-xs text-slate-500 shrink-0">{metodoPagoLabels[venta.metodoPago]}</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center py-6">
+                        <span className="text-xs text-slate-400">Sin cobros registrados</span>
+                      </div>
+                    )}
                   </div>
 
                 </div>
