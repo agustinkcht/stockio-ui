@@ -320,7 +320,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
                 {/* ── Entrega header ── */}
                 <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 px-3 py-2 rounded-md border border-[rgba(228,230,235,0.6)] shadow-sm bg-white">
                     <Truck className={`w-4 h-4 ${entregaPct === 100 ? "text-emerald-500" : entregaPct > 0 ? "text-amber-500" : "text-slate-400"}`} />
                     <div>
                       <div className="flex items-center gap-2">
@@ -522,7 +522,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     </div>
 
                     {/* ── Resumen section ── */}
-                    <div className="px-4 py-3 space-y-2 border-b border-slate-100">
+                    <div className="px-4 py-3 space-y-2 border-b-2 border-slate-200">
                       <div className="flex justify-between text-sm">
                         <span className="text-slate-500">Subtotal</span>
                         <span className="text-slate-700 tabular-nums">${Math.round(venta.subtotal).toLocaleString("es-AR")}</span>
@@ -560,19 +560,21 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
                     {/* ── Cobro section ── */}
                     <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-3">
-                      <Wallet className={`w-4 h-4 ${pagoPct === 100 ? "text-emerald-500" : pagoPct > 0 ? "text-amber-500" : "text-slate-400"}`} />
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-slate-800">
-                            {pagoPct === 100 ? "Cobro completo" : pagoPct > 0 ? "Cobro parcial" : "Sin cobro"}
-                          </span>
-                          <span className={`text-xs font-semibold tabular-nums ${pagoPct === 100 ? "text-emerald-600" : pagoPct > 0 ? "text-amber-600" : "text-slate-400"}`}>
-                            {pagoPct}%
+                      <div className="flex items-center gap-3 px-3 py-2 rounded-md border border-[rgba(228,230,235,0.6)] shadow-sm bg-white">
+                        <Wallet className={`w-4 h-4 ${pagoPct === 100 ? "text-emerald-500" : pagoPct > 0 ? "text-amber-500" : "text-slate-400"}`} />
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold text-slate-800">
+                              {pagoPct === 100 ? "Cobro completo" : pagoPct > 0 ? "Cobro parcial" : "Sin cobro"}
+                            </span>
+                            <span className={`text-xs font-semibold tabular-nums ${pagoPct === 100 ? "text-emerald-600" : pagoPct > 0 ? "text-amber-600" : "text-slate-400"}`}>
+                              {pagoPct}%
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-slate-400 tabular-nums mt-0.5 block">
+                            ${montoCobrado.toLocaleString("es-AR")} / ${Math.round(venta.total).toLocaleString("es-AR")}
                           </span>
                         </div>
-                        <span className="text-[10px] text-slate-400 tabular-nums mt-0.5 block">
-                          ${montoCobrado.toLocaleString("es-AR")} / ${Math.round(venta.total).toLocaleString("es-AR")}
-                        </span>
                       </div>
                     </div>
                     {montoCobrado > 0 ? (
