@@ -113,6 +113,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
   const estadoStyle = estadoColors[venta.estado]
   const EstadoIcon = estadoStyle.icon
+
+
   const isFacturada = !!venta.facturaEmitida
   const fechaCreacion = new Date(venta.fecha).toLocaleDateString("es-AR", {
     day: "2-digit",
@@ -130,6 +132,10 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   // Derived cobro & entrega percentages (deterministic from estado)
   const pagoPct = venta.estado === "completada" ? 100 : venta.estado === "pendiente" ? 50 : 0
   const entregaPct = venta.estado === "completada" ? 100 : 0
+  const estadoVenta = pagoPct === 100 && entregaPct === 100 ? "Completada" : "En Curso"
+  const estadoVentaStyle = estadoVenta === "Completada"
+    ? { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" }
+    : { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" }
   const montoCobrado = Math.round(venta.total * pagoPct / 100)
   const montoRestante = Math.round(venta.total - montoCobrado)
   // Per-item delivered quantity (deterministic: completada = all, pendiente = half, cancelada = 0)
@@ -202,11 +208,11 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
                   <div className="h-10 w-px bg-border/40" />
 
-                  {/* Origen */}
+                  {/* Estado */}
                   <div className="flex flex-col">
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Origen</span>
-                    <span className="text-sm font-medium text-gray-700">
-                      {getOrigen(venta.metodoPago)}
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Estado</span>
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border self-start mt-0.5 ${estadoVentaStyle.bg} ${estadoVentaStyle.text} ${estadoVentaStyle.border}`}>
+                      {estadoVenta}
                     </span>
                   </div>
 
@@ -218,6 +224,16 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     <span className="text-sm font-medium text-gray-700">
                       {fechaCreacion}
                       <span className="text-slate-400"> · {venta.hora}</span>
+                    </span>
+                  </div>
+
+                  <div className="h-10 w-px bg-border/40" />
+
+                  {/* Origen */}
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Origen</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      {getOrigen(venta.metodoPago)}
                     </span>
                   </div>
 
@@ -325,7 +341,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-semibold text-slate-800">
-                          {entregaPct === 100 ? "Entregado" : entregaPct > 0 ? "Entrega parcial" : "Pendiente de entrega"}
+                          Entrega
                         </span>
                         <span className={`text-xs font-semibold tabular-nums ${entregaPct === 100 ? "text-emerald-600" : entregaPct > 0 ? "text-amber-600" : "text-slate-400"}`}>
                           {entregaPct}%
@@ -565,7 +581,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         <div>
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-semibold text-slate-800">
-                              {pagoPct === 100 ? "Cobro completo" : pagoPct > 0 ? "Cobro parcial" : "Sin cobro"}
+                              Cobro
                             </span>
                             <span className={`text-xs font-semibold tabular-nums ${pagoPct === 100 ? "text-emerald-600" : pagoPct > 0 ? "text-amber-600" : "text-slate-400"}`}>
                               {pagoPct}%
