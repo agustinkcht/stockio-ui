@@ -363,8 +363,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     </div>
                   ) : (
                     <div className="grid grid-cols-100 h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      <div className="col-span-45 flex items-center px-4">Item</div>
-                      <div className="col-span-15 flex items-center justify-center">Cantidad</div>
+                      <div className="col-span-40 flex items-center px-4">Item</div>
+                      <div className="col-span-20 flex items-center justify-center">Cantidad</div>
                       <div className="col-span-20 flex items-center justify-center">Precio Unit.</div>
                       <div className="col-span-20 flex items-center justify-end pr-4">Subtotal</div>
                     </div>
@@ -441,7 +441,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         ) : (
                           <div className="grid grid-cols-100 h-[56px]">
                             {/* Item Info */}
-                            <div className="col-span-45 flex items-center gap-3 px-4">
+                            <div className="col-span-40 flex items-center gap-3 px-4">
                               <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                                 <Image src={getCategoryImage(display.categoria || "") || "/placeholder.svg"} alt={item.name} width={32} height={32} className="object-cover" />
                               </div>
@@ -466,7 +466,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                               </div>
                             </div>
                             {/* Cantidad */}
-                            <div className="col-span-15 flex items-center justify-center">
+                            <div className="col-span-20 flex items-center justify-center">
                               <span className="text-sm text-slate-700 tabular-nums">{item.quantity}</span>
                             </div>
                             {/* Precio Unit — with strikethrough + discount badge if applicable */}
