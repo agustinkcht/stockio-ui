@@ -331,15 +331,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                           {entregaPct}%
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <div className="w-32 h-1 bg-slate-200 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all ${entregaPct === 100 ? "bg-emerald-500" : entregaPct > 0 ? "bg-amber-400" : "bg-slate-300"}`}
-                            style={{ width: `${entregaPct}%` }}
-                          />
-                        </div>
-                        <span className="text-[10px] text-slate-400 tabular-nums">{entregadasUnidades} / {totalUnidades} uds</span>
-                      </div>
+                      <span className="text-[10px] text-slate-400 tabular-nums mt-0.5 block">{entregadasUnidades} / {totalUnidades} uds</span>
                     </div>
                   </div>
                   {/* Toggle entrega mode */}
@@ -519,16 +511,18 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
               </div>{/* end entrega+items card */}
               </div>{/* end col-span-2 flex column */}
 
-              {/* Right col-span-1: Cobro card + Resumen card */}
+              {/* Right col-span-1: unified Detalle de Cobro card */}
               {venta.items.length > 0 && (
-                <div className="col-span-1 flex flex-col gap-4">
-
-                  {/* ── Resumen card ── */}
+                <div className="col-span-1">
                   <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm overflow-hidden">
+
+                    {/* Card title */}
                     <div className="bg-slate-100 border-b border-slate-200/80 h-9 flex items-center px-4">
-                      <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Resumen</span>
+                      <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Detalle de Cobro</span>
                     </div>
-                    <div className="px-4 py-3 space-y-2">
+
+                    {/* ── Resumen section ── */}
+                    <div className="px-4 py-3 space-y-2 border-b border-slate-100">
                       <div className="flex justify-between text-sm">
                         <span className="text-slate-500">Subtotal</span>
                         <span className="text-slate-700 tabular-nums">${Math.round(venta.subtotal).toLocaleString("es-AR")}</span>
@@ -563,11 +557,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         </div>
                       )}
                     </div>
-                  </div>
 
-                  {/* ── Cobro card ── */}
-                  <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm overflow-hidden">
-                    {/* Status header */}
+                    {/* ── Cobro section ── */}
                     <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-3">
                       <Wallet className={`w-4 h-4 ${pagoPct === 100 ? "text-emerald-500" : pagoPct > 0 ? "text-amber-500" : "text-slate-400"}`} />
                       <div>
@@ -579,25 +570,13 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             {pagoPct}%
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <div className="w-32 h-1 bg-slate-200 rounded-full overflow-hidden">
-                            <div
-                              className={`h-full rounded-full transition-all ${pagoPct === 100 ? "bg-emerald-500" : pagoPct > 0 ? "bg-amber-400" : "bg-slate-300"}`}
-                              style={{ width: `${pagoPct}%` }}
-                            />
-                          </div>
-                          <span className="text-[10px] text-slate-400 tabular-nums">
-                            ${montoCobrado.toLocaleString("es-AR")} / ${Math.round(venta.total).toLocaleString("es-AR")}
-                          </span>
-                        </div>
+                        <span className="text-[10px] text-slate-400 tabular-nums mt-0.5 block">
+                          ${montoCobrado.toLocaleString("es-AR")} / ${Math.round(venta.total).toLocaleString("es-AR")}
+                        </span>
                       </div>
                     </div>
-                    {/* Cobro rows — flat, same style as resumen */}
-                    <div className="bg-slate-100 border-b border-slate-200/80 h-9 flex items-center px-4">
-                      <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Cobros</span>
-                    </div>
                     {montoCobrado > 0 ? (
-                      <div className="h-[48px] flex items-center px-4 gap-3 border-b border-slate-100 last:border-b-0">
+                      <div className="h-[48px] flex items-center px-4 gap-3">
                         <span className="text-xs text-slate-400 tabular-nums shrink-0">
                           {new Date(venta.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}
                         </span>
@@ -611,8 +590,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         <span className="text-xs text-slate-400">Sin cobros registrados</span>
                       </div>
                     )}
-                  </div>
 
+                  </div>
                 </div>
               )}
 
