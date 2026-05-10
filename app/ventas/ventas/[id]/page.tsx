@@ -279,10 +279,10 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
             {/* Items Grid + Totals side by side */}
             <div className="flex-1 overflow-y-auto px-6 pb-6 mt-4">
-              <div className="grid grid-cols-10 gap-4 items-start">
+              <div className="grid grid-cols-4 gap-4 items-start">
 
-              {/* Left col-span-7 (70%): Cliente card + Entrega/Items card */}
-              <div className="col-span-7 flex flex-col gap-4">
+              {/* Left col-span-3: Cliente card + Entrega/Items card */}
+              <div className="col-span-3 flex flex-col gap-4">
 
                 {/* Cliente card */}
                 <button
