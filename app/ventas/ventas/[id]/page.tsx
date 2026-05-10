@@ -304,6 +304,20 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                 {/* Entrega + Items card */}
               <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm overflow-hidden">
 
+                {/* ── Title strip ── */}
+                <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-3">
+                  <Package className="w-4 h-4 text-slate-400" />
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-semibold text-slate-800">
+                      {venta.items.length} {venta.items.length === 1 ? "producto" : "productos"}
+                    </span>
+                    <span className="text-slate-300">·</span>
+                    <span className="text-sm text-slate-500 tabular-nums">
+                      {totalUnidades} {totalUnidades === 1 ? "unidad" : "unidades"}
+                    </span>
+                  </div>
+                </div>
+
                 {/* ── Entrega header ── */}
                 <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
                   <div className="flex items-center gap-3">
