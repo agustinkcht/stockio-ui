@@ -356,17 +356,17 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                 {/* ── Grid Header ── */}
                 <div className="bg-slate-100 border-b border-slate-200/80">
                   {entregaMode ? (
-                    <div className="grid grid-cols-[2.5fr_0.7fr_1fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      <div className="flex items-center px-4">Item</div>
-                      <div className="flex items-center justify-center">Cantidad</div>
-                      <div className="flex items-center justify-center pr-4">Entregado</div>
+                    <div className="grid grid-cols-100 h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      <div className="col-span-70 flex items-center px-4">Item</div>
+                      <div className="col-span-15 flex items-center justify-center">Cantidad</div>
+                      <div className="col-span-15 flex items-center justify-center pr-4">Entregado</div>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-[2.5fr_0.7fr_1.2fr_1.2fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      <div className="flex items-center px-4">Item</div>
-                      <div className="flex items-center justify-center">Cantidad</div>
-                      <div className="flex items-center justify-center">Precio Unit.</div>
-                      <div className="flex items-center justify-end pr-4">Subtotal</div>
+                    <div className="grid grid-cols-100 h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      <div className="col-span-45 flex items-center px-4">Item</div>
+                      <div className="col-span-15 flex items-center justify-center">Cantidad</div>
+                      <div className="col-span-20 flex items-center justify-center">Precio Unit.</div>
+                      <div className="col-span-20 flex items-center justify-end pr-4">Subtotal</div>
                     </div>
                   )}
                 </div>
@@ -397,9 +397,9 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         className="border-b border-slate-100 last:border-b-0 transition-colors hover:bg-slate-50/50 cursor-pointer"
                       >
                         {entregaMode ? (
-                          <div className="grid grid-cols-[2.5fr_0.7fr_1fr] h-[56px]">
+                          <div className="grid grid-cols-100 h-[56px]">
                             {/* Item Info */}
-                            <div className="flex items-center gap-3 px-4">
+                            <div className="col-span-70 flex items-center gap-3 px-4">
                               <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                                 <Image src={getCategoryImage(display.categoria || "") || "/placeholder.svg"} alt={item.name} width={32} height={32} className="object-cover" />
                               </div>
@@ -415,11 +415,11 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                               </div>
                             </div>
                             {/* Cantidad col */}
-                            <div className="flex items-center justify-center">
+                            <div className="col-span-15 flex items-center justify-center">
                               <span className="text-sm text-slate-700 tabular-nums">{item.quantity}</span>
                             </div>
                             {/* Entregado col */}
-                            <div className="flex flex-col items-center justify-center pr-4 gap-1">
+                            <div className="col-span-15 flex flex-col items-center justify-center pr-4 gap-1">
                               {itemPct === 100 ? (
                                 <div className="flex items-center gap-1.5">
                                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
@@ -439,9 +439,9 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             </div>
                           </div>
                         ) : (
-                          <div className="grid grid-cols-[2.5fr_0.7fr_1.2fr_1.2fr] h-[56px]">
+                          <div className="grid grid-cols-100 h-[56px]">
                             {/* Item Info */}
-                            <div className="flex items-center gap-3 px-4">
+                            <div className="col-span-45 flex items-center gap-3 px-4">
                               <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                                 <Image src={getCategoryImage(display.categoria || "") || "/placeholder.svg"} alt={item.name} width={32} height={32} className="object-cover" />
                               </div>
@@ -466,11 +466,11 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                               </div>
                             </div>
                             {/* Cantidad */}
-                            <div className="flex items-center justify-center">
+                            <div className="col-span-15 flex items-center justify-center">
                               <span className="text-sm text-slate-700 tabular-nums">{item.quantity}</span>
                             </div>
                             {/* Precio Unit — with strikethrough + discount badge if applicable */}
-                            <div className="flex flex-col items-center justify-center gap-0.5">
+                            <div className="col-span-20 flex flex-col items-center justify-center gap-0.5">
                               {item.discount > 0 ? (
                                 <>
                                   <span className="text-[10px] text-slate-400 line-through tabular-nums leading-tight">
@@ -490,7 +490,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                               )}
                             </div>
                             {/* Subtotal */}
-                            <div className="flex flex-col items-end justify-center pr-4 gap-0.5">
+                            <div className="col-span-20 flex flex-col items-end justify-center pr-4 gap-0.5">
                               {item.discount > 0 && (
                                 <span className="text-[10px] text-slate-400 line-through tabular-nums leading-tight">
                                   ${(item.unitPrice * item.quantity).toLocaleString("es-AR")}
