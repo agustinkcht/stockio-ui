@@ -378,11 +378,14 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       <div className="col-span-15 flex items-center justify-center pr-4">Entregado</div>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-100 h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      <div className="col-span-40 flex items-center px-4">Item</div>
-                      <div className="col-span-20 flex items-center justify-center">Cantidad</div>
-                      <div className="col-span-20 flex items-center justify-center">Precio Unit.</div>
-                      <div className="col-span-20 flex items-center justify-end pr-4">Subtotal</div>
+                    <div className="grid grid-cols-[35fr_15fr_15fr_auto_15fr_auto_20fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      <div className="flex items-center px-4">Item</div>
+                      <div className="flex items-center justify-center">Cantidad</div>
+                      <div className="flex items-center justify-center">Precio Unit.</div>
+                      <div className="flex items-center justify-center w-5 text-slate-300">→</div>
+                      <div className="flex items-center justify-center">Promoción</div>
+                      <div className="flex items-center justify-center w-5 text-slate-300">→</div>
+                      <div className="flex items-center justify-end pr-4">Subtotal</div>
                     </div>
                   )}
                 </div>
@@ -455,9 +458,9 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             </div>
                           </div>
                         ) : (
-                          <div className="grid grid-cols-100 h-[56px]">
+                          <div className="grid grid-cols-[35fr_15fr_15fr_auto_15fr_auto_20fr] min-h-[56px]">
                             {/* Item Info */}
-                            <div className="col-span-40 flex items-center gap-3 px-4">
+                            <div className="flex items-center gap-3 px-4 py-2">
                               <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                                 <Image src={getCategoryImage(display.categoria || "") || "/placeholder.svg"} alt={item.name} width={32} height={32} className="object-cover" />
                               </div>
@@ -482,36 +485,34 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                               </div>
                             </div>
                             {/* Cantidad */}
-                            <div className="col-span-20 flex items-center justify-center">
+                            <div className="flex items-center justify-center">
                               <span className="text-sm text-slate-700 tabular-nums">{item.quantity}</span>
                             </div>
-                            {/* Precio Unit — with strikethrough + discount badge if applicable */}
-                            <div className="col-span-20 flex flex-col items-center justify-center gap-0.5">
+                            {/* Precio Unit. — always the original price */}
+                            <div className="flex items-center justify-center">
+                              <span className="text-sm text-slate-700 tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
+                            </div>
+                            {/* Arrow */}
+                            <div className="flex items-center justify-center w-5 text-slate-300">→</div>
+                            {/* Promoción */}
+                            <div className="flex items-center justify-center">
                               {item.discount > 0 ? (
-                                <>
-                                  <span className="text-[10px] text-slate-400 line-through tabular-nums leading-tight">
-                                    ${item.unitPrice.toLocaleString("es-AR")}
-                                  </span>
-                                  <span className="text-[10px] text-red-500 font-medium leading-tight">
-                                    {item.discountType === "percent"
-                                      ? `${item.discount}% OFF`
-                                      : `-$${item.discount.toLocaleString("es-AR")} OFF`}
-                                  </span>
-                                  <span className="text-sm text-slate-800 font-medium tabular-nums leading-tight">
-                                    ${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}
-                                  </span>
-                                </>
+                                <span className="text-sm text-red-500 tabular-nums">
+                                  {item.discountType === "percent"
+                                    ? `-${item.discount}%`
+                                    : `-$${item.discount.toLocaleString("es-AR")}`}
+                                </span>
                               ) : (
-                                <span className="text-sm text-slate-700 tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
+                                <span className="text-sm text-slate-300">—</span>
                               )}
                             </div>
-                            {/* Subtotal */}
-                            <div className="col-span-20 flex flex-col items-end justify-center pr-4 gap-0.5">
-                              {item.discount > 0 && (
-                                <span className="text-[10px] text-slate-400 line-through tabular-nums leading-tight">
-                                  ${(item.unitPrice * item.quantity).toLocaleString("es-AR")}
-                                </span>
-                              )}
+                            {/* Arrow */}
+                            <div className="flex items-center justify-center w-5 text-slate-300">→</div>
+                            {/* Subtotal — qty × final price above total */}
+                            <div className="flex flex-col items-end justify-center pr-4 gap-0.5">
+                              <span className="text-[10px] text-slate-400 tabular-nums leading-tight">
+                                {item.quantity} × ${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}
+                              </span>
                               <span className="text-sm font-semibold text-slate-900 tabular-nums leading-tight">
                                 ${item.total.toLocaleString("es-AR")}
                               </span>
