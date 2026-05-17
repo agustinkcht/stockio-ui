@@ -378,13 +378,11 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       <div className="col-span-15 flex items-center justify-center pr-4">Entregado</div>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-[35fr_15fr_15fr_auto_15fr_auto_20fr] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      <div className="flex items-center px-4">Item</div>
-                      <div className="flex items-center justify-center">Cantidad</div>
-                      <div className="flex items-center justify-center">Precio Unit.</div>
-                      <div className="flex items-center justify-center w-5 text-slate-300">→</div>
-                      <div className="flex items-center justify-center">Promoción</div>
-                      <div className="flex items-center justify-center w-5 text-slate-300">→</div>
+                    <div className="grid grid-cols-[35%_15%_15%_15%_20%] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      <div className="flex items-center px-4 border-r border-slate-200/60">Item</div>
+                      <div className="flex items-center justify-center border-r border-slate-200/60">Cantidad</div>
+                      <div className="flex items-center justify-center border-r border-slate-200/60">Precio Unit.</div>
+                      <div className="flex items-center justify-center border-r border-slate-200/60">Promoción</div>
                       <div className="flex items-center justify-end pr-4">Subtotal</div>
                     </div>
                   )}
@@ -458,22 +456,18 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             </div>
                           </div>
                         ) : (
-                          <div className="grid grid-cols-[35fr_15fr_15fr_auto_15fr_auto_20fr] min-h-[56px]">
-                            {/* Item Info */}
-                            <div className="flex items-center gap-3 px-4 py-2">
+                          <div className="grid grid-cols-[35%_15%_15%_15%_20%] min-h-[56px]">
+                            {/* Item Info — wraps on overflow, never pushes other cols */}
+                            <div className="flex items-center gap-3 px-4 py-3 border-r border-slate-200/60 overflow-hidden">
                               <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                                 <Image src={getCategoryImage(display.categoria || "") || "/placeholder.svg"} alt={item.name} width={32} height={32} className="object-cover" />
                               </div>
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-1.5 min-w-0">
-                                  <p className="text-sm font-medium text-gray-900 truncate leading-tight">{display.name}</p>
-                                  {display.tags.length > 0 && (
-                                    <div className="flex items-center gap-1 shrink-0">
-                                      {display.tags.map((tag, i) => (
-                                        <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-600 whitespace-nowrap">{tag}</span>
-                                      ))}
-                                    </div>
-                                  )}
+                              <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  <p className="text-sm font-medium text-gray-900 break-words leading-tight">{display.name}</p>
+                                  {display.tags.length > 0 && display.tags.map((tag, i) => (
+                                    <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-600 whitespace-nowrap">{tag}</span>
+                                  ))}
                                 </div>
                                 {(display.marca || display.categoria) && (
                                   <div className="flex items-center gap-1 mt-0.5">
@@ -485,19 +479,17 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                               </div>
                             </div>
                             {/* Cantidad */}
-                            <div className="flex items-center justify-center">
+                            <div className="flex items-center justify-center border-r border-slate-200/60">
                               <span className="text-sm text-slate-700 tabular-nums">{item.quantity}</span>
                             </div>
-                            {/* Precio Unit. — always the original price */}
-                            <div className="flex items-center justify-center">
+                            {/* Precio Unit. */}
+                            <div className="flex items-center justify-center border-r border-slate-200/60">
                               <span className="text-sm text-slate-700 tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
                             </div>
-                            {/* Arrow */}
-                            <div className="flex items-center justify-center w-5 text-slate-300">→</div>
                             {/* Promoción */}
-                            <div className="flex items-center justify-center">
+                            <div className="flex items-center justify-center border-r border-slate-200/60">
                               {item.discount > 0 ? (
-                                <span className="text-sm text-red-500 tabular-nums">
+                                <span className="text-sm font-medium text-red-500 tabular-nums">
                                   {item.discountType === "percent"
                                     ? `-${item.discount}%`
                                     : `-$${item.discount.toLocaleString("es-AR")}`}
@@ -506,14 +498,12 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                                 <span className="text-sm text-slate-300">—</span>
                               )}
                             </div>
-                            {/* Arrow */}
-                            <div className="flex items-center justify-center w-5 text-slate-300">→</div>
-                            {/* Subtotal — qty × final price above total */}
+                            {/* Subtotal */}
                             <div className="flex flex-col items-end justify-center pr-4 gap-0.5">
-                              <span className="text-[10px] text-slate-400 tabular-nums leading-tight">
+                              <span className="text-xs font-medium text-slate-500 tabular-nums leading-tight">
                                 {item.quantity} × ${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}
                               </span>
-                              <span className="text-sm font-semibold text-slate-900 tabular-nums leading-tight">
+                              <span className="text-sm font-bold text-slate-900 tabular-nums leading-tight">
                                 ${item.total.toLocaleString("es-AR")}
                               </span>
                             </div>
