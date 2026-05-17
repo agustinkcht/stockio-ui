@@ -208,16 +208,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
                   <div className="h-10 w-px bg-border/40" />
 
-                  {/* Estado */}
-                  <div className="flex flex-col">
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Estado</span>
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border self-start mt-0.5 ${estadoVentaStyle.bg} ${estadoVentaStyle.text} ${estadoVentaStyle.border}`}>
-                      {estadoVenta}
-                    </span>
-                  </div>
-
-                  <div className="h-10 w-px bg-border/40" />
-
                   {/* Fecha */}
                   <div className="flex flex-col">
                     <span className="text-[10px] text-slate-400 uppercase tracking-wider">Fecha</span>
@@ -299,6 +289,59 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
               {/* Left col-span-7: Cliente card + Entrega/Items card */}
               <div className="col-span-7 flex flex-col gap-4">
+
+                {/* Milestones card */}
+                {(() => {
+                  const milestones = [
+                    { label: "Borrador", key: "borrador" },
+                    { label: "En Curso", key: "en_curso" },
+                    { label: "Finalizada", key: "finalizada" },
+                  ]
+                  // Derive active milestone from entrega + cobro
+                  const activeIndex = (pagoPct === 100 && entregaPct === 100)
+                    ? 2
+                    : (pagoPct > 0 || entregaPct > 0)
+                      ? 1
+                      : 0
+
+                  return (
+                    <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3">
+                      <span className="text-[10px] text-slate-400 uppercase tracking-wider block mb-3">Milestones</span>
+                      <div className="flex items-center gap-0">
+                        {milestones.map((m, i) => {
+                          const isDone = i < activeIndex
+                          const isActive = i === activeIndex
+                          const isLast = i === milestones.length - 1
+                          return (
+                            <div key={m.key} className="flex items-center flex-1 min-w-0">
+                              {/* Step */}
+                              <div className="flex flex-col items-center gap-1.5 shrink-0">
+                                <div className={`w-5 h-5 rounded-full flex items-center justify-center border-2 transition-colors
+                                  ${isDone ? "bg-slate-800 border-slate-800" : isActive ? "bg-white border-slate-800" : "bg-white border-slate-200"}`}
+                                >
+                                  {isDone && (
+                                    <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 10 10">
+                                      <path d="M1.5 5L4 7.5L8.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                  )}
+                                  {isActive && <div className="w-2 h-2 rounded-full bg-slate-800" />}
+                                </div>
+                                <span className={`text-[11px] font-medium whitespace-nowrap
+                                  ${isDone ? "text-slate-500" : isActive ? "text-slate-800" : "text-slate-300"}`}>
+                                  {m.label}
+                                </span>
+                              </div>
+                              {/* Connector */}
+                              {!isLast && (
+                                <div className={`flex-1 h-px mx-2 mb-[18px] ${isDone ? "bg-slate-800" : "bg-slate-200"}`} />
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })()}
 
                 {/* Cliente card */}
                 <button
