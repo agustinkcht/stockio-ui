@@ -60,6 +60,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const [showMoreOptionsMenu, setShowMoreOptionsMenu] = useState(false)
   const [viewingItem, setViewingItem] = useState<VentaItem | null>(null)
   const [entregaMode, setEntregaMode] = useState(false)
+  const [showClientePanel, setShowClientePanel] = useState(false)
 
   const exportDropdownRef = useRef<HTMLDivElement>(null)
   const moreMenuRef = useRef<HTMLDivElement>(null)
@@ -202,60 +203,101 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   const fechaObj = new Date(venta.fecha)
                   const mesCorto = fechaObj.toLocaleDateString("es-AR", { month: "short" }).replace(".", "")
                   const dia = fechaObj.toLocaleDateString("es-AR", { day: "2-digit" })
+                  const inicial = venta.clienteNombre.charAt(0).toUpperCase()
                   return (
-                    <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex items-center justify-between gap-4">
-                      {/* Left: venta id + date + cliente */}
-                      <div className="flex items-center gap-5 min-w-0">
-                        {/* ID */}
-                        <div className="shrink-0">
-                          <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Venta</span>
-                          <span className="text-lg font-bold text-slate-900 leading-tight">{venta.id}</span>
-                        </div>
-                        <div className="h-8 w-px bg-slate-100 shrink-0" />
-                        {/* Date */}
-                        <div className="shrink-0">
-                          <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Fecha</span>
-                          <span className="text-sm font-medium text-slate-700 leading-tight tabular-nums">
+                    <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-3">
+                      {/* Row 1: Venta ID + date + actions */}
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-4 min-w-0">
+                          {/* ID with label inline */}
+                          <div className="flex items-baseline gap-1.5 shrink-0">
+                            <span className="text-[10px] text-slate-400 uppercase tracking-wider">Venta</span>
+                            <span className="text-lg font-bold text-slate-900 leading-tight">{venta.id}</span>
+                          </div>
+                          <div className="h-5 w-px bg-slate-100 shrink-0" />
+                          {/* Date — no label */}
+                          <span className="text-sm text-slate-500 tabular-nums shrink-0">
                             {dia} {mesCorto} <span className="text-slate-400">· {venta.hora}</span>
                           </span>
                         </div>
-                        <div className="h-8 w-px bg-slate-100 shrink-0" />
-                        {/* Cliente */}
-                        <div className="min-w-0">
-                          <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Cliente</span>
-                          <span className="text-sm font-medium text-slate-700 truncate block leading-tight">{venta.clienteNombre}</span>
+                        {/* Actions */}
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer gap-1.5 px-3 rounded-md flex items-center"
+                          >
+                            <ReceiptText className="w-3.5 h-3.5 text-slate-500" />
+                            Ver ticket detalle
+                          </button>
+                          <div className="relative" ref={moreMenuRef}>
+                            <button
+                              onClick={() => setShowMoreOptionsMenu(!showMoreOptionsMenu)}
+                              className="h-8 w-8 flex items-center justify-center transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer rounded-md"
+                            >
+                              <MoreVertical className="w-4 h-4 text-slate-500" />
+                            </button>
+                            {showMoreOptionsMenu && (
+                              <div className="absolute top-full right-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[160px]">
+                                <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left">
+                                  <FileDown className="w-4 h-4 text-slate-400" />
+                                  Descargar PDF
+                                </button>
+                                <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors text-left">
+                                  <XCircle className="w-4 h-4 text-red-400" />
+                                  Cancelar venta
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
-                      {/* Right: actions */}
-                      <div className="flex items-center gap-2 shrink-0">
+
+                      {/* Row 2: Cliente pill — clickable, opens slide-in panel */}
+                      <div className="relative">
                         <button
                           type="button"
-                          className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer gap-1.5 px-3 rounded-md flex items-center"
+                          onClick={() => setShowClientePanel(!showClientePanel)}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md border border-slate-200/60 shadow-sm bg-slate-50/60 hover:bg-slate-100/60 transition-colors text-left"
                         >
-                          <ReceiptText className="w-3.5 h-3.5 text-slate-500" />
-                          Ver ticket detalle
+                          <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
+                            <span className="text-xs font-semibold text-white">{inicial}</span>
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-[10px] text-slate-400 uppercase tracking-wider block leading-none mb-0.5">Cliente</span>
+                            <span className="text-sm font-semibold text-slate-800 leading-tight">{venta.clienteNombre}</span>
+                          </div>
                         </button>
-                        {/* 3-dot menu */}
-                        <div className="relative" ref={moreMenuRef}>
-                          <button
-                            onClick={() => setShowMoreOptionsMenu(!showMoreOptionsMenu)}
-                            className="h-8 w-8 flex items-center justify-center transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer rounded-md"
-                          >
-                            <MoreVertical className="w-4 h-4 text-slate-500" />
-                          </button>
-                          {showMoreOptionsMenu && (
-                            <div className="absolute top-full right-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[160px]">
-                              <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left">
-                                <FileDown className="w-4 h-4 text-slate-400" />
-                                Descargar PDF
-                              </button>
-                              <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors text-left">
-                                <XCircle className="w-4 h-4 text-red-400" />
-                                Cancelar venta
+
+                        {/* Slide-in client info panel */}
+                        {showClientePanel && (
+                          <div className="absolute top-full left-0 right-0 mt-1 z-30 bg-white border border-slate-200 rounded-lg shadow-lg p-4 animate-in fade-in slide-in-from-top-1 duration-150">
+                            <div className="flex items-start gap-3">
+                              <div className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
+                                <span className="text-sm font-semibold text-white">{inicial}</span>
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-bold text-slate-900 leading-tight">{venta.clienteNombre}</p>
+                                <p className="text-xs text-slate-400 mt-0.5">Cliente particular</p>
+                                <div className="mt-2 pt-2 border-t border-slate-100 grid grid-cols-2 gap-x-4 gap-y-1.5">
+                                  <div>
+                                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Método de pago</span>
+                                    <span className="text-xs text-slate-700">{metodoPagoLabels[venta.metodoPago]}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Origen</span>
+                                    <span className="text-xs text-slate-700">{getOrigen(venta.metodoPago)}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => setShowClientePanel(false)}
+                                className="shrink-0 text-slate-400 hover:text-slate-600 transition-colors"
+                              >
+                                <XCircle className="w-4 h-4" />
                               </button>
                             </div>
-                          )}
-                        </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )
@@ -379,11 +421,12 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       <div className="col-span-15 flex items-center justify-center pr-4">Entregado</div>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-100 h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      <div className="col-span-40 flex items-center px-4">Item</div>
-                      <div className="col-span-20 flex items-center justify-center">Cantidad</div>
-                      <div className="col-span-20 flex items-center justify-center">Precio Unit.</div>
-                      <div className="col-span-20 flex items-center justify-end pr-4">Subtotal</div>
+                    <div className="grid grid-cols-[35%_12%_22%_11%_20%] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      <div className="flex items-center px-4">Item</div>
+                      <div className="flex items-center justify-center">Cant.</div>
+                      <div className="flex items-center justify-center">Precio Unit.</div>
+                      <div className="flex items-center justify-center">Prom.</div>
+                      <div className="flex items-center justify-end pr-4">Subtotal</div>
                     </div>
                   )}
                 </div>
@@ -456,22 +499,18 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             </div>
                           </div>
                         ) : (
-                          <div className="grid grid-cols-100 h-[56px]">
+                          <div className="grid grid-cols-[35%_12%_22%_11%_20%] min-h-[56px]">
                             {/* Item Info */}
-                            <div className="col-span-40 flex items-center gap-3 px-4">
+                            <div className="flex items-center gap-3 px-4 py-2 overflow-hidden">
                               <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                                 <Image src={getCategoryImage(display.categoria || "") || "/placeholder.svg"} alt={item.name} width={32} height={32} className="object-cover" />
                               </div>
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-1.5 min-w-0">
-                                  <p className="text-sm font-medium text-gray-900 truncate leading-tight">{display.name}</p>
-                                  {display.tags.length > 0 && (
-                                    <div className="flex items-center gap-1 shrink-0">
-                                      {display.tags.map((tag, i) => (
-                                        <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-600 whitespace-nowrap">{tag}</span>
-                                      ))}
-                                    </div>
-                                  )}
+                              <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  <p className="text-sm font-medium text-gray-900 break-words leading-tight">{display.name}</p>
+                                  {display.tags.length > 0 && display.tags.map((tag, i) => (
+                                    <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-600 whitespace-nowrap">{tag}</span>
+                                  ))}
                                 </div>
                                 {(display.marca || display.categoria) && (
                                   <div className="flex items-center gap-1 mt-0.5">
@@ -482,38 +521,32 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                                 )}
                               </div>
                             </div>
-                            {/* Cantidad */}
-                            <div className="col-span-20 flex items-center justify-center">
+                            {/* Precio Unit. — original price */}
+                            <div className="flex items-center justify-center">
                               <span className="text-sm text-slate-700 tabular-nums">{item.quantity}</span>
                             </div>
-                            {/* Precio Unit — with strikethrough + discount badge if applicable */}
-                            <div className="col-span-20 flex flex-col items-center justify-center gap-0.5">
+                            {/* Precio Unit. — original price always, discount shown inline to the right */}
+                            <div className="flex items-center justify-center gap-1.5">
+                              <span className="text-sm text-slate-700 tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
+                            </div>
+                            {/* Promoción */}
+                            <div className="flex items-center justify-center">
                               {item.discount > 0 ? (
-                                <>
-                                  <span className="text-[10px] text-slate-400 line-through tabular-nums leading-tight">
-                                    ${item.unitPrice.toLocaleString("es-AR")}
-                                  </span>
-                                  <span className="text-[10px] text-red-500 font-medium leading-tight">
-                                    {item.discountType === "percent"
-                                      ? `${item.discount}% OFF`
-                                      : `-$${item.discount.toLocaleString("es-AR")} OFF`}
-                                  </span>
-                                  <span className="text-sm text-slate-800 font-medium tabular-nums leading-tight">
-                                    ${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}
-                                  </span>
-                                </>
+                                <span className="text-xs font-semibold text-red-500 tabular-nums">
+                                  {item.discountType === "percent"
+                                    ? `-${item.discount}%`
+                                    : `-$${item.discount.toLocaleString("es-AR")}`}
+                                </span>
                               ) : (
-                                <span className="text-sm text-slate-700 tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
+                                <span className="text-slate-300 text-sm">—</span>
                               )}
                             </div>
-                            {/* Subtotal */}
-                            <div className="col-span-20 flex flex-col items-end justify-center pr-4 gap-0.5">
-                              {item.discount > 0 && (
-                                <span className="text-[10px] text-slate-400 line-through tabular-nums leading-tight">
-                                  ${(item.unitPrice * item.quantity).toLocaleString("es-AR")}
-                                </span>
-                              )}
-                              <span className="text-sm font-semibold text-slate-900 tabular-nums leading-tight">
+                            {/* Subtotal — qty×finalPrice hint above bold total; no dashed value (% and $ discounts shown in Prom. col) */}
+                            <div className="flex flex-col items-end justify-center pr-4 gap-0.5">
+                              <span className="text-xs font-medium text-slate-500 tabular-nums leading-tight">
+                                {item.quantity} × ${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}
+                              </span>
+                              <span className="text-sm font-bold text-slate-900 tabular-nums leading-tight">
                                 ${item.total.toLocaleString("es-AR")}
                               </span>
                             </div>
