@@ -285,10 +285,10 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
             {/* Items Grid + Totals side by side */}
             <div className="flex-1 overflow-y-auto px-6 pb-6 mt-4">
-              <div className="grid grid-cols-100 gap-4 items-start">
+              <div className="grid grid-cols-[70fr_30fr] gap-4 items-start">
 
-              {/* Left col-span-70: Cliente card + Entrega/Items card */}
-              <div className="col-span-70 flex flex-col gap-4">
+              {/* Left (70%): Cliente card + Entrega/Items card */}
+              <div className="flex flex-col gap-4">
 
                 {/* Milestones card */}
                 {(() => {
@@ -570,9 +570,9 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
               </div>{/* end entrega+items card */}
               </div>{/* end col-span-2 flex column */}
 
-              {/* Right col-span-30: unified Detalle de Cobro card */}
+              {/* Right (30%): unified Detalle de Cobro card */}
               {venta.items.length > 0 && (
-                <div className="col-span-30">
+                <div>
                   <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm overflow-hidden">
 
                     {/* Card title */}
