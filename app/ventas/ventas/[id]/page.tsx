@@ -314,9 +314,9 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                 {/* Entrega + Items card */}
               <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm overflow-hidden">
 
-                {/* ── Title strip + entrega inline ── */}
+                {/* ── Title strip ── */}
                 <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-                  {/* Left: products + units + divider + entrega */}
+                  {/* Left: products + units */}
                   <div className="flex items-center gap-3">
                     <Package className="w-4 h-4 text-slate-400 shrink-0" />
                     <div className="flex items-center gap-1.5">
@@ -328,9 +328,9 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         {totalUnidades} {totalUnidades === 1 ? "unidad" : "unidades"}
                       </span>
                     </div>
-                    {/* Fine vertical divider */}
-                    <div className="h-4 w-px bg-slate-200 shrink-0" />
-                    {/* Entrega info */}
+                  </div>
+                  {/* Right: entrega info + toggle button */}
+                  <div className="flex items-center gap-3">
                     <Truck className={`w-4 h-4 shrink-0 ${entregaPct === 100 ? "text-emerald-500" : entregaPct > 0 ? "text-amber-500" : "text-slate-400"}`} />
                     <div className="flex items-baseline gap-1.5">
                       <span className="text-sm font-semibold text-slate-800">Entrega</span>
@@ -339,20 +339,20 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       </span>
                       <span className="text-xs text-slate-400 tabular-nums">{entregadasUnidades}/{totalUnidades}</span>
                     </div>
+                    <div className="h-4 w-px bg-slate-200 shrink-0" />
+                    <button
+                      type="button"
+                      onClick={() => setEntregaMode(!entregaMode)}
+                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
+                        entregaMode
+                          ? "bg-slate-900 text-white"
+                          : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                      }`}
+                    >
+                      <ScanLine className="w-3.5 h-3.5" />
+                      {entregaMode ? "Ver detalle" : "Ver entrega"}
+                    </button>
                   </div>
-                  {/* Right: toggle button */}
-                  <button
-                    type="button"
-                    onClick={() => setEntregaMode(!entregaMode)}
-                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
-                      entregaMode
-                        ? "bg-slate-900 text-white"
-                        : "bg-slate-100 text-slate-500 hover:bg-slate-200"
-                    }`}
-                  >
-                    <ScanLine className="w-3.5 h-3.5" />
-                    {entregaMode ? "Ver detalle" : "Ver entrega"}
-                  </button>
                 </div>
 
                 {/* ── Grid (padded inside card) ── */}
@@ -368,12 +368,11 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       <div className="col-span-15 flex items-center justify-center pr-4">Entregado</div>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-[35%_12%_22%_11%_20%] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    <div className="grid grid-cols-[38%_22%_10%_30%] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
                       <div className="flex items-center px-4">Item</div>
-                      <div className="flex items-center justify-center">Cant.</div>
                       <div className="flex items-center justify-center">Precio Unit.</div>
-                      <div className="flex items-center justify-center">Prom.</div>
-                      <div className="flex items-center justify-end pr-4">Subtotal</div>
+                      <div className="flex items-center justify-center">Cant.</div>
+                      <div className="flex items-center justify-end pr-6">Subtotal</div>
                     </div>
                   )}
                 </div>
@@ -446,7 +445,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             </div>
                           </div>
                         ) : (
-                          <div className="grid grid-cols-[35%_12%_22%_11%_20%] min-h-[56px]">
+                          <div className="grid grid-cols-[38%_22%_10%_30%] min-h-[56px]">
                             {/* Item Info */}
                             <div className="flex items-center gap-3 px-4 py-2 overflow-hidden">
                               <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
@@ -468,34 +467,40 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                                 )}
                               </div>
                             </div>
-                            {/* Precio Unit. — original price */}
+
+                            {/* Precio Unit. col — with promo logic for % and $ */}
+                            <div className="flex flex-col items-center justify-center gap-0.5 py-2">
+                              {item.discount > 0 && (item.discountType === "percent" || item.discountType === "fixed") ? (
+                                <>
+                                  {/* Original price dashed + promo badge inline */}
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-xs text-slate-400 line-through tabular-nums">
+                                      ${item.unitPrice.toLocaleString("es-AR")}
+                                    </span>
+                                    <span className="text-[10px] font-semibold text-red-500">
+                                      {item.discountType === "percent"
+                                        ? `-${item.discount}%`
+                                        : `-$${item.discount.toLocaleString("es-AR")}`}
+                                    </span>
+                                  </div>
+                                  {/* Final unit price */}
+                                  <span className="text-sm font-medium text-slate-800 tabular-nums">
+                                    ${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}
+                                  </span>
+                                </>
+                              ) : (
+                                <span className="text-sm text-slate-700 tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
+                              )}
+                            </div>
+
+                            {/* Cantidad col */}
                             <div className="flex items-center justify-center">
                               <span className="text-sm text-slate-700 tabular-nums">{item.quantity}</span>
                             </div>
-                            {/* Precio Unit. — original price always, discount shown inline to the right */}
-                            <div className="flex items-center justify-center gap-1.5">
-                              <span className="text-sm text-slate-700 tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
-                            </div>
-                            {/* Promoción */}
-                            <div className="flex items-center justify-center">
-                              {item.discount > 0 ? (
-                                <span className="text-xs font-semibold text-red-500 tabular-nums">
-                                  {item.discountType === "percent"
-                                    ? `-${item.discount}%`
-                                    : `-$${item.discount.toLocaleString("es-AR")}`}
-                                </span>
-                              ) : (
-                                <span className="text-slate-300 text-sm">—</span>
-                              )}
-                            </div>
-                            {/* Subtotal — qty×finalPrice hint above bold total; no dashed value (% and $ discounts shown in Prom. col) */}
-                            <div className="flex flex-col items-end justify-center pr-4 gap-0.5">
-                              <span className="text-xs font-medium text-slate-500 tabular-nums leading-tight">
-                                {item.quantity} × ${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}
-                              </span>
-                              <span className="text-sm font-bold text-slate-900 tabular-nums leading-tight">
-                                ${item.total.toLocaleString("es-AR")}
-                              </span>
+
+                            {/* Subtotal col */}
+                            <div className="flex flex-col items-end justify-center pr-6 py-2 gap-0.5">
+                              <span className="text-sm font-bold text-slate-900 tabular-nums">${item.total.toLocaleString("es-AR")}</span>
                             </div>
                           </div>
                         )}
