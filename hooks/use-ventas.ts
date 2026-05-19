@@ -6,7 +6,23 @@ import { VENTAS } from "@/lib/data/ventas"
 import { useAccount } from "@/lib/contexts/account-context"
 
 // Bump this when the Venta type or seed data changes to force re-seeding
-const VENTAS_SEED_VERSION = "v2"
+const VENTAS_SEED_VERSION = "v3"
+
+// Ensures a venta object loaded from localStorage has all required fields,
+// even if it was saved before a type extension.
+function migrateVenta(raw: Partial<Venta> & Record<string, unknown>): Venta {
+  return {
+    ...raw,
+    items: Array.isArray(raw.items) ? raw.items : [],
+    cobros: Array.isArray(raw.cobros) ? raw.cobros : [],
+    entregaItems: Array.isArray(raw.entregaItems) ? raw.entregaItems : [],
+    subtotal: raw.subtotal ?? 0,
+    total: raw.total ?? 0,
+    descuento: raw.descuento ?? 0,
+    descuentoTipo: raw.descuentoTipo ?? "percent",
+    estado: raw.estado ?? "en_curso",
+  } as Venta
+}
 
 // Recomputes derived totals + estado from items/cobros/entregaItems.
 function recomputeVenta(v: Venta): Venta {
@@ -55,7 +71,10 @@ export function useVentas() {
       const storedVentas = localStorage.getItem(storageKey)
 
       if (storedVentas && storedVersion === VENTAS_SEED_VERSION) {
-        setVentas(JSON.parse(storedVentas))
+        const parsed = (JSON.parse(storedVentas) as unknown[]).map((v) =>
+          migrateVenta(v as Partial<Venta> & Record<string, unknown>)
+        )
+        setVentas(parsed)
       } else {
         // Re-seed: type changed or first load
         localStorage.setItem(storageKey, JSON.stringify(VENTAS))

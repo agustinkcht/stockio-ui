@@ -150,30 +150,35 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
     year: "numeric",
   })
 
-  const itemDiscountAmount = venta.items.reduce((sum, it) => {
+  const itemDiscountAmount = (venta.items ?? []).reduce((sum, it) => {
     const baseGross = it.unitPrice * it.quantity
     const discount =
       it.discountType === "percent" ? baseGross * (it.discount / 100) : it.discount * it.quantity
     return sum + discount
   }, 0)
 
+  // Defensive: ensure arrays are never undefined (guard against stale localStorage shapes)
+  const ventaItems = venta.items ?? []
+  const ventaCobros = venta.cobros ?? []
+  const ventaEntregaItems = venta.entregaItems ?? []
+
   // Derived cobro values from real cobros array
-  const montoCobrado = venta.cobros.reduce((sum, c) => sum + c.monto, 0)
+  const montoCobrado = ventaCobros.reduce((sum, c) => sum + c.monto, 0)
   const montoRestante = Math.max(0, venta.total - montoCobrado)
   const pagoPct = venta.total > 0 ? Math.min(100, Math.round((montoCobrado / venta.total) * 100)) : 0
 
   // Derived entrega values from real entregaItems array
-  const totalUnidades = venta.items.reduce((s, it) => s + it.quantity, 0)
-  const entregadasUnidades = venta.items.reduce((s, item) => {
-    const e = venta.entregaItems.find(ei => ei.sku === item.sku)
+  const totalUnidades = ventaItems.reduce((s, it) => s + it.quantity, 0)
+  const entregadasUnidades = ventaItems.reduce((s, item) => {
+    const e = ventaEntregaItems.find(ei => ei.sku === item.sku)
     return s + (e?.quantityEntregada ?? 0)
   }, 0)
   const entregaPct = totalUnidades > 0 ? Math.min(100, Math.round((entregadasUnidades / totalUnidades) * 100)) : 0
 
   // Per-item entrega map for the grid display
   const itemEntregaMap = new Map(
-    venta.items.map((item) => {
-      const e = venta.entregaItems.find(ei => ei.sku === item.sku)
+    ventaItems.map((item) => {
+      const e = ventaEntregaItems.find(ei => ei.sku === item.sku)
       return [item.sku, e?.quantityEntregada ?? 0]
     })
   )
@@ -352,9 +357,9 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const handleConfirmEntrega = () => {
     if (!venta) return
     const entregas: VentaEntregaItem[] = []
-    for (const item of venta.items) {
+    for (const item of ventaItems) {
       if (!entregaSelectedItems[item.sku]) continue
-      const delivered = venta.entregaItems.find(e => e.sku === item.sku)?.quantityEntregada ?? 0
+      const delivered = ventaEntregaItems.find(e => e.sku === item.sku)?.quantityEntregada ?? 0
       const remaining = item.quantity - delivered
       const raw = entregaQuantities[item.sku]
       const qty = raw === "" || raw === undefined ? remaining : Math.max(0, Math.min(remaining, parseInt(raw, 10) || 0))
@@ -375,8 +380,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
     // Auto-deliver any remaining units
     const pendingEntregas: VentaEntregaItem[] = []
-    for (const item of venta.items) {
-      const delivered = venta.entregaItems.find(e => e.sku === item.sku)?.quantityEntregada ?? 0
+    for (const item of ventaItems) {
+      const delivered = ventaEntregaItems.find(e => e.sku === item.sku)?.quantityEntregada ?? 0
       const remaining = item.quantity - delivered
       if (remaining > 0) pendingEntregas.push({ sku: item.sku, quantityEntregada: remaining })
     }
@@ -511,8 +516,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
                       {/* Row 2: Productos + unidades + total */}
                       <div className="flex items-baseline gap-1.5 px-1">
-                        <span className="text-lg font-semibold text-slate-900 tabular-nums">{venta.items.length}</span>
-                        <span className="text-sm text-slate-400">{venta.items.length === 1 ? "producto" : "productos"}</span>
+                        <span className="text-lg font-semibold text-slate-900 tabular-nums">{ventaItems.length}</span>
+                        <span className="text-sm text-slate-400">{ventaItems.length === 1 ? "producto" : "productos"}</span>
                         <span className="text-slate-300 mx-1">·</span>
                         <span className="text-lg font-semibold text-slate-900 tabular-nums">{totalUnidades}</span>
                         <span className="text-sm text-slate-400">{totalUnidades === 1 ? "unidad" : "unidades"}</span>
@@ -690,7 +695,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     }`}
                   >
                     <Package className="w-3.5 h-3.5" />
-                    {venta.items.length} {venta.items.length === 1 ? "producto" : "productos"} · {totalUnidades} {totalUnidades === 1 ? "unidad" : "unidades"}
+                    {ventaItems.length} {ventaItems.length === 1 ? "producto" : "productos"} · {totalUnidades} {totalUnidades === 1 ? "unidad" : "unidades"}
                   </button>
                   <button
                     type="button"
@@ -711,14 +716,14 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
 
                 {/* ── Items ── */}
-                {venta.items.length === 0 ? (
+                {ventaItems.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16">
                     <Package className="w-12 h-12 text-slate-200 mb-3" />
                     <p className="text-slate-500 mb-1">Sin items</p>
                     <p className="text-xs text-slate-400">Esta venta no tiene items asociados</p>
                   </div>
                 ) : (
-                  venta.items.map((item, idx) => {
+                  ventaItems.map((item, idx) => {
                     const display = getVentaItemDisplay(item)
                     const baseGross = item.unitPrice * item.quantity
                     const discountAmount =
@@ -870,7 +875,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
               </div>{/* end col-span-2 flex column */}
 
               {/* Right col-span-1: single white panel, content directly on background */}
-              {venta.items.length > 0 && (
+              {ventaItems.length > 0 && (
                 <div className="col-span-1 bg-white rounded-lg shadow-sm overflow-hidden sticky top-0">
                   <div className="px-5 py-5 flex flex-col gap-0">
 
@@ -891,7 +896,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     </button>
                     {showSubtotalBreakdown && (
                       <div className="border-b border-slate-100">
-                        {venta.items.map((item, idx) => {
+                        {ventaItems.map((item, idx) => {
                           const display = getVentaItemDisplay(item)
                           const adjustedUnit = item.discountType === "percent"
                             ? item.unitPrice * (1 - item.discount / 100)
@@ -959,8 +964,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     <p className="text-sm font-semibold text-slate-800 mb-3">Detalle del Cobro</p>
 
                     {/* Entries */}
-                    {venta.cobros.length > 0 ? (
-                      venta.cobros.map((cobro) => (
+                        {ventaCobros.length > 0 ? (
+                          ventaCobros.map((cobro) => (
                         <div key={cobro.id} className="flex items-center justify-between py-2.5 border-b border-slate-100">
                           <div className="flex items-center gap-2">
                             <span className="text-xs text-slate-400 tabular-nums">
@@ -997,7 +1002,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
       {/* ── Registrar Entrega Modal ── */}
       {showRegistrarEntrega && (() => {
         // Items with units still pending delivery
-        const pendingItems = venta.items.filter(item => {
+        const pendingItems = ventaItems.filter(item => {
           const delivered = itemEntregaMap.get(item.sku) ?? 0
           return delivered < item.quantity
         })
@@ -1159,7 +1164,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
       {/* ── Finalizar Venta Modal ── */}
       {showFinalizarVenta && (() => {
-        const pendingItems = venta.items.filter(item => {
+        const pendingItems = ventaItems.filter(item => {
           const delivered = itemEntregaMap.get(item.sku) ?? 0
           return delivered < item.quantity
         })
