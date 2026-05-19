@@ -285,17 +285,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   </div>
                 </div>
 
-                {/* ── Notas card ── */}
-                <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-2">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider">Notas</span>
-                  <textarea
-                    placeholder="Agregar una nota sobre esta venta..."
-                    defaultValue={venta.observaciones ?? ""}
-                    rows={3}
-                    className="w-full resize-none text-sm text-slate-700 placeholder:text-slate-300 bg-transparent border-none outline-none leading-relaxed"
-                  />
-                </div>
-
                 {/* ── Estado milestones card ── */}
                 {(() => {
                   const steps = [
@@ -535,6 +524,18 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
               </div>{/* end rounded inner grid */}
               </div>{/* end p-3 padding wrapper */}
               </div>{/* end entrega+items card */}
+
+              {/* ── Notas card ── */}
+              <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-2">
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider">Notas</span>
+                <textarea
+                  placeholder="Agregar una nota sobre esta venta..."
+                  defaultValue={venta.observaciones ?? ""}
+                  rows={3}
+                  className="w-full resize-none text-sm text-slate-700 placeholder:text-slate-300 bg-transparent border-none outline-none leading-relaxed"
+                />
+              </div>
+
               </div>{/* end col-span-2 flex column */}
 
               {/* Right col-span-1: single white panel, content directly on background */}
