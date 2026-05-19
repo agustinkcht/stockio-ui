@@ -277,7 +277,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                 {/* ── Cliente card ── */}
                 <div className="bg-slate-100 border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex items-center gap-3">
                   <div className="w-9 h-9 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
-                    <span className="text-sm font-semibold text-white">{inicial}</span>
+                    <span className="text-sm font-semibold text-white">{venta.clienteNombre.charAt(0).toUpperCase()}</span>
                   </div>
                   <div className="min-w-0">
                     <span className="text-[10px] text-slate-400 uppercase tracking-wider block leading-none mb-0.5">Cliente</span>
