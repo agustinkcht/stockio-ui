@@ -22,6 +22,11 @@ import {
   ScanLine,
   Plus,
   Search,
+  Check,
+  Minus,
+  Filter,
+  ArrowUpDown,
+  X,
 } from "lucide-react"
 import Image from "next/image"
 import { VENTAS } from "@/lib/data/ventas"
@@ -60,7 +65,12 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const [showSubtotalBreakdown, setShowSubtotalBreakdown] = useState(false)
   const [showAgregarProductos, setShowAgregarProductos] = useState(false)
   const [showRegistrarCobro, setShowRegistrarCobro] = useState(false)
-  const [productSearch, setProductSearch] = useState("")
+  const [selectedModalItems, setSelectedModalItems] = useState<{ [id: string]: boolean }>({})
+  const [modalSearch, setModalSearch] = useState("")
+  const [modalFilters, setModalFilters] = useState<{ categoria: string; marca: string }>({ categoria: "", marca: "" })
+  const [modalSort, setModalSort] = useState<"name" | "precio">("name")
+  const [modalSortDirection, setModalSortDirection] = useState<"asc" | "desc">("asc")
+  const [showModalFilters, setShowModalFilters] = useState(false)
   const [cobroFecha, setCobroFecha] = useState(() => new Date().toISOString().slice(0, 10))
   const [cobroHora, setCobroHora] = useState(() => new Date().toTimeString().slice(0, 5))
   const [cobroMedio, setCobroMedio] = useState<"efectivo" | "posnet" | "transferencia">("efectivo")
@@ -154,6 +164,111 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   )
   const totalUnidades = venta.items.reduce((s, it) => s + it.quantity, 0)
   const entregadasUnidades = venta.items.reduce((s, it, idx) => s + (itemEntregaMap.get(idx) ?? 0), 0)
+
+  // ── Modal computed values ──
+  const allModalItems = INITIAL_ITEMS
+
+  const uniqueModalCategorias = useMemo(() => {
+    const cats = new Set<string>()
+    allModalItems.forEach(item => {
+      if (item.categoria) cats.add(item.categoria)
+    })
+    return Array.from(cats).sort()
+  }, [])
+
+  const uniqueModalMarcas = useMemo(() => {
+    const marcas = new Set<string>()
+    allModalItems.forEach(item => {
+      if (item.marca) marcas.add(item.marca)
+    })
+    return Array.from(marcas).sort()
+  }, [])
+
+  const filteredModalItems = useMemo(() => {
+    let items = [...allModalItems]
+    if (modalSearch.trim()) {
+      const words = modalSearch.toLowerCase().trim().split(/\s+/)
+      items = items.filter(item => {
+        const text = [item.name, item.sku, item.marca, item.categoria, item.proveedor].filter(Boolean).join(" ").toLowerCase()
+        return words.every(w => text.includes(w))
+      })
+    }
+    if (modalFilters.categoria) items = items.filter(i => i.categoria === modalFilters.categoria)
+    if (modalFilters.marca) items = items.filter(i => i.marca === modalFilters.marca)
+    const dir = modalSortDirection === "asc" ? 1 : -1
+    items.sort((a, b) => {
+      if (modalSort === "precio") return ((a.precio?.precioFinal || 0) - (b.precio?.precioFinal || 0)) * dir
+      return a.name.localeCompare(b.name) * dir
+    })
+    return items
+  }, [modalSearch, modalFilters, modalSort, modalSortDirection])
+
+  const getModalItemId = (item: any): string => item.id || item.sku || item.name || ""
+
+  const getAllModalSelectableIds = useMemo(() => {
+    return filteredModalItems.flatMap(item => {
+      if (item.hasVariants && item.variants?.length) {
+        return item.variants.map((v: any) => getModalItemId(v))
+      }
+      return [getModalItemId(item)]
+    }).filter(Boolean)
+  }, [filteredModalItems])
+
+  const modalSelectAllActive = useMemo(() =>
+    getAllModalSelectableIds.length > 0 && getAllModalSelectableIds.every(id => selectedModalItems[id]),
+    [getAllModalSelectableIds, selectedModalItems])
+
+  const modalSelectAllIndeterminate = useMemo(() => {
+    const some = getAllModalSelectableIds.some(id => selectedModalItems[id])
+    return some && !modalSelectAllActive
+  }, [getAllModalSelectableIds, selectedModalItems, modalSelectAllActive])
+
+  const selectedModalCount = useMemo(() =>
+    Object.values(selectedModalItems).filter(Boolean).length,
+    [selectedModalItems])
+
+  const getModalSelectionState = (item: any, isChild = false): { checked: boolean; indeterminate: boolean } => {
+    const isParent = !isChild && item.hasVariants && item.variants?.length > 0
+    if (isParent) {
+      const childIds = item.variants.map((v: any) => getModalItemId(v)).filter(Boolean)
+      const all = childIds.every((id: string) => selectedModalItems[id])
+      const some = childIds.some((id: string) => selectedModalItems[id])
+      return { checked: all, indeterminate: some && !all }
+    }
+    const id = getModalItemId(item)
+    return { checked: !!selectedModalItems[id], indeterminate: false }
+  }
+
+  const handleModalItemSelection = (item: any, isChild = false) => {
+    const isParent = !isChild && item.hasVariants && item.variants?.length > 0
+    if (isParent) {
+      const childIds = item.variants.map((v: any) => getModalItemId(v)).filter(Boolean)
+      const allSel = childIds.every((id: string) => selectedModalItems[id])
+      setSelectedModalItems(prev => {
+        const next = { ...prev }
+        for (const id of childIds) next[id] = !allSel
+        return next
+      })
+    } else {
+      const id = getModalItemId(item)
+      if (id) setSelectedModalItems(prev => ({ ...prev, [id]: !prev[id] }))
+    }
+  }
+
+  const handleSelectAllModal = () => {
+    const shouldSelect = !modalSelectAllActive && !modalSelectAllIndeterminate
+    const next: { [id: string]: boolean } = {}
+    for (const id of getAllModalSelectableIds) next[id] = shouldSelect
+    setSelectedModalItems(next)
+  }
+
+  const closeAgregarProductos = () => {
+    setShowAgregarProductos(false)
+    setModalSearch("")
+    setSelectedModalItems({})
+    setModalFilters({ categoria: "", marca: "" })
+    setShowModalFilters(false)
+  }
 
   const breadcrumbs = [
     { label: "Ventas" },
@@ -675,57 +790,221 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
       {/* ── Agregar Productos Modal ── */}
       {showAgregarProductos && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setShowAgregarProductos(false)} />
-          <div className="relative bg-white rounded-xl shadow-2xl w-[560px] max-h-[70vh] flex flex-col overflow-hidden">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeAgregarProductos} />
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-3xl mx-4 max-h-[85vh] flex flex-col overflow-hidden">
+
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-              <h2 className="text-sm font-semibold text-slate-900">Agregar productos</h2>
-              <button onClick={() => setShowAgregarProductos(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
-                <XCircle className="w-4 h-4" />
+            <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
+              <div>
+                <h3 className="text-base font-semibold text-slate-900">Agregar productos</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Selecciona los productos a agregar a la venta</p>
+              </div>
+              <button onClick={closeAgregarProductos} className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+                <X className="w-5 h-5" />
               </button>
             </div>
-            {/* Search */}
-            <div className="px-5 py-3 border-b border-slate-100">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                <input
-                  autoFocus
-                  value={productSearch}
-                  onChange={(e) => setProductSearch(e.target.value)}
-                  placeholder="Buscar producto..."
-                  className="w-full pl-8 pr-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-md outline-none focus:border-slate-400 transition-colors"
-                />
+
+            {/* Search + Filters */}
+            <div className="border-b border-slate-100 flex-shrink-0">
+              <div className="flex items-center gap-3 p-3">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    value={modalSearch}
+                    onChange={(e) => setModalSearch(e.target.value)}
+                    placeholder="Buscar productos..."
+                    className="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-400"
+                    autoFocus
+                  />
+                </div>
+                {/* Filter button */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowModalFilters(!showModalFilters)}
+                    className={`flex items-center gap-1.5 px-3 py-2 text-sm border rounded-lg transition-colors ${
+                      Object.values(modalFilters).some(v => v)
+                        ? "border-slate-800 bg-slate-900 text-white"
+                        : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                    }`}
+                  >
+                    <Filter className="w-4 h-4" />
+                    Filtrar
+                  </button>
+                  {showModalFilters && (
+                    <div className="absolute top-full right-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg w-56 p-3 space-y-3">
+                      <div>
+                        <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Categoría</label>
+                        <select
+                          value={modalFilters.categoria}
+                          onChange={(e) => setModalFilters(prev => ({ ...prev, categoria: e.target.value }))}
+                          className="w-full mt-1 px-2 py-1.5 text-sm border border-slate-200 rounded-md focus:outline-none focus:border-slate-400"
+                        >
+                          <option value="">Todas</option>
+                          {uniqueModalCategorias.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Marca</label>
+                        <select
+                          value={modalFilters.marca}
+                          onChange={(e) => setModalFilters(prev => ({ ...prev, marca: e.target.value }))}
+                          className="w-full mt-1 px-2 py-1.5 text-sm border border-slate-200 rounded-md focus:outline-none focus:border-slate-400"
+                        >
+                          <option value="">Todas</option>
+                          {uniqueModalMarcas.map(m => <option key={m} value={m}>{m}</option>)}
+                        </select>
+                      </div>
+                      {Object.values(modalFilters).some(v => v) && (
+                        <button onClick={() => setModalFilters({ categoria: "", marca: "" })} className="w-full text-xs text-slate-500 hover:text-slate-700 py-1">
+                          Limpiar filtros
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {/* Sort */}
+                <div className="flex items-center gap-1">
+                  <select
+                    value={modalSort}
+                    onChange={(e) => setModalSort(e.target.value as "name" | "precio")}
+                    className="appearance-none pl-3 pr-7 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:border-slate-400 cursor-pointer"
+                  >
+                    <option value="name">Nombre</option>
+                    <option value="precio">Precio</option>
+                  </select>
+                  <button
+                    onClick={() => setModalSortDirection(d => d === "asc" ? "desc" : "asc")}
+                    className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                  >
+                    <ArrowUpDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${modalSortDirection === "desc" ? "rotate-180" : ""}`} />
+                  </button>
+                </div>
               </div>
             </div>
-            {/* Product list */}
-            <div className="flex-1 overflow-y-auto">
-              {INITIAL_ITEMS.filter(item => {
-                if (!productSearch.trim()) return true
-                const q = productSearch.toLowerCase()
-                return item.name?.toLowerCase().includes(q) || item.marca?.toLowerCase().includes(q) || item.categoria?.toLowerCase().includes(q)
-              }).map((item, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  className="w-full flex items-center gap-3 px-5 py-3 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 text-left"
-                  onClick={() => setShowAgregarProductos(false)}
-                >
-                  <div className="w-9 h-9 rounded-md bg-slate-100 flex items-center justify-center overflow-hidden shrink-0">
-                    <Image src={getCategoryImage(item.categoria || "") || "/placeholder.svg"} alt={item.name} width={36} height={36} className="object-cover" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-slate-800 leading-tight">{item.name}</p>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      {item.marca && <span className="text-xs text-slate-400">{item.marca}</span>}
-                      {item.marca && item.categoria && <span className="text-xs text-slate-300">·</span>}
-                      {item.categoria && <span className="text-xs text-slate-400">{item.categoria}</span>}
+
+            {/* Column headers */}
+            <div className="bg-slate-50 border-b border-slate-100 flex-shrink-0">
+              <div className="grid grid-cols-[3fr_1fr_1.2fr] h-9 text-[10px] font-medium text-slate-500 uppercase tracking-wider">
+                <div className="flex items-center px-4 gap-3">
+                  <button
+                    onClick={handleSelectAllModal}
+                    className="w-4 h-4 rounded border border-slate-300 flex items-center justify-center hover:border-slate-600 transition-colors bg-white"
+                  >
+                    {modalSelectAllActive && <Check className="w-3 h-3 text-slate-800" />}
+                    {modalSelectAllIndeterminate && <Minus className="w-3 h-3 text-slate-800" />}
+                  </button>
+                  <span>Producto</span>
+                </div>
+                <div className="flex items-center justify-center">Stock</div>
+                <div className="flex items-center justify-center">Precio</div>
+              </div>
+            </div>
+
+            {/* Items list */}
+            <div className="flex-1 overflow-y-auto bg-white">
+              {filteredModalItems.length === 0 ? (
+                <div className="py-12 text-center">
+                  <p className="text-sm text-slate-500">No se encontraron productos{modalSearch ? ` para "${modalSearch}"` : ""}</p>
+                </div>
+              ) : (
+                filteredModalItems.map((item, idx) => {
+                  const isParent = item.hasVariants && item.variants && item.variants.length > 0
+                  const selState = getModalSelectionState(item)
+                  return (
+                    <div key={idx}>
+                      {/* Parent / standalone row */}
+                      <div
+                        className={`grid grid-cols-[3fr_1fr_1.2fr] items-center py-3 px-4 border-b border-slate-100 hover:bg-slate-50/50 transition-colors cursor-pointer ${selState.checked || selState.indeterminate ? "bg-slate-50/70" : ""}`}
+                        onClick={() => handleModalItemSelection(item)}
+                      >
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleModalItemSelection(item) }}
+                            className="w-4 h-4 rounded border border-slate-300 flex items-center justify-center hover:border-slate-600 transition-colors bg-white flex-shrink-0"
+                          >
+                            {selState.checked && <Check className="w-3 h-3 text-slate-800" />}
+                            {selState.indeterminate && <Minus className="w-3 h-3 text-slate-800" />}
+                          </button>
+                          <div className="w-9 h-9 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+                            <Image src={getCategoryImage(item.categoria || "") || "/placeholder.svg"} alt={item.name} width={36} height={36} className="w-full h-full object-cover" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-sm font-medium text-slate-800 truncate">{item.name}</p>
+                              {isParent && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-500">{item.variants!.length} var.</span>
+                              )}
+                            </div>
+                            <p className="text-xs text-slate-400">{[item.marca, item.categoria].filter(Boolean).join(" · ")}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-center">
+                          {!isParent && <span className="text-sm text-slate-600 tabular-nums">{parseInt(item.stock?.disponible || "0")}</span>}
+                        </div>
+                        <div className="flex items-center justify-center">
+                          {!isParent && <span className="text-sm font-medium text-slate-800">${(item.precio?.precioFinal || 0).toLocaleString("es-AR")}</span>}
+                        </div>
+                      </div>
+
+                      {/* Variant rows */}
+                      {isParent && item.variants!.map((variant: any, vIdx: number) => {
+                        const vState = getModalSelectionState(variant, true)
+                        return (
+                          <div
+                            key={vIdx}
+                            className={`grid grid-cols-[3fr_1fr_1.2fr] items-center py-2.5 px-4 border-b border-slate-100 hover:bg-slate-50/50 transition-colors cursor-pointer pl-12 ${vState.checked ? "bg-slate-50/70" : ""}`}
+                            onClick={() => handleModalItemSelection(variant, true)}
+                          >
+                            <div className="flex items-center gap-3">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleModalItemSelection(variant, true) }}
+                                className="w-4 h-4 rounded border border-slate-300 flex items-center justify-center hover:border-slate-600 transition-colors bg-white flex-shrink-0"
+                              >
+                                {vState.checked && <Check className="w-3 h-3 text-slate-800" />}
+                              </button>
+                              <div className="w-8 h-8 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+                                <Image src={getCategoryImage(variant.categoria || item.categoria || "") || "/placeholder.svg"} alt={variant.name || item.name} width={32} height={32} className="w-full h-full object-cover" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <p className="text-sm text-slate-700 truncate">{variant.name || item.name}</p>
+                                  {variant.atributosPrincipales?.map((a: any, i: number) => (
+                                    <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-500">{a.value}</span>
+                                  ))}
+                                </div>
+                                <p className="text-xs text-slate-400">{`${item.skuPrefix}-${variant.skuSuffix}`}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-center">
+                              <span className="text-sm text-slate-600 tabular-nums">{parseInt(variant.stock?.disponible || "0")}</span>
+                            </div>
+                            <div className="flex items-center justify-center">
+                              <span className="text-sm font-medium text-slate-800">${(variant.precio?.precioFinal || 0).toLocaleString("es-AR")}</span>
+                            </div>
+                          </div>
+                        )
+                      })}
                     </div>
-                  </div>
-                  {item.precio?.precioFinal && (
-                    <span className="text-sm font-semibold text-slate-900 tabular-nums shrink-0">${item.precio.precioFinal.toLocaleString("es-AR")}</span>
-                  )}
-                </button>
-              ))}
+                  )
+                })
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-slate-200 bg-slate-50 py-3 px-5 flex items-center justify-between flex-shrink-0">
+              <span className="text-sm text-slate-500">
+                {selectedModalCount > 0
+                  ? `${selectedModalCount} producto${selectedModalCount > 1 ? "s" : ""} seleccionado${selectedModalCount > 1 ? "s" : ""}`
+                  : "Seleccioná productos para agregar"}
+              </span>
+              <button
+                onClick={closeAgregarProductos}
+                disabled={selectedModalCount === 0}
+                className="px-5 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Agregar seleccionados
+              </button>
             </div>
           </div>
         </div>
