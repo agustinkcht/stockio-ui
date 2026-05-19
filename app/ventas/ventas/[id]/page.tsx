@@ -311,6 +311,59 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   )
                 })()}
 
+                {/* ── Estado milestones card ── */}
+                {(() => {
+                  const steps = [
+                    { label: "Borrador", key: "borrador" },
+                    { label: "En Curso", key: "en_curso" },
+                    { label: "Finalizada", key: "finalizada" },
+                  ]
+                  const activeIndex = (pagoPct === 100 && entregaPct === 100) ? 2
+                    : (pagoPct > 0 || entregaPct > 0) ? 1 : 0
+
+                  return (
+                    <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-5 py-3">
+                      <div className="flex items-center">
+                        {steps.map((s, i) => {
+                          const isDone = i < activeIndex
+                          const isActive = i === activeIndex
+                          const isFuture = i > activeIndex
+                          const isLast = i === steps.length - 1
+                          return (
+                            <div key={s.key} className="flex items-center flex-1 min-w-0">
+                              <div className={`flex flex-col items-center gap-1.5 shrink-0 transition-all duration-300 ${isFuture ? "opacity-30" : ""}`}>
+                                <div className={`w-5 h-5 rounded-full flex items-center justify-center border-2 transition-all duration-300
+                                  ${isDone
+                                    ? "bg-slate-800 border-slate-800 shadow-[0_0_0_3px_rgba(15,23,42,0.08)]"
+                                    : isActive
+                                      ? "bg-white border-slate-800 shadow-[0_0_0_3px_rgba(15,23,42,0.1)]"
+                                      : "bg-white border-slate-200"}`}
+                                >
+                                  {isDone && (
+                                    <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 10 10">
+                                      <path d="M1.5 5L4 7.5L8.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                  )}
+                                  {isActive && <div className="w-2 h-2 rounded-full bg-slate-800" />}
+                                </div>
+                                <span className={`text-[11px] whitespace-nowrap transition-all duration-300
+                                  ${isDone ? "font-medium text-slate-400"
+                                    : isActive ? "font-semibold text-slate-900"
+                                    : "font-medium text-slate-400"}`}>
+                                  {s.label}
+                                </span>
+                              </div>
+                              {!isLast && (
+                                <div className={`flex-1 h-px mx-3 mb-[18px] transition-all duration-500 ${isDone ? "bg-slate-800" : "bg-slate-200"}`} />
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })()}
+
                 {/* Entrega + Items card */}
               <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm overflow-hidden">
 
@@ -359,23 +412,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                 <div className="p-3">
                 <div className="rounded-md border border-slate-200/80 overflow-hidden">
 
-                {/* ── Grid Header ── */}
-                <div className="bg-slate-100 border-b border-slate-200/80">
-                  {entregaMode ? (
-                    <div className="grid grid-cols-100 h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      <div className="col-span-70 flex items-center px-4">Item</div>
-                      <div className="col-span-15 flex items-center justify-center">Cantidad</div>
-                      <div className="col-span-15 flex items-center justify-center pr-4">Entregado</div>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-[38%_22%_10%_30%] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      <div className="flex items-center px-4">Item</div>
-                      <div className="flex items-center justify-center">Precio Unit.</div>
-                      <div className="flex items-center justify-center">Cant.</div>
-                      <div className="flex items-center justify-end pr-6">Subtotal</div>
-                    </div>
-                  )}
-                </div>
+
 
                 {/* ── Items ── */}
                 {venta.items.length === 0 ? (
@@ -494,8 +531,9 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             </div>
 
                             {/* Cantidad col */}
-                            <div className="flex items-center justify-center">
+                            <div className="flex flex-col items-center justify-center gap-0.5">
                               <span className="text-sm text-slate-700 tabular-nums">{item.quantity}</span>
+                              <span className="text-[10px] text-slate-400 leading-tight">{item.quantity === 1 ? "unidad" : "unidades"}</span>
                             </div>
 
                             {/* Subtotal col */}
