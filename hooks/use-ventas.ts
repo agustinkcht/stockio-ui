@@ -6,7 +6,7 @@ import { VENTAS } from "@/lib/data/ventas"
 import { useAccount } from "@/lib/contexts/account-context"
 
 // Bump this when the Venta type or seed data changes to force re-seeding
-const VENTAS_SEED_VERSION = "v3"
+const VENTAS_SEED_VERSION = "v2"
 
 export function useVentas() {
   const [ventas, setVentas] = useState<Venta[]>([])
