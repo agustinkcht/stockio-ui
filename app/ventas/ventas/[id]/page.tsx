@@ -29,8 +29,8 @@ import {
   X,
 } from "lucide-react"
 import Image from "next/image"
-import type { Venta, VentaItem, VentaEntregaItem, PaymentMethod, Item, ItemVariant } from "@/lib/types"
-import { useVentas } from "@/hooks/use-ventas"
+import { VENTAS } from "@/lib/data/ventas"
+import type { Venta, VentaItem, PaymentMethod, Item, ItemVariant } from "@/lib/types"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import { VentaItemDetailModal } from "@/components/ventas/venta-item-detail-modal"
@@ -49,8 +49,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const router = useRouter()
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
 
-  const { ventas, isLoading, updateVenta } = useVentas()
-  const venta = useMemo(() => ventas.find((v) => v.id === id) ?? null, [ventas, id])
+  const venta = useMemo(() => VENTAS.find((v) => v.id === id) || null, [id])
 
   const [showExportDropdown, setShowExportDropdown] = useState(false)
   const [showMoreOptionsMenu, setShowMoreOptionsMenu] = useState(false)
