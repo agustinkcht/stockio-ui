@@ -84,121 +84,50 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const exportDropdownRef = useRef<HTMLDivElement>(null)
   const moreMenuRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (exportDropdownRef.current && !exportDropdownRef.current.contains(event.target as Node)) {
-        setShowExportDropdown(false)
-      }
-      if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
-        setShowMoreOptionsMenu(false)
-      }
-      if (estadoDropdownRef.current && !estadoDropdownRef.current.contains(event.target as Node)) {
-        setShowEstadoDropdown(false)
-      }
-    }
-    if (showExportDropdown || showMoreOptionsMenu || showEstadoDropdown) {
-      document.addEventListener("mousedown", handleClickOutside)
-    }
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [showExportDropdown, showMoreOptionsMenu])
+  // ── All useMemo hooks MUST be above any early return (Rules of Hooks) ──
 
-  if (isLoadingVentas) {
-    return (
-      <div className="min-h-screen bg-[rgb(243,242,238)] flex items-center justify-center">
-        <p className="text-sm text-slate-400">Cargando venta...</p>
-      </div>
-    )
-  }
+  // Defensive aliases — safe even when venta is null
+  const ventaItems = venta?.items ?? []
+  const ventaCobros = venta?.cobros ?? []
+  const ventaEntregaItems = venta?.entregaItems ?? []
 
-  if (!venta) {
-    return (
-      <div className="min-h-screen bg-[rgb(243,242,238)]">
-        <div className="px-[6px] py-[6px] flex gap-[6px] h-screen">
-          <div className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
-            <Sidebar
-              sidebarItems={SIDEBAR_ITEMS}
-              bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
-              hoveredDropdown={hoveredDropdown}
-              onDropdownOpen={handleDropdownMouseEnter}
-              onDropdownClose={handleDropdownMouseLeave}
-            />
-          </div>
-          <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden items-center justify-center">
-            <Package className="w-12 h-12 text-slate-200 mb-3" />
-            <p className="text-slate-500 mb-1">Venta no encontrada</p>
-            <p className="text-xs text-slate-400 mb-4">La venta {id} no existe</p>
-            <button
-              onClick={() => router.push("/ventas/ventas")}
-              className="text-sm text-blue-600 hover:underline"
-            >
-              Volver a ventas
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  const montoCobrado = useMemo(() => ventaCobros.reduce((sum, c) => sum + c.monto, 0), [ventaCobros])
+  const montoRestante = useMemo(() => Math.max(0, (venta?.total ?? 0) - montoCobrado), [venta, montoCobrado])
+  const pagoPct = useMemo(() => (venta?.total ?? 0) > 0 ? Math.min(100, Math.round((montoCobrado / venta!.total) * 100)) : 0, [venta, montoCobrado])
 
-  const clienteNombre = venta.cliente.tipo === "cuenta" ? venta.cliente.nombre : "Consumidor Final"
-  const isFacturada = !!venta.facturaEmitida
-  // Estado is derived from the persisted venta. Manual setEstado() updates flip it through the hook.
-  const estadoUI: VentaEstadoUI = venta.estado
-  const setEstadoUI = (next: VentaEstadoUI) => setEstado(venta.id, next)
-  const fechaCreacion = new Date(venta.fecha).toLocaleDateString("es-AR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  })
-
-  const itemDiscountAmount = (venta.items ?? []).reduce((sum, it) => {
-    const baseGross = it.unitPrice * it.quantity
-    const discount =
-      it.discountType === "percent" ? baseGross * (it.discount / 100) : it.discount * it.quantity
-    return sum + discount
-  }, 0)
-
-  // Defensive: ensure arrays are never undefined (guard against stale localStorage shapes)
-  const ventaItems = venta.items ?? []
-  const ventaCobros = venta.cobros ?? []
-  const ventaEntregaItems = venta.entregaItems ?? []
-
-  // Derived cobro values from real cobros array
-  const montoCobrado = ventaCobros.reduce((sum, c) => sum + c.monto, 0)
-  const montoRestante = Math.max(0, venta.total - montoCobrado)
-  const pagoPct = venta.total > 0 ? Math.min(100, Math.round((montoCobrado / venta.total) * 100)) : 0
-
-  // Derived entrega values from real entregaItems array
-  const totalUnidades = ventaItems.reduce((s, it) => s + it.quantity, 0)
-  const entregadasUnidades = ventaItems.reduce((s, item) => {
+  const totalUnidades = useMemo(() => ventaItems.reduce((s, it) => s + it.quantity, 0), [ventaItems])
+  const entregadasUnidades = useMemo(() => ventaItems.reduce((s, item) => {
     const e = ventaEntregaItems.find(ei => ei.sku === item.sku)
     return s + (e?.quantityEntregada ?? 0)
-  }, 0)
-  const entregaPct = totalUnidades > 0 ? Math.min(100, Math.round((entregadasUnidades / totalUnidades) * 100)) : 0
+  }, 0), [ventaItems, ventaEntregaItems])
+  const entregaPct = useMemo(() => totalUnidades > 0 ? Math.min(100, Math.round((entregadasUnidades / totalUnidades) * 100)) : 0, [entregadasUnidades, totalUnidades])
 
-  // Per-item entrega map for the grid display
-  const itemEntregaMap = new Map(
+  const itemEntregaMap = useMemo(() => new Map(
     ventaItems.map((item) => {
       const e = ventaEntregaItems.find(ei => ei.sku === item.sku)
       return [item.sku, e?.quantityEntregada ?? 0]
     })
-  )
+  ), [ventaItems, ventaEntregaItems])
 
-  // ── Modal computed values ──
+  const itemDiscountAmount = useMemo(() => ventaItems.reduce((sum, it) => {
+    const baseGross = it.unitPrice * it.quantity
+    const discount =
+      it.discountType === "percent" ? baseGross * (it.discount / 100) : it.discount * it.quantity
+    return sum + discount
+  }, 0), [ventaItems])
+
+  // Modal computed values
   const allModalItems = INITIAL_ITEMS
 
   const uniqueModalCategorias = useMemo(() => {
     const cats = new Set<string>()
-    allModalItems.forEach(item => {
-      if (item.categoria) cats.add(item.categoria)
-    })
+    allModalItems.forEach(item => { if (item.categoria) cats.add(item.categoria) })
     return Array.from(cats).sort()
   }, [])
 
   const uniqueModalMarcas = useMemo(() => {
     const marcas = new Set<string>()
-    allModalItems.forEach(item => {
-      if (item.marca) marcas.add(item.marca)
-    })
+    allModalItems.forEach(item => { if (item.marca) marcas.add(item.marca) })
     return Array.from(marcas).sort()
   }, [])
 
@@ -244,6 +173,74 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const selectedModalCount = useMemo(() =>
     Object.values(selectedModalItems).filter(Boolean).length,
     [selectedModalItems])
+
+  // ── useEffect hooks MUST also be above early returns ──
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (exportDropdownRef.current && !exportDropdownRef.current.contains(event.target as Node)) {
+        setShowExportDropdown(false)
+      }
+      if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
+        setShowMoreOptionsMenu(false)
+      }
+      if (estadoDropdownRef.current && !estadoDropdownRef.current.contains(event.target as Node)) {
+        setShowEstadoDropdown(false)
+      }
+    }
+    if (showExportDropdown || showMoreOptionsMenu || showEstadoDropdown) {
+      document.addEventListener("mousedown", handleClickOutside)
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [showExportDropdown, showMoreOptionsMenu, showEstadoDropdown])
+
+  // ── Early returns AFTER all hooks ──
+
+  if (isLoadingVentas) {
+    return (
+      <div className="min-h-screen bg-[rgb(243,242,238)] flex items-center justify-center">
+        <p className="text-sm text-slate-400">Cargando venta...</p>
+      </div>
+    )
+  }
+
+  if (!venta) {
+    return (
+      <div className="min-h-screen bg-[rgb(243,242,238)]">
+        <div className="px-[6px] py-[6px] flex gap-[6px] h-screen">
+          <div className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
+            <Sidebar
+              sidebarItems={SIDEBAR_ITEMS}
+              bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
+              hoveredDropdown={hoveredDropdown}
+              onDropdownOpen={handleDropdownMouseEnter}
+              onDropdownClose={handleDropdownMouseLeave}
+            />
+          </div>
+          <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden items-center justify-center">
+            <Package className="w-12 h-12 text-slate-200 mb-3" />
+            <p className="text-slate-500 mb-1">Venta no encontrada</p>
+            <p className="text-xs text-slate-400 mb-4">La venta {id} no existe</p>
+            <button
+              onClick={() => router.push("/ventas/ventas")}
+              className="text-sm text-blue-600 hover:underline"
+            >
+              Volver a ventas
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const clienteNombre = venta.cliente.tipo === "cuenta" ? venta.cliente.nombre : "Consumidor Final"
+  const isFacturada = !!venta.facturaEmitida
+  const estadoUI: VentaEstadoUI = venta.estado
+  const setEstadoUI = (next: VentaEstadoUI) => setEstado(venta.id, next)
+  const fechaCreacion = new Date(venta.fecha).toLocaleDateString("es-AR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  })
 
   const getModalSelectionState = (item: any, isChild = false): { checked: boolean; indeterminate: boolean } => {
     const isParent = !isChild && item.hasVariants && item.variants?.length > 0
