@@ -61,6 +61,9 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const [showSubtotalBreakdown, setShowSubtotalBreakdown] = useState(false)
   const [showAgregarProductos, setShowAgregarProductos] = useState(false)
   const [showRegistrarCobro, setShowRegistrarCobro] = useState(false)
+  const [showRegistrarEntrega, setShowRegistrarEntrega] = useState(false)
+  const [entregaSelectedItems, setEntregaSelectedItems] = useState<{ [sku: string]: boolean }>({})
+  const [entregaQuantities, setEntregaQuantities] = useState<{ [sku: string]: string }>({})
   const [selectedModalItems, setSelectedModalItems] = useState<{ [id: string]: boolean }>({})
   const [modalSearch, setModalSearch] = useState("")
   const [modalFilters, setModalFilters] = useState<{ categoria: string; marca: string }>({ categoria: "", marca: "" })
@@ -459,6 +462,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             <span className="text-xs text-slate-400 tabular-nums">{entregadasUnidades}/{totalUnidades} unidades</span>
                             <button
                               type="button"
+                              onClick={() => setShowRegistrarEntrega(true)}
                               className="mt-1 flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
                             >
                               <Plus className="w-3 h-3" />
@@ -848,6 +852,163 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
       {viewingItem && (
         <VentaItemDetailModal ventaItem={viewingItem} onClose={() => setViewingItem(null)} />
       )}
+
+      {/* ── Registrar Entrega Modal ── */}
+      {showRegistrarEntrega && (() => {
+        // Items with units still pending delivery
+        const pendingItems = venta.items.filter(item => {
+          const delivered = itemEntregaMap.get(item.sku) ?? 0
+          return delivered < item.quantity
+        })
+
+        const pendingSkus = pendingItems.map(i => i.sku)
+
+        const allSelected = pendingSkus.length > 0 && pendingSkus.every(sku => entregaSelectedItems[sku])
+        const someSelected = pendingSkus.some(sku => entregaSelectedItems[sku])
+        const indeterminate = someSelected && !allSelected
+
+        const selectedCount = pendingSkus.filter(sku => entregaSelectedItems[sku]).length
+
+        const handleSelectAllEntrega = () => {
+          const next: { [sku: string]: boolean } = {}
+          for (const sku of pendingSkus) next[sku] = !allSelected && !indeterminate
+          setEntregaSelectedItems(next)
+        }
+
+        const handleToggleEntregaItem = (sku: string) => {
+          setEntregaSelectedItems(prev => ({ ...prev, [sku]: !prev[sku] }))
+        }
+
+        const closeEntrega = () => {
+          setShowRegistrarEntrega(false)
+          setEntregaSelectedItems({})
+          setEntregaQuantities({})
+        }
+
+        return (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeEntrega} />
+            <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[85vh] flex flex-col overflow-hidden">
+
+              {/* Header */}
+              <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
+                <div>
+                  <h3 className="text-base font-semibold text-slate-900">Registrar entrega</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Indicá las unidades a marcar como entregadas</p>
+                </div>
+                <button onClick={closeEntrega} className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Column headers */}
+              <div className="bg-slate-50 border-b border-slate-100 flex-shrink-0">
+                <div className="grid grid-cols-[3fr_1fr_1.4fr] h-9 text-[10px] font-medium text-slate-500 uppercase tracking-wider">
+                  <div className="flex items-center px-4 gap-3">
+                    <button
+                      onClick={handleSelectAllEntrega}
+                      className="w-4 h-4 rounded border border-slate-300 flex items-center justify-center hover:border-slate-600 transition-colors bg-white"
+                    >
+                      {allSelected && <Check className="w-3 h-3 text-slate-800" />}
+                      {indeterminate && <Minus className="w-3 h-3 text-slate-800" />}
+                    </button>
+                    <span>Producto</span>
+                  </div>
+                  <div className="flex items-center justify-center">Restantes</div>
+                  <div className="flex items-center justify-center">Entregar</div>
+                </div>
+              </div>
+
+              {/* Items list */}
+              <div className="flex-1 overflow-y-auto bg-white">
+                {pendingItems.length === 0 ? (
+                  <div className="py-12 text-center">
+                    <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto mb-3" />
+                    <p className="text-sm text-slate-500">Todos los productos ya fueron entregados</p>
+                  </div>
+                ) : (
+                  pendingItems.map((item, idx) => {
+                    const delivered = itemEntregaMap.get(item.sku) ?? 0
+                    const remaining = item.quantity - delivered
+                    const display = getVentaItemDisplay(item)
+                    const isSelected = !!entregaSelectedItems[item.sku]
+                    const qtyValue = entregaQuantities[item.sku] ?? ""
+
+                    return (
+                      <div
+                        key={idx}
+                        className={`grid grid-cols-[3fr_1fr_1.4fr] items-center py-3 px-4 border-b border-slate-100 hover:bg-slate-50/50 transition-colors cursor-pointer ${isSelected ? "bg-slate-50/70" : ""}`}
+                        onClick={() => handleToggleEntregaItem(item.sku)}
+                      >
+                        {/* Product info */}
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleToggleEntregaItem(item.sku) }}
+                            className="w-4 h-4 rounded border border-slate-300 flex items-center justify-center hover:border-slate-600 transition-colors bg-white flex-shrink-0"
+                          >
+                            {isSelected && <Check className="w-3 h-3 text-slate-800" />}
+                          </button>
+                          <div className="w-9 h-9 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+                            <Image
+                              src={getCategoryImage(display.categoria || "") || "/placeholder.svg"}
+                              alt={display.name}
+                              width={36}
+                              height={36}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-slate-800 truncate">{display.name}</p>
+                            <p className="text-xs text-slate-400">{[display.marca, display.categoria].filter(Boolean).join(" · ")}</p>
+                          </div>
+                        </div>
+
+                        {/* Restantes */}
+                        <div className="flex items-center justify-center">
+                          <span className="text-sm text-slate-600 tabular-nums">{remaining}</span>
+                        </div>
+
+                        {/* Entregar input */}
+                        <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-baseline gap-1.5">
+                            <input
+                              type="number"
+                              min={0}
+                              max={remaining}
+                              value={qtyValue}
+                              placeholder={String(remaining)}
+                              onChange={(e) => setEntregaQuantities(prev => ({ ...prev, [item.sku]: e.target.value }))}
+                              className="w-14 text-center text-sm tabular-nums bg-slate-50 border border-slate-200 rounded-md px-2 py-1.5 focus:outline-none focus:border-slate-400 transition-colors"
+                            />
+                            <span className="text-xs text-slate-400">de {remaining}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="border-t border-slate-200 bg-slate-50 py-3 px-5 flex items-center justify-between flex-shrink-0">
+                <span className="text-sm text-slate-500">
+                  {selectedCount > 0
+                    ? `${selectedCount} producto${selectedCount !== 1 ? "s" : ""} seleccionado${selectedCount !== 1 ? "s" : ""}`
+                    : "Seleccioná productos para registrar"}
+                </span>
+                <button
+                  onClick={closeEntrega}
+                  disabled={selectedCount === 0}
+                  className="px-5 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Registrar entrega
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )
+      })()}
 
       {/* ── Agregar Productos Modal ── */}
       {showAgregarProductos && (
