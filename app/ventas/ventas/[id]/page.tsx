@@ -511,16 +511,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         </div>
                       </div>
 
-                      {/* Row 2: Productos + unidades + total */}
-                      <div className="flex items-baseline gap-1.5 px-1">
-                        <span className="text-lg font-semibold text-slate-900 tabular-nums">{ventaItems.length}</span>
-                        <span className="text-sm text-slate-400">{ventaItems.length === 1 ? "producto" : "productos"}</span>
-                        <span className="text-slate-300 mx-1">·</span>
-                        <span className="text-lg font-semibold text-slate-900 tabular-nums">{totalUnidades}</span>
-                        <span className="text-sm text-slate-400">{totalUnidades === 1 ? "unidad" : "unidades"}</span>
-                        <span className="text-slate-300 mx-1">·</span>
-                        <span className="text-lg font-semibold text-slate-900 tabular-nums">${Math.round(venta.total).toLocaleString("es-AR")}</span>
-                      </div>
+
                     </div>
                   )
                 })()}
@@ -540,143 +531,94 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                 <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-5 py-4">
                   <span className="text-[10px] text-slate-400 uppercase tracking-wider block mb-3">Estado de la Venta</span>
 
-                  {estadoUI === "en_curso" ? (
-                    /* 3-col grid: estado | entrega | cobro */
-                    <div className="grid grid-cols-3 gap-0 divide-x divide-slate-100">
+                  {/* Estado is auto-derived: finalizada only when both entrega and cobro are 100% */}
+                  <div className="grid grid-cols-3 gap-0 divide-x divide-slate-100">
 
-                      {/* Col 1 — Estado selector */}
-                      <div className="pr-5 flex flex-col justify-center">
-                        <div className="relative" ref={estadoDropdownRef}>
-                          <button
-                            type="button"
-                            onClick={() => setShowEstadoDropdown(!showEstadoDropdown)}
-                            className="flex items-center justify-between gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors w-full bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100"
-                          >
-                            <div className="flex items-center gap-2">
-                              <Clock className="w-4 h-4" />
-                              En Curso
-                            </div>
-                            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showEstadoDropdown ? "rotate-180" : ""}`} />
-                          </button>
-                          {showEstadoDropdown && (
-                            <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[160px]">
-                              <button
-                                onClick={() => { setEstadoUI("en_curso"); setShowEstadoDropdown(false) }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-slate-50 transition-colors font-semibold text-amber-700"
-                              >
-                                <Clock className="w-4 h-4 text-amber-500" /> En Curso
-                              </button>
-                              <button
-                                onClick={() => { setEstadoUI("finalizada"); setShowEstadoDropdown(false) }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-slate-50 transition-colors text-slate-700"
-                              >
-                                <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Finalizada
-                              </button>
-                            </div>
-                          )}
+                    {/* Col 1 — Estado badge (no chevron, no dropdown) */}
+                    <div className="pr-5 flex flex-col justify-center gap-2">
+                      {estadoUI === "finalizada" ? (
+                        <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 w-fit">
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span className="text-sm font-semibold">Finalizada</span>
                         </div>
-                        {estadoUI === "en_curso" && (
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 w-fit">
+                            <Clock className="w-4 h-4" />
+                            <span className="text-sm font-semibold">En Curso</span>
+                          </div>
                           <button
                             type="button"
                             onClick={() => setShowFinalizarVenta(true)}
-                            className="mt-2 flex items-center gap-1.5 text-xs font-medium text-emerald-700 hover:text-emerald-900 transition-colors"
+                            className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 hover:text-emerald-900 transition-colors"
                           >
                             <CheckCircle2 className="w-3 h-3" />
                             Marcar como Finalizada
                           </button>
-                        )}
-                      </div>
-
-                      {/* Col 2 — Entrega */}
-                      <div className="px-5 flex flex-col gap-1">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Package className="w-4 h-4 text-slate-400" />
-                            {entregaPct === 100 ? (
-                              <span className="text-sm font-semibold text-emerald-600">Entregada</span>
-                            ) : (
-                              <span className="text-sm font-semibold text-slate-700">Entrega {entregaPct}%</span>
-                            )}
-                          </div>
-                          {entregaPct === 100 && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
-                        </div>
-                        {entregaPct < 100 && (
-                          <>
-                            <span className="text-xs text-slate-400 tabular-nums">{entregadasUnidades}/{totalUnidades} unidades</span>
-                            <button
-                              type="button"
-                              onClick={() => setShowRegistrarEntrega(true)}
-                              className="mt-1 flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
-                            >
-                              <Plus className="w-3 h-3" />
-                              Registrar entrega
-                            </button>
-                          </>
-                        )}
-                      </div>
-
-                      {/* Col 3 — Cobro */}
-                      <div className="pl-5 flex flex-col gap-1">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Wallet className="w-4 h-4 text-slate-400" />
-                            {pagoPct === 100 ? (
-                              <span className="text-sm font-semibold text-emerald-600">Cobrada</span>
-                            ) : (
-                              <span className="text-sm font-semibold text-slate-700">Cobro {pagoPct}%</span>
-                            )}
-                          </div>
-                          {pagoPct === 100 && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
-                        </div>
-                        {pagoPct < 100 && (
-                          <>
-                            <span className="text-xs text-slate-400 tabular-nums">
-                              ${montoCobrado.toLocaleString("es-AR")}/${Math.round(venta.total).toLocaleString("es-AR")}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => setShowRegistrarCobro(true)}
-                              className="mt-1 flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
-                            >
-                              <Plus className="w-3 h-3" />
-                              Registrar cobro
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  ) : (
-                    /* Finalizada — just the badge */
-                    <div className="relative" ref={estadoDropdownRef}>
-                      <button
-                        type="button"
-                        onClick={() => setShowEstadoDropdown(!showEstadoDropdown)}
-                        className="flex items-center justify-between gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors w-1/3 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
-                      >
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4" />
-                          Finalizada
-                        </div>
-                        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showEstadoDropdown ? "rotate-180" : ""}`} />
-                      </button>
-                      {showEstadoDropdown && (
-                        <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[160px]">
-                          <button
-                            onClick={() => { setEstadoUI("en_curso"); setShowEstadoDropdown(false) }}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-slate-50 transition-colors text-slate-700"
-                          >
-                            <Clock className="w-4 h-4 text-amber-500" /> En Curso
-                          </button>
-                          <button
-                            onClick={() => { setEstadoUI("finalizada"); setShowEstadoDropdown(false) }}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-slate-50 transition-colors font-semibold text-emerald-700"
-                          >
-                            <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Finalizada
-                          </button>
-                        </div>
+                        </>
                       )}
                     </div>
-                  )}
+
+                    {/* Col 2 — Entrega */}
+                    <div className="px-5 flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <Package className="w-4 h-4 text-slate-400" />
+                        {entregaPct === 100 ? (
+                          <>
+                            <span className="text-sm font-semibold text-emerald-600">Entregada</span>
+                            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                          </>
+                        ) : (
+                          <span className="text-sm font-semibold text-slate-700">Entrega {entregaPct}%</span>
+                        )}
+                      </div>
+                      {entregaPct < 100 && (
+                        <>
+                          <span className="text-xs text-slate-400 tabular-nums">
+                            {totalUnidades - entregadasUnidades} {totalUnidades - entregadasUnidades === 1 ? "unidad pendiente" : "unidades pendientes"} de entrega
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setShowRegistrarEntrega(true)}
+                            className="mt-1 flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                          >
+                            <Plus className="w-3 h-3" />
+                            Registrar entrega
+                          </button>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Col 3 — Cobro */}
+                    <div className="pl-5 flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <Wallet className="w-4 h-4 text-slate-400" />
+                        {pagoPct === 100 ? (
+                          <>
+                            <span className="text-sm font-semibold text-emerald-600">Cobrada</span>
+                            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                          </>
+                        ) : (
+                          <span className="text-sm font-semibold text-slate-700">Cobro {pagoPct}%</span>
+                        )}
+                      </div>
+                      {pagoPct < 100 && (
+                        <>
+                          <span className="text-xs text-slate-400 tabular-nums">
+                            ${Math.round(montoRestante).toLocaleString("es-AR")} pendiente de cobro
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setShowRegistrarCobro(true)}
+                            className="mt-1 flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                          >
+                            <Plus className="w-3 h-3" />
+                            Registrar cobro
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Entrega + Items card */}
@@ -692,7 +634,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     }`}
                   >
                     <Package className="w-3.5 h-3.5" />
-                    {ventaItems.length} {ventaItems.length === 1 ? "producto" : "productos"} · {totalUnidades} {totalUnidades === 1 ? "unidad" : "unidades"}
+                    Productos
                   </button>
                   <button
                     type="button"
@@ -702,12 +644,31 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     }`}
                   >
                     <Truck className="w-3.5 h-3.5" />
-                    Entrega {entregaPct}% · {entregadasUnidades}/{totalUnidades}
+                    Entrega
                   </button>
                 </div>
 
+                {/* ── Grid subtitle ── */}
+                <div className="px-4 py-2.5 flex items-center gap-2">
+                  {entregaMode ? (
+                    <>
+                      <Truck className="w-3.5 h-3.5 text-slate-400" />
+                      <span className="text-xs font-medium text-slate-600 tabular-nums">
+                        {entregadasUnidades}/{totalUnidades} {totalUnidades === 1 ? "unidad entregada" : "unidades entregadas"}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Package className="w-3.5 h-3.5 text-slate-400" />
+                      <span className="text-xs font-medium text-slate-600 tabular-nums">
+                        {ventaItems.length} {ventaItems.length === 1 ? "producto" : "productos"} · {totalUnidades} {totalUnidades === 1 ? "unidad" : "unidades"}
+                      </span>
+                    </>
+                  )}
+                </div>
+
                 {/* ── Grid (padded inside card) ── */}
-                <div className="p-3">
+                <div className="px-3 pb-3">
                 <div className="rounded-md border border-slate-200/80 overflow-hidden">
 
 
@@ -738,9 +699,9 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         className="border-b border-slate-100 last:border-b-0 transition-colors hover:bg-slate-50/50 cursor-pointer"
                       >
                         {entregaMode ? (
-                          <div className="grid grid-cols-100 h-[56px]">
+                          <div className="flex items-center h-[56px] gap-3 px-4">
                             {/* Item Info */}
-                            <div className="col-span-70 flex items-center gap-3 px-4">
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
                               <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                                 <Image src={getCategoryImage(display.categoria || "") || "/placeholder.svg"} alt={item.name} width={32} height={32} className="object-cover" />
                               </div>
@@ -755,27 +716,19 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                                 )}
                               </div>
                             </div>
-                            {/* Cantidad col */}
-                            <div className="col-span-15 flex items-center justify-center">
-                              <span className="text-sm text-slate-700 tabular-nums">{item.quantity}</span>
-                            </div>
-                            {/* Entregado col */}
-                            <div className="col-span-15 flex flex-col items-center justify-center pr-4 gap-1">
+                            {/* Entregadas col */}
+                            <div className="flex items-center gap-2 shrink-0 pr-2">
                               {itemPct === 100 ? (
                                 <div className="flex items-center gap-1.5">
                                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                                  <span className="text-sm font-medium text-emerald-700 tabular-nums">{item.quantity}</span>
+                                  <span className="text-sm font-medium text-emerald-700 tabular-nums">{item.quantity}/{item.quantity}</span>
+                                  <span className="text-xs text-slate-400">entregadas</span>
                                 </div>
                               ) : (
-                                <>
-                                  <div className="flex items-baseline gap-1 tabular-nums">
-                                    <span className={`text-sm font-semibold ${delivered > 0 ? "text-amber-600" : "text-slate-400"}`}>{delivered}</span>
-                                    <span className="text-xs text-slate-400">/ {item.quantity}</span>
-                                  </div>
-                                  <div className="w-14 h-1 bg-slate-200 rounded-full overflow-hidden">
-                                    <div className={`h-full rounded-full ${delivered > 0 ? "bg-amber-400" : "bg-slate-300"}`} style={{ width: `${itemPct}%` }} />
-                                  </div>
-                                </>
+                                <div className="flex items-center gap-1.5">
+                                  <span className={`text-sm font-semibold tabular-nums ${delivered > 0 ? "text-amber-600" : "text-slate-400"}`}>{delivered}/{item.quantity}</span>
+                                  <span className="text-xs text-slate-400">entregadas</span>
+                                </div>
                               )}
                             </div>
                           </div>
