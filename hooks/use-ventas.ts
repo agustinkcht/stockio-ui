@@ -76,8 +76,6 @@ export function useVentas() {
       const updatedVentas = [newVenta, ...ventas]
       setVentas(updatedVentas)
       saveVentas(updatedVentas)
-
-      console.log(`[v0] useVentas - Added new venta: ${newId}`)
       return newVenta
     },
     [ventas, saveVentas],

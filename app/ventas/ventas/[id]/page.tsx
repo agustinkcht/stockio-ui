@@ -49,7 +49,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const router = useRouter()
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
 
-  const { ventas, updateVenta } = useVentas()
+  const { ventas, isLoading, updateVenta } = useVentas()
   const venta = useMemo(() => ventas.find((v) => v.id === id) || null, [ventas, id])
 
   const [showExportDropdown, setShowExportDropdown] = useState(false)
@@ -99,6 +99,27 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
     }
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [showExportDropdown, showMoreOptionsMenu])
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[rgb(243,242,238)]">
+        <div className="px-[6px] py-[6px] flex gap-[6px] h-screen">
+          <div className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
+            <Sidebar
+              sidebarItems={SIDEBAR_ITEMS}
+              bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
+              hoveredDropdown={hoveredDropdown}
+              onDropdownOpen={handleDropdownMouseEnter}
+              onDropdownClose={handleDropdownMouseLeave}
+            />
+          </div>
+          <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden items-center justify-center">
+            <div className="w-8 h-8 border-2 border-slate-200 border-t-slate-500 rounded-full animate-spin" />
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   if (!venta) {
     return (
