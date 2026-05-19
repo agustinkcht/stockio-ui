@@ -11,7 +11,6 @@ import {
   FileDown,
   ReceiptText,
   ChevronLeft,
-  ChevronDown,
   MoreVertical,
   Package,
   Clock,
@@ -62,7 +61,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const [viewingItem, setViewingItem] = useState<VentaItem | null>(null)
   const [entregaMode, setEntregaMode] = useState(false)
   const [showClientePanel, setShowClientePanel] = useState(false)
-  const [showSubtotalBreakdown, setShowSubtotalBreakdown] = useState(false)
 
   const exportDropdownRef = useRef<HTMLDivElement>(null)
   const moreMenuRef = useRef<HTMLDivElement>(null)
@@ -211,7 +209,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       {/* Row 1: Venta ID + estado badge + date + origen + actions */}
                       <div className="flex items-center justify-between gap-4">
                         <div className="flex items-start gap-4 min-w-0">
-                          {/* Venta ID + fecha/hora + cliente all inline */}
+                          {/* Venta ID + fecha/hora + origen all inline */}
                           <div className="flex items-center gap-2.5 shrink-0">
                             <div className="flex items-baseline gap-1.5">
                               <span className="text-[10px] text-slate-400 uppercase tracking-wider">Venta</span>
@@ -222,12 +220,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                               {dia} {mesCorto} {fechaObj.getFullYear()} · {venta.hora}
                             </span>
                             <div className="h-4 w-px bg-slate-200 shrink-0" />
-                            <div className="flex items-center gap-1.5">
-                              <div className="w-5 h-5 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
-                                <span className="text-[9px] font-semibold text-white">{inicial}</span>
-                              </div>
-                              <span className="text-xs text-slate-600 font-medium">{venta.clienteNombre}</span>
-                            </div>
+                            <span className="text-xs text-slate-400">{getOrigen(venta.metodoPago)}</span>
                           </div>
                         </div>
                         {/* Actions */}
@@ -262,7 +255,53 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         </div>
                       </div>
 
+                      {/* Row 2: Cliente pill — clickable, opens slide-in panel */}
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setShowClientePanel(!showClientePanel)}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md border border-slate-200/60 shadow-sm bg-slate-50/60 hover:bg-slate-100/60 transition-colors text-left"
+                        >
+                          <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
+                            <span className="text-xs font-semibold text-white">{inicial}</span>
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-[10px] text-slate-400 uppercase tracking-wider block leading-none mb-0.5">Cliente</span>
+                            <span className="text-sm font-semibold text-slate-800 leading-tight">{venta.clienteNombre}</span>
+                          </div>
+                        </button>
 
+                        {/* Slide-in client info panel */}
+                        {showClientePanel && (
+                          <div className="absolute top-full left-0 right-0 mt-1 z-30 bg-white border border-slate-200 rounded-lg shadow-lg p-4 animate-in fade-in slide-in-from-top-1 duration-150">
+                            <div className="flex items-start gap-3">
+                              <div className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
+                                <span className="text-sm font-semibold text-white">{inicial}</span>
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-bold text-slate-900 leading-tight">{venta.clienteNombre}</p>
+                                <p className="text-xs text-slate-400 mt-0.5">Cliente particular</p>
+                                <div className="mt-2 pt-2 border-t border-slate-100 grid grid-cols-2 gap-x-4 gap-y-1.5">
+                                  <div>
+                                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Método de pago</span>
+                                    <span className="text-xs text-slate-700">{metodoPagoLabels[venta.metodoPago]}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Origen</span>
+                                    <span className="text-xs text-slate-700">{getOrigen(venta.metodoPago)}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => setShowClientePanel(false)}
+                                className="shrink-0 text-slate-400 hover:text-slate-600 transition-colors"
+                              >
+                                <XCircle className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )
                 })()}
@@ -516,49 +555,10 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     {/* ��─ Resumen section ── */}
                     <p className="text-sm font-semibold text-slate-800 mb-4">Resumen</p>
 
-                    {/* Subtotal — expandable */}
-                    <button
-                      type="button"
-                      onClick={() => setShowSubtotalBreakdown(!showSubtotalBreakdown)}
-                      className="w-full flex justify-between items-center py-2.5 border-b border-slate-100 group text-left hover:bg-slate-50/50 -mx-5 px-5 transition-colors"
-                    >
-                      <span className="text-sm text-slate-500 group-hover:text-slate-700 transition-colors">Subtotal</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-slate-700 tabular-nums">${Math.round(venta.subtotal).toLocaleString("es-AR")}</span>
-                        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${showSubtotalBreakdown ? "rotate-180" : ""}`} />
-                      </div>
-                    </button>
-
-                    {/* Per-product breakdown */}
-                    {showSubtotalBreakdown && (
-                      <div className="flex flex-col border-b border-slate-100">
-                        {venta.items.map((item, idx) => {
-                          const display = getVentaItemDisplay(item)
-                          const adjustedUnit = item.discountType === "percent"
-                            ? item.unitPrice * (1 - item.discount / 100)
-                            : item.unitPrice - item.discount
-                          const lineTotal = Math.round(adjustedUnit * item.quantity)
-                          return (
-                            <div key={idx} className="flex justify-between items-start gap-3 py-2.5 -mx-5 px-5 border-b border-slate-50 last:border-0">
-                              <div className="min-w-0 flex-1">
-                                <p className="text-xs text-slate-700 leading-tight">{display.name}</p>
-                                {display.tags.length > 0 && (
-                                  <div className="flex flex-wrap gap-1 mt-0.5">
-                                    {display.tags.map((tag, i) => (
-                                      <span key={i} className="text-[10px] text-slate-400">{tag}</span>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                              <div className="text-right shrink-0">
-                                <p className="text-[11px] text-slate-400 tabular-nums">{item.quantity} × ${Math.round(adjustedUnit).toLocaleString("es-AR")}</p>
-                                <p className="text-xs font-medium text-slate-700 tabular-nums">${lineTotal.toLocaleString("es-AR")}</p>
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )}
+                    <div className="flex justify-between items-center py-2.5 border-b border-slate-100">
+                      <span className="text-sm text-slate-500">Subtotal</span>
+                      <span className="text-sm text-slate-700 tabular-nums">${Math.round(venta.subtotal).toLocaleString("es-AR")}</span>
+                    </div>
 
                     {itemDiscountAmount > 0 && (
                       <div className="flex justify-between items-center py-2.5 border-b border-slate-100">
