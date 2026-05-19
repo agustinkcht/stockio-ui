@@ -235,7 +235,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer gap-1.5 px-3 rounded-md flex items-center"
                           >
                             <ReceiptText className="w-3.5 h-3.5 text-slate-500" />
-                            Ver ticket detalle
+                            Ver ticket
                           </button>
                           <div className="relative" ref={moreMenuRef}>
                             <button
@@ -314,24 +314,24 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                 {/* Entrega + Items card */}
               <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm overflow-hidden">
 
-                {/* ── Title strip ── */}
-                <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-3">
-                  <Package className="w-4 h-4 text-slate-400" />
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-semibold text-slate-800">
-                      {venta.items.length} {venta.items.length === 1 ? "producto" : "productos"}
-                    </span>
-                    <span className="text-slate-300">·</span>
-                    <span className="text-sm text-slate-500 tabular-nums">
-                      {totalUnidades} {totalUnidades === 1 ? "unidad" : "unidades"}
-                    </span>
-                  </div>
-                </div>
-
-                {/* ── Entrega header ── */}
+                {/* ── Title strip + entrega inline ── */}
                 <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-                  <div className="flex items-center gap-2.5 px-1 py-1">
-                    <Truck className={`w-4 h-4 ${entregaPct === 100 ? "text-emerald-500" : entregaPct > 0 ? "text-amber-500" : "text-slate-400"}`} />
+                  {/* Left: products + units + divider + entrega */}
+                  <div className="flex items-center gap-3">
+                    <Package className="w-4 h-4 text-slate-400 shrink-0" />
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-semibold text-slate-800">
+                        {venta.items.length} {venta.items.length === 1 ? "producto" : "productos"}
+                      </span>
+                      <span className="text-slate-300">·</span>
+                      <span className="text-sm text-slate-500 tabular-nums">
+                        {totalUnidades} {totalUnidades === 1 ? "unidad" : "unidades"}
+                      </span>
+                    </div>
+                    {/* Fine vertical divider */}
+                    <div className="h-4 w-px bg-slate-200 shrink-0" />
+                    {/* Entrega info */}
+                    <Truck className={`w-4 h-4 shrink-0 ${entregaPct === 100 ? "text-emerald-500" : entregaPct > 0 ? "text-amber-500" : "text-slate-400"}`} />
                     <div className="flex items-baseline gap-1.5">
                       <span className="text-sm font-semibold text-slate-800">Entrega</span>
                       <span className={`text-xs font-semibold tabular-nums ${entregaPct === 100 ? "text-emerald-600" : entregaPct > 0 ? "text-amber-600" : "text-slate-400"}`}>
@@ -340,7 +340,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       <span className="text-xs text-slate-400 tabular-nums">{entregadasUnidades}/{totalUnidades}</span>
                     </div>
                   </div>
-                  {/* Toggle entrega mode */}
+                  {/* Right: toggle button */}
                   <button
                     type="button"
                     onClick={() => setEntregaMode(!entregaMode)}
@@ -508,90 +508,95 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
               </div>{/* end entrega+items card */}
               </div>{/* end col-span-2 flex column */}
 
-              {/* Right col-span-1: two stacked cards */}
+              {/* Right col-span-1: single white panel, content directly on background */}
               {venta.items.length > 0 && (
-                <div className="col-span-1 flex flex-col gap-4">
+                <div className="col-span-1 bg-white rounded-lg shadow-sm overflow-hidden sticky top-0">
+                  <div className="px-5 py-5 flex flex-col gap-0">
 
-                  {/* ── Resumen card ── */}
-                  <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm overflow-hidden">
-                    <div className="bg-slate-100 border-b border-slate-200/80 h-9 flex items-center px-4">
-                      <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Resumen</span>
-                    </div>
-                    <div className="px-4 py-3 space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-slate-500">Subtotal</span>
-                        <span className="text-slate-700 tabular-nums">${Math.round(venta.subtotal).toLocaleString("es-AR")}</span>
-                      </div>
-                      {itemDiscountAmount > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-red-500">Promociones</span>
-                          <span className="text-red-500 tabular-nums">−${Math.round(itemDiscountAmount).toLocaleString("es-AR")}</span>
-                        </div>
-                      )}
-                      {venta.descuento > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-slate-500">
-                            Descuento
-                            <span className="text-[10px] text-slate-400 ml-1">
-                              ({venta.descuentoTipo === "percent" ? `${venta.descuento}%` : `$${venta.descuento.toLocaleString("es-AR")}`})
-                            </span>
-                          </span>
-                          <span className="text-red-500 tabular-nums">
-                            −${Math.round(venta.descuentoTipo === "percent" ? venta.subtotal * (venta.descuento / 100) : venta.descuento).toLocaleString("es-AR")}
-                          </span>
-                        </div>
-                      )}
-                      <div className="flex justify-between text-sm font-semibold pt-2 border-t border-slate-200">
-                        <span className="text-slate-800">Total</span>
-                        <span className="text-slate-900 tabular-nums">${Math.round(venta.total).toLocaleString("es-AR")}</span>
-                      </div>
-                      {venta.observaciones && (
-                        <div className="pt-2 border-t border-slate-100 flex justify-between text-[11px] gap-3">
-                          <span className="text-slate-400 shrink-0">Observaciones</span>
-                          <span className="text-slate-600 text-right">{venta.observaciones}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                    {/* ── Resumen section ── */}
+                    <p className="text-sm font-semibold text-slate-800 mb-4">Resumen</p>
 
-                  {/* ── Detalle del Cobro card ── */}
-                  <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm overflow-hidden">
-                    <div className="bg-slate-100 border-b border-slate-200/80 h-9 flex items-center px-4">
-                      <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Detalle del Cobro</span>
+                    <div className="flex justify-between items-center py-2.5 border-b border-slate-100">
+                      <span className="text-sm text-slate-500">Subtotal</span>
+                      <span className="text-sm text-slate-700 tabular-nums">${Math.round(venta.subtotal).toLocaleString("es-AR")}</span>
                     </div>
-                    {/* Cobro status chip */}
-                    <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-3">
-                      <div className="flex items-center gap-2.5 px-1 py-1">
+
+                    {itemDiscountAmount > 0 && (
+                      <div className="flex justify-between items-center py-2.5 border-b border-slate-100">
+                        <span className="text-sm text-red-500">Promociones</span>
+                        <span className="text-sm text-red-500 tabular-nums">−${Math.round(itemDiscountAmount).toLocaleString("es-AR")}</span>
+                      </div>
+                    )}
+
+                    {venta.descuento > 0 && (
+                      <div className="flex justify-between items-center py-2.5 border-b border-slate-100">
+                        <span className="text-sm text-slate-500">
+                          Descuento{" "}
+                          <span className="text-[10px] text-slate-400">
+                            ({venta.descuentoTipo === "percent" ? `${venta.descuento}%` : `$${venta.descuento.toLocaleString("es-AR")}`})
+                          </span>
+                        </span>
+                        <span className="text-sm text-red-500 tabular-nums">
+                          −${Math.round(venta.descuentoTipo === "percent" ? venta.subtotal * (venta.descuento / 100) : venta.descuento).toLocaleString("es-AR")}
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="flex justify-between items-center py-3 mt-1">
+                      <span className="text-base font-bold text-slate-900">Total</span>
+                      <span className="text-base font-bold text-slate-900 tabular-nums">${Math.round(venta.total).toLocaleString("es-AR")}</span>
+                    </div>
+
+                    {venta.observaciones && (
+                      <div className="flex justify-between text-[11px] gap-3 pt-2 border-t border-slate-100">
+                        <span className="text-slate-400 shrink-0">Observaciones</span>
+                        <span className="text-slate-600 text-right">{venta.observaciones}</span>
+                      </div>
+                    )}
+
+                    {/* ── Divider between sections ── */}
+                    <div className="border-t border-slate-200 my-4" />
+
+                    {/* ── Detalle del Cobro section ── */}
+                    <p className="text-sm font-semibold text-slate-800 mb-4">Detalle del Cobro</p>
+
+                    {/* Cobro status row */}
+                    <div className="flex items-center justify-between py-2.5 border-b border-slate-100">
+                      <div className="flex items-center gap-2">
                         <Wallet className={`w-4 h-4 ${pagoPct === 100 ? "text-emerald-500" : pagoPct > 0 ? "text-amber-500" : "text-slate-400"}`} />
-                        <div className="flex items-baseline gap-1.5">
-                          <span className="text-sm font-semibold text-slate-800">Cobro</span>
-                          <span className={`text-xs font-semibold tabular-nums ${pagoPct === 100 ? "text-emerald-600" : pagoPct > 0 ? "text-amber-600" : "text-slate-400"}`}>
-                            {pagoPct}%
-                          </span>
-                          <span className="text-xs text-slate-400 tabular-nums">
-                            ${montoCobrado.toLocaleString("es-AR")}/${Math.round(venta.total).toLocaleString("es-AR")}
-                          </span>
-                        </div>
+                        <span className="text-sm text-slate-700">Cobro</span>
+                      </div>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className={`text-sm font-semibold tabular-nums ${pagoPct === 100 ? "text-emerald-600" : pagoPct > 0 ? "text-amber-600" : "text-slate-400"}`}>
+                          {pagoPct}%
+                        </span>
+                        <span className="text-xs text-slate-400 tabular-nums">
+                          ${montoCobrado.toLocaleString("es-AR")}/${Math.round(venta.total).toLocaleString("es-AR")}
+                        </span>
                       </div>
                     </div>
+
                     {/* Transactions */}
                     {montoCobrado > 0 ? (
-                      <div className="h-[48px] flex items-center px-4 gap-3">
-                        <span className="text-xs text-slate-400 tabular-nums shrink-0">
-                          {new Date(venta.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}
-                        </span>
-                        <span className="text-sm font-semibold text-slate-900 tabular-nums flex-1">
+                      <div className="flex items-center justify-between py-2.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-slate-400 tabular-nums">
+                            {new Date(venta.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}
+                          </span>
+                          <span className="text-xs text-slate-400">·</span>
+                          <span className="text-xs text-slate-500">{metodoPagoLabels[venta.metodoPago]}</span>
+                        </div>
+                        <span className="text-sm font-semibold text-slate-900 tabular-nums">
                           ${montoCobrado.toLocaleString("es-AR")}
                         </span>
-                        <span className="text-xs text-slate-500 shrink-0">{metodoPagoLabels[venta.metodoPago]}</span>
                       </div>
                     ) : (
                       <div className="flex items-center justify-center py-6">
                         <span className="text-xs text-slate-400">Sin cobros registrados</span>
                       </div>
                     )}
-                  </div>
 
+                  </div>
                 </div>
               )}
 
