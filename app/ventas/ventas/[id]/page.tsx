@@ -260,12 +260,24 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         </div>
                       </div>
 
-                      {/* Row 2: Cliente pill — clickable, opens slide-in panel */}
-                      <div className="relative">
+                      {/* Row 2: Productos info (left) + Cliente pill (right) */}
+                      <div className="relative flex items-stretch gap-3">
+                        {/* Left half — productos + unidades */}
+                        <div className="flex-1 flex items-center px-3 py-2.5">
+                          <div className="flex items-baseline gap-1.5">
+                            <span className="text-lg font-semibold text-white tabular-nums">{venta.items.length}</span>
+                            <span className="text-sm text-slate-400">{venta.items.length === 1 ? "producto" : "productos"}</span>
+                            <span className="text-slate-600 mx-1">·</span>
+                            <span className="text-lg font-semibold text-white tabular-nums">{totalUnidades}</span>
+                            <span className="text-sm text-slate-400">{totalUnidades === 1 ? "unidad" : "unidades"}</span>
+                          </div>
+                        </div>
+
+                        {/* Right half — Cliente pill */}
                         <button
                           type="button"
                           onClick={() => setShowClientePanel(!showClientePanel)}
-                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md bg-slate-300 hover:bg-slate-200 transition-colors text-left"
+                          className="flex-1 flex items-center gap-3 px-3 py-2.5 rounded-md bg-slate-300 hover:bg-slate-200 transition-colors text-left"
                         >
                           <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center shrink-0">
                             <span className="text-xs font-semibold text-white">{inicial}</span>
