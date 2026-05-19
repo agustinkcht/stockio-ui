@@ -1073,6 +1073,13 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                               max={remaining}
                               value={qtyValue}
                               placeholder={String(remaining)}
+                              onKeyDown={(e) => {
+                                if ((e.key === "ArrowUp" || e.key === "ArrowDown") && qtyValue === "") {
+                                  e.preventDefault()
+                                  const seed = e.key === "ArrowUp" ? remaining : Math.max(0, remaining - 1)
+                                  setEntregaQuantities(prev => ({ ...prev, [item.sku]: String(seed) }))
+                                }
+                              }}
                               onChange={(e) => {
                                 const raw = e.target.value
                                 if (raw === "") { setEntregaQuantities(prev => ({ ...prev, [item.sku]: "" })); return }
