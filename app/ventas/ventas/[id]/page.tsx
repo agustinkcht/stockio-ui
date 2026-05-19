@@ -209,23 +209,18 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       {/* Row 1: Venta ID + estado badge + date + origen + actions */}
                       <div className="flex items-center justify-between gap-4">
                         <div className="flex items-start gap-4 min-w-0">
-                          {/* ID + estado badge + date + origen stacked */}
-                          <div className="flex flex-col shrink-0">
+                          {/* Venta ID + fecha/hora + origen all inline */}
+                          <div className="flex items-center gap-2.5 shrink-0">
                             <div className="flex items-baseline gap-1.5">
                               <span className="text-[10px] text-slate-400 uppercase tracking-wider">Venta</span>
                               <span className="text-lg font-bold text-slate-900 leading-tight">{venta.id}</span>
-                              {/* Estado badge */}
-                              <span className={`ml-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${estadoVentaStyle.bg} ${estadoVentaStyle.text} border ${estadoVentaStyle.border}`}>
-                                {estadoVenta}
-                              </span>
                             </div>
-                            <div className="flex items-center gap-1.5 mt-0.5">
-                              <span className="text-xs text-slate-500 tabular-nums">
-                                {dia} {mesCorto} {fechaObj.getFullYear()} · {venta.hora}
-                              </span>
-                              <span className="text-slate-300 text-xs">·</span>
-                              <span className="text-xs text-slate-400">{getOrigen(venta.metodoPago)}</span>
-                            </div>
+                            <div className="h-4 w-px bg-slate-200 shrink-0" />
+                            <span className="text-xs text-slate-500 tabular-nums">
+                              {dia} {mesCorto} {fechaObj.getFullYear()} · {venta.hora}
+                            </span>
+                            <div className="h-4 w-px bg-slate-200 shrink-0" />
+                            <span className="text-xs text-slate-400">{getOrigen(venta.metodoPago)}</span>
                           </div>
                         </div>
                         {/* Actions */}
@@ -322,7 +317,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     : (pagoPct > 0 || entregaPct > 0) ? 1 : 0
 
                   return (
-                    <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-5 py-3">
+                    <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-5 pt-3 pb-4">
+                      <span className="text-[10px] text-slate-400 uppercase tracking-wider block mb-3">Estado de la Venta</span>
                       <div className="flex items-center">
                         {steps.map((s, i) => {
                           const isDone = i < activeIndex
@@ -482,7 +478,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             </div>
                           </div>
                         ) : (
-                          <div className="grid grid-cols-[38%_22%_10%_30%] min-h-[56px]">
+                          <div className="grid grid-cols-[40%_20%_20%_20%] min-h-[56px]">
                             {/* Item Info */}
                             <div className="flex items-center gap-3 px-4 py-2 overflow-hidden">
                               <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
@@ -556,7 +552,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                 <div className="col-span-1 bg-white rounded-lg shadow-sm overflow-hidden sticky top-0">
                   <div className="px-5 py-5 flex flex-col gap-0">
 
-                    {/* ── Resumen section ── */}
+                    {/* ��─ Resumen section ── */}
                     <p className="text-sm font-semibold text-slate-800 mb-4">Resumen</p>
 
                     <div className="flex justify-between items-center py-2.5 border-b border-slate-100">
@@ -601,43 +597,45 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     <div className="border-t border-slate-200 my-4" />
 
                     {/* ── Detalle del Cobro section ── */}
-                    <p className="text-sm font-semibold text-slate-800 mb-4">Detalle del Cobro</p>
+                    <p className="text-sm font-semibold text-slate-800 mb-3">Detalle del Cobro</p>
 
-                    {/* Cobro status row */}
-                    <div className="flex items-center justify-between py-2.5 border-b border-slate-100">
-                      <div className="flex items-center gap-2">
-                        <Wallet className={`w-4 h-4 ${pagoPct === 100 ? "text-emerald-500" : pagoPct > 0 ? "text-amber-500" : "text-slate-400"}`} />
-                        <span className="text-sm text-slate-700">Cobro</span>
-                      </div>
-                      <div className="flex items-baseline gap-1.5">
-                        <span className={`text-sm font-semibold tabular-nums ${pagoPct === 100 ? "text-emerald-600" : pagoPct > 0 ? "text-amber-600" : "text-slate-400"}`}>
-                          {pagoPct}%
-                        </span>
-                        <span className="text-xs text-slate-400 tabular-nums">
-                          ${montoCobrado.toLocaleString("es-AR")}/${Math.round(venta.total).toLocaleString("es-AR")}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Transactions */}
-                    {montoCobrado > 0 ? (
-                      <div className="flex items-center justify-between py-2.5">
+                    <div className="rounded-lg border border-slate-200/80 bg-slate-50/60 overflow-hidden">
+                      {/* Cobro status row */}
+                      <div className="flex items-center justify-between px-3 py-2.5 border-b border-slate-100">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-slate-400 tabular-nums">
-                            {new Date(venta.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}
-                          </span>
-                          <span className="text-xs text-slate-400">·</span>
-                          <span className="text-xs text-slate-500">{metodoPagoLabels[venta.metodoPago]}</span>
+                          <Wallet className={`w-4 h-4 ${pagoPct === 100 ? "text-emerald-500" : pagoPct > 0 ? "text-amber-500" : "text-slate-400"}`} />
+                          <span className="text-sm text-slate-700">Cobro</span>
                         </div>
-                        <span className="text-sm font-semibold text-slate-900 tabular-nums">
-                          ${montoCobrado.toLocaleString("es-AR")}
-                        </span>
+                        <div className="flex items-baseline gap-1.5">
+                          <span className={`text-sm font-semibold tabular-nums ${pagoPct === 100 ? "text-emerald-600" : pagoPct > 0 ? "text-amber-600" : "text-slate-400"}`}>
+                            {pagoPct}%
+                          </span>
+                          <span className="text-xs text-slate-400 tabular-nums">
+                            ${montoCobrado.toLocaleString("es-AR")}/${Math.round(venta.total).toLocaleString("es-AR")}
+                          </span>
+                        </div>
                       </div>
-                    ) : (
-                      <div className="flex items-center justify-center py-6">
-                        <span className="text-xs text-slate-400">Sin cobros registrados</span>
-                      </div>
-                    )}
+
+                      {/* Transactions */}
+                      {montoCobrado > 0 ? (
+                        <div className="flex items-center justify-between px-3 py-2.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-slate-400 tabular-nums">
+                              {new Date(venta.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}
+                            </span>
+                            <span className="text-xs text-slate-300">·</span>
+                            <span className="text-xs text-slate-500">{metodoPagoLabels[venta.metodoPago]}</span>
+                          </div>
+                          <span className="text-sm font-semibold text-slate-900 tabular-nums">
+                            ${montoCobrado.toLocaleString("es-AR")}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center py-5">
+                          <span className="text-xs text-slate-400">Sin cobros registrados</span>
+                        </div>
+                      )}
+                    </div>
 
                   </div>
                 </div>
