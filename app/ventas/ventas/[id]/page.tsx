@@ -527,9 +527,9 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             </div>
 
                             {/* Cantidad col */}
-                            <div className="flex flex-col items-center justify-center gap-0.5">
+                            <div className="flex items-center justify-center gap-1.5">
                               <span className="text-sm text-slate-700 tabular-nums">{item.quantity}</span>
-                              <span className="text-[10px] text-slate-400 leading-tight">{item.quantity === 1 ? "unidad" : "unidades"}</span>
+                              <span className="text-xs text-slate-400">{item.quantity === 1 ? "unidad" : "unidades"}</span>
                             </div>
 
                             {/* Subtotal col */}
@@ -599,43 +599,41 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     {/* ── Detalle del Cobro section ── */}
                     <p className="text-sm font-semibold text-slate-800 mb-3">Detalle del Cobro</p>
 
-                    <div className="rounded-lg border border-slate-200/80 bg-slate-50/60 overflow-hidden">
-                      {/* Cobro status row */}
-                      <div className="flex items-center justify-between px-3 py-2.5 border-b border-slate-100">
-                        <div className="flex items-center gap-2">
-                          <Wallet className={`w-4 h-4 ${pagoPct === 100 ? "text-emerald-500" : pagoPct > 0 ? "text-amber-500" : "text-slate-400"}`} />
-                          <span className="text-sm text-slate-700">Cobro</span>
-                        </div>
-                        <div className="flex items-baseline gap-1.5">
-                          <span className={`text-sm font-semibold tabular-nums ${pagoPct === 100 ? "text-emerald-600" : pagoPct > 0 ? "text-amber-600" : "text-slate-400"}`}>
-                            {pagoPct}%
-                          </span>
-                          <span className="text-xs text-slate-400 tabular-nums">
-                            ${montoCobrado.toLocaleString("es-AR")}/${Math.round(venta.total).toLocaleString("es-AR")}
-                          </span>
-                        </div>
+                    {/* Cobro status row */}
+                    <div className="flex items-center justify-between py-2.5 border-b border-slate-100">
+                      <div className="flex items-center gap-2">
+                        <Wallet className={`w-4 h-4 ${pagoPct === 100 ? "text-emerald-500" : pagoPct > 0 ? "text-amber-500" : "text-slate-400"}`} />
+                        <span className="text-sm text-slate-700">Cobro</span>
                       </div>
-
-                      {/* Transactions */}
-                      {montoCobrado > 0 ? (
-                        <div className="flex items-center justify-between px-3 py-2.5">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-slate-400 tabular-nums">
-                              {new Date(venta.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}
-                            </span>
-                            <span className="text-xs text-slate-300">·</span>
-                            <span className="text-xs text-slate-500">{metodoPagoLabels[venta.metodoPago]}</span>
-                          </div>
-                          <span className="text-sm font-semibold text-slate-900 tabular-nums">
-                            ${montoCobrado.toLocaleString("es-AR")}
-                          </span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-center py-5">
-                          <span className="text-xs text-slate-400">Sin cobros registrados</span>
-                        </div>
-                      )}
+                      <div className="flex items-baseline gap-1.5">
+                        <span className={`text-sm font-semibold tabular-nums ${pagoPct === 100 ? "text-emerald-600" : pagoPct > 0 ? "text-amber-600" : "text-slate-400"}`}>
+                          {pagoPct}%
+                        </span>
+                        <span className="text-xs text-slate-400 tabular-nums">
+                          ${montoCobrado.toLocaleString("es-AR")}/${Math.round(venta.total).toLocaleString("es-AR")}
+                        </span>
+                      </div>
                     </div>
+
+                    {/* Transactions */}
+                    {montoCobrado > 0 ? (
+                      <div className="flex items-center justify-between py-2.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-slate-400 tabular-nums">
+                            {new Date(venta.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}
+                          </span>
+                          <span className="text-xs text-slate-300">·</span>
+                          <span className="text-xs text-slate-500">{metodoPagoLabels[venta.metodoPago]}</span>
+                        </div>
+                        <span className="text-sm font-semibold text-slate-900 tabular-nums">
+                          ${montoCobrado.toLocaleString("es-AR")}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center py-6">
+                        <span className="text-xs text-slate-400">Sin cobros registrados</span>
+                      </div>
+                    )}
 
                   </div>
                 </div>
