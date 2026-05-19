@@ -205,29 +205,28 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   const dia = fechaObj.toLocaleDateString("es-AR", { day: "2-digit" })
                   const inicial = venta.clienteNombre.charAt(0).toUpperCase()
                   return (
-                    <div className="pt-8 px-4 pb-3 flex flex-col gap-4">
-                      {/* Row 1: Venta ID + productos/unidades/total + actions */}
+                    <div className="pt-8 px-4 pb-3 flex flex-col gap-3">
+                      {/* Row 1: Venta ID + date + origen + actions */}
                       <div className="flex items-center justify-between gap-4">
-                        {/* Venta ID + productos/unidades/total — spread across available width */}
-                        <div className="flex items-center flex-1 min-w-0 gap-3">
+                        {/* Venta ID + fecha/hora + origen — spread across available width */}
+                        <div className="flex items-center flex-1 min-w-0">
                           {/* Venta ID */}
                           <div className="flex items-baseline gap-1.5 shrink-0">
                             <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Venta</span>
                             <span className="text-2xl font-bold text-slate-900 leading-none tracking-tight">{venta.id}</span>
                           </div>
 
-                          <div className="h-5 w-px bg-slate-300 shrink-0" />
+                          <div className="h-5 w-px bg-slate-300 shrink-0 mx-5" />
 
-                          {/* Productos + unidades + total */}
-                          <div className="flex items-baseline gap-1.5">
-                            <span className="text-lg font-semibold text-slate-900 tabular-nums">{venta.items.length}</span>
-                            <span className="text-sm text-slate-400">{venta.items.length === 1 ? "producto" : "productos"}</span>
-                            <span className="text-slate-300">·</span>
-                            <span className="text-lg font-semibold text-slate-900 tabular-nums">{totalUnidades}</span>
-                            <span className="text-sm text-slate-400">{totalUnidades === 1 ? "unidad" : "unidades"}</span>
-                            <span className="text-slate-300">·</span>
-                            <span className="text-lg font-semibold text-slate-900 tabular-nums">${Math.round(venta.total).toLocaleString("es-AR")}</span>
-                          </div>
+                          {/* Fecha */}
+                          <span className="text-sm font-medium text-slate-600 tabular-nums shrink-0">
+                            {dia} {mesCorto} {fechaObj.getFullYear()} · {venta.hora}
+                          </span>
+
+                          <div className="h-5 w-px bg-slate-300 shrink-0 mx-5" />
+
+                          {/* Origen */}
+                          <span className="text-sm text-slate-400 shrink-0">{getOrigen(venta.metodoPago)}</span>
                         </div>
                         {/* Actions */}
                         <div className="flex items-center gap-2 shrink-0">
@@ -261,13 +260,15 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         </div>
                       </div>
 
-                      {/* Row 2: Fecha/hora + origen */}
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm font-medium text-slate-600 tabular-nums">
-                          {dia} {mesCorto} {fechaObj.getFullYear()} · {venta.hora}
-                        </span>
-                        <div className="h-5 w-px bg-slate-300 shrink-0" />
-                        <span className="text-sm text-slate-400">{getOrigen(venta.metodoPago)}</span>
+                      {/* Row 2: Productos + unidades + total */}
+                      <div className="flex items-baseline gap-1.5 px-1">
+                        <span className="text-lg font-semibold text-slate-900 tabular-nums">{venta.items.length}</span>
+                        <span className="text-sm text-slate-400">{venta.items.length === 1 ? "producto" : "productos"}</span>
+                        <span className="text-slate-300 mx-1">·</span>
+                        <span className="text-lg font-semibold text-slate-900 tabular-nums">{totalUnidades}</span>
+                        <span className="text-sm text-slate-400">{totalUnidades === 1 ? "unidad" : "unidades"}</span>
+                        <span className="text-slate-300 mx-1">·</span>
+                        <span className="text-lg font-semibold text-slate-900 tabular-nums">${Math.round(venta.total).toLocaleString("es-AR")}</span>
                       </div>
                     </div>
                   )
