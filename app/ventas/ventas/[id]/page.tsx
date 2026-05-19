@@ -208,20 +208,25 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-3">
                       {/* Row 1: Venta ID + estado badge + date + origen + actions */}
                       <div className="flex items-center justify-between gap-4">
-                        <div className="flex items-start gap-4 min-w-0">
-                          {/* Venta ID + fecha/hora + origen all inline */}
-                          <div className="flex items-center gap-2.5 shrink-0">
-                            <div className="flex items-baseline gap-1.5">
-                              <span className="text-[10px] text-slate-400 uppercase tracking-wider">Venta</span>
-                              <span className="text-lg font-bold text-slate-900 leading-tight">{venta.id}</span>
-                            </div>
-                            <div className="h-4 w-px bg-slate-200 shrink-0" />
-                            <span className="text-xs text-slate-500 tabular-nums">
-                              {dia} {mesCorto} {fechaObj.getFullYear()} · {venta.hora}
-                            </span>
-                            <div className="h-4 w-px bg-slate-200 shrink-0" />
-                            <span className="text-xs text-slate-400">{getOrigen(venta.metodoPago)}</span>
+                        {/* Venta ID + fecha/hora + origen — spread across available width */}
+                        <div className="flex items-center flex-1 min-w-0">
+                          {/* Venta ID */}
+                          <div className="flex items-baseline gap-1.5 shrink-0">
+                            <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Venta</span>
+                            <span className="text-2xl font-bold text-slate-900 leading-none tracking-tight">{venta.id}</span>
                           </div>
+
+                          <div className="h-5 w-px bg-slate-200 shrink-0 mx-5" />
+
+                          {/* Fecha */}
+                          <span className="text-base font-medium text-slate-600 tabular-nums shrink-0">
+                            {dia} {mesCorto} {fechaObj.getFullYear()} · {venta.hora}
+                          </span>
+
+                          <div className="h-5 w-px bg-slate-200 shrink-0 mx-5" />
+
+                          {/* Origen */}
+                          <span className="text-base text-slate-500 shrink-0">{getOrigen(venta.metodoPago)}</span>
                         </div>
                         {/* Actions */}
                         <div className="flex items-center gap-2 shrink-0">
