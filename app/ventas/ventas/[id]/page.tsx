@@ -260,16 +260,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         </div>
                       </div>
 
-                      {/* Row 2: Productos + unidades + total */}
-                      <div className="flex items-baseline gap-1.5 px-1">
-                        <span className="text-lg font-semibold text-slate-900 tabular-nums">{venta.items.length}</span>
-                        <span className="text-sm text-slate-400">{venta.items.length === 1 ? "producto" : "productos"}</span>
-                        <span className="text-slate-300 mx-1">·</span>
-                        <span className="text-lg font-semibold text-slate-900 tabular-nums">{totalUnidades}</span>
-                        <span className="text-sm text-slate-400">{totalUnidades === 1 ? "unidad" : "unidades"}</span>
-                        <span className="text-slate-300 mx-1">·</span>
-                        <span className="text-lg font-semibold text-slate-900 tabular-nums">${Math.round(venta.total).toLocaleString("es-AR")}</span>
-                      </div>
                     </div>
                   )
                 })()}
