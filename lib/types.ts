@@ -180,7 +180,7 @@ export interface StockAdjustment {
   observaciones?: string
 }
 
-export type PaymentMethod = "efectivo" | "posnet" | "transferencia"
+export type PaymentMethod = "efectivo" | "posnet" | "transferencia" | "no_especificado"
 
 export interface VentaItem {
   sku: string

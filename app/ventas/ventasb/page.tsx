@@ -47,12 +47,14 @@ const paymentMethodLabels: Record<PaymentMethod, string> = {
   efectivo: "Efectivo",
   posnet: "Posnet",
   transferencia: "Transferencia",
+  no_especificado: "No especificado",
 }
 
 const paymentMethodIcons: Record<PaymentMethod, typeof Banknote> = {
   efectivo: Banknote,
   posnet: CreditCard,
   transferencia: ArrowRightLeft,
+  no_especificado: Banknote,
 }
 
 function VentasContent() {

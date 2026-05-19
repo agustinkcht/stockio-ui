@@ -29,12 +29,12 @@ import {
   X,
 } from "lucide-react"
 import Image from "next/image"
-import { VENTAS } from "@/lib/data/ventas"
-import type { Venta, VentaItem, PaymentMethod, Item, ItemVariant } from "@/lib/types"
+import type { Venta, VentaItem, PaymentMethod, Item, ItemVariant, VentaEntregaItem } from "@/lib/types"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import { VentaItemDetailModal } from "@/components/ventas/venta-item-detail-modal"
 import { INITIAL_ITEMS } from "@/lib/data/initial-items"
+import { useVentas } from "@/hooks/use-ventas"
 
 type VentaEstadoUI = "en_curso" | "finalizada"
 
@@ -42,6 +42,7 @@ const metodoPagoLabels: Record<PaymentMethod, string> = {
   efectivo: "Efectivo",
   posnet: "Posnet",
   transferencia: "Transferencia",
+  no_especificado: "No especificado",
 }
 
 export default function VentaDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -49,14 +50,15 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const router = useRouter()
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
 
-  const venta = useMemo(() => VENTAS.find((v) => v.id === id) || null, [id])
+  const { ventas, isLoading: isLoadingVentas, addItemsToVenta, addCobro, addEntregas, setEstado } = useVentas()
+  const venta = useMemo(() => ventas.find((v) => v.id === id) || null, [ventas, id])
 
   const [showExportDropdown, setShowExportDropdown] = useState(false)
   const [showMoreOptionsMenu, setShowMoreOptionsMenu] = useState(false)
   const [viewingItem, setViewingItem] = useState<VentaItem | null>(null)
   const [entregaMode, setEntregaMode] = useState(false)
   const [showClientePanel, setShowClientePanel] = useState(false)
-  const [estadoUI, setEstadoUI] = useState<VentaEstadoUI>("en_curso")
+  // estado is derived from venta (persisted via useVentas)
   const [showEstadoDropdown, setShowEstadoDropdown] = useState(false)
   const [showSubtotalBreakdown, setShowSubtotalBreakdown] = useState(false)
   const [showAgregarProductos, setShowAgregarProductos] = useState(false)
@@ -100,6 +102,14 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [showExportDropdown, showMoreOptionsMenu])
 
+  if (isLoadingVentas) {
+    return (
+      <div className="min-h-screen bg-[rgb(243,242,238)] flex items-center justify-center">
+        <p className="text-sm text-slate-400">Cargando venta...</p>
+      </div>
+    )
+  }
+
   if (!venta) {
     return (
       <div className="min-h-screen bg-[rgb(243,242,238)]">
@@ -131,6 +141,9 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
   const clienteNombre = venta.cliente.tipo === "cuenta" ? venta.cliente.nombre : "Consumidor Final"
   const isFacturada = !!venta.facturaEmitida
+  // Estado is derived from the persisted venta. Manual setEstado() updates flip it through the hook.
+  const estadoUI: VentaEstadoUI = venta.estado
+  const setEstadoUI = (next: VentaEstadoUI) => setEstado(venta.id, next)
   const fechaCreacion = new Date(venta.fecha).toLocaleDateString("es-AR", {
     day: "2-digit",
     month: "short",
@@ -268,6 +281,122 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
     setSelectedModalItems({})
     setModalFilters({ categoria: "", marca: "" })
     setShowModalFilters(false)
+  }
+
+  // Build VentaItems from currently selected modal selections and persist them.
+  const handleConfirmAgregarProductos = () => {
+    if (!venta) return
+    const newVentaItems: VentaItem[] = []
+
+    for (const item of allModalItems) {
+      const isParent = item.hasVariants && (item as Item).variants && (item as Item).variants!.length > 0
+
+      if (isParent) {
+        for (const variant of (item as Item).variants!) {
+          const id = (variant as ItemVariant).id || `${(item as Item).skuPrefix}-${(variant as ItemVariant).skuSuffix}`
+          if (!selectedModalItems[id]) continue
+          const sku = `${(item as Item).skuPrefix}-${(variant as ItemVariant).skuSuffix}`
+          const unitPrice = (variant as ItemVariant).precio?.precioFinal || 0
+          newVentaItems.push({
+            sku,
+            name: `${item.name}${(variant as ItemVariant).atributosPrincipales?.length ? " · " + (variant as ItemVariant).atributosPrincipales!.map(a => a.value).join(" · ") : ""}`,
+            quantity: 1,
+            unitPrice,
+            discount: 0,
+            discountType: "percent",
+            total: unitPrice,
+            categoria: (variant as ItemVariant).categoria || (item as Item).categoria,
+          })
+        }
+      } else {
+        const id = (item as Item).id || (item as Item).sku || (item as Item).name
+        if (!selectedModalItems[id]) continue
+        const sku = (item as Item).sku || id
+        const unitPrice = (item as Item).precio?.precioFinal || 0
+        newVentaItems.push({
+          sku,
+          name: (item as Item).name,
+          quantity: 1,
+          unitPrice,
+          discount: 0,
+          discountType: "percent",
+          total: unitPrice,
+          categoria: (item as Item).categoria,
+        })
+      }
+    }
+
+    if (newVentaItems.length > 0) {
+      addItemsToVenta(venta.id, newVentaItems)
+    }
+    closeAgregarProductos()
+  }
+
+  // Persist a new cobro entry from the Registrar Cobro modal.
+  const handleConfirmCobro = () => {
+    if (!venta) return
+    const monto = Number(cobroMonto)
+    if (!monto || monto <= 0) return
+    addCobro(venta.id, {
+      fecha: cobroFecha,
+      hora: cobroHora,
+      medioPago: cobroMedio,
+      monto,
+    })
+    setShowRegistrarCobro(false)
+    setCobroMonto("")
+    setCobroMedio("efectivo")
+  }
+
+  // Persist deliveries for currently selected rows in the Registrar Entrega modal.
+  const handleConfirmEntrega = () => {
+    if (!venta) return
+    const entregas: VentaEntregaItem[] = []
+    for (const item of venta.items) {
+      if (!entregaSelectedItems[item.sku]) continue
+      const delivered = venta.entregaItems.find(e => e.sku === item.sku)?.quantityEntregada ?? 0
+      const remaining = item.quantity - delivered
+      const raw = entregaQuantities[item.sku]
+      const qty = raw === "" || raw === undefined ? remaining : Math.max(0, Math.min(remaining, parseInt(raw, 10) || 0))
+      if (qty > 0) entregas.push({ sku: item.sku, quantityEntregada: qty })
+    }
+    if (entregas.length > 0) {
+      addEntregas(venta.id, entregas)
+    }
+    setShowRegistrarEntrega(false)
+    setEntregaSelectedItems({})
+    setEntregaQuantities({})
+  }
+
+  // Confirm "Marcar como Finalizada": auto-complete entregas, register a cobro for the
+  // remaining balance (if any), and flip estado.
+  const handleConfirmFinalizar = () => {
+    if (!venta) return
+
+    // Auto-deliver any remaining units
+    const pendingEntregas: VentaEntregaItem[] = []
+    for (const item of venta.items) {
+      const delivered = venta.entregaItems.find(e => e.sku === item.sku)?.quantityEntregada ?? 0
+      const remaining = item.quantity - delivered
+      if (remaining > 0) pendingEntregas.push({ sku: item.sku, quantityEntregada: remaining })
+    }
+    if (pendingEntregas.length > 0) addEntregas(venta.id, pendingEntregas)
+
+    // Register a cobro for the remaining balance
+    if (montoRestante > 0) {
+      const now = new Date()
+      addCobro(venta.id, {
+        fecha: now.toISOString().slice(0, 10),
+        hora: now.toTimeString().slice(0, 5),
+        medioPago: finalizarMedioPago,
+        monto: montoRestante,
+      })
+    }
+
+    // The hook auto-derives estado, but force it just in case there were rounding edge cases
+    setEstado(venta.id, "finalizada")
+    setShowFinalizarVenta(false)
+    setFinalizarMedioPago("no_especificado")
   }
 
   const breadcrumbs = [
@@ -1015,7 +1144,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     : "Seleccioná productos para registrar"}
                 </span>
                 <button
-                  onClick={closeEntrega}
+                  onClick={handleConfirmEntrega}
                   disabled={selectedCount === 0}
                   className="px-5 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
@@ -1146,7 +1275,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setEstadoUI("finalizada"); closeModal() }}
+                  onClick={handleConfirmFinalizar}
                   className="px-5 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-2"
                 >
                   <CheckCircle2 className="w-4 h-4" />
@@ -1371,7 +1500,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   : "Seleccioná productos para agregar"}
               </span>
               <button
-                onClick={closeAgregarProductos}
+                onClick={handleConfirmAgregarProductos}
                 disabled={selectedModalCount === 0}
                 className="px-5 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
@@ -1473,8 +1602,9 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
               </button>
               <button
                 type="button"
-                onClick={() => setShowRegistrarCobro(false)}
-                className="flex-1 py-2.5 text-sm text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors font-medium"
+                onClick={handleConfirmCobro}
+                disabled={!cobroMonto || Number(cobroMonto) <= 0}
+                className="flex-1 py-2.5 text-sm text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors font-medium disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Registrar
               </button>
