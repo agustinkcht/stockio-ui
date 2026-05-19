@@ -29,8 +29,8 @@ import {
   X,
 } from "lucide-react"
 import Image from "next/image"
-import type { Venta, VentaItem, PaymentMethod, Item, ItemVariant, VentaCobro, VentaEntregaItem } from "@/lib/types"
-import { useVentas } from "@/hooks/use-ventas"
+import { VENTAS } from "@/lib/data/ventas"
+import type { Venta, VentaItem, PaymentMethod, Item, ItemVariant } from "@/lib/types"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import { VentaItemDetailModal } from "@/components/ventas/venta-item-detail-modal"
@@ -49,16 +49,14 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const router = useRouter()
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
 
-  const { ventas, isLoading, updateVenta } = useVentas()
-  const venta = useMemo(() => ventas.find((v) => v.id === id) || null, [ventas, id])
+  const venta = useMemo(() => VENTAS.find((v) => v.id === id) || null, [id])
 
   const [showExportDropdown, setShowExportDropdown] = useState(false)
   const [showMoreOptionsMenu, setShowMoreOptionsMenu] = useState(false)
   const [viewingItem, setViewingItem] = useState<VentaItem | null>(null)
   const [entregaMode, setEntregaMode] = useState(false)
   const [showClientePanel, setShowClientePanel] = useState(false)
-  const [estadoUI, setEstadoUI] = useState<VentaEstadoUI | null>(null)
-  const efectiveEstadoUI: VentaEstadoUI = estadoUI ?? venta?.estado ?? "en_curso"
+  const [estadoUI, setEstadoUI] = useState<VentaEstadoUI>("en_curso")
   const [showEstadoDropdown, setShowEstadoDropdown] = useState(false)
   const [showSubtotalBreakdown, setShowSubtotalBreakdown] = useState(false)
   const [showAgregarProductos, setShowAgregarProductos] = useState(false)
@@ -73,9 +71,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const [cobroHora, setCobroHora] = useState(() => new Date().toTimeString().slice(0, 5))
   const [cobroMedio, setCobroMedio] = useState<"efectivo" | "posnet" | "transferencia">("efectivo")
   const [cobroMonto, setCobroMonto] = useState("")
-  const [showRegistrarEntrega, setShowRegistrarEntrega] = useState(false)
-  // entregaModalQtys: sku -> quantity to deliver (initialized from current entregaItems when modal opens)
-  const [entregaModalQtys, setEntregaModalQtys] = useState<Record<string, number>>({})
 
   const estadoDropdownRef = useRef<HTMLDivElement>(null)
 
@@ -99,27 +94,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
     }
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [showExportDropdown, showMoreOptionsMenu])
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[rgb(243,242,238)]">
-        <div className="px-[6px] py-[6px] flex gap-[6px] h-screen">
-          <div className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
-            <Sidebar
-              sidebarItems={SIDEBAR_ITEMS}
-              bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
-              hoveredDropdown={hoveredDropdown}
-              onDropdownOpen={handleDropdownMouseEnter}
-              onDropdownClose={handleDropdownMouseLeave}
-            />
-          </div>
-          <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden items-center justify-center">
-            <div className="w-8 h-8 border-2 border-slate-200 border-t-slate-500 rounded-full animate-spin" />
-          </div>
-        </div>
-      </div>
-    )
-  }
 
   if (!venta) {
     return (
@@ -165,27 +139,23 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
     return sum + discount
   }, 0)
 
-  // Safe arrays — guard against stale localStorage records that may predate these fields
-  const safeCobros = Array.isArray(venta.cobros) ? venta.cobros : []
-  const safeEntregaItems = Array.isArray(venta.entregaItems) ? venta.entregaItems : []
-
-  // Derived cobro values
-  const montoCobrado = safeCobros.reduce((sum, c) => sum + c.monto, 0)
+  // Derived cobro values from real cobros array
+  const montoCobrado = venta.cobros.reduce((sum, c) => sum + c.monto, 0)
   const montoRestante = Math.max(0, venta.total - montoCobrado)
   const pagoPct = venta.total > 0 ? Math.min(100, Math.round((montoCobrado / venta.total) * 100)) : 0
 
-  // Derived entrega values
+  // Derived entrega values from real entregaItems array
   const totalUnidades = venta.items.reduce((s, it) => s + it.quantity, 0)
   const entregadasUnidades = venta.items.reduce((s, item) => {
-    const e = safeEntregaItems.find(ei => ei.sku === item.sku)
+    const e = venta.entregaItems.find(ei => ei.sku === item.sku)
     return s + (e?.quantityEntregada ?? 0)
   }, 0)
   const entregaPct = totalUnidades > 0 ? Math.min(100, Math.round((entregadasUnidades / totalUnidades) * 100)) : 0
 
-  // Per-item entrega map for the items grid
+  // Per-item entrega map for the grid display
   const itemEntregaMap = new Map(
     venta.items.map((item) => {
-      const e = safeEntregaItems.find(ei => ei.sku === item.sku)
+      const e = venta.entregaItems.find(ei => ei.sku === item.sku)
       return [item.sku, e?.quantityEntregada ?? 0]
     })
   )
@@ -293,56 +263,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
     setSelectedModalItems({})
     setModalFilters({ categoria: "", marca: "" })
     setShowModalFilters(false)
-  }
-
-  // ── Registrar cobro ──
-  const handleRegistrarCobro = () => {
-    if (!venta || !cobroMonto || Number(cobroMonto) <= 0) return
-    const newCobro: VentaCobro = {
-      id: `COB-${Date.now()}`,
-      fecha: cobroFecha,
-      hora: cobroHora,
-      medioPago: cobroMedio,
-      monto: Number(cobroMonto),
-    }
-    const updatedCobros = [...safeCobros, newCobro]
-    const newMontoCobrado = updatedCobros.reduce((sum, c) => sum + c.monto, 0)
-    const newEstado: VentaEstadoUI =
-      newMontoCobrado >= venta.total && entregaPct === 100 ? "finalizada" : "en_curso"
-    updateVenta(venta.id, { cobros: updatedCobros, estado: newEstado })
-    if (estadoUI !== null) setEstadoUI(newEstado)
-    setShowRegistrarCobro(false)
-    setCobroMonto("")
-    setCobroFecha(new Date().toISOString().slice(0, 10))
-    setCobroHora(new Date().toTimeString().slice(0, 5))
-    setCobroMedio("efectivo")
-  }
-
-  // ── Registrar entrega — open modal with current qtys ──
-  const openRegistrarEntrega = () => {
-    if (!venta) return
-    const init: Record<string, number> = {}
-    venta.items.forEach(item => {
-      const existing = safeEntregaItems.find(ei => ei.sku === item.sku)
-      init[item.sku] = existing?.quantityEntregada ?? 0
-    })
-    setEntregaModalQtys(init)
-    setShowRegistrarEntrega(true)
-  }
-
-  const handleRegistrarEntrega = () => {
-    if (!venta) return
-    const newEntregaItems: VentaEntregaItem[] = venta.items.map(item => ({
-      sku: item.sku,
-      quantityEntregada: Math.min(entregaModalQtys[item.sku] ?? 0, item.quantity),
-    }))
-    const newEntregadas = newEntregaItems.reduce((s, ei) => s + ei.quantityEntregada, 0)
-    const newEntregaPct = totalUnidades > 0 ? Math.round((newEntregadas / totalUnidades) * 100) : 0
-    const newEstado: VentaEstadoUI =
-      newEntregaPct === 100 && pagoPct === 100 ? "finalizada" : "en_curso"
-    updateVenta(venta.id, { entregaItems: newEntregaItems, estado: newEstado })
-    if (estadoUI !== null) setEstadoUI(newEstado)
-    setShowRegistrarEntrega(false)
   }
 
   const breadcrumbs = [
@@ -484,7 +404,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                 <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-5 py-4">
                   <span className="text-[10px] text-slate-400 uppercase tracking-wider block mb-3">Estado de la Venta</span>
 
-                  {efectiveEstadoUI === "en_curso" ? (
+                  {estadoUI === "en_curso" ? (
                     /* 3-col grid: estado | entrega | cobro */
                     <div className="grid grid-cols-3 gap-0 divide-x divide-slate-100">
 
@@ -539,7 +459,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             <span className="text-xs text-slate-400 tabular-nums">{entregadasUnidades}/{totalUnidades} unidades</span>
                             <button
                               type="button"
-                              onClick={openRegistrarEntrega}
                               className="mt-1 flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
                             >
                               <Plus className="w-3 h-3" />
@@ -778,7 +697,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     )
                   })
                 )}
-              {efectiveEstadoUI === "en_curso" && (
+              {estadoUI === "en_curso" && (
                 <button
                   type="button"
                   onClick={() => setShowAgregarProductos(true)}
@@ -895,8 +814,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     <p className="text-sm font-semibold text-slate-800 mb-3">Detalle del Cobro</p>
 
                     {/* Entries */}
-                    {safeCobros.length > 0 ? (
-                      safeCobros.map((cobro) => (
+                    {venta.cobros.length > 0 ? (
+                      venta.cobros.map((cobro) => (
                         <div key={cobro.id} className="flex items-center justify-between py-2.5 border-b border-slate-100">
                           <div className="flex items-center gap-2">
                             <span className="text-xs text-slate-400 tabular-nums">
@@ -928,140 +847,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
       {viewingItem && (
         <VentaItemDetailModal ventaItem={viewingItem} onClose={() => setViewingItem(null)} />
-      )}
-
-      {/* ── Registrar Entrega Modal ── */}
-      {showRegistrarEntrega && venta && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowRegistrarEntrega(false)} />
-          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 flex flex-col overflow-hidden">
-
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
-              <div>
-                <h3 className="text-sm font-semibold text-slate-900">Registrar entrega</h3>
-                <p className="text-xs text-slate-500 mt-0.5">Indicá las unidades entregadas por producto</p>
-              </div>
-              <button onClick={() => setShowRegistrarEntrega(false)} className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Column headers */}
-            <div className="bg-slate-50 border-b border-slate-100 grid grid-cols-[1fr_auto_auto] px-5 py-2 text-[10px] font-medium text-slate-500 uppercase tracking-wider gap-4">
-              <span>Producto</span>
-              <span className="text-right w-24">Entregadas</span>
-              <span className="text-right w-16">Total</span>
-            </div>
-
-            {/* Items */}
-            <div className="overflow-y-auto max-h-[50vh]">
-              {venta.items.map((item) => {
-                const display = getVentaItemDisplay(item)
-                const qty = entregaModalQtys[item.sku] ?? 0
-                const isFullyDelivered = qty >= item.quantity
-                return (
-                  <div
-                    key={item.sku}
-                    className={`grid grid-cols-[1fr_auto_auto] items-center px-5 py-3 border-b border-slate-100 gap-4 transition-colors ${isFullyDelivered ? "bg-emerald-50/40" : ""}`}
-                  >
-                    {/* Product info */}
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-slate-800 leading-tight truncate">{display.name}</p>
-                      {display.tags.length > 0 && (
-                        <div className="flex gap-1 mt-0.5">
-                          {display.tags.map((tag, i) => (
-                            <span key={i} className="text-[10px] text-slate-400">{tag}</span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Qty selector */}
-                    <div className="flex items-center gap-1.5 w-24 justify-end">
-                      <button
-                        type="button"
-                        onClick={() => setEntregaModalQtys(prev => ({ ...prev, [item.sku]: Math.max(0, (prev[item.sku] ?? 0) - 1) }))}
-                        className="w-6 h-6 rounded border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors text-xs font-bold disabled:opacity-30"
-                        disabled={qty <= 0}
-                      >
-                        −
-                      </button>
-                      <input
-                        type="number"
-                        min={0}
-                        max={item.quantity}
-                        value={qty}
-                        onChange={(e) => {
-                          const v = Math.min(item.quantity, Math.max(0, Number(e.target.value)))
-                          setEntregaModalQtys(prev => ({ ...prev, [item.sku]: v }))
-                        }}
-                        className="w-9 text-center text-sm font-semibold text-slate-900 bg-transparent border-b border-slate-300 outline-none focus:border-slate-600 tabular-nums"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setEntregaModalQtys(prev => ({ ...prev, [item.sku]: item.quantity }))}
-                        disabled={qty >= item.quantity}
-                        className={`w-6 h-6 rounded border flex items-center justify-center transition-colors text-xs font-bold disabled:opacity-30 ${isFullyDelivered ? "border-emerald-300 text-emerald-600" : "border-slate-200 text-slate-500 hover:bg-slate-100"}`}
-                      >
-                        +
-                      </button>
-                    </div>
-
-                    {/* Total qty */}
-                    <div className="w-16 text-right">
-                      <span className="text-sm text-slate-400 tabular-nums">{item.quantity}</span>
-                      {isFullyDelivered && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 inline-block ml-1.5" />}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-
-            {/* Summary row */}
-            <div className="px-5 py-3 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
-              <span className="text-xs text-slate-500">
-                {Object.values(entregaModalQtys).reduce((s, v) => s + v, 0)}/{totalUnidades} unidades a registrar
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  const allFull = venta.items.every(item => (entregaModalQtys[item.sku] ?? 0) >= item.quantity)
-                  setEntregaModalQtys(prev => {
-                    const next = { ...prev }
-                    if (allFull) {
-                      venta.items.forEach(item => { next[item.sku] = 0 })
-                    } else {
-                      venta.items.forEach(item => { next[item.sku] = item.quantity })
-                    }
-                    return next
-                  })
-                }}
-                className="text-xs text-slate-500 hover:text-slate-800 transition-colors underline underline-offset-2"
-              >
-                {venta.items.every(item => (entregaModalQtys[item.sku] ?? 0) >= item.quantity) ? "Desmarcar todos" : "Marcar todos"}
-              </button>
-            </div>
-
-            {/* Footer */}
-            <div className="px-5 py-4 border-t border-slate-200 flex gap-2">
-              <button
-                type="button"
-                onClick={() => setShowRegistrarEntrega(false)}
-                className="flex-1 py-2.5 text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors font-medium"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleRegistrarEntrega}
-                className="flex-1 py-2.5 text-sm text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors font-medium"
-              >
-                Registrar entrega
-              </button>
-            </div>
-          </div>
-        </div>
       )}
 
       {/* ── Agregar Productos Modal ── */}
@@ -1378,9 +1163,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
               </button>
               <button
                 type="button"
-                onClick={handleRegistrarCobro}
-                disabled={!cobroMonto || Number(cobroMonto) <= 0}
-                className="flex-1 py-2.5 text-sm text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+                onClick={() => setShowRegistrarCobro(false)}
+                className="flex-1 py-2.5 text-sm text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors font-medium"
               >
                 Registrar
               </button>
