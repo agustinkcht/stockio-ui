@@ -970,18 +970,24 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
                         {/* Entregar input */}
                         <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-baseline gap-1.5">
+                          {isSelected && (
                             <input
                               type="number"
                               min={0}
                               max={remaining}
                               value={qtyValue}
                               placeholder={String(remaining)}
-                              onChange={(e) => setEntregaQuantities(prev => ({ ...prev, [item.sku]: e.target.value }))}
+                              onChange={(e) => {
+                                const raw = e.target.value
+                                if (raw === "") { setEntregaQuantities(prev => ({ ...prev, [item.sku]: "" })); return }
+                                const num = parseInt(raw, 10)
+                                if (isNaN(num) || num < 0) { setEntregaQuantities(prev => ({ ...prev, [item.sku]: "0" })); return }
+                                if (num > remaining) { setEntregaQuantities(prev => ({ ...prev, [item.sku]: String(remaining) })); return }
+                                setEntregaQuantities(prev => ({ ...prev, [item.sku]: String(num) }))
+                              }}
                               className="w-14 text-center text-sm tabular-nums bg-slate-50 border border-slate-200 rounded-md px-2 py-1.5 focus:outline-none focus:border-slate-400 transition-colors"
                             />
-                            <span className="text-xs text-slate-400">de {remaining}</span>
-                          </div>
+                          )}
                         </div>
                       </div>
                     )
