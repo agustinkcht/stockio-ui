@@ -91,7 +91,6 @@ export function useVentas() {
       )
       setVentas(updatedVentas)
       saveVentas(updatedVentas)
-      console.log(`[v0] useVentas - Updated venta: ${ventaId}`)
     },
     [ventas, saveVentas],
   )
