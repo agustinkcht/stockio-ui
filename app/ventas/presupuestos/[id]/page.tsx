@@ -801,11 +801,13 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
     if (!presupuesto || presupuesto.items.length === 0) return
     
     const now = new Date()
+    const isConsumidorFinal = !presupuesto.clienteId || presupuesto.clienteNombre === "Consumidor Final"
     const newVenta = addVenta({
       fecha: now.toISOString().split("T")[0],
       hora: now.toTimeString().split(" ")[0].substring(0, 5),
-      clienteId: presupuesto.clienteId,
-      clienteNombre: presupuesto.clienteNombre,
+      cliente: isConsumidorFinal
+        ? { tipo: "consumidor_final" }
+        : { tipo: "cuenta", id: presupuesto.clienteId, nombre: presupuesto.clienteNombre },
       items: presupuesto.items.map(item => ({
         sku: item.sku,
         name: item.name,
@@ -820,9 +822,9 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
       descuento: showGlobalDiscount ? globalDiscount.value : 0,
       descuentoTipo: showGlobalDiscount ? (globalDiscount.type === "cash" ? "fixed" : "percent") : "percent",
       total: finalTotal,
-      metodoPago: "efectivo",
-      estado: "completada",
-      vendedor: "—",
+      entregaItems: [],
+      cobros: [],
+      estado: "en_curso",
     })
     
     updatePresupuesto(presupuesto.id, { estado: "aceptado", ventaId: newVenta.id })

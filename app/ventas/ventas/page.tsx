@@ -17,30 +17,22 @@ import {
   LayoutGrid,
   CheckCircle2,
   Clock,
-  XCircle,
   Receipt,
   ReceiptText,
   Search,
   Plus,
 } from "lucide-react"
 import { VENTAS } from "@/lib/data/ventas"
-import type { Venta, VentaItem, PaymentMethod } from "@/lib/types"
+import type { Venta, VentaItem } from "@/lib/types"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import { VentaItemDetailModal } from "@/components/ventas/venta-item-detail-modal"
 import { ClienteModal } from "@/components/ventas/cliente-modal"
 import { TicketModal } from "@/components/ventas/ticket-modal"
 
-const estadoLabels: Record<Venta["estado"], string> = {
-  completada: "Completada",
-  pendiente: "Pendiente",
-  cancelada: "Cancelada",
-}
-
-const estadoColors: Record<Venta["estado"], { bg: string; text: string; icon: typeof Clock }> = {
-  completada: { bg: "bg-emerald-50", text: "text-emerald-600", icon: CheckCircle2 },
-  pendiente: { bg: "bg-slate-100", text: "text-slate-600", icon: Clock },
-  cancelada: { bg: "bg-red-50", text: "text-red-600", icon: XCircle },
+const estadoConfig: Record<Venta["estado"], { bg: string; text: string; icon: typeof Clock; label: string }> = {
+  en_curso:   { bg: "bg-amber-50",   text: "text-amber-600",   icon: Clock,         label: "En Curso"   },
+  finalizada: { bg: "bg-emerald-50", text: "text-emerald-600", icon: CheckCircle2,  label: "Finalizada" },
 }
 
 const monthsAbbr = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
@@ -49,23 +41,27 @@ function formatVentaDateTime(dateStr: string, hora: string): string {
   const date = new Date(dateStr)
   const day = date.getDate()
   const month = monthsAbbr[date.getMonth()]
-  // Extra spacing between parts
   return `${day}\u00A0\u00A0${month}\u00A0\u00A0${hora}`
 }
 
-function getOrigen(metodoPago: PaymentMethod): string {
-  return metodoPago === "posnet" ? "Punto de Venta" : "Manual"
+function getClienteNombre(venta: Venta): string {
+  return venta.cliente.tipo === "cuenta" ? venta.cliente.nombre : "Consumidor Final"
 }
 
-function getPagoPercent(estado: Venta["estado"]): number {
-  if (estado === "completada") return 100
-  if (estado === "pendiente") return 50
-  return 0
+function getPagoPct(venta: Venta): number {
+  if (!venta.cobros.length) return 0
+  const cobrado = venta.cobros.reduce((sum, c) => sum + c.monto, 0)
+  return Math.round((cobrado / venta.total) * 100)
 }
 
-function getEntregaPercent(estado: Venta["estado"]): number {
-  if (estado === "completada") return 100
-  return 0
+function getEntregaPct(venta: Venta): number {
+  const totalUnidades = venta.items.reduce((sum, i) => sum + i.quantity, 0)
+  if (!totalUnidades) return 0
+  const entregadas = venta.items.reduce((sum, item) => {
+    const e = venta.entregaItems.find(ei => ei.sku === item.sku)
+    return sum + (e?.quantityEntregada ?? 0)
+  }, 0)
+  return Math.round((entregadas / totalUnidades) * 100)
 }
 
 export default function VentasPage() {
@@ -229,14 +225,14 @@ export default function VentasPage() {
               {/* Floating Rows */}
               <div className="flex flex-col gap-2">
                 {VENTAS.map((venta) => {
-                  const estadoStyle = estadoColors[venta.estado]
+                  const estadoStyle = estadoConfig[venta.estado]
                   const EstadoIcon = estadoStyle.icon
                   const isSelected = selectedVentas.has(venta.id)
                   const isFacturada = !!venta.facturaEmitida
                   const isMulti = venta.items.length > 1
                   const firstItem: VentaItem | undefined = venta.items[0]
-                  const pagoPct = getPagoPercent(venta.estado)
-                  const entregaPct = getEntregaPercent(venta.estado)
+                  const pagoPct = getPagoPct(venta)
+                  const entregaPct = getEntregaPct(venta)
 
                   return (
                     <div
@@ -280,9 +276,7 @@ export default function VentasPage() {
 
                         {/* Origen */}
                         <div className="col-span-10 flex items-center justify-start px-3">
-                          <span className="text-sm font-medium text-slate-700 truncate">
-                            {getOrigen(venta.metodoPago)}
-                          </span>
+                          <span className="text-sm font-medium text-slate-700 truncate">Manual</span>
                         </div>
 
                         {/* Empty 38 (was 20) */}
@@ -294,11 +288,11 @@ export default function VentasPage() {
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation()
-                              setViewingClienteId(venta.clienteId)
+                              if (venta.cliente.tipo === "cuenta") setViewingClienteId(venta.cliente.id)
                             }}
                             className="text-sm font-semibold text-slate-800 truncate hover:text-blue-600 hover:underline transition-colors cursor-pointer text-left"
                           >
-                            {venta.clienteNombre}
+                            {getClienteNombre(venta)}
                           </button>
                         </div>
 
@@ -342,21 +336,21 @@ export default function VentasPage() {
                           <div className={`flex items-center gap-1.5 px-3 py-2 rounded-md ${estadoStyle.bg} w-full`}>
                             <EstadoIcon className={`w-3.5 h-3.5 ${estadoStyle.text} shrink-0`} />
                             <span className={`text-xs font-medium ${estadoStyle.text}`}>
-                              {estadoLabels[venta.estado]}
+                              {estadoStyle.label}
                             </span>
                           </div>
                         </div>
 
-                        {/* Pago % - only when en curso (pendiente) */}
+                        {/* Cobro % - only when en curso */}
                         <div className="col-span-10 flex items-center justify-start px-3">
-                          {venta.estado === "pendiente" && (
-                            <span className="text-xs font-semibold text-slate-700">Pago {pagoPct}%</span>
+                          {venta.estado === "en_curso" && (
+                            <span className="text-xs font-semibold text-slate-700">Cobro {pagoPct}%</span>
                           )}
                         </div>
 
-                        {/* Entrega % - only when en curso (pendiente) */}
+                        {/* Entrega % - only when en curso */}
                         <div className="col-span-10 flex items-center justify-start px-3">
-                          {venta.estado === "pendiente" && (
+                          {venta.estado === "en_curso" && (
                             <span className="text-xs font-semibold text-slate-700">Entrega {entregaPct}%</span>
                           )}
                         </div>

@@ -38,14 +38,10 @@ import { INITIAL_ITEMS } from "@/lib/data/initial-items"
 
 type VentaEstadoUI = "en_curso" | "finalizada"
 
-const metodoPagoLabels: Record<Venta["metodoPago"], string> = {
+const metodoPagoLabels: Record<PaymentMethod, string> = {
   efectivo: "Efectivo",
   posnet: "Posnet",
   transferencia: "Transferencia",
-}
-
-function getOrigen(metodoPago: PaymentMethod): string {
-  return metodoPago === "posnet" ? "Punto de Venta" : "Manual"
 }
 
 export default function VentaDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -128,6 +124,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
     )
   }
 
+  const clienteNombre = venta.cliente.tipo === "cuenta" ? venta.cliente.nombre : "Consumidor Final"
   const isFacturada = !!venta.facturaEmitida
   const fechaCreacion = new Date(venta.fecha).toLocaleDateString("es-AR", {
     day: "2-digit",
@@ -142,28 +139,26 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
     return sum + discount
   }, 0)
 
-  // Derived cobro & entrega percentages (deterministic from estado)
-  const pagoPct = venta.estado === "completada" ? 100 : venta.estado === "pendiente" ? 50 : 0
-  const entregaPct = venta.estado === "completada" ? 100 : 0
-  const estadoVenta = pagoPct === 100 && entregaPct === 100 ? "Completada" : "En Curso"
-  const estadoVentaStyle = estadoVenta === "Completada"
-    ? { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" }
-    : { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" }
-  const montoCobrado = Math.round(venta.total * pagoPct / 100)
-  const montoRestante = Math.round(venta.total - montoCobrado)
-  // Per-item delivered quantity (deterministic: completada = all, pendiente = half, cancelada = 0)
-  const itemEntregaMap = new Map(
-    venta.items.map((item, idx) => [
-      idx,
-      venta.estado === "completada"
-        ? item.quantity
-        : venta.estado === "pendiente"
-          ? Math.floor(item.quantity / 2)
-          : 0,
-    ])
-  )
+  // Derived cobro values from real cobros array
+  const montoCobrado = venta.cobros.reduce((sum, c) => sum + c.monto, 0)
+  const montoRestante = Math.max(0, venta.total - montoCobrado)
+  const pagoPct = venta.total > 0 ? Math.min(100, Math.round((montoCobrado / venta.total) * 100)) : 0
+
+  // Derived entrega values from real entregaItems array
   const totalUnidades = venta.items.reduce((s, it) => s + it.quantity, 0)
-  const entregadasUnidades = venta.items.reduce((s, it, idx) => s + (itemEntregaMap.get(idx) ?? 0), 0)
+  const entregadasUnidades = venta.items.reduce((s, item) => {
+    const e = venta.entregaItems.find(ei => ei.sku === item.sku)
+    return s + (e?.quantityEntregada ?? 0)
+  }, 0)
+  const entregaPct = totalUnidades > 0 ? Math.min(100, Math.round((entregadasUnidades / totalUnidades) * 100)) : 0
+
+  // Per-item entrega map for the grid display
+  const itemEntregaMap = new Map(
+    venta.items.map((item) => {
+      const e = venta.entregaItems.find(ei => ei.sku === item.sku)
+      return [item.sku, e?.quantityEntregada ?? 0]
+    })
+  )
 
   // ── Modal computed values ──
   const allModalItems = INITIAL_ITEMS
@@ -323,7 +318,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   const fechaObj = new Date(venta.fecha)
                   const mesCorto = fechaObj.toLocaleDateString("es-AR", { month: "short" }).replace(".", "")
                   const dia = fechaObj.toLocaleDateString("es-AR", { day: "2-digit" })
-                  const inicial = venta.clienteNombre.charAt(0).toUpperCase()
+                  const inicial = clienteNombre.charAt(0).toUpperCase()
                   return (
                     <div className="pt-8 px-4 pb-3 flex flex-col gap-3">
                       {/* Row 1: Venta ID + date + origen + actions */}
@@ -346,7 +341,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                           <div className="h-5 w-px bg-slate-300 shrink-0 mx-5" />
 
                           {/* Origen */}
-                          <span className="text-sm text-slate-400 shrink-0">{getOrigen(venta.metodoPago)}</span>
+                          <span className="text-sm text-slate-400 shrink-0">Manual</span>
                         </div>
                         {/* Actions */}
                         <div className="flex items-center gap-2 shrink-0">
@@ -397,11 +392,11 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                 {/* ── Cliente card ── */}
                 <div className="bg-slate-100 border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex items-center gap-3">
                   <div className="w-9 h-9 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
-                    <span className="text-sm font-semibold text-white">{venta.clienteNombre.charAt(0).toUpperCase()}</span>
+                    <span className="text-sm font-semibold text-white">{clienteNombre.charAt(0).toUpperCase()}</span>
                   </div>
                   <div className="min-w-0">
                     <span className="text-[10px] text-slate-400 uppercase tracking-wider block leading-none mb-0.5">Cliente</span>
-                    <span className="text-sm font-semibold text-slate-900 leading-tight">{venta.clienteNombre}</span>
+                    <span className="text-sm font-semibold text-slate-900 leading-tight">{clienteNombre}</span>
                   </div>
                 </div>
 
@@ -586,7 +581,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         ? baseGross * (item.discount / 100)
                         : item.discount * item.quantity
                     const adjustedUnitPrice = Math.max(0, item.unitPrice - (discountAmount / Math.max(item.quantity, 1)))
-                    const delivered = itemEntregaMap.get(idx) ?? 0
+                    const delivered = itemEntregaMap.get(item.sku) ?? 0
                     const itemPct = item.quantity === 0 ? 0 : Math.round((delivered / item.quantity) * 100)
 
                     return (
@@ -819,19 +814,21 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     <p className="text-sm font-semibold text-slate-800 mb-3">Detalle del Cobro</p>
 
                     {/* Entries */}
-                    {montoCobrado > 0 ? (
-                      <div className="flex items-center justify-between py-2.5 border-b border-slate-100">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-slate-400 tabular-nums">
-                            {new Date(venta.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}
+                    {venta.cobros.length > 0 ? (
+                      venta.cobros.map((cobro) => (
+                        <div key={cobro.id} className="flex items-center justify-between py-2.5 border-b border-slate-100">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-slate-400 tabular-nums">
+                              {new Date(cobro.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}
+                            </span>
+                            <span className="text-xs text-slate-300">·</span>
+                            <span className="text-xs text-slate-500">{metodoPagoLabels[cobro.medioPago]}</span>
+                          </div>
+                          <span className="text-sm font-semibold text-slate-900 tabular-nums">
+                            ${cobro.monto.toLocaleString("es-AR")}
                           </span>
-                          <span className="text-xs text-slate-300">·</span>
-                          <span className="text-xs text-slate-500">{metodoPagoLabels[venta.metodoPago]}</span>
                         </div>
-                        <span className="text-sm font-semibold text-slate-900 tabular-nums">
-                          ${montoCobrado.toLocaleString("es-AR")}
-                        </span>
-                      </div>
+                      ))
                     ) : (
                       <div className="flex items-center justify-center py-4">
                         <span className="text-xs text-slate-400">Sin cobros registrados</span>

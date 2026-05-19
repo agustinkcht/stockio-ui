@@ -122,15 +122,23 @@ function VentasContent() {
   const hasActiveFilters = activeFilters.metodoPago.length > 0
 
   const filteredVentas = useMemo(() => {
+    const getClienteNombreB = (venta: (typeof ventas)[0]) =>
+      venta.cliente.tipo === "cuenta" ? venta.cliente.nombre : "Consumidor Final"
+    const getFirstMedioPago = (venta: (typeof ventas)[0]) =>
+      venta.cobros.length > 0 ? venta.cobros[0].medioPago : null
+
     const result = ventas.filter((venta) => {
+      const clienteNombreB = getClienteNombreB(venta)
       const matchesSearch =
         searchQuery === "" ||
         venta.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        venta.clienteNombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        clienteNombreB.toLowerCase().includes(searchQuery.toLowerCase()) ||
         venta.items.some((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
 
+      const firstMedioPago = getFirstMedioPago(venta)
       const matchesPayment =
-        activeFilters.metodoPago.length === 0 || activeFilters.metodoPago.includes(venta.metodoPago)
+        activeFilters.metodoPago.length === 0 ||
+        (firstMedioPago !== null && activeFilters.metodoPago.includes(firstMedioPago))
 
       return matchesSearch && matchesPayment
     })
@@ -146,7 +154,7 @@ function VentasContent() {
           comparison = a.total - b.total
           break
         case "cliente":
-          comparison = a.clienteNombre.localeCompare(b.clienteNombre)
+          comparison = getClienteNombreB(a).localeCompare(getClienteNombreB(b))
           break
       }
 
@@ -406,7 +414,9 @@ function VentasContent() {
                       <div className="space-y-[2px]">
                         {sales.map((venta) => {
                           const isExpanded = expandedSales.has(venta.id)
-                          const PaymentIcon = paymentMethodIcons[venta.metodoPago]
+                          const firstMedioPago = venta.cobros.length > 0 ? venta.cobros[0].medioPago : null
+                          const PaymentIcon = firstMedioPago ? paymentMethodIcons[firstMedioPago] : null
+                          const clienteNombreB = venta.cliente.tipo === "cuenta" ? venta.cliente.nombre : "Consumidor Final"
 
                           return (
                             <div key={venta.id} className="bg-white rounded-sm overflow-hidden">
@@ -426,7 +436,7 @@ function VentasContent() {
 
                                   <div className="min-w-0">
                                     <div className="flex items-center gap-2">
-                                      <span className="font-medium text-sm truncate">{venta.clienteNombre}</span>
+                                      <span className="font-medium text-sm truncate">{clienteNombreB}</span>
                                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground flex-shrink-0">
                                         {venta.items.length} item{venta.items.length > 1 ? "s" : ""}
                                       </span>
@@ -452,12 +462,14 @@ function VentasContent() {
 
                                 {/* Payment part: col-span-3 */}
                                 <div className="col-span-3 flex items-center gap-3 justify-end mr-3.5">
-                                  <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-muted/50">
-                                    <PaymentIcon className="w-3.5 h-3.5 text-muted-foreground" />
-                                    <span className="text-xs text-muted-foreground">
-                                      {paymentMethodLabels[venta.metodoPago]}
-                                    </span>
-                                  </div>
+                                  {PaymentIcon && firstMedioPago && (
+                                    <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-muted/50">
+                                      <PaymentIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                                      <span className="text-xs text-muted-foreground">
+                                        {paymentMethodLabels[firstMedioPago]}
+                                      </span>
+                                    </div>
+                                  )}
                                 </div>
 
                                 {/* Comprobantes section: col-span-8 */}

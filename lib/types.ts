@@ -193,20 +193,44 @@ export interface VentaItem {
   categoria?: string
 }
 
+// Tracks how many units of a given item have been delivered
+export interface VentaEntregaItem {
+  sku: string
+  quantityEntregada: number
+}
+
+// A single payment entry against the venta
+export interface VentaCobro {
+  id: string
+  fecha: string        // "YYYY-MM-DD"
+  hora: string         // "HH:mm"
+  medioPago: PaymentMethod
+  monto: number
+}
+
+// Cliente can be an anonymous consumer or a registered account
+export type VentaCliente =
+  | { tipo: "consumidor_final" }
+  | { tipo: "cuenta"; id: string; nombre: string }
+
+export type VentaEstado = "en_curso" | "finalizada"
+
 export interface Venta {
   id: string
-  fecha: string
-  hora: string
-  clienteId: string
-  clienteNombre: string
+  fecha: string        // "YYYY-MM-DD"
+  hora: string         // "HH:mm"
+  cliente: VentaCliente
   items: VentaItem[]
   subtotal: number
   descuento: number
   descuentoTipo: "percent" | "fixed"
   total: number
-  metodoPago: PaymentMethod
-  estado: "completada" | "pendiente" | "cancelada"
-  vendedor: string
+  // Entrega: tracks delivered units per item. Missing sku = 0 delivered.
+  entregaItems: VentaEntregaItem[]
+  // Cobros: list of payment entries. Sum may be <= total.
+  cobros: VentaCobro[]
+  // Estado is derived: "finalizada" when cobros sum = total AND all items fully delivered
+  estado: VentaEstado
   observaciones?: string
   facturaEmitida?: boolean
 }

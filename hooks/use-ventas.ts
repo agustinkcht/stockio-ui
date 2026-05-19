@@ -5,6 +5,9 @@ import type { Venta } from "@/lib/types"
 import { VENTAS } from "@/lib/data/ventas"
 import { useAccount } from "@/lib/contexts/account-context"
 
+// Bump this when the Venta type or seed data changes to force re-seeding
+const VENTAS_SEED_VERSION = "v2"
+
 export function useVentas() {
   const [ventas, setVentas] = useState<Venta[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -23,15 +26,16 @@ export function useVentas() {
 
     try {
       const storageKey = getStorageKey()
+      const versionKey = `${storageKey}_version`
+      const storedVersion = localStorage.getItem(versionKey)
       const storedVentas = localStorage.getItem(storageKey)
 
-      if (storedVentas) {
-        const parsedVentas = JSON.parse(storedVentas)
-        console.log(`[v0] useVentas - Loaded ${parsedVentas.length} ventas from localStorage`)
-        setVentas(parsedVentas)
+      if (storedVentas && storedVersion === VENTAS_SEED_VERSION) {
+        setVentas(JSON.parse(storedVentas))
       } else {
-        console.log(`[v0] useVentas - Loading ${VENTAS.length} initial ventas`)
+        // Re-seed: type changed or first load
         localStorage.setItem(storageKey, JSON.stringify(VENTAS))
+        localStorage.setItem(versionKey, VENTAS_SEED_VERSION)
         setVentas(VENTAS)
       }
     } catch (error) {
@@ -48,7 +52,7 @@ export function useVentas() {
 
       const storageKey = getStorageKey()
       localStorage.setItem(storageKey, JSON.stringify(newVentas))
-      console.log(`[v0] useVentas - Saved ${newVentas.length} ventas to localStorage`)
+      localStorage.setItem(`${storageKey}_version`, VENTAS_SEED_VERSION)
     },
     [currentAccount, getStorageKey],
   )
