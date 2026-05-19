@@ -165,23 +165,27 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
     return sum + discount
   }, 0)
 
-  // Derived cobro values from real cobros array
-  const montoCobrado = venta.cobros.reduce((sum, c) => sum + c.monto, 0)
+  // Safe arrays — guard against stale localStorage records that may predate these fields
+  const safeCobros = Array.isArray(venta.cobros) ? venta.cobros : []
+  const safeEntregaItems = Array.isArray(venta.entregaItems) ? venta.entregaItems : []
+
+  // Derived cobro values
+  const montoCobrado = safeCobros.reduce((sum, c) => sum + c.monto, 0)
   const montoRestante = Math.max(0, venta.total - montoCobrado)
   const pagoPct = venta.total > 0 ? Math.min(100, Math.round((montoCobrado / venta.total) * 100)) : 0
 
-  // Derived entrega values from real entregaItems array
+  // Derived entrega values
   const totalUnidades = venta.items.reduce((s, it) => s + it.quantity, 0)
   const entregadasUnidades = venta.items.reduce((s, item) => {
-    const e = venta.entregaItems.find(ei => ei.sku === item.sku)
+    const e = safeEntregaItems.find(ei => ei.sku === item.sku)
     return s + (e?.quantityEntregada ?? 0)
   }, 0)
   const entregaPct = totalUnidades > 0 ? Math.min(100, Math.round((entregadasUnidades / totalUnidades) * 100)) : 0
 
-  // Per-item entrega map for the grid display
+  // Per-item entrega map for the items grid
   const itemEntregaMap = new Map(
     venta.items.map((item) => {
-      const e = venta.entregaItems.find(ei => ei.sku === item.sku)
+      const e = safeEntregaItems.find(ei => ei.sku === item.sku)
       return [item.sku, e?.quantityEntregada ?? 0]
     })
   )
@@ -301,7 +305,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
       medioPago: cobroMedio,
       monto: Number(cobroMonto),
     }
-    const updatedCobros = [...venta.cobros, newCobro]
+    const updatedCobros = [...safeCobros, newCobro]
     const newMontoCobrado = updatedCobros.reduce((sum, c) => sum + c.monto, 0)
     const newEstado: VentaEstadoUI =
       newMontoCobrado >= venta.total && entregaPct === 100 ? "finalizada" : "en_curso"
@@ -319,7 +323,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
     if (!venta) return
     const init: Record<string, number> = {}
     venta.items.forEach(item => {
-      const existing = venta.entregaItems.find(ei => ei.sku === item.sku)
+      const existing = safeEntregaItems.find(ei => ei.sku === item.sku)
       init[item.sku] = existing?.quantityEntregada ?? 0
     })
     setEntregaModalQtys(init)
@@ -891,8 +895,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     <p className="text-sm font-semibold text-slate-800 mb-3">Detalle del Cobro</p>
 
                     {/* Entries */}
-                    {venta.cobros.length > 0 ? (
-                      venta.cobros.map((cobro) => (
+                    {safeCobros.length > 0 ? (
+                      safeCobros.map((cobro) => (
                         <div key={cobro.id} className="flex items-center justify-between py-2.5 border-b border-slate-100">
                           <div className="flex items-center gap-2">
                             <span className="text-xs text-slate-400 tabular-nums">
