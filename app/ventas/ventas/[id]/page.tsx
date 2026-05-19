@@ -11,6 +11,7 @@ import {
   FileDown,
   ReceiptText,
   ChevronLeft,
+  ChevronDown,
   MoreVertical,
   Package,
   Clock,
@@ -19,25 +20,18 @@ import {
   Truck,
   Wallet,
   ScanLine,
+  Plus,
+  Search,
 } from "lucide-react"
 import Image from "next/image"
 import { VENTAS } from "@/lib/data/ventas"
-import type { Venta, VentaItem, PaymentMethod } from "@/lib/types"
+import type { Venta, VentaItem, PaymentMethod, Item, ItemVariant } from "@/lib/types"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import { VentaItemDetailModal } from "@/components/ventas/venta-item-detail-modal"
+import { INITIAL_ITEMS } from "@/lib/data/initial-items"
 
-const estadoLabels: Record<Venta["estado"], string> = {
-  completada: "Completada",
-  pendiente: "Pendiente",
-  cancelada: "Cancelada",
-}
-
-const estadoColors: Record<Venta["estado"], { bg: string; text: string; icon: typeof Clock }> = {
-  completada: { bg: "bg-emerald-50", text: "text-emerald-600", icon: CheckCircle2 },
-  pendiente: { bg: "bg-slate-100", text: "text-slate-600", icon: Clock },
-  cancelada: { bg: "bg-red-50", text: "text-red-600", icon: XCircle },
-}
+type VentaEstadoUI = "en_curso" | "finalizada"
 
 const metodoPagoLabels: Record<Venta["metodoPago"], string> = {
   efectivo: "Efectivo",
@@ -61,6 +55,18 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const [viewingItem, setViewingItem] = useState<VentaItem | null>(null)
   const [entregaMode, setEntregaMode] = useState(false)
   const [showClientePanel, setShowClientePanel] = useState(false)
+  const [estadoUI, setEstadoUI] = useState<VentaEstadoUI>("en_curso")
+  const [showEstadoDropdown, setShowEstadoDropdown] = useState(false)
+  const [showSubtotalBreakdown, setShowSubtotalBreakdown] = useState(false)
+  const [showAgregarProductos, setShowAgregarProductos] = useState(false)
+  const [showRegistrarCobro, setShowRegistrarCobro] = useState(false)
+  const [productSearch, setProductSearch] = useState("")
+  const [cobroFecha, setCobroFecha] = useState(() => new Date().toISOString().slice(0, 10))
+  const [cobroHora, setCobroHora] = useState(() => new Date().toTimeString().slice(0, 5))
+  const [cobroMedio, setCobroMedio] = useState<"efectivo" | "posnet" | "transferencia">("efectivo")
+  const [cobroMonto, setCobroMonto] = useState("")
+
+  const estadoDropdownRef = useRef<HTMLDivElement>(null)
 
   const exportDropdownRef = useRef<HTMLDivElement>(null)
   const moreMenuRef = useRef<HTMLDivElement>(null)
@@ -73,8 +79,11 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
       if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
         setShowMoreOptionsMenu(false)
       }
+      if (estadoDropdownRef.current && !estadoDropdownRef.current.contains(event.target as Node)) {
+        setShowEstadoDropdown(false)
+      }
     }
-    if (showExportDropdown || showMoreOptionsMenu) {
+    if (showExportDropdown || showMoreOptionsMenu || showEstadoDropdown) {
       document.addEventListener("mousedown", handleClickOutside)
     }
     return () => document.removeEventListener("mousedown", handleClickOutside)
@@ -108,10 +117,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
       </div>
     )
   }
-
-  const estadoStyle = estadoColors[venta.estado]
-  const EstadoIcon = estadoStyle.icon
-
 
   const isFacturada = !!venta.facturaEmitida
   const fechaCreacion = new Date(venta.fecha).toLocaleDateString("es-AR", {
@@ -285,102 +290,71 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   </div>
                 </div>
 
-                {/* ── Estado milestones card ── */}
-                {(() => {
-                  const steps = [
-                    { label: "Borrador", key: "borrador" },
-                    { label: "En Curso", key: "en_curso" },
-                    { label: "Finalizada", key: "finalizada" },
-                  ]
-                  const activeIndex = (pagoPct === 100 && entregaPct === 100) ? 2
-                    : (pagoPct > 0 || entregaPct > 0) ? 1 : 0
-
-                  return (
-                    <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-5 pt-3 pb-4">
-                      <span className="text-[10px] text-slate-400 uppercase tracking-wider block mb-3">Estado de la Venta</span>
-                      <div className="flex items-center">
-                        {steps.map((s, i) => {
-                          const isDone = i < activeIndex
-                          const isActive = i === activeIndex
-                          const isFuture = i > activeIndex
-                          const isLast = i === steps.length - 1
-                          return (
-                            <div key={s.key} className="flex items-center flex-1 min-w-0">
-                              <div className={`flex flex-col items-center gap-1.5 shrink-0 transition-all duration-300 ${isFuture ? "opacity-30" : ""}`}>
-                                <div className={`w-5 h-5 rounded-full flex items-center justify-center border-2 transition-all duration-300
-                                  ${isDone
-                                    ? "bg-slate-800 border-slate-800 shadow-[0_0_0_3px_rgba(15,23,42,0.08)]"
-                                    : isActive
-                                      ? "bg-white border-slate-800 shadow-[0_0_0_3px_rgba(15,23,42,0.1)]"
-                                      : "bg-white border-slate-200"}`}
-                                >
-                                  {isDone && (
-                                    <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 10 10">
-                                      <path d="M1.5 5L4 7.5L8.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                    </svg>
-                                  )}
-                                  {isActive && <div className="w-2 h-2 rounded-full bg-slate-800" />}
-                                </div>
-                                <span className={`text-[11px] whitespace-nowrap transition-all duration-300
-                                  ${isDone ? "font-medium text-slate-400"
-                                    : isActive ? "font-semibold text-slate-900"
-                                    : "font-medium text-slate-400"}`}>
-                                  {s.label}
-                                </span>
-                              </div>
-                              {!isLast && (
-                                <div className={`flex-1 h-px mx-3 mb-[18px] transition-all duration-500 ${isDone ? "bg-slate-800" : "bg-slate-200"}`} />
-                              )}
-                            </div>
-                          )
-                        })}
+                {/* ── Estado card ── */}
+                <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-5 py-4">
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider block mb-3">Estado de la Venta</span>
+                  <div className="relative" ref={estadoDropdownRef}>
+                    <button
+                      type="button"
+                      onClick={() => setShowEstadoDropdown(!showEstadoDropdown)}
+                      className={`flex items-center justify-between gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors w-1/3 ${
+                        estadoUI === "finalizada"
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
+                          : "bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        {estadoUI === "finalizada"
+                          ? <CheckCircle2 className="w-4 h-4" />
+                          : <Clock className="w-4 h-4" />}
+                        {estadoUI === "finalizada" ? "Finalizada" : "En Curso"}
                       </div>
-                    </div>
-                  )
-                })()}
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showEstadoDropdown ? "rotate-180" : ""}`} />
+                    </button>
+                    {showEstadoDropdown && (
+                      <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[160px]">
+                        <button
+                          onClick={() => { setEstadoUI("en_curso"); setShowEstadoDropdown(false) }}
+                          className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-slate-50 transition-colors ${estadoUI === "en_curso" ? "font-semibold text-amber-700" : "text-slate-700"}`}
+                        >
+                          <Clock className="w-4 h-4 text-amber-500" /> En Curso
+                        </button>
+                        <button
+                          onClick={() => { setEstadoUI("finalizada"); setShowEstadoDropdown(false) }}
+                          className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-slate-50 transition-colors ${estadoUI === "finalizada" ? "font-semibold text-emerald-700" : "text-slate-700"}`}
+                        >
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Finalizada
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
 
                 {/* Entrega + Items card */}
               <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm overflow-hidden">
 
-                {/* ── Title strip ── */}
-                <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-                  {/* Left: products + units */}
-                  <div className="flex items-center gap-3">
-                    <Package className="w-4 h-4 text-slate-400 shrink-0" />
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm font-semibold text-slate-800">
-                        {venta.items.length} {venta.items.length === 1 ? "producto" : "productos"}
-                      </span>
-                      <span className="text-slate-300">·</span>
-                      <span className="text-sm text-slate-500 tabular-nums">
-                        {totalUnidades} {totalUnidades === 1 ? "unidad" : "unidades"}
-                      </span>
-                    </div>
-                  </div>
-                  {/* Right: entrega info + toggle button */}
-                  <div className="flex items-center gap-3">
-                    <Truck className={`w-4 h-4 shrink-0 ${entregaPct === 100 ? "text-emerald-500" : entregaPct > 0 ? "text-amber-500" : "text-slate-400"}`} />
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="text-sm font-semibold text-slate-800">Entrega</span>
-                      <span className={`text-xs font-semibold tabular-nums ${entregaPct === 100 ? "text-emerald-600" : entregaPct > 0 ? "text-amber-600" : "text-slate-400"}`}>
-                        {entregaPct}%
-                      </span>
-                      <span className="text-xs text-slate-400 tabular-nums">{entregadasUnidades}/{totalUnidades}</span>
-                    </div>
-                    <div className="h-4 w-px bg-slate-200 shrink-0" />
-                    <button
-                      type="button"
-                      onClick={() => setEntregaMode(!entregaMode)}
-                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
-                        entregaMode
-                          ? "bg-slate-900 text-white"
-                          : "bg-slate-100 text-slate-500 hover:bg-slate-200"
-                      }`}
-                    >
-                      <ScanLine className="w-3.5 h-3.5" />
-                      {entregaMode ? "Ver detalle" : "Ver entrega"}
-                    </button>
-                  </div>
+                {/* ── Title strip — toggle buttons ── */}
+                <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEntregaMode(false)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                      !entregaMode ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                    }`}
+                  >
+                    <Package className="w-3.5 h-3.5" />
+                    {venta.items.length} {venta.items.length === 1 ? "producto" : "productos"} · {totalUnidades} {totalUnidades === 1 ? "unidad" : "unidades"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEntregaMode(true)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                      entregaMode ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                    }`}
+                  >
+                    <Truck className="w-3.5 h-3.5" />
+                    Entrega {entregaPct}% · {entregadasUnidades}/{totalUnidades}
+                  </button>
                 </div>
 
                 {/* ── Grid (padded inside card) ── */}
@@ -521,6 +495,16 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     )
                   })
                 )}
+              {estadoUI === "en_curso" && (
+                <button
+                  type="button"
+                  onClick={() => setShowAgregarProductos(true)}
+                  className="w-full flex items-center gap-2 px-4 py-3 text-sm text-slate-500 hover:bg-slate-50 transition-colors border-t border-slate-100"
+                >
+                  <Plus className="w-4 h-4 text-slate-400" />
+                  Agregar productos
+                </button>
+              )}
               </div>{/* end rounded inner grid */}
               </div>{/* end p-3 padding wrapper */}
               </div>{/* end entrega+items card */}
@@ -546,10 +530,47 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     {/* ��─ Resumen section ── */}
                     <p className="text-sm font-semibold text-slate-800 mb-4">Resumen</p>
 
-                    <div className="flex justify-between items-center py-2.5 border-b border-slate-100">
+                    {/* Subtotal — expandable */}
+                    <button
+                      type="button"
+                      onClick={() => setShowSubtotalBreakdown(!showSubtotalBreakdown)}
+                      className="w-full flex justify-between items-center py-2.5 border-b border-slate-100 group text-left hover:bg-slate-50/50 -mx-5 px-5 transition-colors"
+                    >
                       <span className="text-sm text-slate-500">Subtotal</span>
-                      <span className="text-sm text-slate-700 tabular-nums">${Math.round(venta.subtotal).toLocaleString("es-AR")}</span>
-                    </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-slate-700 tabular-nums">${Math.round(venta.subtotal).toLocaleString("es-AR")}</span>
+                        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${showSubtotalBreakdown ? "rotate-180" : ""}`} />
+                      </div>
+                    </button>
+                    {showSubtotalBreakdown && (
+                      <div className="border-b border-slate-100">
+                        {venta.items.map((item, idx) => {
+                          const display = getVentaItemDisplay(item)
+                          const adjustedUnit = item.discountType === "percent"
+                            ? item.unitPrice * (1 - item.discount / 100)
+                            : item.unitPrice - (item.discount / Math.max(item.quantity, 1))
+                          const lineTotal = Math.round(adjustedUnit * item.quantity)
+                          return (
+                            <div key={idx} className="flex justify-between items-start gap-3 py-2.5 -mx-5 px-5 border-b border-slate-50 last:border-0">
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs text-slate-700 leading-tight">{display.name}</p>
+                                {display.tags.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-0.5">
+                                    {display.tags.map((tag, i) => (
+                                      <span key={i} className="text-[10px] text-slate-400">{tag}</span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="text-right shrink-0">
+                                <p className="text-[11px] text-slate-400 tabular-nums">{item.quantity} × ${Math.round(adjustedUnit).toLocaleString("es-AR")}</p>
+                                <p className="text-xs font-medium text-slate-700 tabular-nums">${lineTotal.toLocaleString("es-AR")}</p>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
 
                     {itemDiscountAmount > 0 && (
                       <div className="flex justify-between items-center py-2.5 border-b border-slate-100">
@@ -608,7 +629,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
                     {/* Transactions */}
                     {montoCobrado > 0 ? (
-                      <div className="flex items-center justify-between py-2.5">
+                      <div className="flex items-center justify-between py-2.5 border-b border-slate-100">
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-slate-400 tabular-nums">
                             {new Date(venta.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}
@@ -621,9 +642,20 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         </span>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-center py-6">
+                      <div className="flex items-center justify-center py-4 border-b border-slate-100">
                         <span className="text-xs text-slate-400">Sin cobros registrados</span>
                       </div>
+                    )}
+
+                    {estadoUI === "en_curso" && (
+                      <button
+                        type="button"
+                        onClick={() => setShowRegistrarCobro(true)}
+                        className="w-full flex items-center gap-2 py-2.5 -mx-5 px-5 text-sm text-slate-500 hover:bg-slate-50 transition-colors"
+                      >
+                        <Plus className="w-3.5 h-3.5 text-slate-400" />
+                        Registrar cobro
+                      </button>
                     )}
 
                   </div>
@@ -638,6 +670,166 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
       {viewingItem && (
         <VentaItemDetailModal ventaItem={viewingItem} onClose={() => setViewingItem(null)} />
+      )}
+
+      {/* ── Agregar Productos Modal ── */}
+      {showAgregarProductos && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowAgregarProductos(false)} />
+          <div className="relative bg-white rounded-xl shadow-2xl w-[560px] max-h-[70vh] flex flex-col overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <h2 className="text-sm font-semibold text-slate-900">Agregar productos</h2>
+              <button onClick={() => setShowAgregarProductos(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                <XCircle className="w-4 h-4" />
+              </button>
+            </div>
+            {/* Search */}
+            <div className="px-5 py-3 border-b border-slate-100">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                <input
+                  autoFocus
+                  value={productSearch}
+                  onChange={(e) => setProductSearch(e.target.value)}
+                  placeholder="Buscar producto..."
+                  className="w-full pl-8 pr-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-md outline-none focus:border-slate-400 transition-colors"
+                />
+              </div>
+            </div>
+            {/* Product list */}
+            <div className="flex-1 overflow-y-auto">
+              {INITIAL_ITEMS.filter(item => {
+                if (!productSearch.trim()) return true
+                const q = productSearch.toLowerCase()
+                return item.name?.toLowerCase().includes(q) || item.marca?.toLowerCase().includes(q) || item.categoria?.toLowerCase().includes(q)
+              }).map((item, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  className="w-full flex items-center gap-3 px-5 py-3 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 text-left"
+                  onClick={() => setShowAgregarProductos(false)}
+                >
+                  <div className="w-9 h-9 rounded-md bg-slate-100 flex items-center justify-center overflow-hidden shrink-0">
+                    <Image src={getCategoryImage(item.categoria || "") || "/placeholder.svg"} alt={item.name} width={36} height={36} className="object-cover" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-slate-800 leading-tight">{item.name}</p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      {item.marca && <span className="text-xs text-slate-400">{item.marca}</span>}
+                      {item.marca && item.categoria && <span className="text-xs text-slate-300">·</span>}
+                      {item.categoria && <span className="text-xs text-slate-400">{item.categoria}</span>}
+                    </div>
+                  </div>
+                  {item.precio?.precioFinal && (
+                    <span className="text-sm font-semibold text-slate-900 tabular-nums shrink-0">${item.precio.precioFinal.toLocaleString("es-AR")}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Registrar Cobro Modal ── */}
+      {showRegistrarCobro && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowRegistrarCobro(false)} />
+          <div className="relative bg-white rounded-xl shadow-2xl w-[420px] flex flex-col overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <h2 className="text-sm font-semibold text-slate-900">Registrar cobro</h2>
+              <button onClick={() => setShowRegistrarCobro(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                <XCircle className="w-4 h-4" />
+              </button>
+            </div>
+            {/* Body */}
+            <div className="px-5 py-5 flex flex-col gap-4">
+              {/* Fecha + Hora */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider">Fecha</label>
+                  <input
+                    type="date"
+                    value={cobroFecha}
+                    onChange={(e) => setCobroFecha(e.target.value)}
+                    className="px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-md outline-none focus:border-slate-400 transition-colors"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider">Hora</label>
+                  <input
+                    type="time"
+                    value={cobroHora}
+                    onChange={(e) => setCobroHora(e.target.value)}
+                    className="px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-md outline-none focus:border-slate-400 transition-colors"
+                  />
+                </div>
+              </div>
+              {/* Medio de pago */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider">Medio de pago</label>
+                <div className="flex gap-2">
+                  {(["efectivo", "posnet", "transferencia"] as const).map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setCobroMedio(m)}
+                      className={`flex-1 py-2 text-xs font-medium rounded-md border transition-colors capitalize ${
+                        cobroMedio === m
+                          ? "bg-slate-900 text-white border-slate-900"
+                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                      }`}
+                    >
+                      {m.charAt(0).toUpperCase() + m.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {/* Monto */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider">Monto</label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">$</span>
+                    <input
+                      type="number"
+                      value={cobroMonto}
+                      onChange={(e) => setCobroMonto(e.target.value)}
+                      placeholder="0"
+                      className="w-full pl-7 pr-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-md outline-none focus:border-slate-400 transition-colors"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCobroMonto(String(montoRestante))}
+                    className="px-3 py-2 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors border border-slate-200 shrink-0"
+                  >
+                    Total
+                  </button>
+                </div>
+                <p className="text-[11px] text-slate-400 tabular-nums">Restante: ${montoRestante.toLocaleString("es-AR")}</p>
+              </div>
+            </div>
+            {/* Footer */}
+            <div className="px-5 pb-5 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowRegistrarCobro(false)}
+                className="flex-1 py-2.5 text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors font-medium"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowRegistrarCobro(false)}
+                className="flex-1 py-2.5 text-sm text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors font-medium"
+              >
+                Registrar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
