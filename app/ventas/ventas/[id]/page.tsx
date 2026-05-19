@@ -408,41 +408,133 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                 {/* ── Estado card ── */}
                 <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-5 py-4">
                   <span className="text-[10px] text-slate-400 uppercase tracking-wider block mb-3">Estado de la Venta</span>
-                  <div className="relative" ref={estadoDropdownRef}>
-                    <button
-                      type="button"
-                      onClick={() => setShowEstadoDropdown(!showEstadoDropdown)}
-                      className={`flex items-center justify-between gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors w-1/3 ${
-                        estadoUI === "finalizada"
-                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
-                          : "bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        {estadoUI === "finalizada"
-                          ? <CheckCircle2 className="w-4 h-4" />
-                          : <Clock className="w-4 h-4" />}
-                        {estadoUI === "finalizada" ? "Finalizada" : "En Curso"}
+
+                  {estadoUI === "en_curso" ? (
+                    /* 3-col grid: estado | entrega | cobro */
+                    <div className="grid grid-cols-3 gap-0 divide-x divide-slate-100">
+
+                      {/* Col 1 — Estado selector */}
+                      <div className="pr-5 flex flex-col justify-center">
+                        <div className="relative" ref={estadoDropdownRef}>
+                          <button
+                            type="button"
+                            onClick={() => setShowEstadoDropdown(!showEstadoDropdown)}
+                            className="flex items-center justify-between gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors w-full bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100"
+                          >
+                            <div className="flex items-center gap-2">
+                              <Clock className="w-4 h-4" />
+                              En Curso
+                            </div>
+                            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showEstadoDropdown ? "rotate-180" : ""}`} />
+                          </button>
+                          {showEstadoDropdown && (
+                            <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[160px]">
+                              <button
+                                onClick={() => { setEstadoUI("en_curso"); setShowEstadoDropdown(false) }}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-slate-50 transition-colors font-semibold text-amber-700"
+                              >
+                                <Clock className="w-4 h-4 text-amber-500" /> En Curso
+                              </button>
+                              <button
+                                onClick={() => { setEstadoUI("finalizada"); setShowEstadoDropdown(false) }}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-slate-50 transition-colors text-slate-700"
+                              >
+                                <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Finalizada
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showEstadoDropdown ? "rotate-180" : ""}`} />
-                    </button>
-                    {showEstadoDropdown && (
-                      <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[160px]">
-                        <button
-                          onClick={() => { setEstadoUI("en_curso"); setShowEstadoDropdown(false) }}
-                          className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-slate-50 transition-colors ${estadoUI === "en_curso" ? "font-semibold text-amber-700" : "text-slate-700"}`}
-                        >
-                          <Clock className="w-4 h-4 text-amber-500" /> En Curso
-                        </button>
-                        <button
-                          onClick={() => { setEstadoUI("finalizada"); setShowEstadoDropdown(false) }}
-                          className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-slate-50 transition-colors ${estadoUI === "finalizada" ? "font-semibold text-emerald-700" : "text-slate-700"}`}
-                        >
-                          <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Finalizada
-                        </button>
+
+                      {/* Col 2 — Entrega */}
+                      <div className="px-5 flex flex-col gap-1">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Package className="w-4 h-4 text-slate-400" />
+                            {entregaPct === 100 ? (
+                              <span className="text-sm font-semibold text-emerald-600">Entregada</span>
+                            ) : (
+                              <span className="text-sm font-semibold text-slate-700">Entrega {entregaPct}%</span>
+                            )}
+                          </div>
+                          {entregaPct === 100 && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                        </div>
+                        {entregaPct < 100 && (
+                          <>
+                            <span className="text-xs text-slate-400 tabular-nums">{entregadasUnidades}/{totalUnidades} unidades</span>
+                            <button
+                              type="button"
+                              className="mt-1 flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                            >
+                              <Plus className="w-3 h-3" />
+                              Registrar entrega
+                            </button>
+                          </>
+                        )}
                       </div>
-                    )}
-                  </div>
+
+                      {/* Col 3 — Cobro */}
+                      <div className="pl-5 flex flex-col gap-1">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Wallet className="w-4 h-4 text-slate-400" />
+                            {pagoPct === 100 ? (
+                              <span className="text-sm font-semibold text-emerald-600">Cobrada</span>
+                            ) : (
+                              <span className="text-sm font-semibold text-slate-700">Cobro {pagoPct}%</span>
+                            )}
+                          </div>
+                          {pagoPct === 100 && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                        </div>
+                        {pagoPct < 100 && (
+                          <>
+                            <span className="text-xs text-slate-400 tabular-nums">
+                              ${montoCobrado.toLocaleString("es-AR")}/${Math.round(venta.total).toLocaleString("es-AR")}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setShowRegistrarCobro(true)}
+                              className="mt-1 flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                            >
+                              <Plus className="w-3 h-3" />
+                              Registrar cobro
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    /* Finalizada — just the badge */
+                    <div className="relative" ref={estadoDropdownRef}>
+                      <button
+                        type="button"
+                        onClick={() => setShowEstadoDropdown(!showEstadoDropdown)}
+                        className="flex items-center justify-between gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors w-1/3 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
+                      >
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4" />
+                          Finalizada
+                        </div>
+                        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showEstadoDropdown ? "rotate-180" : ""}`} />
+                      </button>
+                      {showEstadoDropdown && (
+                        <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[160px]">
+                          <button
+                            onClick={() => { setEstadoUI("en_curso"); setShowEstadoDropdown(false) }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-slate-50 transition-colors text-slate-700"
+                          >
+                            <Clock className="w-4 h-4 text-amber-500" /> En Curso
+                          </button>
+                          <button
+                            onClick={() => { setEstadoUI("finalizada"); setShowEstadoDropdown(false) }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-slate-50 transition-colors font-semibold text-emerald-700"
+                          >
+                            <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Finalizada
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Entrega + Items card */}
@@ -726,23 +818,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     {/* ── Detalle del Cobro section ── */}
                     <p className="text-sm font-semibold text-slate-800 mb-3">Detalle del Cobro</p>
 
-                    {/* Cobro status row */}
-                    <div className="flex items-center justify-between py-2.5 border-b border-slate-100">
-                      <div className="flex items-center gap-2">
-                        <Wallet className={`w-4 h-4 ${pagoPct === 100 ? "text-emerald-500" : pagoPct > 0 ? "text-amber-500" : "text-slate-400"}`} />
-                        <span className="text-sm text-slate-700">Cobro</span>
-                      </div>
-                      <div className="flex items-baseline gap-1.5">
-                        <span className={`text-sm font-semibold tabular-nums ${pagoPct === 100 ? "text-emerald-600" : pagoPct > 0 ? "text-amber-600" : "text-slate-400"}`}>
-                          {pagoPct}%
-                        </span>
-                        <span className="text-xs text-slate-400 tabular-nums">
-                          ${montoCobrado.toLocaleString("es-AR")}/${Math.round(venta.total).toLocaleString("es-AR")}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Transactions */}
+                    {/* Entries */}
                     {montoCobrado > 0 ? (
                       <div className="flex items-center justify-between py-2.5 border-b border-slate-100">
                         <div className="flex items-center gap-2">
@@ -757,20 +833,9 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         </span>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-center py-4 border-b border-slate-100">
+                      <div className="flex items-center justify-center py-4">
                         <span className="text-xs text-slate-400">Sin cobros registrados</span>
                       </div>
-                    )}
-
-                    {estadoUI === "en_curso" && (
-                      <button
-                        type="button"
-                        onClick={() => setShowRegistrarCobro(true)}
-                        className="w-full flex items-center gap-2 py-2.5 -mx-5 px-5 text-sm text-slate-500 hover:bg-slate-50 transition-colors"
-                      >
-                        <Plus className="w-3.5 h-3.5 text-slate-400" />
-                        Registrar cobro
-                      </button>
                     )}
 
                   </div>
