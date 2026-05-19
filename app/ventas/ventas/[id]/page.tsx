@@ -260,68 +260,30 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         </div>
                       </div>
 
-                      {/* Row 2: Productos info (left) + Cliente pill (right) */}
-                      <div className="relative flex items-stretch gap-3">
-                        {/* Left half — productos + unidades */}
-                        <div className="flex-1 flex items-center px-3 py-2.5">
-                          <div className="flex items-baseline gap-1.5">
-                            <span className="text-lg font-semibold text-white tabular-nums">{venta.items.length}</span>
-                            <span className="text-sm text-slate-400">{venta.items.length === 1 ? "producto" : "productos"}</span>
-                            <span className="text-slate-600 mx-1">·</span>
-                            <span className="text-lg font-semibold text-white tabular-nums">{totalUnidades}</span>
-                            <span className="text-sm text-slate-400">{totalUnidades === 1 ? "unidad" : "unidades"}</span>
-                          </div>
-                        </div>
-
-                        {/* Right half — Cliente pill */}
-                        <button
-                          type="button"
-                          onClick={() => setShowClientePanel(!showClientePanel)}
-                          className="flex-1 flex items-center gap-3 px-3 py-2.5 rounded-md bg-slate-300 hover:bg-slate-200 transition-colors text-left"
-                        >
-                          <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center shrink-0">
-                            <span className="text-xs font-semibold text-white">{inicial}</span>
-                          </div>
-                          <div className="min-w-0">
-                            <span className="text-[10px] text-slate-500 uppercase tracking-wider block leading-none mb-0.5">Cliente</span>
-                            <span className="text-sm font-semibold text-slate-900 leading-tight">{venta.clienteNombre}</span>
-                          </div>
-                        </button>
-
-                        {/* Slide-in client info panel */}
-                        {showClientePanel && (
-                          <div className="absolute top-full left-0 right-0 mt-1 z-30 bg-white border border-slate-200 rounded-lg shadow-lg p-4 animate-in fade-in slide-in-from-top-1 duration-150">
-                            <div className="flex items-start gap-3">
-                              <div className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
-                                <span className="text-sm font-semibold text-white">{inicial}</span>
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <p className="text-sm font-bold text-slate-900 leading-tight">{venta.clienteNombre}</p>
-                                <p className="text-xs text-slate-400 mt-0.5">Cliente particular</p>
-                                <div className="mt-2 pt-2 border-t border-slate-100 grid grid-cols-2 gap-x-4 gap-y-1.5">
-                                  <div>
-                                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Método de pago</span>
-                                    <span className="text-xs text-slate-700">{metodoPagoLabels[venta.metodoPago]}</span>
-                                  </div>
-                                  <div>
-                                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Origen</span>
-                                    <span className="text-xs text-slate-700">{getOrigen(venta.metodoPago)}</span>
-                                  </div>
-                                </div>
-                              </div>
-                              <button
-                                onClick={() => setShowClientePanel(false)}
-                                className="shrink-0 text-slate-400 hover:text-slate-600 transition-colors"
-                              >
-                                <XCircle className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </div>
-                        )}
+                      {/* Row 2: Productos + unidades + total */}
+                      <div className="flex items-baseline gap-1.5 px-1">
+                        <span className="text-lg font-semibold text-white tabular-nums">{venta.items.length}</span>
+                        <span className="text-sm text-slate-400">{venta.items.length === 1 ? "producto" : "productos"}</span>
+                        <span className="text-slate-600 mx-1">·</span>
+                        <span className="text-lg font-semibold text-white tabular-nums">{totalUnidades}</span>
+                        <span className="text-sm text-slate-400">{totalUnidades === 1 ? "unidad" : "unidades"}</span>
+                        <span className="text-slate-600 mx-1">·</span>
+                        <span className="text-lg font-semibold text-white tabular-nums">${Math.round(venta.total).toLocaleString("es-AR")}</span>
                       </div>
                     </div>
                   )
                 })()}
+
+                {/* ── Cliente card ── */}
+                <div className="bg-slate-100 border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
+                    <span className="text-sm font-semibold text-white">{inicial}</span>
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block leading-none mb-0.5">Cliente</span>
+                    <span className="text-sm font-semibold text-slate-900 leading-tight">{venta.clienteNombre}</span>
+                  </div>
+                </div>
 
                 {/* ── Estado milestones card ── */}
                 {(() => {
