@@ -205,44 +205,44 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   const dia = fechaObj.toLocaleDateString("es-AR", { day: "2-digit" })
                   const inicial = venta.clienteNombre.charAt(0).toUpperCase()
                   return (
-                    <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-3">
-                      {/* Row 1: Venta ID + estado badge + date + origen + actions */}
+                    <div className="bg-slate-900 border border-slate-800 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-3">
+                      {/* Row 1: Venta ID + date + origen + actions */}
                       <div className="flex items-center justify-between gap-4">
                         {/* Venta ID + fecha/hora + origen — spread across available width */}
                         <div className="flex items-center flex-1 min-w-0">
                           {/* Venta ID */}
                           <div className="flex items-baseline gap-1.5 shrink-0">
-                            <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Venta</span>
-                            <span className="text-2xl font-bold text-slate-900 leading-none tracking-tight">{venta.id}</span>
+                            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-medium">Venta</span>
+                            <span className="text-2xl font-bold text-white leading-none tracking-tight">{venta.id}</span>
                           </div>
 
-                          <div className="h-5 w-px bg-slate-200 shrink-0 mx-5" />
+                          <div className="h-5 w-px bg-slate-700 shrink-0 mx-5" />
 
                           {/* Fecha */}
-                          <span className="text-base font-medium text-slate-600 tabular-nums shrink-0">
+                          <span className="text-sm font-medium text-slate-300 tabular-nums shrink-0">
                             {dia} {mesCorto} {fechaObj.getFullYear()} · {venta.hora}
                           </span>
 
-                          <div className="h-5 w-px bg-slate-200 shrink-0 mx-5" />
+                          <div className="h-5 w-px bg-slate-700 shrink-0 mx-5" />
 
                           {/* Origen */}
-                          <span className="text-base text-slate-500 shrink-0">{getOrigen(venta.metodoPago)}</span>
+                          <span className="text-sm text-slate-400 shrink-0">{getOrigen(venta.metodoPago)}</span>
                         </div>
                         {/* Actions */}
                         <div className="flex items-center gap-2 shrink-0">
                           <button
                             type="button"
-                            className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer gap-1.5 px-3 rounded-md flex items-center"
+                            className="h-8 text-xs transition-colors border shadow-sm border-slate-700 hover:bg-slate-800 cursor-pointer gap-1.5 px-3 rounded-md flex items-center text-slate-300"
                           >
-                            <ReceiptText className="w-3.5 h-3.5 text-slate-500" />
+                            <ReceiptText className="w-3.5 h-3.5 text-slate-400" />
                             Ver ticket
                           </button>
                           <div className="relative" ref={moreMenuRef}>
                             <button
                               onClick={() => setShowMoreOptionsMenu(!showMoreOptionsMenu)}
-                              className="h-8 w-8 flex items-center justify-center transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer rounded-md"
+                              className="h-8 w-8 flex items-center justify-center transition-colors border shadow-sm border-slate-700 hover:bg-slate-800 cursor-pointer rounded-md"
                             >
-                              <MoreVertical className="w-4 h-4 text-slate-500" />
+                              <MoreVertical className="w-4 h-4 text-slate-400" />
                             </button>
                             {showMoreOptionsMenu && (
                               <div className="absolute top-full right-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[160px]">
@@ -265,14 +265,14 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         <button
                           type="button"
                           onClick={() => setShowClientePanel(!showClientePanel)}
-                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md border border-slate-200/60 shadow-sm bg-slate-50/60 hover:bg-slate-100/60 transition-colors text-left"
+                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md border border-slate-700 bg-slate-800/60 hover:bg-slate-800 transition-colors text-left"
                         >
-                          <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center shrink-0">
                             <span className="text-xs font-semibold text-white">{inicial}</span>
                           </div>
                           <div className="min-w-0">
-                            <span className="text-[10px] text-slate-400 uppercase tracking-wider block leading-none mb-0.5">Cliente</span>
-                            <span className="text-sm font-semibold text-slate-800 leading-tight">{venta.clienteNombre}</span>
+                            <span className="text-[10px] text-slate-500 uppercase tracking-wider block leading-none mb-0.5">Cliente</span>
+                            <span className="text-sm font-semibold text-white leading-tight">{venta.clienteNombre}</span>
                           </div>
                         </button>
 
