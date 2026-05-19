@@ -966,13 +966,34 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
         const selectedCount = pendingSkus.filter(sku => entregaSelectedItems[sku]).length
 
         const handleSelectAllEntrega = () => {
-          const next: { [sku: string]: boolean } = {}
-          for (const sku of pendingSkus) next[sku] = !allSelected && !indeterminate
-          setEntregaSelectedItems(next)
+          const selecting = !allSelected && !indeterminate
+          const nextSelected: { [sku: string]: boolean } = {}
+          const nextQty: { [sku: string]: string } = { ...entregaQuantities }
+          for (const item of pendingItems) {
+            nextSelected[item.sku] = selecting
+            if (selecting) {
+              const delivered = itemEntregaMap.get(item.sku) ?? 0
+              nextQty[item.sku] = String(item.quantity - delivered)
+            } else {
+              delete nextQty[item.sku]
+            }
+          }
+          setEntregaSelectedItems(nextSelected)
+          setEntregaQuantities(nextQty)
         }
 
         const handleToggleEntregaItem = (sku: string) => {
-          setEntregaSelectedItems(prev => ({ ...prev, [sku]: !prev[sku] }))
+          const willBeSelected = !entregaSelectedItems[sku]
+          setEntregaSelectedItems(prev => ({ ...prev, [sku]: willBeSelected }))
+          if (willBeSelected) {
+            const item = pendingItems.find(i => i.sku === sku)
+            if (item) {
+              const delivered = itemEntregaMap.get(sku) ?? 0
+              setEntregaQuantities(prev => ({ ...prev, [sku]: String(item.quantity - delivered) }))
+            }
+          } else {
+            setEntregaQuantities(prev => { const next = { ...prev }; delete next[sku]; return next })
+          }
         }
 
         const closeEntrega = () => {
@@ -1073,13 +1094,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                               max={remaining}
                               value={qtyValue}
                               placeholder={String(remaining)}
-                              onKeyDown={(e) => {
-                                if ((e.key === "ArrowUp" || e.key === "ArrowDown") && qtyValue === "") {
-                                  e.preventDefault()
-                                  const seed = e.key === "ArrowUp" ? remaining : Math.max(0, remaining - 1)
-                                  setEntregaQuantities(prev => ({ ...prev, [item.sku]: String(seed) }))
-                                }
-                              }}
                               onChange={(e) => {
                                 const raw = e.target.value
                                 if (raw === "") { setEntregaQuantities(prev => ({ ...prev, [item.sku]: "" })); return }
