@@ -50,7 +50,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const router = useRouter()
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
 
-  const { ventas, isLoading: isLoadingVentas, addItemsToVenta, addCobro, addEntregas, setEstado } = useVentas()
+  const { ventas, isLoading: isLoadingVentas, addItemsToVenta, addCobro, addEntregas, setEstado, finalizarVenta } = useVentas()
   const venta = useMemo(() => ventas.find((v) => v.id === id) || null, [ventas, id])
 
   const [showExportDropdown, setShowExportDropdown] = useState(false)
@@ -370,33 +370,16 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
     setEntregaQuantities({})
   }
 
-  // Confirm "Marcar como Finalizada": auto-complete entregas, register a cobro for the
-  // remaining balance (if any), and flip estado.
+  // Confirm "Marcar como Finalizada": atomic — delivers all pending units + registers cobro in one save.
   const handleConfirmFinalizar = () => {
     if (!venta) return
-
-    // Auto-deliver any remaining units
-    const pendingEntregas: VentaEntregaItem[] = []
-    for (const item of ventaItems) {
-      const delivered = ventaEntregaItems.find(e => e.sku === item.sku)?.quantityEntregada ?? 0
-      const remaining = item.quantity - delivered
-      if (remaining > 0) pendingEntregas.push({ sku: item.sku, quantityEntregada: remaining })
-    }
-    if (pendingEntregas.length > 0) addEntregas(venta.id, pendingEntregas)
-
-    // Register a cobro for the remaining balance
-    if (montoRestante > 0) {
-      const now = new Date()
-      addCobro(venta.id, {
-        fecha: now.toISOString().slice(0, 10),
-        hora: now.toTimeString().slice(0, 5),
-        medioPago: finalizarMedioPago,
-        monto: montoRestante,
-      })
-    }
-
-    // The hook auto-derives estado, but force it just in case there were rounding edge cases
-    setEstado(venta.id, "finalizada")
+    const now = new Date()
+    finalizarVenta(
+      venta.id,
+      finalizarMedioPago,
+      now.toISOString().slice(0, 10),
+      now.toTimeString().slice(0, 5),
+    )
     setShowFinalizarVenta(false)
     setFinalizarMedioPago("no_especificado")
   }

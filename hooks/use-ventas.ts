@@ -224,6 +224,48 @@ export function useVentas() {
     [ventas, saveVentas],
   )
 
+  // Atomic "Marcar como Finalizada": delivers all pending units + registers remaining cobro in one save.
+  const finalizarVenta = useCallback(
+    (ventaId: string, cobroMedioPago: PaymentMethod, cobroFecha: string, cobroHora: string) => {
+      const updatedVentas = ventas.map((v) => {
+        if (v.id !== ventaId) return v
+
+        // 1. Complete all pending entregas
+        const entregaNext = [...v.entregaItems]
+        for (const item of v.items) {
+          const idx = entregaNext.findIndex((ei) => ei.sku === item.sku)
+          const existing = idx >= 0 ? entregaNext[idx].quantityEntregada : 0
+          const remaining = item.quantity - existing
+          if (remaining <= 0) continue
+          if (idx >= 0) entregaNext[idx] = { ...entregaNext[idx], quantityEntregada: item.quantity }
+          else entregaNext.push({ sku: item.sku, quantityEntregada: item.quantity })
+        }
+
+        // 2. Register cobro for remaining balance (recompute with fresh entregaNext first)
+        const interim = recomputeVenta({ ...v, entregaItems: entregaNext })
+        const cobrado = interim.cobros.reduce((s, c) => s + c.monto, 0)
+        const remaining = Math.max(0, interim.total - cobrado)
+        const cobrosNext = [...interim.cobros]
+        if (remaining > 0) {
+          cobrosNext.push({
+            id: `${ventaId}-COB-${cobrosNext.length + 1}-${Date.now()}`,
+            fecha: cobroFecha,
+            hora: cobroHora,
+            medioPago: cobroMedioPago,
+            monto: remaining,
+          })
+        }
+
+        // 3. Force estado finalizada
+        return { ...recomputeVenta({ ...interim, cobros: cobrosNext }), estado: "finalizada" as VentaEstado }
+      })
+      setVentas(updatedVentas)
+      saveVentas(updatedVentas)
+      console.log(`[v0] useVentas - Finalized venta: ${ventaId}`)
+    },
+    [ventas, saveVentas],
+  )
+
   return {
     ventas,
     isLoading,
@@ -233,6 +275,7 @@ export function useVentas() {
     addCobro,
     addEntregas,
     setEstado,
+    finalizarVenta,
   }
 }
 
