@@ -206,19 +206,27 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   const inicial = venta.clienteNombre.charAt(0).toUpperCase()
                   return (
                     <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-3">
-                      {/* Row 1: Venta ID + date + actions */}
+                      {/* Row 1: Venta ID + estado badge + date + origen + actions */}
                       <div className="flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-4 min-w-0">
-                          {/* ID with label inline */}
-                          <div className="flex items-baseline gap-1.5 shrink-0">
-                            <span className="text-[10px] text-slate-400 uppercase tracking-wider">Venta</span>
-                            <span className="text-lg font-bold text-slate-900 leading-tight">{venta.id}</span>
+                        <div className="flex items-start gap-4 min-w-0">
+                          {/* ID + estado badge + date + origen stacked */}
+                          <div className="flex flex-col shrink-0">
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="text-[10px] text-slate-400 uppercase tracking-wider">Venta</span>
+                              <span className="text-lg font-bold text-slate-900 leading-tight">{venta.id}</span>
+                              {/* Estado badge */}
+                              <span className={`ml-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${estadoVentaStyle.bg} ${estadoVentaStyle.text} border ${estadoVentaStyle.border}`}>
+                                {estadoVenta}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="text-xs text-slate-500 tabular-nums">
+                                {dia} {mesCorto} {fechaObj.getFullYear()} · {venta.hora}
+                              </span>
+                              <span className="text-slate-300 text-xs">·</span>
+                              <span className="text-xs text-slate-400">{getOrigen(venta.metodoPago)}</span>
+                            </div>
                           </div>
-                          <div className="h-5 w-px bg-slate-100 shrink-0" />
-                          {/* Date — no label */}
-                          <span className="text-sm text-slate-500 tabular-nums shrink-0">
-                            {dia} {mesCorto} <span className="text-slate-400">· {venta.hora}</span>
-                          </span>
                         </div>
                         {/* Actions */}
                         <div className="flex items-center gap-2 shrink-0">
@@ -303,63 +311,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   )
                 })()}
 
-                {/* ── Estado card ── */}
-                {(() => {
-                  const steps = [
-                    { label: "Borrador", key: "borrador" },
-                    { label: "En Curso", key: "en_curso" },
-                    { label: "Finalizada", key: "finalizada" },
-                  ]
-                  const activeIndex = (pagoPct === 100 && entregaPct === 100)
-                    ? 2
-                    : (pagoPct > 0 || entregaPct > 0)
-                      ? 1
-                      : 0
-
-                  return (
-                    <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-5 py-3">
-                      <span className="text-[10px] text-slate-400 uppercase tracking-wider block mb-3">Estado</span>
-                      <div className="flex items-center">
-                        {steps.map((s, i) => {
-                          const isDone = i < activeIndex
-                          const isActive = i === activeIndex
-                          const isFuture = i > activeIndex
-                          const isLast = i === steps.length - 1
-                          return (
-                            <div key={s.key} className="flex items-center flex-1 min-w-0">
-                              <div className={`flex flex-col items-center gap-1.5 shrink-0 transition-all duration-300 ${isFuture ? "opacity-30" : ""}`}>
-                                <div className={`w-5 h-5 rounded-full flex items-center justify-center border-2 transition-all duration-300
-                                  ${isDone ? "bg-slate-800 border-slate-800 shadow-[0_0_0_3px_rgba(15,23,42,0.08)]"
-                                    : isActive ? "bg-white border-slate-800 shadow-[0_0_0_3px_rgba(15,23,42,0.1)]"
-                                    : "bg-white border-slate-200"}`}
-                                >
-                                  {isDone && (
-                                    <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 10 10">
-                                      <path d="M1.5 5L4 7.5L8.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                    </svg>
-                                  )}
-                                  {isActive && <div className="w-2 h-2 rounded-full bg-slate-800" />}
-                                </div>
-                                <span className={`text-[11px] whitespace-nowrap transition-all duration-300
-                                  ${isDone ? "font-medium text-slate-400"
-                                    : isActive ? "font-semibold text-slate-900"
-                                    : "font-medium text-slate-400"}`}>
-                                  {s.label}
-                                </span>
-                              </div>
-                              {!isLast && (
-                                <div className={`flex-1 h-px mx-3 mb-[18px] transition-all duration-500
-                                  ${isDone ? "bg-slate-800" : "bg-slate-200"}`}
-                                />
-                              )}
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )
-                })()}
-
                 {/* Entrega + Items card */}
               <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm overflow-hidden">
 
@@ -379,18 +330,14 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
                 {/* ── Entrega header ── */}
                 <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-                  <div className="flex items-center gap-3 px-3 py-2 rounded-md border border-[rgba(228,230,235,0.6)] shadow-sm bg-white">
+                  <div className="flex items-center gap-2.5 px-1 py-1">
                     <Truck className={`w-4 h-4 ${entregaPct === 100 ? "text-emerald-500" : entregaPct > 0 ? "text-amber-500" : "text-slate-400"}`} />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-slate-800">
-                          Entrega
-                        </span>
-                        <span className={`text-xs font-semibold tabular-nums ${entregaPct === 100 ? "text-emerald-600" : entregaPct > 0 ? "text-amber-600" : "text-slate-400"}`}>
-                          {entregaPct}%
-                        </span>
-                      </div>
-                      <span className="text-[10px] text-slate-400 tabular-nums mt-0.5 block">{entregadasUnidades} / {totalUnidades} uds</span>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-sm font-semibold text-slate-800">Entrega</span>
+                      <span className={`text-xs font-semibold tabular-nums ${entregaPct === 100 ? "text-emerald-600" : entregaPct > 0 ? "text-amber-600" : "text-slate-400"}`}>
+                        {entregaPct}%
+                      </span>
+                      <span className="text-xs text-slate-400 tabular-nums">{entregadasUnidades}/{totalUnidades}</span>
                     </div>
                   </div>
                   {/* Toggle entrega mode */}
@@ -614,17 +561,15 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     </div>
                     {/* Cobro status chip */}
                     <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-3">
-                      <div className="flex items-center gap-3 px-3 py-2 rounded-md border border-[rgba(228,230,235,0.6)] shadow-sm bg-white">
+                      <div className="flex items-center gap-2.5 px-1 py-1">
                         <Wallet className={`w-4 h-4 ${pagoPct === 100 ? "text-emerald-500" : pagoPct > 0 ? "text-amber-500" : "text-slate-400"}`} />
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold text-slate-800">Cobro</span>
-                            <span className={`text-xs font-semibold tabular-nums ${pagoPct === 100 ? "text-emerald-600" : pagoPct > 0 ? "text-amber-600" : "text-slate-400"}`}>
-                              {pagoPct}%
-                            </span>
-                          </div>
-                          <span className="text-[10px] text-slate-400 tabular-nums mt-0.5 block">
-                            ${montoCobrado.toLocaleString("es-AR")} / ${Math.round(venta.total).toLocaleString("es-AR")}
+                        <div className="flex items-baseline gap-1.5">
+                          <span className="text-sm font-semibold text-slate-800">Cobro</span>
+                          <span className={`text-xs font-semibold tabular-nums ${pagoPct === 100 ? "text-emerald-600" : pagoPct > 0 ? "text-amber-600" : "text-slate-400"}`}>
+                            {pagoPct}%
+                          </span>
+                          <span className="text-xs text-slate-400 tabular-nums">
+                            ${montoCobrado.toLocaleString("es-AR")}/${Math.round(venta.total).toLocaleString("es-AR")}
                           </span>
                         </div>
                       </div>
