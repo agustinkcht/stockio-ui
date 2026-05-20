@@ -44,7 +44,7 @@ function recomputeVenta(v: Venta): Venta {
     const e = v.entregaItems.find((ei) => ei.sku === it.sku)
     return (e?.quantityEntregada ?? 0) >= it.quantity
   })
-  const estado: VentaEstado = fullyPaid && fullyDelivered ? "finalizada" : "en_curso"
+  const estado: VentaEstado = v.estado === "cancelada" ? "cancelada" : (fullyPaid && fullyDelivered ? "finalizada" : "en_curso")
 
   return { ...v, subtotal, total, estado }
 }
@@ -334,6 +334,62 @@ export function useVentas() {
     [ventas, saveVentas],
   )
 
+  // Cancel a venta. Optionally creates a refund cobro and/or a "devolucion" entrega entry.
+  const cancelarVenta = useCallback(
+    (ventaId: string, opts: { devolverUnidades: boolean; devolverCobros: boolean }) => {
+      const now = new Date()
+      const fecha = now.toISOString().slice(0, 10)
+      const hora = now.toTimeString().slice(0, 5)
+
+      const updatedVentas = ventas.map((v) => {
+        if (v.id !== ventaId) return v
+
+        let cobrosNext = [...v.cobros]
+        let entregaEntriesNext = [...(v.entregaEntries ?? [])]
+
+        // Refund cobro entry
+        if (opts.devolverCobros) {
+          const totalCobrado = v.cobros.reduce((s, c) => s + c.monto, 0)
+          if (totalCobrado > 0) {
+            cobrosNext.push({
+              id: `${ventaId}-COB-${cobrosNext.length + 1}-${Date.now()}`,
+              fecha,
+              hora,
+              medioPago: "no_especificado",
+              monto: -totalCobrado,
+            })
+          }
+        }
+
+        // Devolucion entrega entry
+        if (opts.devolverUnidades) {
+          const totalEntregadas = v.entregaItems.reduce((s, ei) => s + ei.quantityEntregada, 0)
+          if (totalEntregadas > 0) {
+            entregaEntriesNext.push({
+              id: `${ventaId}-DEV-${entregaEntriesNext.length + 1}-${Date.now()}`,
+              fecha,
+              hora,
+              items: v.entregaItems
+                .filter((ei) => ei.quantityEntregada > 0)
+                .map((ei) => ({ sku: ei.sku, quantity: -ei.quantityEntregada })),
+            })
+          }
+        }
+
+        return {
+          ...v,
+          estado: "cancelada" as VentaEstado,
+          cobros: cobrosNext,
+          entregaEntries: entregaEntriesNext,
+        }
+      })
+      setVentas(updatedVentas)
+      saveVentas(updatedVentas)
+      console.log(`[v0] useVentas - Cancelled venta: ${ventaId}`)
+    },
+    [ventas, saveVentas],
+  )
+
   return {
     ventas,
     isLoading,
@@ -346,6 +402,7 @@ export function useVentas() {
     finalizarVenta,
     undoCobro,
     undoEntregaEntry,
+    cancelarVenta,
   }
 }
 

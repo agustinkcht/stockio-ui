@@ -221,7 +221,7 @@ export type VentaCliente =
   | { tipo: "consumidor_final" }
   | { tipo: "cuenta"; id: string; nombre: string }
 
-export type VentaEstado = "en_curso" | "finalizada"
+export type VentaEstado = "en_curso" | "finalizada" | "cancelada"
 
 export interface Venta {
   id: string
