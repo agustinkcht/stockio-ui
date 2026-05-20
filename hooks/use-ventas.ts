@@ -299,6 +299,41 @@ export function useVentas() {
     [ventas, saveVentas],
   )
 
+  // Remove a cobro entry by id and recompute totals
+  const undoCobro = useCallback(
+    (ventaId: string, cobroId: string) => {
+      const updatedVentas = ventas.map((v) => {
+        if (v.id !== ventaId) return v
+        const cobros = v.cobros.filter((c) => c.id !== cobroId)
+        return recomputeVenta({ ...v, cobros })
+      })
+      setVentas(updatedVentas)
+      saveVentas(updatedVentas)
+    },
+    [ventas, saveVentas],
+  )
+
+  // Remove an entrega entry by id, subtract its units from entregaItems, and recompute
+  const undoEntregaEntry = useCallback(
+    (ventaId: string, entryId: string) => {
+      const updatedVentas = ventas.map((v) => {
+        if (v.id !== ventaId) return v
+        const entry = (v.entregaEntries ?? []).find((e) => e.id === entryId)
+        if (!entry) return v
+        const entregaItems = v.entregaItems.map((ei) => {
+          const undone = entry.items.find((i) => i.sku === ei.sku)
+          if (!undone) return ei
+          return { ...ei, quantityEntregada: Math.max(0, ei.quantityEntregada - undone.quantity) }
+        })
+        const entregaEntries = (v.entregaEntries ?? []).filter((e) => e.id !== entryId)
+        return recomputeVenta({ ...v, entregaItems, entregaEntries })
+      })
+      setVentas(updatedVentas)
+      saveVentas(updatedVentas)
+    },
+    [ventas, saveVentas],
+  )
+
   return {
     ventas,
     isLoading,
@@ -309,6 +344,8 @@ export function useVentas() {
     addEntregas,
     setEstado,
     finalizarVenta,
+    undoCobro,
+    undoEntregaEntry,
   }
 }
 

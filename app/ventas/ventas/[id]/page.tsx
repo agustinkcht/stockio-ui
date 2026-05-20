@@ -27,6 +27,7 @@ import {
   Filter,
   ArrowUpDown,
   X,
+  Undo2,
 } from "lucide-react"
 import Image from "next/image"
 import type { Venta, VentaItem, PaymentMethod, Item, ItemVariant, VentaEntregaItem, VentaEntregaEntry } from "@/lib/types"
@@ -50,7 +51,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const router = useRouter()
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
 
-  const { ventas, isLoading: isLoadingVentas, addItemsToVenta, addCobro, addEntregas, setEstado, finalizarVenta } = useVentas()
+  const { ventas, isLoading: isLoadingVentas, addItemsToVenta, addCobro, addEntregas, setEstado, finalizarVenta, undoCobro, undoEntregaEntry } = useVentas()
   const venta = useMemo(() => ventas.find((v) => v.id === id) || null, [ventas, id])
 
   const [showExportDropdown, setShowExportDropdown] = useState(false)
@@ -68,6 +69,21 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const [finalizarMedioPago, setFinalizarMedioPago] = useState<PaymentMethod | "no_especificado">("no_especificado")
   const [entregaSelectedItems, setEntregaSelectedItems] = useState<{ [sku: string]: boolean }>({})
   const [viewingEntregaEntry, setViewingEntregaEntry] = useState<VentaEntregaEntry | null>(null)
+  const [undoCobroTarget, setUndoCobroTarget] = useState<{ id: string; monto: number } | null>(null)
+  const [undoEntregaTarget, setUndoEntregaTarget] = useState<VentaEntregaEntry | null>(null)
+
+  // Resumen adjustments (local, en_curso only)
+  const [showGlobalDiscount, setShowGlobalDiscount] = useState(false)
+  const [globalDiscount, setGlobalDiscount] = useState<{ value: number; type: "percent" | "cash" }>({ value: 0, type: "percent" })
+  const [showEnvio, setShowEnvio] = useState(false)
+  const [envioAmount, setEnvioAmount] = useState(0)
+  const [customCharges, setCustomCharges] = useState<{ id: number; label: string; value: number }[]>([])
+
+  const globalDiscountAmount = showGlobalDiscount
+    ? globalDiscount.type === "percent"
+      ? (venta?.subtotal ?? 0) * (globalDiscount.value / 100)
+      : globalDiscount.value
+    : 0
   const [entregaQuantities, setEntregaQuantities] = useState<{ [sku: string]: string }>({})
   const [selectedModalItems, setSelectedModalItems] = useState<{ [id: string]: boolean }>({})
   const [modalSearch, setModalSearch] = useState("")
@@ -441,7 +457,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   const dia = fechaObj.toLocaleDateString("es-AR", { day: "2-digit" })
                   const inicial = clienteNombre.charAt(0).toUpperCase()
                   return (
-                    <div className="pt-8 px-4 pb-3 flex flex-col gap-3">
+                    <div className="pt-8 px-4 pb-3 flex flex-col gap-6">
                       {/* Row 1: Venta ID + date + origen + actions */}
                       <div className="flex items-center justify-between gap-4">
                         {/* Venta ID + fecha/hora + origen — spread across available width */}
@@ -637,18 +653,18 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                 </div>
 
                 {/* ── Grid title ── */}
-                <div className="px-4 pt-3 pb-2 flex items-center gap-2">
+                <div className="px-4 pt-3 pb-1 flex items-center gap-2">
                   {entregaMode ? (
                     <>
-                      <Truck className="w-4 h-4 text-slate-500" />
-                      <span className="text-sm font-semibold text-slate-800 tabular-nums">
+                      <Truck className="w-5 h-5 text-slate-600" />
+                      <span className="text-lg font-bold text-slate-900 tabular-nums">
                         {entregadasUnidades}/{totalUnidades} {totalUnidades === 1 ? "unidad entregada" : "unidades entregadas"}
                       </span>
                     </>
                   ) : (
                     <>
-                      <Package className="w-4 h-4 text-slate-500" />
-                      <span className="text-sm font-semibold text-slate-800 tabular-nums">
+                      <Package className="w-5 h-5 text-slate-600" />
+                      <span className="text-lg font-bold text-slate-900 tabular-nums">
                         {ventaItems.length} {ventaItems.length === 1 ? "producto" : "productos"} · {totalUnidades} {totalUnidades === 1 ? "unidad" : "unidades"}
                       </span>
                     </>
@@ -806,8 +822,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
                 {/* ── Entrega activity log ── */}
                 {entregaMode && (
-                  <div className="px-4 pb-4 flex flex-col gap-2">
-                    <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mt-1">Historial de entregas</p>
+                  <div className="px-4 pb-4 flex flex-col">
                     {ventaEntregaEntries.length === 0 ? (
                       <p className="text-xs text-slate-400 py-2">Sin entregas registradas</p>
                     ) : (
@@ -815,21 +830,27 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         const totalEntryUnits = entry.items.reduce((s, i) => s + i.quantity, 0)
                         const dateLabel = new Date(entry.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })
                         return (
-                          <button
-                            key={entry.id}
-                            type="button"
-                            onClick={() => setViewingEntregaEntry(entry)}
-                            className="flex items-center justify-between py-2.5 border-b border-slate-100 last:border-0 hover:bg-slate-50/60 -mx-4 px-4 transition-colors text-left"
-                          >
-                            <div className="flex items-center gap-2">
+                          <div key={entry.id} className="flex items-center group border-b border-slate-100 last:border-0">
+                            <button
+                              type="button"
+                              onClick={() => setViewingEntregaEntry(entry)}
+                              className="flex-1 flex items-center gap-2 py-2 hover:bg-slate-50/60 -ml-4 pl-4 pr-2 transition-colors text-left"
+                            >
                               <span className="text-xs text-slate-400 tabular-nums">{dateLabel}</span>
                               <span className="text-xs text-slate-300">·</span>
-                              <span className="text-xs text-slate-500">{entry.hora}</span>
-                            </div>
-                            <span className="text-sm font-semibold text-slate-800 tabular-nums">
-                              {totalEntryUnits} {totalEntryUnits === 1 ? "unidad" : "unidades"}
-                            </span>
-                          </button>
+                              <span className="text-xs text-slate-400 tabular-nums">{entry.hora}</span>
+                              <span className="text-xs text-slate-300">·</span>
+                              <span className="text-xs text-slate-400 tabular-nums">{totalEntryUnits} {totalEntryUnits === 1 ? "unidad" : "unidades"}</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setUndoEntregaTarget(entry)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 -mr-4 mr-0 pr-4"
+                              title="Deshacer entrega"
+                            >
+                              <Undo2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         )
                       })
                     )}
@@ -920,9 +941,100 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       </div>
                     )}
 
+                    {/* ── Ajustes: Descuento Global, Envío, Otro ── */}
+                    {showGlobalDiscount && (
+                      <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => { setShowGlobalDiscount(false); setGlobalDiscount({ value: 0, type: "percent" }) }} className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors">
+                            <X className="w-3 h-3" />
+                          </button>
+                          <span className="text-sm text-slate-500">Descuento global</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            value={globalDiscount.value || ""}
+                            onChange={(e) => setGlobalDiscount(prev => ({ ...prev, value: parseFloat(e.target.value) || 0 }))}
+                            className="w-16 text-right text-sm px-2 py-1 border border-slate-200 rounded focus:outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          />
+                          <div className="flex border border-slate-200 rounded overflow-hidden">
+                            <button onClick={() => setGlobalDiscount(prev => ({ ...prev, type: "cash" }))} className={`px-2 py-1 text-xs cursor-pointer ${globalDiscount.type === "cash" ? "bg-slate-900 text-white" : "text-slate-400 hover:bg-slate-50"}`}>$</button>
+                            <button onClick={() => setGlobalDiscount(prev => ({ ...prev, type: "percent" }))} className={`px-2 py-1 text-xs cursor-pointer ${globalDiscount.type === "percent" ? "bg-slate-900 text-white" : "text-slate-400 hover:bg-slate-50"}`}>%</button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {showEnvio && (
+                      <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => { setShowEnvio(false); setEnvioAmount(0) }} className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors">
+                            <X className="w-3 h-3" />
+                          </button>
+                          <span className="text-sm text-slate-500">Envío</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm text-slate-400">$</span>
+                          <input
+                            type="number"
+                            value={envioAmount || ""}
+                            onChange={(e) => setEnvioAmount(parseFloat(e.target.value) || 0)}
+                            className="w-20 text-right text-sm px-2 py-1 border border-slate-200 rounded focus:outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          />
+                        </div>
+                      </div>
+                    )}
+                    {customCharges.map((charge, idx) => (
+                      <div key={charge.id} className="flex justify-between items-center py-2 border-b border-slate-100">
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => setCustomCharges(prev => prev.filter((_, i) => i !== idx))} className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors">
+                            <X className="w-3 h-3" />
+                          </button>
+                          <input
+                            type="text"
+                            value={charge.label}
+                            onChange={(e) => setCustomCharges(prev => prev.map((c, i) => i === idx ? { ...c, label: e.target.value } : c))}
+                            className="text-sm text-slate-500 bg-transparent border-none outline-none w-24"
+                          />
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm text-slate-400">$</span>
+                          <input
+                            type="number"
+                            value={charge.value || ""}
+                            onChange={(e) => setCustomCharges(prev => prev.map((c, i) => i === idx ? { ...c, value: parseFloat(e.target.value) || 0 } : c))}
+                            className="w-20 text-right text-sm px-2 py-1 border border-slate-200 rounded focus:outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          />
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Agregar tags — only shown when en curso and not all options active */}
+                    {estadoUI === "en_curso" && (!showGlobalDiscount || !showEnvio || customCharges.length === 0) && (
+                      <div className="flex items-center gap-2 flex-wrap py-2 border-b border-slate-100">
+                        <span className="text-xs text-slate-400">Agregar:</span>
+                        {!showGlobalDiscount && (
+                          <button onClick={() => setShowGlobalDiscount(true)} className="text-xs px-2 py-0.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors">
+                            Descuento Global
+                          </button>
+                        )}
+                        {!showEnvio && (
+                          <button onClick={() => setShowEnvio(true)} className="text-xs px-2 py-0.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors">
+                            Envío
+                          </button>
+                        )}
+                        {customCharges.length === 0 && (
+                          <button onClick={() => setCustomCharges([{ id: Date.now(), label: "Otro", value: 0 }])} className="text-xs px-2 py-0.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors">
+                            Otro
+                          </button>
+                        )}
+                      </div>
+                    )}
+
                     <div className="flex justify-between items-center py-3 mt-1">
                       <span className="text-base font-bold text-slate-900">Total</span>
-                      <span className="text-base font-bold text-slate-900 tabular-nums">${Math.round(venta.total).toLocaleString("es-AR")}</span>
+                      <span className="text-base font-bold text-slate-900 tabular-nums">
+                        ${Math.round(venta.total - globalDiscountAmount + envioAmount + customCharges.reduce((s, c) => s + c.value, 0)).toLocaleString("es-AR")}
+                      </span>
                     </div>
 
                     {venta.observaciones && (
@@ -939,10 +1051,10 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     <p className="text-sm font-semibold text-slate-800 mb-3">Detalle del Cobro</p>
 
                     {/* Entries */}
-                        {ventaCobros.length > 0 ? (
-                          ventaCobros.map((cobro) => (
-                        <div key={cobro.id} className="flex items-center justify-between py-2.5 border-b border-slate-100">
-                          <div className="flex items-center gap-2">
+                    {ventaCobros.length > 0 ? (
+                      ventaCobros.map((cobro) => (
+                        <div key={cobro.id} className="flex items-center py-2.5 border-b border-slate-100 gap-2 group">
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
                             <span className="text-xs text-slate-400 tabular-nums">
                               {new Date(cobro.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}
                             </span>
@@ -952,6 +1064,14 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                           <span className="text-sm font-semibold text-slate-900 tabular-nums">
                             ${cobro.monto.toLocaleString("es-AR")}
                           </span>
+                          <button
+                            type="button"
+                            onClick={() => setUndoCobroTarget({ id: cobro.id, monto: cobro.monto })}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-400"
+                            title="Deshacer cobro"
+                          >
+                            <Undo2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       ))
                     ) : (
@@ -972,6 +1092,75 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
       {viewingItem && (
         <VentaItemDetailModal ventaItem={viewingItem} onClose={() => setViewingItem(null)} />
+      )}
+
+      {/* ── Undo Cobro Modal ── */}
+      {undoCobroTarget && venta && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setUndoCobroTarget(null)} />
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
+            <div className="px-5 py-5 flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center shrink-0">
+                  <Undo2 className="w-4 h-4 text-red-500" />
+                </div>
+                <h3 className="text-base font-semibold text-slate-900">Deshacer cobro</h3>
+              </div>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                {"¿Estás seguro? "}
+                <span className="font-semibold text-slate-900">${undoCobroTarget.monto.toLocaleString("es-AR")}</span>
+                {" van a volver a estar pendientes de cobro."}
+              </p>
+            </div>
+            <div className="px-5 pb-5 flex gap-2 justify-end">
+              <button onClick={() => setUndoCobroTarget(null)} className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
+                Cancelar
+              </button>
+              <button
+                onClick={() => { undoCobro(venta.id, undoCobroTarget.id); setUndoCobroTarget(null) }}
+                className="px-4 py-2 text-sm font-medium bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              >
+                Aceptar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Undo Entrega Modal ── */}
+      {undoEntregaTarget && venta && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setUndoEntregaTarget(null)} />
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
+            <div className="px-5 py-5 flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center shrink-0">
+                  <Undo2 className="w-4 h-4 text-red-500" />
+                </div>
+                <h3 className="text-base font-semibold text-slate-900">Deshacer entrega</h3>
+              </div>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                {"¿Estás seguro? "}
+                <span className="font-semibold text-slate-900">
+                  {undoEntregaTarget.items.reduce((s, i) => s + i.quantity, 0)}{" "}
+                  {undoEntregaTarget.items.reduce((s, i) => s + i.quantity, 0) === 1 ? "unidad va" : "unidades van"}
+                </span>
+                {" a volver a estar pendientes de entrega."}
+              </p>
+            </div>
+            <div className="px-5 pb-5 flex gap-2 justify-end">
+              <button onClick={() => setUndoEntregaTarget(null)} className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
+                Cancelar
+              </button>
+              <button
+                onClick={() => { undoEntregaEntry(venta.id, undoEntregaTarget.id); setUndoEntregaTarget(null) }}
+                className="px-4 py-2 text-sm font-medium bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              >
+                Aceptar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ── Entrega Entry Detail Modal ── */}
