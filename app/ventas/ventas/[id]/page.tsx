@@ -749,13 +749,10 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
           <main className="flex-1 flex flex-col bg-[rgba(250,251,253,1)] overflow-hidden">
             {/* Items Grid + Totals side by side */}
             <div className="flex-1 overflow-y-auto px-6 pb-6 pt-4">
-              <div className="grid grid-cols-3 gap-4 items-start">
+              <div className="flex flex-col gap-4">
 
-              {/* Left col-span-2 */}
-              <div className="col-span-2 flex flex-col gap-4">
-
-                {/* ── Venta Info card ── */}
-                {(() => {
+              {/* ── Row 1: Venta Info — full width ── */}
+              {(() => {
                   const fechaObj = new Date(venta.fecha)
                   const mesCorto = fechaObj.toLocaleDateString("es-AR", { month: "short" }).replace(".", "")
                   const dia = fechaObj.toLocaleDateString("es-AR", { day: "2-digit" })
@@ -863,8 +860,11 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   )
                 })()}
 
+              {/* ── Row 2: widgets (col-span-2) + resumen (col-span-1) — items-stretch so they match height ── */}
+              <div className="grid grid-cols-3 gap-4 items-stretch">
+              <div className="col-span-2">
                 {/* ── Estado / Entrega / Cobro — 3 widget cards ── */}
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 gap-3 h-full">
 
                   {/* Widget 1 — Estado */}
                   <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-2">
@@ -978,7 +978,159 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   </div>
 
                 </div>
+              </div>{/* end col-span-2 widgets */}
 
+              {/* Right col-span-1: resumen card — stretches to match widgets height */}
+              {ventaItems.length > 0 && (
+                <div className="col-span-1 flex flex-col">
+                <div className="bg-white rounded-lg shadow-sm overflow-hidden flex flex-col flex-1">
+                  <div className="px-5 py-5 flex flex-col gap-0 flex-1">
+
+                    {/* ── Resumen section ── */}
+                    <p className="text-sm font-semibold text-slate-800 mb-4">Resumen</p>
+
+                    {/* Subtotal — expandable */}
+                    <button
+                      type="button"
+                      onClick={() => setShowSubtotalBreakdown(!showSubtotalBreakdown)}
+                      className="w-full flex items-center py-2.5 border-b border-slate-100 text-left hover:bg-slate-50/50 -mx-5 px-5 transition-colors"
+                    >
+                      <span className="text-sm text-slate-500 flex-1">Subtotal</span>
+                      <span className="text-sm text-slate-700 tabular-nums mr-2">${Math.round(venta.subtotal).toLocaleString("es-AR")}</span>
+                      <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${showSubtotalBreakdown ? "rotate-180" : ""}`} />
+                    </button>
+                    {showSubtotalBreakdown && (
+                      <div className="border-b border-slate-100">
+                        {ventaItems.map((item, idx) => {
+                          const display = getVentaItemDisplay(item)
+                          const adjustedUnit = item.discountType === "percent"
+                            ? item.unitPrice * (1 - item.discount / 100)
+                            : item.unitPrice - (item.discount / Math.max(item.quantity, 1))
+                          const lineTotal = Math.round(adjustedUnit * item.quantity)
+                          return (
+                            <div key={idx} className="flex justify-between items-start gap-3 py-2.5 -mx-5 px-5 border-b border-slate-50 last:border-0">
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs text-slate-700 leading-tight">{display.name}</p>
+                                {display.tags.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-0.5">
+                                    {display.tags.map((tag, i) => (
+                                      <span key={i} className="text-[10px] text-slate-400">{tag}</span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="text-right shrink-0">
+                                <p className="text-[11px] text-slate-400 tabular-nums">{item.quantity} × ${Math.round(adjustedUnit).toLocaleString("es-AR")}</p>
+                                <p className="text-xs font-medium text-slate-700 tabular-nums">${lineTotal.toLocaleString("es-AR")}</p>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+
+                    {venta.descuento > 0 && (
+                      <div className="flex justify-between items-center py-2.5 border-b border-slate-100">
+                        <span className="text-sm text-slate-500">
+                          Descuento{" "}
+                          <span className="text-[10px] text-slate-400">
+                            ({venta.descuentoTipo === "percent" ? `${venta.descuento}%` : `$${venta.descuento.toLocaleString("es-AR")}`})
+                          </span>
+                        </span>
+                        <span className="text-sm text-red-500 tabular-nums">
+                          −${Math.round(venta.descuentoTipo === "percent" ? venta.subtotal * (venta.descuento / 100) : venta.descuento).toLocaleString("es-AR")}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* ── Edit mode ajuste inputs ── */}
+                    {isEditMode && showGlobalDiscount && (
+                      <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => { setShowGlobalDiscount(false); setGlobalDiscount({ value: 0, type: "percent" }) }} className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors">
+                            <X className="w-3 h-3" />
+                          </button>
+                          <span className="text-sm text-slate-500">Descuento global</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input type="number" value={globalDiscount.value || ""} onChange={(e) => setGlobalDiscount(prev => ({ ...prev, value: parseFloat(e.target.value) || 0 }))} className="w-16 text-right text-sm px-2 py-1 border border-slate-200 rounded focus:outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                          <div className="flex border border-slate-200 rounded overflow-hidden">
+                            <button onClick={() => setGlobalDiscount(prev => ({ ...prev, type: "cash" }))} className={`px-2 py-1 text-xs cursor-pointer ${globalDiscount.type === "cash" ? "bg-slate-900 text-white" : "text-slate-400 hover:bg-slate-50"}`}>$</button>
+                            <button onClick={() => setGlobalDiscount(prev => ({ ...prev, type: "percent" }))} className={`px-2 py-1 text-xs cursor-pointer ${globalDiscount.type === "percent" ? "bg-slate-900 text-white" : "text-slate-400 hover:bg-slate-50"}`}>%</button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {isEditMode && showEnvio && (
+                      <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => { setShowEnvio(false); setEnvioAmount(0) }} className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors">
+                            <X className="w-3 h-3" />
+                          </button>
+                          <span className="text-sm text-slate-500">Envío</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm text-slate-400">$</span>
+                          <input type="number" value={envioAmount || ""} onChange={(e) => setEnvioAmount(parseFloat(e.target.value) || 0)} className="w-20 text-right text-sm px-2 py-1 border border-slate-200 rounded focus:outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                        </div>
+                      </div>
+                    )}
+                    {isEditMode && customCharges.map((charge, idx) => (
+                      <div key={charge.id} className="flex justify-between items-center py-2 border-b border-slate-100">
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => setCustomCharges(prev => prev.filter((_, i) => i !== idx))} className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors"><X className="w-3 h-3" /></button>
+                          <input type="text" value={charge.label} onChange={(e) => setCustomCharges(prev => prev.map((c, i) => i === idx ? { ...c, label: e.target.value } : c))} className="text-sm text-slate-500 bg-transparent border-none outline-none w-24" />
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm text-slate-400">$</span>
+                          <input type="number" value={charge.value || ""} onChange={(e) => setCustomCharges(prev => prev.map((c, i) => i === idx ? { ...c, value: parseFloat(e.target.value) || 0 } : c))} className="w-20 text-right text-sm px-2 py-1 border border-slate-200 rounded focus:outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                        </div>
+                      </div>
+                    ))}
+                    {isEditMode && estadoUI === "en_curso" && (!showGlobalDiscount || !showEnvio || customCharges.length === 0) && (
+                      <div className="flex items-center gap-2 flex-wrap py-2 border-b border-slate-100">
+                        <span className="text-xs text-slate-400">Agregar:</span>
+                        {!showGlobalDiscount && <button onClick={() => setShowGlobalDiscount(true)} className="text-xs px-2 py-0.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors">Descuento Global</button>}
+                        {!showEnvio && <button onClick={() => setShowEnvio(true)} className="text-xs px-2 py-0.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors">Envío</button>}
+                        {customCharges.length === 0 && <button onClick={() => setCustomCharges([{ id: Date.now(), label: "Otro", value: 0 }])} className="text-xs px-2 py-0.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors">Otro</button>}
+                      </div>
+                    )}
+                    {!isEditMode && savedGlobalDiscount && savedGlobalDiscount.value > 0 && (
+                      <div className="flex justify-between items-center py-2.5 border-b border-slate-100">
+                        <span className="text-sm text-slate-500">Descuento Global <span className="text-xs text-slate-400">({savedGlobalDiscount.type === "percent" ? `${savedGlobalDiscount.value}%` : `$${savedGlobalDiscount.value.toLocaleString("es-AR")}`})</span></span>
+                        <span className="text-sm text-red-500 tabular-nums">−${Math.round(savedGlobalDiscountAmount).toLocaleString("es-AR")}</span>
+                      </div>
+                    )}
+                    {!isEditMode && savedEnvio != null && savedEnvio > 0 && (
+                      <div className="flex justify-between items-center py-2.5 border-b border-slate-100">
+                        <span className="text-sm text-slate-500">Envío</span>
+                        <span className="text-sm text-slate-700 tabular-nums">+${savedEnvio.toLocaleString("es-AR")}</span>
+                      </div>
+                    )}
+                    {!isEditMode && savedCustomCharges.map((c) => (
+                      <div key={c.id} className="flex justify-between items-center py-2.5 border-b border-slate-100">
+                        <span className="text-sm text-slate-500">{c.label}</span>
+                        <span className="text-sm text-slate-700 tabular-nums">+${c.value.toLocaleString("es-AR")}</span>
+                      </div>
+                    ))}
+
+                    {/* Total — pinned to bottom */}
+                    <div className="flex justify-between items-center py-3 mt-auto border-t border-slate-200">
+                      <span className="text-base font-bold text-slate-900">Total</span>
+                      <span className="text-base font-bold text-slate-900 tabular-nums">
+                        ${Math.round(isEditMode ? venta.total - globalDiscountAmount + envioAmount + customCharges.reduce((s, c) => s + c.value, 0) : venta.total + savedAdjTotal).toLocaleString("es-AR")}
+                      </span>
+                    </div>
+
+                  </div>
+                </div>{/* end resumen card */}
+                </div>
+              )}
+              </div>{/* end widgets+resumen row */}
+
+              {/* ── Row 3: productos card (col-span-2) + cobro card (col-span-1) ── */}
+              <div className="grid grid-cols-3 gap-4 items-start">
+              <div className="col-span-2 flex flex-col gap-4">
                 {/* Entrega + Items card */}
               <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm overflow-hidden">
 
@@ -1348,228 +1500,25 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                 />
               </div>
 
-              </div>{/* end col-span-2 flex column */}
+              </div>{/* end col-span-2 products */}
 
-              {/* Right col-span-1: two stacked cards */}
+              {/* Right col-span-1: cobro card aligned with products */}
               {ventaItems.length > 0 && (
                 <div className="col-span-1 flex flex-col gap-4">
-                <div className="bg-white rounded-lg shadow-sm overflow-hidden flex flex-col min-h-[300px]">
-                  <div className="px-5 py-5 flex flex-col gap-0 flex-1">
-
-                    {/* ── Resumen section ── */}
-                    <p className="text-sm font-semibold text-slate-800 mb-4">Resumen</p>
-
-                    {/* Subtotal — expandable */}
-                    <button
-                      type="button"
-                      onClick={() => setShowSubtotalBreakdown(!showSubtotalBreakdown)}
-                      className="w-full flex items-center py-2.5 border-b border-slate-100 text-left hover:bg-slate-50/50 -mx-5 px-5 transition-colors"
-                    >
-                      <span className="text-sm text-slate-500 flex-1">Subtotal</span>
-                      <span className="text-sm text-slate-700 tabular-nums mr-2">${Math.round(venta.subtotal).toLocaleString("es-AR")}</span>
-                      <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${showSubtotalBreakdown ? "rotate-180" : ""}`} />
-                    </button>
-                    {showSubtotalBreakdown && (
-                      <div className="border-b border-slate-100">
-                        {ventaItems.map((item, idx) => {
-                          const display = getVentaItemDisplay(item)
-                          const adjustedUnit = item.discountType === "percent"
-                            ? item.unitPrice * (1 - item.discount / 100)
-                            : item.unitPrice - (item.discount / Math.max(item.quantity, 1))
-                          const lineTotal = Math.round(adjustedUnit * item.quantity)
-                          return (
-                            <div key={idx} className="flex justify-between items-start gap-3 py-2.5 -mx-5 px-5 border-b border-slate-50 last:border-0">
-                              <div className="min-w-0 flex-1">
-                                <p className="text-xs text-slate-700 leading-tight">{display.name}</p>
-                                {display.tags.length > 0 && (
-                                  <div className="flex flex-wrap gap-1 mt-0.5">
-                                    {display.tags.map((tag, i) => (
-                                      <span key={i} className="text-[10px] text-slate-400">{tag}</span>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                              <div className="text-right shrink-0">
-                                <p className="text-[11px] text-slate-400 tabular-nums">{item.quantity} × ${Math.round(adjustedUnit).toLocaleString("es-AR")}</p>
-                                <p className="text-xs font-medium text-slate-700 tabular-nums">${lineTotal.toLocaleString("es-AR")}</p>
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )}
-
-                    {venta.descuento > 0 && (
-                      <div className="flex justify-between items-center py-2.5 border-b border-slate-100">
-                        <span className="text-sm text-slate-500">
-                          Descuento{" "}
-                          <span className="text-[10px] text-slate-400">
-                            ({venta.descuentoTipo === "percent" ? `${venta.descuento}%` : `$${venta.descuento.toLocaleString("es-AR")}`})
-                          </span>
-                        </span>
-                        <span className="text-sm text-red-500 tabular-nums">
-                          −${Math.round(venta.descuentoTipo === "percent" ? venta.subtotal * (venta.descuento / 100) : venta.descuento).toLocaleString("es-AR")}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* ── Edit mode ajuste inputs ── */}
-                    {isEditMode && showGlobalDiscount && (
-                      <div className="flex justify-between items-center py-2 border-b border-slate-100">
-                        <div className="flex items-center gap-1">
-                          <button onClick={() => { setShowGlobalDiscount(false); setGlobalDiscount({ value: 0, type: "percent" }) }} className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors">
-                            <X className="w-3 h-3" />
-                          </button>
-                          <span className="text-sm text-slate-500">Descuento global</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="number"
-                            value={globalDiscount.value || ""}
-                            onChange={(e) => setGlobalDiscount(prev => ({ ...prev, value: parseFloat(e.target.value) || 0 }))}
-                            className="w-16 text-right text-sm px-2 py-1 border border-slate-200 rounded focus:outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                          />
-                          <div className="flex border border-slate-200 rounded overflow-hidden">
-                            <button onClick={() => setGlobalDiscount(prev => ({ ...prev, type: "cash" }))} className={`px-2 py-1 text-xs cursor-pointer ${globalDiscount.type === "cash" ? "bg-slate-900 text-white" : "text-slate-400 hover:bg-slate-50"}`}>$</button>
-                            <button onClick={() => setGlobalDiscount(prev => ({ ...prev, type: "percent" }))} className={`px-2 py-1 text-xs cursor-pointer ${globalDiscount.type === "percent" ? "bg-slate-900 text-white" : "text-slate-400 hover:bg-slate-50"}`}>%</button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    {isEditMode && showEnvio && (
-                      <div className="flex justify-between items-center py-2 border-b border-slate-100">
-                        <div className="flex items-center gap-1">
-                          <button onClick={() => { setShowEnvio(false); setEnvioAmount(0) }} className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors">
-                            <X className="w-3 h-3" />
-                          </button>
-                          <span className="text-sm text-slate-500">Envío</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <span className="text-sm text-slate-400">$</span>
-                          <input
-                            type="number"
-                            value={envioAmount || ""}
-                            onChange={(e) => setEnvioAmount(parseFloat(e.target.value) || 0)}
-                            className="w-20 text-right text-sm px-2 py-1 border border-slate-200 rounded focus:outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                          />
-                        </div>
-                      </div>
-                    )}
-                    {isEditMode && customCharges.map((charge, idx) => (
-                      <div key={charge.id} className="flex justify-between items-center py-2 border-b border-slate-100">
-                        <div className="flex items-center gap-1">
-                          <button onClick={() => setCustomCharges(prev => prev.filter((_, i) => i !== idx))} className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors">
-                            <X className="w-3 h-3" />
-                          </button>
-                          <input
-                            type="text"
-                            value={charge.label}
-                            onChange={(e) => setCustomCharges(prev => prev.map((c, i) => i === idx ? { ...c, label: e.target.value } : c))}
-                            className="text-sm text-slate-500 bg-transparent border-none outline-none w-24"
-                          />
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <span className="text-sm text-slate-400">$</span>
-                          <input
-                            type="number"
-                            value={charge.value || ""}
-                            onChange={(e) => setCustomCharges(prev => prev.map((c, i) => i === idx ? { ...c, value: parseFloat(e.target.value) || 0 } : c))}
-                            className="w-20 text-right text-sm px-2 py-1 border border-slate-200 rounded focus:outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                          />
-                        </div>
-                      </div>
-                    ))}
-
-                    {/* Agregar tags — only shown in edit mode */}
-                    {isEditMode && estadoUI === "en_curso" && (!showGlobalDiscount || !showEnvio || customCharges.length === 0) && (
-                      <div className="flex items-center gap-2 flex-wrap py-2 border-b border-slate-100">
-                        <span className="text-xs text-slate-400">Agregar:</span>
-                        {!showGlobalDiscount && (
-                          <button onClick={() => setShowGlobalDiscount(true)} className="text-xs px-2 py-0.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors">
-                            Descuento Global
-                          </button>
-                        )}
-                        {!showEnvio && (
-                          <button onClick={() => setShowEnvio(true)} className="text-xs px-2 py-0.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors">
-                            Envío
-                          </button>
-                        )}
-                        {customCharges.length === 0 && (
-                          <button onClick={() => setCustomCharges([{ id: Date.now(), label: "Otro", value: 0 }])} className="text-xs px-2 py-0.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors">
-                            Otro
-                          </button>
-                        )}
-                      </div>
-                    )}
-
-                    {/* ── View mode: saved adjustments ── */}
-                    {!isEditMode && savedGlobalDiscount && savedGlobalDiscount.value > 0 && (
-                      <div className="flex justify-between items-center py-2.5 border-b border-slate-100">
-                        <span className="text-sm text-slate-500">
-                          Descuento Global{" "}
-                          <span className="text-xs text-slate-400">
-                            ({savedGlobalDiscount.type === "percent" ? `${savedGlobalDiscount.value}%` : `$${savedGlobalDiscount.value.toLocaleString("es-AR")}`})
-                          </span>
-                        </span>
-                        <span className="text-sm text-red-500 tabular-nums">
-                          −${Math.round(savedGlobalDiscountAmount).toLocaleString("es-AR")}
-                        </span>
-                      </div>
-                    )}
-                    {!isEditMode && savedEnvio != null && savedEnvio > 0 && (
-                      <div className="flex justify-between items-center py-2.5 border-b border-slate-100">
-                        <span className="text-sm text-slate-500">Envío</span>
-                        <span className="text-sm text-slate-700 tabular-nums">+${savedEnvio.toLocaleString("es-AR")}</span>
-                      </div>
-                    )}
-                    {!isEditMode && savedCustomCharges.map((c) => (
-                      <div key={c.id} className="flex justify-between items-center py-2.5 border-b border-slate-100">
-                        <span className="text-sm text-slate-500">{c.label}</span>
-                        <span className="text-sm text-slate-700 tabular-nums">+${c.value.toLocaleString("es-AR")}</span>
-                      </div>
-                    ))}
-
-                    {/* Total */}
-                    <div className="flex justify-between items-center py-3 mt-auto border-t border-slate-200">
-                      <span className="text-base font-bold text-slate-900">Total</span>
-                      <span className="text-base font-bold text-slate-900 tabular-nums">
-                        ${Math.round(
-                          isEditMode
-                            ? venta.total - globalDiscountAmount + envioAmount + customCharges.reduce((s, c) => s + c.value, 0)
-                            : venta.total + savedAdjTotal
-                        ).toLocaleString("es-AR")}
-                      </span>
-                    </div>
-
-
-
-                  </div>
-                </div>{/* end resumen card */}
-
                 {/* ── Detalle del Cobro card ── */}
                 <div className="bg-white rounded-lg shadow-sm overflow-hidden">
                   <div className="px-5 py-5 flex flex-col gap-0">
                     <p className="text-sm font-semibold text-slate-800 mb-3">Detalle del Cobro</p>
-
                     {ventaCobros.length > 0 ? (
                       ventaCobros.map((cobro) => (
                         <div key={cobro.id} className="flex items-center py-2.5 border-b border-slate-100 gap-2 group">
                           <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <span className="text-xs text-slate-400 tabular-nums">
-                              {new Date(cobro.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}
-                            </span>
+                            <span className="text-xs text-slate-400 tabular-nums">{new Date(cobro.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}</span>
                             <span className="text-xs text-slate-300">·</span>
                             <span className="text-xs text-slate-500">{metodoPagoLabels[cobro.medioPago]}</span>
                           </div>
-                          <span className="text-sm font-semibold text-slate-900 tabular-nums">
-                            ${cobro.monto.toLocaleString("es-AR")}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => setUndoCobroTarget({ id: cobro.id, monto: cobro.monto })}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-400"
-                            title="Deshacer cobro"
-                          >
+                          <span className="text-sm font-semibold text-slate-900 tabular-nums">${cobro.monto.toLocaleString("es-AR")}</span>
+                          <button type="button" onClick={() => setUndoCobroTarget({ id: cobro.id, monto: cobro.monto })} className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-400" title="Deshacer cobro">
                             <Undo2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
@@ -1583,8 +1532,11 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                 </div>
                 </div>
               )}
+              </div>{/* end products+cobro row */}
 
-              </div>{/* end grid grid-cols-3 */}
+              </div>{/* end outer flex col */}
+
+
             </div>
           </main>
         </div>
