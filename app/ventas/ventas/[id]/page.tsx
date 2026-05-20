@@ -457,7 +457,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   const dia = fechaObj.toLocaleDateString("es-AR", { day: "2-digit" })
                   const inicial = clienteNombre.charAt(0).toUpperCase()
                   return (
-                    <div className="pt-8 px-4 pb-3 flex flex-col gap-3">
+                    <div className="pt-8 px-4 pb-3 flex flex-col gap-6">
                       {/* Row 1: Venta ID + date + origen + actions */}
                       <div className="flex items-center justify-between gap-4">
                         {/* Venta ID + fecha/hora + origen — spread across available width */}
@@ -670,6 +670,43 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   )}
                 </div>
 
+                {/* ── Entrega activity log — between title and grid ── */}
+                {entregaMode && (
+                  <div className="px-4 pb-2 flex flex-col">
+                    {ventaEntregaEntries.length === 0 ? (
+                      <p className="text-xs text-slate-400 py-1">Sin entregas registradas</p>
+                    ) : (
+                      [...ventaEntregaEntries].reverse().map((entry) => {
+                        const totalEntryUnits = entry.items.reduce((s, i) => s + i.quantity, 0)
+                        const dateLabel = new Date(entry.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })
+                        return (
+                          <div key={entry.id} className="flex items-center group border-b border-slate-100 last:border-0">
+                            <button
+                              type="button"
+                              onClick={() => setViewingEntregaEntry(entry)}
+                              className="flex-1 flex items-center gap-2 py-1.5 hover:bg-slate-50/60 -ml-4 pl-4 pr-2 transition-colors text-left"
+                            >
+                              <span className="text-xs text-slate-400 tabular-nums">{dateLabel}</span>
+                              <span className="text-xs text-slate-300">·</span>
+                              <span className="text-xs text-slate-400 tabular-nums">{entry.hora}</span>
+                              <span className="text-xs text-slate-300">·</span>
+                              <span className="text-xs text-slate-400 tabular-nums">{totalEntryUnits} {totalEntryUnits === 1 ? "unidad" : "unidades"}</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setUndoEntregaTarget(entry)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 pr-0"
+                              title="Deshacer entrega"
+                            >
+                              <Undo2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )
+                      })
+                    )}
+                  </div>
+                )}
+
                 {/* ── Grid (padded inside card) ── */}
                 <div className="px-3 pb-3">
                 <div className="rounded-md border border-slate-200/80 overflow-hidden">
@@ -818,44 +855,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
               )}
               </div>{/* end rounded inner grid */}
               </div>{/* end p-3 padding wrapper */}
-
-                {/* ── Entrega activity log ── */}
-                {entregaMode && (
-                  <div className="px-4 pb-4 flex flex-col">
-                    {ventaEntregaEntries.length === 0 ? (
-                      <p className="text-xs text-slate-400 py-2">Sin entregas registradas</p>
-                    ) : (
-                      [...ventaEntregaEntries].reverse().map((entry) => {
-                        const totalEntryUnits = entry.items.reduce((s, i) => s + i.quantity, 0)
-                        const dateLabel = new Date(entry.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })
-                        return (
-                          <div key={entry.id} className="flex items-center group border-b border-slate-100 last:border-0">
-                            <button
-                              type="button"
-                              onClick={() => setViewingEntregaEntry(entry)}
-                              className="flex-1 flex items-center gap-2 py-2 hover:bg-slate-50/60 -ml-4 pl-4 pr-2 transition-colors text-left"
-                            >
-                              <span className="text-xs text-slate-400 tabular-nums">{dateLabel}</span>
-                              <span className="text-xs text-slate-300">·</span>
-                              <span className="text-xs text-slate-400 tabular-nums">{entry.hora}</span>
-                              <span className="text-xs text-slate-300">·</span>
-                              <span className="text-xs text-slate-400 tabular-nums">{totalEntryUnits} {totalEntryUnits === 1 ? "unidad" : "unidades"}</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setUndoEntregaTarget(entry)}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 -mr-4 mr-0 pr-4"
-                              title="Deshacer entrega"
-                            >
-                              <Undo2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        )
-                      })
-                    )}
-                  </div>
-                )}
-
               </div>{/* end entrega+items card */}
 
               {/* ── Notas card ── */}
@@ -916,13 +915,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             </div>
                           )
                         })}
-                      </div>
-                    )}
-
-                    {itemDiscountAmount > 0 && (
-                      <div className="flex justify-between items-center py-2.5 border-b border-slate-100">
-                        <span className="text-sm text-red-500">Promociones</span>
-                        <span className="text-sm text-red-500 tabular-nums">−${Math.round(itemDiscountAmount).toLocaleString("es-AR")}</span>
                       </div>
                     )}
 
