@@ -193,10 +193,18 @@ export interface VentaItem {
   categoria?: string
 }
 
-// Tracks how many units of a given item have been delivered
+// Tracks how many units of a given item have been delivered (running total)
 export interface VentaEntregaItem {
   sku: string
   quantityEntregada: number
+}
+
+// A single delivery event (log entry), mirroring VentaCobro's structure
+export interface VentaEntregaEntry {
+  id: string
+  fecha: string   // "YYYY-MM-DD"
+  hora: string    // "HH:mm"
+  items: { sku: string; quantity: number }[]
 }
 
 // A single payment entry against the venta
@@ -227,6 +235,8 @@ export interface Venta {
   total: number
   // Entrega: tracks delivered units per item. Missing sku = 0 delivered.
   entregaItems: VentaEntregaItem[]
+  // Entrega log: ordered list of delivery events (newest last)
+  entregaEntries: VentaEntregaEntry[]
   // Cobros: list of payment entries. Sum may be <= total.
   cobros: VentaCobro[]
   // Estado is derived: "finalizada" when cobros sum = total AND all items fully delivered

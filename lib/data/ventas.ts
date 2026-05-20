@@ -54,6 +54,9 @@ export const VENTAS: Venta[] = [
       { sku: "VNO-PROGRES-MALB-2019", quantityEntregada: 3 },
       { sku: "ESP-NAVCOR-EXBR", quantityEntregada: 12 },
     ],
+    entregaEntries: [
+      { id: "VTA-001-ENT-1", fecha: "2025-12-25", hora: "10:34", items: [{ sku: "ESP-CHAND-BRUT", quantity: 6 }, { sku: "VNO-PROGRES-MALB-2019", quantity: 3 }, { sku: "ESP-NAVCOR-EXBR", quantity: 12 }] },
+    ],
     cobros: [
       {
         id: "COB-001-01",
@@ -160,6 +163,9 @@ export const VENTAS: Venta[] = [
       { sku: "VDKA-ABSO-ORIG", quantityEntregada: 3 },
       { sku: "RON-HAVCL-7ANS", quantityEntregada: 2 },
     ],
+    entregaEntries: [
+      { id: "VTA-002-ENT-1", fecha: "2025-12-24", hora: "16:24", items: [{ sku: "WHKY-JW750-BLK", quantity: 2 }, { sku: "GIN-BOMBAY-ORIG", quantity: 2 }, { sku: "VNO-PROGRES-MALB-2019", quantity: 3 }, { sku: "ESP-CHAND-BRTROS", quantity: 2 }, { sku: "LICR-COIN700-ORIG", quantity: 1 }, { sku: "VDKA-ABSO-ORIG", quantity: 3 }, { sku: "RON-HAVCL-7ANS", quantity: 2 }] },
+    ],
     cobros: [
       {
         id: "COB-002-01",
@@ -222,6 +228,9 @@ export const VENTAS: Venta[] = [
       { sku: "VNO-SALRES-CHARD-2021", quantityEntregada: 12 },
       { sku: "ESP-CHAND-BRUT", quantityEntregada: 6 },
     ],
+    entregaEntries: [
+      { id: "VTA-003-ENT-1", fecha: "2025-12-23", hora: "14:08", items: [{ sku: "VNO-SALRES-MALB-2020", quantity: 24 }, { sku: "VNO-SALRES-CHARD-2021", quantity: 12 }, { sku: "ESP-CHAND-BRUT", quantity: 6 }] },
+    ],
     cobros: [
       {
         id: "COB-003-01",
@@ -262,6 +271,7 @@ export const VENTAS: Venta[] = [
     entregaItems: [
       { sku: "RON-HAVCL-7ANS", quantityEntregada: 0 },
     ],
+    entregaEntries: [],
     cobros: [
       {
         id: "COB-004-01",
@@ -320,6 +330,7 @@ export const VENTAS: Venta[] = [
     descuentoTipo: "percent",
     total: 218000,
     entregaItems: [],
+    entregaEntries: [],
     cobros: [],
     estado: "en_curso",
   },

@@ -1,12 +1,12 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import type { Venta, VentaItem, VentaCobro, VentaEntregaItem, VentaEstado } from "@/lib/types"
+import type { Venta, VentaItem, VentaCobro, VentaEntregaItem, VentaEntregaEntry, VentaEstado } from "@/lib/types"
 import { VENTAS } from "@/lib/data/ventas"
 import { useAccount } from "@/lib/contexts/account-context"
 
 // Bump this when the Venta type or seed data changes to force re-seeding
-const VENTAS_SEED_VERSION = "v3"
+const VENTAS_SEED_VERSION = "v4"
 
 // Ensures a venta object loaded from localStorage has all required fields,
 // even if it was saved before a type extension.
@@ -16,6 +16,7 @@ function migrateVenta(raw: Partial<Venta> & Record<string, unknown>): Venta {
     items: Array.isArray(raw.items) ? raw.items : [],
     cobros: Array.isArray(raw.cobros) ? raw.cobros : [],
     entregaItems: Array.isArray(raw.entregaItems) ? raw.entregaItems : [],
+    entregaEntries: Array.isArray(raw.entregaEntries) ? raw.entregaEntries : [],
     subtotal: raw.subtotal ?? 0,
     total: raw.total ?? 0,
     descuento: raw.descuento ?? 0,
@@ -190,25 +191,46 @@ export function useVentas() {
   )
 
   // Add (sum) delivered units to existing entregaItems entries. Caps at item.quantity.
+  // Also appends a VentaEntregaEntry log entry with a timestamp.
   const addEntregas = useCallback(
-    (ventaId: string, entregas: VentaEntregaItem[]) => {
+    (ventaId: string, entregas: VentaEntregaItem[], fecha?: string, hora?: string) => {
+      const now = new Date()
+      const entryFecha = fecha ?? now.toISOString().slice(0, 10)
+      const entryHora = hora ?? now.toTimeString().slice(0, 5)
+
       const updatedVentas = ventas.map((v) => {
         if (v.id !== ventaId) return v
         const next = [...v.entregaItems]
+        const entryItems: VentaEntregaEntry["items"] = []
+
         for (const e of entregas) {
           const item = v.items.find((it) => it.sku === e.sku)
           if (!item) continue
           const idx = next.findIndex((ei) => ei.sku === e.sku)
           const existing = idx >= 0 ? next[idx].quantityEntregada : 0
           const newQty = Math.min(item.quantity, existing + e.quantityEntregada)
+          const actualDelivered = newQty - existing
+          if (actualDelivered <= 0) continue
           if (idx >= 0) next[idx] = { ...next[idx], quantityEntregada: newQty }
           else next.push({ sku: e.sku, quantityEntregada: newQty })
+          entryItems.push({ sku: e.sku, quantity: actualDelivered })
         }
-        return recomputeVenta({ ...v, entregaItems: next })
+
+        const newEntry: VentaEntregaEntry = {
+          id: `${ventaId}-ENT-${(v.entregaEntries ?? []).length + 1}-${Date.now()}`,
+          fecha: entryFecha,
+          hora: entryHora,
+          items: entryItems,
+        }
+
+        return recomputeVenta({
+          ...v,
+          entregaItems: next,
+          entregaEntries: [...(v.entregaEntries ?? []), newEntry],
+        })
       })
       setVentas(updatedVentas)
       saveVentas(updatedVentas)
-      console.log(`[v0] useVentas - Updated entregas on ${ventaId}`)
     },
     [ventas, saveVentas],
   )
@@ -230,8 +252,9 @@ export function useVentas() {
       const updatedVentas = ventas.map((v) => {
         if (v.id !== ventaId) return v
 
-        // 1. Complete all pending entregas
+        // 1. Complete all pending entregas + log entry
         const entregaNext = [...v.entregaItems]
+        const entryItems: VentaEntregaEntry["items"] = []
         for (const item of v.items) {
           const idx = entregaNext.findIndex((ei) => ei.sku === item.sku)
           const existing = idx >= 0 ? entregaNext[idx].quantityEntregada : 0
@@ -239,10 +262,20 @@ export function useVentas() {
           if (remaining <= 0) continue
           if (idx >= 0) entregaNext[idx] = { ...entregaNext[idx], quantityEntregada: item.quantity }
           else entregaNext.push({ sku: item.sku, quantityEntregada: item.quantity })
+          entryItems.push({ sku: item.sku, quantity: remaining })
+        }
+        const entregaEntriesNext = [...(v.entregaEntries ?? [])]
+        if (entryItems.length > 0) {
+          entregaEntriesNext.push({
+            id: `${ventaId}-ENT-${entregaEntriesNext.length + 1}-${Date.now()}`,
+            fecha: cobroFecha,
+            hora: cobroHora,
+            items: entryItems,
+          })
         }
 
         // 2. Register cobro for remaining balance (recompute with fresh entregaNext first)
-        const interim = recomputeVenta({ ...v, entregaItems: entregaNext })
+        const interim = recomputeVenta({ ...v, entregaItems: entregaNext, entregaEntries: entregaEntriesNext })
         const cobrado = interim.cobros.reduce((s, c) => s + c.monto, 0)
         const remaining = Math.max(0, interim.total - cobrado)
         const cobrosNext = [...interim.cobros]
