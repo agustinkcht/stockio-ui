@@ -763,12 +763,18 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                                     </span>
                                   </div>
                                   {/* Final unit price */}
-                                  <span className="text-sm font-medium text-slate-800 tabular-nums">
-                                    ${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}
-                                  </span>
+                                  <div className="flex items-baseline gap-1">
+                                    <span className="text-sm font-medium text-slate-800 tabular-nums">
+                                      ${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}
+                                    </span>
+                                    <span className="text-xs text-slate-400">c/u</span>
+                                  </div>
                                 </>
                               ) : (
-                                <span className="text-sm text-slate-700 tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
+                                <div className="flex items-baseline gap-1">
+                                  <span className="text-sm text-slate-700 tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
+                                  <span className="text-xs text-slate-400">c/u</span>
+                                </div>
                               )}
                             </div>
 
