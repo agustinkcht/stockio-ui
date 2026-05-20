@@ -464,8 +464,23 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                           {/* Origen */}
                           <span className="text-sm text-slate-400 shrink-0">Manual</span>
                         </div>
+                      </div>
+
+                      {/* Row 2: Cliente pill + actions floating right */}
+                      <div className="flex items-center justify-between">
+                        {/* Cliente pill — content-width */}
+                        <div className="bg-slate-100 border border-slate-200/60 rounded-lg shadow-sm px-4 py-2.5 flex items-center gap-3 w-fit">
+                          <div className="w-7 h-7 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
+                            <span className="text-xs font-semibold text-white">{clienteNombre.charAt(0).toUpperCase()}</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-slate-400 uppercase tracking-wider block leading-none mb-0.5">Cliente</span>
+                            <span className="text-sm font-semibold text-slate-900 leading-tight">{clienteNombre}</span>
+                          </div>
+                        </div>
+
                         {/* Actions */}
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-2">
                           <button
                             type="button"
                             className="h-8 text-xs transition-colors bg-white border border-slate-200 hover:bg-slate-50 cursor-pointer gap-1.5 px-3 rounded-md flex items-center text-slate-700 font-medium shadow-sm"
@@ -496,21 +511,9 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         </div>
                       </div>
 
-
                     </div>
                   )
                 })()}
-
-                {/* ── Cliente card ── */}
-                <div className="bg-slate-100 border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
-                    <span className="text-sm font-semibold text-white">{clienteNombre.charAt(0).toUpperCase()}</span>
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider block leading-none mb-0.5">Cliente</span>
-                    <span className="text-sm font-semibold text-slate-900 leading-tight">{clienteNombre}</span>
-                  </div>
-                </div>
 
                 {/* ── Estado card ── */}
                 <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-5 py-4">
