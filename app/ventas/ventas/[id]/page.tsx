@@ -84,57 +84,31 @@ function ClienteSelectorInlineModal({
             />
           </div>
         </div>
-        <div className="overflow-y-auto flex-1">
-          {/* Consumidor Final — pinned at top */}
-          {(() => {
-            const isSelected = currentClienteId === null
-            const showConsumidorFinal = "consumidor final".includes(search.toLowerCase()) || search === ""
-            return showConsumidorFinal ? (
-              <>
-                <button
-                  onClick={() => onSelect("__consumidor_final__", "Consumidor Final")}
-                  className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left ${isSelected ? "bg-slate-50" : ""}`}
-                >
-                  <div className="w-8 h-8 rounded-full bg-slate-400 flex items-center justify-center shrink-0">
-                    <span className="text-xs font-semibold text-white">CF</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-900">Consumidor Final</p>
-                    <p className="text-xs text-slate-400">Sin cuenta registrada</p>
-                  </div>
-                  {isSelected && <Check className="w-4 h-4 text-emerald-500 shrink-0" />}
-                </button>
-                {filtered.length > 0 && <div className="border-t border-slate-100 mx-4" />}
-              </>
-            ) : null
-          })()}
-          {/* Clientes list */}
-          <div className="divide-y divide-slate-50">
-            {filtered.map((c) => {
-              const name = c.tipo === "empresa" ? (c.razonSocial ?? "") : `${c.nombre} ${c.apellido}`.trim()
-              const initials = name.slice(0, 2).toUpperCase()
-              const isSelected = c.id === currentClienteId
-              return (
-                <button
-                  key={c.id}
-                  onClick={() => onSelect(c.id, name)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left ${isSelected ? "bg-slate-50" : ""}`}
-                >
-                  <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
-                    <span className="text-xs font-semibold text-white">{initials}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-900 truncate">{name}</p>
-                    <p className="text-xs text-slate-400">{c.tipo === "empresa" ? "Empresa" : "Particular"} · {c.condicionIva}</p>
-                  </div>
-                  {isSelected && <Check className="w-4 h-4 text-emerald-500 shrink-0" />}
-                </button>
-              )
-            })}
-            {filtered.length === 0 && search !== "" && (
-              <p className="text-sm text-slate-400 text-center py-6">Sin resultados</p>
-            )}
-          </div>
+        <div className="overflow-y-auto flex-1 divide-y divide-slate-50">
+          {filtered.map((c) => {
+            const name = c.tipo === "empresa" ? (c.razonSocial ?? "") : `${c.nombre} ${c.apellido}`.trim()
+            const initials = name.slice(0, 2).toUpperCase()
+            const isSelected = c.id === currentClienteId
+            return (
+              <button
+                key={c.id}
+                onClick={() => onSelect(c.id, name)}
+                className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left ${isSelected ? "bg-slate-50" : ""}`}
+              >
+                <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
+                  <span className="text-xs font-semibold text-white">{initials}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-slate-900 truncate">{name}</p>
+                  <p className="text-xs text-slate-400">{c.tipo === "empresa" ? "Empresa" : "Particular"} · {c.condicionIva}</p>
+                </div>
+                {isSelected && <Check className="w-4 h-4 text-emerald-500 shrink-0" />}
+              </button>
+            )
+          })}
+          {filtered.length === 0 && (
+            <p className="text-sm text-slate-400 text-center py-6">Sin resultados</p>
+          )}
         </div>
       </div>
     </div>
@@ -753,10 +727,10 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
           <main className="flex-1 flex flex-col bg-[rgba(250,251,253,1)] overflow-hidden">
             {/* Items Grid + Totals side by side */}
             <div className="flex-1 overflow-y-auto px-6 pb-6 pt-4">
-              <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-3 gap-4 items-stretch">
 
-              {/* ── Top section: info + widgets (full width) ── */}
-              <div className="flex flex-col gap-4">
+              {/* Left col-span-2 */}
+              <div className="col-span-2 flex flex-col gap-4">
 
                 {/* ── Venta Info card ── */}
                 {(() => {
@@ -982,12 +956,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   </div>
 
                 </div>
-
-              </div>{/* end top section */}
-
-              {/* ── Bottom section: productos (col-span-2) + resumen (col-span-1) ── */}
-              <div className="grid grid-cols-3 gap-4 items-stretch">
-              <div className="col-span-2 flex flex-col gap-4">
 
                 {/* Entrega + Items card */}
               <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm overflow-hidden">
@@ -1358,12 +1326,11 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                 />
               </div>
 
-              </div>{/* end col-span-2 inner */}
-              </div>{/* end col-span-2 */}
+              </div>{/* end col-span-2 flex column */}
 
               {/* Right col-span-1: two stacked cards */}
               {ventaItems.length > 0 && (
-                <div className="col-span-1 flex flex-col gap-4">
+                <div className="col-span-1 flex flex-col gap-4 h-full">
                 <div className="bg-white rounded-lg shadow-sm overflow-hidden flex flex-col flex-1">
                   <div className="px-5 py-5 flex flex-col gap-0 flex-1">
 
@@ -1595,8 +1562,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                 </div>
               )}
 
-              </div>{/* end bottom grid grid-cols-3 */}
-              </div>{/* end outer flex column */}
+              </div>{/* end grid grid-cols-3 */}
             </div>
           </main>
         </div>
@@ -1617,11 +1583,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
           <ClienteSelectorInlineModal
             currentClienteId={clienteId}
             onSelect={(id, nombre) => {
-              if (id === "__consumidor_final__") {
-                updateVenta(venta.id, { cliente: { tipo: "consumidor_final" } })
-              } else {
-                updateVenta(venta.id, { cliente: { tipo: "cuenta", id, nombre } })
-              }
+              updateVenta(venta.id, { cliente: { tipo: "cuenta", id, nombre } })
               setShowClienteSelectorModal(false)
             }}
             onClose={() => setShowClienteSelectorModal(false)}
