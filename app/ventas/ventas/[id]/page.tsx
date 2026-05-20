@@ -131,24 +131,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const [savedEnvio, setSavedEnvio] = useState<number | null>(null)
   const [savedCustomCharges, setSavedCustomCharges] = useState<{ id: number; label: string; value: number }[]>([])
 
-  // Detect pending changes in edit mode
-  const hasItemChanges = useMemo(() => {
-    if (!isEditMode) return false
-    if (editItems.length !== ventaItems.length) return true
-    return editItems.some((ei, i) => {
-      const orig = ventaItems[i]
-      const aj = editAjustes[i] ?? { value: 0, type: "percent" }
-      return ei.quantity !== orig.quantity || ei.unitPrice !== orig.unitPrice || aj.value !== orig.discount
-    })
-  }, [isEditMode, editItems, editAjustes, ventaItems])
-
-  const hasResumenChanges = useMemo(() => {
-    if (!isEditMode) return false
-    return (showGlobalDiscount && globalDiscount.value > 0) || (showEnvio && envioAmount > 0) || customCharges.some(c => c.value > 0)
-  }, [isEditMode, showGlobalDiscount, globalDiscount, showEnvio, envioAmount, customCharges])
-
-  const hasAnyEditChanges = hasItemChanges || hasResumenChanges
-
   // Saved adjustment totals for view mode
   const savedGlobalDiscountAmount = savedGlobalDiscount
     ? savedGlobalDiscount.type === "percent"
@@ -211,6 +193,24 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
       it.discountType === "percent" ? baseGross * (it.discount / 100) : it.discount * it.quantity
     return sum + discount
   }, 0), [ventaItems])
+
+  // Detect pending changes in edit mode — must be after ventaItems is defined
+  const hasItemChanges = useMemo(() => {
+    if (!isEditMode) return false
+    if (editItems.length !== ventaItems.length) return true
+    return editItems.some((ei, i) => {
+      const orig = ventaItems[i]
+      const aj = editAjustes[i] ?? { value: 0, type: "percent" }
+      return ei.quantity !== orig.quantity || ei.unitPrice !== orig.unitPrice || aj.value !== orig.discount
+    })
+  }, [isEditMode, editItems, editAjustes, ventaItems])
+
+  const hasResumenChanges = useMemo(() => {
+    if (!isEditMode) return false
+    return (showGlobalDiscount && globalDiscount.value > 0) || (showEnvio && envioAmount > 0) || customCharges.some(c => c.value > 0)
+  }, [isEditMode, showGlobalDiscount, globalDiscount, showEnvio, envioAmount, customCharges])
+
+  const hasAnyEditChanges = hasItemChanges || hasResumenChanges
 
   // Modal computed values
   const allModalItems = INITIAL_ITEMS
