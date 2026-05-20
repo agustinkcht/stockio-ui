@@ -28,6 +28,7 @@ import {
   ArrowUpDown,
   X,
   Undo2,
+  Pencil,
 } from "lucide-react"
 import Image from "next/image"
 import type { Venta, VentaItem, PaymentMethod, Item, ItemVariant, VentaEntregaItem, VentaEntregaEntry } from "@/lib/types"
@@ -51,7 +52,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const router = useRouter()
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
 
-  const { ventas, isLoading: isLoadingVentas, addItemsToVenta, addCobro, addEntregas, setEstado, finalizarVenta, undoCobro, undoEntregaEntry } = useVentas()
+  const { ventas, isLoading: isLoadingVentas, addItemsToVenta, updateVenta, addCobro, addEntregas, setEstado, finalizarVenta, undoCobro, undoEntregaEntry } = useVentas()
   const venta = useMemo(() => ventas.find((v) => v.id === id) || null, [ventas, id])
 
   const [showExportDropdown, setShowExportDropdown] = useState(false)
@@ -71,6 +72,46 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const [viewingEntregaEntry, setViewingEntregaEntry] = useState<VentaEntregaEntry | null>(null)
   const [undoCobroTarget, setUndoCobroTarget] = useState<{ id: string; monto: number } | null>(null)
   const [undoEntregaTarget, setUndoEntregaTarget] = useState<VentaEntregaEntry | null>(null)
+
+  // Edit mode
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [editItems, setEditItems] = useState<VentaItem[]>([])
+  const [editAjustes, setEditAjustes] = useState<{ [idx: number]: { value: number; type: "percent" | "cash" | "unit" } }>({})
+
+  const enterEditMode = () => {
+    setEditItems(ventaItems.map(i => ({ ...i })))
+    setEditAjustes(
+      Object.fromEntries(ventaItems.map((item, idx) => [
+        idx,
+        item.discount > 0
+          ? { value: item.discount, type: (item.discountType === "fixed" ? "cash" : item.discountType) as "percent" | "cash" }
+          : { value: 0, type: "percent" as const },
+      ]))
+    )
+    setIsEditMode(true)
+  }
+
+  const cancelEditMode = () => { setIsEditMode(false); setEditItems([]); setEditAjustes({}) }
+
+  const saveEditMode = () => {
+    if (!venta) return
+    const saved: VentaItem[] = editItems.map((item, idx) => {
+      const aj = editAjustes[idx] ?? { value: 0, type: "percent" }
+      return {
+        ...item,
+        discount: aj.value,
+        discountType: aj.type === "cash" ? "fixed" : aj.type === "unit" ? "percent" : aj.type,
+        total: (() => {
+          if (aj.value === 0) return item.quantity * item.unitPrice
+          if (aj.type === "unit") return Math.max(0, item.quantity - Math.min(aj.value, item.quantity)) * item.unitPrice
+          const adj = aj.type === "percent" ? item.unitPrice * (1 - aj.value / 100) : Math.max(0, item.unitPrice - aj.value)
+          return item.quantity * adj
+        })(),
+      }
+    })
+    updateVenta(venta.id, { items: saved })
+    cancelEditMode()
+  }
 
   // Resumen adjustments (local, en_curso only)
   const [showGlobalDiscount, setShowGlobalDiscount] = useState(false)
@@ -497,6 +538,20 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
                         {/* Actions */}
                         <div className="flex items-center gap-2">
+                          {estadoUI === "en_curso" && (
+                            <button
+                              type="button"
+                              onClick={() => isEditMode ? cancelEditMode() : enterEditMode()}
+                              className={`h-8 text-xs cursor-pointer gap-1.5 px-3 rounded-md flex items-center font-medium transition-colors shadow-sm ${
+                                isEditMode
+                                  ? "bg-slate-900 text-white border border-slate-900"
+                                  : "bg-white border border-slate-200 hover:bg-slate-50 text-slate-700"
+                              }`}
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                              Editar
+                            </button>
+                          )}
                           <button
                             type="button"
                             className="h-8 text-xs transition-colors bg-white border border-slate-200 hover:bg-slate-50 cursor-pointer gap-1.5 px-3 rounded-md flex items-center text-slate-700 font-medium shadow-sm"
@@ -713,6 +768,20 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
 
 
+                {/* ── Edit mode column headers ── */}
+                {isEditMode && !entregaMode && (
+                  <div className="grid grid-cols-[2fr_0.8fr_1fr_auto_1.2fr_auto_1.2fr_auto] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider border-b border-slate-100 bg-slate-50/80">
+                    <div className="flex items-center px-4">Item</div>
+                    <div className="flex items-center justify-center">Cantidad</div>
+                    <div className="flex items-center justify-center">Precio Unit.</div>
+                    <div className="w-6" />
+                    <div className="flex items-center justify-center">Promoción</div>
+                    <div className="w-6" />
+                    <div className="flex items-center justify-end pr-4">Subtotal</div>
+                    <div className="w-10" />
+                  </div>
+                )}
+
                 {/* ── Items ── */}
                 {ventaItems.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16">
@@ -735,8 +804,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     return (
                       <div
                         key={`${venta.id}-item-${idx}`}
-                        onClick={() => setViewingItem(item)}
-                        className="border-b border-slate-100 last:border-b-0 transition-colors hover:bg-slate-50/50 cursor-pointer"
+                        onClick={() => !isEditMode && !entregaMode && setViewingItem(item)}
+                        className={`border-b border-slate-100 last:border-b-0 transition-colors ${!isEditMode && !entregaMode ? "hover:bg-slate-50/50 cursor-pointer" : ""}`}
                       >
                         {entregaMode ? (
                           <div className="flex items-center h-[56px] gap-3 px-4">
@@ -772,6 +841,124 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                               )}
                             </div>
                           </div>
+                        ) : isEditMode ? (
+                          /* ── Edit mode row (presupuesto-style) ── */
+                          (() => {
+                            const editItem = editItems[idx] ?? item
+                            const aj = editAjustes[idx] ?? { value: 0, type: "percent" as const }
+                            let adjUnit = editItem.unitPrice
+                            let finalTotal = 0
+                            if (aj.value > 0) {
+                              if (aj.type === "unit") {
+                                finalTotal = Math.max(0, editItem.quantity - Math.min(aj.value, editItem.quantity)) * editItem.unitPrice
+                              } else {
+                                adjUnit = aj.type === "percent"
+                                  ? editItem.unitPrice * (1 - aj.value / 100)
+                                  : Math.max(0, editItem.unitPrice - aj.value)
+                                finalTotal = editItem.quantity * adjUnit
+                              }
+                            } else {
+                              finalTotal = editItem.quantity * editItem.unitPrice
+                            }
+                            return (
+                              <div className="grid grid-cols-[2fr_0.8fr_1fr_auto_1.2fr_auto_1.2fr_auto] min-h-[72px]">
+                                {/* Item Info */}
+                                <div className="flex items-center gap-3 px-4 py-3">
+                                  <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                    <Image src={getCategoryImage(display.categoria || "") || "/placeholder.svg"} alt={item.name} width={32} height={32} className="object-cover" />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <div className="flex flex-wrap items-center gap-1.5">
+                                      <p className="text-sm font-medium text-gray-900 break-words leading-tight">{display.name}</p>
+                                      {display.tags.length > 0 && display.tags.map((tag, i) => (
+                                        <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-600 whitespace-nowrap">{tag}</span>
+                                      ))}
+                                    </div>
+                                    {(display.marca || display.categoria) && (
+                                      <div className="flex items-center gap-1 mt-0.5">
+                                        {display.marca && <span className="text-xs text-slate-400">{display.marca}</span>}
+                                        {display.marca && display.categoria && <span className="text-xs text-slate-300">·</span>}
+                                        {display.categoria && <span className="text-xs text-slate-400">{display.categoria}</span>}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                {/* Cantidad */}
+                                <div className="flex items-center justify-center">
+                                  <div className="flex items-center border border-slate-200 rounded-full px-1 py-0.5 bg-white">
+                                    <button onClick={() => setEditItems(prev => prev.map((it, i) => i === idx ? { ...it, quantity: Math.max(1, it.quantity - 1) } : it))} className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-400 transition-colors">
+                                      <Minus className="w-3 h-3" />
+                                    </button>
+                                    <input
+                                      type="number"
+                                      value={editItem.quantity || ""}
+                                      onChange={(e) => setEditItems(prev => prev.map((it, i) => i === idx ? { ...it, quantity: parseInt(e.target.value) || 1 } : it))}
+                                      className="w-10 text-center text-sm py-1 focus:outline-none bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    />
+                                    <button onClick={() => setEditItems(prev => prev.map((it, i) => i === idx ? { ...it, quantity: it.quantity + 1 } : it))} className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-400 transition-colors">
+                                      <Plus className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                </div>
+                                {/* Precio Unit. */}
+                                <div className="flex items-center justify-center gap-1">
+                                  <span className="text-slate-400 text-sm">$</span>
+                                  <input
+                                    type="number"
+                                    value={editItem.unitPrice || ""}
+                                    onChange={(e) => setEditItems(prev => prev.map((it, i) => i === idx ? { ...it, unitPrice: parseFloat(e.target.value) || 0 } : it))}
+                                    className="w-20 text-center text-sm py-1.5 border border-slate-200 rounded focus:outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                  />
+                                </div>
+                                {/* Arrow */}
+                                <div className="flex items-center justify-center w-6 text-slate-300 text-sm">→</div>
+                                {/* Promocion */}
+                                <div className="flex items-center justify-center gap-1.5">
+                                  <input
+                                    type="number"
+                                    placeholder="0"
+                                    min="0"
+                                    value={aj.value || ""}
+                                    onChange={(e) => {
+                                      let val = parseFloat(e.target.value) || 0
+                                      if (aj.type === "unit") val = Math.min(val, editItem.quantity)
+                                      setEditAjustes(prev => ({ ...prev, [idx]: { ...aj, value: val } }))
+                                    }}
+                                    className="w-12 text-center text-xs py-1 border border-slate-200 rounded focus:outline-none focus:border-slate-400 placeholder:text-slate-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                  />
+                                  <div className="flex border border-slate-200 rounded overflow-hidden">
+                                    {(["percent", "cash", "unit"] as const).map((t) => (
+                                      <button key={t} onClick={() => setEditAjustes(prev => ({ ...prev, [idx]: { ...aj, type: t } }))} className={`px-1.5 py-1 text-xs cursor-pointer ${aj.type === t ? "bg-slate-900 text-white" : "text-slate-400 hover:bg-slate-50"}`}>
+                                        {t === "percent" ? "%" : t === "cash" ? "$" : <Package className="w-3 h-3" />}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                                {/* Arrow */}
+                                <div className="flex items-center justify-center w-6 text-slate-300 text-sm">→</div>
+                                {/* Subtotal */}
+                                <div className="flex flex-col items-end justify-center pr-4">
+                                  {aj.value > 0 ? (
+                                    <>
+                                      <span className="text-[10px] text-slate-400 line-through tabular-nums">{editItem.quantity} × ${Math.round(editItem.unitPrice).toLocaleString("es-AR")}</span>
+                                      <span className="text-sm font-bold text-slate-900 tabular-nums">${Math.round(finalTotal).toLocaleString("es-AR")}</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <span className="text-[10px] text-slate-500 tabular-nums">{editItem.quantity} × ${Math.round(editItem.unitPrice).toLocaleString("es-AR")}</span>
+                                      <span className="text-sm font-bold text-slate-900 tabular-nums">${Math.round(finalTotal).toLocaleString("es-AR")}</span>
+                                    </>
+                                  )}
+                                </div>
+                                {/* Delete */}
+                                <div className="flex items-center justify-center w-10">
+                                  <button onClick={() => { setEditItems(prev => prev.filter((_, i) => i !== idx)); setEditAjustes(prev => { const next = { ...prev }; delete next[idx]; return next }) }} className="p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors">
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </div>
+                            )
+                          })()
                         ) : (
                           <div className="grid grid-cols-[40%_20%_20%_20%] min-h-[56px]">
                             {/* Item Info */}
@@ -806,7 +993,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             <div className="flex flex-col items-center justify-center gap-0.5 py-2">
                               {item.discount > 0 && (item.discountType === "percent" || item.discountType === "fixed") ? (
                                 <>
-                                  {/* Original price dashed + promo badge inline */}
                                   <div className="flex items-center gap-1">
                                     <span className="text-xs text-slate-400 line-through tabular-nums">
                                       ${item.unitPrice.toLocaleString("es-AR")}
@@ -817,7 +1003,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                                         : `-$${item.discount.toLocaleString("es-AR")}`}
                                     </span>
                                   </div>
-                                  {/* Final unit price */}
                                   <div className="flex items-baseline gap-1">
                                     <span className="text-sm font-medium text-slate-800 tabular-nums">
                                       ${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}
@@ -843,7 +1028,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     )
                   })
                 )}
-              {estadoUI === "en_curso" && (
+              {isEditMode && (
                 <button
                   type="button"
                   onClick={() => setShowAgregarProductos(true)}
@@ -852,6 +1037,16 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   <Plus className="w-4 h-4 text-slate-400" />
                   Agregar productos
                 </button>
+              )}
+              {isEditMode && (
+                <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-slate-100 bg-slate-50/60">
+                  <button onClick={cancelEditMode} className="px-4 py-1.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
+                    Cancelar
+                  </button>
+                  <button onClick={saveEditMode} className="px-4 py-1.5 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-700 transition-colors">
+                    Guardar cambios
+                  </button>
+                </div>
               )}
               </div>{/* end rounded inner grid */}
               </div>{/* end p-3 padding wrapper */}
@@ -932,8 +1127,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       </div>
                     )}
 
-                    {/* ── Ajustes: Descuento Global, Envío, Otro ── */}
-                    {showGlobalDiscount && (
+                    {/* ── Ajustes: Descuento Global, Envío, Otro (edit mode only) ── */}
+                    {isEditMode && showGlobalDiscount && (
                       <div className="flex justify-between items-center py-2 border-b border-slate-100">
                         <div className="flex items-center gap-1">
                           <button onClick={() => { setShowGlobalDiscount(false); setGlobalDiscount({ value: 0, type: "percent" }) }} className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors">
@@ -955,7 +1150,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         </div>
                       </div>
                     )}
-                    {showEnvio && (
+                    {isEditMode && showEnvio && (
                       <div className="flex justify-between items-center py-2 border-b border-slate-100">
                         <div className="flex items-center gap-1">
                           <button onClick={() => { setShowEnvio(false); setEnvioAmount(0) }} className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors">
@@ -974,7 +1169,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         </div>
                       </div>
                     )}
-                    {customCharges.map((charge, idx) => (
+                    {isEditMode && customCharges.map((charge, idx) => (
                       <div key={charge.id} className="flex justify-between items-center py-2 border-b border-slate-100">
                         <div className="flex items-center gap-1">
                           <button onClick={() => setCustomCharges(prev => prev.filter((_, i) => i !== idx))} className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors">
@@ -999,8 +1194,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       </div>
                     ))}
 
-                    {/* Agregar tags — only shown when en curso and not all options active */}
-                    {estadoUI === "en_curso" && (!showGlobalDiscount || !showEnvio || customCharges.length === 0) && (
+                    {/* Agregar tags — only shown in edit mode */}
+                    {isEditMode && estadoUI === "en_curso" && (!showGlobalDiscount || !showEnvio || customCharges.length === 0) && (
                       <div className="flex items-center gap-2 flex-wrap py-2 border-b border-slate-100">
                         <span className="text-xs text-slate-400">Agregar:</span>
                         {!showGlobalDiscount && (
