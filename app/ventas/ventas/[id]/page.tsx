@@ -523,7 +523,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
           <main className="flex-1 flex flex-col bg-[rgba(250,251,253,1)] overflow-hidden">
             {/* Items Grid + Totals side by side */}
             <div className="flex-1 overflow-y-auto px-6 pb-6 pt-4">
-              <div className="grid grid-cols-3 gap-4 items-start">
+              <div className="grid grid-cols-3 gap-4 items-stretch">
 
               {/* Left col-span-2 */}
               <div className="col-span-2 flex flex-col gap-4">
@@ -1102,9 +1102,9 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
               {/* Right col-span-1: two stacked cards */}
               {ventaItems.length > 0 && (
-                <div className="col-span-1 flex flex-col gap-4 sticky top-0">
-                <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-                  <div className="px-5 py-5 flex flex-col gap-0">
+                <div className="col-span-1 flex flex-col gap-4 h-full">
+                <div className="bg-white rounded-lg shadow-sm overflow-hidden flex flex-col flex-1">
+                  <div className="px-5 py-5 flex flex-col gap-0 flex-1">
 
                     {/* ── Resumen section ── */}
                     <p className="text-sm font-semibold text-slate-800 mb-4">Resumen</p>
