@@ -727,10 +727,10 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
           <main className="flex-1 flex flex-col bg-[rgba(250,251,253,1)] overflow-hidden">
             {/* Items Grid + Totals side by side */}
             <div className="flex-1 overflow-y-auto px-6 pb-6 pt-4">
-              <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-3 gap-4 items-stretch">
 
-              {/* ── Venta Info card ── full width ── */}
-              <div className="flex flex-col gap-4">
+              {/* Left col-span-2 */}
+              <div className="col-span-2 flex flex-col gap-4">
 
                 {/* ── Venta Info card ── */}
                 {(() => {
@@ -841,11 +841,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   )
                 })()}
 
-              </div>{/* end venta info full-width */}
-
-              {/* ── Row 2: widgets (col-span-2) + resumen (col-span-1) — aligned together ── */}
-              <div className="grid grid-cols-3 gap-4 items-start">
-              <div className="col-span-2">
                 {/* ── Estado / Entrega / Cobro — 3 widget cards ── */}
                 <div className="grid grid-cols-3 gap-3">
 
@@ -961,23 +956,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   </div>
 
                 </div>
-              </div>{/* end col-span-2 widgets */}
 
-              {/* Right col-span-1: resumen card aligned with widgets */}
-              {ventaItems.length > 0 && (
-                <div className="col-span-1 flex flex-col gap-4">
-                <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-                  <div className="px-5 py-5 flex flex-col gap-0">
-                    <p className="text-sm font-semibold text-slate-800 mb-4">Resumen (placeholder)</p>
-                  </div>
-                </div>
-                </div>
-              )}
-              </div>{/* end widgets+resumen row */}
-
-              {/* ── Row 3: productos card (col-span-2) only ── */}
-              <div className="grid grid-cols-3 gap-4">
-              <div className="col-span-2">
                 {/* Entrega + Items card */}
               <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm overflow-hidden">
 
@@ -1347,13 +1326,10 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                 />
               </div>
 
-              </div>{/* end col-span-2 products */}
-              </div>{/* end products row */}
+              </div>{/* end col-span-2 flex column */}
 
-              </div>{/* end outer flex */}
-
-              {/* ═══ RESUMEN CARD (real content, rendered separately via portal-like approach) ═══ */}
-              {ventaItems.length > 0 && false && (
+              {/* Right col-span-1: two stacked cards */}
+              {ventaItems.length > 0 && (
                 <div className="col-span-1 flex flex-col gap-4 h-full">
                 <div className="bg-white rounded-lg shadow-sm overflow-hidden flex flex-col flex-1">
                   <div className="px-5 py-5 flex flex-col gap-0 flex-1">
