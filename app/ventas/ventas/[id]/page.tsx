@@ -532,7 +532,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                 })()}
 
                 {/* ── Estado / Entrega / Cobro — 3 widget cards ── */}
-                <div className="grid grid-cols-3 gap-3 mt-3">
+                <div className="grid grid-cols-3 gap-3">
 
                   {/* Widget 1 — Estado */}
                   <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-2">
