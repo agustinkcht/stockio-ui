@@ -110,6 +110,12 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
       }
     })
     updateVenta(venta.id, { items: saved })
+    // Commit resumen adjustments to view mode
+    if (showGlobalDiscount && globalDiscount.value > 0) setSavedGlobalDiscount({ ...globalDiscount })
+    else setSavedGlobalDiscount(null)
+    if (showEnvio && envioAmount > 0) setSavedEnvio(envioAmount)
+    else setSavedEnvio(null)
+    setSavedCustomCharges(customCharges.filter(c => c.value > 0))
     cancelEditMode()
   }
 
@@ -119,6 +125,37 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const [showEnvio, setShowEnvio] = useState(false)
   const [envioAmount, setEnvioAmount] = useState(0)
   const [customCharges, setCustomCharges] = useState<{ id: number; label: string; value: number }[]>([])
+
+  // Saved (committed) adjustments shown in view mode
+  const [savedGlobalDiscount, setSavedGlobalDiscount] = useState<{ value: number; type: "percent" | "cash" } | null>(null)
+  const [savedEnvio, setSavedEnvio] = useState<number | null>(null)
+  const [savedCustomCharges, setSavedCustomCharges] = useState<{ id: number; label: string; value: number }[]>([])
+
+  // Detect pending changes in edit mode
+  const hasItemChanges = useMemo(() => {
+    if (!isEditMode) return false
+    if (editItems.length !== ventaItems.length) return true
+    return editItems.some((ei, i) => {
+      const orig = ventaItems[i]
+      const aj = editAjustes[i] ?? { value: 0, type: "percent" }
+      return ei.quantity !== orig.quantity || ei.unitPrice !== orig.unitPrice || aj.value !== orig.discount
+    })
+  }, [isEditMode, editItems, editAjustes, ventaItems])
+
+  const hasResumenChanges = useMemo(() => {
+    if (!isEditMode) return false
+    return (showGlobalDiscount && globalDiscount.value > 0) || (showEnvio && envioAmount > 0) || customCharges.some(c => c.value > 0)
+  }, [isEditMode, showGlobalDiscount, globalDiscount, showEnvio, envioAmount, customCharges])
+
+  const hasAnyEditChanges = hasItemChanges || hasResumenChanges
+
+  // Saved adjustment totals for view mode
+  const savedGlobalDiscountAmount = savedGlobalDiscount
+    ? savedGlobalDiscount.type === "percent"
+      ? (venta?.subtotal ?? 0) * (savedGlobalDiscount.value / 100)
+      : savedGlobalDiscount.value
+    : 0
+  const savedAdjTotal = savedGlobalDiscountAmount * -1 + (savedEnvio ?? 0) + savedCustomCharges.reduce((s, c) => s + c.value, 0)
 
   const globalDiscountAmount = showGlobalDiscount
     ? globalDiscount.type === "percent"
@@ -770,13 +807,11 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
                 {/* ── Edit mode column headers ── */}
                 {isEditMode && !entregaMode && (
-                  <div className="grid grid-cols-[2fr_0.8fr_1fr_auto_1.2fr_auto_1.2fr_auto] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider border-b border-slate-100 bg-slate-50/80">
+                  <div className="grid grid-cols-[2fr_0.8fr_1fr_1.2fr_1.2fr_auto] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider border-b border-slate-100 bg-slate-50/80">
                     <div className="flex items-center px-4">Item</div>
                     <div className="flex items-center justify-center">Cantidad</div>
                     <div className="flex items-center justify-center">Precio Unit.</div>
-                    <div className="w-6" />
                     <div className="flex items-center justify-center">Promoción</div>
-                    <div className="w-6" />
                     <div className="flex items-center justify-end pr-4">Subtotal</div>
                     <div className="w-10" />
                   </div>
@@ -861,7 +896,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                               finalTotal = editItem.quantity * editItem.unitPrice
                             }
                             return (
-                              <div className="grid grid-cols-[2fr_0.8fr_1fr_auto_1.2fr_auto_1.2fr_auto] min-h-[72px]">
+                              <div className="grid grid-cols-[2fr_0.8fr_1fr_1.2fr_1.2fr_auto] min-h-[72px]">
                                 {/* Item Info */}
                                 <div className="flex items-center gap-3 px-4 py-3">
                                   <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
@@ -910,8 +945,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                                     className="w-20 text-center text-sm py-1.5 border border-slate-200 rounded focus:outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                   />
                                 </div>
-                                {/* Arrow */}
-                                <div className="flex items-center justify-center w-6 text-slate-300 text-sm">→</div>
                                 {/* Promocion */}
                                 <div className="flex items-center justify-center gap-1.5">
                                   <input
@@ -934,8 +967,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                                     ))}
                                   </div>
                                 </div>
-                                {/* Arrow */}
-                                <div className="flex items-center justify-center w-6 text-slate-300 text-sm">→</div>
                                 {/* Subtotal */}
                                 <div className="flex flex-col items-end justify-center pr-4">
                                   {aj.value > 0 ? (
@@ -1028,7 +1059,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     )
                   })
                 )}
-              {isEditMode && (
+              {isEditMode && !entregaMode && (
                 <button
                   type="button"
                   onClick={() => setShowAgregarProductos(true)}
@@ -1038,12 +1069,16 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   Agregar productos
                 </button>
               )}
-              {isEditMode && (
+              {isEditMode && !entregaMode && (
                 <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-slate-100 bg-slate-50/60">
-                  <button onClick={cancelEditMode} className="px-4 py-1.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
+                  <button onClick={cancelEditMode} className="px-4 py-1.5 text-sm text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
                     Cancelar
                   </button>
-                  <button onClick={saveEditMode} className="px-4 py-1.5 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-700 transition-colors">
+                  <button
+                    onClick={hasItemChanges ? saveEditMode : undefined}
+                    disabled={!hasItemChanges}
+                    className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors ${hasItemChanges ? "bg-slate-900 text-white hover:bg-slate-700 cursor-pointer" : "bg-slate-200 text-slate-400 cursor-not-allowed"}`}
+                  >
                     Guardar cambios
                   </button>
                 </div>
@@ -1065,12 +1100,13 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
               </div>{/* end col-span-2 flex column */}
 
-              {/* Right col-span-1: single white panel, content directly on background */}
+              {/* Right col-span-1: two stacked cards */}
               {ventaItems.length > 0 && (
-                <div className="col-span-1 bg-white rounded-lg shadow-sm overflow-hidden sticky top-0">
+                <div className="col-span-1 flex flex-col gap-4 sticky top-0">
+                <div className="bg-white rounded-lg shadow-sm overflow-hidden">
                   <div className="px-5 py-5 flex flex-col gap-0">
 
-                    {/* ��─ Resumen section ── */}
+                    {/* ── Resumen section ── */}
                     <p className="text-sm font-semibold text-slate-800 mb-4">Resumen</p>
 
                     {/* Subtotal — expandable */}
@@ -1127,7 +1163,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       </div>
                     )}
 
-                    {/* ── Ajustes: Descuento Global, Envío, Otro (edit mode only) ── */}
+                    {/* ── Edit mode ajuste inputs ── */}
                     {isEditMode && showGlobalDiscount && (
                       <div className="flex justify-between items-center py-2 border-b border-slate-100">
                         <div className="flex items-center gap-1">
@@ -1216,27 +1252,69 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       </div>
                     )}
 
-                    <div className="flex justify-between items-center py-3 mt-1">
+                    {/* ── View mode: saved adjustments ── */}
+                    {!isEditMode && savedGlobalDiscount && savedGlobalDiscount.value > 0 && (
+                      <div className="flex justify-between items-center py-2.5 border-b border-slate-100">
+                        <span className="text-sm text-slate-500">
+                          Descuento Global{" "}
+                          <span className="text-xs text-slate-400">
+                            ({savedGlobalDiscount.type === "percent" ? `${savedGlobalDiscount.value}%` : `$${savedGlobalDiscount.value.toLocaleString("es-AR")}`})
+                          </span>
+                        </span>
+                        <span className="text-sm text-red-500 tabular-nums">
+                          −${Math.round(savedGlobalDiscountAmount).toLocaleString("es-AR")}
+                        </span>
+                      </div>
+                    )}
+                    {!isEditMode && savedEnvio != null && savedEnvio > 0 && (
+                      <div className="flex justify-between items-center py-2.5 border-b border-slate-100">
+                        <span className="text-sm text-slate-500">Envío</span>
+                        <span className="text-sm text-slate-700 tabular-nums">+${savedEnvio.toLocaleString("es-AR")}</span>
+                      </div>
+                    )}
+                    {!isEditMode && savedCustomCharges.map((c) => (
+                      <div key={c.id} className="flex justify-between items-center py-2.5 border-b border-slate-100">
+                        <span className="text-sm text-slate-500">{c.label}</span>
+                        <span className="text-sm text-slate-700 tabular-nums">+${c.value.toLocaleString("es-AR")}</span>
+                      </div>
+                    ))}
+
+                    {/* Total */}
+                    <div className="flex justify-between items-center py-3 mt-1 border-t border-slate-200">
                       <span className="text-base font-bold text-slate-900">Total</span>
                       <span className="text-base font-bold text-slate-900 tabular-nums">
-                        ${Math.round(venta.total - globalDiscountAmount + envioAmount + customCharges.reduce((s, c) => s + c.value, 0)).toLocaleString("es-AR")}
+                        ${Math.round(
+                          isEditMode
+                            ? venta.total - globalDiscountAmount + envioAmount + customCharges.reduce((s, c) => s + c.value, 0)
+                            : venta.total + savedAdjTotal
+                        ).toLocaleString("es-AR")}
                       </span>
                     </div>
 
-                    {venta.observaciones && (
-                      <div className="flex justify-between text-[11px] gap-3 pt-2 border-t border-slate-100">
-                        <span className="text-slate-400 shrink-0">Observaciones</span>
-                        <span className="text-slate-600 text-right">{venta.observaciones}</span>
+                    {/* Resumen save/cancel — only in edit mode */}
+                    {isEditMode && (
+                      <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                        <button onClick={cancelEditMode} className="px-4 py-1.5 text-sm text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
+                          Cancelar
+                        </button>
+                        <button
+                          onClick={hasResumenChanges ? saveEditMode : undefined}
+                          disabled={!hasResumenChanges}
+                          className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors ${hasResumenChanges ? "bg-slate-900 text-white hover:bg-slate-700 cursor-pointer" : "bg-slate-200 text-slate-400 cursor-not-allowed"}`}
+                        >
+                          Guardar cambios
+                        </button>
                       </div>
                     )}
 
-                    {/* ── Divider between sections ── */}
-                    <div className="border-t border-slate-200 my-4" />
+                  </div>
+                </div>{/* end resumen card */}
 
-                    {/* ── Detalle del Cobro section ── */}
+                {/* ── Detalle del Cobro card ── */}
+                <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                  <div className="px-5 py-5 flex flex-col gap-0">
                     <p className="text-sm font-semibold text-slate-800 mb-3">Detalle del Cobro</p>
 
-                    {/* Entries */}
                     {ventaCobros.length > 0 ? (
                       ventaCobros.map((cobro) => (
                         <div key={cobro.id} className="flex items-center py-2.5 border-b border-slate-100 gap-2 group">
@@ -1265,9 +1343,10 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         <span className="text-xs text-slate-400">Sin cobros registrados</span>
                       </div>
                     )}
-
                   </div>
-                </div>
+                </div>{/* end cobro card */}
+
+                </div>{/* end col-span-1 flex column */}
               )}
 
               </div>{/* end grid grid-cols-3 */}
