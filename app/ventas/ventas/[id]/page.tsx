@@ -1353,7 +1353,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
               {/* Right col-span-1: two stacked cards */}
               {ventaItems.length > 0 && (
                 <div className="col-span-1 flex flex-col gap-4">
-                <div className="bg-white rounded-lg shadow-sm overflow-hidden flex flex-col min-h-[300px]">
+                <div className="bg-white rounded-lg shadow-sm overflow-hidden flex flex-col flex-1">
                   <div className="px-5 py-5 flex flex-col gap-0 flex-1">
 
                     {/* ── Resumen section ── */}
@@ -1530,7 +1530,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     ))}
 
                     {/* Total */}
-                    <div className="flex justify-between items-center py-3 mt-auto border-t border-slate-200">
+                    <div className="flex justify-between items-center py-3 mt-1 border-t border-slate-200">
                       <span className="text-base font-bold text-slate-900">Total</span>
                       <span className="text-base font-bold text-slate-900 tabular-nums">
                         ${Math.round(
@@ -2162,7 +2162,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
         )
       })()}
 
-      {/* �����─ Agregar Productos Modal ── */}
+      {/* ── Agregar Productos Modal ── */}
       {showAgregarProductos && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeAgregarProductos} />
