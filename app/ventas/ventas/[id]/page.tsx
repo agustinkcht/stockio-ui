@@ -1344,9 +1344,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       </div>
                     )}
                   </div>
-                </div>{/* end cobro card */}
-
-                </div>{/* end col-span-1 flex column */}
+                </div>
+                </div>
               )}
 
               </div>{/* end grid grid-cols-3 */}
