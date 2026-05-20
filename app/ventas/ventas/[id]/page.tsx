@@ -457,7 +457,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   const dia = fechaObj.toLocaleDateString("es-AR", { day: "2-digit" })
                   const inicial = clienteNombre.charAt(0).toUpperCase()
                   return (
-                    <div className="pt-8 px-4 pb-3 flex flex-col gap-6">
+                    <div className="pt-8 px-4 pb-3 flex flex-col gap-3">
                       {/* Row 1: Venta ID + date + origen + actions */}
                       <div className="flex items-center justify-between gap-4">
                         {/* Venta ID + fecha/hora + origen — spread across available width */}
@@ -531,98 +531,97 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   )
                 })()}
 
-                {/* ── Estado card ── */}
-                <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-5 py-4">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider block mb-3">Estado de la Venta</span>
+                {/* ── Estado / Entrega / Cobro — 3 widget cards ── */}
+                <div className="grid grid-cols-3 gap-3 mt-3">
 
-                  {/* Estado is auto-derived: finalizada only when both entrega and cobro are 100% */}
-                  <div className="grid grid-cols-3 gap-0 divide-x divide-slate-100">
-
-                    {/* Col 1 — Estado badge (no chevron, no dropdown) */}
-                    <div className="pr-5 flex flex-col justify-center gap-2">
-                      {estadoUI === "finalizada" ? (
-                        <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 w-fit">
-                          <CheckCircle2 className="w-4 h-4" />
-                          <span className="text-sm font-semibold">Finalizada</span>
+                  {/* Widget 1 — Estado */}
+                  <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-2">
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Estado</span>
+                    {estadoUI === "finalizada" ? (
+                      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 w-fit">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span className="text-sm font-semibold">Finalizada</span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 w-fit">
+                          <Clock className="w-3.5 h-3.5" />
+                          <span className="text-sm font-semibold">En Curso</span>
                         </div>
-                      ) : (
-                        <>
-                          <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 w-fit">
-                            <Clock className="w-4 h-4" />
-                            <span className="text-sm font-semibold">En Curso</span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setShowFinalizarVenta(true)}
-                            className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 hover:text-emerald-900 transition-colors"
-                          >
-                            <CheckCircle2 className="w-3 h-3" />
-                            Marcar como Finalizada
-                          </button>
-                        </>
-                      )}
-                    </div>
-
-                    {/* Col 2 — Entrega */}
-                    <div className="px-5 flex flex-col gap-1">
-                      <div className="flex items-center gap-2">
-                        <Package className="w-4 h-4 text-slate-400" />
-                        {entregaPct === 100 ? (
-                          <>
-                            <span className="text-sm font-semibold text-emerald-600">Entregada</span>
-                            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                          </>
-                        ) : (
-                          <span className="text-sm font-semibold text-slate-700">Entrega {entregaPct}%</span>
-                        )}
-                      </div>
-                      {entregaPct < 100 && (
-                        <>
-                          <span className="text-xs text-slate-400 tabular-nums">
-                            {totalUnidades - entregadasUnidades} {totalUnidades - entregadasUnidades === 1 ? "unidad pendiente" : "unidades pendientes"} de entrega
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => setShowRegistrarEntrega(true)}
-                            className="mt-1 flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
-                          >
-                            <Plus className="w-3 h-3" />
-                            Registrar entrega
-                          </button>
-                        </>
-                      )}
-                    </div>
-
-                    {/* Col 3 — Cobro */}
-                    <div className="pl-5 flex flex-col gap-1">
-                      <div className="flex items-center gap-2">
-                        <Wallet className="w-4 h-4 text-slate-400" />
-                        {pagoPct === 100 ? (
-                          <>
-                            <span className="text-sm font-semibold text-emerald-600">Cobrada</span>
-                            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                          </>
-                        ) : (
-                          <span className="text-sm font-semibold text-slate-700">Cobro {pagoPct}%</span>
-                        )}
-                      </div>
-                      {pagoPct < 100 && (
-                        <>
-                          <span className="text-xs text-slate-400 tabular-nums">
-                            ${Math.round(montoRestante).toLocaleString("es-AR")} pendiente de cobro
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => setShowRegistrarCobro(true)}
-                            className="mt-1 flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
-                          >
-                            <Plus className="w-3 h-3" />
-                            Registrar cobro
-                          </button>
-                        </>
-                      )}
-                    </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowFinalizarVenta(true)}
+                          className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 hover:text-emerald-900 transition-colors"
+                        >
+                          <CheckCircle2 className="w-3 h-3" />
+                          Marcar como Finalizada
+                        </button>
+                      </>
+                    )}
                   </div>
+
+                  {/* Widget 2 — Entrega */}
+                  <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-1.5">
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Entrega</span>
+                    <div className="flex items-center gap-2">
+                      <Package className="w-4 h-4 text-slate-400" />
+                      {entregaPct === 100 ? (
+                        <>
+                          <span className="text-sm font-semibold text-emerald-600">Entregada</span>
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                        </>
+                      ) : (
+                        <span className="text-sm font-semibold text-slate-700">Entrega {entregaPct}%</span>
+                      )}
+                    </div>
+                    {entregaPct < 100 && (
+                      <>
+                        <span className="text-xs text-slate-400 tabular-nums">
+                          {totalUnidades - entregadasUnidades} {totalUnidades - entregadasUnidades === 1 ? "unidad pendiente" : "unidades pendientes"} de entrega
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setShowRegistrarEntrega(true)}
+                          className="mt-0.5 flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                        >
+                          <Plus className="w-3 h-3" />
+                          Registrar entrega
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Widget 3 — Cobro */}
+                  <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-1.5">
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Cobro</span>
+                    <div className="flex items-center gap-2">
+                      <Wallet className="w-4 h-4 text-slate-400" />
+                      {pagoPct === 100 ? (
+                        <>
+                          <span className="text-sm font-semibold text-emerald-600">Cobrada</span>
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                        </>
+                      ) : (
+                        <span className="text-sm font-semibold text-slate-700">Cobro {pagoPct}%</span>
+                      )}
+                    </div>
+                    {pagoPct < 100 && (
+                      <>
+                        <span className="text-xs text-slate-400 tabular-nums">
+                          ${Math.round(montoRestante).toLocaleString("es-AR")} pendiente de cobro
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setShowRegistrarCobro(true)}
+                          className="mt-0.5 flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                        >
+                          <Plus className="w-3 h-3" />
+                          Registrar cobro
+                        </button>
+                      </>
+                    )}
+                  </div>
+
                 </div>
 
                 {/* Entrega + Items card */}
@@ -656,15 +655,15 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                 <div className="px-4 pt-3 pb-1 flex items-center gap-2">
                   {entregaMode ? (
                     <>
-                      <Truck className="w-5 h-5 text-slate-600" />
-                      <span className="text-lg font-bold text-slate-900 tabular-nums">
+                      <Truck className="w-4 h-4 text-slate-600" />
+                      <span className="text-base font-bold text-slate-900 tabular-nums">
                         {entregadasUnidades}/{totalUnidades} {totalUnidades === 1 ? "unidad entregada" : "unidades entregadas"}
                       </span>
                     </>
                   ) : (
                     <>
-                      <Package className="w-5 h-5 text-slate-600" />
-                      <span className="text-lg font-bold text-slate-900 tabular-nums">
+                      <Package className="w-4 h-4 text-slate-600" />
+                      <span className="text-base font-bold text-slate-900 tabular-nums">
                         {ventaItems.length} {ventaItems.length === 1 ? "producto" : "productos"} · {totalUnidades} {totalUnidades === 1 ? "unidad" : "unidades"}
                       </span>
                     </>
