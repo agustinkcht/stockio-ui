@@ -741,6 +741,12 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                               </div>
                             </div>
 
+                            {/* Cantidad col */}
+                            <div className="flex items-center justify-center gap-1.5">
+                              <span className="text-sm text-slate-700 tabular-nums">{item.quantity}</span>
+                              <span className="text-xs text-slate-400">{item.quantity === 1 ? "unidad" : "unidades"}</span>
+                            </div>
+
                             {/* Precio Unit. col — with promo logic for % and $ */}
                             <div className="flex flex-col items-center justify-center gap-0.5 py-2">
                               {item.discount > 0 && (item.discountType === "percent" || item.discountType === "fixed") ? (
@@ -764,12 +770,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                               ) : (
                                 <span className="text-sm text-slate-700 tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
                               )}
-                            </div>
-
-                            {/* Cantidad col */}
-                            <div className="flex items-center justify-center gap-1.5">
-                              <span className="text-sm text-slate-700 tabular-nums">{item.quantity}</span>
-                              <span className="text-xs text-slate-400">{item.quantity === 1 ? "unidad" : "unidades"}</span>
                             </div>
 
                             {/* Subtotal col */}
