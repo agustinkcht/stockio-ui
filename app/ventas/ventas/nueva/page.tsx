@@ -47,8 +47,8 @@ import type {
 const STEPS = [
   { id: 1, label: "Cliente" },
   { id: 2, label: "Productos" },
-  { id: 3, label: "Entrega" },
-  { id: 4, label: "Cobro" },
+  { id: 3, label: "Resumen" },
+  { id: 4, label: "Entrega y Cobro" },
   { id: 5, label: "Confirmación" },
 ]
 
@@ -334,7 +334,6 @@ export default function NuevaVentaPage() {
     if (currentStep === 2) return selectedItems.length > 0
     if (currentStep === 3) return true
     if (currentStep === 4) return true
-    if (currentStep === 5) return true
     return false
   }, [currentStep, selectedItems])
 
@@ -570,7 +569,7 @@ export default function NuevaVentaPage() {
               </div>
 
               {/* Right: Step Content */}
-              <div className={`col-span-16 overflow-auto p-8 ${currentStep === 2 ? "pr-8" : "pr-[15%]"}`}>
+              <div className="col-span-16 overflow-auto p-8 pr-[15%]">
 
                 {/* ── Step 1: Cliente ── */}
                 {currentStep === 1 && (
@@ -648,11 +647,9 @@ export default function NuevaVentaPage() {
                   </div>
                 )}
 
-                {/* ── Step 2: Productos (edit-mode grid) + Resumen ── */}
+                {/* ── Step 2: Productos (edit-mode grid) ── */}
                 {currentStep === 2 && (
-                  <div className="flex gap-5 items-start">
-                  {/* Products card */}
-                  <div className="flex-1 min-w-0 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] overflow-hidden">
+                  <div className="bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] overflow-hidden">
                     {/* Header */}
                     <div className="flex items-center gap-2 px-6 pt-6 pb-4 border-b border-slate-100">
                       <Package className="w-4 h-4 text-slate-500" />
@@ -828,6 +825,14 @@ export default function NuevaVentaPage() {
                       Agregar productos
                     </button>
 
+                    {/* Total + nav */}
+                    {selectedItems.length > 0 && (
+                      <div className="flex items-center justify-between px-6 py-3 bg-slate-50/50 border-t border-slate-100">
+                        <span className="text-sm font-medium text-slate-600">Total</span>
+                        <span className="text-base font-bold text-slate-900 tabular-nums">${Math.round(total).toLocaleString("es-AR")}</span>
+                      </div>
+                    )}
+
                     <div className="px-6 pb-6">
                       <StepNav
                         onBack={() => setCurrentStep(1)}
@@ -836,180 +841,172 @@ export default function NuevaVentaPage() {
                       />
                     </div>
                   </div>
-
-                  {/* Resumen card — right side */}
-                  <div className="w-72 shrink-0 sticky top-0 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] p-5">
-                    <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Resumen</h3>
-
-                    {selectedItems.length === 0 ? (
-                      <p className="text-xs text-slate-400 text-center py-4">Sin productos aún</p>
-                    ) : (
-                      <>
-                        {/* Line items */}
-                        <div className="space-y-2.5 mb-3">
-                          {selectedItems.map((it, idx) => {
-                            const aj = editAjustes[idx] ?? { value: 0, type: "percent" as const }
-                            let lineTotal = 0
-                            if (aj.value > 0) {
-                              if (aj.type === "unit") {
-                                lineTotal = Math.max(0, it.quantity - Math.min(aj.value, it.quantity)) * it.unitPrice
-                              } else {
-                                const adjUnit = aj.type === "percent"
-                                  ? it.unitPrice * (1 - aj.value / 100)
-                                  : Math.max(0, it.unitPrice - aj.value)
-                                lineTotal = it.quantity * adjUnit
-                              }
-                            } else {
-                              lineTotal = it.unitPrice * it.quantity
-                            }
-                            return (
-                              <div key={it.sku} className="flex justify-between items-start gap-2">
-                                <p className="text-xs text-slate-600 leading-tight flex-1 min-w-0 truncate">{it.quantity}× {it.name}</p>
-                                <p className="text-xs font-medium text-slate-800 tabular-nums shrink-0">${Math.round(lineTotal).toLocaleString("es-AR")}</p>
-                              </div>
-                            )
-                          })}
-                        </div>
-
-                        {/* Separator */}
-                        <div className="border-t border-slate-100 pt-3 space-y-1.5">
-
-                          {/* Global discount row */}
-                          {showGlobalDiscount && (
-                            <div className="flex justify-between items-center">
-                              <div className="flex items-center gap-1">
-                                <button
-                                  onClick={() => { setShowGlobalDiscount(false); setGlobalDiscount({ value: 0, type: "percent" }) }}
-                                  className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors"
-                                >
-                                  <X className="w-3 h-3" />
-                                </button>
-                                <span className="text-xs text-slate-500">Descuento global</span>
-                              </div>
-                              <div className="flex items-center gap-1.5">
-                                <input
-                                  type="number"
-                                  value={globalDiscount.value || ""}
-                                  onChange={(e) => setGlobalDiscount(prev => ({ ...prev, value: parseFloat(e.target.value) || 0 }))}
-                                  className="w-12 text-right text-xs px-1.5 py-0.5 border border-slate-200 rounded focus:outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                />
-                                <div className="flex border border-slate-200 rounded overflow-hidden">
-                                  <button onClick={() => setGlobalDiscount(prev => ({ ...prev, type: "cash" }))} className={`px-1.5 py-0.5 text-[10px] cursor-pointer ${globalDiscount.type === "cash" ? "bg-slate-900 text-white" : "text-slate-400 hover:bg-slate-50"}`}>$</button>
-                                  <button onClick={() => setGlobalDiscount(prev => ({ ...prev, type: "percent" }))} className={`px-1.5 py-0.5 text-[10px] cursor-pointer ${globalDiscount.type === "percent" ? "bg-slate-900 text-white" : "text-slate-400 hover:bg-slate-50"}`}>%</button>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Envío row */}
-                          {showEnvio && (
-                            <div className="flex justify-between items-center">
-                              <div className="flex items-center gap-1">
-                                <button onClick={() => { setShowEnvio(false); setEnvioAmount(0) }} className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors">
-                                  <X className="w-3 h-3" />
-                                </button>
-                                <span className="text-xs text-slate-500">Envío</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <span className="text-xs text-slate-400">$</span>
-                                <input
-                                  type="number"
-                                  value={envioAmount || ""}
-                                  onChange={(e) => setEnvioAmount(parseFloat(e.target.value) || 0)}
-                                  className="w-16 text-right text-xs px-1.5 py-0.5 border border-slate-200 rounded focus:outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                />
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Custom charges */}
-                          {customCharges.map((charge, cidx) => (
-                            <div key={charge.id} className="flex justify-between items-center">
-                              <div className="flex items-center gap-1">
-                                <button onClick={() => setCustomCharges(prev => prev.filter((_, i) => i !== cidx))} className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors">
-                                  <X className="w-3 h-3" />
-                                </button>
-                                <input
-                                  type="text"
-                                  value={charge.label}
-                                  onChange={(e) => setCustomCharges(prev => prev.map((c, i) => i === cidx ? { ...c, label: e.target.value } : c))}
-                                  className="text-xs text-slate-500 bg-transparent border-none outline-none w-20"
-                                />
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <span className="text-xs text-slate-400">$</span>
-                                <input
-                                  type="number"
-                                  value={charge.value || ""}
-                                  onChange={(e) => setCustomCharges(prev => prev.map((c, i) => i === cidx ? { ...c, value: parseFloat(e.target.value) || 0 } : c))}
-                                  className="w-16 text-right text-xs px-1.5 py-0.5 border border-slate-200 rounded focus:outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                />
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-
-                        {/* Agregar tags */}
-                        {(!showGlobalDiscount || !showEnvio || customCharges.length === 0) && (
-                          <div className="flex items-center gap-1.5 flex-wrap pt-3 border-t border-slate-100 mt-2">
-                            <span className="text-[10px] text-slate-400">Agregar:</span>
-                            {!showGlobalDiscount && (
-                              <button onClick={() => setShowGlobalDiscount(true)} className="text-[10px] px-2 py-0.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors cursor-pointer">
-                                Descuento
-                              </button>
-                            )}
-                            {!showEnvio && (
-                              <button onClick={() => setShowEnvio(true)} className="text-[10px] px-2 py-0.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors cursor-pointer">
-                                Envío
-                              </button>
-                            )}
-                            {customCharges.length === 0 && (
-                              <button onClick={() => setCustomCharges([{ id: Date.now(), label: "Otro", value: 0 }])} className="text-[10px] px-2 py-0.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors cursor-pointer">
-                                Otro
-                              </button>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Grand Total */}
-                        <div className="flex justify-between items-center pt-3 mt-3 border-t border-slate-200">
-                          <span className="text-sm font-bold text-slate-900">Total</span>
-                          <span className="text-sm font-bold text-slate-900 tabular-nums">${Math.round(grandTotal).toLocaleString("es-AR")}</span>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                  </div>
                 )}
 
-                {/* ── Step 3: Entrega ── */}
+                {/* ── Step 3: Resumen ── */}
                 {currentStep === 3 && (
                   <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Truck className="w-4 h-4 text-slate-500" />
-                      <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">Entrega</h3>
+                    <div className="flex items-center gap-2 mb-4">
+                      <ClipboardCheck className="w-4 h-4 text-slate-500" />
+                      <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">Resumen</h3>
                     </div>
-                    <p className="text-[11px] text-slate-400 mb-6 italic">
-                      Indica si la entrega se realiza ahora o de forma diferida.
-                    </p>
-                    <div className="grid grid-cols-2 gap-4">
-                      <ModeCard
-                        active={entregaMode === "en_el_acto"}
-                        onClick={() => setEntregaMode("en_el_acto")}
-                        color="blue"
-                        icon={CheckCircle2}
-                        title="En el acto"
-                        description="Se marca como entregada (100%)"
-                      />
-                      <ModeCard
-                        active={entregaMode === "diferida"}
-                        onClick={() => setEntregaMode("diferida")}
-                        color="amber"
-                        icon={Truck}
-                        title="Diferida"
-                        description="Quedará en 0% para completar luego"
-                      />
+
+                    {/* Subtotal row */}
+                    <div className="flex items-center justify-between py-2.5 border-b border-slate-100">
+                      <span className="text-sm text-slate-500">Subtotal</span>
+                      <span className="text-sm text-slate-700 tabular-nums">${Math.round(total).toLocaleString("es-AR")}</span>
                     </div>
+
+                    {/* Items breakdown */}
+                    <div className="border-b border-slate-100">
+                      {selectedItems.map((it, idx) => {
+                        const aj = editAjustes[idx] ?? { value: 0, type: "percent" as const }
+                        let lineTotal = 0
+                        if (aj.value > 0) {
+                          if (aj.type === "unit") {
+                            lineTotal = Math.max(0, it.quantity - Math.min(aj.value, it.quantity)) * it.unitPrice
+                          } else {
+                            const adjUnit = aj.type === "percent"
+                              ? it.unitPrice * (1 - aj.value / 100)
+                              : Math.max(0, it.unitPrice - aj.value)
+                            lineTotal = it.quantity * adjUnit
+                          }
+                        } else {
+                          lineTotal = it.unitPrice * it.quantity
+                        }
+                        const adjustedUnit = aj.value > 0
+                          ? (aj.type === "unit" ? it.unitPrice : aj.type === "percent" ? it.unitPrice * (1 - aj.value / 100) : Math.max(0, it.unitPrice - aj.value))
+                          : it.unitPrice
+                        return (
+                          <div key={it.sku} className="flex justify-between items-start gap-3 py-2.5 border-b border-slate-50 last:border-0">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs text-slate-700 leading-tight">{it.name}</p>
+                              {aj.value > 0 && (
+                                <p className="text-[10px] text-slate-400 mt-0.5">
+                                  Promoción: {aj.type === "percent" ? `${aj.value}%` : aj.type === "cash" ? `$${aj.value}` : `${aj.value} u.`}
+                                </p>
+                              )}
+                            </div>
+                            <div className="text-right shrink-0">
+                              <p className="text-[11px] text-slate-400 tabular-nums">{it.quantity} × ${Math.round(adjustedUnit).toLocaleString("es-AR")}</p>
+                              <p className="text-xs font-medium text-slate-700 tabular-nums">${Math.round(lineTotal).toLocaleString("es-AR")}</p>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    {/* Global discount row */}
+                    {showGlobalDiscount && (
+                      <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => { setShowGlobalDiscount(false); setGlobalDiscount({ value: 0, type: "percent" }) }}
+                            className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                          <span className="text-sm text-slate-500">Descuento global</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            value={globalDiscount.value || ""}
+                            onChange={(e) => setGlobalDiscount(prev => ({ ...prev, value: parseFloat(e.target.value) || 0 }))}
+                            className="w-16 text-right text-sm px-2 py-1 border border-slate-200 rounded focus:outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          />
+                          <div className="flex border border-slate-200 rounded overflow-hidden">
+                            <button onClick={() => setGlobalDiscount(prev => ({ ...prev, type: "cash" }))} className={`px-2 py-1 text-xs cursor-pointer ${globalDiscount.type === "cash" ? "bg-slate-900 text-white" : "text-slate-400 hover:bg-slate-50"}`}>$</button>
+                            <button onClick={() => setGlobalDiscount(prev => ({ ...prev, type: "percent" }))} className={`px-2 py-1 text-xs cursor-pointer ${globalDiscount.type === "percent" ? "bg-slate-900 text-white" : "text-slate-400 hover:bg-slate-50"}`}>%</button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Envío row */}
+                    {showEnvio && (
+                      <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => { setShowEnvio(false); setEnvioAmount(0) }} className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors">
+                            <X className="w-3 h-3" />
+                          </button>
+                          <span className="text-sm text-slate-500">Envío</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm text-slate-400">$</span>
+                          <input
+                            type="number"
+                            value={envioAmount || ""}
+                            onChange={(e) => setEnvioAmount(parseFloat(e.target.value) || 0)}
+                            className="w-20 text-right text-sm px-2 py-1 border border-slate-200 rounded focus:outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Custom charges */}
+                    {customCharges.map((charge, idx) => (
+                      <div key={charge.id} className="flex justify-between items-center py-2 border-b border-slate-100">
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => setCustomCharges(prev => prev.filter((_, i) => i !== idx))} className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors">
+                            <X className="w-3 h-3" />
+                          </button>
+                          <input
+                            type="text"
+                            value={charge.label}
+                            onChange={(e) => setCustomCharges(prev => prev.map((c, i) => i === idx ? { ...c, label: e.target.value } : c))}
+                            className="text-sm text-slate-500 bg-transparent border-none outline-none w-24"
+                          />
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm text-slate-400">$</span>
+                          <input
+                            type="number"
+                            value={charge.value || ""}
+                            onChange={(e) => setCustomCharges(prev => prev.map((c, i) => i === idx ? { ...c, value: parseFloat(e.target.value) || 0 } : c))}
+                            className="w-20 text-right text-sm px-2 py-1 border border-slate-200 rounded focus:outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          />
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Agregar tags */}
+                    {(!showGlobalDiscount || !showEnvio || customCharges.length === 0) && (
+                      <div className="flex items-center gap-2 flex-wrap py-2 border-b border-slate-100">
+                        <span className="text-xs text-slate-400">Agregar:</span>
+                        {!showGlobalDiscount && (
+                          <button
+                            onClick={() => setShowGlobalDiscount(true)}
+                            className="text-xs px-2 py-0.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors cursor-pointer"
+                          >
+                            Descuento Global
+                          </button>
+                        )}
+                        {!showEnvio && (
+                          <button
+                            onClick={() => setShowEnvio(true)}
+                            className="text-xs px-2 py-0.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors cursor-pointer"
+                          >
+                            Envío
+                          </button>
+                        )}
+                        {customCharges.length === 0 && (
+                          <button
+                            onClick={() => setCustomCharges([{ id: Date.now(), label: "Otro", value: 0 }])}
+                            className="text-xs px-2 py-0.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors cursor-pointer"
+                          >
+                            Otro
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Grand Total */}
+                    <div className="flex justify-between items-center py-3 mt-1 border-t border-slate-200">
+                      <span className="text-base font-bold text-slate-900">Total</span>
+                      <span className="text-base font-bold text-slate-900 tabular-nums">${Math.round(grandTotal).toLocaleString("es-AR")}</span>
+                    </div>
+
                     <StepNav
                       onBack={() => setCurrentStep(2)}
                       onNext={() => setCurrentStep(4)}
@@ -1018,62 +1015,96 @@ export default function NuevaVentaPage() {
                   </div>
                 )}
 
-                {/* ── Step 4: Cobro ── */}
+                {/* ── Step 4: Entrega y Cobro ── */}
                 {currentStep === 4 && (
-                  <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Wallet className="w-4 h-4 text-slate-500" />
-                      <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">Cobro</h3>
-                    </div>
-                    <p className="text-[11px] text-slate-400 mb-6 italic">
-                      Indica si el cobro se realiza ahora o de forma diferida.
-                    </p>
-                    <div className="grid grid-cols-2 gap-4 mb-6">
-                      <ModeCard
-                        active={cobroMode === "en_el_acto"}
-                        onClick={() => setCobroMode("en_el_acto")}
-                        color="blue"
-                        icon={CheckCircle2}
-                        title="En el acto"
-                        description="Se marca como cobrada (100%)"
-                      />
-                      <ModeCard
-                        active={cobroMode === "diferida"}
-                        onClick={() => setCobroMode("diferida")}
-                        color="amber"
-                        icon={Wallet}
-                        title="Diferida"
-                        description="Quedará en 0% para completar luego"
-                      />
-                    </div>
-
-                    {cobroMode === "en_el_acto" && (
-                      <div className="mb-2">
-                        <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-3 block">
-                          Medio de Pago
-                        </label>
-                        <div className="grid grid-cols-3 gap-3">
-                          {(["efectivo", "transferencia", "posnet"] as PaymentMethod[]).map((mp) => {
-                            const Icon = medioPagoIcons[mp]
-                            const active = medioPago === mp
-                            return (
-                              <button
-                                key={mp}
-                                onClick={() => setMedioPago(mp)}
-                                className={`flex items-center gap-2 px-4 py-3 rounded-xl border-2 transition-colors cursor-pointer ${
-                                  active
-                                    ? "border-blue-500 bg-blue-50 text-blue-700"
-                                    : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
-                                }`}
-                              >
-                                <Icon className={`w-4 h-4 ${active ? "text-blue-600" : "text-slate-400"}`} />
-                                <span className="text-sm font-medium">{medioPagoLabels[mp]}</span>
-                              </button>
-                            )
-                          })}
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Entrega card */}
+                      <div className="p-5 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Truck className="w-4 h-4 text-slate-500" />
+                          <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">Entrega</h3>
+                        </div>
+                        <p className="text-[11px] text-slate-400 mb-4 italic">
+                          Indica si la entrega se realiza ahora o de forma diferida.
+                        </p>
+                        <div className="flex flex-col gap-3">
+                          <ModeCard
+                            active={entregaMode === "en_el_acto"}
+                            onClick={() => setEntregaMode("en_el_acto")}
+                            color="blue"
+                            icon={CheckCircle2}
+                            title="En el acto"
+                            description="Se marca como entregada (100%)"
+                          />
+                          <ModeCard
+                            active={entregaMode === "diferida"}
+                            onClick={() => setEntregaMode("diferida")}
+                            color="amber"
+                            icon={Truck}
+                            title="Diferida"
+                            description="Quedará en 0% para completar luego"
+                          />
                         </div>
                       </div>
-                    )}
+
+                      {/* Cobro card */}
+                      <div className="p-5 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Wallet className="w-4 h-4 text-slate-500" />
+                          <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">Cobro</h3>
+                        </div>
+                        <p className="text-[11px] text-slate-400 mb-4 italic">
+                          Indica si el cobro se realiza ahora o de forma diferida.
+                        </p>
+                        <div className="flex flex-col gap-3 mb-4">
+                          <ModeCard
+                            active={cobroMode === "en_el_acto"}
+                            onClick={() => setCobroMode("en_el_acto")}
+                            color="blue"
+                            icon={CheckCircle2}
+                            title="En el acto"
+                            description="Se marca como cobrada (100%)"
+                          />
+                          <ModeCard
+                            active={cobroMode === "diferida"}
+                            onClick={() => setCobroMode("diferida")}
+                            color="amber"
+                            icon={Wallet}
+                            title="Diferida"
+                            description="Quedará en 0% para completar luego"
+                          />
+                        </div>
+
+                        {cobroMode === "en_el_acto" && (
+                          <div>
+                            <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2 block">
+                              Medio de Pago
+                            </label>
+                            <div className="flex flex-col gap-2">
+                              {(["efectivo", "transferencia", "posnet"] as PaymentMethod[]).map((mp) => {
+                                const Icon = medioPagoIcons[mp]
+                                const active = medioPago === mp
+                                return (
+                                  <button
+                                    key={mp}
+                                    onClick={() => setMedioPago(mp)}
+                                    className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border transition-colors cursor-pointer ${
+                                      active
+                                        ? "border-blue-500 bg-blue-50 text-blue-700"
+                                        : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
+                                    }`}
+                                  >
+                                    <Icon className={`w-4 h-4 ${active ? "text-blue-600" : "text-slate-400"}`} />
+                                    <span className="text-xs font-medium">{medioPagoLabels[mp]}</span>
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
 
                     <StepNav
                       onBack={() => setCurrentStep(3)}
