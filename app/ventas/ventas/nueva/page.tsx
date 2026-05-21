@@ -864,15 +864,17 @@ export default function NuevaVentaPage() {
                       })
                     )}
 
-                    {/* Agregar productos row */}
-                    <button
-                      type="button"
-                      onClick={() => setShowAgregarProductos(true)}
-                      className="w-full flex items-center gap-2 px-4 py-3 text-sm text-slate-500 hover:bg-slate-50 transition-colors border-t border-slate-100"
-                    >
-                      <Plus className="w-4 h-4 text-slate-400" />
-                      Agregar productos
-                    </button>
+                    {/* Agregar productos row — only when items exist */}
+                    {selectedItems.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setShowAgregarProductos(true)}
+                        className="w-full flex items-center gap-2 px-4 py-3 text-sm text-slate-500 hover:bg-slate-50 transition-colors border-t border-slate-100"
+                      >
+                        <Plus className="w-4 h-4 text-slate-400" />
+                        Agregar productos
+                      </button>
+                    )}
 
                     <div className="px-6 pb-6">
                       <StepNav
@@ -1064,68 +1066,57 @@ export default function NuevaVentaPage() {
                           Entrega inicial (opcional)
                         </p>
 
-                        {/* Registered entries */}
-                        {entregaInicialEntries.length > 0 && (
-                          <div className="space-y-2 mb-3">
-                            {entregaInicialEntries.map((entry, i) => (
-                              <div key={i} className="flex items-center justify-between gap-3 py-2 px-3 bg-slate-50 rounded-lg border border-slate-100">
-                                <div className="flex items-center gap-2 min-w-0 flex-1">
-                                  <div className="w-7 h-7 rounded bg-slate-200 overflow-hidden shrink-0">
-                                    <Image
-                                      src={getCategoryImage(entry.categoria || "") || "/placeholder.svg"}
-                                      alt={entry.name}
-                                      width={28}
-                                      height={28}
-                                      className="w-full h-full object-cover"
-                                    />
-                                  </div>
-                                  <div className="min-w-0">
-                                    <p className="text-xs font-medium text-slate-700 truncate">{entry.name}</p>
-                                    <p className="text-[10px] text-slate-400">{entry.quantity} u.</p>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-2 shrink-0">
-                                  {entry.editingDate ? (
-                                    <input
-                                      type="date"
-                                      max={getTodayDateStr()}
-                                      value={entry.date}
-                                      autoFocus
-                                      onChange={(e) => setEntregaInicialEntries(prev => prev.map((en, j) => j === i ? { ...en, date: e.target.value } : en))}
-                                      onBlur={() => setEntregaInicialEntries(prev => prev.map((en, j) => j === i ? { ...en, editingDate: false } : en))}
-                                      className="text-xs px-2 py-1 border border-slate-200 rounded focus:outline-none focus:border-slate-400 bg-white"
-                                    />
-                                  ) : (
-                                    <button
-                                      onClick={() => setEntregaInicialEntries(prev => prev.map((en, j) => j === i ? { ...en, editingDate: true } : en))}
-                                      className="text-[10px] text-slate-400 hover:text-slate-600 transition-colors tabular-nums cursor-pointer"
-                                    >
-                                      {entry.date}
-                                    </button>
-                                  )}
+                        {/* Registered entries — venta detail style */}
+                        {entregaInicialEntries.map((entry, i) => {
+                          const totalUnits = entry.quantity
+                          const dateLabel = new Date(entry.date + "T12:00:00").toLocaleDateString("es-AR", { day: "2-digit", month: "short" })
+                          return (
+                            <div key={i} className="flex items-center group border-b border-slate-100 last:border-0 mb-1">
+                              <div className="flex-1 flex items-center gap-2 py-1.5">
+                                {entry.editingDate ? (
+                                  <input
+                                    type="date"
+                                    max={getTodayDateStr()}
+                                    value={entry.date}
+                                    autoFocus
+                                    onChange={(e) => setEntregaInicialEntries(prev => prev.map((en, j) => j === i ? { ...en, date: e.target.value } : en))}
+                                    onBlur={() => setEntregaInicialEntries(prev => prev.map((en, j) => j === i ? { ...en, editingDate: false } : en))}
+                                    className="text-xs px-2 py-0.5 border border-slate-200 rounded focus:outline-none focus:border-slate-400 bg-white"
+                                  />
+                                ) : (
                                   <button
-                                    onClick={() => setEntregaInicialEntries(prev => prev.filter((_, j) => j !== i))}
-                                    className="p-0.5 text-slate-300 hover:text-red-400 transition-colors"
+                                    onClick={() => setEntregaInicialEntries(prev => prev.map((en, j) => j === i ? { ...en, editingDate: true } : en))}
+                                    className="text-xs text-slate-400 tabular-nums hover:text-slate-600 transition-colors cursor-pointer"
                                   >
-                                    <X className="w-3.5 h-3.5" />
+                                    {dateLabel}
                                   </button>
-                                </div>
+                                )}
+                                <span className="text-xs text-slate-300">·</span>
+                                <span className="text-xs text-slate-400 tabular-nums">{totalUnits} {totalUnits === 1 ? "unidad" : "unidades"}</span>
                               </div>
-                            ))}
-                          </div>
-                        )}
+                              <button
+                                onClick={() => setEntregaInicialEntries(prev => prev.filter((_, j) => j !== i))}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-400"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )
+                        })}
 
-                        <button
-                          onClick={() => {
-                            setEntregaModalSelected({})
-                            setEntregaModalQtys({})
-                            setShowEntregaInicialModal(true)
-                          }}
-                          className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>Registrar entrega</span>
-                        </button>
+                        {entregaInicialEntries.length === 0 && (
+                          <button
+                            onClick={() => {
+                              setEntregaModalSelected({})
+                              setEntregaModalQtys({})
+                              setShowEntregaInicialModal(true)
+                            }}
+                            className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Registrar entrega</span>
+                          </button>
+                        )}
                       </div>
                     )}
 
@@ -1201,63 +1192,61 @@ export default function NuevaVentaPage() {
                           Cobro inicial (opcional)
                         </p>
 
-                        {/* Registered cobro entries */}
-                        {cobroInicialEntries.length > 0 && (
-                          <div className="space-y-2 mb-3">
-                            {cobroInicialEntries.map((entry, i) => {
-                              const Icon = medioPagoIcons[entry.medioPago]
-                              return (
-                                <div key={entry.id} className="flex items-center justify-between gap-3 py-2 px-3 bg-slate-50 rounded-lg border border-slate-100">
-                                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                                    <Icon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                    <span className="text-xs font-medium text-slate-700">${Number(entry.monto).toLocaleString("es-AR")}</span>
-                                    <span className="text-[10px] text-slate-400">{medioPagoLabels[entry.medioPago]}</span>
-                                  </div>
-                                  <div className="flex items-center gap-2 shrink-0">
-                                    {entry.editingDate ? (
-                                      <input
-                                        type="date"
-                                        max={getTodayDateStr()}
-                                        value={entry.date}
-                                        autoFocus
-                                        onChange={(e) => setCobroInicialEntries(prev => prev.map((en, j) => j === i ? { ...en, date: e.target.value } : en))}
-                                        onBlur={() => setCobroInicialEntries(prev => prev.map((en, j) => j === i ? { ...en, editingDate: false } : en))}
-                                        className="text-xs px-2 py-1 border border-slate-200 rounded focus:outline-none focus:border-slate-400 bg-white"
-                                      />
-                                    ) : (
-                                      <button
-                                        onClick={() => setCobroInicialEntries(prev => prev.map((en, j) => j === i ? { ...en, editingDate: true } : en))}
-                                        className="text-[10px] text-slate-400 hover:text-slate-600 transition-colors tabular-nums cursor-pointer"
-                                      >
-                                        {entry.date}
-                                      </button>
-                                    )}
-                                    <button
-                                      onClick={() => setCobroInicialEntries(prev => prev.filter((_, j) => j !== i))}
-                                      className="p-0.5 text-slate-300 hover:text-red-400 transition-colors"
-                                    >
-                                      <X className="w-3.5 h-3.5" />
-                                    </button>
-                                  </div>
-                                </div>
-                              )
-                            })}
-                          </div>
-                        )}
+                        {/* Registered cobro entries — venta detail style */}
+                        {cobroInicialEntries.map((entry, i) => {
+                          const dateLabel = new Date(entry.date + "T12:00:00").toLocaleDateString("es-AR", { day: "2-digit", month: "short" })
+                          return (
+                            <div key={entry.id} className="flex items-center group border-b border-slate-100 last:border-0 mb-1">
+                              <div className="flex items-center gap-2 flex-1 min-w-0 py-2.5">
+                                {entry.editingDate ? (
+                                  <input
+                                    type="date"
+                                    max={getTodayDateStr()}
+                                    value={entry.date}
+                                    autoFocus
+                                    onChange={(e) => setCobroInicialEntries(prev => prev.map((en, j) => j === i ? { ...en, date: e.target.value } : en))}
+                                    onBlur={() => setCobroInicialEntries(prev => prev.map((en, j) => j === i ? { ...en, editingDate: false } : en))}
+                                    className="text-xs px-2 py-0.5 border border-slate-200 rounded focus:outline-none focus:border-slate-400 bg-white"
+                                  />
+                                ) : (
+                                  <button
+                                    onClick={() => setCobroInicialEntries(prev => prev.map((en, j) => j === i ? { ...en, editingDate: true } : en))}
+                                    className="text-xs text-slate-400 tabular-nums hover:text-slate-600 transition-colors cursor-pointer"
+                                  >
+                                    {dateLabel}
+                                  </button>
+                                )}
+                                <span className="text-xs text-slate-300">·</span>
+                                <span className="text-xs text-slate-500">{medioPagoLabels[entry.medioPago]}</span>
+                              </div>
+                              <span className="text-sm font-semibold text-slate-900 tabular-nums mr-2">
+                                ${Number(entry.monto).toLocaleString("es-AR")}
+                              </span>
+                              <button
+                                onClick={() => setCobroInicialEntries(prev => prev.filter((_, j) => j !== i))}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-400"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )
+                        })}
 
-                        <button
-                          onClick={() => {
-                            setCobroModalMonto("")
-                            setCobroModalMedio("efectivo")
-                            setCobroModalFecha(getTodayDateStr())
-                            setCobroModalHora(getNowTimeStr())
-                            setShowCobroInicialModal(true)
-                          }}
-                          className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>Registrar cobro</span>
-                        </button>
+                        {cobroInicialEntries.length === 0 && (
+                          <button
+                            onClick={() => {
+                              setCobroModalMonto("")
+                              setCobroModalMedio("efectivo")
+                              setCobroModalFecha(getTodayDateStr())
+                              setCobroModalHora(getNowTimeStr())
+                              setShowCobroInicialModal(true)
+                            }}
+                            className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Registrar cobro</span>
+                          </button>
+                        )}
                       </div>
                     )}
 
