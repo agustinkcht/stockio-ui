@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import Image from "next/image"
 import {
   CheckCircle2,
+  ChevronDown,
   User,
   Package,
   Truck,
@@ -108,6 +109,9 @@ export default function NuevaVentaPage() {
   const [modalSort, setModalSort] = useState<"name" | "precio">("name")
   const [modalSortDirection, setModalSortDirection] = useState<"asc" | "desc">("asc")
   const [showModalFilters, setShowModalFilters] = useState(false)
+
+  // Resumen sidebar
+  const [showProductosBreakdown, setShowProductosBreakdown] = useState(false)
 
   // Step 3: Resumen adjustments
   const [showGlobalDiscount, setShowGlobalDiscount] = useState(false)
@@ -750,21 +754,37 @@ export default function NuevaVentaPage() {
                         return (
                           <div key={item.sku} className="grid grid-cols-[2fr_0.8fr_1fr_1.4fr_auto] min-h-[72px] border-b border-slate-100 last:border-b-0">
                             {/* Item Info */}
-                            <div className="flex items-center gap-3 px-4 py-3">
-                              <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-                                <Image
-                                  src={getCategoryImage(item.categoria || "") || "/placeholder.svg"}
-                                  alt={item.name}
-                                  width={32}
-                                  height={32}
-                                  className="object-cover"
-                                />
-                              </div>
-                              <div className="min-w-0">
-                                <p className="text-sm font-medium text-gray-900 break-words leading-tight">{item.name}</p>
-                                <p className="text-xs text-slate-400 font-mono">{item.sku}</p>
-                              </div>
-                            </div>
+                            {(() => {
+                              const display = getVentaItemDisplay(item)
+                              return (
+                                <div className="flex items-center gap-3 px-4 py-3">
+                                  <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                    <Image
+                                      src={getCategoryImage(display.categoria || "") || "/placeholder.svg"}
+                                      alt={display.name}
+                                      width={32}
+                                      height={32}
+                                      className="object-cover"
+                                    />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <p className="text-sm font-medium text-gray-900 break-words leading-tight">{display.name}</p>
+                                      {display.tags.length > 0 && display.tags.map((tag, ti) => (
+                                        <span key={ti} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-600 whitespace-nowrap">{tag}</span>
+                                      ))}
+                                    </div>
+                                    {(display.marca || display.categoria) && (
+                                      <div className="flex items-center gap-1 mt-0.5">
+                                        {display.marca && <span className="text-xs text-slate-400 leading-tight">{display.marca}</span>}
+                                        {display.marca && display.categoria && <span className="text-xs text-slate-300">·</span>}
+                                        {display.categoria && <span className="text-xs text-slate-400 leading-tight">{display.categoria}</span>}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )
+                            })()}
                             {/* Cantidad */}
                             <div className="flex items-center justify-center">
                               <div className="flex items-center border border-slate-200 rounded-full px-1 py-0.5 bg-white">
@@ -891,33 +911,53 @@ export default function NuevaVentaPage() {
                       <p className="text-xs text-slate-400 text-center py-4">Sin productos aún</p>
                     ) : (
                       <>
-                        {/* Line items */}
-                        <div className="space-y-2.5 mb-3">
-                          {selectedItems.map((it, idx) => {
-                            const aj = editAjustes[idx] ?? { value: 0, type: "percent" as const }
-                            let lineTotal = 0
-                            if (aj.value > 0) {
-                              if (aj.type === "unit") {
-                                lineTotal = Math.max(0, it.quantity - Math.min(aj.value, it.quantity)) * it.unitPrice
-                              } else {
-                                const adjUnit = aj.type === "percent"
-                                  ? it.unitPrice * (1 - aj.value / 100)
-                                  : Math.max(0, it.unitPrice - aj.value)
-                                lineTotal = it.quantity * adjUnit
-                              }
-                            } else {
-                              lineTotal = it.unitPrice * it.quantity
-                            }
-                            return (
-                              <div key={it.sku} className="flex justify-between items-start gap-2">
-                                <p className="text-xs text-slate-600 leading-tight flex-1 min-w-0 truncate">{it.quantity}× {it.name}</p>
-                                <p className="text-xs font-medium text-slate-800 tabular-nums shrink-0">${Math.round(lineTotal).toLocaleString("es-AR")}</p>
-                              </div>
-                            )
-                          })}
-                        </div>
+                        {/* Productos — collapsible subtotal row */}
+                        <button
+                          type="button"
+                          onClick={() => setShowProductosBreakdown(v => !v)}
+                          className="w-full flex items-center py-2.5 border-b border-slate-100 text-left hover:bg-slate-50/50 -mx-5 px-5 transition-colors"
+                        >
+                          <span className="text-xs text-slate-500 flex-1">Productos</span>
+                          <span className="text-xs text-slate-700 tabular-nums mr-1.5">${Math.round(total).toLocaleString("es-AR")}</span>
+                          <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform duration-200 ${showProductosBreakdown ? "rotate-180" : ""}`} />
+                        </button>
 
-                        {/* Separator */}
+                        {showProductosBreakdown && (
+                          <div className="border-b border-slate-100">
+                            {selectedItems.map((it, idx) => {
+                              const aj = editAjustes[idx] ?? { value: 0, type: "percent" as const }
+                              const display = getVentaItemDisplay(it)
+                              let adjUnit = it.unitPrice
+                              let lineTotal = 0
+                              if (aj.value > 0) {
+                                if (aj.type === "unit") {
+                                  adjUnit = it.unitPrice
+                                  lineTotal = Math.max(0, it.quantity - Math.min(aj.value, it.quantity)) * it.unitPrice
+                                } else {
+                                  adjUnit = aj.type === "percent"
+                                    ? it.unitPrice * (1 - aj.value / 100)
+                                    : Math.max(0, it.unitPrice - aj.value)
+                                  lineTotal = it.quantity * adjUnit
+                                }
+                              } else {
+                                lineTotal = it.unitPrice * it.quantity
+                              }
+                              return (
+                                <div key={it.sku} className="flex justify-between items-start gap-2 py-2 -mx-5 px-5 border-b border-slate-50 last:border-0">
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-xs text-slate-700 leading-tight">{display.name}</p>
+                                  </div>
+                                  <div className="text-right shrink-0">
+                                    <p className="text-[11px] text-slate-400 tabular-nums">{it.quantity} × ${Math.round(adjUnit).toLocaleString("es-AR")}</p>
+                                    <p className="text-xs font-medium text-slate-700 tabular-nums">${Math.round(lineTotal).toLocaleString("es-AR")}</p>
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
+
+                        {/* Adjustments */}
                         <div className="border-t border-slate-100 pt-3 space-y-1.5">
 
                           {/* Global discount row */}
