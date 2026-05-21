@@ -32,6 +32,7 @@ import { CLIENTES } from "@/lib/data/clientes"
 import { INITIAL_ITEMS } from "@/lib/data/initial-items"
 import { useVentas } from "@/hooks/use-ventas"
 import { getCategoryImage } from "@/lib/utils/category-images"
+import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import type {
   Item,
   ItemVariant,
@@ -115,10 +116,29 @@ export default function NuevaVentaPage() {
   const [envioAmount, setEnvioAmount] = useState(0)
   const [customCharges, setCustomCharges] = useState<{ id: number; label: string; value: number }[]>([])
 
-  // Step 4: Entrega y Cobro
+  // Step 3: Entrega
   const [entregaMode, setEntregaMode] = useState<EntregaMode>("en_el_acto")
+  // Entrega inicial (diferida)
+  const [showEntregaInicialModal, setShowEntregaInicialModal] = useState(false)
+  const [entregaInicialEntries, setEntregaInicialEntries] = useState<Array<{
+    sku: string; name: string; categoria?: string; quantity: number; max: number; date: string; editingDate: boolean
+  }>>([])
+  const [entregaModalSelected, setEntregaModalSelected] = useState<{ [sku: string]: boolean }>({})
+  const [entregaModalQtys, setEntregaModalQtys] = useState<{ [sku: string]: string }>({})
+
+  // Step 4: Cobro
   const [cobroMode, setCobroMode] = useState<CobroMode>("en_el_acto")
   const [medioPago, setMedioPago] = useState<PaymentMethod>("efectivo")
+  // Cobro inicial (diferida)
+  const [showCobroInicialModal, setShowCobroInicialModal] = useState(false)
+  const [cobroInicialEntries, setCobroInicialEntries] = useState<Array<{
+    id: number; monto: string; medioPago: PaymentMethod; date: string; editingDate: boolean
+  }>>([])
+  // Cobro modal state
+  const [cobroModalMonto, setCobroModalMonto] = useState("")
+  const [cobroModalMedio, setCobroModalMedio] = useState<PaymentMethod>("efectivo")
+  const [cobroModalFecha, setCobroModalFecha] = useState(getTodayDateStr())
+  const [cobroModalHora, setCobroModalHora] = useState(getNowTimeStr())
 
   // Creation state
   const [isCreating, setIsCreating] = useState(false)
@@ -371,17 +391,43 @@ export default function NuevaVentaPage() {
       const entregaItems: VentaEntregaItem[] =
         entregaMode === "en_el_acto"
           ? items.map((it) => ({ sku: it.sku, quantityEntregada: it.quantity }))
-          : items.map((it) => ({ sku: it.sku, quantityEntregada: 0 }))
+          : items.map((it) => ({ sku: it.sku, quantityEntregada: 0 as number }))
 
       const entregaEntries: VentaEntregaEntry[] =
         entregaMode === "en_el_acto"
           ? [{ id: `ENT-${Date.now()}`, fecha, hora, items: items.map((it) => ({ sku: it.sku, quantity: it.quantity })) }]
-          : []
+          : entregaInicialEntries.length > 0
+            ? entregaInicialEntries.reduce<VentaEntregaEntry[]>((acc, en) => {
+                const existing = acc.find(e => e.fecha === en.date)
+                if (existing) {
+                  existing.items.push({ sku: en.sku, quantity: en.quantity })
+                } else {
+                  acc.push({ id: `ENT-${Date.now()}-${en.sku}`, fecha: en.date, hora, items: [{ sku: en.sku, quantity: en.quantity }] })
+                }
+                return acc
+              }, [])
+            : []
+
+      // Update entregaItems to reflect any entrega inicial
+      if (entregaMode === "diferida" && entregaInicialEntries.length > 0) {
+        for (const en of entregaInicialEntries) {
+          const idx = entregaItems.findIndex(ei => ei.sku === en.sku)
+          if (idx >= 0) entregaItems[idx].quantityEntregada = en.quantity
+        }
+      }
 
       const cobros: VentaCobro[] =
         cobroMode === "en_el_acto"
           ? [{ id: `COB-${Date.now()}`, fecha, hora, medioPago, monto: ventaTotal }]
-          : []
+          : cobroInicialEntries.length > 0
+            ? cobroInicialEntries.map((en, i) => ({
+                id: `COB-${Date.now()}-${i}`,
+                fecha: en.date,
+                hora,
+                medioPago: en.medioPago,
+                monto: Number(en.monto),
+              }))
+            : []
 
       const fullyPaid = cobros.reduce((s, c) => s + c.monto, 0) >= subtotal && subtotal > 0
       const fullyDelivered = entregaMode === "en_el_acto"
@@ -1007,9 +1053,82 @@ export default function NuevaVentaPage() {
                         color="amber"
                         icon={Truck}
                         title="Diferida"
-                        description="Quedará en 0% para completar luego"
+                        description="Quedará total o parcialmente pendiente de entrega"
                       />
                     </div>
+
+                    {/* Entrega inicial opcional — only when diferida */}
+                    {entregaMode === "diferida" && (
+                      <div className="mt-5 border-t border-slate-100 pt-5">
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+                          Entrega inicial (opcional)
+                        </p>
+
+                        {/* Registered entries */}
+                        {entregaInicialEntries.length > 0 && (
+                          <div className="space-y-2 mb-3">
+                            {entregaInicialEntries.map((entry, i) => (
+                              <div key={i} className="flex items-center justify-between gap-3 py-2 px-3 bg-slate-50 rounded-lg border border-slate-100">
+                                <div className="flex items-center gap-2 min-w-0 flex-1">
+                                  <div className="w-7 h-7 rounded bg-slate-200 overflow-hidden shrink-0">
+                                    <Image
+                                      src={getCategoryImage(entry.categoria || "") || "/placeholder.svg"}
+                                      alt={entry.name}
+                                      width={28}
+                                      height={28}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="text-xs font-medium text-slate-700 truncate">{entry.name}</p>
+                                    <p className="text-[10px] text-slate-400">{entry.quantity} u.</p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  {entry.editingDate ? (
+                                    <input
+                                      type="date"
+                                      max={getTodayDateStr()}
+                                      value={entry.date}
+                                      autoFocus
+                                      onChange={(e) => setEntregaInicialEntries(prev => prev.map((en, j) => j === i ? { ...en, date: e.target.value } : en))}
+                                      onBlur={() => setEntregaInicialEntries(prev => prev.map((en, j) => j === i ? { ...en, editingDate: false } : en))}
+                                      className="text-xs px-2 py-1 border border-slate-200 rounded focus:outline-none focus:border-slate-400 bg-white"
+                                    />
+                                  ) : (
+                                    <button
+                                      onClick={() => setEntregaInicialEntries(prev => prev.map((en, j) => j === i ? { ...en, editingDate: true } : en))}
+                                      className="text-[10px] text-slate-400 hover:text-slate-600 transition-colors tabular-nums cursor-pointer"
+                                    >
+                                      {entry.date}
+                                    </button>
+                                  )}
+                                  <button
+                                    onClick={() => setEntregaInicialEntries(prev => prev.filter((_, j) => j !== i))}
+                                    className="p-0.5 text-slate-300 hover:text-red-400 transition-colors"
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        <button
+                          onClick={() => {
+                            setEntregaModalSelected({})
+                            setEntregaModalQtys({})
+                            setShowEntregaInicialModal(true)
+                          }}
+                          className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Registrar entrega</span>
+                        </button>
+                      </div>
+                    )}
+
                     <StepNav
                       onBack={() => setCurrentStep(2)}
                       onNext={() => setCurrentStep(4)}
@@ -1043,7 +1162,7 @@ export default function NuevaVentaPage() {
                         color="amber"
                         icon={Wallet}
                         title="Diferida"
-                        description="Quedará en 0% para completar luego"
+                        description="Quedará total o parcialmente pendiente de cobro"
                       />
                     </div>
 
@@ -1075,6 +1194,73 @@ export default function NuevaVentaPage() {
                       </div>
                     )}
 
+                    {/* Cobro inicial opcional — only when diferida */}
+                    {cobroMode === "diferida" && (
+                      <div className="mt-5 border-t border-slate-100 pt-5">
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+                          Cobro inicial (opcional)
+                        </p>
+
+                        {/* Registered cobro entries */}
+                        {cobroInicialEntries.length > 0 && (
+                          <div className="space-y-2 mb-3">
+                            {cobroInicialEntries.map((entry, i) => {
+                              const Icon = medioPagoIcons[entry.medioPago]
+                              return (
+                                <div key={entry.id} className="flex items-center justify-between gap-3 py-2 px-3 bg-slate-50 rounded-lg border border-slate-100">
+                                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                                    <Icon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                    <span className="text-xs font-medium text-slate-700">${Number(entry.monto).toLocaleString("es-AR")}</span>
+                                    <span className="text-[10px] text-slate-400">{medioPagoLabels[entry.medioPago]}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    {entry.editingDate ? (
+                                      <input
+                                        type="date"
+                                        max={getTodayDateStr()}
+                                        value={entry.date}
+                                        autoFocus
+                                        onChange={(e) => setCobroInicialEntries(prev => prev.map((en, j) => j === i ? { ...en, date: e.target.value } : en))}
+                                        onBlur={() => setCobroInicialEntries(prev => prev.map((en, j) => j === i ? { ...en, editingDate: false } : en))}
+                                        className="text-xs px-2 py-1 border border-slate-200 rounded focus:outline-none focus:border-slate-400 bg-white"
+                                      />
+                                    ) : (
+                                      <button
+                                        onClick={() => setCobroInicialEntries(prev => prev.map((en, j) => j === i ? { ...en, editingDate: true } : en))}
+                                        className="text-[10px] text-slate-400 hover:text-slate-600 transition-colors tabular-nums cursor-pointer"
+                                      >
+                                        {entry.date}
+                                      </button>
+                                    )}
+                                    <button
+                                      onClick={() => setCobroInicialEntries(prev => prev.filter((_, j) => j !== i))}
+                                      className="p-0.5 text-slate-300 hover:text-red-400 transition-colors"
+                                    >
+                                      <X className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
+
+                        <button
+                          onClick={() => {
+                            setCobroModalMonto("")
+                            setCobroModalMedio("efectivo")
+                            setCobroModalFecha(getTodayDateStr())
+                            setCobroModalHora(getNowTimeStr())
+                            setShowCobroInicialModal(true)
+                          }}
+                          className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Registrar cobro</span>
+                        </button>
+                      </div>
+                    )}
+
                     <StepNav
                       onBack={() => setCurrentStep(3)}
                       onNext={() => setCurrentStep(5)}
@@ -1096,42 +1282,85 @@ export default function NuevaVentaPage() {
 
                     <div className="space-y-4">
                       <SummaryRow label="Cliente" value={clienteNombre} />
+
+                      {/* Resumen */}
                       <div>
-                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                          Productos ({selectedItems.length})
-                        </p>
-                        <div className="space-y-1.5 border border-slate-100 rounded-lg p-3 bg-slate-50/50">
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Resumen</p>
+                        <div className="border border-slate-100 rounded-xl overflow-hidden">
+                          {/* Items */}
                           {selectedItems.map((it, idx) => {
                             const aj = editAjustes[idx] ?? { value: 0, type: "percent" as const }
                             let lineTotal = 0
+                            let adjustedUnit = it.unitPrice
                             if (aj.value > 0) {
                               if (aj.type === "unit") {
                                 lineTotal = Math.max(0, it.quantity - Math.min(aj.value, it.quantity)) * it.unitPrice
+                                adjustedUnit = it.unitPrice
                               } else {
-                                const adjUnit = aj.type === "percent"
+                                adjustedUnit = aj.type === "percent"
                                   ? it.unitPrice * (1 - aj.value / 100)
                                   : Math.max(0, it.unitPrice - aj.value)
-                                lineTotal = it.quantity * adjUnit
+                                lineTotal = it.quantity * adjustedUnit
                               }
                             } else {
                               lineTotal = it.unitPrice * it.quantity
                             }
                             return (
-                              <div key={it.sku} className="flex items-center justify-between text-xs">
-                                <span className="text-slate-700 truncate flex-1 pr-3">
-                                  {it.quantity}× {it.name}
-                                </span>
-                                <span className="text-slate-900 font-medium tabular-nums">
+                              <div key={it.sku} className="flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-100 last:border-b-0">
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-xs font-medium text-slate-700 truncate">{it.name}</p>
+                                  <p className="text-[10px] text-slate-400 mt-0.5 tabular-nums">
+                                    {it.quantity} × ${Math.round(adjustedUnit).toLocaleString("es-AR")}
+                                    {aj.value > 0 && (
+                                      <span className="ml-1.5 text-amber-600">
+                                        ({aj.type === "percent" ? `−${aj.value}%` : aj.type === "cash" ? `−$${aj.value}` : `${aj.value} u. bonif.`})
+                                      </span>
+                                    )}
+                                  </p>
+                                </div>
+                                <span className="text-xs font-medium text-slate-800 tabular-nums shrink-0">
                                   ${Math.round(lineTotal).toLocaleString("es-AR")}
                                 </span>
                               </div>
                             )
                           })}
-                          <div className="flex items-center justify-between pt-2 mt-2 border-t border-slate-200/60">
-                            <span className="text-sm font-semibold text-slate-700">Total</span>
-                            <span className="text-sm font-semibold text-slate-900 tabular-nums">
-                              ${Math.round(grandTotal).toLocaleString("es-AR")}
-                            </span>
+
+                          {/* Subtotal */}
+                          <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 border-t border-slate-100">
+                            <span className="text-xs text-slate-500">Subtotal</span>
+                            <span className="text-xs text-slate-700 tabular-nums">${Math.round(total).toLocaleString("es-AR")}</span>
+                          </div>
+
+                          {/* Descuento global */}
+                          {showGlobalDiscount && globalDiscount.value > 0 && (
+                            <div className="flex items-center justify-between px-4 py-2 bg-slate-50 border-t border-slate-100">
+                              <span className="text-xs text-slate-500">
+                                Descuento global {globalDiscount.type === "percent" ? `(${globalDiscount.value}%)` : ""}
+                              </span>
+                              <span className="text-xs text-red-500 tabular-nums">−${Math.round(globalDiscountAmount).toLocaleString("es-AR")}</span>
+                            </div>
+                          )}
+
+                          {/* Envío */}
+                          {showEnvio && envioAmount > 0 && (
+                            <div className="flex items-center justify-between px-4 py-2 bg-slate-50 border-t border-slate-100">
+                              <span className="text-xs text-slate-500">Envío</span>
+                              <span className="text-xs text-slate-700 tabular-nums">+${Math.round(envioAmount).toLocaleString("es-AR")}</span>
+                            </div>
+                          )}
+
+                          {/* Custom charges */}
+                          {customCharges.filter(c => c.value > 0).map(charge => (
+                            <div key={charge.id} className="flex items-center justify-between px-4 py-2 bg-slate-50 border-t border-slate-100">
+                              <span className="text-xs text-slate-500">{charge.label}</span>
+                              <span className="text-xs text-slate-700 tabular-nums">+${Math.round(charge.value).toLocaleString("es-AR")}</span>
+                            </div>
+                          ))}
+
+                          {/* Total */}
+                          <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-slate-200">
+                            <span className="text-sm font-bold text-slate-900">Total</span>
+                            <span className="text-sm font-bold text-slate-900 tabular-nums">${Math.round(grandTotal).toLocaleString("es-AR")}</span>
                           </div>
                         </div>
                       </div>
@@ -1140,13 +1369,13 @@ export default function NuevaVentaPage() {
                         <SummaryCard
                           icon={Truck}
                           label="Entrega"
-                          value={entregaMode === "en_el_acto" ? "En el acto · 100%" : "Diferida · 0%"}
+                          value={entregaMode === "en_el_acto" ? "En el acto · 100%" : "Diferida"}
                           tone={entregaMode === "en_el_acto" ? "green" : "amber"}
                         />
                         <SummaryCard
                           icon={Wallet}
                           label="Cobro"
-                          value={cobroMode === "en_el_acto" ? `En el acto · ${medioPagoLabels[medioPago]}` : "Diferida · 0%"}
+                          value={cobroMode === "en_el_acto" ? `En el acto · ${medioPagoLabels[medioPago]}` : "Diferida"}
                           tone={cobroMode === "en_el_acto" ? "green" : "amber"}
                         />
                       </div>
@@ -1175,6 +1404,288 @@ export default function NuevaVentaPage() {
           </main>
         </div>
       </div>
+
+      {/* ── Registrar Entrega Inicial Modal ── */}
+      {showEntregaInicialModal && (() => {
+        const pendingSkus = selectedItems.map(it => it.sku)
+        const allSel = pendingSkus.length > 0 && pendingSkus.every(s => entregaModalSelected[s])
+        const someSel = pendingSkus.some(s => entregaModalSelected[s])
+        const indeterminate = someSel && !allSel
+        const selectedCount = pendingSkus.filter(s => entregaModalSelected[s]).length
+
+        const handleSelectAll = () => {
+          const selecting = !allSel && !indeterminate
+          const next: { [sku: string]: boolean } = {}
+          const nextQtys: { [sku: string]: string } = { ...entregaModalQtys }
+          for (const it of selectedItems) {
+            next[it.sku] = selecting
+            if (selecting) nextQtys[it.sku] = String(it.quantity)
+            else delete nextQtys[it.sku]
+          }
+          setEntregaModalSelected(next)
+          setEntregaModalQtys(nextQtys)
+        }
+
+        const handleToggle = (sku: string) => {
+          const willSelect = !entregaModalSelected[sku]
+          setEntregaModalSelected(prev => ({ ...prev, [sku]: willSelect }))
+          if (willSelect) {
+            const it = selectedItems.find(i => i.sku === sku)
+            if (it) setEntregaModalQtys(prev => ({ ...prev, [sku]: String(it.quantity) }))
+          } else {
+            setEntregaModalQtys(prev => { const n = { ...prev }; delete n[sku]; return n })
+          }
+        }
+
+        const handleConfirm = () => {
+          const today = getTodayDateStr()
+          const newEntries = selectedItems
+            .filter(it => entregaModalSelected[it.sku])
+            .map(it => {
+              const qty = parseInt(entregaModalQtys[it.sku] || "0", 10) || it.quantity
+              const display = getVentaItemDisplay(it)
+              return {
+                sku: it.sku,
+                name: display.name,
+                categoria: display.categoria,
+                quantity: Math.min(qty, it.quantity),
+                max: it.quantity,
+                date: today,
+                editingDate: false,
+              }
+            })
+          setEntregaInicialEntries(prev => {
+            const next = [...prev]
+            for (const entry of newEntries) {
+              const idx = next.findIndex(e => e.sku === entry.sku)
+              if (idx >= 0) next[idx] = entry
+              else next.push(entry)
+            }
+            return next
+          })
+          setShowEntregaInicialModal(false)
+        }
+
+        return (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowEntregaInicialModal(false)} />
+            <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[85vh] flex flex-col overflow-hidden">
+              {/* Header */}
+              <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
+                <div>
+                  <h3 className="text-base font-semibold text-slate-900">Registrar entrega</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Indicá las unidades a marcar como entregadas</p>
+                </div>
+                <button onClick={() => setShowEntregaInicialModal(false)} className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              {/* Column headers */}
+              <div className="bg-slate-50 border-b border-slate-100 flex-shrink-0">
+                <div className="grid grid-cols-[3fr_1fr_1.4fr] h-9 text-[10px] font-medium text-slate-500 uppercase tracking-wider">
+                  <div className="flex items-center px-4 gap-3">
+                    <button
+                      onClick={handleSelectAll}
+                      className="w-4 h-4 rounded border border-slate-300 flex items-center justify-center hover:border-slate-600 transition-colors bg-white"
+                    >
+                      {allSel && <Check className="w-3 h-3 text-slate-800" />}
+                      {indeterminate && <Minus className="w-3 h-3 text-slate-800" />}
+                    </button>
+                    <span>Producto</span>
+                  </div>
+                  <div className="flex items-center justify-center">Cantidad</div>
+                  <div className="flex items-center justify-center">Entregar</div>
+                </div>
+              </div>
+              {/* Items */}
+              <div className="flex-1 overflow-y-auto bg-white">
+                {selectedItems.map((it, idx) => {
+                  const display = getVentaItemDisplay(it)
+                  const isSel = !!entregaModalSelected[it.sku]
+                  const qtyVal = entregaModalQtys[it.sku] ?? ""
+                  return (
+                    <div
+                      key={idx}
+                      className={`grid grid-cols-[3fr_1fr_1.4fr] items-center py-3 px-4 border-b border-slate-100 hover:bg-slate-50/50 transition-colors cursor-pointer ${isSel ? "bg-slate-50/70" : ""}`}
+                      onClick={() => handleToggle(it.sku)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleToggle(it.sku) }}
+                          className="w-4 h-4 rounded border border-slate-300 flex items-center justify-center hover:border-slate-600 transition-colors bg-white flex-shrink-0"
+                        >
+                          {isSel && <Check className="w-3 h-3 text-slate-800" />}
+                        </button>
+                        <div className="w-9 h-9 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+                          <Image
+                            src={getCategoryImage(display.categoria || "") || "/placeholder.svg"}
+                            alt={display.name}
+                            width={36}
+                            height={36}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-slate-800 truncate">{display.name}</p>
+                          <p className="text-xs text-slate-400">{[display.marca, display.categoria].filter(Boolean).join(" · ")}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-center">
+                        <span className="text-sm text-slate-600 tabular-nums">{it.quantity}</span>
+                      </div>
+                      <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                        {isSel && (
+                          <input
+                            type="number"
+                            min={0}
+                            max={it.quantity}
+                            value={qtyVal}
+                            placeholder={String(it.quantity)}
+                            onChange={(e) => {
+                              const raw = e.target.value
+                              if (raw === "") { setEntregaModalQtys(prev => ({ ...prev, [it.sku]: "" })); return }
+                              const num = parseInt(raw, 10)
+                              if (isNaN(num) || num < 0) { setEntregaModalQtys(prev => ({ ...prev, [it.sku]: "0" })); return }
+                              if (num > it.quantity) { setEntregaModalQtys(prev => ({ ...prev, [it.sku]: String(it.quantity) })); return }
+                              setEntregaModalQtys(prev => ({ ...prev, [it.sku]: String(num) }))
+                            }}
+                            className="w-14 text-center text-sm tabular-nums bg-slate-50 border border-slate-200 rounded-md px-2 py-1.5 focus:outline-none focus:border-slate-400 transition-colors"
+                          />
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+              {/* Footer */}
+              <div className="border-t border-slate-200 bg-slate-50 py-3 px-5 flex items-center justify-between flex-shrink-0">
+                <span className="text-sm text-slate-500">
+                  {selectedCount > 0 ? `${selectedCount} producto${selectedCount !== 1 ? "s" : ""} seleccionado${selectedCount !== 1 ? "s" : ""}` : "Seleccioná productos para registrar"}
+                </span>
+                <button
+                  onClick={handleConfirm}
+                  disabled={selectedCount === 0}
+                  className="px-5 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Registrar entrega
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* ── Registrar Cobro Inicial Modal ── */}
+      {showCobroInicialModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowCobroInicialModal(false)} />
+          <div className="relative bg-white rounded-xl shadow-2xl w-[420px] flex flex-col overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <h2 className="text-sm font-semibold text-slate-900">Registrar cobro</h2>
+              <button onClick={() => setShowCobroInicialModal(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            {/* Body */}
+            <div className="px-5 py-5 flex flex-col gap-4">
+              {/* Fecha + Hora */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider">Fecha</label>
+                  <input
+                    type="date"
+                    max={getTodayDateStr()}
+                    value={cobroModalFecha}
+                    onChange={(e) => setCobroModalFecha(e.target.value)}
+                    className="px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-md outline-none focus:border-slate-400 transition-colors"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider">Hora</label>
+                  <input
+                    type="time"
+                    value={cobroModalHora}
+                    onChange={(e) => setCobroModalHora(e.target.value)}
+                    className="px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-md outline-none focus:border-slate-400 transition-colors"
+                  />
+                </div>
+              </div>
+              {/* Medio de pago */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider">Medio de pago</label>
+                <div className="flex gap-2">
+                  {(["efectivo", "posnet", "transferencia"] as PaymentMethod[]).map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setCobroModalMedio(m)}
+                      className={`flex-1 py-2 text-xs font-medium rounded-md border transition-colors ${
+                        cobroModalMedio === m
+                          ? "bg-slate-900 text-white border-slate-900"
+                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                      }`}
+                    >
+                      {medioPagoLabels[m]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {/* Monto */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider">Monto</label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">$</span>
+                    <input
+                      type="number"
+                      value={cobroModalMonto}
+                      onChange={(e) => setCobroModalMonto(e.target.value)}
+                      placeholder="0"
+                      className="w-full pl-7 pr-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-md outline-none focus:border-slate-400 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCobroModalMonto(String(Math.round(grandTotal)))}
+                    className="px-3 py-2 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors border border-slate-200 shrink-0"
+                  >
+                    Total
+                  </button>
+                </div>
+                <p className="text-[11px] text-slate-400 tabular-nums">Total de la venta: ${Math.round(grandTotal).toLocaleString("es-AR")}</p>
+              </div>
+            </div>
+            {/* Footer */}
+            <div className="px-5 pb-5 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowCobroInicialModal(false)}
+                className="flex-1 py-2.5 text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors font-medium"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={!cobroModalMonto || Number(cobroModalMonto) <= 0}
+                onClick={() => {
+                  setCobroInicialEntries(prev => [...prev, {
+                    id: Date.now(),
+                    monto: cobroModalMonto,
+                    medioPago: cobroModalMedio,
+                    date: cobroModalFecha,
+                    editingDate: false,
+                  }])
+                  setShowCobroInicialModal(false)
+                }}
+                className="flex-1 py-2.5 text-sm text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Registrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Agregar Productos Modal (exact copy from venta detail) ── */}
       {showAgregarProductos && (
