@@ -149,6 +149,7 @@ export default function VentasPage() {
               <div className="flex items-center">
                 <button
                   type="button"
+                  onClick={() => router.push("/ventas/ventas/nueva")}
                   className="h-11 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-md flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer"
                 >
                   <Plus className="w-4 h-4 text-slate-700" strokeWidth={2.25} />
