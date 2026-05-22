@@ -20,7 +20,7 @@ import type { VentaItem } from "@/lib/types"
 export default function PuntoDeVentaPage() {
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
   const { items, reduceStock } = useItems()
-  const { addVenta, updateVenta } = useVentas()
+  const { addVenta } = useVentas()
   const { clientes, getClienteById, incrementTransactionCount } = useClientes()
   const { sesionActiva, agregarMovimiento } = useCaja()
   const [showCheckoutSuccess, setShowCheckoutSuccess] = useState(false)
@@ -83,32 +83,71 @@ export default function PuntoDeVentaPage() {
       categoria: cartItem.item.categoria,
     }))
 
-    // 3. Get client info
-    const cliente = selectedClientId ? getClienteById(selectedClientId) : null
-    const clienteNombre = cliente
-      ? cliente.tipo === "empresa"
-        ? cliente.razonSocial || ""
-        : `${cliente.nombre} ${cliente.apellido}`
+    // 3. Build cliente shape
+    const clienteRaw = selectedClientId ? getClienteById(selectedClientId) : null
+    const clienteNombre = clienteRaw
+      ? clienteRaw.tipo === "empresa"
+        ? clienteRaw.razonSocial || ""
+        : `${clienteRaw.nombre} ${clienteRaw.apellido}`
       : "Consumidor Final"
+    const ventaCliente: import("@/lib/types").VentaCliente = clienteRaw
+      ? { tipo: "cuenta", id: selectedClientId!, nombre: clienteNombre }
+      : { tipo: "consumidor_final" }
 
-    // 4. Create the venta record
+    // 4. Build full venta — PDV is always en el acto for both cobro + entrega
     const now = new Date()
     const fecha = now.toISOString().split("T")[0]
     const hora = now.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })
 
+    // Map PDV payment method to PaymentMethod
+    const medioPagoMap: Record<string, import("@/lib/types").PaymentMethod> = {
+      efectivo: "efectivo",
+      tarjeta: "posnet",
+      posnet: "posnet",
+      transferencia: "transferencia",
+    }
+    const medioPago: import("@/lib/types").PaymentMethod =
+      medioPagoMap[paymentMethod] ?? "no_especificado"
+
+    // Cobros: single entry for the full amount
+    const cobros: import("@/lib/types").VentaCobro[] = [
+      {
+        id: `PDV-COB-${Date.now()}`,
+        fecha,
+        hora,
+        medioPago,
+        monto: total,
+      },
+    ]
+
+    // Entregas: all items fully delivered right now
+    const entregaItems: import("@/lib/types").VentaEntregaItem[] = ventaItems.map((it) => ({
+      sku: it.sku,
+      quantityEntregada: it.quantity,
+    }))
+    const entregaEntries: import("@/lib/types").VentaEntregaEntry[] = [
+      {
+        id: `PDV-ENT-${Date.now()}`,
+        fecha,
+        hora,
+        items: ventaItems.map((it) => ({ sku: it.sku, quantity: it.quantity })),
+      },
+    ]
+
     const venta = addVenta({
       fecha,
       hora,
-      clienteId: selectedClientId || "CONSUMIDOR_FINAL",
-      clienteNombre,
+      cliente: ventaCliente,
       items: ventaItems,
       subtotal,
       descuento: globalDiscount,
       descuentoTipo: globalDiscountType === "percentage" ? "percent" : "fixed",
       total,
-      metodoPago: paymentMethod,
-      estado: "completada",
-      vendedor: "Admin",
+      cobros,
+      entregaItems,
+      entregaEntries,
+      // estado will be derived as "finalizada" by recomputeVenta (paid + delivered = 100%)
+      estado: "finalizada",
     })
 
     // 5. Add movimiento to caja if session is active and payment affects caja
