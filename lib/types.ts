@@ -132,6 +132,7 @@ export interface SidebarItem {
   dropdownItems?: string[] // Deprecated, keeping for backward compatibility
   active?: boolean
   dividerAfter?: boolean
+  href?: string // For modules without sub-items (direct navigation)
 }
 
 export interface DropdownItem {

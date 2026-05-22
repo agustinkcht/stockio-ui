@@ -1,4 +1,4 @@
-import { Store, Box, Tag, HelpCircle, Settings, Receipt, Users, Wallet, Package, LayoutList } from "lucide-react"
+import { Store, Box, Tag, HelpCircle, Settings, Receipt, Users, Wallet, Package, LayoutList, LayoutDashboard } from "lucide-react"
 import type { SidebarItem, Template } from "./types"
 
 export const TEMPLATES: Template[] = [
@@ -149,6 +149,12 @@ export const TEMPLATES: Template[] = [
 ]
 
 export const SIDEBAR_ITEMS: SidebarItem[] = [
+  {
+    icon: LayoutDashboard,
+    label: "Dashboard",
+    href: "/dashboard",
+    dividerAfter: true,
+  },
   {
     icon: Store,
     label: "Mi Negocio",

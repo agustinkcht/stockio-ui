@@ -1,6 +1,6 @@
 "use client"
 
-import { Settings, DollarSign, ShoppingCart, Package, FolderOpen, Building2, User, Camera } from "lucide-react"
+import { Settings, DollarSign, ShoppingCart, Package, FolderOpen, Building2, User, Camera, LayoutDashboard } from "lucide-react"
 import Image from "next/image"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
@@ -8,12 +8,13 @@ import { Sidebar } from "@/components/layout/sidebar"
 import { UserPanel } from "@/components/layout/user-panel"
 import { useSidebar } from "@/hooks/use-sidebar"
 import { useSettings, type CostoBehavior, type CondicionIva } from "@/lib/contexts/settings-context"
+import { getMesEnCursoPeriod } from "@/lib/utils/dashboard-period"
 
 const condicionesIva: CondicionIva[] = ["Consumidor Final", "Responsable Inscripto", "Monotributista", "Exento"]
 
 export default function AjustesPage() {
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
-  const { miNegocio, precios, catalogo, stock, updateMiNegocioSettings, updatePreciosSettings, updateCatalogoSettings, updateStockSettings } = useSettings()
+  const { miNegocio, precios, catalogo, stock, dashboard, updateMiNegocioSettings, updatePreciosSettings, updateCatalogoSettings, updateStockSettings, updateDashboardSettings } = useSettings()
 
   const handleCostoBehaviorChange = (behavior: CostoBehavior) => {
     updatePreciosSettings({ costoBehavior: behavior })
@@ -80,6 +81,71 @@ export default function AjustesPage() {
 
             {/* Settings Sections */}
             <div className="space-y-6">
+              {/* Dashboard Section */}
+              <section className="bg-white rounded-2xl border border-slate-200/60 overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center">
+                    <LayoutDashboard className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">Dashboard</h2>
+                    <p className="text-xs text-slate-500">Configuración del período de Mes en Curso</p>
+                  </div>
+                </div>
+
+                <div className="px-6 py-5">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                      Mes en Curso
+                    </label>
+                    <p className="text-xs text-slate-400 mb-4">
+                      Definí el ciclo mensual de tu negocio. El período corre desde el día elegido de un mes hasta el día anterior del siguiente.
+                    </p>
+
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span className="text-sm text-slate-600">Del día</span>
+                      <input
+                        type="number"
+                        min="1"
+                        max="31"
+                        value={dashboard.mesEnCursoStartDay}
+                        onChange={(e) => {
+                          const v = Math.min(31, Math.max(1, parseInt(e.target.value) || 1))
+                          updateDashboardSettings({ mesEnCursoStartDay: v })
+                        }}
+                        className="w-20 px-3 py-2 border border-slate-200 rounded-lg text-sm text-center font-mono font-medium focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400"
+                      />
+                      <span className="text-sm text-slate-600">de un mes al día</span>
+                      <div className="px-3 py-2 border border-slate-200 rounded-lg text-sm text-center font-mono font-medium bg-slate-50 text-slate-700 min-w-[5rem]">
+                        {dashboard.mesEnCursoStartDay === 1
+                          ? "último"
+                          : dashboard.mesEnCursoStartDay - 1}
+                      </div>
+                      <span className="text-sm text-slate-600">del siguiente.</span>
+                    </div>
+
+                    {dashboard.mesEnCursoStartDay >= 29 && (
+                      <p className="text-xs text-amber-600 mt-3 flex items-start gap-1.5">
+                        <span className="inline-block w-1 h-1 rounded-full bg-amber-500 mt-1.5 flex-shrink-0" />
+                        En meses con menos de {dashboard.mesEnCursoStartDay} días se tomará hasta el último día del mes.
+                      </p>
+                    )}
+
+                    <div className="mt-4 px-4 py-3 rounded-xl bg-slate-50 border border-slate-100">
+                      <p className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1">Período actual</p>
+                      <p className="text-sm font-medium text-slate-800">
+                        {(() => {
+                          const range = getMesEnCursoPeriod(dashboard.mesEnCursoStartDay)
+                          const fmt = (d: Date) =>
+                            d.toLocaleDateString("es-AR", { day: "numeric", month: "long", year: "numeric" })
+                          return `${fmt(range.start)} — ${fmt(range.end)}`
+                        })()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
               {/* Mi Negocio Section */}
               <section className="bg-white rounded-2xl border border-slate-200/60 overflow-hidden">
                 <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">

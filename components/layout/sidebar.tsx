@@ -30,6 +30,9 @@ export function Sidebar({
         pathname.startsWith(dropdownItem.href.split("/").slice(0, 2).join("/")),
       )
     }
+    if (item.href) {
+      return pathname === item.href || pathname.startsWith(item.href + "/")
+    }
     return false
   }
 
@@ -114,6 +117,12 @@ export function Sidebar({
                 className="flex flex-col items-center gap-1 w-full py-2 rounded-lg transition-colors cursor-pointer pt-0 relative z-[100]"
                 onMouseEnter={() => handleModuleEnter(index, hasDropdown)}
                 onMouseLeave={() => handleModuleLeave(hasDropdown)}
+                onClick={() => {
+                  if (!hasDropdown && item.href) {
+                    router.push(item.href)
+                    onDropdownClose()
+                  }
+                }}
               >
                 {/* Icon Container - only this gets hover bg */}
                 <div

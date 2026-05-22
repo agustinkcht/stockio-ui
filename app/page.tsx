@@ -7,7 +7,7 @@ export default function Page() {
   const router = useRouter()
 
   useEffect(() => {
-    router.push("/catalogo/items")
+    router.push("/dashboard")
   }, [router])
 
   return (

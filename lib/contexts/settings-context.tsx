@@ -36,15 +36,24 @@ interface StockSettings {
   stockMinimoPorDefecto: number
 }
 
+export interface DashboardSettings {
+  // Day of month the "mes en curso" period starts on (1-31).
+  // The period ends the day before this on the next month.
+  // E.g. start=1 → 1st to last day of month. start=5 → 5th to 4th of next month.
+  mesEnCursoStartDay: number
+}
+
 interface SettingsContextType {
   miNegocio: MiNegocioSettings
   precios: PreciosSettings
   catalogo: CatalogoSettings
   stock: StockSettings
+  dashboard: DashboardSettings
   updateMiNegocioSettings: (settings: Partial<MiNegocioSettings>) => void
   updatePreciosSettings: (settings: Partial<PreciosSettings>) => void
   updateCatalogoSettings: (settings: Partial<CatalogoSettings>) => void
   updateStockSettings: (settings: Partial<StockSettings>) => void
+  updateDashboardSettings: (settings: Partial<DashboardSettings>) => void
 }
 
 const defaultMiNegocio: MiNegocioSettings = {
@@ -65,7 +74,7 @@ const defaultMiNegocio: MiNegocioSettings = {
   condicionIva: "Responsable Inscripto",
 }
 
-const defaultSettings: { miNegocio: MiNegocioSettings; precios: PreciosSettings; catalogo: CatalogoSettings; stock: StockSettings } = {
+const defaultSettings: { miNegocio: MiNegocioSettings; precios: PreciosSettings; catalogo: CatalogoSettings; stock: StockSettings; dashboard: DashboardSettings } = {
   miNegocio: defaultMiNegocio,
   precios: {
     costoBehavior: "preservePrecioFinal", // Default: when editing costo, preserve precio final and modify margen
@@ -76,6 +85,9 @@ const defaultSettings: { miNegocio: MiNegocioSettings; precios: PreciosSettings;
   stock: {
     stockMinimoPorDefecto: 1, // Default: stock mínimo of 1
   },
+  dashboard: {
+    mesEnCursoStartDay: 1, // Default: 1st of month to last day of month
+  },
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined)
@@ -85,6 +97,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [precios, setPrecios] = useState<PreciosSettings>(defaultSettings.precios)
   const [catalogo, setCatalogo] = useState<CatalogoSettings>(defaultSettings.catalogo)
   const [stock, setStock] = useState<StockSettings>(defaultSettings.stock)
+  const [dashboard, setDashboard] = useState<DashboardSettings>(defaultSettings.dashboard)
 
   // Load settings from localStorage on mount
   useEffect(() => {
@@ -108,6 +121,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         if (parsed.stock) {
           setStock({ ...defaultSettings.stock, ...parsed.stock })
         }
+        if (parsed.dashboard) {
+          setDashboard({ ...defaultSettings.dashboard, ...parsed.dashboard })
+        }
       } catch (e) {
         console.error("Failed to parse settings from localStorage")
       }
@@ -116,8 +132,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem("stockio-settings", JSON.stringify({ miNegocio, precios, catalogo, stock }))
-  }, [miNegocio, precios, catalogo, stock])
+    localStorage.setItem("stockio-settings", JSON.stringify({ miNegocio, precios, catalogo, stock, dashboard }))
+  }, [miNegocio, precios, catalogo, stock, dashboard])
 
   const updateMiNegocioSettings = (settings: Partial<MiNegocioSettings>) => {
     setMiNegocio((prev) => ({ ...prev, ...settings }))
@@ -135,8 +151,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setStock((prev) => ({ ...prev, ...settings }))
   }
 
+  const updateDashboardSettings = (settings: Partial<DashboardSettings>) => {
+    setDashboard((prev) => ({ ...prev, ...settings }))
+  }
+
   return (
-    <SettingsContext.Provider value={{ miNegocio, precios, catalogo, stock, updateMiNegocioSettings, updatePreciosSettings, updateCatalogoSettings, updateStockSettings }}>
+    <SettingsContext.Provider value={{ miNegocio, precios, catalogo, stock, dashboard, updateMiNegocioSettings, updatePreciosSettings, updateCatalogoSettings, updateStockSettings, updateDashboardSettings }}>
       {children}
     </SettingsContext.Provider>
   )
