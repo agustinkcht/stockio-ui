@@ -191,17 +191,15 @@ export default function VentasPage() {
 
           <main className="flex-1 flex flex-col bg-[rgba(250,251,253,1)] overflow-hidden">
             {/* Toolbar */}
-            <div className="px-6 py-4 border-b border-border/20 bg-white">
-              <div className="flex items-center">
-                <button
-                  type="button"
-                  onClick={() => router.push("/ventas/ventas/nueva")}
-                  className="h-11 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-md flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer"
-                >
-                  <Plus className="w-4 h-4 text-slate-700" strokeWidth={2.25} />
-                  Nueva Venta
-                </button>
-              </div>
+            <div className="px-6 py-4 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => router.push("/ventas/ventas/nueva")}
+                className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-md flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer"
+              >
+                <Plus className="w-4 h-4 text-slate-700" strokeWidth={2.25} />
+                Nueva Venta
+              </button>
             </div>
 
             {/* Items Grid */}
