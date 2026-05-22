@@ -136,7 +136,7 @@ function computeMetrics(
 
   for (const v of valid) {
     netoVenta += v.total
-    if (v.cliente.tipo === "cuenta") clientes.add(v.cliente.id)
+      if (v.cliente && v.cliente.tipo === "cuenta") clientes.add(v.cliente.id)
     else clientes.add("__cf__")
     for (const it of v.items) {
       const gross = it.unitPrice * it.quantity
