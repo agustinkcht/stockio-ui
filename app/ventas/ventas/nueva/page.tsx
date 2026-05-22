@@ -1287,8 +1287,8 @@ export default function NuevaVentaPage() {
                   </div>
                 )}
 
-                {/* ── Step 5: Confirmación ── */}
-                {currentStep === 5 && (
+                {/* ── Step 4: Confirmación ── */}
+                {currentStep === 4 && (
                   <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
                     <div className="flex items-center gap-2 mb-1">
                       <ClipboardCheck className="w-4 h-4 text-slate-500" />
