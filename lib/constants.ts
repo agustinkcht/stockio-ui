@@ -165,7 +165,6 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     hasDropdown: true,
     dropdown: [
       { label: "Ventas", href: "/ventas/ventas" },
-      { label: "VentasB", href: "/ventas/ventasb" },
       { label: "Presupuestos", href: "/ventas/presupuestos" },
     ],
   },
