@@ -576,7 +576,6 @@ export default function DashboardPage() {
                   <p className="text-xs text-slate-500">Ranking del período por ingresos</p>
                 </div>
                 <TopProductsList items={metrics.topItems} totalIngresos={metrics.ingresos} />
-                </div>
               </div>
             </div>
           </div>
