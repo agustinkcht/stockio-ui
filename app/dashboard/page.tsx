@@ -411,7 +411,7 @@ export default function DashboardPage() {
 
         <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white rounded-lg shadow-sm h-[calc(100vh-12px)]">
           {/* Top bar */}
-          <div className="relative border-b border-border h-[44px] bg-white">
+          <div className="relative h-[44px] bg-white">
             <div className="px-4 flex items-center justify-between h-full">
               <div className="flex items-center">
                 <Breadcrumb items={[{ label: "Dashboard", href: "/dashboard" }]} />
@@ -426,7 +426,8 @@ export default function DashboardPage() {
           {/* Scrollable content */}
           <div className="flex-1 overflow-y-auto bg-slate-50">
             {/* Sticky hero */}
-            <div className="sticky top-0 z-30 bg-slate-50/75 backdrop-blur-md border-b border-slate-200/60">
+            <div className="sticky top-0 z-30">
+              <div className="bg-slate-50/80 backdrop-blur-md">
               <div className="max-w-6xl mx-auto px-8 py-6">
                 <div className="flex items-start justify-between gap-6">
                   <div className="flex items-center gap-5 min-w-0">
@@ -479,6 +480,9 @@ export default function DashboardPage() {
                   </div>
                 </div>
               </div>
+              </div>
+              {/* Gradient fade: blurred hero → content */}
+              <div className="h-6 bg-gradient-to-b from-slate-50/70 to-transparent pointer-events-none" />
             </div>
 
             <div className="max-w-6xl mx-auto px-8 py-8">
@@ -585,7 +589,7 @@ export default function DashboardPage() {
                   </h2>
                   <p className="text-xs text-slate-500">Por día de la semana y franja horaria</p>
                 </div>
-                <div className={rangeDays < 7 ? "blur-sm pointer-events-none select-none" : ""}>
+                <div className={rangeDays < 7 ? "blur-[2px] pointer-events-none select-none" : ""}>
                   <SalesHeatmap heatmap={metrics.heatmap} range={range} totalVentas={metrics.ventasCount} />
                 </div>
                 {rangeDays < 7 && (
@@ -619,13 +623,13 @@ interface FactorDef {
   dash: string // SVG strokeDasharray
 }
 
-// 3 colors × 3 line styles, mapped to 5 factors
+// Specific color+dash per factor as requested
 const FACTOR_DEFS: FactorDef[] = [
-  { key: "ventasBrutas",      label: "Ventas brutas",            format: formatARS,    color: "rgb(15 23 42)",   dash: "0" },        // slate-900 solid
-  { key: "cantidadVentas",    label: "Cantidad de ventas",       format: formatNumber, color: "rgb(16 185 129)", dash: "6 4" },      // emerald dashed
-  { key: "unidadesVendidas",  label: "Unidades vendidas",        format: formatNumber, color: "rgb(245 158 11)", dash: "2 4" },      // amber dotted
-  { key: "unidadesDevueltas", label: "Unidades devueltas",       format: formatNumber, color: "rgb(15 23 42)",   dash: "6 4" },      // slate-900 dashed
-  { key: "valorDevoluciones", label: "Valor de unidades devueltas", format: formatARS, color: "rgb(16 185 129)", dash: "2 4" },      // emerald dotted
+  { key: "ventasBrutas",      label: "Ventas brutas",               format: formatARS,    color: "rgb(15 23 42)",    dash: "0" },     // negro sólido
+  { key: "cantidadVentas",    label: "Cantidad de ventas",          format: formatNumber, color: "rgb(16 185 129)",  dash: "0" },     // verde sólido
+  { key: "unidadesVendidas",  label: "Unidades vendidas",           format: formatNumber, color: "rgb(16 185 129)",  dash: "6 3" },   // verde dashed
+  { key: "unidadesDevueltas", label: "Unidades devueltas",          format: formatNumber, color: "rgb(239 68 68)",   dash: "6 3" },   // rojo dashed
+  { key: "valorDevoluciones", label: "Valor de unidades devueltas", format: formatARS,    color: "rgb(239 68 68)",   dash: "0" },     // rojo sólido
 ]
 
 function EstadisticasDelPeriodo({ metrics, rangeLabel }: { metrics: DashboardMetrics; rangeLabel: string }) {
@@ -669,23 +673,16 @@ function EstadisticasDelPeriodo({ metrics, rangeLabel }: { metrics: DashboardMet
               key={f.key}
               type="button"
               onClick={() => toggle(f.key)}
-              className={`group flex flex-col items-start gap-1.5 px-3 py-3 rounded-xl border transition-all cursor-pointer text-left ${
-                isActive
-                  ? "border-slate-300 bg-slate-50"
-                  : "border-slate-200/60 bg-white hover:border-slate-200 hover:bg-slate-50/60"
-              }`}
+              style={isActive ? { borderTopColor: f.color, borderTopWidth: "2.5px" } : {}}
+              className="group flex flex-col items-start gap-1.5 px-3 py-3 rounded-xl border border-slate-200/60 bg-white hover:border-slate-200 hover:bg-slate-50/50 transition-all cursor-pointer text-left"
             >
               <div className="flex items-center gap-2 w-full">
                 <FactorMark color={f.color} dash={f.dash} active={isActive} />
-                <span
-                  className={`text-[10px] uppercase tracking-wider font-semibold truncate ${
-                    isActive ? "text-slate-700" : "text-slate-400"
-                  }`}
-                >
+                <span className="text-[10px] uppercase tracking-wider font-semibold truncate text-slate-600">
                   {f.label}
                 </span>
               </div>
-              <span className={`text-base font-semibold tabular-nums ${isActive ? "text-slate-900" : "text-slate-500"}`}>
+              <span className="text-base font-semibold tabular-nums text-slate-900">
                 {f.format(totals[f.key])}
               </span>
             </button>
@@ -701,7 +698,7 @@ function EstadisticasDelPeriodo({ metrics, rangeLabel }: { metrics: DashboardMet
   )
 }
 
-function FactorMark({ color, dash, active }: { color: string; dash: string; active: boolean }) {
+function FactorMark({ color, dash }: { color: string; dash: string; active: boolean }) {
   return (
     <svg width="20" height="8" viewBox="0 0 20 8" className="flex-shrink-0">
       <line
@@ -709,7 +706,7 @@ function FactorMark({ color, dash, active }: { color: string; dash: string; acti
         y1="4"
         x2="20"
         y2="4"
-        stroke={active ? color : "rgb(203 213 225)"}
+        stroke={color}
         strokeWidth="2"
         strokeDasharray={dash}
         strokeLinecap="round"
