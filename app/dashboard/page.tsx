@@ -1,7 +1,18 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { LayoutDashboard, TrendingUp, TrendingDown, Wallet, ShoppingBag, Package, Tag, Users, ChevronDown, Receipt, ArrowUpRight, ArrowDownRight, ChevronLeft, ChevronRight, Calendar, Info } from "lucide-react"
+import {
+  TrendingUp,
+  TrendingDown,
+  Wallet,
+  Package,
+  ChevronDown,
+  ArrowUpRight,
+  ArrowDownRight,
+  ChevronLeft,
+  ChevronRight,
+  Info,
+} from "lucide-react"
 import Image from "next/image"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
@@ -12,19 +23,14 @@ import { useSettings } from "@/lib/contexts/settings-context"
 import { useVentas } from "@/hooks/use-ventas"
 import { useCaja } from "@/hooks/use-caja"
 import { useItems } from "@/hooks/use-items"
-import { getMesEnCursoPeriod, type PeriodRange } from "@/lib/utils/dashboard-period"
+import {
+  PERIOD_OPTIONS,
+  usePeriod,
+  usePeriodRange,
+  type PeriodKey,
+} from "@/lib/contexts/period-context"
+import type { PeriodRange } from "@/lib/utils/dashboard-period"
 import type { Item, ItemVariant, Venta } from "@/lib/types"
-
-type PeriodKey = "mes_en_curso" | "mes_anterior" | "7d" | "30d" | "ano_en_curso" | "personalizado"
-
-const PERIOD_OPTIONS: { key: PeriodKey; label: string }[] = [
-  { key: "mes_en_curso", label: "Mes en Curso" },
-  { key: "mes_anterior", label: "Mes Anterior" },
-  { key: "7d", label: "Últimos 7 días" },
-  { key: "30d", label: "Últimos 30 días" },
-  { key: "ano_en_curso", label: "Año en Curso" },
-  { key: "personalizado", label: "Personalizado" },
-]
 
 const formatARS = (n: number): string =>
   new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(n)
@@ -50,7 +56,6 @@ function buildCostoMap(items: Item[]): Map<string, number> {
   return map
 }
 
-// Build sku → meta (marca, categoria, thumbnail, tags) map from items
 interface ItemMeta {
   marca?: string
   categoria?: string
@@ -83,73 +88,8 @@ function buildItemMetaMap(items: Item[]): Map<string, ItemMeta> {
   return map
 }
 
-// YYYY-MM-DD inclusive comparison
 const inRange = (dateStr: string, range: { startStr: string; endStr: string }): boolean =>
   dateStr >= range.startStr && dateStr <= range.endStr
-
-const ymd = (d: Date): string => {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, "0")
-  const day = String(d.getDate()).padStart(2, "0")
-  return `${y}-${m}-${day}`
-}
-
-function getPeriodRange(
-  key: PeriodKey,
-  mesEnCursoStartDay: number,
-  customRange?: { start: Date; end: Date } | null,
-): PeriodRange {
-  const today = new Date()
-  if (key === "personalizado" && customRange) {
-    const start = new Date(customRange.start)
-    start.setHours(0, 0, 0, 0)
-    const end = new Date(customRange.end)
-    end.setHours(23, 59, 59, 999)
-    return {
-      start,
-      end,
-      startStr: ymd(start),
-      endStr: ymd(end),
-      label: "Personalizado",
-    }
-  }
-  if (key === "mes_en_curso") {
-    return getMesEnCursoPeriod(mesEnCursoStartDay)
-  }
-  if (key === "mes_anterior") {
-    const current = getMesEnCursoPeriod(mesEnCursoStartDay)
-    // Reference one day before current period start to compute previous period
-    const ref = new Date(current.start)
-    ref.setDate(ref.getDate() - 1)
-    return getMesEnCursoPeriod(mesEnCursoStartDay, ref)
-  }
-  if (key === "7d" || key === "30d") {
-    const days = key === "7d" ? 7 : 30
-    const end = new Date(today)
-    end.setHours(23, 59, 59, 999)
-    const start = new Date(today)
-    start.setDate(start.getDate() - (days - 1))
-    start.setHours(0, 0, 0, 0)
-    return {
-      start,
-      end,
-      startStr: ymd(start),
-      endStr: ymd(end),
-      label: `Últimos ${days} días`,
-    }
-  }
-  // ano_en_curso
-  const start = new Date(today.getFullYear(), 0, 1)
-  const end = new Date(today)
-  end.setHours(23, 59, 59, 999)
-  return {
-    start,
-    end,
-    startStr: ymd(start),
-    endStr: ymd(end),
-    label: `Año ${today.getFullYear()}`,
-  }
-}
 
 interface TopItemRow {
   sku: string
@@ -163,36 +103,116 @@ interface TopItemRow {
   ventasCount: number
 }
 
+// Per-bucket factor values for the line chart
+interface FactorBuckets {
+  ventasBrutas: number[]
+  cantidadVentas: number[]
+  unidadesVendidas: number[]
+  unidadesDevueltas: number[]
+  valorDevoluciones: number[]
+}
+
 interface DashboardMetrics {
   ingresos: number
   promociones: number
   mercaderia: number
-  otros: number
   gastos: number
   ganancia: number
   margen: number
   ventasCount: number
   unidadesVendidas: number
-  unidadesCanceladas: number
-  clientesUnicos: number
-  ticketPromedio: number
+  unidadesDevueltas: number
+  valorDevoluciones: number
   payments: { efectivo: number; posnet: number; transferencia: number }
   topItems: TopItemRow[]
-  // Concentración: weekday (0=Sun..6=Sat) × hour (0..23) → ventas count
   heatmap: number[][]
-  // Per-day venta count keyed by YYYY-MM-DD
-  ventasByDay: Map<string, number>
-  // Per-hour venta count (0..23)
-  ventasByHour: number[]
+  // Bucketed series, aligned with chartLabels
+  chartLabels: string[]
+  factors: FactorBuckets
+}
+
+type Granularity = "hour" | "day" | "month"
+
+function chooseGranularity(range: PeriodRange): Granularity {
+  const ms = range.end.getTime() - range.start.getTime()
+  const days = ms / (1000 * 60 * 60 * 24)
+  if (days <= 1.5) return "hour"
+  if (days <= 95) return "day"
+  return "month"
+}
+
+// Build the bucket keys + labels for the chart axis
+function buildBuckets(range: PeriodRange): { keys: string[]; labels: string[]; granularity: Granularity } {
+  const granularity = chooseGranularity(range)
+  if (granularity === "hour") {
+    const keys: string[] = []
+    const labels: string[] = []
+    for (let h = 0; h < 24; h++) {
+      keys.push(`H${h}`)
+      labels.push(`${String(h).padStart(2, "0")}:00`)
+    }
+    return { keys, labels, granularity }
+  }
+  if (granularity === "day") {
+    const keys: string[] = []
+    const labels: string[] = []
+    const cursor = new Date(range.start)
+    cursor.setHours(0, 0, 0, 0)
+    const stop = new Date(range.end)
+    stop.setHours(0, 0, 0, 0)
+    while (cursor <= stop) {
+      const y = cursor.getFullYear()
+      const m = String(cursor.getMonth() + 1).padStart(2, "0")
+      const d = String(cursor.getDate()).padStart(2, "0")
+      keys.push(`${y}-${m}-${d}`)
+      labels.push(`${cursor.getDate()}/${cursor.getMonth() + 1}`)
+      cursor.setDate(cursor.getDate() + 1)
+    }
+    return { keys, labels, granularity }
+  }
+  const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+  const keys: string[] = []
+  const labels: string[] = []
+  const cursor = new Date(range.start.getFullYear(), range.start.getMonth(), 1)
+  const stop = new Date(range.end.getFullYear(), range.end.getMonth(), 1)
+  while (cursor <= stop) {
+    keys.push(`${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}`)
+    labels.push(monthNames[cursor.getMonth()])
+    cursor.setMonth(cursor.getMonth() + 1)
+  }
+  return { keys, labels, granularity }
+}
+
+function bucketKeyForVenta(v: Venta, granularity: Granularity): string {
+  if (granularity === "hour") {
+    const hour = parseInt((v.hora || "12:00").split(":")[0], 10)
+    return `H${isNaN(hour) ? 12 : hour}`
+  }
+  if (granularity === "day") return v.fecha
+  // month
+  const [y, m] = v.fecha.split("-")
+  return `${y}-${m}`
 }
 
 function computeMetrics(
   ventas: Venta[],
   range: PeriodRange,
   costoMap: Map<string, number>,
-  itemMetaMap: Map<string, { marca?: string; categoria?: string; thumbnail?: string; tags?: string[] }>,
+  itemMetaMap: Map<string, ItemMeta>,
   cajaEgresos: number,
 ): DashboardMetrics {
+  const { keys, labels, granularity } = buildBuckets(range)
+  const idxByKey = new Map<string, number>()
+  keys.forEach((k, i) => idxByKey.set(k, i))
+
+  const factors: FactorBuckets = {
+    ventasBrutas: Array(keys.length).fill(0),
+    cantidadVentas: Array(keys.length).fill(0),
+    unidadesVendidas: Array(keys.length).fill(0),
+    unidadesDevueltas: Array(keys.length).fill(0),
+    valorDevoluciones: Array(keys.length).fill(0),
+  }
+
   const ventasInRange = ventas.filter((v) => inRange(v.fecha, range))
   const valid = ventasInRange.filter((v) => v.estado !== "cancelada")
   const cancelled = ventasInRange.filter((v) => v.estado === "cancelada")
@@ -202,32 +222,27 @@ function computeMetrics(
   let mercaderia = 0
   let unidadesVendidas = 0
   const itemAgg = new Map<string, TopItemRow & { ventasIds: Set<string> }>()
-  const clientes = new Set<string>()
 
-  // Heatmap[weekday][hour]
   const heatmap: number[][] = Array.from({ length: 7 }, () => Array(24).fill(0))
-  const ventasByDay = new Map<string, number>()
-  const ventasByHour = Array(24).fill(0)
 
   for (const v of valid) {
     netoVenta += v.total
-    if (v.cliente && v.cliente.tipo === "cuenta") clientes.add(v.cliente.id)
-    else clientes.add("__cf__")
+    const bk = bucketKeyForVenta(v, granularity)
+    const i = idxByKey.get(bk)
 
-    // Time buckets
     const ventaDate = new Date(`${v.fecha}T${v.hora || "12:00"}:00`)
-    const wd = ventaDate.getDay() // 0..6 (Sun..Sat)
+    const wd = ventaDate.getDay()
     const hr = ventaDate.getHours()
-    if (!isNaN(wd) && !isNaN(hr)) {
-      heatmap[wd][hr] += 1
-      ventasByHour[hr] += 1
-    }
-    ventasByDay.set(v.fecha, (ventasByDay.get(v.fecha) ?? 0) + 1)
+    if (!isNaN(wd) && !isNaN(hr)) heatmap[wd][hr] += 1
 
+    let ventaGross = 0
+    let ventaUnits = 0
     for (const it of v.items) {
       const gross = it.unitPrice * it.quantity
       ingresos += gross
+      ventaGross += gross
       unidadesVendidas += it.quantity
+      ventaUnits += it.quantity
       const costo = costoMap.get(it.sku) ?? 0
       mercaderia += costo * it.quantity
       const meta = itemMetaMap.get(it.sku)
@@ -248,24 +263,35 @@ function computeMetrics(
       agg.ventasIds.add(v.id)
       itemAgg.set(it.sku, agg)
     }
+
+    if (i !== undefined) {
+      factors.ventasBrutas[i] += ventaGross
+      factors.cantidadVentas[i] += 1
+      factors.unidadesVendidas[i] += ventaUnits
+    }
   }
 
   const promociones = Math.max(0, ingresos - netoVenta)
 
-  // Cancelled value lost (lost potential gross)
-  let cancelledLoss = 0
-  let unidadesCanceladas = 0
+  let valorDevoluciones = 0
+  let unidadesDevueltas = 0
   for (const v of cancelled) {
-    cancelledLoss += v.total
-    for (const it of v.items) unidadesCanceladas += it.quantity
+    valorDevoluciones += v.total
+    let cUnits = 0
+    for (const it of v.items) cUnits += it.quantity
+    unidadesDevueltas += cUnits
+    const bk = bucketKeyForVenta(v, granularity)
+    const i = idxByKey.get(bk)
+    if (i !== undefined) {
+      factors.unidadesDevueltas[i] += cUnits
+      factors.valorDevoluciones[i] += v.total
+    }
   }
-  const otros = cajaEgresos + cancelledLoss
 
-  const gastos = promociones + mercaderia + otros
+  const gastos = promociones + mercaderia + cajaEgresos
   const ganancia = ingresos - gastos
   const margen = ingresos > 0 ? (ganancia / ingresos) * 100 : 0
 
-  // Payment breakdown (efectivo, posnet, transferencia)
   const payments = { efectivo: 0, posnet: 0, transferencia: 0 }
   for (const v of valid) {
     for (const c of v.cobros) {
@@ -275,7 +301,6 @@ function computeMetrics(
     }
   }
 
-  // Build sorted top items list (by revenue desc)
   const topItems: TopItemRow[] = Array.from(itemAgg.values())
     .map((a) => ({
       sku: a.sku,
@@ -294,66 +319,59 @@ function computeMetrics(
     ingresos,
     promociones,
     mercaderia,
-    otros,
     gastos,
     ganancia,
     margen,
     ventasCount: valid.length,
     unidadesVendidas,
-    unidadesCanceladas,
-    clientesUnicos: clientes.size,
-    ticketPromedio: valid.length > 0 ? netoVenta / valid.length : 0,
+    unidadesDevueltas,
+    valorDevoluciones,
     payments,
     topItems,
     heatmap,
-    ventasByDay,
-    ventasByHour,
+    chartLabels: labels,
+    factors,
   }
 }
 
 export default function DashboardPage() {
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
-  const { miNegocio, dashboard } = useSettings()
+  const { miNegocio } = useSettings()
   const { ventas } = useVentas()
   const { sesiones } = useCaja()
   const { items } = useItems()
 
-  const [periodKey, setPeriodKey] = useState<PeriodKey>("mes_en_curso")
+  const { periodKey, customRange, setPeriodKey, setCustomRange } = usePeriod()
   const [periodOpen, setPeriodOpen] = useState(false)
-  const [customRange, setCustomRange] = useState<{ start: Date; end: Date } | null>(null)
   const [calendarOpen, setCalendarOpen] = useState(false)
 
-  const range = useMemo(
-    () => getPeriodRange(periodKey, dashboard.mesEnCursoStartDay, customRange),
-    [periodKey, dashboard.mesEnCursoStartDay, customRange],
-  )
+  // First sale date (YYYY-MM-DD) for "histórico"
+  const firstSaleDate = useMemo(() => {
+    let min: string | null = null
+    for (const v of ventas) {
+      if (v.estado === "cancelada") continue
+      if (!min || v.fecha < min) min = v.fecha
+    }
+    return min
+  }, [ventas])
+
+  const range = usePeriodRange(firstSaleDate)
 
   const periodLabel = useMemo(() => {
-    if (periodKey === "personalizado") return "Personalizado"
     const opt = PERIOD_OPTIONS.find((o) => o.key === periodKey)
     return opt?.label ?? "Período"
   }, [periodKey])
 
   const rangeLabel = useMemo(() => {
-    const fmt = (d: Date) =>
-      d.toLocaleDateString("es-AR", { day: "numeric", month: "short" })
+    const fmt = (d: Date) => d.toLocaleDateString("es-AR", { day: "numeric", month: "short" })
+    if (periodKey === "hoy") return fmt(range.start)
     return `${fmt(range.start)} — ${fmt(range.end)}`
-  }, [range])
+  }, [range, periodKey])
 
   const costoMap = useMemo(() => buildCostoMap(items), [items])
   const itemMetaMap = useMemo(() => buildItemMetaMap(items), [items])
 
   const cajaEgresos = useMemo(() => {
-    let total = 0
-    for (const s of sesiones) {
-      for (const m of s.movimientos) {
-        if (m.tipo === "egreso" || m.tipo === "retiro") {
-          // egreso/retiro reduce cash; treat as gasto only when egreso (retiros are bank transfers, not real expense)
-          if (m.tipo === "egreso") total += Math.abs(m.monto)
-        }
-      }
-    }
-    // Filter by date
     let filtered = 0
     for (const s of sesiones) {
       for (const m of s.movimientos) {
@@ -372,6 +390,12 @@ export default function DashboardPage() {
 
   const businessName = miNegocio.nombreApp || miNegocio.razonSocial || "Mi Negocio"
 
+  // Range duration in days (for concentración blur gating)
+  const rangeDays = useMemo(() => {
+    const ms = range.end.getTime() - range.start.getTime()
+    return Math.floor(ms / (1000 * 60 * 60 * 24)) + 1
+  }, [range])
+
   return (
     <div className="min-h-screen bg-[rgb(243,242,238)]">
       <div className="px-[6px] py-[6px] flex gap-[6px] h-screen" onClick={handleCloseDropdowns}>
@@ -386,7 +410,7 @@ export default function DashboardPage() {
         </div>
 
         <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white rounded-lg shadow-sm h-[calc(100vh-12px)]">
-          {/* Header */}
+          {/* Top bar */}
           <div className="relative border-b border-border h-[44px] bg-white">
             <div className="px-4 flex items-center justify-between h-full">
               <div className="flex items-center">
@@ -399,64 +423,67 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Content */}
+          {/* Scrollable content */}
           <div className="flex-1 overflow-y-auto bg-slate-50">
-            <div className="max-w-6xl mx-auto px-8 py-10">
-              {/* Hero */}
-              <div className="flex items-start justify-between gap-6 mb-10">
-                <div className="flex items-center gap-5 min-w-0">
-                  {miNegocio.fotoUrl && (
-                    <div className="w-14 h-14 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/80 flex-shrink-0">
-                      <Image
-                        src={miNegocio.fotoUrl}
-                        alt={businessName}
-                        width={56}
-                        height={56}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                  <div className="min-w-0">
-                    <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight text-balance">
-                      {businessName}
-                    </h1>
-                    <div className="mt-2 flex items-center gap-3 flex-wrap">
-                      <PeriodSelector
-                        open={periodOpen}
-                        setOpen={setPeriodOpen}
-                        currentLabel={periodLabel}
-                        currentKey={periodKey}
-                        onSelect={(k) => {
-                          if (k === "personalizado") {
+            {/* Sticky hero */}
+            <div className="sticky top-0 z-30 bg-slate-50/75 backdrop-blur-md border-b border-slate-200/60">
+              <div className="max-w-6xl mx-auto px-8 py-6">
+                <div className="flex items-start justify-between gap-6">
+                  <div className="flex items-center gap-5 min-w-0">
+                    {miNegocio.fotoUrl && (
+                      <div className="w-14 h-14 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/80 flex-shrink-0">
+                        <Image
+                          src={miNegocio.fotoUrl}
+                          alt={businessName}
+                          width={56}
+                          height={56}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight text-balance">
+                        {businessName}
+                      </h1>
+                      <div className="mt-2 flex items-center gap-3 flex-wrap">
+                        <PeriodSelector
+                          open={periodOpen}
+                          setOpen={setPeriodOpen}
+                          currentLabel={periodLabel}
+                          currentKey={periodKey}
+                          onSelect={(k) => {
+                            if (k === "personalizado") {
+                              setPeriodOpen(false)
+                              setCalendarOpen(true)
+                              return
+                            }
+                            setPeriodKey(k)
+                            setCustomRange(null)
                             setPeriodOpen(false)
-                            setCalendarOpen(true)
-                            return
-                          }
-                          setPeriodKey(k)
-                          setCustomRange(null)
-                          setPeriodOpen(false)
-                        }}
-                      />
-                      <span className="text-sm text-slate-500 font-mono">{rangeLabel}</span>
-                      {calendarOpen && (
-                        <RangeCalendarDialog
-                          initialRange={customRange}
-                          onCancel={() => setCalendarOpen(false)}
-                          onApply={(start, end) => {
-                            setCustomRange({ start, end })
-                            setPeriodKey("personalizado")
-                            setCalendarOpen(false)
                           }}
                         />
-                      )}
+                        <span className="text-sm text-slate-500 font-mono">{rangeLabel}</span>
+                        {calendarOpen && (
+                          <RangeCalendarDialog
+                            initialRange={customRange}
+                            onCancel={() => setCalendarOpen(false)}
+                            onApply={(start, end) => {
+                              setCustomRange({ start, end })
+                              setPeriodKey("personalizado")
+                              setCalendarOpen(false)
+                            }}
+                          />
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Widgets row */}
+            <div className="max-w-6xl mx-auto px-8 py-8">
+              {/* Top KPI row */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-                {/* Ingresos */}
                 <WidgetCard
                   icon={<TrendingUp className="w-4 h-4" />}
                   label="Ingresos"
@@ -465,7 +492,7 @@ export default function DashboardPage() {
                   accent="emerald"
                 />
 
-                {/* Gastos (3-part) */}
+                {/* Gastos */}
                 <div className="bg-white rounded-2xl border border-slate-200/60 p-5 flex flex-col">
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-2">
@@ -484,10 +511,9 @@ export default function DashboardPage() {
                   <p className="text-2xl font-semibold text-slate-900 tracking-tight tabular-nums">
                     {formatARS(metrics.gastos)}
                   </p>
-                  <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-3 gap-3">
+                  <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 gap-3">
                     <GastoSubItem label="Mercadería" value={metrics.mercaderia} dot="bg-amber-400" />
                     <GastoSubItem label="Promociones" value={metrics.promociones} dot="bg-rose-400" />
-                    <GastoSubItem label="Otros" value={metrics.otros} dot="bg-slate-400" />
                   </div>
                 </div>
 
@@ -524,48 +550,8 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Operación: stats + payments + line chart */}
-              <div className="bg-white rounded-2xl border border-slate-200/60 overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                  <div>
-                    <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">Operación</h2>
-                    <p className="text-xs text-slate-500">Indicadores del período</p>
-                  </div>
-                </div>
-
-                {/* Top row: 3 stats left + payments right */}
-                <div className="grid grid-cols-1 lg:grid-cols-5 border-t border-slate-100 divide-x divide-slate-100">
-                  <div className="lg:col-span-2 grid grid-cols-3 divide-x divide-slate-100">
-                    <StatCell icon={<Receipt className="w-3.5 h-3.5" />} label="Ventas" value={formatNumber(metrics.ventasCount)} />
-                    <StatCell icon={<ShoppingBag className="w-3.5 h-3.5" />} label="Unidades" value={formatNumber(metrics.unidadesVendidas)} />
-                    <StatCell icon={<Tag className="w-3.5 h-3.5" />} label="Ticket prom." value={formatARS(metrics.ticketPromedio)} />
-                  </div>
-                  <div className="lg:col-span-3 px-6 py-5">
-                    <p className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-3">Cobros por medio</p>
-                    <PaymentSplit payments={metrics.payments} />
-                  </div>
-                </div>
-
-                {/* Bottom: line chart inside same card */}
-                <div className="border-t border-slate-100 px-6 py-5">
-                  <div className="flex items-center justify-between mb-4">
-                    <p className="text-xs uppercase tracking-wider text-slate-400 font-semibold">Evolución de ventas</p>
-                    <p className="text-[11px] text-slate-400 font-mono">{rangeLabel}</p>
-                  </div>
-                  <SalesLineChart range={range} ventasByDay={metrics.ventasByDay} ventasByHour={metrics.ventasByHour} />
-                </div>
-              </div>
-
-              {/* Concentración heatmap */}
-              <div className="mt-6 bg-white rounded-2xl border border-slate-200/60 overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100">
-                  <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
-                    Concentración de ventas
-                  </h2>
-                  <p className="text-xs text-slate-500">Por día de la semana y franja horaria</p>
-                </div>
-                <SalesHeatmap heatmap={metrics.heatmap} range={range} totalVentas={metrics.ventasCount} />
-              </div>
+              {/* Estadísticas del Período */}
+              <EstadisticasDelPeriodo metrics={metrics} rangeLabel={rangeLabel} />
 
               {/* Productos más vendidos */}
               <div className="mt-6 bg-white rounded-2xl border border-slate-200/60 overflow-hidden">
@@ -577,11 +563,280 @@ export default function DashboardPage() {
                 </div>
                 <TopProductsList items={metrics.topItems} totalIngresos={metrics.ingresos} />
               </div>
+
+              {/* Cobros por medio de pago */}
+              <div className="mt-6 bg-white rounded-2xl border border-slate-200/60 overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-100">
+                  <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
+                    Cobros por medio de pago
+                  </h2>
+                  <p className="text-xs text-slate-500">Distribución de cobros del período</p>
+                </div>
+                <div className="px-6 py-5">
+                  <PaymentSplit payments={metrics.payments} />
+                </div>
+              </div>
+
+              {/* Concentración de ventas */}
+              <div className="mt-6 bg-white rounded-2xl border border-slate-200/60 overflow-hidden relative">
+                <div className="px-6 py-4 border-b border-slate-100">
+                  <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
+                    Concentración de ventas
+                  </h2>
+                  <p className="text-xs text-slate-500">Por día de la semana y franja horaria</p>
+                </div>
+                <div className={rangeDays < 7 ? "blur-sm pointer-events-none select-none" : ""}>
+                  <SalesHeatmap heatmap={metrics.heatmap} range={range} totalVentas={metrics.ventasCount} />
+                </div>
+                {rangeDays < 7 && (
+                  <div className="absolute inset-0 top-[68px] flex items-center justify-center">
+                    <div className="px-5 py-3 rounded-full bg-white/90 backdrop-blur-sm border border-slate-200 shadow-sm">
+                      <p className="text-sm text-slate-700 text-center">
+                        Seleccioná un período de al menos 7 días para ver la concentración de ventas
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </main>
       </div>
     </div>
+  )
+}
+
+/* ---------------- Estadísticas del Período ---------------- */
+
+type FactorKey = "ventasBrutas" | "cantidadVentas" | "unidadesVendidas" | "unidadesDevueltas" | "valorDevoluciones"
+
+interface FactorDef {
+  key: FactorKey
+  label: string
+  format: (n: number) => string
+  // Color + line style cycle through 3 each so 5 factors are visually distinct
+  color: string
+  dash: string // SVG strokeDasharray
+}
+
+// 3 colors × 3 line styles, mapped to 5 factors
+const FACTOR_DEFS: FactorDef[] = [
+  { key: "ventasBrutas",      label: "Ventas brutas",            format: formatARS,    color: "rgb(15 23 42)",   dash: "0" },        // slate-900 solid
+  { key: "cantidadVentas",    label: "Cantidad de ventas",       format: formatNumber, color: "rgb(16 185 129)", dash: "6 4" },      // emerald dashed
+  { key: "unidadesVendidas",  label: "Unidades vendidas",        format: formatNumber, color: "rgb(245 158 11)", dash: "2 4" },      // amber dotted
+  { key: "unidadesDevueltas", label: "Unidades devueltas",       format: formatNumber, color: "rgb(15 23 42)",   dash: "6 4" },      // slate-900 dashed
+  { key: "valorDevoluciones", label: "Valor de unidades devueltas", format: formatARS, color: "rgb(16 185 129)", dash: "2 4" },      // emerald dotted
+]
+
+function EstadisticasDelPeriodo({ metrics, rangeLabel }: { metrics: DashboardMetrics; rangeLabel: string }) {
+  const [active, setActive] = useState<Set<FactorKey>>(new Set(["ventasBrutas"]))
+
+  const totals: Record<FactorKey, number> = {
+    ventasBrutas: metrics.ingresos,
+    cantidadVentas: metrics.ventasCount,
+    unidadesVendidas: metrics.unidadesVendidas,
+    unidadesDevueltas: metrics.unidadesDevueltas,
+    valorDevoluciones: metrics.valorDevoluciones,
+  }
+
+  const toggle = (k: FactorKey) => {
+    setActive((prev) => {
+      const next = new Set(prev)
+      if (next.has(k)) next.delete(k)
+      else next.add(k)
+      return next
+    })
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200/60 overflow-hidden">
+      <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div>
+          <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
+            Estadísticas del Período
+          </h2>
+          <p className="text-xs text-slate-500">Indicadores del período</p>
+        </div>
+        <p className="text-[11px] text-slate-400 font-mono">{rangeLabel}</p>
+      </div>
+
+      {/* Factor toggles */}
+      <div className="px-6 py-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+        {FACTOR_DEFS.map((f) => {
+          const isActive = active.has(f.key)
+          return (
+            <button
+              key={f.key}
+              type="button"
+              onClick={() => toggle(f.key)}
+              className={`group flex flex-col items-start gap-1.5 px-3 py-3 rounded-xl border transition-all cursor-pointer text-left ${
+                isActive
+                  ? "border-slate-300 bg-slate-50"
+                  : "border-slate-200/60 bg-white hover:border-slate-200 hover:bg-slate-50/60"
+              }`}
+            >
+              <div className="flex items-center gap-2 w-full">
+                <FactorMark color={f.color} dash={f.dash} active={isActive} />
+                <span
+                  className={`text-[10px] uppercase tracking-wider font-semibold truncate ${
+                    isActive ? "text-slate-700" : "text-slate-400"
+                  }`}
+                >
+                  {f.label}
+                </span>
+              </div>
+              <span className={`text-base font-semibold tabular-nums ${isActive ? "text-slate-900" : "text-slate-500"}`}>
+                {f.format(totals[f.key])}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Chart */}
+      <div className="border-t border-slate-100 px-6 py-5">
+        <MultiFactorChart labels={metrics.chartLabels} series={metrics.factors} active={active} />
+      </div>
+    </div>
+  )
+}
+
+function FactorMark({ color, dash, active }: { color: string; dash: string; active: boolean }) {
+  return (
+    <svg width="20" height="8" viewBox="0 0 20 8" className="flex-shrink-0">
+      <line
+        x1="0"
+        y1="4"
+        x2="20"
+        y2="4"
+        stroke={active ? color : "rgb(203 213 225)"}
+        strokeWidth="2"
+        strokeDasharray={dash}
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
+/* ---------------- Multi-factor Line Chart ---------------- */
+
+function MultiFactorChart({
+  labels,
+  series,
+  active,
+}: {
+  labels: string[]
+  series: FactorBuckets
+  active: Set<FactorKey>
+}) {
+  const W = 800
+  const H = 220
+  const PAD_L = 28
+  const PAD_R = 12
+  const PAD_T = 16
+  const PAD_B = 28
+  const innerW = W - PAD_L - PAD_R
+  const innerH = H - PAD_T - PAD_B
+
+  const n = labels.length
+  const stepX = n > 1 ? innerW / (n - 1) : 0
+
+  // Active factors in declaration order
+  const activeFactors = FACTOR_DEFS.filter((f) => active.has(f.key))
+
+  if (activeFactors.length === 0) {
+    return (
+      <div className="h-56 flex items-center justify-center text-sm text-slate-400">
+        Seleccioná al menos un factor
+      </div>
+    )
+  }
+
+  if (n === 0) {
+    return (
+      <div className="h-56 flex items-center justify-center text-sm text-slate-400">
+        Sin datos en el período
+      </div>
+    )
+  }
+
+  // Slight pixel offsets so identical lines don't fully overlap
+  const offsetFor = (i: number, total: number): number => {
+    if (total <= 1) return 0
+    const spacing = 2.5 // px between stacked lines
+    const start = -((total - 1) / 2) * spacing
+    return start + i * spacing
+  }
+
+  // Build path for each factor (each normalized to its own max so different magnitudes coexist)
+  const lines = activeFactors.map((f, fIdx) => {
+    const values = series[f.key]
+    const max = Math.max(1, ...values)
+    const dy = offsetFor(fIdx, activeFactors.length)
+    const points = values.map((val, i) => {
+      const x = PAD_L + i * stepX
+      const y = PAD_T + innerH - (val / max) * innerH + dy
+      return { x, y }
+    })
+    const d = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ")
+    return { factor: f, d, points, max }
+  })
+
+  // X-axis label trimming
+  const labelStep = Math.max(1, Math.ceil(n / 12))
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-56" preserveAspectRatio="none">
+      {/* Subtle baseline */}
+      <line
+        x1={PAD_L}
+        x2={W - PAD_R}
+        y1={PAD_T + innerH}
+        y2={PAD_T + innerH}
+        stroke="rgb(226 232 240)"
+        strokeWidth="1"
+      />
+      <line
+        x1={PAD_L}
+        x2={W - PAD_R}
+        y1={PAD_T + innerH / 2}
+        y2={PAD_T + innerH / 2}
+        stroke="rgb(241 245 249)"
+        strokeWidth="1"
+        strokeDasharray="2 4"
+      />
+
+      {/* Lines */}
+      {lines.map(({ factor, d }) => (
+        <path
+          key={factor.key}
+          d={d}
+          fill="none"
+          stroke={factor.color}
+          strokeWidth="2"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+          strokeDasharray={factor.dash}
+        />
+      ))}
+
+      {/* X labels */}
+      {labels.map((label, i) =>
+        i % labelStep === 0 || i === n - 1 ? (
+          <text
+            key={i}
+            x={PAD_L + i * stepX}
+            y={H - 8}
+            fontSize="9"
+            fill="rgb(148 163 184)"
+            textAnchor="middle"
+            fontFamily="monospace"
+          >
+            {label}
+          </text>
+        ) : null,
+      )}
+    </svg>
   )
 }
 
@@ -624,18 +879,6 @@ function GastoSubItem({ label, value, dot }: { label: string; value: number; dot
   )
 }
 
-function StatCell({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <div className="px-5 py-4 first:border-l-0">
-      <div className="flex items-center gap-1.5 text-slate-400 mb-1.5">
-        {icon}
-        <span className="text-[10px] uppercase tracking-wider font-semibold">{label}</span>
-      </div>
-      <p className="text-lg font-semibold text-slate-900 tabular-nums">{value}</p>
-    </div>
-  )
-}
-
 function PaymentSplit({ payments }: { payments: { efectivo: number; posnet: number; transferencia: number } }) {
   const total = payments.efectivo + payments.posnet + payments.transferencia
   const segments = [
@@ -650,7 +893,6 @@ function PaymentSplit({ payments }: { payments: { efectivo: number; posnet: numb
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Bar */}
       <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden flex">
         {segments.map((s) =>
           s.value > 0 ? (
@@ -663,7 +905,6 @@ function PaymentSplit({ payments }: { payments: { efectivo: number; posnet: numb
           ) : null,
         )}
       </div>
-      {/* Legend */}
       <div className="grid grid-cols-3 gap-3">
         {segments.map((s) => {
           const pct = total > 0 ? (s.value / total) * 100 : 0
@@ -732,161 +973,10 @@ function PeriodSelector({
   )
 }
 
-/* ---------------- Sales line chart ---------------- */
-
-type Granularity = "hour" | "day" | "month"
-
-function chooseGranularity(range: PeriodRange): Granularity {
-  const ms = range.end.getTime() - range.start.getTime()
-  const days = ms / (1000 * 60 * 60 * 24)
-  if (days <= 1.5) return "hour"
-  if (days <= 95) return "day"
-  return "month"
-}
-
-function SalesLineChart({
-  range,
-  ventasByDay,
-  ventasByHour,
-}: {
-  range: PeriodRange
-  ventasByDay: Map<string, number>
-  ventasByHour: number[]
-}) {
-  const granularity = chooseGranularity(range)
-
-  // Build buckets
-  const buckets: { label: string; value: number }[] = useMemo(() => {
-    if (granularity === "hour") {
-      return Array.from({ length: 24 }, (_, h) => ({
-        label: String(h).padStart(2, "0"),
-        value: ventasByHour[h] ?? 0,
-      }))
-    }
-    if (granularity === "day") {
-      const out: { label: string; value: number }[] = []
-      const cursor = new Date(range.start)
-      cursor.setHours(0, 0, 0, 0)
-      const stop = new Date(range.end)
-      stop.setHours(0, 0, 0, 0)
-      while (cursor <= stop) {
-        const y = cursor.getFullYear()
-        const m = String(cursor.getMonth() + 1).padStart(2, "0")
-        const d = String(cursor.getDate()).padStart(2, "0")
-        const key = `${y}-${m}-${d}`
-        out.push({ label: String(cursor.getDate()), value: ventasByDay.get(key) ?? 0 })
-        cursor.setDate(cursor.getDate() + 1)
-      }
-      return out
-    }
-    // month
-    const out: { label: string; value: number }[] = []
-    const cursor = new Date(range.start.getFullYear(), range.start.getMonth(), 1)
-    const stop = new Date(range.end.getFullYear(), range.end.getMonth(), 1)
-    const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
-    while (cursor <= stop) {
-      let monthTotal = 0
-      const y = cursor.getFullYear()
-      const m = cursor.getMonth()
-      for (const [key, val] of ventasByDay) {
-        const [yy, mm] = key.split("-").map((s) => parseInt(s, 10))
-        if (yy === y && mm - 1 === m) monthTotal += val
-      }
-      out.push({ label: monthNames[m], value: monthTotal })
-      cursor.setMonth(cursor.getMonth() + 1)
-    }
-    return out
-  }, [granularity, range, ventasByDay, ventasByHour])
-
-  const max = Math.max(1, ...buckets.map((b) => b.value))
-  const W = 800
-  const H = 160
-  const PAD_L = 28
-  const PAD_R = 8
-  const PAD_T = 12
-  const PAD_B = 24
-  const innerW = W - PAD_L - PAD_R
-  const innerH = H - PAD_T - PAD_B
-  const stepX = buckets.length > 1 ? innerW / (buckets.length - 1) : 0
-
-  const points = buckets.map((b, i) => {
-    const x = PAD_L + i * stepX
-    const y = PAD_T + innerH - (b.value / max) * innerH
-    return { x, y, ...b }
-  })
-
-  const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ")
-  const areaD = points.length
-    ? `${pathD} L ${points[points.length - 1].x} ${PAD_T + innerH} L ${points[0].x} ${PAD_T + innerH} Z`
-    : ""
-
-  // Y ticks: 0, mid, max
-  const yTicks = [0, max / 2, max]
-
-  // Trim labels for readability
-  const labelStep = Math.max(1, Math.ceil(buckets.length / 12))
-
-  if (buckets.length === 0 || max === 0) {
-    return (
-      <div className="h-40 flex items-center justify-center text-sm text-slate-400">
-        Sin ventas en el período
-      </div>
-    )
-  }
-
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-44" preserveAspectRatio="none">
-      <defs>
-        <linearGradient id="lineFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="rgb(15 23 42)" stopOpacity="0.10" />
-          <stop offset="100%" stopColor="rgb(15 23 42)" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      {/* Grid */}
-      {yTicks.map((t, i) => {
-        const y = PAD_T + innerH - (t / max) * innerH
-        return (
-          <g key={i}>
-            <line x1={PAD_L} x2={W - PAD_R} y1={y} y2={y} stroke="rgb(241 245 249)" strokeWidth="1" />
-            <text x={PAD_L - 6} y={y + 3} fontSize="9" fill="rgb(148 163 184)" textAnchor="end" fontFamily="monospace">
-              {Math.round(t)}
-            </text>
-          </g>
-        )
-      })}
-      {/* Area + line */}
-      <path d={areaD} fill="url(#lineFill)" />
-      <path d={pathD} fill="none" stroke="rgb(15 23 42)" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
-      {/* Points */}
-      {points.map((p, i) => (
-        <circle key={i} cx={p.x} cy={p.y} r="2" fill="rgb(15 23 42)">
-          <title>{`${p.label}: ${p.value} venta${p.value === 1 ? "" : "s"}`}</title>
-        </circle>
-      ))}
-      {/* X labels */}
-      {points.map((p, i) =>
-        i % labelStep === 0 || i === points.length - 1 ? (
-          <text
-            key={i}
-            x={p.x}
-            y={H - 6}
-            fontSize="9"
-            fill="rgb(148 163 184)"
-            textAnchor="middle"
-            fontFamily="monospace"
-          >
-            {p.label}
-          </text>
-        ) : null,
-      )}
-    </svg>
-  )
-}
-
 /* ---------------- Sales heatmap ---------------- */
 
 const DAY_NAMES_FULL = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"]
-const DAY_NAMES_ORDER = [1, 2, 3, 4, 5, 6, 0] // Mon..Sun rows
+const DAY_NAMES_ORDER = [1, 2, 3, 4, 5, 6, 0]
 
 function SalesHeatmap({
   heatmap,
@@ -915,10 +1005,8 @@ function SalesHeatmap({
     return { dayTotals, hourTotals, max, weeksInRange }
   }, [heatmap, range])
 
-  // Top day & hour band
   const topDayIdx = dayTotals.reduce((best, v, i) => (v > dayTotals[best] ? i : best), 0)
   const topDayName = DAY_NAMES_FULL[topDayIdx]
-  // Top hour band: find best contiguous 6h window
   let bestStart = 0
   let bestSum = -1
   for (let s = 0; s < 24; s++) {
@@ -934,13 +1022,12 @@ function SalesHeatmap({
 
   const ventasPromedioDia = totalVentas > 0 ? totalVentas / 7 : 0
 
-  // Bucket: 0 (none), low, mid, high
   const colorFor = (v: number) => {
     if (max === 0 || v === 0) return { fill: "rgb(226 232 240)", size: 4 }
     const ratio = v / max
-    if (ratio < 0.34) return { fill: "rgb(216 180 254)", size: 7 } // light purple
-    if (ratio < 0.67) return { fill: "rgb(168 85 247)", size: 10 } // medium
-    return { fill: "rgb(107 33 168)", size: 13 } // alta
+    if (ratio < 0.34) return { fill: "rgb(216 180 254)", size: 7 }
+    if (ratio < 0.67) return { fill: "rgb(168 85 247)", size: 10 }
+    return { fill: "rgb(107 33 168)", size: 13 }
   }
 
   const showAvgInfo = weeksInRange > 1
@@ -965,7 +1052,6 @@ function SalesHeatmap({
 
       <div className="mt-5 overflow-x-auto">
         <div className="min-w-[640px]">
-          {/* Rows */}
           <div className="flex flex-col gap-2">
             {DAY_NAMES_ORDER.map((dIdx) => (
               <div key={dIdx} className="flex items-center gap-2">
@@ -992,7 +1078,6 @@ function SalesHeatmap({
             ))}
           </div>
 
-          {/* Hour labels */}
           <div className="flex items-center gap-2 mt-2">
             <div className="w-20 flex-shrink-0" />
             <div className="flex-1 grid" style={{ gridTemplateColumns: "repeat(24, 1fr)" }}>
@@ -1007,7 +1092,6 @@ function SalesHeatmap({
         </div>
       </div>
 
-      {/* Legend */}
       <div className="mt-5 flex items-center justify-center gap-5 text-[11px] text-slate-500">
         {[
           { l: "Sin ventas", c: "rgb(226 232 240)", s: 4 },
@@ -1034,17 +1118,26 @@ function HmStat({ label, value }: { label: string; value: string }) {
   )
 }
 
-/* ---------------- Top products list ---------------- */
+/* ---------------- Top products list (paginated) ---------------- */
+
+const PRODUCTS_PER_PAGE = 5
 
 function TopProductsList({ items, totalIngresos }: { items: TopItemRow[]; totalIngresos: number }) {
+  const [page, setPage] = useState(0)
+
   if (items.length === 0) {
     return <div className="px-6 py-8 text-center text-sm text-slate-400">Sin ventas en el período</div>
   }
 
+  const totalPages = Math.max(1, Math.ceil(items.length / PRODUCTS_PER_PAGE))
+  const safePage = Math.min(page, totalPages - 1)
+  const startIdx = safePage * PRODUCTS_PER_PAGE
+  const visible = items.slice(startIdx, startIdx + PRODUCTS_PER_PAGE)
+
   return (
-    <div className="max-h-[420px] overflow-y-auto">
+    <div>
       <table className="w-full text-sm">
-        <thead className="bg-slate-50/60 sticky top-0 z-10">
+        <thead className="bg-slate-50/60">
           <tr className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
             <th className="text-left px-6 py-3 w-14">#</th>
             <th className="text-left px-3 py-3">Item</th>
@@ -1055,11 +1148,11 @@ function TopProductsList({ items, totalIngresos }: { items: TopItemRow[]; totalI
           </tr>
         </thead>
         <tbody>
-          {items.map((it, idx) => {
+          {visible.map((it, idx) => {
             const pct = totalIngresos > 0 ? (it.revenue / totalIngresos) * 100 : 0
             return (
               <tr key={it.sku} className="border-t border-slate-100 hover:bg-slate-50/60 transition-colors">
-                <td className="px-6 py-3 text-slate-400 font-mono tabular-nums">{idx + 1}</td>
+                <td className="px-6 py-3 text-slate-400 font-mono tabular-nums">{startIdx + idx + 1}</td>
                 <td className="px-3 py-3">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200/60 flex-shrink-0 overflow-hidden flex items-center justify-center">
@@ -1104,6 +1197,31 @@ function TopProductsList({ items, totalIngresos }: { items: TopItemRow[]; totalI
           })}
         </tbody>
       </table>
+
+      {/* Pagination footer */}
+      <div className="px-6 py-3 border-t border-slate-100 flex items-center justify-between bg-slate-50/40">
+        <p className="text-xs text-slate-500 font-mono">
+          Página {safePage + 1} de {totalPages}
+        </p>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            disabled={safePage === 0}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-500 hover:bg-white hover:text-slate-900 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+            disabled={safePage >= totalPages - 1}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-500 hover:bg-white hover:text-slate-900 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -1161,17 +1279,15 @@ function RangeCalendarDialog({
   const goPrev = () => setViewMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth() - 1, 1))
   const goNext = () => {
     const next = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 1)
-    // Don't navigate beyond current month
     if (next.getFullYear() > today.getFullYear() || (next.getFullYear() === today.getFullYear() && next.getMonth() > today.getMonth())) {
       return
     }
     setViewMonth(next)
   }
 
-  // Build calendar grid (Mon-first)
   const firstOfMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 1)
   const lastOfMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 0)
-  const startWeekday = (firstOfMonth.getDay() + 6) % 7 // Mon=0..Sun=6
+  const startWeekday = (firstOfMonth.getDay() + 6) % 7
   const totalCells = Math.ceil((startWeekday + lastOfMonth.getDate()) / 7) * 7
   const cells: (Date | null)[] = []
   for (let i = 0; i < totalCells; i++) {
@@ -1193,7 +1309,6 @@ function RangeCalendarDialog({
         className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Month nav */}
         <div className="px-6 pt-6 pb-3 flex items-center justify-between">
           <button
             type="button"
@@ -1217,7 +1332,6 @@ function RangeCalendarDialog({
           </button>
         </div>
 
-        {/* Weekday header */}
         <div className="px-6 grid grid-cols-7 gap-y-2">
           {ES_WEEKDAYS_SHORT.map((w) => (
             <div key={w} className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold text-center py-2">
@@ -1226,7 +1340,6 @@ function RangeCalendarDialog({
           ))}
         </div>
 
-        {/* Days grid */}
         <div className="px-3 pb-4">
           <div className="grid grid-cols-7">
             {cells.map((d, i) => {
@@ -1239,7 +1352,6 @@ function RangeCalendarDialog({
 
               return (
                 <div key={i} className="aspect-square flex items-center justify-center relative">
-                  {/* Range strip background */}
                   {(inRangeSel || (isEdge && start && end && !isSameDay(start, end))) && (
                     <div
                       className={`absolute inset-y-1 bg-blue-50 ${
@@ -1271,7 +1383,6 @@ function RangeCalendarDialog({
           </div>
         </div>
 
-        {/* Apply */}
         <div className="px-6 pb-6 pt-2 flex items-center gap-3">
           <button
             type="button"
