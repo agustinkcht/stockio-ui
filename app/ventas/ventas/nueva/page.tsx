@@ -108,10 +108,11 @@ export default function NuevaVentaPage() {
   // Inline price editing (idx → temp string value)
   const [editingPriceIdx, setEditingPriceIdx] = useState<number | null>(null)
   const [tempPriceVal, setTempPriceVal] = useState("")
-  // Discount modal
+  // Editar precio modal
   const [discountModalIdx, setDiscountModalIdx] = useState<number | null>(null)
   const [modalAjuste, setModalAjuste] = useState<{ value: number; type: "percent" | "cash" | "unit" }>({ value: 0, type: "percent" })
   const [modalPrice, setModalPrice] = useState<string>("")
+  const [showModalDescuento, setShowModalDescuento] = useState(false)
 
   // Modal state (exact copy from venta detail)
   const [modalSearch, setModalSearch] = useState("")
@@ -882,97 +883,40 @@ export default function NuevaVentaPage() {
 
                             {/* Precio */}
                             <div className="flex flex-col items-center justify-center gap-0.5 py-2 px-1">
-                              {isEditingPrice ? (
-                                /* ── Edit mode ── */
-                                <div className="flex items-center gap-1">
-                                  <div className="flex items-center border border-slate-200 rounded px-2 py-1 bg-white">
-                                    <span className="text-slate-400 text-sm mr-1">$</span>
-                                    <input
-                                      type="number"
-                                      value={tempPriceVal}
-                                      onChange={(e) => setTempPriceVal(e.target.value)}
-                                      autoFocus
-                                      className="w-20 text-sm focus:outline-none bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                    />
-                                  </div>
-                                  {/* Paired confirm/cancel buttons */}
-                                  <div className="flex rounded overflow-hidden border border-slate-800">
-                                    <button
-                                      onClick={() => {
-                                        const v = parseFloat(tempPriceVal)
-                                        if (!isNaN(v) && v >= 0) {
-                                          setSelectedItems(prev => prev.map((it, i) => i === idx ? { ...it, unitPrice: v } : it))
-                                        }
-                                        setEditingPriceIdx(null)
-                                      }}
-                                      className="w-6 h-6 flex items-center justify-center bg-slate-900 hover:bg-slate-700 text-white transition-colors"
-                                    >
-                                      <Check className="w-3 h-3" />
-                                    </button>
-                                    <button
-                                      onClick={() => setEditingPriceIdx(null)}
-                                      className="w-6 h-6 flex items-center justify-center bg-slate-900 hover:bg-slate-700 text-white transition-colors border-l border-slate-700"
-                                    >
-                                      <X className="w-3 h-3" />
-                                    </button>
-                                  </div>
-                                </div>
-                              ) : (
-                                /* ── Display mode ── */
-                                <>
-                                  <div className="flex items-center gap-1.5">
-                                    <div className="flex flex-col items-end">
-                                      {/* If $ or % discount: original struck-through + badge */}
-                                      {hasDiscount && (aj.type === "percent" || aj.type === "cash") && (
-                                        <div className="flex items-center gap-1">
-                                          <span className="text-[11px] text-slate-400 line-through tabular-nums">
-                                            ${Math.round(item.unitPrice).toLocaleString("es-AR")}
-                                          </span>
-                                          <span className="text-[10px] text-red-500 font-medium">
-                                            {aj.type === "percent" ? `-${aj.value}%` : `-$${aj.value.toLocaleString("es-AR")}`}
-                                          </span>
-                                        </div>
-                                      )}
-                                      <span className="text-sm font-medium text-slate-900 tabular-nums">
-                                        ${Math.round(hasDiscount && (aj.type === "percent" || aj.type === "cash") ? adjUnitPrice : item.unitPrice).toLocaleString("es-AR")}
+                              <div className="flex items-center gap-1.5">
+                                <div className="flex flex-col items-end">
+                                  {/* $ or % discount: original struck-through + badge */}
+                                  {hasDiscount && (aj.type === "percent" || aj.type === "cash") && (
+                                    <div className="flex items-center gap-1">
+                                      <span className="text-[11px] text-slate-400 line-through tabular-nums">
+                                        ${Math.round(item.unitPrice).toLocaleString("es-AR")}
                                       </span>
-                                      {/* If unit discount */}
-                                      {hasDiscount && aj.type === "unit" && (
-                                        <span className="text-[10px] text-emerald-600">{aj.value} unidades bonificadas</span>
-                                      )}
+                                      <span className="text-[10px] text-red-500 font-medium">
+                                        {aj.type === "percent" ? `-${aj.value}%` : `-$${aj.value.toLocaleString("es-AR")}`}
+                                      </span>
                                     </div>
-                                    <button
-                                      onClick={() => {
-                                        if (hasDiscount) {
-                                          // Open discount modal directly
-                                          setModalAjuste({ ...aj })
-                                          setModalPrice(String(item.unitPrice))
-                                          setDiscountModalIdx(idx)
-                                        } else {
-                                          setTempPriceVal(String(item.unitPrice))
-                                          setEditingPriceIdx(idx)
-                                        }
-                                      }}
-                                      className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
-                                    >
-                                      <Pencil className="w-3 h-3" />
-                                    </button>
-                                  </div>
-                                  {/* + agregar descuento — only when no discount */}
-                                  {!hasDiscount && (
-                                    <button
-                                      onClick={() => {
-                                        setModalAjuste({ value: 0, type: "percent" })
-                                        setModalPrice(String(item.unitPrice))
-                                        setDiscountModalIdx(idx)
-                                      }}
-                                      className="text-[11px] text-blue-500 hover:text-blue-600 transition-colors"
-                                    >
-                                      + agregar descuento
-                                    </button>
                                   )}
-                                </>
-                              )}
+                                  <span className="text-sm font-medium text-slate-900 tabular-nums">
+                                    ${Math.round(hasDiscount && (aj.type === "percent" || aj.type === "cash") ? adjUnitPrice : item.unitPrice).toLocaleString("es-AR")}
+                                  </span>
+                                  {/* Unit discount */}
+                                  {hasDiscount && aj.type === "unit" && (
+                                    <span className="text-[10px] text-emerald-600">{aj.value} unidades bonificadas</span>
+                                  )}
+                                </div>
+                                {/* Pencil always opens the modal */}
+                                <button
+                                  onClick={() => {
+                                    setModalAjuste(hasDiscount ? { ...aj } : { value: 0, type: "percent" })
+                                    setModalPrice(String(item.unitPrice))
+                                    setShowModalDescuento(hasDiscount)
+                                    setDiscountModalIdx(idx)
+                                  }}
+                                  className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                                >
+                                  <Pencil className="w-3 h-3" />
+                                </button>
+                              </div>
                             </div>
 
                             {/* Delete */}
@@ -1624,7 +1568,7 @@ export default function NuevaVentaPage() {
                 </div>
               </div>
 
-              <div className="px-6 py-5 space-y-5">
+              <div className="px-6 py-5 space-y-4">
                 {/* Precio editable */}
                 <div>
                   <label className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Precio</label>
@@ -1639,56 +1583,85 @@ export default function NuevaVentaPage() {
                   </div>
                 </div>
 
-                {/* Descuento */}
-                <div>
-                  <label className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Descuento</label>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 focus-within:border-slate-400 transition-colors flex-1">
-                      <input
-                        type="number"
-                        placeholder="0"
-                        min="0"
-                        value={modalAjuste.value || ""}
-                        onChange={(e) => {
-                          let val = parseFloat(e.target.value) || 0
-                          if (modalAjuste.type === "unit") val = Math.min(val, item.quantity)
-                          setModalAjuste(prev => ({ ...prev, value: val }))
-                        }}
-                        className="w-full text-sm bg-transparent focus:outline-none placeholder:text-slate-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                      />
-                    </div>
-                    <div className="flex border border-slate-200 rounded-lg overflow-hidden">
-                      {(["percent", "cash", "unit"] as const).map((t) => (
-                        <button
-                          key={t}
-                          onClick={() => setModalAjuste(prev => ({ ...prev, type: t }))}
-                          className={`px-3 py-2 text-xs font-medium cursor-pointer transition-colors ${modalAjuste.type === t ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"}`}
-                        >
-                          {t === "percent" ? "% porcentaje" : t === "cash" ? "$ dinero" : "unidades"}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                {/* + agregar descuento — shown when discount area is collapsed */}
+                {!showModalDescuento && (
+                  <button
+                    onClick={() => setShowModalDescuento(true)}
+                    className="text-sm text-blue-500 hover:text-blue-600 transition-colors"
+                  >
+                    + agregar descuento
+                  </button>
+                )}
 
-                {/* Precio final */}
-                <div className="flex items-center justify-between py-3 px-4 bg-slate-50 rounded-xl">
-                  <span className="text-sm font-medium text-slate-600">Precio final</span>
-                  <div className="text-right">
-                    <span className="text-base font-bold text-slate-900 tabular-nums">
-                      ${Math.round(finalPrice).toLocaleString("es-AR")}
-                    </span>
-                    {modalAjuste.type === "unit" && modalAjuste.value > 0 && (
-                      <p className="text-[11px] text-emerald-600">{modalAjuste.value} unidades bonificadas</p>
+                {/* Descuento area — shown when expanded */}
+                {showModalDescuento && (
+                  <>
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Descuento</label>
+                        <button
+                          onClick={() => {
+                            setShowModalDescuento(false)
+                            setModalAjuste({ value: 0, type: "percent" })
+                          }}
+                          className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
+                          title="Quitar descuento"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 focus-within:border-slate-400 transition-colors flex-1">
+                          <input
+                            type="number"
+                            placeholder="0"
+                            min="0"
+                            autoFocus
+                            value={modalAjuste.value || ""}
+                            onChange={(e) => {
+                              let val = parseFloat(e.target.value) || 0
+                              if (modalAjuste.type === "unit") val = Math.min(val, item.quantity)
+                              setModalAjuste(prev => ({ ...prev, value: val }))
+                            }}
+                            className="w-full text-sm bg-transparent focus:outline-none placeholder:text-slate-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          />
+                        </div>
+                        <div className="flex border border-slate-200 rounded-lg overflow-hidden">
+                          {(["percent", "cash", "unit"] as const).map((t) => (
+                            <button
+                              key={t}
+                              onClick={() => setModalAjuste(prev => ({ ...prev, type: t }))}
+                              className={`px-3 py-2 text-xs font-medium cursor-pointer transition-colors ${modalAjuste.type === t ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"}`}
+                            >
+                              {t === "percent" ? "% porcentaje" : t === "cash" ? "$ dinero" : "unidades"}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Precio final — only when a discount value is entered */}
+                    {modalAjuste.value > 0 && (
+                      <div className="flex items-center justify-between py-3 px-4 bg-slate-50 rounded-xl">
+                        <span className="text-sm font-medium text-slate-600">Precio final</span>
+                        <div className="text-right">
+                          <span className="text-base font-bold text-slate-900 tabular-nums">
+                            ${Math.round(finalPrice).toLocaleString("es-AR")}
+                          </span>
+                          {modalAjuste.type === "unit" && (
+                            <p className="text-[11px] text-emerald-600">{modalAjuste.value} unidades bonificadas</p>
+                          )}
+                        </div>
+                      </div>
                     )}
-                  </div>
-                </div>
+                  </>
+                )}
               </div>
 
               {/* Footer */}
               <div className="flex items-center justify-end gap-2 px-6 pb-6">
                 <button
-                  onClick={() => setDiscountModalIdx(null)}
+                  onClick={() => { setDiscountModalIdx(null); setShowModalDescuento(false) }}
                   className="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
                 >
                   Cancelar
@@ -1699,8 +1672,11 @@ export default function NuevaVentaPage() {
                     if (!isNaN(newPrice) && newPrice >= 0) {
                       setSelectedItems(prev => prev.map((it, i) => i === discountModalIdx ? { ...it, unitPrice: newPrice } : it))
                     }
-                    setEditAjustes(prev => ({ ...prev, [discountModalIdx]: { ...modalAjuste } }))
+                    // If discount section was closed, clear any discount
+                    const ajuste = showModalDescuento ? { ...modalAjuste } : { value: 0, type: "percent" as const }
+                    setEditAjustes(prev => ({ ...prev, [discountModalIdx]: ajuste }))
                     setDiscountModalIdx(null)
+                    setShowModalDescuento(false)
                   }}
                   className="px-5 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
                 >
