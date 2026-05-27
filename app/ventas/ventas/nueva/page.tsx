@@ -1150,39 +1150,49 @@ export default function NuevaVentaPage() {
 
                 {/* ── Step 3: Entrega + Cobro ── */}
                 {currentStep === 3 && (
-                  <div className="p-6 bg-white/60 backdrop-blur-md border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
+                  <div className="p-6 border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.08)]">
                     <div className="grid grid-cols-2 gap-5 mb-6">
 
                       {/* Entrega card */}
-                      <div className="border border-slate-200 rounded-xl p-4">
+                      <div className="bg-white border border-slate-200 rounded-xl p-4">
                         <div className="flex items-center gap-2 mb-3">
                           <Truck className="w-4 h-4 text-slate-500" />
                           <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">Entrega</h3>
                         </div>
 
-                        {/* Selector */}
-                        <div className="flex border border-slate-200 rounded-lg overflow-hidden mb-4">
-                          <button
-                            type="button"
-                            onClick={() => setEntregaMode("en_el_acto")}
-                            className={`flex-1 py-2 text-xs font-medium transition-colors cursor-pointer ${entregaMode === "en_el_acto" ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"}`}
+                        {/* Dropdown selector */}
+                        <div className="relative mb-4">
+                          <select
+                            value={entregaMode}
+                            onChange={(e) => setEntregaMode(e.target.value as EntregaMode)}
+                            className="w-full appearance-none px-3 py-2.5 pr-8 border border-slate-200 rounded-lg bg-white text-sm font-medium focus:outline-none focus:border-slate-400 cursor-pointer text-slate-700"
                           >
-                            En el acto
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setEntregaMode("diferida")}
-                            className={`flex-1 py-2 text-xs font-medium transition-colors cursor-pointer border-l border-slate-200 ${entregaMode === "diferida" ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"}`}
-                          >
-                            Diferida
-                          </button>
+                            <option value="en_el_acto">En el acto</option>
+                            <option value="diferida">Diferida</option>
+                          </select>
+                          <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                        </div>
+
+                        {/* Status badge with description */}
+                        <div className={`flex items-start gap-2 px-3 py-2.5 rounded-lg mb-4 ${entregaMode === "en_el_acto" ? "bg-emerald-50 border border-emerald-100" : "bg-orange-50 border border-orange-100"}`}>
+                          <div className={`mt-0.5 w-2 h-2 rounded-full shrink-0 ${entregaMode === "en_el_acto" ? "bg-emerald-500" : "bg-orange-400"}`} />
+                          <div>
+                            <p className={`text-sm font-medium ${entregaMode === "en_el_acto" ? "text-emerald-700" : "text-orange-600"}`}>
+                              {entregaMode === "en_el_acto" ? "En el acto" : "Diferida"}
+                            </p>
+                            <p className={`text-xs mt-0.5 ${entregaMode === "en_el_acto" ? "text-emerald-600" : "text-orange-500"}`}>
+                              {entregaMode === "en_el_acto"
+                                ? "Los productos se entregan en el momento de la venta."
+                                : "La entrega se coordina para una fecha posterior a la venta."}
+                            </p>
+                          </div>
                         </div>
 
                         {/* Entrega inicial opcional — only when diferida */}
                         {entregaMode === "diferida" && (
                           <div>
-                            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                              Entrega inicial (opcional)
+                            <p className="text-sm font-medium text-slate-500 mb-2">
+                              Entrega inicial <span className="text-slate-400 font-normal">(opcional)</span>
                             </p>
 
                             {/* Aggregate all entries into one row per "session" */}
@@ -1243,28 +1253,38 @@ export default function NuevaVentaPage() {
                       </div>
 
                       {/* Cobro card */}
-                      <div className="border border-slate-200 rounded-xl p-4">
+                      <div className="bg-white border border-slate-200 rounded-xl p-4">
                         <div className="flex items-center gap-2 mb-3">
                           <Wallet className="w-4 h-4 text-slate-500" />
                           <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">Cobro</h3>
                         </div>
 
-                        {/* Selector */}
-                        <div className="flex border border-slate-200 rounded-lg overflow-hidden mb-4">
-                          <button
-                            type="button"
-                            onClick={() => setCobroMode("en_el_acto")}
-                            className={`flex-1 py-2 text-xs font-medium transition-colors cursor-pointer ${cobroMode === "en_el_acto" ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"}`}
+                        {/* Dropdown selector */}
+                        <div className="relative mb-4">
+                          <select
+                            value={cobroMode}
+                            onChange={(e) => setCobroMode(e.target.value as CobroMode)}
+                            className="w-full appearance-none px-3 py-2.5 pr-8 border border-slate-200 rounded-lg bg-white text-sm font-medium focus:outline-none focus:border-slate-400 cursor-pointer text-slate-700"
                           >
-                            En el acto
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setCobroMode("diferida")}
-                            className={`flex-1 py-2 text-xs font-medium transition-colors cursor-pointer border-l border-slate-200 ${cobroMode === "diferida" ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"}`}
-                          >
-                            Diferido
-                          </button>
+                            <option value="en_el_acto">En el acto</option>
+                            <option value="diferida">Diferido</option>
+                          </select>
+                          <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                        </div>
+
+                        {/* Status badge with description */}
+                        <div className={`flex items-start gap-2 px-3 py-2.5 rounded-lg mb-4 ${cobroMode === "en_el_acto" ? "bg-emerald-50 border border-emerald-100" : "bg-orange-50 border border-orange-100"}`}>
+                          <div className={`mt-0.5 w-2 h-2 rounded-full shrink-0 ${cobroMode === "en_el_acto" ? "bg-emerald-500" : "bg-orange-400"}`} />
+                          <div>
+                            <p className={`text-sm font-medium ${cobroMode === "en_el_acto" ? "text-emerald-700" : "text-orange-600"}`}>
+                              {cobroMode === "en_el_acto" ? "En el acto" : "Diferido"}
+                            </p>
+                            <p className={`text-xs mt-0.5 ${cobroMode === "en_el_acto" ? "text-emerald-600" : "text-orange-500"}`}>
+                              {cobroMode === "en_el_acto"
+                                ? "El pago se recibe en el momento de la venta."
+                                : "El cobro se realiza en una fecha posterior a la venta."}
+                            </p>
+                          </div>
                         </div>
 
                         {cobroMode === "en_el_acto" && (
@@ -1298,8 +1318,8 @@ export default function NuevaVentaPage() {
                         {/* Cobro inicial opcional — only when diferida */}
                         {cobroMode === "diferida" && (
                           <div>
-                            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                              Cobro inicial (opcional)
+                            <p className="text-sm font-medium text-slate-500 mb-2">
+                              Cobro inicial <span className="text-slate-400 font-normal">(opcional)</span>
                             </p>
 
                             {cobroInicialEntries.map((entry, i) => {
