@@ -780,7 +780,7 @@ export default function NuevaVentaPage() {
 
                 {/* ── Step 2: Productos (edit-mode grid) + Resumen ── */}
                 {currentStep === 2 && (
-                  <div className="p-6 bg-white/60 backdrop-blur-md border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
+                  <div className="p-6 bg-[rgba(250,251,253,1)] border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
                   <div className="flex gap-5 items-start w-full">
                   {/* Products card — 6/10 width */}
                   <div className="w-[60%] min-w-0 border border-slate-100 rounded-xl overflow-hidden">
