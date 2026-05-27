@@ -77,24 +77,108 @@ export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
     onAddToCart(item, variant)
   }
 
-  // ── Root view ──────────────────────────────────────────────────────────────
-  if (!activeParentSku) {
-    return (
-      <div className="flex flex-col h-full">
-        <div className="p-4 border-b border-border/50">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              ref={searchRef}
-              type="text"
-              placeholder="Buscar productos... (⌘K)"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-muted/30 border-0 focus-visible:ring-1 focus-visible:ring-ring/50"
-            />
-          </div>
-        </div>
+  const parentItem = activeParentSku
+    ? items.find((i) => (i.skuPrefix || i.sku) === activeParentSku) ?? null
+    : null
 
+  return (
+    <div className="flex flex-col h-full">
+
+      {/* ── Search bar — always visible ── */}
+      <div className="p-4 border-b border-border/50 flex-shrink-0">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            ref={searchRef}
+            type="text"
+            placeholder="Buscar productos... (⌘K)"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 bg-muted/30 border-0 focus-visible:ring-1 focus-visible:ring-ring/50"
+          />
+        </div>
+      </div>
+
+      {/* ── Parent view ── */}
+      {parentItem ? (
+        <>
+          {/* Back + parent header */}
+          <div className="px-4 pt-3 pb-3 border-b border-border/30 flex-shrink-0">
+            <button
+              onClick={() => setActiveParentSku(null)}
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer mb-3"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+              <span>Volver</span>
+            </button>
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-muted/30 to-muted/60 flex items-center justify-center overflow-hidden flex-shrink-0 relative">
+                <Image
+                  src={getCategoryImage(parentItem.categoria) || "/placeholder.svg"}
+                  alt={parentItem.name}
+                  fill
+                  className="object-cover"
+                  sizes="44px"
+                />
+              </div>
+              <div>
+                <p className="font-semibold text-sm">{parentItem.name}</p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  {parentItem.marca && <span className="text-xs text-muted-foreground">{parentItem.marca}</span>}
+                  {parentItem.categoria && <span className="text-xs text-muted-foreground">· {parentItem.categoria}</span>}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Variants */}
+          <div className="flex-1 overflow-auto p-2 space-y-1">
+            {parentItem.variants?.map((variant) => {
+              const variantStock = getStockStatus(variant.stock)
+              const variantActive = (variant as any).isActive !== false
+              const tags = getTags(variant)
+              return (
+                <div
+                  key={variant.sku}
+                  className={cn(
+                    "flex items-center gap-3 p-3 rounded-lg transition-all group cursor-pointer hover:bg-muted/50",
+                    (variantStock.status === "sin-stock" || !variantActive) && "opacity-50",
+                  )}
+                  onClick={() => handleAddItem(parentItem, variant)}
+                >
+                  <div className="w-10 h-10 rounded-md bg-gradient-to-br from-muted/30 to-muted/60 flex items-center justify-center overflow-hidden flex-shrink-0 relative">
+                    <Image
+                      src={getCategoryImage(parentItem.categoria) || "/placeholder.svg"}
+                      alt={variant.name}
+                      fill
+                      className="object-cover"
+                      sizes="40px"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <p className="text-sm font-medium truncate">{variant.name}</p>
+                      {tags.map((tag) => (
+                        <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-medium leading-none flex-shrink-0">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                    {variant.sku && <p className="text-[11px] text-muted-foreground mt-0.5">{variant.sku}</p>}
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="font-semibold text-sm">${variant.precio?.precioFinal?.toLocaleString("es-AR") || "0"}</p>
+                    <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full", variantStock.color)}>{variantStock.label}</span>
+                  </div>
+                  <Plus className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-1" />
+                </div>
+              )
+            })}
+          </div>
+        </>
+      ) : (
+
+        /* ── Root list ── */
         <div className="flex-1 overflow-auto p-2 space-y-1">
           {filteredItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
@@ -109,50 +193,29 @@ export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
                 ? item.variants!.some((v) => (v as any).isActive !== false)
                 : item.isActive !== false
               const tags = getTags(item)
-
               return (
                 <div
-                  key={item.sku}
+                  key={itemId(item)}
                   className={cn(
-                    "flex items-center gap-3 p-3 rounded-lg transition-all group cursor-pointer",
-                    "hover:bg-muted/50",
+                    "flex items-center gap-3 p-3 rounded-lg transition-all group cursor-pointer hover:bg-muted/50",
                     !itemActive && "opacity-50",
                   )}
                   onClick={() => {
-                    if (hasVariants) {
-                      setActiveParentSku(itemId(item))
-                    } else {
-                      handleAddItem(item)
-                    }
+                    if (hasVariants) setActiveParentSku(itemId(item))
+                    else handleAddItem(item)
                   }}
                 >
-                  {/* Image */}
                   <div className="w-11 h-11 rounded-md bg-gradient-to-br from-muted/30 to-muted/60 flex items-center justify-center overflow-hidden flex-shrink-0 relative">
-                    <Image
-                      src={getCategoryImage(item.categoria) || "/placeholder.svg"}
-                      alt={item.name}
-                      fill
-                      className="object-cover"
-                      sizes="44px"
-                    />
+                    <Image src={getCategoryImage(item.categoria) || "/placeholder.svg"} alt={item.name} fill className="object-cover" sizes="44px" />
                   </div>
-
-                  {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <p className="font-medium text-sm truncate">{item.name}</p>
                       {!hasVariants && tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-medium leading-none flex-shrink-0"
-                        >
-                          {tag}
-                        </span>
+                        <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-medium leading-none flex-shrink-0">{tag}</span>
                       ))}
                       {hasVariants && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-                          {item.variants?.length} var.
-                        </span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{item.variants?.length} var.</span>
                       )}
                     </div>
                     <div className="flex items-center gap-1.5 mt-0.5">
@@ -160,19 +223,13 @@ export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
                       {item.categoria && <span className="text-xs text-muted-foreground">· {item.categoria}</span>}
                     </div>
                   </div>
-
-                  {/* Price / action */}
                   {hasVariants ? (
                     <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                   ) : (
                     <>
                       <div className="text-right flex-shrink-0">
-                        <p className="font-semibold text-sm">
-                          ${item.precio?.precioFinal?.toLocaleString("es-AR") || "0"}
-                        </p>
-                        <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full", stockStatus.color)}>
-                          {stockStatus.label}
-                        </span>
+                        <p className="font-semibold text-sm">${item.precio?.precioFinal?.toLocaleString("es-AR") || "0"}</p>
+                        <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full", stockStatus.color)}>{stockStatus.label}</span>
                       </div>
                       <Plus className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-1" />
                     </>
@@ -182,112 +239,7 @@ export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
             })
           )}
         </div>
-      </div>
-    )
-  }
-
-  // ── Parent / variants view ─────────────────────────────────────────────────
-  const parentItem = items.find((i) => (i.skuPrefix || i.sku) === activeParentSku)
-  if (!parentItem) {
-    setActiveParentSku(null)
-    return null
-  }
-
-  return (
-    <div className="flex flex-col h-full">
-      {/* Header with back button */}
-      <div className="p-4 border-b border-border/50">
-        <button
-          onClick={() => setActiveParentSku(null)}
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer mb-3"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          <span>Volver</span>
-        </button>
-
-        {/* Parent item info */}
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-muted/30 to-muted/60 flex items-center justify-center overflow-hidden flex-shrink-0 relative">
-            <Image
-              src={getCategoryImage(parentItem.categoria) || "/placeholder.svg"}
-              alt={parentItem.name}
-              fill
-              className="object-cover"
-              sizes="48px"
-            />
-          </div>
-          <div>
-            <p className="font-semibold text-sm">{parentItem.name}</p>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              {parentItem.marca && <span className="text-xs text-muted-foreground">{parentItem.marca}</span>}
-              {parentItem.categoria && (
-                <span className="text-xs text-muted-foreground">· {parentItem.categoria}</span>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Variants list */}
-      <div className="flex-1 overflow-auto p-2 space-y-1">
-        {parentItem.variants?.map((variant) => {
-          const variantStock = getStockStatus(variant.stock)
-          const variantActive = (variant as any).isActive !== false
-          const tags = getTags(variant)
-
-          return (
-            <div
-              key={variant.sku}
-              className={cn(
-                "flex items-center gap-3 p-3 rounded-lg transition-all group cursor-pointer",
-                "hover:bg-muted/50",
-                (variantStock.status === "sin-stock" || !variantActive) && "opacity-50",
-              )}
-              onClick={() => handleAddItem(parentItem, variant)}
-            >
-              {/* Variant image */}
-              <div className="w-10 h-10 rounded-md bg-gradient-to-br from-muted/30 to-muted/60 flex items-center justify-center overflow-hidden flex-shrink-0 relative">
-                <Image
-                  src={getCategoryImage(parentItem.categoria) || "/placeholder.svg"}
-                  alt={variant.name}
-                  fill
-                  className="object-cover"
-                  sizes="40px"
-                />
-              </div>
-
-              {/* Variant info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <p className="text-sm font-medium truncate">{variant.name}</p>
-                  {tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-medium leading-none flex-shrink-0"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-                {variant.sku && (
-                  <p className="text-[11px] text-muted-foreground mt-0.5">{variant.sku}</p>
-                )}
-              </div>
-
-              {/* Price, stock, add */}
-              <div className="text-right flex-shrink-0">
-                <p className="font-semibold text-sm">
-                  ${variant.precio?.precioFinal?.toLocaleString("es-AR") || "0"}
-                </p>
-                <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full", variantStock.color)}>
-                  {variantStock.label}
-                </span>
-              </div>
-              <Plus className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-1" />
-            </div>
-          )
-        })}
-      </div>
+      )}
     </div>
   )
 }
