@@ -778,9 +778,9 @@ export default function NuevaVentaPage() {
 
                 {/* ── Step 2: Productos (edit-mode grid) + Resumen ── */}
                 {currentStep === 2 && (
-                  <div className="flex gap-5 items-start">
-                  {/* Products card */}
-                  <div className="flex-1 min-w-0 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] overflow-hidden">
+                  <div className="flex gap-5 items-start w-full">
+                  {/* Products card — 6/10 width */}
+                  <div className="w-[60%] min-w-0 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] overflow-hidden">
                     {/* Header */}
                     <div className="flex items-center gap-2 px-6 pt-6 pb-4 border-b border-slate-100">
                       <Package className="w-4 h-4 text-slate-500" />
@@ -966,7 +966,7 @@ export default function NuevaVentaPage() {
                   </div>
 
                   {/* Resumen card — right side */}
-                  <div className="w-72 shrink-0 sticky top-0 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] p-5">
+                  <div className="w-[40%] shrink-0 sticky top-0 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] p-5">
                     <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Resumen</h3>
 
                     {selectedItems.length === 0 ? (
