@@ -12,6 +12,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Info,
+  Pencil,
+  X,
+  Check,
 } from "lucide-react"
 import Image from "next/image"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
@@ -110,6 +113,10 @@ interface FactorBuckets {
   unidadesVendidas: number[]
   unidadesDevueltas: number[]
   valorDevoluciones: number[]
+  ticketPromedio: number[]
+  costoMercaderia: number[]
+  costoPromociones: number[]
+  egresosCaja: number[]
 }
 
 interface DashboardMetrics {
@@ -123,6 +130,7 @@ interface DashboardMetrics {
   unidadesVendidas: number
   unidadesDevueltas: number
   valorDevoluciones: number
+  ticketPromedio: number
   payments: { efectivo: number; posnet: number; transferencia: number }
   topItems: TopItemRow[]
   heatmap: number[][]
@@ -228,7 +236,13 @@ function computeMetrics(
     unidadesVendidas: Array(keys.length).fill(0),
     unidadesDevueltas: Array(keys.length).fill(0),
     valorDevoluciones: Array(keys.length).fill(0),
+    ticketPromedio: Array(keys.length).fill(0),
+    costoMercaderia: Array(keys.length).fill(0),
+    costoPromociones: Array(keys.length).fill(0),
+    egresosCaja: Array(keys.length).fill(0),
   }
+  // Track per-bucket counts for ticket promedio calculation
+  const bucketCounts: number[] = Array(keys.length).fill(0)
 
   const ventasInRange = ventas.filter((v) => inRange(v.fecha, range))
   const valid = ventasInRange.filter((v) => v.estado !== "cancelada")
@@ -281,10 +295,18 @@ function computeMetrics(
       itemAgg.set(it.sku, agg)
     }
 
+    // Per venta: cost of goods
+    let ventaCosto = 0
+    for (const it of v.items) {
+      ventaCosto += (costoMap.get(it.sku) ?? 0) * it.quantity
+    }
+
     if (i !== undefined) {
       factors.ventasBrutas[i] += ventaGross
       factors.cantidadVentas[i] += 1
       factors.unidadesVendidas[i] += ventaUnits
+      factors.costoMercaderia[i] += ventaCosto
+      bucketCounts[i] += 1
     }
   }
 
@@ -305,9 +327,18 @@ function computeMetrics(
     }
   }
 
+  // Compute per-bucket derived factors
+  const activeBuckets = bucketCounts.filter((c) => c > 0).length || 1
+  for (let i = 0; i < keys.length; i++) {
+    factors.ticketPromedio[i] = bucketCounts[i] > 0 ? factors.ventasBrutas[i] / bucketCounts[i] : 0
+    factors.costoPromociones[i] = Math.max(0, factors.ventasBrutas[i] * (ingresos > 0 ? promociones / ingresos : 0))
+    factors.egresosCaja[i] = bucketCounts[i] > 0 ? cajaEgresos / activeBuckets : 0
+  }
+
   const gastos = promociones + mercaderia + cajaEgresos
   const ganancia = ingresos - gastos
   const margen = ingresos > 0 ? (ganancia / ingresos) * 100 : 0
+  const ticketPromedio = valid.length > 0 ? ingresos / valid.length : 0
 
   const payments = { efectivo: 0, posnet: 0, transferencia: 0 }
   for (const v of valid) {
@@ -343,6 +374,7 @@ function computeMetrics(
     unidadesVendidas,
     unidadesDevueltas,
     valorDevoluciones,
+    ticketPromedio,
     payments,
     topItems,
     heatmap,
@@ -627,41 +659,89 @@ export default function DashboardPage() {
 
 /* ---------------- Estadísticas del Período ---------------- */
 
-type FactorKey = "ventasBrutas" | "cantidadVentas" | "unidadesVendidas" | "unidadesDevueltas" | "valorDevoluciones"
+type FactorKey =
+  | "ventasBrutas"
+  | "cantidadVentas"
+  | "unidadesVendidas"
+  | "ticketPromedio"
+  | "unidadesDevueltas"
+  | "valorDevoluciones"
+  | "costoMercaderia"
+  | "costoPromociones"
+  | "egresosCaja"
 
 interface FactorDef {
   key: FactorKey
   label: string
   format: (n: number) => string
-  // Color + line style cycle through 3 each so 5 factors are visually distinct
   color: string
-  dash: string // SVG strokeDasharray
+  dash: string
 }
 
-// All factors — chart line is always black; selection is single
-const FACTOR_DEFS: FactorDef[] = [
+const ALL_FACTOR_DEFS: FactorDef[] = [
   { key: "ventasBrutas",      label: "Ventas brutas",               format: formatARS,    color: "rgb(15 23 42)", dash: "0" },
   { key: "cantidadVentas",    label: "Cantidad de ventas",          format: formatNumber, color: "rgb(15 23 42)", dash: "0" },
   { key: "unidadesVendidas",  label: "Unidades vendidas",           format: formatNumber, color: "rgb(15 23 42)", dash: "0" },
+  { key: "ticketPromedio",    label: "Ticket promedio",             format: formatARS,    color: "rgb(15 23 42)", dash: "0" },
   { key: "unidadesDevueltas", label: "Unidades devueltas",          format: formatNumber, color: "rgb(15 23 42)", dash: "0" },
   { key: "valorDevoluciones", label: "Valor de unidades devueltas", format: formatARS,    color: "rgb(15 23 42)", dash: "0" },
+  { key: "costoMercaderia",   label: "Costo de mercadería",         format: formatARS,    color: "rgb(15 23 42)", dash: "0" },
+  { key: "costoPromociones",  label: "Costo de promociones",        format: formatARS,    color: "rgb(15 23 42)", dash: "0" },
+  { key: "egresosCaja",       label: "Egresos de caja",             format: formatARS,    color: "rgb(15 23 42)", dash: "0" },
 ]
+
+const DEFAULT_VISIBLE_FACTORS: FactorKey[] = ["ventasBrutas", "cantidadVentas", "unidadesVendidas", "ticketPromedio"]
 
 function EstadisticasDelPeriodo({ metrics, rangeLabel }: { metrics: DashboardMetrics; rangeLabel: string }) {
   const [selected, setSelected] = useState<FactorKey>("ventasBrutas")
+  const [visibleFactors, setVisibleFactors] = useState<FactorKey[]>(DEFAULT_VISIBLE_FACTORS)
+  const [configOpen, setConfigOpen] = useState(false)
+  const [draftFactors, setDraftFactors] = useState<FactorKey[]>(DEFAULT_VISIBLE_FACTORS)
 
   const totals: Record<FactorKey, number> = {
-    ventasBrutas: metrics.ingresos,
-    cantidadVentas: metrics.ventasCount,
-    unidadesVendidas: metrics.unidadesVendidas,
+    ventasBrutas:      metrics.ingresos,
+    cantidadVentas:    metrics.ventasCount,
+    unidadesVendidas:  metrics.unidadesVendidas,
+    ticketPromedio:    metrics.ticketPromedio,
     unidadesDevueltas: metrics.unidadesDevueltas,
     valorDevoluciones: metrics.valorDevoluciones,
+    costoMercaderia:   metrics.mercaderia,
+    costoPromociones:  metrics.promociones,
+    egresosCaja:       metrics.gastos - metrics.mercaderia - metrics.promociones,
   }
 
-  const activeDef = FACTOR_DEFS.find((f) => f.key === selected)!
+  const shownDefs = visibleFactors
+    .map((k) => ALL_FACTOR_DEFS.find((f) => f.key === k)!)
+    .filter(Boolean)
+  const activeDef = ALL_FACTOR_DEFS.find((f) => f.key === selected) ?? shownDefs[0]
+
+  // If the selected factor was removed from visible set, reset to first visible
+  const safeSelected = visibleFactors.includes(selected) ? selected : visibleFactors[0]
+
+  function openConfig() {
+    setDraftFactors([...visibleFactors])
+    setConfigOpen(true)
+  }
+
+  function toggleDraft(key: FactorKey) {
+    setDraftFactors((prev) => {
+      if (prev.includes(key)) {
+        if (prev.length <= 1) return prev // keep at least 1
+        return prev.filter((k) => k !== key)
+      }
+      if (prev.length >= 4) return prev // max 4
+      return [...prev, key]
+    })
+  }
+
+  function saveConfig() {
+    setVisibleFactors(draftFactors)
+    if (!draftFactors.includes(safeSelected)) setSelected(draftFactors[0])
+    setConfigOpen(false)
+  }
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/60 overflow-hidden">
+    <div className="bg-white rounded-2xl border border-slate-200/60 overflow-hidden relative">
       <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
         <div>
           <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
@@ -669,13 +749,23 @@ function EstadisticasDelPeriodo({ metrics, rangeLabel }: { metrics: DashboardMet
           </h2>
           <p className="text-xs text-slate-500">Indicadores del período</p>
         </div>
-        <p className="text-[11px] text-slate-400 font-mono">{rangeLabel}</p>
+        <div className="flex items-center gap-3">
+          <p className="text-[11px] text-slate-400 font-mono">{rangeLabel}</p>
+          <button
+            type="button"
+            onClick={openConfig}
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+            title="Configurar factores"
+          >
+            <Pencil className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
 
-      {/* Factor selectors */}
-      <div className="px-6 py-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-        {FACTOR_DEFS.map((f) => {
-          const isSelected = f.key === selected
+      {/* Factor selectors — exactly 4 shown */}
+      <div className="px-6 py-5 grid grid-cols-2 lg:grid-cols-4 gap-2">
+        {shownDefs.map((f) => {
+          const isSelected = f.key === safeSelected
           return (
             <button
               key={f.key}
@@ -701,10 +791,71 @@ function EstadisticasDelPeriodo({ metrics, rangeLabel }: { metrics: DashboardMet
       <div className="border-t border-slate-100 px-6 py-5">
         <SingleFactorChart
           labels={metrics.chartLabels}
-          values={metrics.factors[selected]}
+          values={metrics.factors[safeSelected]}
           factorDef={activeDef}
         />
       </div>
+
+      {/* Config modal */}
+      {configOpen && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/10 backdrop-blur-[2px] rounded-2xl">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl w-[340px] mx-4 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Configurar factores</p>
+                <p className="text-xs text-slate-500 mt-0.5">Elegí hasta 4 factores para mostrar</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setConfigOpen(false)}
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="px-5 py-3 flex flex-col gap-1">
+              {ALL_FACTOR_DEFS.map((f) => {
+                const isOn = draftFactors.includes(f.key)
+                const disabled = !isOn && draftFactors.length >= 4
+                return (
+                  <button
+                    key={f.key}
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => toggleDraft(f.key)}
+                    className={`flex items-center justify-between px-3 py-2.5 rounded-xl transition-colors text-left w-full ${
+                      isOn
+                        ? "bg-slate-900 text-white"
+                        : disabled
+                        ? "text-slate-300 cursor-not-allowed"
+                        : "hover:bg-slate-50 text-slate-700 cursor-pointer"
+                    }`}
+                  >
+                    <span className="text-sm font-medium">{f.label}</span>
+                    {isOn && <Check className="w-4 h-4 flex-shrink-0" />}
+                  </button>
+                )
+              })}
+            </div>
+            <div className="px-5 py-4 border-t border-slate-100 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setConfigOpen(false)}
+                className="px-4 py-2 rounded-xl text-sm text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={saveConfig}
+                className="px-4 py-2 rounded-xl text-sm font-semibold bg-slate-900 text-white hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                Aplicar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -1149,6 +1300,30 @@ function HmStat({ label, value }: { label: string; value: string }) {
   )
 }
 
+/* ---------------- Thumbnail with fallback ---------------- */
+
+function ThumbnailImg({ src, alt }: { src?: string; alt: string }) {
+  const [err, setErr] = useState(false)
+  if (src && !err) {
+    return (
+      <div className="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200/60 flex-shrink-0 overflow-hidden">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={src}
+          alt={alt}
+          className="w-full h-full object-cover"
+          onError={() => setErr(true)}
+        />
+      </div>
+    )
+  }
+  return (
+    <div className="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200/60 flex-shrink-0 flex items-center justify-center">
+      <Package className="w-4 h-4 text-slate-400" />
+    </div>
+  )
+}
+
 /* ---------------- Top products list (paginated) ---------------- */
 
 const PRODUCTS_PER_PAGE = 5
@@ -1190,23 +1365,21 @@ function TopProductsList({ items, totalIngresos }: { items: TopItemRow[]; totalI
 
             {/* Item — col-span-5 */}
             <div className="col-span-5 flex items-center gap-3 min-w-0 pr-4">
-              <div className="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200/60 flex-shrink-0 overflow-hidden flex items-center justify-center">
-                {it.thumbnail ? (
-                  <Image
-                    src={it.thumbnail}
-                    alt={it.name}
-                    width={36}
-                    height={36}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <Package className="w-4 h-4 text-slate-400" />
-                )}
-              </div>
+              <ThumbnailImg src={it.thumbnail} alt={it.name} />
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-slate-900 truncate" title={it.name}>
-                  {it.name}
-                </p>
+                <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+                  <p className="text-sm font-medium text-slate-900 truncate" title={it.name}>
+                    {it.name}
+                  </p>
+                  {it.tags?.slice(0, 3).map((tag) => (
+                    <span
+                      key={tag}
+                      className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-medium leading-none flex-shrink-0"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
                 <p className="text-xs text-slate-500 truncate">
                   {[it.marca, it.categoria].filter(Boolean).join(" · ") || "—"}
                 </p>
