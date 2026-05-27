@@ -780,7 +780,7 @@ export default function NuevaVentaPage() {
 
                 {/* ── Step 2: Productos (edit-mode grid) + Resumen ── */}
                 {currentStep === 2 && (
-                  <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
+                  <div className="p-6 bg-white/60 backdrop-blur-md border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
                   <div className="flex gap-5 items-start w-full">
                   {/* Products card — 6/10 width */}
                   <div className="w-[60%] min-w-0 border border-slate-100 rounded-xl overflow-hidden">
@@ -960,11 +960,6 @@ export default function NuevaVentaPage() {
                     )}
 
                     <div className="px-6 pb-6">
-                      <StepNav
-                        onBack={() => setCurrentStep(1)}
-                        onNext={() => { setMaxUnlockedStep(s => Math.max(s, 3)); setCurrentStep(3) }}
-                        canAdvance={canAdvance}
-                      />
                     </div>
                   </div>
 
@@ -1135,12 +1130,27 @@ export default function NuevaVentaPage() {
                     )}
                   </div>
                   </div>
+                  <div className="flex items-center justify-end gap-2 mt-6 pt-6 border-t border-slate-100">
+                    <button
+                      onClick={() => setCurrentStep(1)}
+                      className="px-4 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+                    >
+                      Volver
+                    </button>
+                    <button
+                      onClick={() => { setMaxUnlockedStep(s => Math.max(s, 3)); setCurrentStep(3) }}
+                      disabled={!canAdvance}
+                      className="px-6 py-2.5 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Continuar
+                    </button>
+                  </div>
                   </div>
                 )}
 
                 {/* ── Step 3: Entrega + Cobro ── */}
                 {currentStep === 3 && (
-                  <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
+                  <div className="p-6 bg-white/60 backdrop-blur-md border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
                     <div className="grid grid-cols-2 gap-5 mb-6">
 
                       {/* Entrega card */}
