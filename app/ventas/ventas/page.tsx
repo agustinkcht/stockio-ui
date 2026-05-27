@@ -191,7 +191,7 @@ export default function VentasPage() {
 
           <main className="flex-1 flex flex-col bg-[rgba(250,251,253,1)] overflow-hidden">
             {/* Toolbar */}
-            <div className="max-w-[1280px] mx-auto w-full px-8 py-4 flex items-center justify-end">
+            <div className="max-w-[1240px] mx-auto w-full px-8 py-4 flex items-center justify-end">
               <button
                 type="button"
                 onClick={() => router.push("/ventas/ventas/nueva")}
@@ -204,7 +204,7 @@ export default function VentasPage() {
 
             {/* Items Grid */}
             <div className="flex-1 overflow-y-auto">
-              <div className="max-w-[1280px] mx-auto px-8 pb-8 mt-4">
+              <div className="max-w-[1240px] mx-auto px-8 pb-8 mt-4">
 
               {/* Status tabs */}
               <div className="flex items-center gap-1 mb-4">
