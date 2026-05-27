@@ -66,15 +66,19 @@ interface ItemMeta {
 function buildItemMetaMap(items: Item[]): Map<string, ItemMeta> {
   const map = new Map<string, ItemMeta>()
   for (const item of items) {
-    if (item.variants && item.variants.length > 0 && item.skuPrefix) {
-      for (const v of item.variants as ItemVariant[]) {
-        const sku = v.skuSuffix ? `${item.skuPrefix}-${v.skuSuffix}` : v.sku
+    if (item.variants && item.variants.length > 0) {
+      for (const v of item.variants as (ItemVariant & { foto?: string; sku?: string })[]) {
+        // Full SKU: prefer skuSuffix combined with prefix, fallback to v.sku
+        const sku = (item.skuPrefix && v.skuSuffix)
+          ? `${item.skuPrefix}-${v.skuSuffix}`
+          : v.sku
         if (!sku) continue
         map.set(sku, {
           marca: v.marca ?? item.marca,
           categoria: item.categoria,
-          thumbnail: item.imagenUrl,
-          tags: v.atributosPrincipales?.map((a) => String(a.valor)).filter(Boolean),
+          // Variant-level foto first, then parent imagenUrl
+          thumbnail: v.foto || item.imagenUrl,
+          tags: v.atributosPrincipales?.map((a) => String(a.value)).filter(Boolean),
         })
       }
     } else if (item.sku) {
@@ -82,7 +86,7 @@ function buildItemMetaMap(items: Item[]): Map<string, ItemMeta> {
         marca: item.marca,
         categoria: item.categoria,
         thumbnail: item.imagenUrl,
-        tags: item.atributosPrincipales?.map((a) => String(a.valor)).filter(Boolean),
+        tags: item.atributosPrincipales?.map((a) => String(a.value)).filter(Boolean),
       })
     }
   }
