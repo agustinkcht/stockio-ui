@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useRef } from "react"
 import {
   TrendingUp,
   TrendingDown,
@@ -975,6 +975,7 @@ function SalesHeatmap({
   totalVentas: number
 }) {
   const [tooltip, setTooltip] = useState<HmTooltip>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const { dayTotals, hourTotals, max, weeksInRange } = useMemo(() => {
     const dayTotals = Array(7).fill(0)
@@ -1040,7 +1041,7 @@ function SalesHeatmap({
       </div>
 
       <div className="mt-5 overflow-x-auto">
-        <div className="min-w-[640px] relative">
+        <div className="min-w-[640px] relative" ref={containerRef}>
           <div className="flex flex-col gap-2">
             {DAY_NAMES_ORDER.map((dIdx) => (
               <div key={dIdx} className="flex items-center gap-2">
@@ -1049,22 +1050,26 @@ function SalesHeatmap({
                   {Array.from({ length: 24 }, (_, h) => {
                     const v = heatmap[dIdx][h]
                     const c = colorFor(v)
-                    const concentrLabel =
-                      v === 0 ? "Sin ventas" : v / max < 0.34 ? "Concentración baja" : v / max < 0.67 ? "Concentración media" : "Concentración alta"
                     return (
                       <div
                         key={h}
-                        className="flex items-center justify-center h-7 relative"
+                        className={`flex items-center justify-center h-7 ${v > 0 ? "cursor-pointer" : ""}`}
                         onMouseEnter={(e) => {
-                          if (v === 0) return
-                          const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-                          const parent = (e.currentTarget as HTMLElement).closest(".relative")!.getBoundingClientRect()
-                          setTooltip({ dIdx, h, v, x: rect.left - parent.left + rect.width / 2, y: rect.top - parent.top })
+                          if (v === 0 || !containerRef.current) return
+                          const dotRect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+                          const parentRect = containerRef.current.getBoundingClientRect()
+                          setTooltip({
+                            dIdx,
+                            h,
+                            v,
+                            x: dotRect.left - parentRect.left + dotRect.width / 2,
+                            y: dotRect.top - parentRect.top,
+                          })
                         }}
                         onMouseLeave={() => setTooltip(null)}
                       >
                         <div
-                          className="rounded-full transition-transform hover:scale-125 cursor-default"
+                          className="rounded-full transition-transform hover:scale-125"
                           style={{ width: c.size, height: c.size, backgroundColor: c.fill }}
                         />
                       </div>
