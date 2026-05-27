@@ -15,8 +15,11 @@ interface ProductSearchProps {
 
 export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
   const [searchQuery, setSearchQuery] = useState("")
-  // null = root view, string = SKU of the parent we've "entered"
+  // null = root view, string = skuPrefix (or sku) of the parent we've "entered"
   const [activeParentSku, setActiveParentSku] = useState<string | null>(null)
+
+  // Returns the stable identifier for an item (skuPrefix for parents, sku for standalone)
+  const itemId = (item: Item) => item.skuPrefix || item.sku || ""
   const searchRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -117,7 +120,7 @@ export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
                   )}
                   onClick={() => {
                     if (hasVariants) {
-                      setActiveParentSku(item.sku || "")
+                      setActiveParentSku(itemId(item))
                     } else {
                       handleAddItem(item)
                     }
@@ -184,7 +187,7 @@ export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
   }
 
   // ── Parent / variants view ─────────────────────────────────────────────────
-  const parentItem = items.find((i) => i.sku === activeParentSku)
+  const parentItem = items.find((i) => (i.skuPrefix || i.sku) === activeParentSku)
   if (!parentItem) {
     setActiveParentSku(null)
     return null
