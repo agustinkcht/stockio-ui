@@ -219,14 +219,14 @@ export default function PuntoDeVentaPage() {
             </div>
           </div>
 
-          <main className="flex-1 grid grid-cols-2 bg-[rgba(250,251,253,1)] overflow-hidden">
-            {/* Left: Product Search */}
-            <div className="flex flex-col border-r border-border/30 overflow-hidden">
+          <main className="flex-1 grid grid-cols-10 bg-[rgba(250,251,253,1)] overflow-hidden">
+            {/* Left: Product Search — 6/10 */}
+            <div className="col-span-6 flex flex-col border-r border-border/30 overflow-hidden">
               <ProductSearch items={items} onAddToCart={addToCart} />
             </div>
 
-            {/* Right: Cart + Checkout */}
-            <div className="flex flex-col bg-card overflow-hidden">
+            {/* Right: Cart + Checkout — 4/10 */}
+            <div className="col-span-4 flex flex-col bg-card overflow-hidden">
               {/* Cart Header */}
               <div className="px-4 py-3.5 border-b border-border/50 flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">

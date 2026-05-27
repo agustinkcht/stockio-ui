@@ -100,7 +100,7 @@ export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
             </div>
           ) : (
             filteredItems.map((item) => {
-              const hasVariants = item.hasVariants && item.variants && item.variants.length > 0
+              const hasVariants = (item.hasVariants || item.tipo === "variantes" || item.tipo === "agrupador") && Array.isArray(item.variants) && item.variants.length > 0
               const stockStatus = getStockStatus(item.stock)
               const itemActive = hasVariants
                 ? item.variants!.some((v) => (v as any).isActive !== false)
