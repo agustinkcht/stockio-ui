@@ -183,10 +183,27 @@ function buildBuckets(range: PeriodRange): { keys: string[]; labels: string[]; g
   return { keys, labels, granularity }
 }
 
+/** Parse hora regardless of locale format — strips AM/PM suffixes */
+function parseHour(hora: string | undefined): number {
+  if (!hora) return 12
+  // Match the first 1-2 digits before the colon
+  const m = hora.match(/^(\d{1,2}):/)
+  if (!m) return 12
+  const h = parseInt(m[1], 10)
+  // Detect AM/PM in the string (es-AR locale appends " a. m." / " p. m.")
+  const lower = hora.toLowerCase()
+  const isAM = lower.includes("a.")
+  const isPM = lower.includes("p.")
+  if (!isAM && !isPM) return isNaN(h) ? 12 : h  // 24-h format
+  // 12-h → 24-h conversion
+  if (isAM) return h === 12 ? 0 : h
+  return h === 12 ? 12 : h + 12
+}
+
 function bucketKeyForVenta(v: Venta, granularity: Granularity): string {
   if (granularity === "hour") {
-    const hour = parseInt((v.hora || "12:00").split(":")[0], 10)
-    return `H${isNaN(hour) ? 12 : hour}`
+    const hour = parseHour(v.hora)
+    return `H${hour}`
   }
   if (granularity === "day") return v.fecha
   // month
@@ -230,10 +247,10 @@ function computeMetrics(
     const bk = bucketKeyForVenta(v, granularity)
     const i = idxByKey.get(bk)
 
-    const ventaDate = new Date(`${v.fecha}T${v.hora || "12:00"}:00`)
+    const ventaDate = new Date(`${v.fecha}T00:00:00`)
     const wd = ventaDate.getDay()
-    const hr = ventaDate.getHours()
-    if (!isNaN(wd) && !isNaN(hr)) heatmap[wd][hr] += 1
+    const hr = parseHour(v.hora)
+    if (!isNaN(wd)) heatmap[wd][hr] += 1
 
     let ventaGross = 0
     let ventaUnits = 0
@@ -481,8 +498,6 @@ export default function DashboardPage() {
                 </div>
               </div>
               </div>
-              {/* Gradient fade: blurred hero → content */}
-              <div className="h-6 bg-gradient-to-b from-slate-50/70 to-transparent pointer-events-none" />
             </div>
 
             <div className="max-w-6xl mx-auto px-8 py-8">
@@ -623,17 +638,17 @@ interface FactorDef {
   dash: string // SVG strokeDasharray
 }
 
-// Specific color+dash per factor as requested
+// All factors — chart line is always black; selection is single
 const FACTOR_DEFS: FactorDef[] = [
-  { key: "ventasBrutas",      label: "Ventas brutas",               format: formatARS,    color: "rgb(15 23 42)",    dash: "0" },     // negro sólido
-  { key: "cantidadVentas",    label: "Cantidad de ventas",          format: formatNumber, color: "rgb(16 185 129)",  dash: "0" },     // verde sólido
-  { key: "unidadesVendidas",  label: "Unidades vendidas",           format: formatNumber, color: "rgb(16 185 129)",  dash: "6 3" },   // verde dashed
-  { key: "unidadesDevueltas", label: "Unidades devueltas",          format: formatNumber, color: "rgb(239 68 68)",   dash: "6 3" },   // rojo dashed
-  { key: "valorDevoluciones", label: "Valor de unidades devueltas", format: formatARS,    color: "rgb(239 68 68)",   dash: "0" },     // rojo sólido
+  { key: "ventasBrutas",      label: "Ventas brutas",               format: formatARS,    color: "rgb(15 23 42)", dash: "0" },
+  { key: "cantidadVentas",    label: "Cantidad de ventas",          format: formatNumber, color: "rgb(15 23 42)", dash: "0" },
+  { key: "unidadesVendidas",  label: "Unidades vendidas",           format: formatNumber, color: "rgb(15 23 42)", dash: "0" },
+  { key: "unidadesDevueltas", label: "Unidades devueltas",          format: formatNumber, color: "rgb(15 23 42)", dash: "0" },
+  { key: "valorDevoluciones", label: "Valor de unidades devueltas", format: formatARS,    color: "rgb(15 23 42)", dash: "0" },
 ]
 
 function EstadisticasDelPeriodo({ metrics, rangeLabel }: { metrics: DashboardMetrics; rangeLabel: string }) {
-  const [active, setActive] = useState<Set<FactorKey>>(new Set(["ventasBrutas"]))
+  const [selected, setSelected] = useState<FactorKey>("ventasBrutas")
 
   const totals: Record<FactorKey, number> = {
     ventasBrutas: metrics.ingresos,
@@ -643,14 +658,7 @@ function EstadisticasDelPeriodo({ metrics, rangeLabel }: { metrics: DashboardMet
     valorDevoluciones: metrics.valorDevoluciones,
   }
 
-  const toggle = (k: FactorKey) => {
-    setActive((prev) => {
-      const next = new Set(prev)
-      if (next.has(k)) next.delete(k)
-      else next.add(k)
-      return next
-    })
-  }
+  const activeDef = FACTOR_DEFS.find((f) => f.key === selected)!
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200/60 overflow-hidden">
@@ -664,24 +672,23 @@ function EstadisticasDelPeriodo({ metrics, rangeLabel }: { metrics: DashboardMet
         <p className="text-[11px] text-slate-400 font-mono">{rangeLabel}</p>
       </div>
 
-      {/* Factor toggles */}
+      {/* Factor selectors */}
       <div className="px-6 py-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
         {FACTOR_DEFS.map((f) => {
-          const isActive = active.has(f.key)
+          const isSelected = f.key === selected
           return (
             <button
               key={f.key}
               type="button"
-              onClick={() => toggle(f.key)}
-              style={isActive ? { borderTopColor: f.color, borderTopWidth: "2.5px" } : {}}
-              className="group flex flex-col items-start gap-1.5 px-3 py-3 rounded-xl border border-slate-200/60 bg-white hover:border-slate-200 hover:bg-slate-50/50 transition-all cursor-pointer text-left"
+              onClick={() => setSelected(f.key)}
+              style={isSelected ? { borderColor: "rgb(15 23 42)" } : {}}
+              className={`flex flex-col items-start gap-1.5 px-3 py-3 rounded-xl border transition-all cursor-pointer text-left ${
+                isSelected ? "bg-slate-50" : "border-slate-200/60 bg-white hover:border-slate-300 hover:bg-slate-50/50"
+              }`}
             >
-              <div className="flex items-center gap-2 w-full">
-                <FactorMark color={f.color} dash={f.dash} active={isActive} />
-                <span className="text-[10px] uppercase tracking-wider font-semibold truncate text-slate-600">
-                  {f.label}
-                </span>
-              </div>
+              <span className="text-[10px] uppercase tracking-wider font-semibold truncate text-slate-500">
+                {f.label}
+              </span>
               <span className="text-base font-semibold tabular-nums text-slate-900">
                 {f.format(totals[f.key])}
               </span>
@@ -692,62 +699,49 @@ function EstadisticasDelPeriodo({ metrics, rangeLabel }: { metrics: DashboardMet
 
       {/* Chart */}
       <div className="border-t border-slate-100 px-6 py-5">
-        <MultiFactorChart labels={metrics.chartLabels} series={metrics.factors} active={active} />
+        <SingleFactorChart
+          labels={metrics.chartLabels}
+          values={metrics.factors[selected]}
+          factorDef={activeDef}
+        />
       </div>
     </div>
   )
 }
 
-function FactorMark({ color, dash }: { color: string; dash: string; active: boolean }) {
-  return (
-    <svg width="20" height="8" viewBox="0 0 20 8" className="flex-shrink-0">
-      <line
-        x1="0"
-        y1="4"
-        x2="20"
-        y2="4"
-        stroke={color}
-        strokeWidth="2"
-        strokeDasharray={dash}
-        strokeLinecap="round"
-      />
-    </svg>
-  )
+/* ---------------- Single-factor Line Chart with Y-axis ---------------- */
+
+function formatYTick(value: number, factorDef: FactorDef): string {
+  // For ARS values use compact notation; for counts use plain integers
+  if (factorDef.format === formatARS) {
+    if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`
+    if (value >= 1_000) return `$${(value / 1_000).toFixed(0)}k`
+    return `$${value.toFixed(0)}`
+  }
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`
+  if (value >= 1_000) return `${(value / 1_000).toFixed(0)}k`
+  return `${Math.round(value)}`
 }
 
-/* ---------------- Multi-factor Line Chart ---------------- */
-
-function MultiFactorChart({
+function SingleFactorChart({
   labels,
-  series,
-  active,
+  values,
+  factorDef,
 }: {
   labels: string[]
-  series: FactorBuckets
-  active: Set<FactorKey>
+  values: number[]
+  factorDef: FactorDef
 }) {
   const W = 800
   const H = 220
-  const PAD_L = 28
-  const PAD_R = 12
-  const PAD_T = 16
+  const PAD_L = 52   // room for Y-axis labels
+  const PAD_R = 16
+  const PAD_T = 12
   const PAD_B = 28
   const innerW = W - PAD_L - PAD_R
   const innerH = H - PAD_T - PAD_B
 
   const n = labels.length
-  const stepX = n > 1 ? innerW / (n - 1) : 0
-
-  // Active factors in declaration order
-  const activeFactors = FACTOR_DEFS.filter((f) => active.has(f.key))
-
-  if (activeFactors.length === 0) {
-    return (
-      <div className="h-56 flex items-center justify-center text-sm text-slate-400">
-        Seleccioná al menos un factor
-      </div>
-    )
-  }
 
   if (n === 0) {
     return (
@@ -757,65 +751,59 @@ function MultiFactorChart({
     )
   }
 
-  // Slight pixel offsets so identical lines don't fully overlap
-  const offsetFor = (i: number, total: number): number => {
-    if (total <= 1) return 0
-    const spacing = 2.5 // px between stacked lines
-    const start = -((total - 1) / 2) * spacing
-    return start + i * spacing
-  }
+  const stepX = n > 1 ? innerW / (n - 1) : 0
+  const maxVal = Math.max(1, ...values)
 
-  // Build path for each factor (each normalized to its own max so different magnitudes coexist)
-  const lines = activeFactors.map((f, fIdx) => {
-    const values = series[f.key]
-    const max = Math.max(1, ...values)
-    const dy = offsetFor(fIdx, activeFactors.length)
-    const points = values.map((val, i) => {
-      const x = PAD_L + i * stepX
-      const y = PAD_T + innerH - (val / max) * innerH + dy
-      return { x, y }
-    })
-    const d = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ")
-    return { factor: f, d, points, max }
-  })
+  // 4 evenly spaced Y ticks: 0, 33%, 66%, 100%
+  const yTicks = [0, 0.33, 0.66, 1].map((ratio) => ({
+    val: maxVal * ratio,
+    y: PAD_T + innerH - ratio * innerH,
+  }))
 
-  // X-axis label trimming
+  const points = values.map((val, i) => ({
+    x: PAD_L + i * stepX,
+    y: PAD_T + innerH - (val / maxVal) * innerH,
+  }))
+  const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ")
+
   const labelStep = Math.max(1, Math.ceil(n / 12))
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-56" preserveAspectRatio="none">
-      {/* Subtle baseline */}
-      <line
-        x1={PAD_L}
-        x2={W - PAD_R}
-        y1={PAD_T + innerH}
-        y2={PAD_T + innerH}
-        stroke="rgb(226 232 240)"
-        strokeWidth="1"
-      />
-      <line
-        x1={PAD_L}
-        x2={W - PAD_R}
-        y1={PAD_T + innerH / 2}
-        y2={PAD_T + innerH / 2}
-        stroke="rgb(241 245 249)"
-        strokeWidth="1"
-        strokeDasharray="2 4"
-      />
-
-      {/* Lines */}
-      {lines.map(({ factor, d }) => (
-        <path
-          key={factor.key}
-          d={d}
-          fill="none"
-          stroke={factor.color}
-          strokeWidth="2"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-          strokeDasharray={factor.dash}
-        />
+      {/* Y grid lines + labels */}
+      {yTicks.map(({ val, y }, idx) => (
+        <g key={idx}>
+          <line
+            x1={PAD_L}
+            x2={W - PAD_R}
+            y1={y}
+            y2={y}
+            stroke={idx === 0 ? "rgb(226 232 240)" : "rgb(241 245 249)"}
+            strokeWidth="1"
+            strokeDasharray={idx === 0 ? "0" : "2 4"}
+          />
+          <text
+            x={PAD_L - 6}
+            y={y + 3}
+            fontSize="8"
+            fill="rgb(148 163 184)"
+            textAnchor="end"
+            fontFamily="monospace"
+          >
+            {formatYTick(val, factorDef)}
+          </text>
+        </g>
       ))}
+
+      {/* Line */}
+      <path
+        d={pathD}
+        fill="none"
+        stroke="rgb(15 23 42)"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
 
       {/* X labels */}
       {labels.map((label, i) =>
@@ -975,6 +963,8 @@ function PeriodSelector({
 const DAY_NAMES_FULL = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"]
 const DAY_NAMES_ORDER = [1, 2, 3, 4, 5, 6, 0]
 
+type HmTooltip = { dIdx: number; h: number; v: number; x: number; y: number } | null
+
 function SalesHeatmap({
   heatmap,
   range,
@@ -984,6 +974,8 @@ function SalesHeatmap({
   range: PeriodRange
   totalVentas: number
 }) {
+  const [tooltip, setTooltip] = useState<HmTooltip>(null)
+
   const { dayTotals, hourTotals, max, weeksInRange } = useMemo(() => {
     const dayTotals = Array(7).fill(0)
     const hourTotals = Array(24).fill(0)
@@ -1048,21 +1040,32 @@ function SalesHeatmap({
       </div>
 
       <div className="mt-5 overflow-x-auto">
-        <div className="min-w-[640px]">
+        <div className="min-w-[640px] relative">
           <div className="flex flex-col gap-2">
             {DAY_NAMES_ORDER.map((dIdx) => (
               <div key={dIdx} className="flex items-center gap-2">
                 <div className="w-20 text-xs text-slate-500 flex-shrink-0">{DAY_NAMES_FULL[dIdx]}</div>
-                <div className="flex-1 grid grid-cols-24 items-center" style={{ gridTemplateColumns: "repeat(24, 1fr)" }}>
+                <div className="flex-1 grid items-center" style={{ gridTemplateColumns: "repeat(24, 1fr)" }}>
                   {Array.from({ length: 24 }, (_, h) => {
                     const v = heatmap[dIdx][h]
                     const c = colorFor(v)
+                    const concentrLabel =
+                      v === 0 ? "Sin ventas" : v / max < 0.34 ? "Concentración baja" : v / max < 0.67 ? "Concentración media" : "Concentración alta"
                     return (
-                      <div key={h} className="flex items-center justify-center h-7">
+                      <div
+                        key={h}
+                        className="flex items-center justify-center h-7 relative"
+                        onMouseEnter={(e) => {
+                          if (v === 0) return
+                          const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+                          const parent = (e.currentTarget as HTMLElement).closest(".relative")!.getBoundingClientRect()
+                          setTooltip({ dIdx, h, v, x: rect.left - parent.left + rect.width / 2, y: rect.top - parent.top })
+                        }}
+                        onMouseLeave={() => setTooltip(null)}
+                      >
                         <div
-                          className="rounded-full transition-transform hover:scale-110"
+                          className="rounded-full transition-transform hover:scale-125 cursor-default"
                           style={{ width: c.size, height: c.size, backgroundColor: c.fill }}
-                          title={`${DAY_NAMES_FULL[dIdx]}, ${String(h).padStart(2, "0")}:00 — ${v} venta${v === 1 ? "" : "s"}`}
                         />
                       </div>
                     )
@@ -1073,6 +1076,33 @@ function SalesHeatmap({
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Hover tooltip */}
+          {tooltip && (
+            <div
+              className="pointer-events-none absolute z-50 bg-white border border-slate-200 rounded-xl shadow-lg px-4 py-3 min-w-[180px] -translate-x-1/2 -translate-y-full -mt-2"
+              style={{ left: tooltip.x, top: tooltip.y - 6 }}
+            >
+              <p className="text-xs text-slate-400 mb-2">
+                {DAY_NAMES_FULL[tooltip.dIdx]}, {String(tooltip.h).padStart(2, "0")}:00
+              </p>
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: colorFor(tooltip.v).fill }}
+                  />
+                  <span className="text-sm text-slate-700">
+                    {tooltip.v / max < 0.34 ? "Concentración baja" : tooltip.v / max < 0.67 ? "Concentración media" : "Concentración alta"}
+                  </span>
+                </div>
+                <span className="text-sm font-semibold text-slate-900 tabular-nums whitespace-nowrap">
+                  {tooltip.v} {tooltip.v === 1 ? "venta" : "ventas"}
+                </span>
+              </div>
+            </div>
+          )}
           </div>
 
           <div className="flex items-center gap-2 mt-2">
@@ -1133,67 +1163,69 @@ function TopProductsList({ items, totalIngresos }: { items: TopItemRow[]; totalI
 
   return (
     <div>
-      <table className="w-full text-sm">
-        <thead className="bg-slate-50/60">
-          <tr className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
-            <th className="text-left px-6 py-3 w-14">#</th>
-            <th className="text-left px-3 py-3">Item</th>
-            <th className="text-right px-3 py-3 w-20">Ventas</th>
-            <th className="text-right px-3 py-3 w-28">Unidades</th>
-            <th className="text-right px-3 py-3 w-32">Ingresos</th>
-            <th className="text-right px-6 py-3 w-24">% Período</th>
-          </tr>
-        </thead>
-        <tbody>
-          {visible.map((it, idx) => {
-            const pct = totalIngresos > 0 ? (it.revenue / totalIngresos) * 100 : 0
-            return (
-              <tr key={it.sku} className="border-t border-slate-100 hover:bg-slate-50/60 transition-colors">
-                <td className="px-6 py-3 text-slate-400 font-mono tabular-nums">{startIdx + idx + 1}</td>
-                <td className="px-3 py-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200/60 flex-shrink-0 overflow-hidden flex items-center justify-center">
-                      {it.thumbnail ? (
-                        <Image
-                          src={it.thumbnail}
-                          alt={it.name}
-                          width={40}
-                          height={40}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <Package className="w-4 h-4 text-slate-400" />
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm font-medium text-slate-900 truncate" title={it.name}>
-                          {it.name}
-                        </p>
-                        {it.tags?.slice(0, 2).map((tag) => (
-                          <span
-                            key={tag}
-                            className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-medium"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                      <p className="text-xs text-slate-500 truncate">
-                        {[it.marca, it.categoria].filter(Boolean).join(" · ") || "—"}
-                      </p>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-3 py-3 text-right tabular-nums text-slate-700">{formatNumber(it.ventasCount)}</td>
-                <td className="px-3 py-3 text-right tabular-nums text-slate-700">{formatNumber(it.units)}</td>
-                <td className="px-3 py-3 text-right tabular-nums font-medium text-slate-900">{formatARS(it.revenue)}</td>
-                <td className="px-6 py-3 text-right tabular-nums text-slate-600 font-mono">{pct.toFixed(1)}%</td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
+      {/* Header row — grid cols 12: 1 #, 5 item, 2 unidades, 2 ingresos, 2 % */}
+      <div className="grid grid-cols-12 text-[10px] uppercase tracking-wider text-slate-400 font-semibold bg-slate-50/60 border-b border-slate-100 px-6 py-3">
+        <div className="col-span-1">#</div>
+        <div className="col-span-5">Item</div>
+        <div className="col-span-2 text-right">Unidades vendidas</div>
+        <div className="col-span-2 text-right">Ingresos</div>
+        <div className="col-span-2 text-right">% del período</div>
+      </div>
+
+      {visible.map((it, idx) => {
+        const pct = totalIngresos > 0 ? (it.revenue / totalIngresos) * 100 : 0
+        return (
+          <div
+            key={it.sku}
+            className="grid grid-cols-12 items-center border-t border-slate-100 hover:bg-slate-50/60 transition-colors px-6 py-3"
+          >
+            {/* # — col-span-1 */}
+            <div className="col-span-1 text-slate-400 font-mono tabular-nums text-sm">
+              {startIdx + idx + 1}
+            </div>
+
+            {/* Item — col-span-5 */}
+            <div className="col-span-5 flex items-center gap-3 min-w-0 pr-4">
+              <div className="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200/60 flex-shrink-0 overflow-hidden flex items-center justify-center">
+                {it.thumbnail ? (
+                  <Image
+                    src={it.thumbnail}
+                    alt={it.name}
+                    width={36}
+                    height={36}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <Package className="w-4 h-4 text-slate-400" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-slate-900 truncate" title={it.name}>
+                  {it.name}
+                </p>
+                <p className="text-xs text-slate-500 truncate">
+                  {[it.marca, it.categoria].filter(Boolean).join(" · ") || "—"}
+                </p>
+              </div>
+            </div>
+
+            {/* Unidades vendidas — col-span-2 */}
+            <div className="col-span-2 text-right tabular-nums text-sm text-slate-700">
+              {formatNumber(it.units)}
+            </div>
+
+            {/* Ingresos — col-span-2 */}
+            <div className="col-span-2 text-right tabular-nums text-sm font-medium text-slate-900">
+              {formatARS(it.revenue)}
+            </div>
+
+            {/* % Período — col-span-2 */}
+            <div className="col-span-2 text-right tabular-nums text-sm text-slate-600 font-mono">
+              {pct.toFixed(1)}%
+            </div>
+          </div>
+        )
+      })}
 
       {/* Pagination footer */}
       <div className="px-6 py-3 border-t border-slate-100 flex items-center justify-between bg-slate-50/40">
