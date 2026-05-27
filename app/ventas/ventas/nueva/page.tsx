@@ -1160,30 +1160,32 @@ export default function NuevaVentaPage() {
                           <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">Entrega</h3>
                         </div>
 
-                        {/* Unified badge-selector: the colored badge IS the selector */}
-                        <div className={`relative flex items-start gap-2 px-3 py-2.5 rounded-lg mb-4 cursor-pointer ${entregaMode === "en_el_acto" ? "bg-emerald-50 border border-emerald-100" : "bg-orange-50 border border-orange-100"}`}>
+                        {/* Selector */}
+                        <div className="relative mb-3">
+                          <select
+                            value={entregaMode}
+                            onChange={(e) => setEntregaMode(e.target.value as EntregaMode)}
+                            className="w-full appearance-none px-3 py-2.5 pr-8 border border-slate-200 rounded-lg bg-white text-sm font-medium focus:outline-none focus:border-slate-400 cursor-pointer text-slate-700"
+                          >
+                            <option value="en_el_acto">En el acto</option>
+                            <option value="diferida">Diferida</option>
+                          </select>
+                          <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                        </div>
+
+                        {/* Status badge */}
+                        <div className={`flex items-start gap-2 px-3 py-2.5 rounded-lg mb-4 ${entregaMode === "en_el_acto" ? "bg-emerald-50 border border-emerald-100" : "bg-orange-50 border border-orange-100"}`}>
                           <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${entregaMode === "en_el_acto" ? "bg-emerald-500" : "bg-orange-400"}`} />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between">
-                              <p className={`text-sm font-medium ${entregaMode === "en_el_acto" ? "text-emerald-700" : "text-orange-600"}`}>
-                                {entregaMode === "en_el_acto" ? "En el acto" : "Diferida"}
-                              </p>
-                              <ChevronDown className={`w-3.5 h-3.5 ${entregaMode === "en_el_acto" ? "text-emerald-400" : "text-orange-400"}`} />
-                            </div>
+                          <div>
+                            <p className={`text-sm font-medium ${entregaMode === "en_el_acto" ? "text-emerald-700" : "text-orange-600"}`}>
+                              {entregaMode === "en_el_acto" ? "En el acto" : "Diferida"}
+                            </p>
                             <p className={`text-xs mt-0.5 ${entregaMode === "en_el_acto" ? "text-emerald-600" : "text-orange-500"}`}>
                               {entregaMode === "en_el_acto"
                                 ? "Los productos se entregan en el momento de la venta."
                                 : "La venta queda pendiente de entrega de forma parcial o total."}
                             </p>
                           </div>
-                          <select
-                            value={entregaMode}
-                            onChange={(e) => setEntregaMode(e.target.value as EntregaMode)}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                          >
-                            <option value="en_el_acto">En el acto</option>
-                            <option value="diferida">Diferida</option>
-                          </select>
                         </div>
 
                         {/* Entrega inicial opcional — only when diferida */}
@@ -1257,30 +1259,32 @@ export default function NuevaVentaPage() {
                           <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">Cobro</h3>
                         </div>
 
-                        {/* Unified badge-selector */}
-                        <div className={`relative flex items-start gap-2 px-3 py-2.5 rounded-lg mb-4 cursor-pointer ${cobroMode === "en_el_acto" ? "bg-emerald-50 border border-emerald-100" : "bg-orange-50 border border-orange-100"}`}>
+                        {/* Selector */}
+                        <div className="relative mb-3">
+                          <select
+                            value={cobroMode}
+                            onChange={(e) => setCobroMode(e.target.value as CobroMode)}
+                            className="w-full appearance-none px-3 py-2.5 pr-8 border border-slate-200 rounded-lg bg-white text-sm font-medium focus:outline-none focus:border-slate-400 cursor-pointer text-slate-700"
+                          >
+                            <option value="en_el_acto">En el acto</option>
+                            <option value="diferida">Diferido</option>
+                          </select>
+                          <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                        </div>
+
+                        {/* Status badge */}
+                        <div className={`flex items-start gap-2 px-3 py-2.5 rounded-lg mb-4 ${cobroMode === "en_el_acto" ? "bg-emerald-50 border border-emerald-100" : "bg-orange-50 border border-orange-100"}`}>
                           <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${cobroMode === "en_el_acto" ? "bg-emerald-500" : "bg-orange-400"}`} />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between">
-                              <p className={`text-sm font-medium ${cobroMode === "en_el_acto" ? "text-emerald-700" : "text-orange-600"}`}>
-                                {cobroMode === "en_el_acto" ? "En el acto" : "Diferido"}
-                              </p>
-                              <ChevronDown className={`w-3.5 h-3.5 ${cobroMode === "en_el_acto" ? "text-emerald-400" : "text-orange-400"}`} />
-                            </div>
+                          <div>
+                            <p className={`text-sm font-medium ${cobroMode === "en_el_acto" ? "text-emerald-700" : "text-orange-600"}`}>
+                              {cobroMode === "en_el_acto" ? "En el acto" : "Diferido"}
+                            </p>
                             <p className={`text-xs mt-0.5 ${cobroMode === "en_el_acto" ? "text-emerald-600" : "text-orange-500"}`}>
                               {cobroMode === "en_el_acto"
                                 ? "El cobro se realiza en el momento de la venta."
                                 : "La venta queda pendiente de cobro de forma total o parcial."}
                             </p>
                           </div>
-                          <select
-                            value={cobroMode}
-                            onChange={(e) => setCobroMode(e.target.value as CobroMode)}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                          >
-                            <option value="en_el_acto">En el acto</option>
-                            <option value="diferida">Diferido</option>
-                          </select>
                         </div>
 
                         {cobroMode === "en_el_acto" && (
@@ -1439,8 +1443,8 @@ export default function NuevaVentaPage() {
                                 <div className="col-span-2 flex items-center justify-end pr-4">
                                   <span className="text-sm text-slate-500 tabular-nums">
                                     {aj.type === "unit" && hasDiscount
-                                      ? <>{it.quantity} u <span className="text-amber-500 text-xs">({aj.value} bonif.)</span></>
-                                      : <>{it.quantity} u</>
+                                      ? <>{it.quantity} unidades <span className="text-amber-500 text-xs">({aj.value} bonif.)</span></>
+                                      : <>{it.quantity} unidades</>
                                     }
                                   </span>
                                 </div>
@@ -1460,48 +1464,63 @@ export default function NuevaVentaPage() {
                           })}
 
                           {/* Subtotal productos */}
-                          <div className="border-t border-slate-200 py-3">
-                            <div className="flex items-center justify-end gap-2 px-4">
+                          <div className="grid grid-cols-10 border-t border-slate-200 py-3">
+                            <div className="col-span-4 flex items-center px-4">
                               <span className="text-sm font-semibold text-slate-500">Subtotal productos</span>
-                              <span className="text-sm font-semibold text-slate-700 tabular-nums w-28 text-right">${Math.round(total).toLocaleString("es-AR")}</span>
+                            </div>
+                            <div className="col-span-4" />
+                            <div className="col-span-2 flex items-center justify-end px-4">
+                              <span className="text-sm font-semibold text-slate-700 tabular-nums">${Math.round(total).toLocaleString("es-AR")}</span>
                             </div>
                           </div>
 
                           {/* Descuento global */}
                           {showGlobalDiscount && globalDiscount.value > 0 && (
-                            <div className="border-t border-slate-100 py-2.5">
-                              <div className="flex items-center justify-end gap-2 px-4">
+                            <div className="grid grid-cols-10 border-t border-slate-100 py-2.5">
+                              <div className="col-span-4 flex items-center px-4">
                                 <span className="text-sm text-slate-500">Descuento{globalDiscount.type === "percent" ? ` (${globalDiscount.value}%)` : ""}</span>
-                                <span className="text-sm text-red-500 tabular-nums w-28 text-right">−${Math.round(globalDiscountAmount).toLocaleString("es-AR")}</span>
+                              </div>
+                              <div className="col-span-4" />
+                              <div className="col-span-2 flex items-center justify-end px-4">
+                                <span className="text-sm text-red-500 tabular-nums">−${Math.round(globalDiscountAmount).toLocaleString("es-AR")}</span>
                               </div>
                             </div>
                           )}
 
                           {/* Envío */}
                           {showEnvio && envioAmount > 0 && (
-                            <div className="border-t border-slate-100 py-2.5">
-                              <div className="flex items-center justify-end gap-2 px-4">
+                            <div className="grid grid-cols-10 border-t border-slate-100 py-2.5">
+                              <div className="col-span-4 flex items-center px-4">
                                 <span className="text-sm text-slate-500">Envío</span>
-                                <span className="text-sm text-slate-600 tabular-nums w-28 text-right">+${Math.round(envioAmount).toLocaleString("es-AR")}</span>
+                              </div>
+                              <div className="col-span-4" />
+                              <div className="col-span-2 flex items-center justify-end px-4">
+                                <span className="text-sm text-slate-600 tabular-nums">+${Math.round(envioAmount).toLocaleString("es-AR")}</span>
                               </div>
                             </div>
                           )}
 
                           {/* Custom charges */}
                           {customCharges.filter(c => c.value > 0).map(charge => (
-                            <div key={charge.id} className="border-t border-slate-100 py-2.5">
-                              <div className="flex items-center justify-end gap-2 px-4">
+                            <div key={charge.id} className="grid grid-cols-10 border-t border-slate-100 py-2.5">
+                              <div className="col-span-4 flex items-center px-4">
                                 <span className="text-sm text-slate-500">{charge.label}</span>
-                                <span className="text-sm text-slate-600 tabular-nums w-28 text-right">+${Math.round(charge.value).toLocaleString("es-AR")}</span>
+                              </div>
+                              <div className="col-span-4" />
+                              <div className="col-span-2 flex items-center justify-end px-4">
+                                <span className="text-sm text-slate-600 tabular-nums">+${Math.round(charge.value).toLocaleString("es-AR")}</span>
                               </div>
                             </div>
                           ))}
 
-                          {/* Total */}
-                          <div className="border-t border-slate-200 py-3.5">
-                            <div className="flex items-center justify-end gap-2 px-4">
+                          {/* Total — strong border above */}
+                          <div className="grid grid-cols-10 border-t-2 border-slate-200 py-3.5">
+                            <div className="col-span-4 flex items-center px-4">
                               <span className="text-base font-bold text-slate-900">Total</span>
-                              <span className="text-base font-bold text-slate-900 tabular-nums w-28 text-right">${Math.round(grandTotal).toLocaleString("es-AR")}</span>
+                            </div>
+                            <div className="col-span-4" />
+                            <div className="col-span-2 flex items-center justify-end px-4">
+                              <span className="text-base font-bold text-slate-900 tabular-nums">${Math.round(grandTotal).toLocaleString("es-AR")}</span>
                             </div>
                           </div>
                         </div>
