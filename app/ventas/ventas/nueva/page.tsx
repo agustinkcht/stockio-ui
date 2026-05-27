@@ -635,105 +635,135 @@ export default function NuevaVentaPage() {
                       Selecciona el cliente para esta venta.
                     </p>
 
-                    <div className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2 mb-3">
-                      <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <input
-                        value={clienteSearch}
-                        onChange={(e) => setClienteSearch(e.target.value)}
-                        placeholder="Buscar cliente..."
-                        className="flex-1 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none"
-                      />
-                    </div>
+                    {/* ── Selected state: compact card, shrinks to content ── */}
+                    {cliente !== null ? (
+                      <div className="inline-flex items-center gap-3 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl max-w-full">
+                        <div className="w-9 h-9 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
+                          <span className="text-xs font-semibold text-white">
+                            {cliente.tipo === "consumidor_final"
+                              ? "CF"
+                              : clienteNombre.slice(0, 2).toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider mb-0.5">Cliente</p>
+                          <p className="text-sm font-semibold text-slate-900 truncate">{clienteNombre}</p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setCliente(null)
+                            setClienteSearch("")
+                            setMaxUnlockedStep(1)
+                          }}
+                          className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors shrink-0 ml-1"
+                          title="Cambiar cliente"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      /* ── Search + dropdown ── */
+                      <>
+                        <div className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2 mb-3">
+                          <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <input
+                            value={clienteSearch}
+                            onChange={(e) => setClienteSearch(e.target.value)}
+                            placeholder="Buscar cliente..."
+                            className="flex-1 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none"
+                            autoFocus
+                          />
+                          {clienteSearch && (
+                            <button onClick={() => setClienteSearch("")} className="text-slate-400 hover:text-slate-600">
+                              <X className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
 
                         <div className="border border-slate-200 rounded-lg overflow-hidden max-h-[240px] overflow-y-auto">
+                          {/* CF + Nuevo Cliente — ONLY when search is empty */}
+                          {clienteSearch.trim() === "" && (
+                            <>
+                              <button
+                                onClick={() => {
+                                  setCliente({ tipo: "consumidor_final" })
+                                  setMaxUnlockedStep(s => Math.max(s, 2))
+                                  setCurrentStep(2)
+                                }}
+                                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left"
+                              >
+                                <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
+                                  <span className="text-xs font-semibold text-slate-600">CF</span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-slate-900">Consumidor Final</p>
+                                  <p className="text-xs text-slate-400">Sin cuenta registrada</p>
+                                </div>
+                              </button>
+                              <button
+                                onClick={() => setShowNuevoClienteModal(true)}
+                                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left"
+                              >
+                                <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
+                                  <Plus className="w-3.5 h-3.5 text-white" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-slate-900">Nuevo Cliente</p>
+                                  <p className="text-xs text-slate-400">Crear cuenta nueva</p>
+                                </div>
+                              </button>
+                              <div className="border-t-2 border-slate-200" />
+                            </>
+                          )}
 
-                      {/* Consumidor Final + Nuevo Cliente — always on top, hidden only when search has real results */}
-                      {(clienteSearch.trim() === "" || filteredClientes.length === 0) && (
-                        <>
-                          {/* Consumidor Final */}
-                          <button
-                            onClick={() => {
-                              setCliente({ tipo: "consumidor_final" })
-                              setMaxUnlockedStep(s => Math.max(s, 2))
-                              setCurrentStep(2)
-                            }}
-                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left"
-                          >
-                            <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
-                              <span className="text-xs font-semibold text-slate-600">CF</span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-slate-900">Consumidor Final</p>
-                              <p className="text-xs text-slate-400">Sin cuenta registrada</p>
-                            </div>
-                          </button>
+                          {/* Real clients */}
+                          <div className="divide-y divide-slate-50">
+                            {filteredClientes.map((c) => {
+                              const name =
+                                c.tipo === "empresa"
+                                  ? c.razonSocial ?? ""
+                                  : `${c.nombre} ${c.apellido}`.trim()
+                              const initials = name.slice(0, 2).toUpperCase()
+                              return (
+                                <button
+                                  key={c.id}
+                                  onClick={() => {
+                                    setCliente({ tipo: "cuenta", id: c.id, nombre: name })
+                                    setMaxUnlockedStep(s => Math.max(s, 2))
+                                    setCurrentStep(2)
+                                  }}
+                                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left"
+                                >
+                                  <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
+                                    <span className="text-xs font-semibold text-white">{initials}</span>
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-slate-900 truncate">{name}</p>
+                                    <p className="text-xs text-slate-400">
+                                      {c.tipo === "empresa" ? "Empresa" : "Particular"} · {c.condicionIva}
+                                    </p>
+                                  </div>
+                                </button>
+                              )
+                            })}
 
-                          {/* Nuevo Cliente */}
-                          <button
-                            onClick={() => setShowNuevoClienteModal(true)}
-                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left"
-                          >
-                            <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
-                              <Plus className="w-3.5 h-3.5 text-white" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-slate-900">Nuevo Cliente</p>
-                              <p className="text-xs text-slate-400">Crear cuenta nueva</p>
-                            </div>
-                          </button>
-
-                          {/* Thick separator */}
-                          <div className="border-t-2 border-slate-200" />
-                        </>
-                      )}
-
-                      {/* Real clients */}
-                      <div className="divide-y divide-slate-50">
-                        {filteredClientes.map((c) => {
-                          const name =
-                            c.tipo === "empresa"
-                              ? c.razonSocial ?? ""
-                              : `${c.nombre} ${c.apellido}`.trim()
-                          const initials = name.slice(0, 2).toUpperCase()
-                          const isSelected = cliente?.tipo === "cuenta" && (cliente as any).id === c.id
-                          return (
-                            <button
-                              key={c.id}
-                              onClick={() => {
-                                setCliente({ tipo: "cuenta", id: c.id, nombre: name })
-                                setMaxUnlockedStep(s => Math.max(s, 2))
-                                setCurrentStep(2)
-                              }}
-                              className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left ${isSelected ? "bg-blue-50/50" : ""}`}
-                            >
-                              <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
-                                <span className="text-xs font-semibold text-white">{initials}</span>
+                            {/* No results — ONLY sin resultados + nuevo cliente link, nothing else */}
+                            {clienteSearch.trim() !== "" && filteredClientes.length === 0 && (
+                              <div className="py-6 flex flex-col items-center gap-2">
+                                <p className="text-sm text-slate-400">Sin resultados</p>
+                                <button
+                                  onClick={() => setShowNuevoClienteModal(true)}
+                                  className="flex items-center gap-1 text-sm text-blue-500 hover:text-blue-600 transition-colors"
+                                >
+                                  <Plus className="w-3.5 h-3.5" />
+                                  Nuevo Cliente
+                                </button>
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-slate-900 truncate">{name}</p>
-                                <p className="text-xs text-slate-400">
-                                  {c.tipo === "empresa" ? "Empresa" : "Particular"} · {c.condicionIva}
-                                </p>
-                              </div>
-                              {isSelected && <Check className="w-4 h-4 text-emerald-500 shrink-0" />}
-                            </button>
-                          )
-                        })}
-                        {/* No results state */}
-                        {clienteSearch.trim() !== "" && filteredClientes.length === 0 && (
-                          <div className="py-6 flex flex-col items-center gap-2">
-                            <p className="text-sm text-slate-400">Sin resultados</p>
-                            <button
-                              onClick={() => setShowNuevoClienteModal(true)}
-                              className="flex items-center gap-1 text-sm text-blue-500 hover:text-blue-600 transition-colors"
-                            >
-                              <Plus className="w-3.5 h-3.5" />
-                              Nuevo Cliente
-                            </button>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
 
