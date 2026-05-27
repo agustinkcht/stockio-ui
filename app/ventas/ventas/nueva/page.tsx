@@ -1183,7 +1183,7 @@ export default function NuevaVentaPage() {
                             <p className={`text-xs mt-0.5 ${entregaMode === "en_el_acto" ? "text-emerald-600" : "text-orange-500"}`}>
                               {entregaMode === "en_el_acto"
                                 ? "Los productos se entregan en el momento de la venta."
-                                : "La entrega se coordina para una fecha posterior a la venta."}
+                                : "La venta queda pendiente de entrega de forma parcial o total."}
                             </p>
                           </div>
                         </div>
@@ -1191,8 +1191,8 @@ export default function NuevaVentaPage() {
                         {/* Entrega inicial opcional — only when diferida */}
                         {entregaMode === "diferida" && (
                           <div>
-                            <p className="text-sm font-medium text-slate-500 mb-2">
-                              Entrega inicial <span className="text-slate-400 font-normal">(opcional)</span>
+                            <p className="text-sm font-medium text-slate-700 mb-2">
+                              Entrega inicial <span className="text-slate-400 font-normal text-xs">(opcional)</span>
                             </p>
 
                             {/* Aggregate all entries into one row per "session" */}
@@ -1281,8 +1281,8 @@ export default function NuevaVentaPage() {
                             </p>
                             <p className={`text-xs mt-0.5 ${cobroMode === "en_el_acto" ? "text-emerald-600" : "text-orange-500"}`}>
                               {cobroMode === "en_el_acto"
-                                ? "El pago se recibe en el momento de la venta."
-                                : "El cobro se realiza en una fecha posterior a la venta."}
+                                ? "El cobro se realiza en el momento de la venta."
+                                : "La venta queda pendiente de cobro de forma total o parcial."}
                             </p>
                           </div>
                         </div>
@@ -1318,8 +1318,8 @@ export default function NuevaVentaPage() {
                         {/* Cobro inicial opcional — only when diferida */}
                         {cobroMode === "diferida" && (
                           <div>
-                            <p className="text-sm font-medium text-slate-500 mb-2">
-                              Cobro inicial <span className="text-slate-400 font-normal">(opcional)</span>
+                            <p className="text-sm font-medium text-slate-700 mb-2">
+                              Cobro inicial <span className="text-slate-400 font-normal text-xs">(opcional)</span>
                             </p>
 
                             {cobroInicialEntries.map((entry, i) => {
@@ -1391,7 +1391,7 @@ export default function NuevaVentaPage() {
 
                 {/* ── Step 4: Confirmación ── */}
                 {currentStep === 4 && (
-                  <div className="p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
+                  <div className="p-6 border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.08)]">
                     <div className="flex items-center gap-2 mb-1">
                       <ClipboardCheck className="w-4 h-4 text-slate-500" />
                       <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">Confirmación</h3>
@@ -1401,16 +1401,20 @@ export default function NuevaVentaPage() {
                     </p>
 
                     <div className="space-y-4">
-                      <SummaryRow label="Cliente" value={clienteNombre} />
+                      {/* Cliente — label + value inline on the left */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Cliente</span>
+                        <span className="text-sm text-slate-700">{clienteNombre}</span>
+                      </div>
 
-                      {/* Resumen */}
+                      {/* Resumen — no tab header */}
                       <div>
-                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Resumen</p>
                         <div className="border border-slate-100 rounded-xl overflow-hidden">
-                          {/* Column headers */}
-                          <div className="grid grid-cols-[1fr_auto_auto] h-8 bg-slate-50 border-b border-slate-100 text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+                          {/* Column headers: Item | Cantidad | Precio | Subtotal */}
+                          <div className="grid grid-cols-[1fr_auto_auto_auto] h-8 bg-slate-50 border-b border-slate-100 text-[10px] font-medium text-slate-400 uppercase tracking-wider">
                             <div className="flex items-center px-4">Item</div>
-                            <div className="flex items-center justify-end pr-4">Cantidad × Precio</div>
+                            <div className="flex items-center justify-end pr-4">Cantidad</div>
+                            <div className="flex items-center justify-end pr-4">Precio</div>
                             <div className="flex items-center justify-end px-4">Subtotal</div>
                           </div>
 
@@ -1434,27 +1438,31 @@ export default function NuevaVentaPage() {
                               lineTotal = it.unitPrice * it.quantity
                             }
                             return (
-                              <div key={it.sku} className="grid grid-cols-[1fr_auto_auto] border-b border-slate-100 last:border-b-0 py-2.5">
+                              <div key={it.sku} className="grid grid-cols-[1fr_auto_auto_auto] border-b border-slate-100 last:border-b-0 py-2.5">
                                 {/* Item name + tags */}
                                 <div className="flex items-center gap-1.5 px-4 min-w-0">
                                   <p className="text-xs font-medium text-slate-700 truncate">{display.name}</p>
-                                  {display.tags.length > 0 && display.tags.map((tag, ti) => (
+                                  {display.tags.map((tag, ti) => (
                                     <span key={ti} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 whitespace-nowrap">{tag}</span>
                                   ))}
                                 </div>
-                                {/* Cantidad × precio */}
-                                <div className="flex flex-col items-end justify-center pr-4">
-                                  {hasDiscount && aj.type !== "unit" && (
-                                    <span className="text-[10px] text-slate-300 line-through tabular-nums">{it.quantity} × ${Math.round(it.unitPrice).toLocaleString("es-AR")}</span>
-                                  )}
+                                {/* Cantidad */}
+                                <div className="flex items-center justify-end pr-4">
                                   <span className="text-xs text-slate-500 tabular-nums">
                                     {aj.type === "unit" && hasDiscount
-                                      ? <>{it.quantity} × ${Math.round(it.unitPrice).toLocaleString("es-AR")} <span className="text-amber-500">({aj.value} bonif.)</span></>
-                                      : <>{it.quantity} × ${Math.round(adjustedUnit).toLocaleString("es-AR")}</>
+                                      ? <>{it.quantity} u <span className="text-amber-500 text-[10px]">({aj.value} bonif.)</span></>
+                                      : <>{it.quantity} u</>
                                     }
                                   </span>
                                 </div>
-                                {/* Line subtotal */}
+                                {/* Precio c/u — with dashed original + discount if applies */}
+                                <div className="flex flex-col items-end justify-center pr-4">
+                                  {hasDiscount && aj.type !== "unit" && (
+                                    <span className="text-[10px] text-slate-300 line-through tabular-nums">${Math.round(it.unitPrice).toLocaleString("es-AR")} c/u</span>
+                                  )}
+                                  <span className="text-xs text-slate-500 tabular-nums">${Math.round(adjustedUnit).toLocaleString("es-AR")} c/u</span>
+                                </div>
+                                {/* Subtotal */}
                                 <div className="flex items-center justify-end px-4">
                                   <span className="text-xs font-semibold text-slate-700 tabular-nums">${Math.round(lineTotal).toLocaleString("es-AR")}</span>
                                 </div>
@@ -1462,25 +1470,19 @@ export default function NuevaVentaPage() {
                             )
                           })}
 
-                          {/* Subtotal row */}
-                          <div className="grid grid-cols-[1fr_auto_auto] border-t border-slate-200 py-2.5">
-                            <div className="px-4" />
-                            <div className="flex items-center justify-end pr-4">
-                              <span className="text-xs font-semibold text-slate-600">Subtotal</span>
-                            </div>
-                            <div className="flex items-center justify-end px-4">
+                          {/* Subtotal productos */}
+                          <div className="border-t border-slate-200 py-2.5">
+                            <div className="flex items-center justify-end gap-2 px-4">
+                              <span className="text-xs font-semibold text-slate-500">Subtotal productos</span>
                               <span className="text-xs font-semibold text-slate-700 tabular-nums">${Math.round(total).toLocaleString("es-AR")}</span>
                             </div>
                           </div>
 
                           {/* Descuento global */}
                           {showGlobalDiscount && globalDiscount.value > 0 && (
-                            <div className="grid grid-cols-[1fr_auto_auto] border-t border-slate-100 py-2">
-                              <div className="px-4">
-                                <span className="text-xs text-slate-500">Descuento global{globalDiscount.type === "percent" ? ` (${globalDiscount.value}%)` : ""}</span>
-                              </div>
-                              <div className="pr-4" />
-                              <div className="flex items-center justify-end px-4">
+                            <div className="border-t border-slate-100 py-2">
+                              <div className="flex items-center justify-end gap-2 px-4">
+                                <span className="text-xs text-slate-500">Descuento{globalDiscount.type === "percent" ? ` (${globalDiscount.value}%)` : ""}</span>
                                 <span className="text-xs text-red-500 tabular-nums">−${Math.round(globalDiscountAmount).toLocaleString("es-AR")}</span>
                               </div>
                             </div>
@@ -1488,12 +1490,9 @@ export default function NuevaVentaPage() {
 
                           {/* Envío */}
                           {showEnvio && envioAmount > 0 && (
-                            <div className="grid grid-cols-[1fr_auto_auto] border-t border-slate-100 py-2">
-                              <div className="px-4">
+                            <div className="border-t border-slate-100 py-2">
+                              <div className="flex items-center justify-end gap-2 px-4">
                                 <span className="text-xs text-slate-500">Envío</span>
-                              </div>
-                              <div className="pr-4" />
-                              <div className="flex items-center justify-end px-4">
                                 <span className="text-xs text-slate-600 tabular-nums">+${Math.round(envioAmount).toLocaleString("es-AR")}</span>
                               </div>
                             </div>
@@ -1501,24 +1500,18 @@ export default function NuevaVentaPage() {
 
                           {/* Custom charges */}
                           {customCharges.filter(c => c.value > 0).map(charge => (
-                            <div key={charge.id} className="grid grid-cols-[1fr_auto_auto] border-t border-slate-100 py-2">
-                              <div className="px-4">
+                            <div key={charge.id} className="border-t border-slate-100 py-2">
+                              <div className="flex items-center justify-end gap-2 px-4">
                                 <span className="text-xs text-slate-500">{charge.label}</span>
-                              </div>
-                              <div className="pr-4" />
-                              <div className="flex items-center justify-end px-4">
                                 <span className="text-xs text-slate-600 tabular-nums">+${Math.round(charge.value).toLocaleString("es-AR")}</span>
                               </div>
                             </div>
                           ))}
 
                           {/* Total */}
-                          <div className="grid grid-cols-[1fr_auto_auto] border-t border-slate-200 py-3">
-                            <div className="px-4">
+                          <div className="border-t border-slate-200 py-3">
+                            <div className="flex items-center justify-end gap-2 px-4">
                               <span className="text-sm font-bold text-slate-900">Total</span>
-                            </div>
-                            <div className="pr-4" />
-                            <div className="flex items-center justify-end px-4">
                               <span className="text-sm font-bold text-slate-900 tabular-nums">${Math.round(grandTotal).toLocaleString("es-AR")}</span>
                             </div>
                           </div>
