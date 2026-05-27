@@ -748,7 +748,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
           <main className="flex-1 flex flex-col bg-[rgba(250,251,253,1)] overflow-hidden">
             {/* Items Grid + Totals side by side */}
-            <div className="flex-1 overflow-y-auto px-6 pb-6 pt-4">
+            <div className="flex-1 overflow-y-auto px-8 pb-8 pt-4">
+              <div className="max-w-[1240px] mx-auto">
               <div className="grid grid-cols-3 gap-4 items-start">
 
               {/* Left col-span-2 */}
@@ -1585,6 +1586,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
               )}
 
               </div>{/* end grid grid-cols-3 */}
+              </div>{/* end max-w-[1240px] */}
             </div>
           </main>
         </div>
@@ -2162,7 +2164,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
         )
       })()}
 
-      {/* ── Agregar Productos Modal ── */}
+      {/* ���─ Agregar Productos Modal ── */}
       {showAgregarProductos && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeAgregarProductos} />
