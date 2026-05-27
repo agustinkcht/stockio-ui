@@ -756,7 +756,6 @@ function EstadisticasDelPeriodo({ metrics, rangeLabel }: { metrics: DashboardMet
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {!configOpen && <p className="text-[11px] text-slate-400 font-mono">{rangeLabel}</p>}
           {configOpen ? (
             <div className="flex items-center gap-2">
               <button
@@ -790,11 +789,11 @@ function EstadisticasDelPeriodo({ metrics, rangeLabel }: { metrics: DashboardMet
       {configOpen ? (
         /* ---- Inline factor picker ---- */
         <div className="px-6 py-5">
-          {atMax && (
-            <p className="text-xs text-slate-400 mb-4">
-              Tenés 4 factores seleccionados. Deseleccioná uno para poder elegir otro.
-            </p>
-          )}
+          <p className="text-xs text-slate-400 mb-4">
+            {atMax
+              ? "Tenés 4 factores seleccionados. Deseleccioná uno para poder elegir otro."
+              : "Podés elegir hasta 4 factores."}
+          </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {ALL_FACTOR_DEFS.map((f) => {
               const isOn = draftFactors.includes(f.key)
