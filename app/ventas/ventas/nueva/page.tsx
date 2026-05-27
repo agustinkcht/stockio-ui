@@ -22,6 +22,7 @@ import {
   Filter,
   ArrowUpDown,
   Pencil,
+  ShoppingCart,
 } from "lucide-react"
 
 import { Sidebar } from "@/components/layout/sidebar"
@@ -967,21 +968,25 @@ export default function NuevaVentaPage() {
 
                   {/* Resumen card — right side */}
                   <div className="w-[40%] shrink-0 sticky top-0 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] p-5">
-                    <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Resumen</h3>
+                    {/* Title — same style as other step labels */}
+                    <div className="flex items-center gap-2 mb-4">
+                      <ShoppingCart className="w-4 h-4 text-slate-500" />
+                      <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">Resumen</h3>
+                    </div>
 
                     {selectedItems.length === 0 ? (
-                      <p className="text-xs text-slate-400 text-center py-4">Sin productos aún</p>
+                      <p className="text-sm text-slate-400 text-center py-4">Sin productos aún</p>
                     ) : (
                       <>
-                        {/* Productos — collapsible subtotal row */}
+                        {/* Productos — collapsible subtotal row, full-bleed via negative margin */}
                         <button
                           type="button"
                           onClick={() => setShowProductosBreakdown(v => !v)}
-                          className="w-full flex items-center py-2.5 border-b border-slate-100 text-left hover:bg-slate-50/50 -mx-5 px-5 transition-colors"
+                          className="flex items-center py-3 border-b border-slate-100 text-left hover:bg-slate-50/50 transition-colors -mx-5 px-5 w-[calc(100%+2.5rem)]"
                         >
-                          <span className="text-xs text-slate-500 flex-1">Productos</span>
-                          <span className="text-xs text-slate-700 tabular-nums mr-1.5">${Math.round(total).toLocaleString("es-AR")}</span>
-                          <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform duration-200 ${showProductosBreakdown ? "rotate-180" : ""}`} />
+                          <span className="text-sm text-slate-500 flex-1">Productos</span>
+                          <span className="text-sm text-slate-700 tabular-nums mr-1.5">${Math.round(total).toLocaleString("es-AR")}</span>
+                          <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${showProductosBreakdown ? "rotate-180" : ""}`} />
                         </button>
 
                         {showProductosBreakdown && (
@@ -989,14 +994,12 @@ export default function NuevaVentaPage() {
                             {selectedItems.map((it, idx) => {
                               const aj = editAjustes[idx] ?? { value: 0, type: "percent" as const }
                               const display = getVentaItemDisplay(it)
-                              let adjUnit = it.unitPrice
                               let lineTotal = 0
                               if (aj.value > 0) {
                                 if (aj.type === "unit") {
-                                  adjUnit = it.unitPrice
                                   lineTotal = Math.max(0, it.quantity - Math.min(aj.value, it.quantity)) * it.unitPrice
                                 } else {
-                                  adjUnit = aj.type === "percent"
+                                  const adjUnit = aj.type === "percent"
                                     ? it.unitPrice * (1 - aj.value / 100)
                                     : Math.max(0, it.unitPrice - aj.value)
                                   lineTotal = it.quantity * adjUnit
@@ -1005,14 +1008,16 @@ export default function NuevaVentaPage() {
                                 lineTotal = it.unitPrice * it.quantity
                               }
                               return (
-                                <div key={it.sku} className="flex justify-between items-start gap-2 py-2 -mx-5 px-5 border-b border-slate-50 last:border-0">
+                                <div key={it.sku} className="flex justify-between items-center gap-2 py-2.5 -mx-5 px-5 border-b border-slate-50 last:border-0">
                                   <div className="min-w-0 flex-1">
-                                    <p className="text-xs text-slate-700 leading-tight">{display.name}</p>
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <p className="text-sm text-slate-600 font-light leading-tight">{display.name}</p>
+                                      {display.tags.map((tag, ti) => (
+                                        <span key={ti} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 whitespace-nowrap">{tag}</span>
+                                      ))}
+                                    </div>
                                   </div>
-                                  <div className="text-right shrink-0">
-                                    <p className="text-[11px] text-slate-400 tabular-nums">{it.quantity} × ${Math.round(adjUnit).toLocaleString("es-AR")}</p>
-                                    <p className="text-xs font-medium text-slate-700 tabular-nums">${Math.round(lineTotal).toLocaleString("es-AR")}</p>
-                                  </div>
+                                  <p className="text-sm font-light text-slate-700 tabular-nums shrink-0">${Math.round(lineTotal).toLocaleString("es-AR")}</p>
                                 </div>
                               )
                             })}
@@ -1020,30 +1025,30 @@ export default function NuevaVentaPage() {
                         )}
 
                         {/* Adjustments */}
-                        <div className="space-y-1.5 mt-1">
+                        <div className="space-y-2 mt-1.5">
 
                           {/* Global discount row */}
                           {showGlobalDiscount && (
                             <div className="flex justify-between items-center">
-                              <div className="flex items-center gap-1">
+                              <div className="flex items-center gap-1.5">
                                 <button
                                   onClick={() => { setShowGlobalDiscount(false); setGlobalDiscount({ value: 0, type: "percent" }) }}
                                   className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors"
                                 >
                                   <X className="w-3 h-3" />
                                 </button>
-                                <span className="text-xs text-slate-500">Descuento global</span>
+                                <span className="text-sm font-light text-slate-500">Descuento global</span>
                               </div>
                               <div className="flex items-center gap-1.5">
                                 <input
                                   type="number"
                                   value={globalDiscount.value || ""}
                                   onChange={(e) => setGlobalDiscount(prev => ({ ...prev, value: parseFloat(e.target.value) || 0 }))}
-                                  className="w-12 text-right text-xs px-1.5 py-0.5 border border-slate-200 rounded focus:outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                  className="w-14 text-right text-sm px-1.5 py-0.5 border border-slate-200 rounded focus:outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 />
                                 <div className="flex border border-slate-200 rounded overflow-hidden">
-                                  <button onClick={() => setGlobalDiscount(prev => ({ ...prev, type: "cash" }))} className={`px-1.5 py-0.5 text-[10px] cursor-pointer ${globalDiscount.type === "cash" ? "bg-slate-900 text-white" : "text-slate-400 hover:bg-slate-50"}`}>$</button>
-                                  <button onClick={() => setGlobalDiscount(prev => ({ ...prev, type: "percent" }))} className={`px-1.5 py-0.5 text-[10px] cursor-pointer ${globalDiscount.type === "percent" ? "bg-slate-900 text-white" : "text-slate-400 hover:bg-slate-50"}`}>%</button>
+                                  <button onClick={() => setGlobalDiscount(prev => ({ ...prev, type: "cash" }))} className={`px-2 py-1 text-xs cursor-pointer ${globalDiscount.type === "cash" ? "bg-slate-900 text-white" : "text-slate-400 hover:bg-slate-50"}`}>$</button>
+                                  <button onClick={() => setGlobalDiscount(prev => ({ ...prev, type: "percent" }))} className={`px-2 py-1 text-xs cursor-pointer ${globalDiscount.type === "percent" ? "bg-slate-900 text-white" : "text-slate-400 hover:bg-slate-50"}`}>%</button>
                                 </div>
                               </div>
                             </div>
@@ -1052,19 +1057,19 @@ export default function NuevaVentaPage() {
                           {/* Envío row */}
                           {showEnvio && (
                             <div className="flex justify-between items-center">
-                              <div className="flex items-center gap-1">
+                              <div className="flex items-center gap-1.5">
                                 <button onClick={() => { setShowEnvio(false); setEnvioAmount(0) }} className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors">
                                   <X className="w-3 h-3" />
                                 </button>
-                                <span className="text-xs text-slate-500">Envío</span>
+                                <span className="text-sm font-light text-slate-500">Envío</span>
                               </div>
                               <div className="flex items-center gap-1">
-                                <span className="text-xs text-slate-400">$</span>
+                                <span className="text-sm text-slate-400">$</span>
                                 <input
                                   type="number"
                                   value={envioAmount || ""}
                                   onChange={(e) => setEnvioAmount(parseFloat(e.target.value) || 0)}
-                                  className="w-16 text-right text-xs px-1.5 py-0.5 border border-slate-200 rounded focus:outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                  className="w-16 text-right text-sm px-1.5 py-0.5 border border-slate-200 rounded focus:outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 />
                               </div>
                             </div>
@@ -1073,7 +1078,7 @@ export default function NuevaVentaPage() {
                           {/* Custom charges */}
                           {customCharges.map((charge, cidx) => (
                             <div key={charge.id} className="flex justify-between items-center">
-                              <div className="flex items-center gap-1">
+                              <div className="flex items-center gap-1.5">
                                 <button onClick={() => setCustomCharges(prev => prev.filter((_, i) => i !== cidx))} className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors">
                                   <X className="w-3 h-3" />
                                 </button>
@@ -1081,16 +1086,16 @@ export default function NuevaVentaPage() {
                                   type="text"
                                   value={charge.label}
                                   onChange={(e) => setCustomCharges(prev => prev.map((c, i) => i === cidx ? { ...c, label: e.target.value } : c))}
-                                  className="text-xs text-slate-500 bg-transparent border-none outline-none w-20"
+                                  className="text-sm font-light text-slate-500 bg-transparent border-none outline-none w-24"
                                 />
                               </div>
                               <div className="flex items-center gap-1">
-                                <span className="text-xs text-slate-400">$</span>
+                                <span className="text-sm text-slate-400">$</span>
                                 <input
                                   type="number"
                                   value={charge.value || ""}
                                   onChange={(e) => setCustomCharges(prev => prev.map((c, i) => i === cidx ? { ...c, value: parseFloat(e.target.value) || 0 } : c))}
-                                  className="w-16 text-right text-xs px-1.5 py-0.5 border border-slate-200 rounded focus:outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                  className="w-16 text-right text-sm px-1.5 py-0.5 border border-slate-200 rounded focus:outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 />
                               </div>
                             </div>
@@ -1099,20 +1104,20 @@ export default function NuevaVentaPage() {
 
                         {/* Agregar tags */}
                         {(!showGlobalDiscount || !showEnvio || customCharges.length === 0) && (
-                          <div className="flex items-center gap-1.5 flex-wrap pt-3 mt-1">
-                            <span className="text-[10px] text-slate-400">Agregar:</span>
+                          <div className="flex items-center gap-2 flex-wrap pt-3 mt-1">
+                            <span className="text-xs text-slate-400">Agregar:</span>
                             {!showGlobalDiscount && (
-                              <button onClick={() => setShowGlobalDiscount(true)} className="text-[10px] px-2 py-0.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors cursor-pointer">
+                              <button onClick={() => setShowGlobalDiscount(true)} className="text-xs px-3 py-1 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors cursor-pointer">
                                 Descuento
                               </button>
                             )}
                             {!showEnvio && (
-                              <button onClick={() => setShowEnvio(true)} className="text-[10px] px-2 py-0.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors cursor-pointer">
+                              <button onClick={() => setShowEnvio(true)} className="text-xs px-3 py-1 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors cursor-pointer">
                                 Envío
                               </button>
                             )}
                             {customCharges.length === 0 && (
-                              <button onClick={() => setCustomCharges([{ id: Date.now(), label: "Otro", value: 0 }])} className="text-[10px] px-2 py-0.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors cursor-pointer">
+                              <button onClick={() => setCustomCharges([{ id: Date.now(), label: "Otro", value: 0 }])} className="text-xs px-3 py-1 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors cursor-pointer">
                                 Otro
                               </button>
                             )}
