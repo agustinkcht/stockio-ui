@@ -21,6 +21,7 @@ import {
   ArrowRightLeft,
   Filter,
   ArrowUpDown,
+  Pencil,
 } from "lucide-react"
 
 import { Sidebar } from "@/components/layout/sidebar"
@@ -104,6 +105,13 @@ export default function NuevaVentaPage() {
   const [selectedItems, setSelectedItems] = useState<VentaItem[]>([])
   const [editAjustes, setEditAjustes] = useState<Record<number, { value: number; type: "percent" | "cash" | "unit" }>>({})
   const [showAgregarProductos, setShowAgregarProductos] = useState(false)
+  // Inline price editing (idx → temp string value)
+  const [editingPriceIdx, setEditingPriceIdx] = useState<number | null>(null)
+  const [tempPriceVal, setTempPriceVal] = useState("")
+  // Discount modal
+  const [discountModalIdx, setDiscountModalIdx] = useState<number | null>(null)
+  const [modalAjuste, setModalAjuste] = useState<{ value: number; type: "percent" | "cash" | "unit" }>({ value: 0, type: "percent" })
+  const [modalPrice, setModalPrice] = useState<string>("")
 
   // Modal state (exact copy from venta detail)
   const [modalSearch, setModalSearch] = useState("")
@@ -778,13 +786,12 @@ export default function NuevaVentaPage() {
                       <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">Productos</h3>
                     </div>
 
-                    {/* Column headers (always visible once items exist) */}
+                    {/* Column headers */}
                     {selectedItems.length > 0 && (
-                      <div className="grid grid-cols-[2fr_0.8fr_1fr_1.4fr_auto] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider border-b border-slate-100 bg-slate-50/80">
+                      <div className="grid grid-cols-[2fr_0.8fr_1fr_auto] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider border-b border-slate-100 bg-slate-50/80">
                         <div className="flex items-center px-4">Item</div>
                         <div className="flex items-center justify-center">Cantidad</div>
-                        <div className="flex items-center justify-center">Precio Unit.</div>
-                        <div className="flex items-center justify-center">Promoción</div>
+                        <div className="flex items-center justify-center">Precio</div>
                         <div className="w-10" />
                       </div>
                     )}
@@ -807,53 +814,48 @@ export default function NuevaVentaPage() {
                     ) : (
                       selectedItems.map((item, idx) => {
                         const aj = editAjustes[idx] ?? { value: 0, type: "percent" as const }
-                        let finalTotal = 0
-                        if (aj.value > 0) {
-                          if (aj.type === "unit") {
-                            finalTotal = Math.max(0, item.quantity - Math.min(aj.value, item.quantity)) * item.unitPrice
-                          } else {
-                            const adjUnit = aj.type === "percent"
-                              ? item.unitPrice * (1 - aj.value / 100)
-                              : Math.max(0, item.unitPrice - aj.value)
-                            finalTotal = item.quantity * adjUnit
-                          }
-                        } else {
-                          finalTotal = item.unitPrice * item.quantity
+                        const hasDiscount = aj.value > 0
+                        const display = getVentaItemDisplay(item)
+                        const isEditingPrice = editingPriceIdx === idx
+
+                        // Derived adjusted unit price for display
+                        let adjUnitPrice = item.unitPrice
+                        if (hasDiscount) {
+                          if (aj.type === "percent") adjUnitPrice = item.unitPrice * (1 - aj.value / 100)
+                          else if (aj.type === "cash") adjUnitPrice = Math.max(0, item.unitPrice - aj.value)
+                          // "unit" type: adjUnitPrice stays same, units are free
                         }
+
                         return (
-                          <div key={item.sku} className="grid grid-cols-[2fr_0.8fr_1fr_1.4fr_auto] min-h-[72px] border-b border-slate-100 last:border-b-0">
+                          <div key={item.sku} className="grid grid-cols-[2fr_0.8fr_1fr_auto] min-h-[72px] border-b border-slate-100 last:border-b-0">
                             {/* Item Info */}
-                            {(() => {
-                              const display = getVentaItemDisplay(item)
-                              return (
-                                <div className="flex items-center gap-3 px-4 py-3">
-                                  <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-                                    <Image
-                                      src={getCategoryImage(display.categoria || "") || "/placeholder.svg"}
-                                      alt={display.name}
-                                      width={32}
-                                      height={32}
-                                      className="object-cover"
-                                    />
-                                  </div>
-                                  <div className="min-w-0">
-                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                      <p className="text-sm font-medium text-gray-900 break-words leading-tight">{display.name}</p>
-                                      {display.tags.length > 0 && display.tags.map((tag, ti) => (
-                                        <span key={ti} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-600 whitespace-nowrap">{tag}</span>
-                                      ))}
-                                    </div>
-                                    {(display.marca || display.categoria) && (
-                                      <div className="flex items-center gap-1 mt-0.5">
-                                        {display.marca && <span className="text-xs text-slate-400 leading-tight">{display.marca}</span>}
-                                        {display.marca && display.categoria && <span className="text-xs text-slate-300">·</span>}
-                                        {display.categoria && <span className="text-xs text-slate-400 leading-tight">{display.categoria}</span>}
-                                      </div>
-                                    )}
-                                  </div>
+                            <div className="flex items-center gap-3 px-4 py-3">
+                              <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                <Image
+                                  src={getCategoryImage(display.categoria || "") || "/placeholder.svg"}
+                                  alt={display.name}
+                                  width={32}
+                                  height={32}
+                                  className="object-cover"
+                                />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <p className="text-sm font-medium text-gray-900 break-words leading-tight">{display.name}</p>
+                                  {display.tags.length > 0 && display.tags.map((tag, ti) => (
+                                    <span key={ti} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-600 whitespace-nowrap">{tag}</span>
+                                  ))}
                                 </div>
-                              )
-                            })()}
+                                {(display.marca || display.categoria) && (
+                                  <div className="flex items-center gap-1 mt-0.5">
+                                    {display.marca && <span className="text-xs text-slate-400 leading-tight">{display.marca}</span>}
+                                    {display.marca && display.categoria && <span className="text-xs text-slate-300">·</span>}
+                                    {display.categoria && <span className="text-xs text-slate-400 leading-tight">{display.categoria}</span>}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
                             {/* Cantidad */}
                             <div className="flex items-center justify-center">
                               <div className="flex items-center border border-slate-200 rounded-full px-1 py-0.5 bg-white">
@@ -877,55 +879,102 @@ export default function NuevaVentaPage() {
                                 </button>
                               </div>
                             </div>
-                            {/* Precio Unit. */}
-                            <div className="flex items-center justify-center gap-1">
-                              <span className="text-slate-400 text-sm">$</span>
-                              <input
-                                type="number"
-                                value={item.unitPrice || ""}
-                                onChange={(e) => setSelectedItems(prev => prev.map((it, i) => i === idx ? { ...it, unitPrice: parseFloat(e.target.value) || 0 } : it))}
-                                className="w-20 text-center text-sm py-1.5 border border-slate-200 rounded focus:outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                              />
-                            </div>
-                            {/* Promocion */}
-                            <div className="flex flex-col items-center justify-center gap-1 py-2">
-                              <div className="flex items-center gap-1.5">
-                                <input
-                                  type="number"
-                                  placeholder="0"
-                                  min="0"
-                                  value={aj.value || ""}
-                                  onChange={(e) => {
-                                    let val = parseFloat(e.target.value) || 0
-                                    if (aj.type === "unit") val = Math.min(val, item.quantity)
-                                    setEditAjustes(prev => ({ ...prev, [idx]: { ...aj, value: val } }))
-                                  }}
-                                  className="w-12 text-center text-xs py-1 border border-slate-200 rounded focus:outline-none focus:border-slate-400 placeholder:text-slate-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                />
-                                <div className="flex border border-slate-200 rounded overflow-hidden">
-                                  {(["percent", "cash", "unit"] as const).map((t) => (
-                                    <button
-                                      key={t}
-                                      onClick={() => setEditAjustes(prev => ({ ...prev, [idx]: { ...aj, type: t } }))}
-                                      className={`px-1.5 py-1 text-xs cursor-pointer ${aj.type === t ? "bg-slate-900 text-white" : "text-slate-400 hover:bg-slate-50"}`}
-                                    >
-                                      {t === "percent" ? "%" : t === "cash" ? "$" : <Package className="w-3 h-3" />}
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                              {aj.value > 0 && (aj.type === "percent" || aj.type === "cash") && (() => {
-                                const adjUnit = aj.type === "percent"
-                                  ? item.unitPrice * (1 - aj.value / 100)
-                                  : Math.max(0, item.unitPrice - aj.value)
-                                return (
-                                  <div className="flex flex-col items-center mt-0.5">
-                                    <span className="text-[10px] text-slate-400 leading-none">precio final</span>
-                                    <span className="text-xs font-semibold text-slate-800 tabular-nums leading-tight">${Math.round(adjUnit).toLocaleString("es-AR")}</span>
+
+                            {/* Precio */}
+                            <div className="flex flex-col items-center justify-center gap-0.5 py-2 px-1">
+                              {isEditingPrice ? (
+                                /* ── Edit mode ── */
+                                <div className="flex items-center gap-1">
+                                  <div className="flex items-center border border-slate-200 rounded px-2 py-1 bg-white">
+                                    <span className="text-slate-400 text-sm mr-1">$</span>
+                                    <input
+                                      type="number"
+                                      value={tempPriceVal}
+                                      onChange={(e) => setTempPriceVal(e.target.value)}
+                                      autoFocus
+                                      className="w-20 text-sm focus:outline-none bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    />
                                   </div>
-                                )
-                              })()}
+                                  {/* Paired confirm/cancel buttons */}
+                                  <div className="flex rounded overflow-hidden border border-slate-800">
+                                    <button
+                                      onClick={() => {
+                                        const v = parseFloat(tempPriceVal)
+                                        if (!isNaN(v) && v >= 0) {
+                                          setSelectedItems(prev => prev.map((it, i) => i === idx ? { ...it, unitPrice: v } : it))
+                                        }
+                                        setEditingPriceIdx(null)
+                                      }}
+                                      className="w-6 h-6 flex items-center justify-center bg-slate-900 hover:bg-slate-700 text-white transition-colors"
+                                    >
+                                      <Check className="w-3 h-3" />
+                                    </button>
+                                    <button
+                                      onClick={() => setEditingPriceIdx(null)}
+                                      className="w-6 h-6 flex items-center justify-center bg-slate-900 hover:bg-slate-700 text-white transition-colors border-l border-slate-700"
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                /* ── Display mode ── */
+                                <>
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="flex flex-col items-end">
+                                      {/* If $ or % discount: original struck-through + badge */}
+                                      {hasDiscount && (aj.type === "percent" || aj.type === "cash") && (
+                                        <div className="flex items-center gap-1">
+                                          <span className="text-[11px] text-slate-400 line-through tabular-nums">
+                                            ${Math.round(item.unitPrice).toLocaleString("es-AR")}
+                                          </span>
+                                          <span className="text-[10px] text-red-500 font-medium">
+                                            {aj.type === "percent" ? `-${aj.value}%` : `-$${aj.value.toLocaleString("es-AR")}`}
+                                          </span>
+                                        </div>
+                                      )}
+                                      <span className="text-sm font-medium text-slate-900 tabular-nums">
+                                        ${Math.round(hasDiscount && (aj.type === "percent" || aj.type === "cash") ? adjUnitPrice : item.unitPrice).toLocaleString("es-AR")}
+                                      </span>
+                                      {/* If unit discount */}
+                                      {hasDiscount && aj.type === "unit" && (
+                                        <span className="text-[10px] text-emerald-600">{aj.value} unidades bonificadas</span>
+                                      )}
+                                    </div>
+                                    <button
+                                      onClick={() => {
+                                        if (hasDiscount) {
+                                          // Open discount modal directly
+                                          setModalAjuste({ ...aj })
+                                          setModalPrice(String(item.unitPrice))
+                                          setDiscountModalIdx(idx)
+                                        } else {
+                                          setTempPriceVal(String(item.unitPrice))
+                                          setEditingPriceIdx(idx)
+                                        }
+                                      }}
+                                      className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                                    >
+                                      <Pencil className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                  {/* + agregar descuento — only when no discount */}
+                                  {!hasDiscount && (
+                                    <button
+                                      onClick={() => {
+                                        setModalAjuste({ value: 0, type: "percent" })
+                                        setModalPrice(String(item.unitPrice))
+                                        setDiscountModalIdx(idx)
+                                      }}
+                                      className="text-[11px] text-blue-500 hover:text-blue-600 transition-colors"
+                                    >
+                                      + agregar descuento
+                                    </button>
+                                  )}
+                                </>
+                              )}
                             </div>
+
                             {/* Delete */}
                             <div className="flex items-center justify-center w-10">
                               <button
@@ -1533,6 +1582,135 @@ export default function NuevaVentaPage() {
           </main>
         </div>
       </div>
+
+      {/* ── Descuento Modal ── */}
+      {discountModalIdx !== null && (() => {
+        const item = selectedItems[discountModalIdx]
+        if (!item) return null
+        const display = getVentaItemDisplay(item)
+        const parsedPrice = parseFloat(modalPrice) || item.unitPrice
+        let finalPrice = parsedPrice
+        if (modalAjuste.value > 0) {
+          if (modalAjuste.type === "percent") finalPrice = parsedPrice * (1 - modalAjuste.value / 100)
+          else if (modalAjuste.type === "cash") finalPrice = Math.max(0, parsedPrice - modalAjuste.value)
+          else if (modalAjuste.type === "unit") finalPrice = parsedPrice // unit doesn't change price per unit
+        }
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+              {/* Item info header */}
+              <div className="flex items-center gap-3 px-6 pt-6 pb-4 border-b border-slate-100">
+                <div className="w-10 h-10 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0 relative">
+                  <Image
+                    src={getCategoryImage(display.categoria || "") || "/placeholder.svg"}
+                    alt={display.name}
+                    width={40}
+                    height={40}
+                    className="object-cover w-full h-full"
+                  />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <p className="text-sm font-semibold text-slate-900">{display.name}</p>
+                    {display.tags.map((tag, i) => (
+                      <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">{tag}</span>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    {display.marca && <span className="text-xs text-slate-400">{display.marca}</span>}
+                    {display.marca && display.categoria && <span className="text-xs text-slate-300">·</span>}
+                    {display.categoria && <span className="text-xs text-slate-400">{display.categoria}</span>}
+                  </div>
+                </div>
+              </div>
+
+              <div className="px-6 py-5 space-y-5">
+                {/* Precio editable */}
+                <div>
+                  <label className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Precio</label>
+                  <div className="flex items-center border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 focus-within:border-slate-400 transition-colors">
+                    <span className="text-slate-400 text-sm mr-1.5">$</span>
+                    <input
+                      type="number"
+                      value={modalPrice}
+                      onChange={(e) => setModalPrice(e.target.value)}
+                      className="flex-1 text-sm bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Descuento */}
+                <div>
+                  <label className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Descuento</label>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 focus-within:border-slate-400 transition-colors flex-1">
+                      <input
+                        type="number"
+                        placeholder="0"
+                        min="0"
+                        value={modalAjuste.value || ""}
+                        onChange={(e) => {
+                          let val = parseFloat(e.target.value) || 0
+                          if (modalAjuste.type === "unit") val = Math.min(val, item.quantity)
+                          setModalAjuste(prev => ({ ...prev, value: val }))
+                        }}
+                        className="w-full text-sm bg-transparent focus:outline-none placeholder:text-slate-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      />
+                    </div>
+                    <div className="flex border border-slate-200 rounded-lg overflow-hidden">
+                      {(["percent", "cash", "unit"] as const).map((t) => (
+                        <button
+                          key={t}
+                          onClick={() => setModalAjuste(prev => ({ ...prev, type: t }))}
+                          className={`px-3 py-2 text-xs font-medium cursor-pointer transition-colors ${modalAjuste.type === t ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"}`}
+                        >
+                          {t === "percent" ? "% porcentaje" : t === "cash" ? "$ dinero" : "unidades"}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Precio final */}
+                <div className="flex items-center justify-between py-3 px-4 bg-slate-50 rounded-xl">
+                  <span className="text-sm font-medium text-slate-600">Precio final</span>
+                  <div className="text-right">
+                    <span className="text-base font-bold text-slate-900 tabular-nums">
+                      ${Math.round(finalPrice).toLocaleString("es-AR")}
+                    </span>
+                    {modalAjuste.type === "unit" && modalAjuste.value > 0 && (
+                      <p className="text-[11px] text-emerald-600">{modalAjuste.value} unidades bonificadas</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-end gap-2 px-6 pb-6">
+                <button
+                  onClick={() => setDiscountModalIdx(null)}
+                  className="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    const newPrice = parseFloat(modalPrice)
+                    if (!isNaN(newPrice) && newPrice >= 0) {
+                      setSelectedItems(prev => prev.map((it, i) => i === discountModalIdx ? { ...it, unitPrice: newPrice } : it))
+                    }
+                    setEditAjustes(prev => ({ ...prev, [discountModalIdx]: { ...modalAjuste } }))
+                    setDiscountModalIdx(null)
+                  }}
+                  className="px-5 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
+                >
+                  Aceptar
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* ── Nuevo Cliente Modal ── */}
       <NuevoClienteModal
