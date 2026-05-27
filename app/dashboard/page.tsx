@@ -479,7 +479,7 @@ export default function DashboardPage() {
             {/* Sticky hero */}
             <div className="sticky top-0 z-30">
               <div className="bg-slate-50/80 backdrop-blur-md">
-              <div className="max-w-6xl mx-auto px-8 py-8">
+              <div className="max-w-6xl mx-auto px-12 py-12">
                 <div className="flex items-start justify-between gap-6">
                   <div className="flex items-center gap-5 min-w-0">
                     {miNegocio.fotoUrl && (
@@ -534,7 +534,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="max-w-6xl mx-auto px-8 py-8">
+            <div className="max-w-6xl mx-auto px-12 py-12">
               {/* Top KPI row */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
                 <WidgetCard
