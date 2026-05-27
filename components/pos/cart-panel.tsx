@@ -22,24 +22,19 @@ export function CartPanel({ cart, onUpdateQuantity, onRemove, onUpdatePrice, onU
   const [tempDiscount, setTempDiscount] = useState("")
   const [tempDiscountType, setTempDiscountType] = useState<"percentage" | "fixed">("percentage")
 
-  const getFullTitle = (item: CartItem): string => {
+  const getTags = (item: CartItem): string[] => {
     const baseItem = item.variant || item.item
-    const isParent = item.item.tipo === "agrupador"
+    if (!baseItem.atributosPrincipales || !Array.isArray(baseItem.atributosPrincipales)) return []
+    return baseItem.atributosPrincipales
+      .map((attr: any) => attr.value || attr.valor)
+      .filter((v: any) => v && String(v).trim() !== "")
+      .map(String)
+  }
 
-    // For parent items (agrupador), just return the name
-    if (isParent && !item.variant) {
-      return item.item.name
-    }
-
-    // For standalone or child items, concatenate with attributes
-    const attributes = baseItem.atributosPrincipales
-      ? Object.values(baseItem.atributosPrincipales)
-          .filter((attr) => attr && typeof attr === "object" && "valor" in attr)
-          .map((attr) => attr.valor)
-          .filter(Boolean)
-      : []
-
-    return attributes.length > 0 ? `${baseItem.name} ${attributes.join(" ")}` : baseItem.name
+  const getDisplayName = (item: CartItem): string => {
+    // For variants, show parent name; tags shown separately
+    if (item.variant) return item.item.name
+    return item.item.name
   }
 
   const handleStartEditPrice = (item: CartItem) => {
@@ -105,7 +100,8 @@ export function CartPanel({ cart, onUpdateQuantity, onRemove, onUpdatePrice, onU
       <div className="p-2 space-y-1">
         {cart.map((item) => {
           const stockWarning = getStockWarning(item)
-          const displayName = getFullTitle(item)
+          const displayName = getDisplayName(item)
+          const tags = getTags(item)
           const displaySku = item.variant?.sku || item.item.sku
           const hasDiscount = item.discount > 0
           const hasPriceOverride = item.priceOverride !== undefined
@@ -121,8 +117,18 @@ export function CartPanel({ cart, onUpdateQuantity, onRemove, onUpdatePrice, onU
               {/* Header Row */}
               <div className="flex items-start gap-2 mb-2">
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate">{displayName}</p>
-                  <p className="text-xs text-muted-foreground">{displaySku}</p>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <p className="font-medium text-sm truncate">{displayName}</p>
+                    {tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-medium leading-none flex-shrink-0"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">{displaySku}</p>
                 </div>
                 <Button
                   variant="ghost"

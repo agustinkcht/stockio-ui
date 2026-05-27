@@ -1,11 +1,10 @@
 "use client"
 
 import { useState, useMemo, useRef, useEffect } from "react"
-import { Search, Package, Plus, ChevronDown } from "lucide-react"
+import { Search, Package, Plus, ChevronRight, ChevronLeft } from "lucide-react"
 import Image from "next/image"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import type { Item, ItemVariant } from "@/lib/types"
 
@@ -16,37 +15,37 @@ interface ProductSearchProps {
 
 export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
   const [searchQuery, setSearchQuery] = useState("")
-  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
+  // null = root view, string = SKU of the parent we've "entered"
+  const [activeParentSku, setActiveParentSku] = useState<string | null>(null)
   const searchRef = useRef<HTMLInputElement>(null)
 
-  // Keyboard shortcut to focus search
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault()
         searchRef.current?.focus()
       }
+      if (e.key === "Escape" && activeParentSku) {
+        setActiveParentSku(null)
+      }
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [])
+  }, [activeParentSku])
 
   const filteredItems = useMemo(() => {
     if (!searchQuery.trim()) return items
-
     const query = searchQuery.toLowerCase()
     return items.filter((item) => {
-      const nameMatch = item.name?.toLowerCase().includes(query)
-      const skuMatch = item.sku?.toLowerCase().includes(query)
-      const marcaMatch = item.marca?.toLowerCase().includes(query)
-      const categoriaMatch = item.categoria?.toLowerCase().includes(query)
-
-      // Also search in variants
-      const variantMatch = item.variants?.some(
-        (v) => v.name?.toLowerCase().includes(query) || v.sku?.toLowerCase().includes(query),
+      return (
+        item.name?.toLowerCase().includes(query) ||
+        item.sku?.toLowerCase().includes(query) ||
+        item.marca?.toLowerCase().includes(query) ||
+        item.categoria?.toLowerCase().includes(query) ||
+        item.variants?.some(
+          (v) => v.name?.toLowerCase().includes(query) || v.sku?.toLowerCase().includes(query),
+        )
       )
-
-      return nameMatch || skuMatch || marcaMatch || categoriaMatch || variantMatch
     })
   }, [items, searchQuery])
 
@@ -58,236 +57,233 @@ export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
     return { status: "disponible", label: `${disponible} disp.`, color: "text-emerald-500 bg-emerald-500/10" }
   }
 
-  const getFullTitle = (item: Item | ItemVariant): string => {
-    let fullTitle = item.name
-
-    if (item.atributosPrincipales && Array.isArray(item.atributosPrincipales)) {
-      const attributeValues = item.atributosPrincipales
-        .map((attr) => attr.value)
-        .filter((value) => value && value.trim() !== "")
-        .join(" ")
-
-      if (attributeValues) {
-        fullTitle = `${fullTitle} ${attributeValues}`
-      }
-    }
-
-    return fullTitle
-  }
-
-  const toggleExpanded = (sku: string) => {
-    setExpandedItems((prev) => {
-      const next = new Set(prev)
-      if (next.has(sku)) {
-        next.delete(sku)
-      } else {
-        next.add(sku)
-      }
-      return next
-    })
+  const getTags = (item: Item | ItemVariant): string[] => {
+    if (!item.atributosPrincipales || !Array.isArray(item.atributosPrincipales)) return []
+    return item.atributosPrincipales
+      .map((attr: any) => attr.value || attr.valor)
+      .filter((v: any) => v && String(v).trim() !== "")
+      .map(String)
   }
 
   const handleAddItem = (item: Item, variant?: ItemVariant) => {
-    // Check if item/variant is active
     const isActive = variant ? (variant as any).isActive !== false : item.isActive !== false
     if (!isActive) return
-    
     const stock = variant?.stock || item.stock
     const disponible = Number.parseInt(stock?.disponible || "0")
     if (disponible === 0) return
     onAddToCart(item, variant)
   }
 
-  // Check if a parent item has at least one active child
-  const isParentActive = (item: Item): boolean => {
-    if (item.variants && item.variants.length > 0) {
-      return item.variants.some((v) => (v as any).isActive !== false)
-    }
-    return item.isActive !== false
-  }
-
-  return (
-    <div className="flex flex-col h-full">
-      {/* Search Header */}
-      <div className="p-4 border-b border-border/50">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            ref={searchRef}
-            type="text"
-            placeholder="Buscar productos... (⌘K)"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-muted/30 border-0 focus-visible:ring-1 focus-visible:ring-ring/50"
-          />
-        </div>
-      </div>
-
-      {/* Products List */}
-      <div className="flex-1 overflow-auto p-2 space-y-1">
-        {filteredItems.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-            <Package className="h-12 w-12 mb-2 opacity-30" />
-            <p className="text-sm">No se encontraron productos</p>
+  // ── Root view ──────────────────────────────────────────────────────────────
+  if (!activeParentSku) {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="p-4 border-b border-border/50">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              ref={searchRef}
+              type="text"
+              placeholder="Buscar productos... (⌘K)"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 bg-muted/30 border-0 focus-visible:ring-1 focus-visible:ring-ring/50"
+            />
           </div>
-        ) : (
-          filteredItems.map((item) => {
-            const hasVariants = item.hasVariants && item.variants && item.variants.length > 0
-            const isExpanded = expandedItems.has(item.sku || "")
-            const stockStatus = getStockStatus(item.stock)
-            const itemActive = hasVariants ? isParentActive(item) : item.isActive !== false
+        </div>
 
-            return (
-              <div key={item.sku} className="rounded-lg overflow-hidden">
-                {/* Main Item Row */}
+        <div className="flex-1 overflow-auto p-2 space-y-1">
+          {filteredItems.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+              <Package className="h-12 w-12 mb-2 opacity-30" />
+              <p className="text-sm">No se encontraron productos</p>
+            </div>
+          ) : (
+            filteredItems.map((item) => {
+              const hasVariants = item.hasVariants && item.variants && item.variants.length > 0
+              const stockStatus = getStockStatus(item.stock)
+              const itemActive = hasVariants
+                ? item.variants!.some((v) => (v as any).isActive !== false)
+                : item.isActive !== false
+              const tags = getTags(item)
+
+              return (
                 <div
+                  key={item.sku}
                   className={cn(
-                    "flex items-center gap-3 p-3 rounded-lg transition-all",
-                    "hover:bg-muted/50 cursor-pointer group",
-                    hasVariants && isExpanded && "rounded-b-none bg-muted/30",
-                    !itemActive && "opacity-50 bg-slate-100/50",
+                    "flex items-center gap-3 p-3 rounded-lg transition-all group cursor-pointer",
+                    "hover:bg-muted/50",
+                    !itemActive && "opacity-50",
                   )}
-                  onClick={() => (hasVariants ? toggleExpanded(item.sku || "") : handleAddItem(item))}
+                  onClick={() => {
+                    if (hasVariants) {
+                      setActiveParentSku(item.sku || "")
+                    } else {
+                      handleAddItem(item)
+                    }
+                  }}
                 >
-                  {/* Product Image */}
-                  <div className="w-12 h-12 rounded-md bg-gradient-to-br from-muted/30 to-muted/60 flex items-center justify-center overflow-hidden flex-shrink-0 relative">
+                  {/* Image */}
+                  <div className="w-11 h-11 rounded-md bg-gradient-to-br from-muted/30 to-muted/60 flex items-center justify-center overflow-hidden flex-shrink-0 relative">
                     <Image
                       src={getCategoryImage(item.categoria) || "/placeholder.svg"}
                       alt={item.name}
                       fill
                       className="object-cover"
-                      sizes="48px"
+                      sizes="44px"
                     />
                   </div>
 
-                  {/* Product Info */}
+                  {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-sm truncate">{hasVariants ? item.name : getFullTitle(item)}</p>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <p className="font-medium text-sm truncate">{item.name}</p>
+                      {!hasVariants && tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-medium leading-none flex-shrink-0"
+                        >
+                          {tag}
+                        </span>
+                      ))}
                       {hasVariants && (
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
                           {item.variants?.length} var.
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 mt-0.5">
+                    <div className="flex items-center gap-1.5 mt-0.5">
                       {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
                       {item.categoria && <span className="text-xs text-muted-foreground">· {item.categoria}</span>}
                     </div>
                   </div>
 
-                  {/* Price & Stock */}
-                  <div className="text-right flex-shrink-0">
-                    {!hasVariants && (
-                      <>
+                  {/* Price / action */}
+                  {hasVariants ? (
+                    <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                  ) : (
+                    <>
+                      <div className="text-right flex-shrink-0">
                         <p className="font-semibold text-sm">
                           ${item.precio?.precioFinal?.toLocaleString("es-AR") || "0"}
                         </p>
                         <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full", stockStatus.color)}>
                           {stockStatus.label}
                         </span>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Action Button */}
-                  {hasVariants ? (
-                    <ChevronDown
-                      className={cn("h-4 w-4 text-muted-foreground transition-transform", isExpanded && "rotate-180")}
-                    />
-                  ) : itemActive ? (
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className={cn(
-                        "h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity",
-                        stockStatus.status === "sin-stock" && "pointer-events-none",
-                      )}
-                      disabled={stockStatus.status === "sin-stock"}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleAddItem(item)
-                      }}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  ) : null}
+                      </div>
+                      <Plus className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-1" />
+                    </>
+                  )}
                 </div>
+              )
+            })
+          )}
+        </div>
+      </div>
+    )
+  }
 
-                {/* Variants */}
-                {hasVariants && isExpanded && (
-                  <div className="bg-muted/20 border-t border-border/30">
-                    {item.variants?.map((variant) => {
-                      const variantStock = getStockStatus(variant.stock)
-                      const variantActive = (variant as any).isActive !== false
-                      return (
-                        <div
-                          key={variant.sku}
-                          className={cn(
-                            "flex items-center gap-3 p-3 pl-8 transition-all",
-                            "hover:bg-muted/50 cursor-pointer group",
-                            (variantStock.status === "sin-stock" || !variantActive) && "opacity-50 bg-slate-100/30",
-                          )}
-                          onClick={() => handleAddItem(item, variant)}
-                        >
-                          {/* Product Image for Variants */}
-                          <div className="w-8 h-8 rounded bg-gradient-to-br from-muted/30 to-muted/60 flex items-center justify-center overflow-hidden flex-shrink-0 relative">
-                            <Image
-                              src={getCategoryImage(item.categoria) || "/placeholder.svg"}
-                              alt={variant.name}
-                              fill
-                              className="object-cover"
-                              sizes="32px"
-                            />
-                          </div>
+  // ── Parent / variants view ─────────────────────────────────────────────────
+  const parentItem = items.find((i) => i.sku === activeParentSku)
+  if (!parentItem) {
+    setActiveParentSku(null)
+    return null
+  }
 
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <p className="text-sm truncate">{variant.name}</p>
-                              {variant.atributosPrincipales && variant.atributosPrincipales.length > 0 && variant.atributosPrincipales.slice(0, 2).map((attr: any, i: number) => (
-                                <span
-                                  key={i}
-                                  className="text-[9px] px-1.5 py-0.5 rounded whitespace-nowrap bg-blue-50 text-blue-900 border border-blue-100"
-                                >
-                                  {attr.value}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                          <div className="text-right flex-shrink-0">
-                            <p className="font-semibold text-sm">
-                              ${variant.precio?.precioFinal?.toLocaleString("es-AR") || "0"}
-                            </p>
-                            <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full", variantStock.color)}>
-                              {variantStock.label}
-                            </span>
-                          </div>
-                          {variantActive ? (
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className={cn(
-                                "h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity",
-                                variantStock.status === "sin-stock" && "pointer-events-none",
-                              )}
-                              disabled={variantStock.status === "sin-stock"}
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleAddItem(item, variant)
-                              }}
-                            >
-                              <Plus className="h-3 w-3" />
-                            </Button>
-                          ) : null}
-                        </div>
-                      )
-                    })}
-                  </div>
+  return (
+    <div className="flex flex-col h-full">
+      {/* Header with back button */}
+      <div className="p-4 border-b border-border/50">
+        <button
+          onClick={() => setActiveParentSku(null)}
+          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer mb-3"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          <span>Volver</span>
+        </button>
+
+        {/* Parent item info */}
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-muted/30 to-muted/60 flex items-center justify-center overflow-hidden flex-shrink-0 relative">
+            <Image
+              src={getCategoryImage(parentItem.categoria) || "/placeholder.svg"}
+              alt={parentItem.name}
+              fill
+              className="object-cover"
+              sizes="48px"
+            />
+          </div>
+          <div>
+            <p className="font-semibold text-sm">{parentItem.name}</p>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              {parentItem.marca && <span className="text-xs text-muted-foreground">{parentItem.marca}</span>}
+              {parentItem.categoria && (
+                <span className="text-xs text-muted-foreground">· {parentItem.categoria}</span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Variants list */}
+      <div className="flex-1 overflow-auto p-2 space-y-1">
+        {parentItem.variants?.map((variant) => {
+          const variantStock = getStockStatus(variant.stock)
+          const variantActive = (variant as any).isActive !== false
+          const tags = getTags(variant)
+
+          return (
+            <div
+              key={variant.sku}
+              className={cn(
+                "flex items-center gap-3 p-3 rounded-lg transition-all group cursor-pointer",
+                "hover:bg-muted/50",
+                (variantStock.status === "sin-stock" || !variantActive) && "opacity-50",
+              )}
+              onClick={() => handleAddItem(parentItem, variant)}
+            >
+              {/* Variant image */}
+              <div className="w-10 h-10 rounded-md bg-gradient-to-br from-muted/30 to-muted/60 flex items-center justify-center overflow-hidden flex-shrink-0 relative">
+                <Image
+                  src={getCategoryImage(parentItem.categoria) || "/placeholder.svg"}
+                  alt={variant.name}
+                  fill
+                  className="object-cover"
+                  sizes="40px"
+                />
+              </div>
+
+              {/* Variant info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <p className="text-sm font-medium truncate">{variant.name}</p>
+                  {tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-medium leading-none flex-shrink-0"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+                {variant.sku && (
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{variant.sku}</p>
                 )}
               </div>
-            )
-          })
-        )}
+
+              {/* Price, stock, add */}
+              <div className="text-right flex-shrink-0">
+                <p className="font-semibold text-sm">
+                  ${variant.precio?.precioFinal?.toLocaleString("es-AR") || "0"}
+                </p>
+                <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full", variantStock.color)}>
+                  {variantStock.label}
+                </span>
+              </div>
+              <Plus className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-1" />
+            </div>
+          )
+        })}
       </div>
     </div>
   )

@@ -13,7 +13,7 @@ import { useVentas } from "@/hooks/use-ventas"
 import { useClientes } from "@/hooks/use-clientes"
 import { useCaja } from "@/hooks/use-caja"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
-import { ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react"
+  import { ShoppingCart } from "lucide-react"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import type { VentaItem } from "@/lib/types"
 
@@ -24,7 +24,6 @@ export default function PuntoDeVentaPage() {
   const { clientes, getClienteById, incrementTransactionCount } = useClientes()
   const { sesionActiva, agregarMovimiento } = useCaja()
   const [showCheckoutSuccess, setShowCheckoutSuccess] = useState(false)
-  const [isCartExpanded, setIsCartExpanded] = useState(false)
   const [currentVenta, setCurrentVenta] = useState<{ id: string; total: number } | null>(null)
 
   const {
@@ -220,41 +219,24 @@ export default function PuntoDeVentaPage() {
             </div>
           </div>
 
-          <main className="flex-1 flex bg-[rgba(250,251,253,1)] overflow-hidden">
-            {/* Product Search Panel - Left Side */}
-            <div className={`flex-1 flex flex-col border-r border-border/30 transition-all duration-300`}>
+          <main className="flex-1 grid grid-cols-2 bg-[rgba(250,251,253,1)] overflow-hidden">
+            {/* Left: Product Search */}
+            <div className="flex flex-col border-r border-border/30 overflow-hidden">
               <ProductSearch items={items} onAddToCart={addToCart} />
             </div>
 
-            {/* Cart & Checkout Panel - Right Side */}
-            <div
-              className={`flex flex-col bg-card transition-all duration-300 ${isCartExpanded ? "w-[50vw]" : "w-[380px]"}`}
-            >
+            {/* Right: Cart + Checkout */}
+            <div className="flex flex-col bg-card overflow-hidden">
               {/* Cart Header */}
-              <div className="p-4 border-b border-border/50 flex items-center gap-3 justify-between py-3.5">
-                {/* Expand/Collapse Button */}
-                <button
-                  onClick={() => setIsCartExpanded(!isCartExpanded)}
-                  className="p-1.5 hover:bg-muted rounded transition-colors"
-                  title={isCartExpanded ? "Contraer panel" : "Expandir panel"}
-                >
-                  {isCartExpanded ? (
-                    <ChevronLeft className="w-5 h-5 text-muted-foreground" />
-                  ) : (
-                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                  )}
-                </button>
-
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <ShoppingCart className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <h2 className="font-semibold">Orden Actual</h2>
-                    <p className="text-xs text-muted-foreground">
-                      {itemCount === 0 ? "Sin productos" : `${itemCount} producto${itemCount > 1 ? "s" : ""}`}
-                    </p>
-                  </div>
+              <div className="px-4 py-3.5 border-b border-border/50 flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
+                  <ShoppingCart className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <h2 className="font-semibold text-sm">Orden Actual</h2>
+                  <p className="text-xs text-muted-foreground">
+                    {itemCount === 0 ? "Sin productos" : `${itemCount} producto${itemCount > 1 ? "s" : ""}`}
+                  </p>
                 </div>
               </div>
 
