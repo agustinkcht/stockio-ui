@@ -13,8 +13,6 @@ import {
   ChevronRight,
   Info,
   Pencil,
-  X,
-  Check,
 } from "lucide-react"
 import Image from "next/image"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
@@ -714,8 +712,6 @@ function EstadisticasDelPeriodo({ metrics, rangeLabel }: { metrics: DashboardMet
     .map((k) => ALL_FACTOR_DEFS.find((f) => f.key === k)!)
     .filter(Boolean)
   const activeDef = ALL_FACTOR_DEFS.find((f) => f.key === selected) ?? shownDefs[0]
-
-  // If the selected factor was removed from visible set, reset to first visible
   const safeSelected = visibleFactors.includes(selected) ? selected : visibleFactors[0]
 
   function openConfig() {
@@ -726,135 +722,142 @@ function EstadisticasDelPeriodo({ metrics, rangeLabel }: { metrics: DashboardMet
   function toggleDraft(key: FactorKey) {
     setDraftFactors((prev) => {
       if (prev.includes(key)) {
-        if (prev.length <= 1) return prev // keep at least 1
+        if (prev.length <= 1) return prev
         return prev.filter((k) => k !== key)
       }
-      if (prev.length >= 4) return prev // max 4
+      if (prev.length >= 4) return prev // must deselect first
       return [...prev, key]
     })
   }
 
-  function saveConfig() {
+  function applyConfig() {
     setVisibleFactors(draftFactors)
     if (!draftFactors.includes(safeSelected)) setSelected(draftFactors[0])
     setConfigOpen(false)
   }
 
+  function cancelConfig() {
+    setDraftFactors([...visibleFactors])
+    setConfigOpen(false)
+  }
+
+  const atMax = draftFactors.length >= 4
+
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/60 overflow-hidden relative">
+    <div className="bg-white rounded-2xl border border-slate-200/60 overflow-hidden">
+      {/* Header */}
       <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
         <div>
           <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
             Estadísticas del Período
           </h2>
-          <p className="text-xs text-slate-500">Indicadores del período</p>
+          <p className="text-xs text-slate-500">
+            {configOpen ? "Seleccioná los factores a mostrar" : "Indicadores del período"}
+          </p>
         </div>
         <div className="flex items-center gap-3">
-          <p className="text-[11px] text-slate-400 font-mono">{rangeLabel}</p>
-          <button
-            type="button"
-            onClick={openConfig}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-            title="Configurar factores"
-          >
-            <Pencil className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </div>
-
-      {/* Factor selectors — exactly 4 shown */}
-      <div className="px-6 py-5 grid grid-cols-2 lg:grid-cols-4 gap-2">
-        {shownDefs.map((f) => {
-          const isSelected = f.key === safeSelected
-          return (
-            <button
-              key={f.key}
-              type="button"
-              onClick={() => setSelected(f.key)}
-              style={isSelected ? { borderColor: "rgb(15 23 42)" } : {}}
-              className={`flex flex-col items-start gap-1.5 px-3 py-3 rounded-xl border transition-all cursor-pointer text-left ${
-                isSelected ? "bg-slate-50" : "border-slate-200/60 bg-white hover:border-slate-300 hover:bg-slate-50/50"
-              }`}
-            >
-              <span className="text-[10px] uppercase tracking-wider font-semibold truncate text-slate-500">
-                {f.label}
-              </span>
-              <span className="text-base font-semibold tabular-nums text-slate-900">
-                {f.format(totals[f.key])}
-              </span>
-            </button>
-          )
-        })}
-      </div>
-
-      {/* Chart */}
-      <div className="border-t border-slate-100 px-6 py-5">
-        <SingleFactorChart
-          labels={metrics.chartLabels}
-          values={metrics.factors[safeSelected]}
-          factorDef={activeDef}
-        />
-      </div>
-
-      {/* Config modal */}
-      {configOpen && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/10 backdrop-blur-[2px] rounded-2xl">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl w-[340px] mx-4 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold text-slate-900">Configurar factores</p>
-                <p className="text-xs text-slate-500 mt-0.5">Elegí hasta 4 factores para mostrar</p>
-              </div>
+          {!configOpen && <p className="text-[11px] text-slate-400 font-mono">{rangeLabel}</p>}
+          {configOpen ? (
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => setConfigOpen(false)}
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="px-5 py-3 flex flex-col gap-1">
-              {ALL_FACTOR_DEFS.map((f) => {
-                const isOn = draftFactors.includes(f.key)
-                const disabled = !isOn && draftFactors.length >= 4
-                return (
-                  <button
-                    key={f.key}
-                    type="button"
-                    disabled={disabled}
-                    onClick={() => toggleDraft(f.key)}
-                    className={`flex items-center justify-between px-3 py-2.5 rounded-xl transition-colors text-left w-full ${
-                      isOn
-                        ? "bg-slate-900 text-white"
-                        : disabled
-                        ? "text-slate-300 cursor-not-allowed"
-                        : "hover:bg-slate-50 text-slate-700 cursor-pointer"
-                    }`}
-                  >
-                    <span className="text-sm font-medium">{f.label}</span>
-                    {isOn && <Check className="w-4 h-4 flex-shrink-0" />}
-                  </button>
-                )
-              })}
-            </div>
-            <div className="px-5 py-4 border-t border-slate-100 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setConfigOpen(false)}
-                className="px-4 py-2 rounded-xl text-sm text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                onClick={cancelConfig}
+                className="px-3 py-1.5 rounded-lg text-xs text-slate-500 hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 type="button"
-                onClick={saveConfig}
-                className="px-4 py-2 rounded-xl text-sm font-semibold bg-slate-900 text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                onClick={applyConfig}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 Aplicar
               </button>
             </div>
+          ) : (
+            <button
+              type="button"
+              onClick={openConfig}
+              className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+              title="Configurar factores"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {configOpen ? (
+        /* ---- Inline factor picker ---- */
+        <div className="px-6 py-5">
+          {atMax && (
+            <p className="text-xs text-slate-400 mb-4">
+              Tenés 4 factores seleccionados. Deseleccioná uno para poder elegir otro.
+            </p>
+          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {ALL_FACTOR_DEFS.map((f) => {
+              const isOn = draftFactors.includes(f.key)
+              const disabled = !isOn && atMax
+              return (
+                <button
+                  key={f.key}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => toggleDraft(f.key)}
+                  className={`flex items-center justify-between px-4 py-3 rounded-xl border transition-all text-left w-full cursor-pointer ${
+                    isOn
+                      ? "border-slate-900 bg-slate-900 text-white"
+                      : disabled
+                      ? "border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed"
+                      : "border-slate-200/60 hover:border-slate-300 hover:bg-slate-50 text-slate-700"
+                  }`}
+                >
+                  <span className="text-sm font-medium">{f.label}</span>
+                  <div className={`w-4 h-4 rounded-full border flex-shrink-0 flex items-center justify-center ${
+                    isOn ? "border-white bg-white" : disabled ? "border-slate-200" : "border-slate-300"
+                  }`}>
+                    {isOn && <div className="w-2 h-2 rounded-full bg-slate-900" />}
+                  </div>
+                </button>
+              )
+            })}
           </div>
         </div>
+      ) : (
+        /* ---- Normal view: factor cards + chart ---- */
+        <>
+          <div className="px-6 py-5 grid grid-cols-2 lg:grid-cols-4 gap-2">
+            {shownDefs.map((f) => {
+              const isSelected = f.key === safeSelected
+              return (
+                <button
+                  key={f.key}
+                  type="button"
+                  onClick={() => setSelected(f.key)}
+                  style={isSelected ? { borderColor: "rgb(15 23 42)" } : {}}
+                  className={`flex flex-col items-start gap-1.5 px-3 py-3 rounded-xl border transition-all cursor-pointer text-left ${
+                    isSelected ? "bg-slate-50" : "border-slate-200/60 bg-white hover:border-slate-300 hover:bg-slate-50/50"
+                  }`}
+                >
+                  <span className="text-[10px] uppercase tracking-wider font-semibold truncate text-slate-500">
+                    {f.label}
+                  </span>
+                  <span className="text-base font-semibold tabular-nums text-slate-900">
+                    {f.format(totals[f.key])}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+          <div className="border-t border-slate-100 px-6 py-5">
+            <SingleFactorChart
+              labels={metrics.chartLabels}
+              values={metrics.factors[safeSelected]}
+              factorDef={activeDef}
+            />
+          </div>
+        </>
       )}
     </div>
   )
