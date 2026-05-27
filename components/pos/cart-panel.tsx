@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { Trash2, Minus, Plus, AlertTriangle, Edit2, Check, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import type { CartItem } from "@/hooks/use-pos"
 
@@ -95,7 +94,7 @@ export function CartPanel({ cart, onUpdateQuantity, onRemove, onUpdatePrice, onU
                 stockWarning.critical && "border-red-500/30 bg-red-500/5",
               )}
             >
-              {/* Title + trash */}
+              {/* Title + marca/categoria + trash */}
               <div className="flex items-start gap-2 mb-2.5">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 flex-wrap">
@@ -108,6 +107,11 @@ export function CartPanel({ cart, onUpdateQuantity, onRemove, onUpdatePrice, onU
                         {tag}
                       </span>
                     ))}
+                  </div>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    {item.item.marca && <span className="text-xs text-muted-foreground">{item.item.marca}</span>}
+                    {item.item.marca && item.item.categoria && <span className="text-xs text-muted-foreground">·</span>}
+                    {item.item.categoria && <span className="text-xs text-muted-foreground">{item.item.categoria}</span>}
                   </div>
                 </div>
                 <Button
@@ -138,8 +142,8 @@ export function CartPanel({ cart, onUpdateQuantity, onRemove, onUpdatePrice, onU
 
               {/* Cantidad (left) + Precio (right) — same row */}
               <div className="flex items-center justify-between gap-3">
-                {/* Quantity selector — nueva venta style */}
-                <div className="flex items-center gap-1">
+                {/* Quantity — pill style matching nueva venta step 2 */}
+                <div className="flex items-center border border-slate-200 rounded-full px-1 py-0.5 bg-white">
                   <button
                     onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
                     className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-400 transition-colors"
@@ -150,8 +154,8 @@ export function CartPanel({ cart, onUpdateQuantity, onRemove, onUpdatePrice, onU
                     type="number"
                     value={item.quantity}
                     onChange={(e) => {
-                      const val = parseInt(e.target.value)
-                      if (!isNaN(val) && val > 0) onUpdateQuantity(item.id, val)
+                      const val = parseInt(e.target.value) || 1
+                      onUpdateQuantity(item.id, val)
                     }}
                     className="w-10 text-center text-sm py-1 focus:outline-none bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
@@ -167,21 +171,34 @@ export function CartPanel({ cart, onUpdateQuantity, onRemove, onUpdatePrice, onU
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs text-muted-foreground">Precio:</span>
                   {editingPrice === item.id ? (
-                    <>
-                      <Input
-                        type="number"
-                        value={tempPrice}
-                        onChange={(e) => setTempPrice(e.target.value)}
-                        className="h-6 text-sm w-20"
-                        autoFocus
-                      />
-                      <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleSavePrice(item.id)}>
-                        <Check className="h-3 w-3" />
-                      </Button>
-                      <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setEditingPrice(null)}>
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </>
+                    <div className="flex items-center gap-1.5">
+                      {/* $ + input — matching nueva venta precio unit style */}
+                      <div className="flex items-center gap-1 border border-slate-200 rounded px-2 py-1">
+                        <span className="text-slate-400 text-sm">$</span>
+                        <input
+                          type="number"
+                          value={tempPrice}
+                          onChange={(e) => setTempPrice(e.target.value)}
+                          autoFocus
+                          className="w-20 text-sm focus:outline-none bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        />
+                      </div>
+                      {/* Check / X wrapped in black button-like divs */}
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleSavePrice(item.id)}
+                          className="w-6 h-6 flex items-center justify-center rounded bg-slate-900 hover:bg-slate-700 text-white transition-colors"
+                        >
+                          <Check className="h-3 w-3" />
+                        </button>
+                        <button
+                          onClick={() => setEditingPrice(null)}
+                          className="w-6 h-6 flex items-center justify-center rounded bg-slate-900 hover:bg-slate-700 text-white transition-colors"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    </div>
                   ) : (
                     <>
                       <span className={cn("text-sm font-medium", hasPriceOverride && "text-blue-500")}>
@@ -203,6 +220,14 @@ export function CartPanel({ cart, onUpdateQuantity, onRemove, onUpdatePrice, onU
                     </>
                   )}
                 </div>
+              </div>
+
+              {/* Separator + Total */}
+              <div className="border-t border-border/30 mt-2.5 pt-2 flex justify-between items-center">
+                <span className="text-xs text-muted-foreground">Total</span>
+                <span className="font-semibold text-sm">
+                  ${item.subtotal.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                </span>
               </div>
             </div>
           )
