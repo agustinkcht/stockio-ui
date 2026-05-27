@@ -26,6 +26,7 @@ import {
 import { Sidebar } from "@/components/layout/sidebar"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { UserPanel } from "@/components/layout/user-panel"
+import { NuevoClienteModal } from "@/components/modals/nuevo-cliente-modal"
 import { useSidebar } from "@/hooks/use-sidebar"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 
@@ -91,10 +92,13 @@ export default function NuevaVentaPage() {
   const stepsContainerRef = useRef<HTMLDivElement>(null)
 
   const [currentStep, setCurrentStep] = useState(1)
+  // maxUnlockedStep tracks how far the user has explicitly advanced
+  const [maxUnlockedStep, setMaxUnlockedStep] = useState(1)
 
   // Step 1: Cliente
-  const [cliente, setCliente] = useState<VentaCliente>({ tipo: "consumidor_final" })
+  const [cliente, setCliente] = useState<VentaCliente | null>(null)
   const [clienteSearch, setClienteSearch] = useState("")
+  const [showNuevoClienteModal, setShowNuevoClienteModal] = useState(false)
 
   // Step 2: Productos — edit-mode state
   const [selectedItems, setSelectedItems] = useState<VentaItem[]>([])
@@ -154,8 +158,11 @@ export default function NuevaVentaPage() {
   ]
 
   // ── Derived ───────────────────────────────────────────────
-  const clienteNombre =
-    cliente.tipo === "cuenta" ? cliente.nombre : "Consumidor Final"
+  const clienteNombre = !cliente
+    ? "Sin cliente"
+    : cliente.tipo === "cuenta"
+    ? cliente.nombre
+    : "Consumidor Final"
 
   const total = useMemo(() => {
     return selectedItems.reduce((sum, it, idx) => {
@@ -353,7 +360,7 @@ export default function NuevaVentaPage() {
   }, [total, globalDiscountAmount, showEnvio, envioAmount, customCharges])
 
   const canAdvance = useMemo(() => {
-    if (currentStep === 1) return true
+    if (currentStep === 1) return cliente !== null
     if (currentStep === 2) return selectedItems.length > 0
     if (currentStep === 3) return true
     if (currentStep === 4) return true
@@ -437,7 +444,7 @@ export default function NuevaVentaPage() {
       const newVenta: Omit<Venta, "id"> = {
         fecha,
         hora,
-        cliente,
+        cliente: cliente ?? { tipo: "consumidor_final" },
         items,
         subtotal,
         descuento: showGlobalDiscount ? globalDiscount.value : 0,
@@ -559,10 +566,7 @@ export default function NuevaVentaPage() {
 
                 <div className="flex flex-col">
                   {STEPS.map((step, index) => {
-                    const isDisabled =
-                      (step.id === 3 && selectedItems.length === 0) ||
-                      (step.id === 4 && selectedItems.length === 0) ||
-                      (step.id === 5 && selectedItems.length === 0)
+                    const isDisabled = step.id > maxUnlockedStep
                     return (
                       <div key={step.id} className="flex items-start">
                         <div className="flex flex-col items-center mr-3">
@@ -628,7 +632,7 @@ export default function NuevaVentaPage() {
                       <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">Cliente</h3>
                     </div>
                     <p className="text-[11px] text-slate-400 mb-4 italic">
-                      Selecciona el cliente para esta venta. Por defecto es Consumidor Final.
+                      Selecciona el cliente para esta venta.
                     </p>
 
                     <div className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2 mb-3">
@@ -641,24 +645,49 @@ export default function NuevaVentaPage() {
                       />
                     </div>
 
-                    <div className="border border-slate-200 rounded-lg overflow-hidden max-h-[420px] overflow-y-auto">
-                      {("consumidor final".includes(clienteSearch.toLowerCase()) || clienteSearch === "") && (
-                        <button
-                          onClick={() => setCliente({ tipo: "consumidor_final" })}
-                          className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left border-b border-slate-100 ${cliente.tipo === "consumidor_final" ? "bg-blue-50/50" : ""}`}
-                        >
-                          <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center shrink-0">
-                            <span className="text-xs font-semibold text-slate-600">CF</span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-slate-900">Consumidor Final</p>
-                            <p className="text-xs text-slate-400">Sin cuenta registrada</p>
-                          </div>
-                          {cliente.tipo === "consumidor_final" && (
-                            <Check className="w-4 h-4 text-emerald-500 shrink-0" />
-                          )}
-                        </button>
+                    <div className="border border-slate-200 rounded-lg overflow-hidden max-h-[480px] overflow-y-auto">
+
+                      {/* Consumidor Final + Nuevo Cliente — always on top, hidden only when search has real results */}
+                      {(clienteSearch.trim() === "" || filteredClientes.length === 0) && (
+                        <>
+                          {/* Consumidor Final */}
+                          <button
+                            onClick={() => {
+                              setCliente({ tipo: "consumidor_final" })
+                              setMaxUnlockedStep(s => Math.max(s, 2))
+                              setCurrentStep(2)
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left"
+                          >
+                            <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
+                              <span className="text-xs font-semibold text-slate-600">CF</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-slate-900">Consumidor Final</p>
+                              <p className="text-xs text-slate-400">Sin cuenta registrada</p>
+                            </div>
+                          </button>
+
+                          {/* Nuevo Cliente */}
+                          <button
+                            onClick={() => setShowNuevoClienteModal(true)}
+                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left"
+                          >
+                            <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
+                              <Plus className="w-3.5 h-3.5 text-white" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-slate-900">Nuevo Cliente</p>
+                              <p className="text-xs text-slate-400">Crear cuenta nueva</p>
+                            </div>
+                          </button>
+
+                          {/* Thick separator */}
+                          <div className="border-t-2 border-slate-200" />
+                        </>
                       )}
+
+                      {/* Real clients */}
                       <div className="divide-y divide-slate-50">
                         {filteredClientes.map((c) => {
                           const name =
@@ -666,11 +695,15 @@ export default function NuevaVentaPage() {
                               ? c.razonSocial ?? ""
                               : `${c.nombre} ${c.apellido}`.trim()
                           const initials = name.slice(0, 2).toUpperCase()
-                          const isSelected = cliente.tipo === "cuenta" && cliente.id === c.id
+                          const isSelected = cliente?.tipo === "cuenta" && (cliente as any).id === c.id
                           return (
                             <button
                               key={c.id}
-                              onClick={() => setCliente({ tipo: "cuenta", id: c.id, nombre: name })}
+                              onClick={() => {
+                                setCliente({ tipo: "cuenta", id: c.id, nombre: name })
+                                setMaxUnlockedStep(s => Math.max(s, 2))
+                                setCurrentStep(2)
+                              }}
                               className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left ${isSelected ? "bg-blue-50/50" : ""}`}
                             >
                               <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
@@ -686,13 +719,21 @@ export default function NuevaVentaPage() {
                             </button>
                           )
                         })}
-                        {filteredClientes.length === 0 && (
-                          <p className="text-sm text-slate-400 text-center py-6">Sin resultados</p>
+                        {/* No results state */}
+                        {clienteSearch.trim() !== "" && filteredClientes.length === 0 && (
+                          <div className="py-6 flex flex-col items-center gap-2">
+                            <p className="text-sm text-slate-400">Sin resultados</p>
+                            <button
+                              onClick={() => setShowNuevoClienteModal(true)}
+                              className="flex items-center gap-1 text-sm text-blue-500 hover:text-blue-600 transition-colors"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                              Nuevo Cliente
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>
-
-                    <StepNav onNext={() => setCurrentStep(2)} canAdvance={canAdvance} />
                   </div>
                 )}
 
@@ -895,7 +936,7 @@ export default function NuevaVentaPage() {
                     <div className="px-6 pb-6">
                       <StepNav
                         onBack={() => setCurrentStep(1)}
-                        onNext={() => setCurrentStep(3)}
+                        onNext={() => { setMaxUnlockedStep(s => Math.max(s, 3)); setCurrentStep(3) }}
                         canAdvance={canAdvance}
                       />
                     </div>
@@ -1281,7 +1322,7 @@ export default function NuevaVentaPage() {
 
                     <StepNav
                       onBack={() => setCurrentStep(2)}
-                      onNext={() => setCurrentStep(4)}
+                      onNext={() => { setMaxUnlockedStep(s => Math.max(s, 4)); setCurrentStep(4) }}
                       canAdvance={canAdvance}
                     />
                   </div>
@@ -1439,12 +1480,12 @@ export default function NuevaVentaPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between mt-6 pt-6 border-t border-slate-100">
+                    <div className="flex items-center justify-end gap-2 mt-6 pt-6 border-t border-slate-100">
                       <button
                         onClick={() => setCurrentStep(3)}
-                        className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
+                        className="px-4 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
                       >
-                        Atrás
+                        Volver
                       </button>
                       <button
                         onClick={handleCreate}
@@ -1462,6 +1503,22 @@ export default function NuevaVentaPage() {
           </main>
         </div>
       </div>
+
+      {/* ── Nuevo Cliente Modal ── */}
+      <NuevoClienteModal
+        isOpen={showNuevoClienteModal}
+        onClose={() => setShowNuevoClienteModal(false)}
+        onSave={(nuevoCliente) => {
+          // Use name from the new client and advance
+          const name = nuevoCliente.tipo === "empresa"
+            ? nuevoCliente.razonSocial ?? ""
+            : `${nuevoCliente.nombre} ${nuevoCliente.apellido}`.trim()
+          setCliente({ tipo: "cuenta", id: `nuevo-${Date.now()}`, nombre: name })
+          setShowNuevoClienteModal(false)
+          setMaxUnlockedStep(s => Math.max(s, 2))
+          setCurrentStep(2)
+        }}
+      />
 
       {/* ── Registrar Entrega Inicial Modal ── */}
       {showEntregaInicialModal && (() => {
@@ -1984,16 +2041,14 @@ function StepNav({
   canAdvance: boolean
 }) {
   return (
-    <div className="flex items-center justify-between mt-6 pt-6 border-t border-slate-100">
-      {onBack ? (
+    <div className="flex items-center justify-end gap-2 mt-6 pt-6 border-t border-slate-100">
+      {onBack && (
         <button
           onClick={onBack}
-          className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
+          className="px-4 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
         >
-          Atrás
+          Volver
         </button>
-      ) : (
-        <div />
       )}
       <button
         onClick={onNext}
