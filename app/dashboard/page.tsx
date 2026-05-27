@@ -1103,7 +1103,6 @@ function SalesHeatmap({
               </div>
             </div>
           )}
-          </div>
 
           <div className="flex items-center gap-2 mt-2">
             <div className="w-20 flex-shrink-0" />
