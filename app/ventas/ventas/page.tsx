@@ -543,26 +543,27 @@ export default function VentasPage() {
                             className="w-4 h-4 rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                           />
                         </div>
-                        <div className="col-span-16 flex items-center justify-start gap-2 px-3 border-r border-slate-200/70">
+                        {/* ID */}
+                        <div className="col-span-10 flex items-center justify-start px-3 border-r border-slate-200/70">
                           <span className="text-sm font-semibold text-slate-900 shrink-0">{venta.id}</span>
+                        </div>
+                        {/* Fecha */}
+                        <div className="col-span-14 flex items-center justify-start px-3 border-r border-slate-200/70">
+                          <span className="text-sm text-slate-600 truncate">
+                            {formatVentaDateTime(venta.fecha, venta.hora)}
+                          </span>
+                        </div>
+                        {/* Estado */}
+                        <div className="col-span-14 flex items-center justify-start px-3 border-r border-slate-200/70">
                           <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full shrink-0 ${estadoStyle.bg}`}>
                             <EstadoIcon className={`w-3 h-3 ${estadoStyle.text}`} />
                             <span className={`text-xs font-medium ${estadoStyle.text}`}>{estadoStyle.label}</span>
                           </div>
                         </div>
-                        <div className="col-span-10 flex items-center justify-start px-3 border-r border-slate-200/70">
-                          <span className="text-sm text-slate-600 truncate">
-                            {formatVentaDateTime(venta.fecha, venta.hora)}
-                          </span>
-                        </div>
-                        {/* Origen */}
-                        <div className="col-span-10 flex items-center justify-start px-3 border-r border-slate-200/70">
-                          <span className="text-sm text-slate-600 truncate">Manual</span>
-                        </div>
                         {/* Spacer */}
-                        <div className="col-span-38" />
+                        <div className="col-span-40" />
                         {/* Ver ticket */}
-                        <div className="col-span-18 flex items-center justify-end pr-3 border-r border-slate-200/70">
+                        <div className="col-span-14 flex items-center justify-end pr-3 border-r border-slate-200/70">
                           {isFacturada ? (
                             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50">
                               <Receipt className="w-3.5 h-3.5 text-blue-600" />
@@ -624,9 +625,9 @@ export default function VentasPage() {
                           <span className="text-xs font-semibold text-slate-800 whitespace-nowrap">{getClienteNombre(venta)}</span>
                         </button>
 
-                        {/* Pendientes — pushed to the right, only when en_curso */}
+                        {/* Pendientes — inline after cliente pill */}
                         {venta.estado === "en_curso" && (isPendienteCobro(venta) || isPendienteEntrega(venta)) && (
-                          <div className="ml-auto flex items-center gap-2 text-[11px] font-light text-slate-400 pr-3">
+                          <div className="flex items-center gap-2 text-[11px] font-light text-slate-400">
                             {isPendienteCobro(venta) && (
                               <span className="flex items-center gap-1">
                                 <span>•</span>
