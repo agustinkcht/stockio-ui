@@ -711,7 +711,6 @@ export default function VentasPage() {
                 })}
               </div>
               </div>
-            </div>
           </main>
         </div>
       </div>
