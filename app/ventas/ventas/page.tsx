@@ -9,6 +9,7 @@ import { UserPanel } from "@/components/layout/user-panel"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import {
   ChevronRight,
+  ChevronDown,
   FileDown,
   MoreVertical,
   ListFilter,
@@ -29,6 +30,11 @@ import { VentaItemDetailModal } from "@/components/ventas/venta-item-detail-moda
 import { ClienteModal } from "@/components/ventas/cliente-modal"
 import { TicketModal } from "@/components/ventas/ticket-modal"
 import { useVentas } from "@/hooks/use-ventas"
+import {
+  PERIOD_OPTIONS,
+  usePeriod,
+  type PeriodKey,
+} from "@/lib/contexts/period-context"
 
 type StatusTab = "todas" | "en_curso" | "finalizada" | "cancelada"
 
@@ -86,6 +92,12 @@ export default function VentasPage() {
   const router = useRouter()
   const allCheckboxRef = useRef<HTMLInputElement>(null)
   const { ventas } = useVentas()
+
+  const { periodKey, customRange, setPeriodKey, setCustomRange } = usePeriod()
+  const [periodOpen, setPeriodOpen] = useState(false)
+  const [calendarOpen, setCalendarOpen] = useState(false)
+
+  const periodLabel = PERIOD_OPTIONS.find((o) => o.key === periodKey)?.label ?? "Período"
 
   const [selectedVentas, setSelectedVentas] = useState<Set<string>>(new Set())
   const [openMoreMenu, setOpenMoreMenu] = useState<string | null>(null)
@@ -189,14 +201,58 @@ export default function VentasPage() {
           </div>
 
           <main className="flex-1 flex flex-col bg-[rgba(250,251,253,1)] overflow-hidden">
-            {/* Toolbar */}
-            <div className="px-8 py-4 flex items-center justify-end">
+            {/* Top Bar */}
+            <div className="px-8 py-5 flex items-center justify-between border-b border-slate-100 bg-white">
+              <div className="flex items-center gap-4">
+                <h1 className="text-xl font-semibold text-slate-900 tracking-tight">Ventas</h1>
+                {/* Period selector */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setPeriodOpen(!periodOpen)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 bg-white hover:border-slate-300 transition-colors text-sm font-medium text-slate-600 cursor-pointer"
+                  >
+                    <span>{periodLabel}</span>
+                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${periodOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  {periodOpen && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setPeriodOpen(false)} />
+                      <div className="absolute top-full left-0 mt-1 w-52 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden z-20">
+                        {PERIOD_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.key}
+                            type="button"
+                            onClick={() => {
+                              if (opt.key === "personalizado") {
+                                setPeriodOpen(false)
+                                setCalendarOpen(true)
+                                return
+                              }
+                              setPeriodKey(opt.key)
+                              setCustomRange(null)
+                              setPeriodOpen(false)
+                            }}
+                            className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer ${
+                              periodKey === opt.key
+                                ? "bg-slate-900 text-white"
+                                : "text-slate-700 hover:bg-slate-50"
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
               <button
                 type="button"
                 onClick={() => router.push("/ventas/ventas/nueva")}
-                className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-md flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer"
+                className="h-8 px-3.5 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-1.5 shrink-0 rounded-md flex items-center bg-white text-slate-800 hover:bg-slate-50 cursor-pointer"
               >
-                <Plus className="w-4 h-4 text-slate-700" strokeWidth={2.25} />
+                <Plus className="w-3.5 h-3.5 text-slate-600" strokeWidth={2.25} />
                 Nueva Venta
               </button>
             </div>
@@ -211,16 +267,14 @@ export default function VentasPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTab("todas")}
-                  className={`group bg-white border rounded-xl px-5 py-4 shadow-sm text-left transition-all cursor-pointer ${activeTab === "todas" ? "border-blue-300 ring-1 ring-blue-200 shadow-blue-50" : "border-slate-200/80 hover:border-blue-200 hover:shadow-md"}`}
+                  className={`border rounded-xl px-5 py-4 shadow-sm text-left transition-all cursor-pointer ${activeTab === "todas" ? "bg-blue-50 border-blue-200" : "bg-white border-slate-200/80 hover:border-blue-200 hover:shadow-md"}`}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
-                      <BarChart3 className="w-4 h-4 text-blue-500" />
-                    </div>
-                    <div className="flex items-baseline gap-2.5 min-w-0">
-                      <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{ventas.length}</p>
-                      <p className="text-sm font-medium text-blue-500 truncate">Totales</p>
-                    </div>
+                  <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center mb-3 shadow-sm border border-slate-100">
+                    <BarChart3 className="w-4 h-4 text-blue-500" />
+                  </div>
+                  <div className="flex items-baseline gap-2.5 min-w-0">
+                    <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{ventas.length}</p>
+                    <p className="text-sm font-medium text-blue-500 truncate">Totales</p>
                   </div>
                 </button>
 
@@ -228,16 +282,14 @@ export default function VentasPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTab("en_curso")}
-                  className={`group bg-white border rounded-xl px-5 py-4 shadow-sm text-left transition-all cursor-pointer ${activeTab === "en_curso" ? "border-orange-300 ring-1 ring-orange-200 shadow-orange-50" : "border-slate-200/80 hover:border-orange-200 hover:shadow-md"}`}
+                  className={`border rounded-xl px-5 py-4 shadow-sm text-left transition-all cursor-pointer ${activeTab === "en_curso" ? "bg-orange-50 border-orange-200" : "bg-white border-slate-200/80 hover:border-orange-200 hover:shadow-md"}`}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center shrink-0">
-                      <Clock className="w-4 h-4 text-orange-400" />
-                    </div>
-                    <div className="flex items-baseline gap-2.5 min-w-0">
-                      <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{ventas.filter(v => v.estado === "en_curso").length}</p>
-                      <p className="text-sm font-medium text-orange-500 truncate">En Curso</p>
-                    </div>
+                  <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center mb-3 shadow-sm border border-slate-100">
+                    <Clock className="w-4 h-4 text-orange-400" />
+                  </div>
+                  <div className="flex items-baseline gap-2.5 min-w-0">
+                    <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{ventas.filter(v => v.estado === "en_curso").length}</p>
+                    <p className="text-sm font-medium text-orange-500 truncate">En Curso</p>
                   </div>
                 </button>
 
@@ -245,16 +297,14 @@ export default function VentasPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTab("finalizada")}
-                  className={`group bg-white border rounded-xl px-5 py-4 shadow-sm text-left transition-all cursor-pointer ${activeTab === "finalizada" ? "border-emerald-300 ring-1 ring-emerald-200 shadow-emerald-50" : "border-slate-200/80 hover:border-emerald-200 hover:shadow-md"}`}
+                  className={`border rounded-xl px-5 py-4 shadow-sm text-left transition-all cursor-pointer ${activeTab === "finalizada" ? "bg-emerald-50 border-emerald-200" : "bg-white border-slate-200/80 hover:border-emerald-200 hover:shadow-md"}`}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    </div>
-                    <div className="flex items-baseline gap-2.5 min-w-0">
-                      <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{ventas.filter(v => v.estado === "finalizada").length}</p>
-                      <p className="text-sm font-medium text-emerald-500 truncate">Finalizadas</p>
-                    </div>
+                  <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center mb-3 shadow-sm border border-slate-100">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                  </div>
+                  <div className="flex items-baseline gap-2.5 min-w-0">
+                    <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{ventas.filter(v => v.estado === "finalizada").length}</p>
+                    <p className="text-sm font-medium text-emerald-500 truncate">Finalizadas</p>
                   </div>
                 </button>
 
@@ -262,16 +312,14 @@ export default function VentasPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTab("cancelada")}
-                  className={`group bg-white border rounded-xl px-5 py-4 shadow-sm text-left transition-all cursor-pointer ${activeTab === "cancelada" ? "border-red-300 ring-1 ring-red-200 shadow-red-50" : "border-slate-200/80 hover:border-red-200 hover:shadow-md"}`}
+                  className={`border rounded-xl px-5 py-4 shadow-sm text-left transition-all cursor-pointer ${activeTab === "cancelada" ? "bg-red-50 border-red-200" : "bg-white border-slate-200/80 hover:border-red-200 hover:shadow-md"}`}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
-                      <XCircle className="w-4 h-4 text-red-400" />
-                    </div>
-                    <div className="flex items-baseline gap-2.5 min-w-0">
-                      <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{canceladas.length}</p>
-                      <p className="text-sm font-medium text-red-400 truncate">Canceladas</p>
-                    </div>
+                  <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center mb-3 shadow-sm border border-slate-100">
+                    <XCircle className="w-4 h-4 text-red-400" />
+                  </div>
+                  <div className="flex items-baseline gap-2.5 min-w-0">
+                    <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{canceladas.length}</p>
+                    <p className="text-sm font-medium text-red-400 truncate">Canceladas</p>
                   </div>
                 </button>
               </div>
