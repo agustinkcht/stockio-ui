@@ -244,7 +244,9 @@ export default function VentasPage() {
                               </>
                             )}
                           </div>
-                        {calendarOpen && (
+                        </div>
+                      </div>
+                      {calendarOpen && (
                           <RangeCalendarDialog
                             initialRange={null}
                             onCancel={() => setCalendarOpen(false)}
@@ -255,8 +257,6 @@ export default function VentasPage() {
                             }}
                           />
                         )}
-                        </div>
-                      </div>
                       {/* Nueva Venta button */}
                       <button
                         type="button"
