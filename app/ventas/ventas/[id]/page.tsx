@@ -796,8 +796,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                           <span className="text-sm font-medium text-slate-600 tabular-nums shrink-0">
                             {dia} {mesCorto} {fechaObj.getFullYear()} · {venta.hora}
                           </span>
-                          <div className="h-5 w-px bg-slate-300 shrink-0 mx-5" />
-                          <span className="text-sm text-slate-400 shrink-0">Manual</span>
                         </div>
 
                         {/* Actions — moved here from row 2 */}
@@ -875,7 +873,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         </button>
 
                         {/* Actions widget */}
-                        <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm flex items-center justify-center px-4 py-3">
+                        <div className="flex items-center justify-center px-4 py-3">
                           {estadoUI === "en_curso" && !isEditMode && (
                             <button
                               type="button"
@@ -1382,8 +1380,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
               {/* Right col-span-1: two stacked cards */}
               {ventaItems.length > 0 && (
                 <div className="col-span-1 flex flex-col gap-4">
-                <div className="bg-white rounded-lg shadow-sm flex flex-col min-h-[200px]">
-                  <div className="px-5 py-5 flex flex-col gap-0 flex-1 overflow-hidden">
+                <div className="bg-white rounded-lg shadow-sm">
+                  <div className="px-5 py-5 flex flex-col gap-0">
 
                     {/* ── Resumen section ── */}
                     <div className="flex items-center gap-2 mb-4">
@@ -1575,9 +1573,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         ).toLocaleString("es-AR")}
                       </span>
                     </div>
-
-
-
                   </div>
                 </div>{/* end resumen card */}
 
