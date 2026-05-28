@@ -1393,7 +1393,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${showSubtotalBreakdown ? "rotate-180" : ""}`} />
                     </button>
                     {showSubtotalBreakdown && (
-                      <div className="border-b border-slate-200">
+                      <div>
                         {ventaItems.map((item, idx) => {
                           const display = getVentaItemDisplay(item)
                           const adjustedUnit = item.discountType === "percent"
@@ -1401,7 +1401,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             : item.unitPrice - (item.discount / Math.max(item.quantity, 1))
                           const lineTotal = Math.round(adjustedUnit * item.quantity)
                           return (
-                            <div key={idx} className="flex justify-between items-start gap-3 py-2.5 -mx-5 px-5 border-b border-slate-50 last:border-0">
+                            <div key={idx} className="flex justify-between items-start gap-3 py-2.5 -mx-5 px-5">
                               <div className="min-w-0 flex-1">
                                 <p className="text-xs text-slate-700 leading-tight">{display.name}</p>
                                 {display.tags.length > 0 && (
@@ -1419,6 +1419,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             </div>
                           )
                         })}
+                        <div className="-mx-5 w-[calc(100%+2.5rem)] border-b border-slate-100" />
                       </div>
                     )}
 
@@ -1526,7 +1527,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     )}
 
                     {/* ── View mode: saved adjustments ── */}
-                    {!isEditMode && (savedGlobalDiscount?.value > 0 || (savedEnvio != null && savedEnvio > 0) || savedCustomCharges.length > 0) && <div className="border-t border-slate-200" />}
                     {!isEditMode && savedGlobalDiscount && savedGlobalDiscount.value > 0 && (
                       <div className="flex justify-between items-center py-2.5">
                         <span className="text-sm text-slate-500">
@@ -1552,9 +1552,13 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         <span className="text-sm text-slate-700 tabular-nums">+${c.value.toLocaleString("es-AR")}</span>
                       </div>
                     ))}
+                    {/* Border below adjustments only if any exist */}
+                    {!isEditMode && (savedGlobalDiscount?.value > 0 || (savedEnvio != null && savedEnvio > 0) || savedCustomCharges.length > 0) && (
+                      <div className="-mx-5 w-[calc(100%+2.5rem)] border-b border-slate-100" />
+                    )}
 
                     {/* Total */}
-                    <div className="flex justify-between items-center py-3 mt-1 border-t border-slate-200">
+                    <div className="flex justify-between items-center py-3 mt-1">
                       <span className="text-base font-bold text-slate-900">Total</span>
                       <span className="text-base font-bold text-slate-900 tabular-nums">
                         ${Math.round(
