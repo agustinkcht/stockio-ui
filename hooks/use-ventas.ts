@@ -402,33 +402,49 @@ export function useVentas() {
         if (v.id !== ventaId) return v
 
         let cobrosNext = [...v.cobros]
-        let entregaEntriesNext = [...(v.entregaEntries ?? [])]
+        let devolucionItemsNext = [...(v.devolucionItems ?? [])]
+        let devolucionEntriesNext = [...(v.devolucionEntries ?? [])]
 
-        // Refund cobro entry
-        if (opts.devolverCobros) {
-          const totalCobrado = v.cobros.reduce((s, c) => s + c.monto, 0)
-          if (totalCobrado > 0) {
-            cobrosNext.push({
-              id: `${ventaId}-COB-${cobrosNext.length + 1}-${Date.now()}`,
+        // Devolucion for unidades — records in devolucion section (entregaItems untouched)
+        if (opts.devolverUnidades) {
+          const entregadasItems = v.entregaItems.filter((ei) => ei.quantityEntregada > 0)
+          if (entregadasItems.length > 0) {
+            for (const ei of entregadasItems) {
+              const idx = devolucionItemsNext.findIndex((di) => di.sku === ei.sku)
+              if (idx >= 0) devolucionItemsNext[idx] = { ...devolucionItemsNext[idx], quantityDevuelta: devolucionItemsNext[idx].quantityDevuelta + ei.quantityEntregada }
+              else devolucionItemsNext.push({ sku: ei.sku, quantityDevuelta: ei.quantityEntregada })
+            }
+            devolucionEntriesNext.push({
+              id: `${ventaId}-DEV-${devolucionEntriesNext.length + 1}-${Date.now()}`,
               fecha,
               hora,
-              medioPago: "no_especificado",
-              monto: -totalCobrado,
+              items: entregadasItems.map((ei) => ({ sku: ei.sku, quantity: ei.quantityEntregada })),
+              montoDevuelto: 0,
+              medioPago: "",
             })
           }
         }
 
-        // Devolucion entrega entry
-        if (opts.devolverUnidades) {
-          const totalEntregadas = v.entregaItems.reduce((s, ei) => s + ei.quantityEntregada, 0)
-          if (totalEntregadas > 0) {
-            entregaEntriesNext.push({
-              id: `${ventaId}-DEV-${entregaEntriesNext.length + 1}-${Date.now()}`,
+        // Devolucion for cobros — negative cobro entry visible in cobro card
+        if (opts.devolverCobros) {
+          const totalCobrado = v.cobros.filter((c) => c.monto > 0).reduce((s, c) => s + c.monto, 0)
+          if (totalCobrado > 0) {
+            // Add devolucion entry for the monto
+            devolucionEntriesNext.push({
+              id: `${ventaId}-DEV-COB-${devolucionEntriesNext.length + 1}-${Date.now()}`,
               fecha,
               hora,
-              items: v.entregaItems
-                .filter((ei) => ei.quantityEntregada > 0)
-                .map((ei) => ({ sku: ei.sku, quantity: -ei.quantityEntregada })),
+              items: [],
+              montoDevuelto: totalCobrado,
+              medioPago: "devolucion",
+            })
+            // Negative cobro entry for the cobro card
+            cobrosNext.push({
+              id: `${ventaId}-COB-DEV-${cobrosNext.length + 1}-${Date.now()}`,
+              fecha,
+              hora,
+              medioPago: "devolucion" as PaymentMethod,
+              monto: -totalCobrado,
             })
           }
         }
@@ -437,12 +453,12 @@ export function useVentas() {
           ...v,
           estado: "cancelada" as VentaEstado,
           cobros: cobrosNext,
-          entregaEntries: entregaEntriesNext,
+          devolucionItems: devolucionItemsNext,
+          devolucionEntries: devolucionEntriesNext,
         }
       })
       setVentas(updatedVentas)
       saveVentas(updatedVentas)
-      console.log(`[v0] useVentas - Cancelled venta: ${ventaId}`)
     },
     [ventas, saveVentas],
   )

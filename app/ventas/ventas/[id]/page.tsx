@@ -30,7 +30,6 @@ import {
   Pencil,
   RotateCcw,
   RefreshCw,
-  Copy,
   ShoppingCart,
 } from "lucide-react"
 import Image from "next/image"
@@ -922,15 +921,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                               </button>
                             </div>
                           )}
-                          {estadoUI === "cancelada" && (
-                            <button
-                              type="button"
-                              className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer group w-full justify-center"
-                            >
-                              <Copy className="w-4 h-4 text-slate-500 group-hover:text-slate-700 shrink-0" />
-                              <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-800">Duplicar venta</span>
-                            </button>
-                          )}
+
                           {isEditMode && (
                             <span className="text-xs text-slate-400">—</span>
                           )}
@@ -942,8 +933,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   )
                 })()}
 
-                {/* ── Entrega / Cobro — only shown when not finalizada ── */}
-                {estadoUI !== "finalizada" && <div className="grid grid-cols-2 gap-3">
+                {/* ── Entrega / Cobro — only shown when en_curso ── */}
+                {estadoUI === "en_curso" && <div className="grid grid-cols-2 gap-3">
 
                   {/* Widget 1 — Entrega */}
                   <div className={`bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-2 ${entregaPct === 100 && estadoUI !== "cancelada" ? "items-center justify-center" : ""}`}>
