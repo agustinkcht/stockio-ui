@@ -31,6 +31,7 @@ import {
   RotateCcw,
   RefreshCw,
   Copy,
+  ShoppingCart,
 } from "lucide-react"
 import Image from "next/image"
 import type { Venta, VentaItem, PaymentMethod, Item, ItemVariant, VentaEntregaItem, VentaEntregaEntry } from "@/lib/types"
@@ -1380,7 +1381,10 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   <div className="px-5 py-5 flex flex-col gap-0 flex-1 overflow-hidden">
 
                     {/* ── Resumen section ── */}
-                    <p className="text-sm font-semibold text-slate-800 mb-4">Resumen</p>
+                    <div className="flex items-center gap-2 mb-4">
+                      <ShoppingCart className="w-4 h-4 text-slate-500" />
+                      <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">Resumen</h3>
+                    </div>
 
                     {/* Productos — expandable */}
                     <button
@@ -1403,14 +1407,12 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                           return (
                             <div key={idx} className="flex justify-between items-start gap-3 py-2.5 -mx-5 px-5">
                               <div className="min-w-0 flex-1">
-                                <p className="text-xs text-slate-700 leading-tight">{display.name}</p>
-                                {display.tags.length > 0 && (
-                                  <div className="flex flex-wrap gap-1 mt-0.5">
-                                    {display.tags.map((tag, i) => (
-                                      <span key={i} className="text-[10px] text-slate-400">{tag}</span>
-                                    ))}
-                                  </div>
-                                )}
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <p className="text-xs text-slate-700 leading-tight">{display.name}</p>
+                                  {display.tags.map((tag, i) => (
+                                    <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 whitespace-nowrap">{tag}</span>
+                                  ))}
+                                </div>
                               </div>
                               <div className="text-right shrink-0">
                                 <p className="text-[11px] text-slate-400 tabular-nums">{item.quantity} × ${Math.round(adjustedUnit).toLocaleString("es-AR")}</p>

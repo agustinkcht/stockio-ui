@@ -987,7 +987,7 @@ export default function NuevaVentaPage() {
                         </button>
 
                         {showProductosBreakdown && (
-                          <div className="border-b border-slate-100">
+                          <div>
                             {selectedItems.map((it, idx) => {
                               const aj = editAjustes[idx] ?? { value: 0, type: "percent" as const }
                               const display = getVentaItemDisplay(it)
@@ -1005,7 +1005,7 @@ export default function NuevaVentaPage() {
                                 lineTotal = it.unitPrice * it.quantity
                               }
                               return (
-                                <div key={it.sku} className="flex justify-between items-center gap-2 py-2.5 -mx-5 px-5 border-b border-slate-50 last:border-0">
+                                <div key={it.sku} className="flex justify-between items-center gap-2 py-2.5 -mx-5 px-5">
                                   <div className="min-w-0 flex-1">
                                     <div className="flex items-center gap-1.5 flex-wrap">
                                       <p className="text-sm text-slate-600 font-light leading-tight">{display.name}</p>
@@ -1018,6 +1018,7 @@ export default function NuevaVentaPage() {
                                 </div>
                               )
                             })}
+                            <div className="-mx-5 w-[calc(100%+2.5rem)] border-b border-slate-100" />
                           </div>
                         )}
 
@@ -1121,8 +1122,13 @@ export default function NuevaVentaPage() {
                           </div>
                         )}
 
+                        {/* Border below adjustments if any exist */}
+                        {(showGlobalDiscount || showEnvio || customCharges.length > 0) && (
+                          <div className="-mx-5 w-[calc(100%+2.5rem)] border-b border-slate-100 mt-1" />
+                        )}
+
                         {/* Grand Total */}
-                        <div className="flex justify-between items-center pt-3 mt-3 border-t border-slate-200">
+                        <div className="flex justify-between items-center pt-3 mt-1">
                           <span className="text-sm font-bold text-slate-900">Total</span>
                           <span className="text-sm font-bold text-slate-900 tabular-nums">${Math.round(grandTotal).toLocaleString("es-AR")}</span>
                         </div>
