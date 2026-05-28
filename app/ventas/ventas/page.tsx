@@ -9,6 +9,8 @@ import { UserPanel } from "@/components/layout/user-panel"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import {
   ChevronRight,
+  ChevronDown,
+  ChevronLeft,
   FileDown,
   MoreVertical,
   ListFilter,
@@ -29,6 +31,7 @@ import { VentaItemDetailModal } from "@/components/ventas/venta-item-detail-moda
 import { ClienteModal } from "@/components/ventas/cliente-modal"
 import { TicketModal } from "@/components/ventas/ticket-modal"
 import { useVentas } from "@/hooks/use-ventas"
+import { usePeriod, PERIOD_OPTIONS, type PeriodKey } from "@/lib/contexts/period-context"
 
 type StatusTab = "todas" | "en_curso" | "finalizada" | "cancelada"
 
@@ -86,6 +89,11 @@ export default function VentasPage() {
   const router = useRouter()
   const allCheckboxRef = useRef<HTMLInputElement>(null)
   const { ventas } = useVentas()
+
+  const { periodKey, setPeriodKey, setCustomRange } = usePeriod()
+  const [periodOpen, setPeriodOpen] = useState(false)
+  const [calendarOpen, setCalendarOpen] = useState(false)
+  const currentPeriodLabel = PERIOD_OPTIONS.find(o => o.key === periodKey)?.label ?? "Período"
 
   const [selectedVentas, setSelectedVentas] = useState<Set<string>>(new Set())
   const [openMoreMenu, setOpenMoreMenu] = useState<string | null>(null)
@@ -189,17 +197,144 @@ export default function VentasPage() {
           </div>
 
           <main className="flex-1 flex flex-col bg-[rgba(250,251,253,1)] overflow-hidden">
-            {/* Toolbar */}
-            <div className="px-8 py-4 flex items-center justify-end">
-              <button
-                type="button"
-                onClick={() => router.push("/ventas/ventas/nueva")}
-                className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-md flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer"
-              >
-                <Plus className="w-4 h-4 text-slate-700" strokeWidth={2.25} />
-                Nueva Venta
-              </button>
-            </div>
+            {/* Items Grid */}
+            <div className="flex-1 overflow-y-auto">
+              {/* Sticky top bar — mirrors dashboard */}
+              <div className="sticky top-0 z-30">
+                <div className="bg-[rgba(250,251,253,0.85)] backdrop-blur-md">
+                  <div className="px-8 py-6">
+                    <div className="flex items-center justify-between gap-6">
+                      <div>
+                        <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">Ventas</h1>
+                        <div className="mt-2 flex items-center gap-3">
+                          {/* Period selector */}
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={() => setPeriodOpen(!periodOpen)}
+                              className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200 bg-white hover:border-slate-300 transition-colors text-sm font-medium text-slate-700 cursor-pointer"
+                            >
+                              <span>{currentPeriodLabel}</span>
+                              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${periodOpen ? "rotate-180" : ""}`} />
+                            </button>
+                            {periodOpen && (
+                              <>
+                                <div className="fixed inset-0 z-10" onClick={() => setPeriodOpen(false)} />
+                                <div className="absolute top-full left-0 mt-1 w-52 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden z-20 animate-in fade-in-0 slide-in-from-top-1 duration-150">
+                                  {PERIOD_OPTIONS.map(opt => (
+                                    <button
+                                      key={opt.key}
+                                      type="button"
+                                      onClick={() => {
+                                        if (opt.key === "personalizado") {
+                                          setPeriodOpen(false)
+                                          setCalendarOpen(true)
+                                          return
+                                        }
+                                        setPeriodKey(opt.key)
+                                        setCustomRange(null)
+                                        setPeriodOpen(false)
+                                      }}
+                                      className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer ${periodKey === opt.key ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-50"}`}
+                                    >
+                                      {opt.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        {calendarOpen && (
+                          <RangeCalendarDialog
+                            initialRange={null}
+                            onCancel={() => setCalendarOpen(false)}
+                            onApply={(start, end) => {
+                              setPeriodKey("personalizado")
+                              setCustomRange({ start, end })
+                              setCalendarOpen(false)
+                            }}
+                          />
+                        )}
+                        </div>
+                      </div>
+                      {/* Nueva Venta button */}
+                      <button
+                        type="button"
+                        onClick={() => router.push("/ventas/ventas/nueva")}
+                        className="flex items-center gap-2 h-9 px-4 rounded-full bg-slate-900 text-white text-sm font-medium hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+                      >
+                        <Plus className="w-4 h-4" strokeWidth={2.25} />
+                        Nueva Venta
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="px-8 pb-8 pt-6">
+
+              {/* 4 Widgets — clickable to filter */}
+              <div className="grid grid-cols-4 gap-3 mb-5">
+                {/* Widget 1 — Todas */}
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("todas")}
+                  className={`group bg-white border rounded-2xl px-5 py-4 shadow-sm text-left transition-all cursor-pointer flex items-center gap-4 ${activeTab === "todas" ? "border-blue-300 ring-1 ring-blue-200" : "border-slate-200/80 hover:border-blue-200 hover:shadow-md"}`}
+                >
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+                    <BarChart3 className="w-5 h-5 text-blue-500" />
+                  </div>
+                  <div>
+                    <span className="text-2xl font-bold text-slate-900 tabular-nums">{ventas.length}</span>
+                    <span className="text-sm font-medium text-blue-500 ml-2">Ventas Totales</span>
+                  </div>
+                </button>
+
+                {/* Widget 2 — En Curso */}
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("en_curso")}
+                  className={`group bg-white border rounded-2xl px-5 py-4 shadow-sm text-left transition-all cursor-pointer flex items-center gap-4 ${activeTab === "en_curso" ? "border-orange-300 ring-1 ring-orange-200" : "border-slate-200/80 hover:border-orange-200 hover:shadow-md"}`}
+                >
+                  <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center shrink-0">
+                    <Clock className="w-5 h-5 text-orange-400" />
+                  </div>
+                  <div>
+                    <span className="text-2xl font-bold text-slate-900 tabular-nums">{ventas.filter(v => v.estado === "en_curso").length}</span>
+                    <span className="text-sm font-medium text-orange-500 ml-2">En Curso</span>
+                  </div>
+                </button>
+
+                {/* Widget 3 — Finalizadas */}
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("finalizada")}
+                  className={`group bg-white border rounded-2xl px-5 py-4 shadow-sm text-left transition-all cursor-pointer flex items-center gap-4 ${activeTab === "finalizada" ? "border-emerald-300 ring-1 ring-emerald-200" : "border-slate-200/80 hover:border-emerald-200 hover:shadow-md"}`}
+                >
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                  </div>
+                  <div>
+                    <span className="text-2xl font-bold text-slate-900 tabular-nums">{ventas.filter(v => v.estado === "finalizada").length}</span>
+                    <span className="text-sm font-medium text-emerald-500 ml-2">Finalizadas</span>
+                  </div>
+                </button>
+
+                {/* Widget 4 — Canceladas */}
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("cancelada")}
+                  className={`group bg-white border rounded-2xl px-5 py-4 shadow-sm text-left transition-all cursor-pointer flex items-center gap-4 ${activeTab === "cancelada" ? "border-red-300 ring-1 ring-red-200" : "border-slate-200/80 hover:border-red-200 hover:shadow-md"}`}
+                >
+                  <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
+                    <XCircle className="w-5 h-5 text-red-400" />
+                  </div>
+                  <div>
+                    <span className="text-2xl font-bold text-slate-900 tabular-nums">{canceladas.length}</span>
+                    <span className="text-sm font-medium text-red-400 ml-2">Canceladas</span>
+                  </div>
+                </button>
+              </div>
 
             {/* Items Grid */}
             <div className="flex-1 overflow-y-auto">
@@ -211,35 +346,29 @@ export default function VentasPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTab("todas")}
-                  className={`group bg-white border rounded-2xl p-5 shadow-sm text-left transition-all cursor-pointer ${activeTab === "todas" ? "border-blue-300 ring-1 ring-blue-200 shadow-blue-50" : "border-slate-200/80 hover:border-blue-200 hover:shadow-md"}`}
+                  className={`bg-white border rounded-xl p-4 shadow-sm text-left transition-all cursor-pointer ${activeTab === "todas" ? "border-slate-900 ring-1 ring-slate-900" : "border-slate-200/80 hover:border-slate-300"}`}
                 >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-                      <BarChart3 className="w-5 h-5 text-blue-500" />
-                    </div>
-                  </div>
-                  <p className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{ventas.length}</p>
-                  <p className="text-sm font-medium text-blue-500 mt-1.5">Ventas Totales</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">en el período</p>
+                  <p className="text-xl font-bold text-slate-900 leading-tight">{ventas.length} Ventas</p>
+                  <p className="text-xs text-slate-400 mt-1">totales en el período</p>
                 </button>
 
                 {/* Widget 2 — En Curso */}
                 <button
                   type="button"
                   onClick={() => setActiveTab("en_curso")}
-                  className={`group bg-white border rounded-2xl p-5 shadow-sm text-left transition-all cursor-pointer ${activeTab === "en_curso" ? "border-orange-300 ring-1 ring-orange-200 shadow-orange-50" : "border-slate-200/80 hover:border-orange-200 hover:shadow-md"}`}
+                  className={`bg-white border rounded-xl p-4 shadow-sm text-left transition-all cursor-pointer ${activeTab === "en_curso" ? "border-slate-900 ring-1 ring-slate-900" : "border-slate-200/80 hover:border-slate-300"}`}
                 >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
-                      <Clock className="w-5 h-5 text-orange-400" />
-                    </div>
-                  </div>
-                  <p className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{ventas.filter(v => v.estado === "en_curso").length}</p>
-                  <p className="text-sm font-medium text-orange-500 mt-1.5">Ventas En Curso</p>
-                  <div className="flex flex-col gap-0.5 mt-2.5 border-t border-slate-100 pt-2.5">
-                    <span className="text-[11px] text-slate-400 tabular-nums">{pendientesEntrega.length} pendientes de entrega</span>
-                    <span className="text-[11px] text-slate-400 tabular-nums">{pendientesCobro.length} pendientes de cobro</span>
-                    <span className="text-[11px] text-slate-400 tabular-nums">{ventas.filter(v => isPendienteCobro(v) && isPendienteEntrega(v)).length} pendientes de ambos</span>
+                  <p className="text-xl font-bold text-slate-900 leading-tight">{ventas.filter(v => v.estado === "en_curso").length} Ventas En Curso</p>
+                  <div className="flex flex-col gap-1 mt-2">
+                    <button type="button" onClick={e => { e.stopPropagation(); setActiveTab("en_curso") }} className="text-xs text-slate-500 hover:text-slate-800 transition-colors text-left tabular-nums">
+                      {pendientesEntrega.length} pendientes de entrega
+                    </button>
+                    <button type="button" onClick={e => { e.stopPropagation(); setActiveTab("en_curso") }} className="text-xs text-slate-500 hover:text-slate-800 transition-colors text-left tabular-nums">
+                      {pendientesCobro.length} pendientes de cobro
+                    </button>
+                    <button type="button" onClick={e => { e.stopPropagation(); setActiveTab("en_curso") }} className="text-xs text-slate-500 hover:text-slate-800 transition-colors text-left tabular-nums">
+                      {ventas.filter(v => isPendienteCobro(v) && isPendienteEntrega(v)).length} pendientes de entrega y cobro
+                    </button>
                   </div>
                 </button>
 
@@ -247,17 +376,13 @@ export default function VentasPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTab("finalizada")}
-                  className={`group bg-white border rounded-2xl p-5 shadow-sm text-left transition-all cursor-pointer ${activeTab === "finalizada" ? "border-emerald-300 ring-1 ring-emerald-200 shadow-emerald-50" : "border-slate-200/80 hover:border-emerald-200 hover:shadow-md"}`}
+                  className={`bg-white border rounded-xl p-4 shadow-sm text-left transition-all cursor-pointer ${activeTab === "finalizada" ? "border-slate-900 ring-1 ring-slate-900" : "border-slate-200/80 hover:border-slate-300"}`}
                 >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
-                      <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                    </div>
-                  </div>
-                  <p className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{ventas.filter(v => v.estado === "finalizada").length}</p>
-                  <p className="text-sm font-medium text-emerald-500 mt-1.5">Ventas Finalizadas</p>
-                  <div className="flex flex-col gap-0.5 mt-2.5 border-t border-slate-100 pt-2.5">
-                    <span className="text-[11px] text-slate-400 tabular-nums">0 con cambios/devoluciones</span>
+                  <p className="text-xl font-bold text-slate-900 leading-tight">{ventas.filter(v => v.estado === "finalizada").length} Ventas Finalizadas</p>
+                  <div className="flex flex-col gap-1 mt-2">
+                    <button type="button" onClick={e => { e.stopPropagation(); setActiveTab("finalizada") }} className="text-xs text-slate-500 hover:text-slate-800 transition-colors text-left tabular-nums">
+                      0 con cambios/devoluciones
+                    </button>
                   </div>
                 </button>
 
@@ -265,15 +390,9 @@ export default function VentasPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTab("cancelada")}
-                  className={`group bg-white border rounded-2xl p-5 shadow-sm text-left transition-all cursor-pointer ${activeTab === "cancelada" ? "border-red-300 ring-1 ring-red-200 shadow-red-50" : "border-slate-200/80 hover:border-red-200 hover:shadow-md"}`}
+                  className={`bg-white border rounded-xl p-4 shadow-sm text-left transition-all cursor-pointer ${activeTab === "cancelada" ? "border-slate-900 ring-1 ring-slate-900" : "border-slate-200/80 hover:border-slate-300"}`}
                 >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
-                      <XCircle className="w-5 h-5 text-red-400" />
-                    </div>
-                  </div>
-                  <p className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{canceladas.length}</p>
-                  <p className="text-sm font-medium text-red-400 mt-1.5">Ventas Canceladas</p>
+                  <p className="text-xl font-bold text-slate-900 leading-tight">{canceladas.length} Ventas Canceladas</p>
                 </button>
               </div>
 
@@ -606,6 +725,72 @@ export default function VentasPage() {
       {viewingTicketVenta && (
         <TicketModal venta={viewingTicketVenta} onClose={() => setViewingTicketVenta(null)} />
       )}
+    </div>
+  )
+}
+
+/* ---- Range Calendar Dialog (mirrors dashboard) ---- */
+
+const ES_MONTHS = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
+const ES_WEEKDAYS_SHORT = ["LUN","MAR","MIÉ","JUE","VIE","SÁB","DOM"]
+
+function startOfDay(d: Date) { const x = new Date(d); x.setHours(0,0,0,0); return x }
+function isSameDay(a: Date, b: Date) { return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate() }
+
+function RangeCalendarDialog({ initialRange, onApply, onCancel }: { initialRange: {start:Date;end:Date}|null; onApply:(s:Date,e:Date)=>void; onCancel:()=>void }) {
+  const today = startOfDay(new Date())
+  const [viewMonth, setViewMonth] = useState(() => { const base = initialRange?.end ?? today; return new Date(base.getFullYear(), base.getMonth(), 1) })
+  const [start, setStart] = useState<Date|null>(initialRange?.start ?? null)
+  const [end, setEnd] = useState<Date|null>(initialRange?.end ?? null)
+
+  const handleDayClick = (d: Date) => {
+    if (d > today) return
+    if (!start || (start && end)) { setStart(d); setEnd(null) }
+    else if (start && !end) { if (d < start) { setStart(d); setEnd(start) } else setEnd(d) }
+  }
+  const goPrev = () => setViewMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth()-1, 1))
+  const goNext = () => { const n = new Date(viewMonth.getFullYear(), viewMonth.getMonth()+1, 1); if (n <= new Date(today.getFullYear(), today.getMonth(), 1)) setViewMonth(n) }
+
+  const firstOfMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 1)
+  const lastOfMonth  = new Date(viewMonth.getFullYear(), viewMonth.getMonth()+1, 0)
+  const startWeekday = (firstOfMonth.getDay()+6)%7
+  const totalCells   = Math.ceil((startWeekday+lastOfMonth.getDate())/7)*7
+  const cells: (Date|null)[] = []
+  for (let i=0;i<totalCells;i++) { const d=i-startWeekday+1; cells.push(d<1||d>lastOfMonth.getDate()?null:new Date(viewMonth.getFullYear(),viewMonth.getMonth(),d)) }
+
+  const inRange = (d: Date) => !!(start && end && d>=start && d<=end)
+  const canApply = !!start && !!end
+
+  return (
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-sm" onClick={onCancel}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200" onClick={e=>e.stopPropagation()}>
+        <div className="px-6 pt-6 pb-3 flex items-center justify-between">
+          <button type="button" onClick={goPrev} className="w-9 h-9 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-700 cursor-pointer"><ChevronLeft className="w-5 h-5"/></button>
+          <span className="text-base font-medium text-slate-900">{ES_MONTHS[viewMonth.getMonth()]} {viewMonth.getFullYear()}</span>
+          <button type="button" onClick={goNext} disabled={viewMonth.getFullYear()===today.getFullYear()&&viewMonth.getMonth()===today.getMonth()} className="w-9 h-9 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-700 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"><ChevronRight className="w-5 h-5"/></button>
+        </div>
+        <div className="px-6 grid grid-cols-7 gap-y-2">
+          {ES_WEEKDAYS_SHORT.map(w=><div key={w} className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold text-center py-2">{w}</div>)}
+        </div>
+        <div className="px-3 pb-4">
+          <div className="grid grid-cols-7">
+            {cells.map((d,i)=>{
+              if (!d) return <div key={i} className="aspect-square"/>
+              const isFuture=d>today; const isStart=!!(start&&isSameDay(d,start)); const isEnd=!!(end&&isSameDay(d,end)); const inRangeSel=inRange(d)&&!isStart&&!isEnd; const isEdge=isStart||isEnd
+              return (
+                <div key={i} className="aspect-square flex items-center justify-center relative">
+                  {(inRangeSel||(isEdge&&start&&end&&!isSameDay(start,end)))&&<div className={`absolute inset-y-1 bg-blue-50 ${isStart?"left-1/2 right-0":isEnd?"left-0 right-1/2":"left-0 right-0"}`}/>}
+                  <button type="button" onClick={()=>handleDayClick(d)} disabled={isFuture} className={`relative z-10 w-9 h-9 rounded-full flex items-center justify-center text-sm transition-colors cursor-pointer ${isEdge?"bg-blue-500 text-white font-semibold":isFuture?"text-slate-300 cursor-not-allowed":"text-slate-700 hover:bg-slate-100"}`}>{d.getDate()}</button>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+        <div className="px-6 pb-6 pt-2 flex items-center gap-3">
+          <button type="button" onClick={onCancel} className="px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg cursor-pointer">Cancelar</button>
+          <button type="button" disabled={!canApply} onClick={()=>start&&end&&onApply(start,end)} className="flex-1 py-2.5 rounded-lg bg-blue-500 text-white text-sm font-semibold hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer">Aplicar</button>
+        </div>
+      </div>
     </div>
   )
 }
