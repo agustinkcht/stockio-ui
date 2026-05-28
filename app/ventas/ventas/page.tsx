@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, Fragment } from "react"
+import { useState, useEffect, useRef, useMemo, Fragment } from "react"
 import { useRouter } from "next/navigation"
 import { Sidebar } from "@/components/layout/sidebar"
 import { useSidebar } from "@/hooks/use-sidebar"
@@ -33,6 +33,7 @@ import { useVentas } from "@/hooks/use-ventas"
 import {
   PERIOD_OPTIONS,
   usePeriod,
+  usePeriodRange,
   type PeriodKey,
 } from "@/lib/contexts/period-context"
 
@@ -96,8 +97,17 @@ export default function VentasPage() {
   const { periodKey, customRange, setPeriodKey, setCustomRange } = usePeriod()
   const [periodOpen, setPeriodOpen] = useState(false)
   const [calendarOpen, setCalendarOpen] = useState(false)
+  const range = usePeriodRange()
 
-  const periodLabel = PERIOD_OPTIONS.find((o) => o.key === periodKey)?.label ?? "Período"
+  const periodLabel = useMemo(() => {
+    return PERIOD_OPTIONS.find((o) => o.key === periodKey)?.label ?? "Período"
+  }, [periodKey])
+
+  const rangeLabel = useMemo(() => {
+    const fmt = (d: Date) => d.toLocaleDateString("es-AR", { day: "numeric", month: "short" })
+    if (periodKey === "hoy") return fmt(range.start)
+    return `${fmt(range.start)} — ${fmt(range.end)}`
+  }, [range, periodKey])
 
   const [selectedVentas, setSelectedVentas] = useState<Set<string>>(new Set())
   const [openMoreMenu, setOpenMoreMenu] = useState<string | null>(null)
@@ -200,70 +210,67 @@ export default function VentasPage() {
             </div>
           </div>
 
-          <main className="flex-1 flex flex-col bg-[rgba(250,251,253,1)] overflow-hidden">
-            {/* Top Bar */}
-            <div className="px-8 py-5 flex items-center justify-between border-b border-slate-100 bg-white">
-              <div className="flex items-center gap-4">
-                <h1 className="text-xl font-semibold text-slate-900 tracking-tight">Ventas</h1>
-                {/* Period selector */}
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setPeriodOpen(!periodOpen)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 bg-white hover:border-slate-300 transition-colors text-sm font-medium text-slate-600 cursor-pointer"
-                  >
-                    <span>{periodLabel}</span>
-                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${periodOpen ? "rotate-180" : ""}`} />
-                  </button>
-                  {periodOpen && (
-                    <>
-                      <div className="fixed inset-0 z-10" onClick={() => setPeriodOpen(false)} />
-                      <div className="absolute top-full left-0 mt-1 w-52 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden z-20">
-                        {PERIOD_OPTIONS.map((opt) => (
-                          <button
-                            key={opt.key}
-                            type="button"
-                            onClick={() => {
-                              if (opt.key === "personalizado") {
-                                setPeriodOpen(false)
-                                setCalendarOpen(true)
-                                return
-                              }
-                              setPeriodKey(opt.key)
-                              setCustomRange(null)
+          <main className="flex-1 flex flex-col bg-slate-50 overflow-hidden">
+            {/* Sticky hero — matches dashboard style */}
+            <div className="sticky top-0 z-30">
+              <div className="bg-slate-50/80 backdrop-blur-md">
+                <div className="px-8 py-8">
+                  <div className="flex items-start justify-between gap-6">
+                    <div className="min-w-0">
+                      <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
+                        Ventas
+                      </h1>
+                      <div className="mt-2 flex items-center gap-3 flex-wrap">
+                        <VentasPeriodSelector
+                          open={periodOpen}
+                          setOpen={setPeriodOpen}
+                          currentLabel={periodLabel}
+                          currentKey={periodKey}
+                          onSelect={(k) => {
+                            if (k === "personalizado") {
                               setPeriodOpen(false)
+                              setCalendarOpen(true)
+                              return
+                            }
+                            setPeriodKey(k)
+                            setCustomRange(null)
+                            setPeriodOpen(false)
+                          }}
+                        />
+                        <span className="text-sm text-slate-500 font-mono">{rangeLabel}</span>
+                        {calendarOpen && (
+                          <VentasRangeCalendarDialog
+                            initialRange={customRange}
+                            onCancel={() => setCalendarOpen(false)}
+                            onApply={(start, end) => {
+                              setCustomRange({ start, end })
+                              setPeriodKey("personalizado")
+                              setCalendarOpen(false)
                             }}
-                            className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer ${
-                              periodKey === opt.key
-                                ? "bg-slate-900 text-white"
-                                : "text-slate-700 hover:bg-slate-50"
-                            }`}
-                          >
-                            {opt.label}
-                          </button>
-                        ))}
+                          />
+                        )}
                       </div>
-                    </>
-                  )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => router.push("/ventas/ventas/nueva")}
+                      className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer mt-1"
+                    >
+                      <Plus className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
+                      Nueva Venta
+                    </button>
+                  </div>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => router.push("/ventas/ventas/nueva")}
-                className="h-8 px-3.5 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-1.5 shrink-0 rounded-md flex items-center bg-white text-slate-800 hover:bg-slate-50 cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5 text-slate-600" strokeWidth={2.25} />
-                Nueva Venta
-              </button>
             </div>
 
             {/* Items Grid */}
             <div className="flex-1 overflow-y-auto">
-              <div className="px-8 pb-8 mt-4">
+              <div className="px-8 pb-8 mt-2">
 
-              {/* 4 Widgets — clickable to filter */}
+              {/* 4 Widgets — clickable to filter: Totales / Finalizadas / En Curso / Canceladas */}
               <div className="grid grid-cols-4 gap-3 mb-5">
-                {/* Widget 1 — Todas */}
+                {/* Widget 1 — Totales */}
                 <button
                   type="button"
                   onClick={() => setActiveTab("todas")}
@@ -278,22 +285,7 @@ export default function VentasPage() {
                   </div>
                 </button>
 
-                {/* Widget 2 — En Curso */}
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("en_curso")}
-                  className={`border rounded-xl px-5 py-4 shadow-sm text-left transition-all cursor-pointer ${activeTab === "en_curso" ? "bg-orange-50 border-orange-200" : "bg-white border-slate-200/80 hover:border-orange-200 hover:shadow-md"}`}
-                >
-                  <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center mb-3 shadow-sm border border-slate-100">
-                    <Clock className="w-4 h-4 text-orange-400" />
-                  </div>
-                  <div className="flex items-baseline gap-2.5 min-w-0">
-                    <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{ventas.filter(v => v.estado === "en_curso").length}</p>
-                    <p className="text-sm font-medium text-orange-500 truncate">En Curso</p>
-                  </div>
-                </button>
-
-                {/* Widget 3 — Finalizadas */}
+                {/* Widget 2 — Finalizadas */}
                 <button
                   type="button"
                   onClick={() => setActiveTab("finalizada")}
@@ -305,6 +297,21 @@ export default function VentasPage() {
                   <div className="flex items-baseline gap-2.5 min-w-0">
                     <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{ventas.filter(v => v.estado === "finalizada").length}</p>
                     <p className="text-sm font-medium text-emerald-500 truncate">Finalizadas</p>
+                  </div>
+                </button>
+
+                {/* Widget 3 — En Curso */}
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("en_curso")}
+                  className={`border rounded-xl px-5 py-4 shadow-sm text-left transition-all cursor-pointer ${activeTab === "en_curso" ? "bg-orange-50 border-orange-200" : "bg-white border-slate-200/80 hover:border-orange-200 hover:shadow-md"}`}
+                >
+                  <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center mb-3 shadow-sm border border-slate-100">
+                    <Clock className="w-4 h-4 text-orange-400" />
+                  </div>
+                  <div className="flex items-baseline gap-2.5 min-w-0">
+                    <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{ventas.filter(v => v.estado === "en_curso").length}</p>
+                    <p className="text-sm font-medium text-orange-500 truncate">En Curso</p>
                   </div>
                 </button>
 
@@ -653,6 +660,176 @@ export default function VentasPage() {
       {viewingTicketVenta && (
         <TicketModal venta={viewingTicketVenta} onClose={() => setViewingTicketVenta(null)} />
       )}
+    </div>
+  )
+}
+
+/* ─── Period Selector ───────────────────────────────────────────────────────── */
+
+function VentasPeriodSelector({
+  open,
+  setOpen,
+  currentLabel,
+  currentKey,
+  onSelect,
+}: {
+  open: boolean
+  setOpen: (v: boolean) => void
+  currentLabel: string
+  currentKey: PeriodKey
+  onSelect: (k: PeriodKey) => void
+}) {
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200 bg-white hover:border-slate-300 transition-colors text-sm font-medium text-slate-700 cursor-pointer"
+      >
+        <span>{currentLabel}</span>
+        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden z-20 animate-in fade-in-0 slide-in-from-top-1 duration-150">
+            {PERIOD_OPTIONS.map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => onSelect(opt.key)}
+                className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer ${
+                  currentKey === opt.key
+                    ? "bg-slate-900 text-white"
+                    : "text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+/* ─── Range Calendar Dialog ─────────────────────────────────────────────────── */
+
+function startOfDayV(d: Date) {
+  const copy = new Date(d)
+  copy.setHours(0, 0, 0, 0)
+  return copy
+}
+
+function VentasRangeCalendarDialog({
+  initialRange,
+  onApply,
+  onCancel,
+}: {
+  initialRange: { start: Date; end: Date } | null
+  onApply: (start: Date, end: Date) => void
+  onCancel: () => void
+}) {
+  const today = startOfDayV(new Date())
+  const [viewMonth, setViewMonth] = useState(() => {
+    const base = initialRange?.end ?? today
+    return new Date(base.getFullYear(), base.getMonth(), 1)
+  })
+  const [start, setStart] = useState<Date | null>(initialRange?.start ?? null)
+  const [end, setEnd] = useState<Date | null>(initialRange?.end ?? null)
+
+  const handleDayClick = (d: Date) => {
+    if (d > today) return
+    if (!start || (start && end)) {
+      setStart(d); setEnd(null)
+    } else if (start && !end) {
+      if (d < start) { setStart(d); setEnd(start) }
+      else setEnd(d)
+    }
+  }
+
+  const goPrev = () => setViewMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth() - 1, 1))
+  const goNext = () => {
+    const next = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 1)
+    if (next > today) return
+    setViewMonth(next)
+  }
+
+  const firstOfMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 1)
+  const lastOfMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 0)
+  const startWeekday = (firstOfMonth.getDay() + 6) % 7
+  const totalCells = Math.ceil((startWeekday + lastOfMonth.getDate()) / 7) * 7
+  const cells: (Date | null)[] = []
+  for (let i = 0; i < totalCells; i++) {
+    const dayNum = i - startWeekday + 1
+    cells.push(dayNum < 1 || dayNum > lastOfMonth.getDate() ? null : new Date(viewMonth.getFullYear(), viewMonth.getMonth(), dayNum))
+  }
+
+  const inRange = (d: Date) => !!(start && end && d >= start && d <= end)
+  const canApply = !!start && !!end
+
+  const MONTHS = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 p-6 w-80">
+        <div className="flex items-center justify-between mb-4">
+          <button type="button" onClick={goPrev} className="p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer">
+            <ChevronDown className="w-4 h-4 text-slate-500 rotate-90" />
+          </button>
+          <span className="text-sm font-semibold text-slate-800">{MONTHS[viewMonth.getMonth()]} {viewMonth.getFullYear()}</span>
+          <button type="button" onClick={goNext} className="p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer">
+            <ChevronDown className="w-4 h-4 text-slate-500 -rotate-90" />
+          </button>
+        </div>
+        <div className="grid grid-cols-7 gap-0.5 mb-1">
+          {["Lu","Ma","Mi","Ju","Vi","Sa","Do"].map((d) => (
+            <div key={d} className="text-center text-[10px] font-semibold text-slate-400 py-1">{d}</div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-0.5">
+          {cells.map((d, i) => {
+            if (!d) return <div key={i} />
+            const isStart = start && d.getTime() === start.getTime()
+            const isEnd = end && d.getTime() === end.getTime()
+            const isInRange = inRange(d)
+            const isFuture = d > today
+            return (
+              <button
+                key={i}
+                type="button"
+                disabled={isFuture}
+                onClick={() => handleDayClick(d)}
+                className={`text-xs h-8 rounded-lg transition-colors cursor-pointer ${
+                  isStart || isEnd
+                    ? "bg-slate-900 text-white"
+                    : isInRange
+                    ? "bg-slate-100 text-slate-700"
+                    : isFuture
+                    ? "text-slate-300 cursor-not-allowed"
+                    : "text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                {d.getDate()}
+              </button>
+            )
+          })}
+        </div>
+        <div className="mt-4 flex gap-2">
+          <button type="button" onClick={onCancel} className="flex-1 h-9 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 cursor-pointer transition-colors">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            disabled={!canApply}
+            onClick={() => canApply && onApply(start!, end!)}
+            className="flex-1 h-9 rounded-lg bg-slate-900 text-white text-sm font-medium hover:bg-slate-800 cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Aplicar
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
