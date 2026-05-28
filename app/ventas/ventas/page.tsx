@@ -543,8 +543,12 @@ export default function VentasPage() {
                             className="w-4 h-4 rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                           />
                         </div>
-                        <div className="col-span-10 flex items-center justify-start px-3 border-r border-slate-200/70">
-                          <span className="text-sm font-semibold text-slate-900 truncate">{venta.id}</span>
+                        <div className="col-span-16 flex items-center justify-start gap-2 px-3 border-r border-slate-200/70">
+                          <span className="text-sm font-semibold text-slate-900 shrink-0">{venta.id}</span>
+                          <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full shrink-0 ${estadoStyle.bg}`}>
+                            <EstadoIcon className={`w-3 h-3 ${estadoStyle.text}`} />
+                            <span className={`text-xs font-medium ${estadoStyle.text}`}>{estadoStyle.label}</span>
+                          </div>
                         </div>
                         <div className="col-span-10 flex items-center justify-start px-3 border-r border-slate-200/70">
                           <span className="text-sm text-slate-600 truncate">
@@ -556,7 +560,7 @@ export default function VentasPage() {
                           <span className="text-sm text-slate-600 truncate">Manual</span>
                         </div>
                         {/* Spacer */}
-                        <div className="col-span-44" />
+                        <div className="col-span-38" />
                         {/* Ver ticket */}
                         <div className="col-span-18 flex items-center justify-end pr-3 border-r border-slate-200/70">
                           {isFacturada ? (
@@ -620,24 +624,18 @@ export default function VentasPage() {
                           <span className="text-xs font-semibold text-slate-800 whitespace-nowrap">{getClienteNombre(venta)}</span>
                         </button>
 
-                        {/* Estado badge */}
-                        <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full ${estadoStyle.bg} shrink-0`}>
-                          <EstadoIcon className={`w-3 h-3 ${estadoStyle.text}`} />
-                          <span className={`text-xs font-medium ${estadoStyle.text}`}>{estadoStyle.label}</span>
-                        </div>
-
-                        {/* Pendientes — only when en_curso */}
+                        {/* Pendientes — pushed to the right, only when en_curso */}
                         {venta.estado === "en_curso" && (isPendienteCobro(venta) || isPendienteEntrega(venta)) && (
-                          <div className="flex items-center gap-2 text-[11px] font-light text-slate-500">
+                          <div className="ml-auto flex items-center gap-2 text-[11px] font-light text-slate-400 pr-3">
                             {isPendienteCobro(venta) && (
                               <span className="flex items-center gap-1">
-                                <span className="text-slate-400">•</span>
+                                <span>•</span>
                                 Cobro pendiente
                               </span>
                             )}
                             {isPendienteEntrega(venta) && (
                               <span className="flex items-center gap-1">
-                                <span className="text-slate-400">•</span>
+                                <span>•</span>
                                 Entrega pendiente
                               </span>
                             )}
