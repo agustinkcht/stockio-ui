@@ -662,11 +662,11 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
         doc.setFontSize(9)
         const nameW = doc.getTextWidth(nameStr)
         const spaceW = doc.getTextWidth(" ")
-        // Now render tags smaller and lighter, offset by name width + one word-space
+        // Render tags smaller and lighter, offset by name width + two word-spaces for comfort
         doc.setFontSize(7)
         doc.setTextColor(100, 116, 139)
         const tagsStr = display.tags.join("  ·  ")
-        doc.text(tagsStr, colItem + nameW + spaceW, nameY)
+        doc.text(tagsStr, colItem + nameW + spaceW * 2, nameY)
       }
 
       // CANT. column: quantity centered + "x bonif." below if unit discount

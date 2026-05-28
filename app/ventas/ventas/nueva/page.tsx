@@ -694,7 +694,7 @@ export default function NuevaVentaPage() {
                           )}
                         </div>
 
-                        <div className="border border-slate-200 rounded-lg overflow-hidden max-h-[240px] overflow-y-auto">
+                        <div className="border border-slate-200 rounded-lg overflow-hidden max-h-[360px] overflow-y-auto">
                           {/* CF + Nuevo Cliente — ONLY when search is empty */}
                           {clienteSearch.trim() === "" && (
                             <>
@@ -1419,7 +1419,7 @@ export default function NuevaVentaPage() {
                       <div>
                         <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Resumen</p>
                         {/* Products table */}
-                        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+                        <div className="bg-white border border-slate-200 overflow-hidden">
                           {selectedItems.map((it, idx) => {
                             const aj = editAjustes[idx] ?? { value: 0, type: "percent" as const }
                             const display = getVentaItemDisplay(it)
@@ -1471,7 +1471,7 @@ export default function NuevaVentaPage() {
                         </div>
 
                         {/* Totals — right-aligned compact block, separate from products */}
-                        <div className="flex justify-end px-4 pt-3 pb-4 border border-t-0 border-slate-200 rounded-b-xl">
+                        <div className="flex justify-end px-4 pt-3 pb-4 border border-t-0 border-slate-200">
                           <div className="w-64 space-y-2">
                             <div className="flex justify-between items-center">
                               <span className="text-sm text-slate-500">Subtotal</span>
