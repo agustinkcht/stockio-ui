@@ -28,6 +28,9 @@ import {
   X,
   Undo2,
   Pencil,
+  RotateCcw,
+  RefreshCw,
+  Copy,
 } from "lucide-react"
 import Image from "next/image"
 import type { Venta, VentaItem, PaymentMethod, Item, ItemVariant, VentaEntregaItem, VentaEntregaEntry } from "@/lib/types"
@@ -840,47 +843,74 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         <button
                           type="button"
                           onClick={() => isEditMode ? setShowClienteSelectorModal(true) : (clienteId ? setShowClienteInfoModal(true) : undefined)}
-                          className={`bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex items-center gap-3 transition-colors text-left ${clienteId || isEditMode ? "hover:bg-slate-50 cursor-pointer" : "cursor-default"}`}
+                          className={`bg-slate-50 border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex items-center gap-4 transition-colors text-left ${clienteId || isEditMode ? "hover:bg-slate-100 cursor-pointer" : "cursor-default"}`}
                         >
-                          <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
-                            <span className="text-xs font-semibold text-white">{clienteNombre.charAt(0).toUpperCase()}</span>
+                          <div className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
+                            <span className="text-sm font-bold text-white">{clienteNombre.charAt(0).toUpperCase()}</span>
                           </div>
                           <div className="min-w-0">
                             <span className="text-[10px] text-slate-400 uppercase tracking-wider block leading-none mb-1">Cliente</span>
-                            <span className="text-sm font-semibold text-slate-900 truncate block">{clienteNombre}</span>
+                            <span className="text-base font-semibold text-slate-900 truncate block">{clienteNombre}</span>
                           </div>
-                          {isEditMode && <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-auto shrink-0" />}
+                          {isEditMode && <ChevronDown className="w-4 h-4 text-slate-400 ml-auto shrink-0" />}
                         </button>
 
-                        {/* Estado widget */}
-                        <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-1.5">
-                          <span className="text-[10px] text-slate-400 uppercase tracking-wider">Estado</span>
-                          {estadoUI === "finalizada" ? (
-                            <div className="flex items-center gap-2">
-                              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                              <span className="text-sm font-semibold text-emerald-600">Finalizada</span>
-                            </div>
-                          ) : estadoUI === "cancelada" ? (
-                            <div className="flex items-center gap-2">
-                              <XCircle className="w-4 h-4 text-red-400" />
-                              <span className="text-sm font-semibold text-red-600">Cancelada</span>
-                            </div>
-                          ) : (
-                            <>
+                        {/* Estado widget — 3-col internal grid: indicator | divider | actions */}
+                        <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 grid grid-cols-3 gap-0 items-center">
+                          {/* Col 1 — indicator */}
+                          <div className="flex flex-col gap-1 pr-3">
+                            {estadoUI === "finalizada" ? (
                               <div className="flex items-center gap-2">
-                                <Clock className="w-4 h-4 text-amber-500" />
+                                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                                <span className="text-sm font-semibold text-emerald-600">Finalizada</span>
+                              </div>
+                            ) : estadoUI === "cancelada" ? (
+                              <div className="flex items-center gap-2">
+                                <XCircle className="w-4 h-4 text-red-400 shrink-0" />
+                                <span className="text-sm font-semibold text-red-600">Cancelada</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <Clock className="w-4 h-4 text-amber-500 shrink-0" />
                                 <span className="text-sm font-semibold text-amber-700">En Curso</span>
                               </div>
-                              <button
-                                type="button"
-                                onClick={() => setShowFinalizarVenta(true)}
-                                className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 hover:text-emerald-900 transition-colors mt-0.5"
-                              >
-                                <CheckCircle2 className="w-3 h-3" />
-                                Marcar como Finalizada
-                              </button>
-                            </>
-                          )}
+                            )}
+                          </div>
+                          {/* Vertical divider */}
+                          <div className="col-span-2 flex items-stretch gap-0">
+                            <div className="w-px bg-slate-200 self-stretch mx-0 shrink-0" />
+                            {/* Col 3 — actions */}
+                            <div className="flex flex-col gap-1.5 pl-3 justify-center">
+                              {estadoUI === "en_curso" && (
+                                <button
+                                  type="button"
+                                  onClick={() => setShowFinalizarVenta(true)}
+                                  className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 hover:text-emerald-900 transition-colors text-left"
+                                >
+                                  <CheckCircle2 className="w-3 h-3 shrink-0" />
+                                  Finalizar venta
+                                </button>
+                              )}
+                              {estadoUI === "finalizada" && (
+                                <>
+                                  <button type="button" className="flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors text-left">
+                                    <RotateCcw className="w-3 h-3 shrink-0" />
+                                    Devoluciones
+                                  </button>
+                                  <button type="button" className="flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors text-left">
+                                    <RefreshCw className="w-3 h-3 shrink-0" />
+                                    Cambios
+                                  </button>
+                                </>
+                              )}
+                              {estadoUI === "cancelada" && (
+                                <button type="button" className="flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors text-left">
+                                  <Copy className="w-3 h-3 shrink-0" />
+                                  Duplicar venta
+                                </button>
+                              )}
+                            </div>
+                          </div>
                         </div>
 
                       </div>
@@ -893,12 +923,11 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                 {estadoUI !== "finalizada" && <div className="grid grid-cols-2 gap-3">
 
                   {/* Widget 1 — Entrega */}
-                  <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-1.5">
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Entrega</span>
+                  <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-2">
                     {estadoUI === "cancelada" ? (
                       <div className="flex items-center gap-2">
                         <XCircle className="w-4 h-4 text-red-400" />
-                        <span className="text-sm font-semibold text-red-600">No Concretada</span>
+                        <span className="text-base font-semibold text-red-600">No Concretada</span>
                       </div>
                     ) : (
                       <>
@@ -906,22 +935,22 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                           <Package className="w-4 h-4 text-slate-400" />
                           {entregaPct === 100 ? (
                             <>
-                              <span className="text-sm font-semibold text-emerald-600">Entregada</span>
+                              <span className="text-base font-semibold text-emerald-600">Entregada</span>
                               <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                             </>
                           ) : (
-                            <span className="text-sm font-semibold text-slate-700">Entrega {entregaPct}%</span>
+                            <span className="text-base font-semibold text-slate-700">Entrega {entregaPct}%</span>
                           )}
                         </div>
                         {entregaPct < 100 && (
                           <>
-                            <span className="text-xs text-slate-400 tabular-nums">
+                            <span className="text-sm text-slate-400 tabular-nums">
                               {totalUnidades - entregadasUnidades} {totalUnidades - entregadasUnidades === 1 ? "unidad pendiente" : "unidades pendientes"} de entrega
                             </span>
                             <button
                               type="button"
                               onClick={() => setShowRegistrarEntrega(true)}
-                              className="mt-0.5 flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                              className="flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
                             >
                               <Plus className="w-3 h-3" />
                               Registrar entrega
@@ -933,12 +962,11 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   </div>
 
                   {/* Widget 2 — Cobro */}
-                  <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-1.5">
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Cobro</span>
+                  <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-2">
                     {estadoUI === "cancelada" ? (
                       <div className="flex items-center gap-2">
                         <XCircle className="w-4 h-4 text-red-400" />
-                        <span className="text-sm font-semibold text-red-600">No Concretado</span>
+                        <span className="text-base font-semibold text-red-600">No Concretado</span>
                       </div>
                     ) : (
                       <>
@@ -946,22 +974,22 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                           <Wallet className="w-4 h-4 text-slate-400" />
                           {pagoPct === 100 ? (
                             <>
-                              <span className="text-sm font-semibold text-emerald-600">Cobrada</span>
+                              <span className="text-base font-semibold text-emerald-600">Cobrada</span>
                               <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                             </>
                           ) : (
-                            <span className="text-sm font-semibold text-slate-700">Cobro {pagoPct}%</span>
+                            <span className="text-base font-semibold text-slate-700">Cobro {pagoPct}%</span>
                           )}
                         </div>
                         {pagoPct < 100 && (
                           <>
-                            <span className="text-xs text-slate-400 tabular-nums">
+                            <span className="text-sm text-slate-400 tabular-nums">
                               ${Math.round(montoRestante).toLocaleString("es-AR")} pendiente de cobro
                             </span>
                             <button
                               type="button"
                               onClick={() => setShowRegistrarCobro(true)}
-                              className="mt-0.5 flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                              className="flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
                             >
                               <Plus className="w-3 h-3" />
                               Registrar cobro
