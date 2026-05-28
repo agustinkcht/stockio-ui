@@ -226,52 +226,41 @@ export default function VentasPage() {
               {/* Sticky hero — collapses on scroll */}
               <div className="sticky top-0 z-30">
                 <div className="bg-slate-50/80 backdrop-blur-md">
-                  <div
-                    className="px-8 transition-[padding] duration-300 ease-in-out"
-                    style={{ paddingTop: scrolled ? "10px" : "32px", paddingBottom: scrolled ? "10px" : "32px" }}
-                  >
-                    <div className="flex items-center justify-between gap-6">
-                      {/* Left block — stacks title above period when expanded, inline when collapsed */}
-                      <div className="flex min-w-0" style={{ flexDirection: scrolled ? "row" : "column", alignItems: scrolled ? "center" : "flex-start", gap: scrolled ? "12px" : "6px", transition: "gap 0.3s ease, flex-direction 0.3s ease" }}>
+                  <div className="px-8" style={{ paddingTop: scrolled ? "10px" : "32px", paddingBottom: scrolled ? "10px" : "28px", transition: "padding 0.3s ease" }}>
+
+                    {/* Row 1: title (shrinks) + collapsed period (fades in) + button */}
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3 min-w-0">
                         <h1
                           className="font-semibold text-slate-900 tracking-tight shrink-0"
                           style={{
                             fontSize: scrolled ? "1.125rem" : "2.25rem",
-                            lineHeight: scrolled ? "1.5rem" : "2.5rem",
+                            lineHeight: scrolled ? "1.75rem" : "2.75rem",
                             transition: "font-size 0.3s ease, line-height 0.3s ease",
                           }}
                         >
                           Ventas
                         </h1>
-                        <div className="flex items-center gap-3 flex-wrap">
+                        {/* Period pills — visible only in collapsed mode */}
+                        <div
+                          className="flex items-center gap-2"
+                          style={{
+                            opacity: scrolled ? 1 : 0,
+                            pointerEvents: scrolled ? "auto" : "none",
+                            transition: "opacity 0.25s ease",
+                          }}
+                        >
                           <VentasPeriodSelector
                             open={periodOpen}
                             setOpen={setPeriodOpen}
                             currentLabel={periodLabel}
                             currentKey={periodKey}
                             onSelect={(k) => {
-                              if (k === "personalizado") {
-                                setPeriodOpen(false)
-                                setCalendarOpen(true)
-                                return
-                              }
-                              setPeriodKey(k)
-                              setCustomRange(null)
-                              setPeriodOpen(false)
+                              if (k === "personalizado") { setPeriodOpen(false); setCalendarOpen(true); return }
+                              setPeriodKey(k); setCustomRange(null); setPeriodOpen(false)
                             }}
                           />
                           <span className="text-sm text-slate-500 font-mono">{rangeLabel}</span>
-                          {calendarOpen && (
-                            <VentasRangeCalendarDialog
-                              initialRange={customRange}
-                              onCancel={() => setCalendarOpen(false)}
-                              onApply={(start, end) => {
-                                setCustomRange({ start, end })
-                                setPeriodKey("personalizado")
-                                setCalendarOpen(false)
-                              }}
-                            />
-                          )}
                         </div>
                       </div>
                       <button
@@ -283,6 +272,41 @@ export default function VentasPage() {
                         Nueva Venta
                       </button>
                     </div>
+
+                    {/* Row 2: period selector + range — visible only in expanded mode, collapses away */}
+                    <div
+                      style={{
+                        maxHeight: scrolled ? "0px" : "40px",
+                        opacity: scrolled ? 0 : 1,
+                        overflow: "hidden",
+                        marginTop: scrolled ? "0px" : "8px",
+                        transition: "max-height 0.3s ease, opacity 0.25s ease, margin-top 0.3s ease",
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <VentasPeriodSelector
+                          open={!scrolled && periodOpen}
+                          setOpen={(v) => { if (!scrolled) setPeriodOpen(v) }}
+                          currentLabel={periodLabel}
+                          currentKey={periodKey}
+                          onSelect={(k) => {
+                            if (k === "personalizado") { setPeriodOpen(false); setCalendarOpen(true); return }
+                            setPeriodKey(k); setCustomRange(null); setPeriodOpen(false)
+                          }}
+                        />
+                        <span className="text-sm text-slate-500 font-mono">{rangeLabel}</span>
+                      </div>
+                    </div>
+
+                    {calendarOpen && (
+                      <VentasRangeCalendarDialog
+                        initialRange={customRange}
+                        onCancel={() => setCalendarOpen(false)}
+                        onApply={(start, end) => {
+                          setCustomRange({ start, end }); setPeriodKey("personalizado"); setCalendarOpen(false)
+                        }}
+                      />
+                    )}
                   </div>
                 </div>
               </div>
