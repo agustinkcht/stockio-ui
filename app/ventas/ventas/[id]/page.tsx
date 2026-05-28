@@ -173,7 +173,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const [devolucionStep, setDevolucionStep] = useState<1 | 2>(1)
   const [devolucionSelectedItems, setDevolucionSelectedItems] = useState<{ [sku: string]: boolean }>({})
   const [devolucionQuantities, setDevolucionQuantities] = useState<{ [sku: string]: string }>({})
-  const [devolucionMedioPago, setDevolucionMedioPago] = useState<string>("no_especificado")
   // View mode toggle: "productos" | "entrega" | "devolucion"
   const [viewMode, setViewMode] = useState<"productos" | "entrega" | "devolucion">("productos")
   const [finalizarMedioPago, setFinalizarMedioPago] = useState<PaymentMethod | "no_especificado">("no_especificado")
@@ -2237,15 +2236,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
           setDevolucionStep(1)
           setDevolucionSelectedItems({})
           setDevolucionQuantities({})
-          setDevolucionMedioPago("no_especificado")
-        }
-
-        // Default medioPago = last positive cobro's medioPago
-        const defaultMedioPago = [...ventaCobros].reverse().find(c => c.monto > 0)?.medioPago ?? "no_especificado"
-
-        const handleContinuar = () => {
-          setDevolucionMedioPago(defaultMedioPago as string)
-          setDevolucionStep(2)
         }
 
         const handleConfirmDevolucion = () => {
@@ -2254,7 +2244,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
             .filter(e => e.qty > 0)
             .map(e => ({ sku: e.item.sku, quantityDevuelta: e.qty }))
           if (devoluciones.length === 0) return
-          addDevolucion(venta.id, devoluciones, Math.round(totalDevAmount), devolucionMedioPago)
+          addDevolucion(venta.id, devoluciones, Math.round(totalDevAmount))
           setViewMode("devolucion")
           closeModal()
         }
@@ -2372,7 +2362,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         : "Seleccioná productos para devolver"}
                     </span>
                     <button
-                      onClick={handleContinuar}
+                      onClick={() => setDevolucionStep(2)}
                       disabled={selectedCount === 0 || totalDevUnits === 0}
                       className="px-5 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
@@ -2403,24 +2393,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         )
                       })}
                     </ul>
-
-                    {/* Medio de pago selector */}
-                    <div className="w-full max-w-xs mt-4 flex flex-col gap-1.5">
-                      <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Medio de devolución</label>
-                      <select
-                        value={devolucionMedioPago}
-                        onChange={e => setDevolucionMedioPago(e.target.value)}
-                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 bg-white focus:outline-none focus:border-slate-400 transition-colors"
-                      >
-                        <option value="no_especificado">No especificado</option>
-                        <option value="efectivo">Efectivo</option>
-                        <option value="transferencia">Transferencia</option>
-                        <option value="debito">Débito</option>
-                        <option value="credito">Crédito</option>
-                        <option value="mercado_pago">Mercado Pago</option>
-                        <option value="otro">Otro</option>
-                      </select>
-                    </div>
                   </div>
 
                   {/* Footer step 2 */}
