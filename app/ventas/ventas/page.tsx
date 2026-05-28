@@ -112,6 +112,18 @@ export default function VentasPage() {
   const [selectedVentas, setSelectedVentas] = useState<Set<string>>(new Set())
   const [openMoreMenu, setOpenMoreMenu] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
+
+  // Sort
+  const [sortField, setSortField] = useState<"fecha" | "precio">("fecha")
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc")
+  const [sortOpen, setSortOpen] = useState(false)
+
+  // Filters
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [filterCliente, setFilterCliente] = useState("")
+  const [filterPendienteCobro, setFilterPendienteCobro] = useState(false)
+  const [filterPendienteEntrega, setFilterPendienteEntrega] = useState(false)
+  const hasActiveFilters = !!filterCliente || filterPendienteCobro || filterPendienteEntrega
   const [expandedVentas, setExpandedVentas] = useState<Set<string>>(new Set())
   const [viewingItem, setViewingItem] = useState<VentaItem | null>(null)
   const [viewingClienteId, setViewingClienteId] = useState<string | null>(null)
@@ -131,17 +143,40 @@ export default function VentasPage() {
   const pendientesEntrega = ventas.filter(isPendienteEntrega)
   const canceladas = ventas.filter(v => v.estado === "cancelada")
 
-  // Filtered list
-  const filteredVentas = ventas.filter(v => {
-    const matchesTab =
-      activeTab === "todas" ? true :
-      activeTab === "en_curso" ? v.estado === "en_curso" :
-      activeTab === "finalizada" ? v.estado === "finalizada" :
-      v.estado === "cancelada"
-    const q = searchQuery.toLowerCase()
-    const matchesSearch = !q || v.id.toLowerCase().includes(q) || getClienteNombre(v).toLowerCase().includes(q)
-    return matchesTab && matchesSearch
-  })
+  // Unique clientes for filter dropdown
+  const uniqueClientes = useMemo(() => {
+    const names = ventas
+      .map(v => getClienteNombre(v))
+      .filter(n => n !== "Consumidor Final")
+    return Array.from(new Set(names)).sort()
+  }, [ventas])
+
+  // Filtered + sorted list
+  const filteredVentas = useMemo(() => {
+    const filtered = ventas.filter(v => {
+      const matchesTab =
+        activeTab === "todas" ? true :
+        activeTab === "en_curso" ? v.estado === "en_curso" :
+        activeTab === "finalizada" ? v.estado === "finalizada" :
+        v.estado === "cancelada"
+      const q = searchQuery.toLowerCase()
+      const matchesSearch = !q || v.id.toLowerCase().includes(q) || getClienteNombre(v).toLowerCase().includes(q)
+      const matchesCliente = !filterCliente || getClienteNombre(v) === filterCliente
+      const matchesPendienteCobro = !filterPendienteCobro || isPendienteCobro(v)
+      const matchesPendienteEntrega = !filterPendienteEntrega || isPendienteEntrega(v)
+      return matchesTab && matchesSearch && matchesCliente && matchesPendienteCobro && matchesPendienteEntrega
+    })
+    filtered.sort((a, b) => {
+      let diff = 0
+      if (sortField === "fecha") {
+        diff = new Date(`${a.fecha}T${a.hora}`).getTime() - new Date(`${b.fecha}T${b.hora}`).getTime()
+      } else {
+        diff = a.total - b.total
+      }
+      return sortDir === "asc" ? diff : -diff
+    })
+    return filtered
+  }, [ventas, activeTab, searchQuery, filterCliente, filterPendienteCobro, filterPendienteEntrega, sortField, sortDir])
 
   const allSelected = selectedVentas.size === filteredVentas.length && filteredVentas.length > 0
   const someSelected = selectedVentas.size > 0 && selectedVentas.size < filteredVentas.length
@@ -334,9 +369,9 @@ export default function VentasPage() {
               {/* Combined header bar: checkbox | divider | search — then Filtrar/Ordenar on the right */}
               <div className="mb-2 flex items-center gap-2">
                 {/* Header block — shrinks to fit checkbox + search, not full width */}
-                <div className="flex items-center h-9 bg-slate-100 border border-slate-200/80 rounded-md shadow-sm min-w-0 overflow-hidden">
-                  {/* Checkbox cell — width matches col-span-4 of venta item rows */}
-                  <div className="flex items-center justify-center w-[52px] shrink-0">
+                <div className="flex items-center h-9 border border-[rgba(228,230,235,0.6)] shadow-sm rounded-md min-w-0 overflow-hidden bg-white">
+                  {/* Checkbox cell — same bg as Filtrar/Ordenar buttons */}
+                  <div className="flex items-center justify-center w-[52px] shrink-0 h-full bg-white">
                     <input
                       ref={allCheckboxRef}
                       type="checkbox"
@@ -373,20 +408,95 @@ export default function VentasPage() {
 
                 {/* Filtrar / Ordenar — pushed to the far right */}
                 <div className="ml-auto flex items-center gap-2">
-                  <button
-                    type="button"
-                    className="h-9 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] gap-1.5 shrink-0 px-3 rounded-md flex items-center hover:bg-gray-100 cursor-pointer"
-                  >
-                    <ListFilter className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Filtrar</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="h-9 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] gap-1.5 shrink-0 px-3 rounded-md flex items-center hover:bg-gray-100 cursor-pointer"
-                  >
-                    <ArrowUpDown className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Ordenar</span>
-                  </button>
+
+                  {/* Filtrar */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => { setFilterOpen(!filterOpen); setSortOpen(false) }}
+                      className={`h-9 text-xs transition-colors border shadow-sm gap-1.5 shrink-0 px-3 rounded-md flex items-center cursor-pointer ${
+                        hasActiveFilters
+                          ? "border-blue-400 text-blue-600 bg-blue-50"
+                          : "border-[rgba(228,230,235,0.6)] bg-white hover:bg-slate-50"
+                      }`}
+                    >
+                      <ListFilter className="w-3.5 h-3.5" />
+                      <span>Filtrar</span>
+                    </button>
+                    {filterOpen && (
+                      <>
+                        <div className="fixed inset-0 z-10" onClick={() => setFilterOpen(false)} />
+                        <div className="absolute top-full right-0 mt-1 z-20 bg-white border border-slate-200 rounded-lg shadow-lg w-60 p-3 space-y-3">
+                          {/* Cliente */}
+                          <div>
+                            <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Cliente</label>
+                            <select
+                              value={filterCliente}
+                              onChange={(e) => setFilterCliente(e.target.value)}
+                              className="w-full mt-1 px-2 py-1.5 text-xs border border-slate-200 rounded-md focus:outline-none focus:border-slate-400 bg-white"
+                            >
+                              <option value="">Todos</option>
+                              {uniqueClientes.map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                          </div>
+                          {/* Pendiente de cobro / entrega — only for todas / en_curso */}
+                          {(activeTab === "todas" || activeTab === "en_curso") && (
+                            <div className="space-y-2">
+                              <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Estado</label>
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={filterPendienteCobro}
+                                  onChange={(e) => setFilterPendienteCobro(e.target.checked)}
+                                  className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <span className="text-xs text-slate-700">Pendiente de cobro</span>
+                              </label>
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={filterPendienteEntrega}
+                                  onChange={(e) => setFilterPendienteEntrega(e.target.checked)}
+                                  className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <span className="text-xs text-slate-700">Pendiente de entrega</span>
+                              </label>
+                            </div>
+                          )}
+                          {hasActiveFilters && (
+                            <button
+                              type="button"
+                              onClick={() => { setFilterCliente(""); setFilterPendienteCobro(false); setFilterPendienteEntrega(false) }}
+                              className="w-full text-xs text-slate-500 hover:text-slate-700 py-1 text-center cursor-pointer"
+                            >
+                              Limpiar filtros
+                            </button>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Ordenar — unified arrow toggle + field select */}
+                  <div className="flex items-center border border-[rgba(228,230,235,0.6)] shadow-sm rounded-md overflow-hidden bg-white h-9">
+                    <button
+                      type="button"
+                      onClick={() => setSortDir(d => d === "asc" ? "desc" : "asc")}
+                      title={sortDir === "asc" ? "Ascendente" : "Descendente"}
+                      className="px-2.5 h-full hover:bg-slate-50 transition-colors border-r border-[rgba(228,230,235,0.6)] cursor-pointer flex items-center"
+                    >
+                      <ArrowUpDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${sortDir === "desc" ? "rotate-180" : ""}`} />
+                    </button>
+                    <select
+                      value={sortField}
+                      onChange={(e) => setSortField(e.target.value as "fecha" | "precio")}
+                      className="appearance-none pl-2.5 pr-6 text-xs bg-transparent focus:outline-none cursor-pointer text-slate-700 h-full"
+                    >
+                      <option value="fecha">Fecha</option>
+                      <option value="precio">Precio</option>
+                    </select>
+                  </div>
+
                 </div>
               </div>
 
