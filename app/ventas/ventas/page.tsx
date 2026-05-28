@@ -97,8 +97,6 @@ export default function VentasPage() {
   const { periodKey, customRange, setPeriodKey, setCustomRange } = usePeriod()
   const [periodOpen, setPeriodOpen] = useState(false)
   const [calendarOpen, setCalendarOpen] = useState(false)
-  const [scrolled, setScrolled] = useState(false)
-  const scrollContainerRef = useRef<HTMLDivElement>(null)
   const range = usePeriodRange()
 
   const periodLabel = useMemo(() => {
@@ -153,14 +151,6 @@ export default function VentasPage() {
       allCheckboxRef.current.indeterminate = someSelected
     }
   }, [someSelected])
-
-  useEffect(() => {
-    const el = scrollContainerRef.current
-    if (!el) return
-    const handleScroll = () => setScrolled(el.scrollTop > 40)
-    el.addEventListener("scroll", handleScroll, { passive: true })
-    return () => el.removeEventListener("scroll", handleScroll)
-  }, [])
 
   const toggleSelectAll = () => {
     if (allSelected) {
@@ -222,91 +212,56 @@ export default function VentasPage() {
 
           <main className="flex-1 flex flex-col overflow-hidden">
             {/* Single scroll container — sticky hero lives inside it so backdrop-blur works */}
-            <div ref={scrollContainerRef} className="flex-1 overflow-y-auto bg-slate-50">
-              {/* Sticky hero — collapses on scroll */}
+            <div className="flex-1 overflow-y-auto bg-slate-50">
+              {/* Sticky hero */}
               <div className="sticky top-0 z-30">
                 <div className="bg-slate-50/80 backdrop-blur-md">
-                  <div className="px-8" style={{ paddingTop: scrolled ? "10px" : "32px", paddingBottom: scrolled ? "10px" : "28px", transition: "padding 0.3s ease" }}>
-
-                    {/* Row 1: title (shrinks) + collapsed period (fades in) + button */}
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <h1
-                          className="font-semibold text-slate-900 tracking-tight shrink-0"
-                          style={{
-                            fontSize: scrolled ? "1.125rem" : "2.25rem",
-                            lineHeight: scrolled ? "1.75rem" : "2.75rem",
-                            transition: "font-size 0.3s ease, line-height 0.3s ease",
-                          }}
-                        >
+                  <div className="px-8 py-8">
+                    <div className="flex items-start justify-between gap-6">
+                      <div className="min-w-0">
+                        <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
                           Ventas
                         </h1>
-                        {/* Period pills — visible only in collapsed mode */}
-                        <div
-                          className="flex items-center gap-2"
-                          style={{
-                            opacity: scrolled ? 1 : 0,
-                            pointerEvents: scrolled ? "auto" : "none",
-                            transition: "opacity 0.25s ease",
-                          }}
-                        >
+                        <div className="mt-2 flex items-center gap-3 flex-wrap">
                           <VentasPeriodSelector
                             open={periodOpen}
                             setOpen={setPeriodOpen}
                             currentLabel={periodLabel}
                             currentKey={periodKey}
                             onSelect={(k) => {
-                              if (k === "personalizado") { setPeriodOpen(false); setCalendarOpen(true); return }
-                              setPeriodKey(k); setCustomRange(null); setPeriodOpen(false)
+                              if (k === "personalizado") {
+                                setPeriodOpen(false)
+                                setCalendarOpen(true)
+                                return
+                              }
+                              setPeriodKey(k)
+                              setCustomRange(null)
+                              setPeriodOpen(false)
                             }}
                           />
                           <span className="text-sm text-slate-500 font-mono">{rangeLabel}</span>
+                          {calendarOpen && (
+                            <VentasRangeCalendarDialog
+                              initialRange={customRange}
+                              onCancel={() => setCalendarOpen(false)}
+                              onApply={(start, end) => {
+                                setCustomRange({ start, end })
+                                setPeriodKey("personalizado")
+                                setCalendarOpen(false)
+                              }}
+                            />
+                          )}
                         </div>
                       </div>
                       <button
                         type="button"
                         onClick={() => router.push("/ventas/ventas/nueva")}
-                        className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer"
+                        className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer mt-1"
                       >
                         <Plus className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
                         Nueva Venta
                       </button>
                     </div>
-
-                    {/* Row 2: period selector + range — visible only in expanded mode, collapses away */}
-                    <div
-                      style={{
-                        maxHeight: scrolled ? "0px" : "40px",
-                        opacity: scrolled ? 0 : 1,
-                        overflow: "hidden",
-                        marginTop: scrolled ? "0px" : "8px",
-                        transition: "max-height 0.3s ease, opacity 0.25s ease, margin-top 0.3s ease",
-                      }}
-                    >
-                      <div className="flex items-center gap-3">
-                        <VentasPeriodSelector
-                          open={!scrolled && periodOpen}
-                          setOpen={(v) => { if (!scrolled) setPeriodOpen(v) }}
-                          currentLabel={periodLabel}
-                          currentKey={periodKey}
-                          onSelect={(k) => {
-                            if (k === "personalizado") { setPeriodOpen(false); setCalendarOpen(true); return }
-                            setPeriodKey(k); setCustomRange(null); setPeriodOpen(false)
-                          }}
-                        />
-                        <span className="text-sm text-slate-500 font-mono">{rangeLabel}</span>
-                      </div>
-                    </div>
-
-                    {calendarOpen && (
-                      <VentasRangeCalendarDialog
-                        initialRange={customRange}
-                        onCancel={() => setCalendarOpen(false)}
-                        onApply={(start, end) => {
-                          setCustomRange({ start, end }); setPeriodKey("personalizado"); setCalendarOpen(false)
-                        }}
-                      />
-                    )}
                   </div>
                 </div>
               </div>
