@@ -1386,12 +1386,11 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     <button
                       type="button"
                       onClick={() => setShowSubtotalBreakdown(!showSubtotalBreakdown)}
-                      className="flex items-center py-2.5 border-b border-slate-200 text-left hover:bg-slate-50/50 -mx-5 px-5 w-[calc(100%+2.5rem)] transition-colors"
+                      className="flex items-center py-3 border-b border-slate-100 text-left hover:bg-slate-50/50 transition-colors -mx-5 px-5 w-[calc(100%+2.5rem)]"
                     >
                       <span className="text-sm text-slate-500 flex-1">Productos</span>
                       <span className="text-sm text-slate-700 tabular-nums mr-1.5">${Math.round(venta.subtotal).toLocaleString("es-AR")}</span>
                       <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${showSubtotalBreakdown ? "rotate-180" : ""}`} />
-                      </div>
                     </button>
                     {showSubtotalBreakdown && (
                       <div className="border-b border-slate-200">
