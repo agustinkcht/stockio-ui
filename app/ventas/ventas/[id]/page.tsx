@@ -765,48 +765,21 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     <div className="pt-8 px-0 pb-3 flex flex-col gap-6">
                       {/* Row 1: Venta ID + date + origen + actions */}
                       <div className="flex items-center justify-between gap-4">
-                        {/* Venta ID + fecha/hora + origen — spread across available width */}
                         <div className="flex items-center flex-1 min-w-0">
-                          {/* Venta ID */}
                           <div className="flex items-baseline gap-1.5 shrink-0">
                             <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Venta</span>
                             <span className="text-2xl font-bold text-slate-900 leading-none tracking-tight">{venta.id}</span>
                           </div>
-
                           <div className="h-5 w-px bg-slate-300 shrink-0 mx-5" />
-
-                          {/* Fecha */}
                           <span className="text-sm font-medium text-slate-600 tabular-nums shrink-0">
                             {dia} {mesCorto} {fechaObj.getFullYear()} · {venta.hora}
                           </span>
-
                           <div className="h-5 w-px bg-slate-300 shrink-0 mx-5" />
-
-                          {/* Origen */}
                           <span className="text-sm text-slate-400 shrink-0">Manual</span>
                         </div>
-                      </div>
 
-                      {/* Row 2: Cliente pill + actions floating right */}
-                      <div className="flex items-center justify-between">
-                        {/* Cliente pill — click to view info (view mode) or select (edit mode) */}
-                        <button
-                          type="button"
-                          onClick={() => isEditMode ? setShowClienteSelectorModal(true) : (clienteId ? setShowClienteInfoModal(true) : undefined)}
-                          className={`bg-slate-100 border border-slate-200/60 rounded-lg shadow-sm px-4 py-2.5 flex items-center gap-3 w-fit transition-colors ${clienteId || isEditMode ? "hover:bg-slate-200/60 cursor-pointer" : "cursor-default"}`}
-                        >
-                          <div className="w-7 h-7 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
-                            <span className="text-xs font-semibold text-white">{clienteNombre.charAt(0).toUpperCase()}</span>
-                          </div>
-                          <div className="text-left">
-                            <span className="text-[10px] text-slate-400 uppercase tracking-wider block leading-none mb-0.5">Cliente</span>
-                            <span className="text-sm font-semibold text-slate-900 leading-tight">{clienteNombre}</span>
-                          </div>
-                          {isEditMode && <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-1" />}
-                        </button>
-
-                        {/* Actions */}
-                        <div className="flex items-center gap-2">
+                        {/* Actions — moved here from row 2 */}
+                        <div className="flex items-center gap-2 shrink-0">
                           {estadoUI === "en_curso" && (
                             <button
                               type="button"
@@ -860,45 +833,62 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         </div>
                       </div>
 
+                      {/* Row 2: Cliente pill + Estado widget on the right */}
+                      <div className="flex items-center justify-between">
+                        <button
+                          type="button"
+                          onClick={() => isEditMode ? setShowClienteSelectorModal(true) : (clienteId ? setShowClienteInfoModal(true) : undefined)}
+                          className={`bg-slate-100 border border-slate-200/60 rounded-lg shadow-sm px-4 py-2.5 flex items-center gap-3 w-fit transition-colors ${clienteId || isEditMode ? "hover:bg-slate-200/60 cursor-pointer" : "cursor-default"}`}
+                        >
+                          <div className="w-7 h-7 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
+                            <span className="text-xs font-semibold text-white">{clienteNombre.charAt(0).toUpperCase()}</span>
+                          </div>
+                          <div className="text-left">
+                            <span className="text-[10px] text-slate-400 uppercase tracking-wider block leading-none mb-0.5">Cliente</span>
+                            <span className="text-sm font-semibold text-slate-900 leading-tight">{clienteNombre}</span>
+                          </div>
+                          {isEditMode && <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-1" />}
+                        </button>
+
+                        {/* Estado — moved here from widget row */}
+                        <div className="flex items-center gap-2">
+                          {estadoUI === "finalizada" ? (
+                            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span className="text-sm font-semibold">Finalizada</span>
+                            </div>
+                          ) : estadoUI === "cancelada" ? (
+                            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 text-red-700 border border-red-200">
+                              <XCircle className="w-3.5 h-3.5" />
+                              <span className="text-sm font-semibold">Cancelada</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 text-amber-700 border border-amber-200">
+                                <Clock className="w-3.5 h-3.5" />
+                                <span className="text-sm font-semibold">En Curso</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setShowFinalizarVenta(true)}
+                                className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 hover:text-emerald-900 transition-colors"
+                              >
+                                <CheckCircle2 className="w-3 h-3" />
+                                Marcar como Finalizada
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
                     </div>
                   )
                 })()}
 
-                {/* ── Estado / Entrega / Cobro — 3 widget cards ── */}
-                <div className="grid grid-cols-3 gap-3">
+                {/* ── Entrega / Cobro — 2 widget cards ── */}
+                <div className="grid grid-cols-2 gap-3">
 
-                  {/* Widget 1 — Estado */}
-                  <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-2">
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Estado</span>
-                    {estadoUI === "finalizada" ? (
-                      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 w-fit">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span className="text-sm font-semibold">Finalizada</span>
-                      </div>
-                    ) : estadoUI === "cancelada" ? (
-                      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 text-red-700 border border-red-200 w-fit">
-                        <XCircle className="w-3.5 h-3.5" />
-                        <span className="text-sm font-semibold">Cancelada</span>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 w-fit">
-                          <Clock className="w-3.5 h-3.5" />
-                          <span className="text-sm font-semibold">En Curso</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setShowFinalizarVenta(true)}
-                          className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 hover:text-emerald-900 transition-colors"
-                        >
-                          <CheckCircle2 className="w-3 h-3" />
-                          Marcar como Finalizada
-                        </button>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Widget 2 — Entrega */}
+                  {/* Widget 1 — Entrega */}
                   <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-1.5">
                     <span className="text-[10px] text-slate-400 uppercase tracking-wider">Entrega</span>
                     {estadoUI === "cancelada" ? (
@@ -938,7 +928,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     )}
                   </div>
 
-                  {/* Widget 3 — Cobro */}
+                  {/* Widget 2 — Cobro */}
                   <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-1.5">
                     <span className="text-[10px] text-slate-400 uppercase tracking-wider">Cobro</span>
                     {estadoUI === "cancelada" ? (
