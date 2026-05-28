@@ -97,6 +97,8 @@ export default function VentasPage() {
   const { periodKey, customRange, setPeriodKey, setCustomRange } = usePeriod()
   const [periodOpen, setPeriodOpen] = useState(false)
   const [calendarOpen, setCalendarOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
   const range = usePeriodRange()
 
   const periodLabel = useMemo(() => {
@@ -151,6 +153,14 @@ export default function VentasPage() {
       allCheckboxRef.current.indeterminate = someSelected
     }
   }, [someSelected])
+
+  useEffect(() => {
+    const el = scrollContainerRef.current
+    if (!el) return
+    const handleScroll = () => setScrolled(el.scrollTop > 40)
+    el.addEventListener("scroll", handleScroll, { passive: true })
+    return () => el.removeEventListener("scroll", handleScroll)
+  }, [])
 
   const toggleSelectAll = () => {
     if (allSelected) {
@@ -212,17 +222,28 @@ export default function VentasPage() {
 
           <main className="flex-1 flex flex-col overflow-hidden">
             {/* Single scroll container — sticky hero lives inside it so backdrop-blur works */}
-            <div className="flex-1 overflow-y-auto bg-slate-50">
-              {/* Sticky hero */}
+            <div ref={scrollContainerRef} className="flex-1 overflow-y-auto bg-slate-50">
+              {/* Sticky hero — collapses on scroll */}
               <div className="sticky top-0 z-30">
                 <div className="bg-slate-50/80 backdrop-blur-md">
-                  <div className="px-8 py-8">
-                    <div className="flex items-start justify-between gap-6">
-                      <div className="min-w-0">
-                        <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
+                  <div
+                    className="px-8 transition-[padding] duration-300 ease-in-out"
+                    style={{ paddingTop: scrolled ? "10px" : "32px", paddingBottom: scrolled ? "10px" : "32px" }}
+                  >
+                    <div className="flex items-center justify-between gap-6">
+                      {/* Left block — stacks title above period when expanded, inline when collapsed */}
+                      <div className="flex min-w-0" style={{ flexDirection: scrolled ? "row" : "column", alignItems: scrolled ? "center" : "flex-start", gap: scrolled ? "12px" : "6px", transition: "gap 0.3s ease, flex-direction 0.3s ease" }}>
+                        <h1
+                          className="font-semibold text-slate-900 tracking-tight shrink-0"
+                          style={{
+                            fontSize: scrolled ? "1.125rem" : "2.25rem",
+                            lineHeight: scrolled ? "1.5rem" : "2.5rem",
+                            transition: "font-size 0.3s ease, line-height 0.3s ease",
+                          }}
+                        >
                           Ventas
                         </h1>
-                        <div className="mt-2 flex items-center gap-3 flex-wrap">
+                        <div className="flex items-center gap-3 flex-wrap">
                           <VentasPeriodSelector
                             open={periodOpen}
                             setOpen={setPeriodOpen}
@@ -256,7 +277,7 @@ export default function VentasPage() {
                       <button
                         type="button"
                         onClick={() => router.push("/ventas/ventas/nueva")}
-                        className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer mt-1"
+                        className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer"
                       >
                         <Plus className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
                         Nueva Venta
