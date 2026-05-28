@@ -23,8 +23,11 @@ import {
   XCircle,
   BarChart3,
   CheckCheck,
+  X,
+  Package,
+  Wallet,
 } from "lucide-react"
-import type { Venta, VentaItem } from "@/lib/types"
+import type { Venta, VentaItem, PaymentMethod } from "@/lib/types"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import { VentaItemDetailModal } from "@/components/ventas/venta-item-detail-modal"
@@ -137,6 +140,10 @@ export default function VentasPage() {
   const [cancelarModalVenta, setCancelarModalVenta] = useState<Venta | null>(null)
   const [cancelarDevolverUnidades, setCancelarDevolverUnidades] = useState(true)
   const [cancelarDevolverCobros, setCancelarDevolverCobros] = useState(true)
+
+  // Finalizar modal
+  const [finalizarModalVenta, setFinalizarModalVenta] = useState<Venta | null>(null)
+  const [finalizarMedioPago, setFinalizarMedioPago] = useState<PaymentMethod | "no_especificado">("no_especificado")
 
   // Widget counts
   const pendientesCobro = ventas.filter(isPendienteCobro)
@@ -413,13 +420,22 @@ export default function VentasPage() {
                   </div>
                 </div>
 
-                {/* Selection count — visible only when items are selected */}
+                {/* Selection count + bulk actions — visible only when items are selected */}
                 {selectedVentas.size > 0 && (
                   <div className="flex items-center gap-2.5 h-9">
                     <div className="w-px h-5 bg-slate-300" />
                     <span className="text-xs text-slate-500 whitespace-nowrap">
                       {selectedVentas.size} seleccionada{selectedVentas.size !== 1 ? "s" : ""}
                     </span>
+                    <div className="w-px h-5 bg-slate-200" />
+                    <button
+                      type="button"
+                      className="h-8 flex items-center gap-1.5 px-3 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-md hover:bg-slate-50 hover:border-slate-300 shadow-sm transition-colors"
+                      onClick={() => {/* PDF bulk download */}}
+                    >
+                      <FileDown className="w-3.5 h-3.5 text-slate-400" />
+                      Descargar PDF
+                    </button>
                   </div>
                 )}
 
@@ -613,7 +629,7 @@ export default function VentasPage() {
                               {venta.estado === "en_curso" && (
                                 <button
                                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
-                                  onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); finalizarVenta(venta.id) }}
+                                  onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); setFinalizarModalVenta(venta); setFinalizarMedioPago("no_especificado") }}
                                 >
                                   <CheckCheck className="w-4 h-4 text-slate-400" />
                                   Marcar como finalizada
@@ -826,6 +842,154 @@ export default function VentasPage() {
       {viewingTicketVenta && (
         <TicketModal venta={viewingTicketVenta} onClose={() => setViewingTicketVenta(null)} />
       )}
+
+      {/* Finalizar venta modal */}
+      {finalizarModalVenta && (() => {
+        const v = finalizarModalVenta
+        const totalUnidades = v.items.reduce((s, i) => s + i.quantity, 0)
+        const entregadas = v.items.reduce((s, it) => {
+          const e = v.entregaItems.find(ei => ei.sku === it.sku)
+          return s + (e?.quantityEntregada ?? 0)
+        }, 0)
+        const totalCobrado = v.cobros.reduce((s, c) => s + c.monto, 0)
+        const montoRestante = Math.max(0, v.total - totalCobrado)
+        const hasPendingEntrega = entregadas < totalUnidades
+        const hasPendingCobro = montoRestante > 0
+        const pendingProductsCount = v.items.filter(it => {
+          const e = v.entregaItems.find(ei => ei.sku === it.sku)
+          return (e?.quantityEntregada ?? 0) < it.quantity
+        }).length
+
+        const metodoOptions: { value: PaymentMethod | "no_especificado"; label: string }[] = [
+          { value: "no_especificado", label: "No especificado" },
+          { value: "efectivo", label: "Efectivo" },
+          { value: "posnet", label: "Posnet" },
+          { value: "transferencia", label: "Transferencia" },
+        ]
+
+        const closeModal = () => {
+          setFinalizarModalVenta(null)
+          setFinalizarMedioPago("no_especificado")
+        }
+
+        const handleConfirm = () => {
+          const now = new Date()
+          finalizarVenta(
+            v.id,
+            finalizarMedioPago as PaymentMethod,
+            now.toISOString().slice(0, 10),
+            now.toTimeString().slice(0, 5),
+          )
+          closeModal()
+        }
+
+        return (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeModal} />
+            <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 flex flex-col overflow-hidden">
+
+              {/* Header */}
+              <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-semibold text-slate-900">Marcar como Finalizada</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Revisá los cambios que se aplicarán al confirmar</p>
+                </div>
+                <button onClick={closeModal} className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="px-5 py-4 flex flex-col gap-4">
+                <div className="flex flex-col gap-2">
+                  {/* Entrega */}
+                  <div className={`flex items-start gap-3 p-3 rounded-lg border ${hasPendingEntrega ? "border-amber-200 bg-amber-50" : "border-emerald-200 bg-emerald-50"}`}>
+                    <div className={`mt-0.5 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${hasPendingEntrega ? "bg-amber-100" : "bg-emerald-100"}`}>
+                      {hasPendingEntrega
+                        ? <Package className="w-3.5 h-3.5 text-amber-600" />
+                        : <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
+                    </div>
+                    <div className="min-w-0">
+                      <p className={`text-sm font-semibold ${hasPendingEntrega ? "text-amber-800" : "text-emerald-800"}`}>
+                        {hasPendingEntrega ? "Entrega pendiente" : "Entrega completa"}
+                      </p>
+                      <p className={`text-xs mt-0.5 ${hasPendingEntrega ? "text-amber-700" : "text-emerald-700"}`}>
+                        {hasPendingEntrega
+                          ? `${pendingProductsCount} producto${pendingProductsCount !== 1 ? "s" : ""} sin entregar serán marcados como entregados`
+                          : "Todos los productos ya fueron entregados"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Cobro */}
+                  <div className={`flex items-start gap-3 p-3 rounded-lg border ${hasPendingCobro ? "border-amber-200 bg-amber-50" : "border-emerald-200 bg-emerald-50"}`}>
+                    <div className={`mt-0.5 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${hasPendingCobro ? "bg-amber-100" : "bg-emerald-100"}`}>
+                      {hasPendingCobro
+                        ? <Wallet className="w-3.5 h-3.5 text-amber-600" />
+                        : <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
+                    </div>
+                    <div className="min-w-0">
+                      <p className={`text-sm font-semibold ${hasPendingCobro ? "text-amber-800" : "text-emerald-800"}`}>
+                        {hasPendingCobro ? "Cobro pendiente" : "Cobro completo"}
+                      </p>
+                      <p className={`text-xs mt-0.5 ${hasPendingCobro ? "text-amber-700" : "text-emerald-700"}`}>
+                        {hasPendingCobro
+                          ? `Se registrará un cobro de $${Math.round(montoRestante).toLocaleString("es-AR")} para cubrir el saldo restante`
+                          : "El total de la venta ya fue cobrado"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Medio de pago — only if pending cobro */}
+                {hasPendingCobro && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">
+                      Medio de pago del cobro
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {metodoOptions.map(opt => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setFinalizarMedioPago(opt.value)}
+                          className={`px-3 py-2.5 rounded-lg border text-sm font-medium text-left transition-colors ${
+                            finalizarMedioPago === opt.value
+                              ? "border-slate-900 bg-slate-900 text-white"
+                              : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="border-t border-slate-200 bg-slate-50 px-5 py-3 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirm}
+                  className="px-5 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-2"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  Confirmar y Finalizar
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Cancelar venta modal */}
       {cancelarModalVenta && (() => {
