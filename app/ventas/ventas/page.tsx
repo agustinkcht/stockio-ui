@@ -8,21 +8,17 @@ import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 import { UserPanel } from "@/components/layout/user-panel"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import {
-  ChevronDown,
   ChevronRight,
   FileDown,
   MoreVertical,
   ListFilter,
   ArrowUpDown,
-  LayoutGrid,
   CheckCircle2,
   Clock,
   Receipt,
   ReceiptText,
   Search,
   Plus,
-  Wallet,
-  Truck,
   XCircle,
 } from "lucide-react"
 import type { Venta, VentaItem } from "@/lib/types"
@@ -33,7 +29,7 @@ import { ClienteModal } from "@/components/ventas/cliente-modal"
 import { TicketModal } from "@/components/ventas/ticket-modal"
 import { useVentas } from "@/hooks/use-ventas"
 
-type StatusTab = "todas" | "en_curso" | "finalizada"
+type StatusTab = "todas" | "en_curso" | "finalizada" | "cancelada"
 
 const estadoConfig: Record<string, { bg: string; text: string; icon: typeof Clock; label: string }> = {
   en_curso:   { bg: "bg-amber-50",   text: "text-amber-600",   icon: Clock,         label: "En Curso"   },
@@ -117,7 +113,8 @@ export default function VentasPage() {
     const matchesTab =
       activeTab === "todas" ? true :
       activeTab === "en_curso" ? v.estado === "en_curso" :
-      v.estado === "finalizada"
+      activeTab === "finalizada" ? v.estado === "finalizada" :
+      v.estado === "cancelada"
     const q = searchQuery.toLowerCase()
     const matchesSearch = !q || v.id.toLowerCase().includes(q) || getClienteNombre(v).toLowerCase().includes(q)
     return matchesTab && matchesSearch
@@ -157,9 +154,10 @@ export default function VentasPage() {
   const breadcrumbs = [{ label: "Ventas" }, { label: "Ventas", href: "/ventas/ventas" }]
 
   const tabs: { id: StatusTab; label: string; count?: number }[] = [
-    { id: "todas", label: "Todas", count: ventas.length },
-    { id: "en_curso", label: "En Curso", count: ventas.filter(v => v.estado === "en_curso").length },
-    { id: "finalizada", label: "Finalizadas", count: ventas.filter(v => v.estado === "finalizada").length },
+    { id: "todas",     label: "Todas",        count: ventas.length },
+    { id: "en_curso",  label: "En Curso",     count: ventas.filter(v => v.estado === "en_curso").length },
+    { id: "finalizada",label: "Finalizadas",  count: ventas.filter(v => v.estado === "finalizada").length },
+    { id: "cancelada", label: "Canceladas",   count: ventas.filter(v => v.estado === "cancelada").length },
   ]
 
   return (
@@ -206,29 +204,116 @@ export default function VentasPage() {
             <div className="flex-1 overflow-y-auto">
               <div className="px-8 pb-8 mt-4">
 
-              {/* Status tabs */}
-              <div className="flex items-center gap-1 mb-4">
-                {tabs.map(tab => (
+              {/* 4 Widgets — clickable to filter */}
+              <div className="grid grid-cols-4 gap-3 mb-5">
+                {/* Widget 1 — Todas */}
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("todas")}
+                  className={`bg-white border rounded-xl p-4 shadow-sm text-left transition-all cursor-pointer ${activeTab === "todas" ? "border-slate-900 ring-1 ring-slate-900" : "border-slate-200/80 hover:border-slate-300"}`}
+                >
+                  <p className="text-xl font-bold text-slate-900 leading-tight">{ventas.length} Ventas</p>
+                  <p className="text-xs text-slate-400 mt-1">totales en el período</p>
+                </button>
+
+                {/* Widget 2 — En Curso */}
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("en_curso")}
+                  className={`bg-white border rounded-xl p-4 shadow-sm text-left transition-all cursor-pointer ${activeTab === "en_curso" ? "border-slate-900 ring-1 ring-slate-900" : "border-slate-200/80 hover:border-slate-300"}`}
+                >
+                  <p className="text-xl font-bold text-slate-900 leading-tight">{ventas.filter(v => v.estado === "en_curso").length} Ventas En Curso</p>
+                  <div className="flex flex-col gap-1 mt-2">
+                    <button type="button" onClick={e => { e.stopPropagation(); setActiveTab("en_curso") }} className="text-xs text-slate-500 hover:text-slate-800 transition-colors text-left tabular-nums">
+                      {pendientesEntrega.length} pendientes de entrega
+                    </button>
+                    <button type="button" onClick={e => { e.stopPropagation(); setActiveTab("en_curso") }} className="text-xs text-slate-500 hover:text-slate-800 transition-colors text-left tabular-nums">
+                      {pendientesCobro.length} pendientes de cobro
+                    </button>
+                    <button type="button" onClick={e => { e.stopPropagation(); setActiveTab("en_curso") }} className="text-xs text-slate-500 hover:text-slate-800 transition-colors text-left tabular-nums">
+                      {ventas.filter(v => isPendienteCobro(v) && isPendienteEntrega(v)).length} pendientes de entrega y cobro
+                    </button>
+                  </div>
+                </button>
+
+                {/* Widget 3 — Finalizadas */}
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("finalizada")}
+                  className={`bg-white border rounded-xl p-4 shadow-sm text-left transition-all cursor-pointer ${activeTab === "finalizada" ? "border-slate-900 ring-1 ring-slate-900" : "border-slate-200/80 hover:border-slate-300"}`}
+                >
+                  <p className="text-xl font-bold text-slate-900 leading-tight">{ventas.filter(v => v.estado === "finalizada").length} Ventas Finalizadas</p>
+                  <div className="flex flex-col gap-1 mt-2">
+                    <button type="button" onClick={e => { e.stopPropagation(); setActiveTab("finalizada") }} className="text-xs text-slate-500 hover:text-slate-800 transition-colors text-left tabular-nums">
+                      0 con cambios/devoluciones
+                    </button>
+                  </div>
+                </button>
+
+                {/* Widget 4 — Canceladas */}
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("cancelada")}
+                  className={`bg-white border rounded-xl p-4 shadow-sm text-left transition-all cursor-pointer ${activeTab === "cancelada" ? "border-slate-900 ring-1 ring-slate-900" : "border-slate-200/80 hover:border-slate-300"}`}
+                >
+                  <p className="text-xl font-bold text-slate-900 leading-tight">{canceladas.length} Ventas Canceladas</p>
+                </button>
+              </div>
+
+              {/* Search + tabs inline + right-side actions */}
+              <div className="flex items-center mb-3 gap-2">
+                {/* Tabs inline */}
+                <div className="flex items-center gap-0.5 shrink-0">
+                  {tabs.map(tab => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium transition-colors cursor-pointer ${
+                        activeTab === tab.id ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-100"
+                      }`}
+                    >
+                      {tab.label}
+                      {tab.count !== undefined && tab.count > 0 && (
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full leading-none tabular-nums ${
+                          activeTab === tab.id ? "bg-white/20 text-white" : "bg-slate-200 text-slate-600"
+                        }`}>
+                          {tab.count}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="w-px h-5 bg-slate-200 shrink-0" />
+
+                <div className="w-[28%] h-8 flex items-center gap-2 px-3 rounded-md border shadow-sm border-[rgba(228,230,235,0.6)] bg-white">
+                  <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Buscar"
+                    className="flex-1 bg-transparent text-xs text-slate-700 placeholder:text-slate-400 outline-none"
+                  />
+                </div>
+
+                <div className="ml-auto flex items-center gap-2">
                   <button
-                    key={tab.id}
                     type="button"
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-1.5 h-8 px-3.5 rounded-full text-sm font-medium transition-colors cursor-pointer ${
-                      activeTab === tab.id
-                        ? "bg-slate-900 text-white"
-                        : "text-slate-500 hover:bg-slate-100"
-                    }`}
+                    className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] gap-1.5 shrink-0 px-3 rounded-md flex items-center hover:bg-gray-100 cursor-pointer"
                   >
-                    {tab.label}
-                    {tab.count !== undefined && tab.count > 0 && (
-                      <span className={`text-xs px-1.5 py-0.5 rounded-full leading-none tabular-nums ${
-                        activeTab === tab.id ? "bg-white/20 text-white" : "bg-slate-200 text-slate-600"
-                      }`}>
-                        {tab.count}
-                      </span>
-                    )}
+                    <ListFilter className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Filtrar</span>
                   </button>
-                ))}
+                  <button
+                    type="button"
+                    className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] gap-1.5 shrink-0 px-3 rounded-md flex items-center hover:bg-gray-100 cursor-pointer"
+                  >
+                    <ArrowUpDown className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Ordenar</span>
+                  </button>
+                </div>
               </div>
 
               {/* Widgets row */}
