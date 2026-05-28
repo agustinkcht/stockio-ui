@@ -655,14 +655,18 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
       doc.setTextColor(15, 23, 42)
       doc.text(nameStr, colItem, nameY)
 
-      // Tags — inline after the name on the same baseline
+      // Tags — inline after the name on the same baseline, separated by a word-space
       if (display.tags.length > 0) {
+        // Measure the space width at the name font size (9pt) before switching to tag size
         doc.setFont("helvetica", "normal")
+        doc.setFontSize(9)
+        const nameW = doc.getTextWidth(nameStr)
+        const spaceW = doc.getTextWidth(" ")
+        // Now render tags smaller and lighter, offset by name width + one word-space
         doc.setFontSize(7)
         doc.setTextColor(100, 116, 139)
-        const nameW = doc.getTextWidth(nameStr)
         const tagsStr = display.tags.join("  ·  ")
-        doc.text(tagsStr, colItem + nameW + 2, nameY)
+        doc.text(tagsStr, colItem + nameW + spaceW, nameY)
       }
 
       // CANT. column: quantity centered + "x bonif." below if unit discount
