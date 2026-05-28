@@ -43,6 +43,7 @@ import { CLIENTES } from "@/lib/data/clientes"
 import { INITIAL_ITEMS } from "@/lib/data/initial-items"
 import { useVentas } from "@/hooks/use-ventas"
 import { useSettings } from "@/lib/contexts/settings-context"
+import jsPDF from "jspdf"
 
 type VentaEstadoUI = "en_curso" | "finalizada" | "cancelada"
 
@@ -515,239 +516,289 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
     cancelEditMode()
   }
 
-  const handleDownloadPDF = async () => {
-    const { jsPDF } = await import("jspdf")
+  const handleDownloadPDF = () => {
+    // Synchronous jsPDF drawing — same pattern as ODC, no html2canvas needed
+    const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" })
+    const pw = doc.internal.pageSize.getWidth()   // 210
+    const ph = doc.internal.pageSize.getHeight()  // 297
+    const ml = 16  // margin left
+    const mr = pw - 16  // margin right
+    let y = 16
 
+    // ── Helpers ──────────────────────────────────────────────────────────────
+    const newPageIfNeeded = (needed = 10) => {
+      if (y + needed > ph - 16) { doc.addPage(); y = 16 }
+    }
+
+    // ── Brand block (top-left) + doc meta (top-right) ──────────────────────
+    const businessName = miNegocio.razonSocial || miNegocio.nombre || miNegocio.nombreApp || "Negocio"
+    const businessSub = miNegocio.ciudad
+      ? `${miNegocio.ciudad}${miNegocio.provincia ? `, ${miNegocio.provincia}` : ""}`
+      : miNegocio.email || ""
+
+    // Logo placeholder circle
+    doc.setFillColor(15, 23, 42)
+    doc.roundedRect(ml, y - 1, 10, 10, 2, 2, "F")
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(7)
+    doc.setTextColor(255, 255, 255)
+    const initials = businessName.charAt(0).toUpperCase()
+    doc.text(initials, ml + 5, y + 5.5, { align: "center" })
+
+    // Business name
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(12)
+    doc.setTextColor(15, 23, 42)
+    doc.text(businessName, ml + 13, y + 4)
+    if (businessSub) {
+      doc.setFont("helvetica", "normal")
+      doc.setFontSize(8)
+      doc.setTextColor(148, 163, 184)
+      doc.text(businessSub, ml + 13, y + 8.5)
+    }
+
+    // Venta ID + date (top-right)
     const fechaFormateada = new Date(venta.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "long", year: "numeric" })
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(8)
+    doc.setTextColor(100, 116, 139)
+    doc.text(`VENTA ${venta.id}`, mr, y + 3, { align: "right" })
+    doc.setFont("helvetica", "normal")
+    doc.setFontSize(9)
+    doc.setTextColor(15, 23, 42)
+    doc.text(fechaFormateada, mr, y + 8.5, { align: "right" })
 
-    // Build item rows HTML — tags inline with product name, unit bonificadas support
-    const itemRows = venta.items.map((item) => {
+    y += 17
+
+    // ── Divider ──────────────────────────────────────────────────────────────
+    doc.setDrawColor(226, 232, 240)
+    doc.setLineWidth(0.3)
+    doc.line(ml, y, mr, y)
+    y += 7
+
+    // ── Cliente ──────────────────────────────────────────────────────────────
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(7)
+    doc.setTextColor(148, 163, 184)
+    doc.text("CLIENTE", ml, y)
+    y += 4
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(11)
+    doc.setTextColor(15, 23, 42)
+    doc.text(clienteNombre, ml, y)
+    y += 9
+
+    // ── Column headers ────────────────────────────────────────────────────────
+    // Col positions: Item 16–106 | Cant 106–130 | Precio 130–172 | Subtotal 172–194
+    const colItem = ml
+    const colQty = 106
+    const colPrice = 130
+    const colSub = mr
+
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(7)
+    doc.setTextColor(100, 116, 139)
+    doc.text("ÍTEM", colItem, y)
+    doc.text("CANT.", colQty + 6, y, { align: "center" })
+    doc.text("PRECIO UNIT.", colPrice, y)
+    doc.text("SUBTOTAL", colSub, y, { align: "right" })
+    y += 3
+
+    doc.setDrawColor(15, 23, 42)
+    doc.setLineWidth(0.5)
+    doc.line(ml, y, mr, y)
+    y += 4
+
+    // ── Item rows ─────────────────────────────────────────────────────────────
+    doc.setLineWidth(0.2)
+    for (const item of venta.items) {
       const display = getVentaItemDisplay(item)
       const hasDiscount = item.discount > 0
       const isUnit = item.discountType === "unit"
-      const isBonificada = hasDiscount && item.discountType === "percent" && item.discount === 100
-      const paidQty = isUnit ? Math.max(0, item.quantity - Math.min(item.discount, item.quantity)) : item.quantity
+      const paidQty = isUnit
+        ? Math.max(0, item.quantity - Math.min(item.discount, item.quantity))
+        : item.quantity
       const adjustedUnit = item.discountType === "percent"
         ? item.unitPrice * (1 - item.discount / 100)
         : item.discountType === "fixed"
         ? Math.max(0, item.unitPrice - item.discount)
         : item.unitPrice
-
-      const tagsHtml = display.tags.length > 0
-        ? display.tags.map(t => `<span class="tag">${t}</span>`).join("")
-        : ""
-
-      const priceHtml = isUnit && hasDiscount
-        ? `<span class="price-final">$${item.unitPrice.toLocaleString("es-AR")} c/u</span><br/><span class="badge-green">${Math.min(item.discount, item.quantity)} bonificadas</span>`
-        : isBonificada
-        ? `<span class="price-original">${item.unitPrice.toLocaleString("es-AR")}</span><span class="badge">Bonificada</span>`
-        : hasDiscount
-          ? `<span class="price-original">${item.unitPrice.toLocaleString("es-AR")}</span><span class="badge">${item.discountType === "percent" ? `-${item.discount}%` : `-$${item.discount.toLocaleString("es-AR")}`}</span><br/><span class="price-final">$${Math.round(adjustedUnit).toLocaleString("es-AR")} c/u</span>`
-          : `<span class="price-final">$${item.unitPrice.toLocaleString("es-AR")} c/u</span>`
-
       const lineTotal = isUnit
         ? Math.round(adjustedUnit * paidQty)
         : Math.round(item.total)
 
-      return `
-        <tr>
-          <td class="item-cell">
-            <div class="item-name-row">
-              <span class="item-name">${display.name}</span>
-              ${tagsHtml}
-            </div>
-          </td>
-          <td class="qty-cell">${item.quantity}</td>
-          <td class="price-cell">${priceHtml}</td>
-          <td class="subtotal-cell">$${lineTotal.toLocaleString("es-AR")}</td>
-        </tr>`
-    }).join("")
+      // Determine row height
+      const hasTags = display.tags.length > 0
+      const hasSecondPriceLine = hasDiscount && !isUnit
+      const rowH = (hasTags || hasSecondPriceLine) ? 11 : 7.5
 
-    // Adjustments — read directly from venta (persisted fields)
+      newPageIfNeeded(rowH + 2)
+
+      // Name
+      const maxNameW = colQty - colItem - 3
+      const nameStr = display.name.length > 52 ? display.name.slice(0, 49) + "..." : display.name
+      doc.setFont("helvetica", "normal")
+      doc.setFontSize(9)
+      doc.setTextColor(15, 23, 42)
+      doc.text(nameStr, colItem, y + 5)
+
+      // Tags — inline after name on same y, or below if overflow (simplified: below)
+      if (hasTags) {
+        const tagsStr = display.tags.join("  ·  ")
+        doc.setFont("helvetica", "normal")
+        doc.setFontSize(7)
+        doc.setTextColor(100, 116, 139)
+        doc.text(tagsStr, colItem, y + 9.5)
+      }
+
+      // Quantity
+      doc.setFont("helvetica", "normal")
+      doc.setFontSize(9)
+      doc.setTextColor(71, 85, 105)
+      doc.text(String(item.quantity), colQty + 6, y + 5, { align: "center" })
+
+      // Precio unit
+      if (isUnit && hasDiscount) {
+        doc.setFont("helvetica", "normal")
+        doc.setFontSize(9)
+        doc.setTextColor(15, 23, 42)
+        doc.text(`$${item.unitPrice.toLocaleString("es-AR")} c/u`, colPrice, y + 4)
+        doc.setFontSize(7)
+        doc.setTextColor(22, 163, 74) // green
+        doc.text(`${Math.min(item.discount, item.quantity)} bonificadas`, colPrice, y + 8.5)
+      } else if (hasDiscount) {
+        // Strikethrough price
+        doc.setFont("helvetica", "normal")
+        doc.setFontSize(7.5)
+        doc.setTextColor(148, 163, 184)
+        const origStr = `$${item.unitPrice.toLocaleString("es-AR")}`
+        const origW = doc.getTextWidth(origStr)
+        doc.text(origStr, colPrice, y + 3.5)
+        // draw strikethrough line
+        doc.setDrawColor(148, 163, 184)
+        doc.setLineWidth(0.25)
+        doc.line(colPrice, y + 2.8, colPrice + origW, y + 2.8)
+        // Badge label
+        const badgeLabel = item.discountType === "percent"
+          ? `-${item.discount}%`
+          : `-$${item.discount.toLocaleString("es-AR")}`
+        doc.setFontSize(7)
+        doc.setFont("helvetica", "bold")
+        doc.setTextColor(239, 68, 68)
+        doc.text(badgeLabel, colPrice + origW + 1.5, y + 3.5)
+        // Adjusted price
+        doc.setFont("helvetica", "normal")
+        doc.setFontSize(9)
+        doc.setTextColor(15, 23, 42)
+        doc.text(`$${Math.round(adjustedUnit).toLocaleString("es-AR")} c/u`, colPrice, y + 8.5)
+      } else {
+        doc.setFont("helvetica", "normal")
+        doc.setFontSize(9)
+        doc.setTextColor(15, 23, 42)
+        doc.text(`$${item.unitPrice.toLocaleString("es-AR")} c/u`, colPrice, y + 5)
+      }
+
+      // Subtotal
+      doc.setFont("helvetica", "bold")
+      doc.setFontSize(9)
+      doc.setTextColor(15, 23, 42)
+      doc.text(`$${lineTotal.toLocaleString("es-AR")}`, colSub, y + 5, { align: "right" })
+
+      y += rowH
+
+      // Row separator
+      doc.setDrawColor(241, 245, 249)
+      doc.setLineWidth(0.2)
+      doc.line(ml, y, mr, y)
+      y += 1.5
+    }
+
+    // ── Adjustments + Total ───────────────────────────────────────────────────
     const ventaDescuento = venta.descuento ?? 0
     const ventaDescuentoTipo = venta.descuentoTipo ?? "percent"
     const ventaDescuentoAmount = ventaDescuentoTipo === "percent"
       ? venta.subtotal * (ventaDescuento / 100)
       : ventaDescuento
     const ventaEnvio = venta.envio ?? 0
-    const ventaCustomCharges = venta.customCharges ?? []
+    const ventaCustomCharges = (venta.customCharges ?? []).filter(c => c.value > 0)
+    const hasAdjustments = ventaDescuento > 0 || ventaEnvio > 0 || ventaCustomCharges.length > 0
 
-    const adjustmentRows = [
-      `<tr class="adj-row subtotal-row">
-        <td colspan="3" class="adj-label">Subtotal</td>
-        <td class="adj-value">$${Math.round(venta.subtotal).toLocaleString("es-AR")}</td>
-      </tr>`,
-      ventaDescuento > 0 ? `<tr class="adj-row">
-        <td colspan="3" class="adj-label">Descuento ${ventaDescuentoTipo === "percent" ? `(${ventaDescuento}%)` : ""}</td>
-        <td class="adj-value discount">−$${Math.round(ventaDescuentoAmount).toLocaleString("es-AR")}</td>
-      </tr>` : "",
-      ventaEnvio > 0 ? `<tr class="adj-row">
-        <td colspan="3" class="adj-label">Envío</td>
-        <td class="adj-value">+$${Math.round(ventaEnvio).toLocaleString("es-AR")}</td>
-      </tr>` : "",
-      ...ventaCustomCharges.filter(c => c.value > 0).map(c => `<tr class="adj-row">
-        <td colspan="3" class="adj-label">${c.label}</td>
-        <td class="adj-value">+$${Math.round(c.value).toLocaleString("es-AR")}</td>
-      </tr>`),
-      `<tr class="total-row">
-        <td colspan="3" class="total-label">Total</td>
-        <td class="total-value">$${Math.round(venta.total).toLocaleString("es-AR")}</td>
-      </tr>`,
-    ].join("")
+    y += 4
+    newPageIfNeeded(30)
 
-    const logoHtml = miNegocio.fotoUrl
-      ? `<img src="${window.location.origin}${miNegocio.fotoUrl}" class="logo" alt="logo" />`
-      : `<div class="logo-placeholder">${(miNegocio.razonSocial || miNegocio.nombre || "N").charAt(0)}</div>`
+    // Subtotal line (right-aligned block, 70mm wide)
+    const adjLeft = mr - 68
+    doc.setDrawColor(226, 232, 240)
+    doc.setLineWidth(0.3)
+    doc.line(adjLeft, y, mr, y)
+    y += 5
 
-    const html = `<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8"/>
-<title>Venta ${venta.id}</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { width: 210mm; background: #fff; font-family: 'Inter', -apple-system, sans-serif; color: #0f172a; }
-  @page { size: A4; margin: 0; }
+    doc.setFont("helvetica", "normal")
+    doc.setFontSize(9)
+    doc.setTextColor(100, 116, 139)
+    doc.text("Subtotal", adjLeft, y)
+    doc.setTextColor(71, 85, 105)
+    doc.text(`$${Math.round(venta.subtotal).toLocaleString("es-AR")}`, mr, y, { align: "right" })
+    y += 5.5
 
-  .page { padding: 14mm 16mm 14mm 16mm; min-height: 297mm; display: flex; flex-direction: column; }
+    if (ventaDescuento > 0) {
+      const label = `Descuento${ventaDescuentoTipo === "percent" ? ` (${ventaDescuento}%)` : ""}`
+      doc.setFont("helvetica", "normal")
+      doc.setFontSize(9)
+      doc.setTextColor(100, 116, 139)
+      doc.text(label, adjLeft, y)
+      doc.setFont("helvetica", "normal")
+      doc.setTextColor(239, 68, 68)
+      doc.text(`-$${Math.round(ventaDescuentoAmount).toLocaleString("es-AR")}`, mr, y, { align: "right" })
+      y += 5.5
+    }
 
-  /* ── Header ── */
-  .header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10mm; }
-  .brand { display: flex; align-items: center; gap: 10px; }
-  .logo { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; }
-  .logo-placeholder { width: 44px; height: 44px; border-radius: 10px; background: #0f172a; color: #fff; font-size: 20px; font-weight: 700; display: flex; align-items: center; justify-content: center; letter-spacing: -0.5px; }
-  .brand-name { font-size: 15px; font-weight: 700; color: #0f172a; letter-spacing: -0.3px; line-height: 1.2; }
-  .brand-sub { font-size: 10px; color: #94a3b8; font-weight: 400; margin-top: 1px; }
-  .doc-meta { text-align: right; }
-  .doc-id { font-size: 11px; font-weight: 600; color: #64748b; letter-spacing: 0.08em; text-transform: uppercase; }
-  .doc-date { font-size: 12px; color: #0f172a; font-weight: 500; margin-top: 3px; }
+    if (ventaEnvio > 0) {
+      doc.setFont("helvetica", "normal")
+      doc.setFontSize(9)
+      doc.setTextColor(100, 116, 139)
+      doc.text("Envio", adjLeft, y)
+      doc.setTextColor(71, 85, 105)
+      doc.text(`+$${Math.round(ventaEnvio).toLocaleString("es-AR")}`, mr, y, { align: "right" })
+      y += 5.5
+    }
 
-  /* ── Divider ── */
-  .rule { border: none; border-top: 1px solid #e2e8f0; margin: 0 0 8mm 0; }
+    for (const c of ventaCustomCharges) {
+      doc.setFont("helvetica", "normal")
+      doc.setFontSize(9)
+      doc.setTextColor(100, 116, 139)
+      doc.text(c.label, adjLeft, y)
+      doc.setTextColor(71, 85, 105)
+      doc.text(`+$${Math.round(c.value).toLocaleString("es-AR")}`, mr, y, { align: "right" })
+      y += 5.5
+    }
 
-  /* ── Client row ── */
-  .client-row { display: flex; align-items: flex-start; margin-bottom: 8mm; }
-  .field-label { font-size: 9px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #94a3b8; margin-bottom: 3px; }
-  .field-value { font-size: 13px; font-weight: 500; color: #0f172a; }
+    // Total divider + row
+    doc.setDrawColor(15, 23, 42)
+    doc.setLineWidth(0.5)
+    doc.line(adjLeft, y, mr, y)
+    y += 5.5
 
-  /* ── Items table ── */
-  table { width: 100%; border-collapse: collapse; margin-bottom: 0; }
-  thead tr { border-bottom: 1.5px solid #0f172a; }
-  thead th { font-size: 9px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #64748b; padding: 0 0 5px 0; text-align: left; }
-  thead th.right { text-align: right; }
-  tbody tr { border-bottom: 1px solid #f1f5f9; }
-  tbody tr:last-child { border-bottom: none; }
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(12)
+    doc.setTextColor(15, 23, 42)
+    doc.text("Total", adjLeft, y)
+    doc.text(`$${Math.round(venta.total).toLocaleString("es-AR")}`, mr, y, { align: "right" })
 
-  .item-cell { padding: 9px 12px 9px 0; width: 46%; }
-  .qty-cell { padding: 9px 12px; width: 14%; color: #475569; font-size: 12px; font-weight: 500; text-align: center; }
-  .price-cell { padding: 9px 12px; width: 22%; text-align: right; vertical-align: middle; }
-  .subtotal-cell { padding: 9px 0 9px 12px; width: 18%; text-align: right; font-size: 13px; font-weight: 600; color: #0f172a; vertical-align: middle; }
+    // ── Footer ───────────────────────────────────────────────────────────────
+    const footerY = ph - 12
+    doc.setDrawColor(226, 232, 240)
+    doc.setLineWidth(0.3)
+    doc.line(ml, footerY - 3, mr, footerY - 3)
+    doc.setFont("helvetica", "normal")
+    doc.setFontSize(7.5)
+    doc.setTextColor(148, 163, 184)
+    const footerLeft = [businessName, miNegocio.email].filter(Boolean).join("  ·  ")
+    doc.text(footerLeft, ml, footerY)
+    doc.text(`Venta ${venta.id}`, mr, footerY, { align: "right" })
 
-  .item-name-row { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
-  .item-name { font-size: 12px; font-weight: 500; color: #0f172a; line-height: 1.4; }
-  .tag { font-size: 9px; padding: 2px 6px; border-radius: 4px; background: #f1f5f9; color: #475569; font-weight: 500; letter-spacing: 0.02em; }
-
-  .price-original { font-size: 10px; color: #94a3b8; text-decoration: line-through; }
-  .price-final { font-size: 12px; font-weight: 500; color: #0f172a; }
-  .badge { font-size: 9px; font-weight: 600; color: #ef4444; background: #fef2f2; padding: 1px 5px; border-radius: 4px; margin-left: 4px; }
-  .badge-green { font-size: 9px; font-weight: 600; color: #16a34a; background: #f0fdf4; padding: 1px 5px; border-radius: 4px; }
-
-  /* ── Totals ── */
-  .totals-wrapper { margin-top: 6mm; display: flex; justify-content: flex-end; }
-  .totals-table { width: 220px; }
-  .adj-row td { padding: 4px 0; }
-  .subtotal-row td { padding: 6px 0 4px 0; border-top: 1px solid #e2e8f0; }
-  .adj-label { font-size: 11px; color: #64748b; font-weight: 400; padding-right: 16px; }
-  .adj-value { font-size: 11px; color: #475569; font-weight: 500; text-align: right; }
-  .adj-value.discount { color: #ef4444; }
-  .total-row td { padding: 8px 0 4px 0; border-top: 1.5px solid #0f172a; }
-  .total-label { font-size: 14px; font-weight: 700; color: #0f172a; letter-spacing: -0.2px; padding-right: 16px; }
-  .total-value { font-size: 14px; font-weight: 700; color: #0f172a; text-align: right; letter-spacing: -0.3px; }
-
-  /* ── Footer ── */
-  .footer { margin-top: auto; padding-top: 8mm; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
-  .footer-left { font-size: 9px; color: #94a3b8; }
-  .footer-right { font-size: 9px; color: #cbd5e1; }
-</style>
-</head>
-<body>
-<div class="page">
-
-  <!-- Header -->
-  <div class="header">
-    <div class="brand">
-      ${logoHtml}
-      <div>
-        <div class="brand-name">${miNegocio.razonSocial || miNegocio.nombre || miNegocio.nombreApp}</div>
-        ${miNegocio.ciudad ? `<div class="brand-sub">${miNegocio.ciudad}${miNegocio.provincia ? `, ${miNegocio.provincia}` : ""}</div>` : ""}
-      </div>
-    </div>
-    <div class="doc-meta">
-      <div class="doc-id">Venta ${venta.id}</div>
-      <div class="doc-date">${fechaFormateada}</div>
-    </div>
-  </div>
-
-  <hr class="rule"/>
-
-  <!-- Client -->
-  <div class="client-row">
-    <div>
-      <div class="field-label">Cliente</div>
-      <div class="field-value">${clienteNombre}</div>
-    </div>
-  </div>
-
-  <!-- Items table -->
-  <table>
-    <thead>
-      <tr>
-        <th>Ítem</th>
-        <th class="right" style="text-align:center">Cant.</th>
-        <th class="right">Precio unit.</th>
-        <th class="right">Subtotal</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${itemRows}
-    </tbody>
-  </table>
-
-  <!-- Totals -->
-  <div class="totals-wrapper">
-    <table class="totals-table">
-      <tbody>
-        ${adjustmentRows}
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Footer -->
-  <div class="footer">
-    <div class="footer-left">${miNegocio.razonSocial || miNegocio.nombre || ""} · ${miNegocio.email || ""}</div>
-    <div class="footer-right">Venta ${venta.id}</div>
-  </div>
-
-</div>
-</body>
-</html>`
-
-    // Render HTML to PDF using jsPDF and download directly (no print dialog)
-    const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" })
-    await new Promise<void>((resolve) => {
-      doc.html(html, {
-        callback: (d) => {
-          d.save(`Venta-${venta.id}.pdf`)
-          resolve()
-        },
-        x: 0,
-        y: 0,
-        width: 210,
-        windowWidth: 794,
-        autoPaging: "text",
-      })
-    })
+    // ── Save ─────────────────────────────────────────────────────────────────
+    doc.save(`Venta-${venta.id}.pdf`)
   }
   const fechaCreacion = new Date(venta.fecha).toLocaleDateString("es-AR", {
     day: "2-digit",
