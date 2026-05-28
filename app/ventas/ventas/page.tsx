@@ -334,9 +334,9 @@ export default function VentasPage() {
               {/* Combined header bar: checkbox | divider | search — then Filtrar/Ordenar on the right */}
               <div className="mb-2 flex items-center gap-2">
                 {/* Header block — shrinks to fit checkbox + search, not full width */}
-                <div className="flex items-center h-9 bg-slate-100 border border-slate-200/80 rounded-md shadow-sm min-w-0">
-                  {/* Checkbox cell */}
-                  <div className="flex items-center justify-center px-3 shrink-0">
+                <div className="flex items-center h-9 bg-slate-100 border border-slate-200/80 rounded-md shadow-sm min-w-0 overflow-hidden">
+                  {/* Checkbox cell — width matches col-span-4 of venta item rows */}
+                  <div className="flex items-center justify-center w-[52px] shrink-0">
                     <input
                       ref={allCheckboxRef}
                       type="checkbox"
@@ -348,8 +348,8 @@ export default function VentasPage() {
                   </div>
                   {/* Divider */}
                   <div className="w-px h-full bg-slate-200/80 shrink-0" />
-                  {/* Search input */}
-                  <div className="flex items-center gap-2 px-3 h-full w-56">
+                  {/* Search input — white bg */}
+                  <div className="flex items-center gap-2 px-3 h-full w-64 bg-white">
                     <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                     <input
                       type="text"
