@@ -1376,24 +1376,26 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
               {/* Right col-span-1: two stacked cards */}
               {ventaItems.length > 0 && (
                 <div className="col-span-1 flex flex-col gap-4">
-                <div className="bg-white rounded-lg shadow-sm overflow-hidden flex flex-col flex-1">
+                <div className="bg-white rounded-lg shadow-sm overflow-hidden flex flex-col min-h-[200px]">
                   <div className="px-5 py-5 flex flex-col gap-0 flex-1">
 
                     {/* ── Resumen section ── */}
                     <p className="text-sm font-semibold text-slate-800 mb-4">Resumen</p>
 
-                    {/* Subtotal — expandable */}
+                    {/* Productos — expandable */}
                     <button
                       type="button"
                       onClick={() => setShowSubtotalBreakdown(!showSubtotalBreakdown)}
-                      className="w-full flex items-center py-2.5 border-b border-slate-100 text-left hover:bg-slate-50/50 -mx-5 px-5 transition-colors"
+                      className="w-full flex items-center py-2.5 border-b border-slate-200 text-left hover:bg-slate-50/50 -mx-5 px-5 transition-colors"
                     >
-                      <span className="text-sm text-slate-500 flex-1">Subtotal</span>
-                      <span className="text-sm text-slate-700 tabular-nums mr-2">${Math.round(venta.subtotal).toLocaleString("es-AR")}</span>
-                      <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${showSubtotalBreakdown ? "rotate-180" : ""}`} />
+                      <span className="text-sm text-slate-500 flex-1">Productos</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm text-slate-700 tabular-nums">${Math.round(venta.subtotal).toLocaleString("es-AR")}</span>
+                        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${showSubtotalBreakdown ? "rotate-180" : ""}`} />
+                      </div>
                     </button>
                     {showSubtotalBreakdown && (
-                      <div className="border-b border-slate-100">
+                      <div className="border-b border-slate-200">
                         {ventaItems.map((item, idx) => {
                           const display = getVentaItemDisplay(item)
                           const adjustedUnit = item.discountType === "percent"
@@ -1423,7 +1425,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     )}
 
                     {venta.descuento > 0 && (
-                      <div className="flex justify-between items-center py-2.5 border-b border-slate-100">
+                      <div className="flex justify-between items-center py-2.5">
                         <span className="text-sm text-slate-500">
                           Descuento{" "}
                           <span className="text-[10px] text-slate-400">
@@ -1438,7 +1440,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
                     {/* ── Edit mode ajuste inputs ── */}
                     {isEditMode && showGlobalDiscount && (
-                      <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                      <div className="flex justify-between items-center py-2">
                         <div className="flex items-center gap-1">
                           <button onClick={() => { setShowGlobalDiscount(false); setGlobalDiscount({ value: 0, type: "percent" }) }} className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors">
                             <X className="w-3 h-3" />
@@ -1460,7 +1462,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       </div>
                     )}
                     {isEditMode && showEnvio && (
-                      <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                      <div className="flex justify-between items-center py-2">
                         <div className="flex items-center gap-1">
                           <button onClick={() => { setShowEnvio(false); setEnvioAmount(0) }} className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors">
                             <X className="w-3 h-3" />
@@ -1479,7 +1481,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       </div>
                     )}
                     {isEditMode && customCharges.map((charge, idx) => (
-                      <div key={charge.id} className="flex justify-between items-center py-2 border-b border-slate-100">
+                      <div key={charge.id} className="flex justify-between items-center py-2">
                         <div className="flex items-center gap-1">
                           <button onClick={() => setCustomCharges(prev => prev.filter((_, i) => i !== idx))} className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors">
                             <X className="w-3 h-3" />
@@ -1505,7 +1507,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
                     {/* Agregar tags — only shown in edit mode */}
                     {isEditMode && estadoUI === "en_curso" && (!showGlobalDiscount || !showEnvio || customCharges.length === 0) && (
-                      <div className="flex items-center gap-2 flex-wrap py-2 border-b border-slate-100">
+                      <div className="flex items-center gap-2 flex-wrap py-2">
                         <span className="text-xs text-slate-400">Agregar:</span>
                         {!showGlobalDiscount && (
                           <button onClick={() => setShowGlobalDiscount(true)} className="text-xs px-2 py-0.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors">
@@ -1526,8 +1528,9 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     )}
 
                     {/* ── View mode: saved adjustments ── */}
+                    {!isEditMode && (savedGlobalDiscount?.value > 0 || (savedEnvio != null && savedEnvio > 0) || savedCustomCharges.length > 0) && <div className="border-t border-slate-200" />}
                     {!isEditMode && savedGlobalDiscount && savedGlobalDiscount.value > 0 && (
-                      <div className="flex justify-between items-center py-2.5 border-b border-slate-100">
+                      <div className="flex justify-between items-center py-2.5">
                         <span className="text-sm text-slate-500">
                           Descuento Global{" "}
                           <span className="text-xs text-slate-400">
@@ -1540,13 +1543,13 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       </div>
                     )}
                     {!isEditMode && savedEnvio != null && savedEnvio > 0 && (
-                      <div className="flex justify-between items-center py-2.5 border-b border-slate-100">
+                      <div className="flex justify-between items-center py-2.5">
                         <span className="text-sm text-slate-500">Envío</span>
                         <span className="text-sm text-slate-700 tabular-nums">+${savedEnvio.toLocaleString("es-AR")}</span>
                       </div>
                     )}
                     {!isEditMode && savedCustomCharges.map((c) => (
-                      <div key={c.id} className="flex justify-between items-center py-2.5 border-b border-slate-100">
+                      <div key={c.id} className="flex justify-between items-center py-2.5">
                         <span className="text-sm text-slate-500">{c.label}</span>
                         <span className="text-sm text-slate-700 tabular-nums">+${c.value.toLocaleString("es-AR")}</span>
                       </div>
