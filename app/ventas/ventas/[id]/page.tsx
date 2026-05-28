@@ -42,7 +42,7 @@ import { TicketModal } from "@/components/ventas/ticket-modal"
 import { CLIENTES } from "@/lib/data/clientes"
 import { INITIAL_ITEMS } from "@/lib/data/initial-items"
 import { useVentas } from "@/hooks/use-ventas"
-import jsPDF from "jspdf"
+import { useSettings } from "@/lib/contexts/settings-context"
 
 type VentaEstadoUI = "en_curso" | "finalizada" | "cancelada"
 
@@ -146,6 +146,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
 
   const { ventas, isLoading: isLoadingVentas, addItemsToVenta, updateVenta, addCobro, addEntregas, addDevolucion, setEstado, finalizarVenta, undoCobro, undoEntregaEntry, cancelarVenta } = useVentas()
+  const { miNegocio } = useSettings()
   const venta = useMemo(() => ventas.find((v) => v.id === id) || null, [ventas, id])
 
   const [showExportDropdown, setShowExportDropdown] = useState(false)
@@ -470,97 +471,220 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   }
 
   const handleDownloadPDF = () => {
-    const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" })
-    const pw = doc.internal.pageSize.getWidth()
-    let y = 15
-    const left = 15
-    const right = pw - 15
+    const fechaFormateada = new Date(venta.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "long", year: "numeric" })
 
-    doc.setFont("helvetica", "bold")
-    doc.setFontSize(18)
-    doc.setTextColor(20, 20, 20)
-    doc.text("VENTA", left, y)
-    doc.setFont("helvetica", "normal")
-    doc.setFontSize(12)
-    doc.text(venta.id, left + 22, y)
-    y += 7
+    // Build item rows HTML
+    const itemRows = venta.items.map((item) => {
+      const display = getVentaItemDisplay(item)
+      const hasDiscount = item.discount > 0
+      const isBonificada = hasDiscount && item.discountType === "percent" && item.discount === 100
+      const adjustedUnit = item.discountType === "percent"
+        ? item.unitPrice * (1 - item.discount / 100)
+        : item.unitPrice - item.discount
 
-    doc.setFontSize(9)
-    doc.setTextColor(130, 130, 130)
-    doc.text(`${venta.fecha}  ${venta.hora}`, left, y)
-    y += 6
+      const tagsHtml = display.tags.length > 0
+        ? display.tags.map(t => `<span class="tag">${t}</span>`).join("")
+        : ""
 
-    doc.setFontSize(9)
-    doc.setTextColor(60, 60, 60)
-    doc.text(`Cliente: ${clienteNombre}`, left, y)
-    y += 10
+      const priceHtml = isBonificada
+        ? `<span class="price-original">${item.unitPrice.toLocaleString("es-AR")}</span><span class="badge">Bonificada</span>`
+        : hasDiscount
+          ? `<span class="price-original">${item.unitPrice.toLocaleString("es-AR")}</span><span class="badge">${item.discountType === "percent" ? `-${item.discount}%` : `-$${item.discount.toLocaleString("es-AR")}`}</span><br/><span class="price-final">$${Math.round(adjustedUnit).toLocaleString("es-AR")} c/u</span>`
+          : `<span class="price-final">$${item.unitPrice.toLocaleString("es-AR")} c/u</span>`
 
-    // Divider
-    doc.setDrawColor(200, 200, 200)
-    doc.line(left, y, right, y)
-    y += 6
+      const subtotal = `$${Math.round(item.total).toLocaleString("es-AR")}`
 
-    // Column headers
-    doc.setFont("helvetica", "bold")
-    doc.setFontSize(8)
-    doc.setTextColor(100, 100, 100)
-    doc.text("ÍTEM", left, y)
-    doc.text("CANT.", left + 90, y, { align: "right" })
-    doc.text("PRECIO UNIT.", left + 120, y, { align: "right" })
-    doc.text("SUBTOTAL", right, y, { align: "right" })
-    y += 5
+      return `
+        <tr>
+          <td class="item-cell">
+            <div class="item-name">${display.name}</div>
+            ${tagsHtml ? `<div class="tags">${tagsHtml}</div>` : ""}
+          </td>
+          <td class="qty-cell">${item.quantity}</td>
+          <td class="price-cell">${priceHtml}</td>
+          <td class="subtotal-cell">${subtotal}</td>
+        </tr>`
+    }).join("")
 
-    doc.setDrawColor(220, 220, 220)
-    doc.line(left, y, right, y)
-    y += 5
+    // Adjustments rows
+    const hasDescuento = savedGlobalDiscount && savedGlobalDiscount.value > 0
+    const hasEnvioAdj = savedEnvio != null && savedEnvio > 0
+    const hasOtros = savedCustomCharges.length > 0
+    const displayTotal = Math.round(venta.total + savedAdjTotal)
 
-    // Items
-    doc.setFont("helvetica", "normal")
-    doc.setFontSize(9)
-    doc.setTextColor(30, 30, 30)
-    for (const item of venta.items) {
-      const name = item.name.length > 40 ? item.name.slice(0, 37) + "..." : item.name
-      doc.text(name, left, y)
-      doc.text(String(item.quantity), left + 90, y, { align: "right" })
-      doc.text(`$${item.unitPrice.toLocaleString("es-AR")}`, left + 120, y, { align: "right" })
-      doc.text(`$${item.total.toLocaleString("es-AR")}`, right, y, { align: "right" })
-      y += 7
+    const adjustmentRows = [
+      `<tr class="adj-row subtotal-row">
+        <td colspan="3" class="adj-label">Subtotal</td>
+        <td class="adj-value">$${Math.round(venta.subtotal).toLocaleString("es-AR")}</td>
+      </tr>`,
+      hasDescuento ? `<tr class="adj-row">
+        <td colspan="3" class="adj-label">Descuento ${savedGlobalDiscount!.type === "percent" ? `(${savedGlobalDiscount!.value}%)` : ""}</td>
+        <td class="adj-value discount">−$${Math.round(savedGlobalDiscountAmount).toLocaleString("es-AR")}</td>
+      </tr>` : "",
+      hasEnvioAdj ? `<tr class="adj-row">
+        <td colspan="3" class="adj-label">Envío</td>
+        <td class="adj-value">+$${Math.round(savedEnvio!).toLocaleString("es-AR")}</td>
+      </tr>` : "",
+      ...savedCustomCharges.map(c => `<tr class="adj-row">
+        <td colspan="3" class="adj-label">${c.label}</td>
+        <td class="adj-value">+$${Math.round(c.value).toLocaleString("es-AR")}</td>
+      </tr>`),
+      `<tr class="total-row">
+        <td colspan="3" class="total-label">Total</td>
+        <td class="total-value">$${displayTotal.toLocaleString("es-AR")}</td>
+      </tr>`,
+    ].join("")
+
+    const logoHtml = miNegocio.fotoUrl
+      ? `<img src="${window.location.origin}${miNegocio.fotoUrl}" class="logo" alt="logo" />`
+      : `<div class="logo-placeholder">${(miNegocio.razonSocial || miNegocio.nombre || "N").charAt(0)}</div>`
+
+    const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<title>Venta ${venta.id}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 210mm; background: #fff; font-family: 'Inter', -apple-system, sans-serif; color: #0f172a; }
+  @page { size: A4; margin: 0; }
+  @media print { html, body { width: 210mm; } .page { padding: 14mm 16mm 14mm 16mm; } }
+
+  .page { padding: 14mm 16mm 14mm 16mm; min-height: 297mm; display: flex; flex-direction: column; }
+
+  /* ── Header ── */
+  .header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10mm; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .logo { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; }
+  .logo-placeholder { width: 44px; height: 44px; border-radius: 10px; background: #0f172a; color: #fff; font-size: 20px; font-weight: 700; display: flex; align-items: center; justify-content: center; letter-spacing: -0.5px; }
+  .brand-name { font-size: 15px; font-weight: 700; color: #0f172a; letter-spacing: -0.3px; line-height: 1.2; }
+  .brand-sub { font-size: 10px; color: #94a3b8; font-weight: 400; margin-top: 1px; }
+  .doc-meta { text-align: right; }
+  .doc-id { font-size: 11px; font-weight: 600; color: #64748b; letter-spacing: 0.08em; text-transform: uppercase; }
+  .doc-date { font-size: 12px; color: #0f172a; font-weight: 500; margin-top: 3px; }
+
+  /* ── Divider ── */
+  .rule { border: none; border-top: 1px solid #e2e8f0; margin: 0 0 8mm 0; }
+  .rule-light { border: none; border-top: 1px solid #f1f5f9; }
+
+  /* ── Client row ── */
+  .client-row { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8mm; }
+  .field-label { font-size: 9px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #94a3b8; margin-bottom: 3px; }
+  .field-value { font-size: 13px; font-weight: 500; color: #0f172a; }
+  .field-value-sm { font-size: 11px; color: #475569; }
+
+  /* ── Items table ── */
+  table { width: 100%; border-collapse: collapse; margin-bottom: 0; }
+  thead tr { border-bottom: 1.5px solid #0f172a; }
+  thead th { font-size: 9px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #64748b; padding: 0 0 5px 0; text-align: left; }
+  thead th.right { text-align: right; }
+  tbody tr { border-bottom: 1px solid #f1f5f9; }
+  tbody tr:last-child { border-bottom: none; }
+
+  .item-cell { padding: 9px 12px 9px 0; width: 46%; }
+  .qty-cell { padding: 9px 12px; width: 14%; color: #475569; font-size: 12px; font-weight: 500; text-align: center; }
+  .price-cell { padding: 9px 12px; width: 22%; text-align: right; vertical-align: middle; }
+  .subtotal-cell { padding: 9px 0 9px 12px; width: 18%; text-align: right; font-size: 13px; font-weight: 600; color: #0f172a; vertical-align: middle; }
+
+  .item-name { font-size: 12px; font-weight: 500; color: #0f172a; line-height: 1.4; }
+  .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+  .tag { font-size: 9px; padding: 2px 6px; border-radius: 4px; background: #f1f5f9; color: #475569; font-weight: 500; letter-spacing: 0.02em; }
+
+  .price-original { font-size: 10px; color: #94a3b8; text-decoration: line-through; }
+  .price-final { font-size: 12px; font-weight: 500; color: #0f172a; }
+  .badge { font-size: 9px; font-weight: 600; color: #ef4444; background: #fef2f2; padding: 1px 5px; border-radius: 4px; margin-left: 4px; }
+
+  /* ── Totals ── */
+  .totals-wrapper { margin-top: 6mm; display: flex; justify-content: flex-end; }
+  .totals-table { width: 220px; }
+  .adj-row td { padding: 4px 0; }
+  .subtotal-row td { padding: 6px 0 4px 0; border-top: 1px solid #e2e8f0; }
+  .adj-label { font-size: 11px; color: #64748b; font-weight: 400; padding-right: 16px; }
+  .adj-value { font-size: 11px; color: #475569; font-weight: 500; text-align: right; }
+  .adj-value.discount { color: #ef4444; }
+  .total-row td { padding: 8px 0 4px 0; border-top: 1.5px solid #0f172a; }
+  .total-label { font-size: 14px; font-weight: 700; color: #0f172a; letter-spacing: -0.2px; padding-right: 16px; }
+  .total-value { font-size: 14px; font-weight: 700; color: #0f172a; text-align: right; letter-spacing: -0.3px; }
+
+  /* ── Footer ── */
+  .footer { margin-top: auto; padding-top: 8mm; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+  .footer-left { font-size: 9px; color: #94a3b8; }
+  .footer-right { font-size: 9px; color: #cbd5e1; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="brand">
+      ${logoHtml}
+      <div>
+        <div class="brand-name">${miNegocio.razonSocial || miNegocio.nombre || miNegocio.nombreApp}</div>
+        ${miNegocio.ciudad ? `<div class="brand-sub">${miNegocio.ciudad}${miNegocio.provincia ? `, ${miNegocio.provincia}` : ""}</div>` : ""}
+      </div>
+    </div>
+    <div class="doc-meta">
+      <div class="doc-id">Venta ${venta.id}</div>
+      <div class="doc-date">${fechaFormateada}</div>
+    </div>
+  </div>
+
+  <hr class="rule"/>
+
+  <!-- Client + hour -->
+  <div class="client-row">
+    <div>
+      <div class="field-label">Cliente</div>
+      <div class="field-value">${clienteNombre}</div>
+    </div>
+    <div style="text-align:right">
+      <div class="field-label">Hora</div>
+      <div class="field-value-sm">${venta.hora}</div>
+    </div>
+  </div>
+
+  <!-- Items table -->
+  <table>
+    <thead>
+      <tr>
+        <th>Ítem</th>
+        <th class="right" style="text-align:center">Cant.</th>
+        <th class="right">Precio unit.</th>
+        <th class="right">Subtotal</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${itemRows}
+    </tbody>
+  </table>
+
+  <!-- Totals -->
+  <div class="totals-wrapper">
+    <table class="totals-table">
+      <tbody>
+        ${adjustmentRows}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="footer-left">${miNegocio.razonSocial || miNegocio.nombre || ""} · ${miNegocio.email || ""}</div>
+    <div class="footer-right">Venta ${venta.id}</div>
+  </div>
+
+</div>
+<script>window.onload = function(){ window.print(); window.onafterprint = function(){ window.close(); }; }</script>
+</body>
+</html>`
+
+    const printWindow = window.open("", "_blank", "width=900,height=700")
+    if (printWindow) {
+      printWindow.document.write(html)
+      printWindow.document.close()
     }
-
-    y += 3
-    doc.setDrawColor(200, 200, 200)
-    doc.line(left, y, right, y)
-    y += 6
-
-    // Totals
-    doc.setFontSize(9)
-    doc.setTextColor(80, 80, 80)
-    doc.text("Subtotal:", right - 40, y)
-    doc.text(`$${venta.subtotal.toLocaleString("es-AR")}`, right, y, { align: "right" })
-    y += 6
-
-    doc.setFont("helvetica", "bold")
-    doc.setFontSize(11)
-    doc.setTextColor(10, 10, 10)
-    doc.text("TOTAL:", right - 40, y)
-    doc.text(`$${venta.total.toLocaleString("es-AR")}`, right, y, { align: "right" })
-    y += 10
-
-    // Cobros
-    if (venta.cobros.length > 0) {
-      doc.setFont("helvetica", "bold")
-      doc.setFontSize(9)
-      doc.setTextColor(60, 60, 60)
-      doc.text("Cobros registrados:", left, y)
-      y += 5
-      doc.setFont("helvetica", "normal")
-      for (const c of venta.cobros) {
-        doc.text(`${c.fecha}  ${c.hora}  ${c.medioPago}  $${Math.abs(c.monto).toLocaleString("es-AR")}${c.monto < 0 ? " (devolución)" : ""}`, left, y)
-        y += 5
-      }
-    }
-
-    doc.save(`venta-${venta.id}.pdf`)
   }
   const fechaCreacion = new Date(venta.fecha).toLocaleDateString("es-AR", {
     day: "2-digit",
