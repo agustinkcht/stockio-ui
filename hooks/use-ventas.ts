@@ -369,10 +369,20 @@ export function useVentas() {
           medioPago: "",
         }
 
+        // Cobro entry for the refund — monto negative so UI can render it distinctly
+        const refundCobro: VentaCobro = {
+          id: `${ventaId}-DEV-COB-${Date.now()}`,
+          fecha,
+          hora,
+          medioPago: "devolucion" as PaymentMethod,
+          monto: -montoDevuelto,
+        }
+
         return recomputeVenta({
           ...v,
           devolucionItems: nextDevItems,
           devolucionEntries: [...(v.devolucionEntries ?? []), newEntry],
+          cobros: [...v.cobros, refundCobro],
         })
       })
       setVentas(updatedVentas)
