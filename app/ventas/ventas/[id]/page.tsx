@@ -1376,8 +1376,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
               {/* Right col-span-1: two stacked cards */}
               {ventaItems.length > 0 && (
                 <div className="col-span-1 flex flex-col gap-4">
-                <div className="bg-white rounded-lg shadow-sm overflow-hidden flex flex-col min-h-[200px]">
-                  <div className="px-5 py-5 flex flex-col gap-0 flex-1">
+                <div className="bg-white rounded-lg shadow-sm flex flex-col min-h-[200px]">
+                  <div className="px-5 py-5 flex flex-col gap-0 flex-1 overflow-hidden">
 
                     {/* ── Resumen section ── */}
                     <p className="text-sm font-semibold text-slate-800 mb-4">Resumen</p>
