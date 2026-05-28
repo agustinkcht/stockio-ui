@@ -556,14 +556,7 @@ export default function VentasPage() {
                           <span className="text-sm text-slate-600 truncate">Manual</span>
                         </div>
                         {/* Spacer */}
-                        <div className="col-span-28" />
-                        {/* Estado badge */}
-                        <div className="col-span-16 flex items-center justify-end pr-2">
-                          <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full ${estadoStyle.bg}`}>
-                            <EstadoIcon className={`w-3 h-3 ${estadoStyle.text} shrink-0`} />
-                            <span className={`text-xs font-medium ${estadoStyle.text}`}>{estadoStyle.label}</span>
-                          </div>
-                        </div>
+                        <div className="col-span-44" />
                         {/* Ver ticket */}
                         <div className="col-span-18 flex items-center justify-end pr-3 border-r border-slate-200/70">
                           {isFacturada ? (
@@ -611,7 +604,7 @@ export default function VentasPage() {
                       </div>
 
                       {/* MIDDLE ROW */}
-                      <div className="flex items-center gap-3 px-3 pb-2 min-h-[44px]" style={{ paddingLeft: "calc(4% + 12px)" }}>
+                      <div className="flex items-center gap-3 py-1.5" style={{ paddingLeft: "calc(4% + 12px)" }}>
                         {/* Mini cliente widget — no label, smaller avatar */}
                         <button
                           type="button"
@@ -660,7 +653,7 @@ export default function VentasPage() {
                         const firstItemDisplay = firstItem ? getVentaItemDisplay(firstItem) : null
 
                         return (
-                          <div className="grid grid-cols-100 pt-2 pb-2" onClick={(e) => e.stopPropagation()}>
+                          <div className="grid grid-cols-100 pt-1 pb-2" onClick={(e) => e.stopPropagation()}>
                             <div className="col-span-4" />
                             <div className={`col-span-48 bg-slate-50 ${isExpanded ? "rounded-tl-md" : "rounded-l-md"} py-2.5 pl-3 pr-2 flex items-center gap-2`}>
                               {isMulti && (
