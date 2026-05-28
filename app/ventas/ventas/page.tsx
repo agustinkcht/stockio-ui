@@ -361,6 +361,16 @@ export default function VentasPage() {
                   </div>
                 </div>
 
+                {/* Selection count — visible only when items are selected */}
+                {selectedVentas.size > 0 && (
+                  <div className="flex items-center gap-2.5 h-9">
+                    <div className="w-px h-5 bg-slate-300" />
+                    <span className="text-xs text-slate-500 whitespace-nowrap">
+                      {selectedVentas.size} seleccionada{selectedVentas.size !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+                )}
+
                 {/* Filtrar / Ordenar — pushed to the far right */}
                 <div className="ml-auto flex items-center gap-2">
                   <button
