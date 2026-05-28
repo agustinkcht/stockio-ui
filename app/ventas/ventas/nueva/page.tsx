@@ -44,6 +44,7 @@ import type {
   Venta,
   VentaCliente,
   VentaCobro,
+  VentaCustomCharge,
   VentaEntregaEntry,
   VentaEntregaItem,
   VentaItem,
@@ -131,7 +132,7 @@ export default function NuevaVentaPage() {
   const [globalDiscount, setGlobalDiscount] = useState<{ value: number; type: "percent" | "cash" }>({ value: 0, type: "percent" })
   const [showEnvio, setShowEnvio] = useState(false)
   const [envioAmount, setEnvioAmount] = useState(0)
-  const [customCharges, setCustomCharges] = useState<{ id: number; label: string; value: number }[]>([])
+  const [customCharges, setCustomCharges] = useState<VentaCustomCharge[]>([])
 
   // Step 3: Entrega
   const [entregaMode, setEntregaMode] = useState<EntregaMode>("en_el_acto")
@@ -401,7 +402,7 @@ export default function NuevaVentaPage() {
           lineTotal = it.unitPrice * it.quantity
         }
         const discountValue = aj.value
-        const discountType = aj.type === "unit" ? "percent" : (aj.type === "percent" ? "percent" : "fixed")
+        const discountType: "percent" | "fixed" | "unit" = aj.type === "unit" ? "unit" : (aj.type === "percent" ? "percent" : "fixed")
         return { ...it, discount: discountValue, discountType, total: Math.round(lineTotal) }
       })
 
@@ -460,6 +461,8 @@ export default function NuevaVentaPage() {
         subtotal,
         descuento: showGlobalDiscount ? globalDiscount.value : 0,
         descuentoTipo: globalDiscount.type === "cash" ? "fixed" : "percent",
+        envio: showEnvio && envioAmount > 0 ? envioAmount : 0,
+        customCharges: customCharges.filter(c => c.value > 0),
         total: ventaTotal,
         entregaItems,
         entregaEntries,
@@ -1456,10 +1459,19 @@ export default function NuevaVentaPage() {
                                 </div>
                                 {/* Precio c/u — 2 cols */}
                                 <div className="col-span-2 flex flex-col items-end justify-center pr-4">
-                                  {hasDiscount && aj.type !== "unit" && (
-                                    <span className="text-xs text-slate-300 line-through tabular-nums">${Math.round(it.unitPrice).toLocaleString("es-AR")} c/u</span>
+                                  {hasDiscount && aj.type === "unit" ? (
+                                    <>
+                                      <span className="text-sm text-slate-500 tabular-nums">${Math.round(it.unitPrice).toLocaleString("es-AR")} c/u</span>
+                                      <span className="text-[10px] text-emerald-600 font-medium">{Math.min(aj.value, it.quantity)} unidades bonificadas</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      {hasDiscount && (
+                                        <span className="text-xs text-slate-300 line-through tabular-nums">${Math.round(it.unitPrice).toLocaleString("es-AR")} c/u</span>
+                                      )}
+                                      <span className="text-sm text-slate-500 tabular-nums">${Math.round(adjustedUnit).toLocaleString("es-AR")} c/u</span>
+                                    </>
                                   )}
-                                  <span className="text-sm text-slate-500 tabular-nums">${Math.round(adjustedUnit).toLocaleString("es-AR")} c/u</span>
                                 </div>
                                 {/* Subtotal — 2 cols */}
                                 <div className="col-span-2 flex items-center justify-end px-4">

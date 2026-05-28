@@ -6,7 +6,7 @@ import { VENTAS } from "@/lib/data/ventas"
 import { useAccount } from "@/lib/contexts/account-context"
 
 // Bump this when the Venta type or seed data changes to force re-seeding
-const VENTAS_SEED_VERSION = "v6"
+const VENTAS_SEED_VERSION = "v7"
 
 // Ensures a venta object loaded from localStorage has all required fields,
 // even if it was saved before a type extension.
@@ -23,6 +23,8 @@ function migrateVenta(raw: Partial<Venta> & Record<string, unknown>): Venta {
     total: raw.total ?? 0,
     descuento: raw.descuento ?? 0,
     descuentoTipo: raw.descuentoTipo ?? "percent",
+    envio: raw.envio ?? 0,
+    customCharges: Array.isArray(raw.customCharges) ? raw.customCharges : [],
     estado: raw.estado ?? "en_curso",
   } as Venta
 }
@@ -30,6 +32,10 @@ function migrateVenta(raw: Partial<Venta> & Record<string, unknown>): Venta {
 // Recomputes derived totals + estado from items/cobros/entregaItems.
 function recomputeVenta(v: Venta): Venta {
   const subtotal = v.items.reduce((sum, it) => {
+    if (it.discountType === "unit") {
+      const paidQty = Math.max(0, it.quantity - Math.min(it.discount, it.quantity))
+      return sum + paidQty * it.unitPrice
+    }
     const baseGross = it.unitPrice * it.quantity
     const discount =
       it.discountType === "percent" ? baseGross * (it.discount / 100) : it.discount * it.quantity
@@ -39,7 +45,9 @@ function recomputeVenta(v: Venta): Venta {
   const ventaDescuento =
     v.descuentoTipo === "percent" ? subtotal * (v.descuento / 100) : v.descuento
   const montoDevuelto = (v.devolucionEntries ?? []).reduce((s, e) => s + e.montoDevuelto, 0)
-  const total = Math.max(0, subtotal - ventaDescuento - montoDevuelto)
+  const envio = v.envio ?? 0
+  const customChargesTotal = (v.customCharges ?? []).reduce((s, c) => s + c.value, 0)
+  const total = Math.max(0, subtotal - ventaDescuento + envio + customChargesTotal - montoDevuelto)
 
   const cobrado = v.cobros.reduce((s, c) => s + c.monto, 0)
   const fullyPaid = cobrado + 0.001 >= total && total > 0

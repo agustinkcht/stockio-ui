@@ -192,10 +192,26 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
       Object.fromEntries(ventaItems.map((item, idx) => [
         idx,
         item.discount > 0
-          ? { value: item.discount, type: (item.discountType === "fixed" ? "cash" : item.discountType) as "percent" | "cash" }
+          ? { value: item.discount, type: (item.discountType === "fixed" ? "cash" : item.discountType === "unit" ? "unit" : "percent") as "percent" | "cash" | "unit" }
           : { value: 0, type: "percent" as const },
       ]))
     )
+    // Restore current venta adjustments into edit mode
+    if (venta && venta.descuento > 0) {
+      setShowGlobalDiscount(true)
+      setGlobalDiscount({ value: venta.descuento, type: venta.descuentoTipo === "fixed" ? "cash" : "percent" })
+    } else {
+      setShowGlobalDiscount(false)
+      setGlobalDiscount({ value: 0, type: "percent" })
+    }
+    if (venta && venta.envio && venta.envio > 0) {
+      setShowEnvio(true)
+      setEnvioAmount(venta.envio)
+    } else {
+      setShowEnvio(false)
+      setEnvioAmount(0)
+    }
+    setCustomCharges(venta?.customCharges?.filter(c => c.value > 0) ?? [])
     setIsEditMode(true)
   }
 
@@ -208,7 +224,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
       return {
         ...item,
         discount: aj.value,
-        discountType: aj.type === "cash" ? "fixed" : aj.type === "unit" ? "percent" : aj.type,
+        discountType: aj.type === "cash" ? "fixed" : aj.type,
         total: (() => {
           if (aj.value === 0) return item.quantity * item.unitPrice
           if (aj.type === "unit") return Math.max(0, item.quantity - Math.min(aj.value, item.quantity)) * item.unitPrice
@@ -217,13 +233,22 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
         })(),
       }
     })
-    updateVenta(venta.id, { items: saved })
+    const newDescuento = showGlobalDiscount && globalDiscount.value > 0 ? globalDiscount.value : 0
+    const newDescuentoTipo: "percent" | "fixed" = globalDiscount.type === "cash" ? "fixed" : "percent"
+    const newEnvio = showEnvio && envioAmount > 0 ? envioAmount : 0
+    const newCustomCharges = customCharges.filter(c => c.value > 0)
+    updateVenta(venta.id, {
+      items: saved,
+      descuento: newDescuento,
+      descuentoTipo: newDescuentoTipo,
+      envio: newEnvio,
+      customCharges: newCustomCharges,
+    })
     // Commit resumen adjustments to view mode
-    if (showGlobalDiscount && globalDiscount.value > 0) setSavedGlobalDiscount({ ...globalDiscount })
+    if (newDescuento > 0) setSavedGlobalDiscount({ ...globalDiscount })
     else setSavedGlobalDiscount(null)
-    if (showEnvio && envioAmount > 0) setSavedEnvio(envioAmount)
-    else setSavedEnvio(null)
-    setSavedCustomCharges(customCharges.filter(c => c.value > 0))
+    setSavedEnvio(newEnvio > 0 ? newEnvio : null)
+    setSavedCustomCharges(newCustomCharges)
     cancelEditMode()
   }
 
@@ -234,10 +259,11 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const [envioAmount, setEnvioAmount] = useState(0)
   const [customCharges, setCustomCharges] = useState<{ id: number; label: string; value: number }[]>([])
 
-  // Saved (committed) adjustments shown in view mode
+  // Saved (committed) adjustments shown in view mode — initialized from venta once loaded
   const [savedGlobalDiscount, setSavedGlobalDiscount] = useState<{ value: number; type: "percent" | "cash" } | null>(null)
   const [savedEnvio, setSavedEnvio] = useState<number | null>(null)
   const [savedCustomCharges, setSavedCustomCharges] = useState<{ id: number; label: string; value: number }[]>([])
+  const [adjustmentsInitialized, setAdjustmentsInitialized] = useState(false)
 
   // Saved adjustment totals for view mode
   const savedGlobalDiscountAmount = savedGlobalDiscount
@@ -308,6 +334,9 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   ), [ventaItems, ventaEntregaItems])
 
   const itemDiscountAmount = useMemo(() => ventaItems.reduce((sum, it) => {
+    if (it.discountType === "unit") {
+      return sum + Math.min(it.discount, it.quantity) * it.unitPrice
+    }
     const baseGross = it.unitPrice * it.quantity
     const discount =
       it.discountType === "percent" ? baseGross * (it.discount / 100) : it.discount * it.quantity
@@ -391,6 +420,22 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
     [selectedModalItems])
 
   // ── useEffect hooks MUST also be above early returns ──
+
+  // Initialize saved adjustments from venta once it's available
+  useEffect(() => {
+    if (!venta || adjustmentsInitialized) return
+    setAdjustmentsInitialized(true)
+    if (venta.descuento > 0) {
+      setSavedGlobalDiscount({ value: venta.descuento, type: venta.descuentoTipo === "fixed" ? "cash" : "percent" })
+    }
+    if (venta.envio && venta.envio > 0) {
+      setSavedEnvio(venta.envio)
+    }
+    if (venta.customCharges && venta.customCharges.length > 0) {
+      setSavedCustomCharges(venta.customCharges)
+    }
+  }, [venta, adjustmentsInitialized])
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (exportDropdownRef.current && !exportDropdownRef.current.contains(event.target as Node)) {
@@ -470,68 +515,83 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
     cancelEditMode()
   }
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
+    const { jsPDF } = await import("jspdf")
+
     const fechaFormateada = new Date(venta.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "long", year: "numeric" })
 
-    // Build item rows HTML
+    // Build item rows HTML — tags inline with product name, unit bonificadas support
     const itemRows = venta.items.map((item) => {
       const display = getVentaItemDisplay(item)
       const hasDiscount = item.discount > 0
+      const isUnit = item.discountType === "unit"
       const isBonificada = hasDiscount && item.discountType === "percent" && item.discount === 100
+      const paidQty = isUnit ? Math.max(0, item.quantity - Math.min(item.discount, item.quantity)) : item.quantity
       const adjustedUnit = item.discountType === "percent"
         ? item.unitPrice * (1 - item.discount / 100)
-        : item.unitPrice - item.discount
+        : item.discountType === "fixed"
+        ? Math.max(0, item.unitPrice - item.discount)
+        : item.unitPrice
 
       const tagsHtml = display.tags.length > 0
         ? display.tags.map(t => `<span class="tag">${t}</span>`).join("")
         : ""
 
-      const priceHtml = isBonificada
+      const priceHtml = isUnit && hasDiscount
+        ? `<span class="price-final">$${item.unitPrice.toLocaleString("es-AR")} c/u</span><br/><span class="badge-green">${Math.min(item.discount, item.quantity)} bonificadas</span>`
+        : isBonificada
         ? `<span class="price-original">${item.unitPrice.toLocaleString("es-AR")}</span><span class="badge">Bonificada</span>`
         : hasDiscount
           ? `<span class="price-original">${item.unitPrice.toLocaleString("es-AR")}</span><span class="badge">${item.discountType === "percent" ? `-${item.discount}%` : `-$${item.discount.toLocaleString("es-AR")}`}</span><br/><span class="price-final">$${Math.round(adjustedUnit).toLocaleString("es-AR")} c/u</span>`
           : `<span class="price-final">$${item.unitPrice.toLocaleString("es-AR")} c/u</span>`
 
-      const subtotal = `$${Math.round(item.total).toLocaleString("es-AR")}`
+      const lineTotal = isUnit
+        ? Math.round(adjustedUnit * paidQty)
+        : Math.round(item.total)
 
       return `
         <tr>
           <td class="item-cell">
-            <div class="item-name">${display.name}</div>
-            ${tagsHtml ? `<div class="tags">${tagsHtml}</div>` : ""}
+            <div class="item-name-row">
+              <span class="item-name">${display.name}</span>
+              ${tagsHtml}
+            </div>
           </td>
           <td class="qty-cell">${item.quantity}</td>
           <td class="price-cell">${priceHtml}</td>
-          <td class="subtotal-cell">${subtotal}</td>
+          <td class="subtotal-cell">$${lineTotal.toLocaleString("es-AR")}</td>
         </tr>`
     }).join("")
 
-    // Adjustments rows
-    const hasDescuento = savedGlobalDiscount && savedGlobalDiscount.value > 0
-    const hasEnvioAdj = savedEnvio != null && savedEnvio > 0
-    const hasOtros = savedCustomCharges.length > 0
-    const displayTotal = Math.round(venta.total + savedAdjTotal)
+    // Adjustments — read directly from venta (persisted fields)
+    const ventaDescuento = venta.descuento ?? 0
+    const ventaDescuentoTipo = venta.descuentoTipo ?? "percent"
+    const ventaDescuentoAmount = ventaDescuentoTipo === "percent"
+      ? venta.subtotal * (ventaDescuento / 100)
+      : ventaDescuento
+    const ventaEnvio = venta.envio ?? 0
+    const ventaCustomCharges = venta.customCharges ?? []
 
     const adjustmentRows = [
       `<tr class="adj-row subtotal-row">
         <td colspan="3" class="adj-label">Subtotal</td>
         <td class="adj-value">$${Math.round(venta.subtotal).toLocaleString("es-AR")}</td>
       </tr>`,
-      hasDescuento ? `<tr class="adj-row">
-        <td colspan="3" class="adj-label">Descuento ${savedGlobalDiscount!.type === "percent" ? `(${savedGlobalDiscount!.value}%)` : ""}</td>
-        <td class="adj-value discount">−$${Math.round(savedGlobalDiscountAmount).toLocaleString("es-AR")}</td>
+      ventaDescuento > 0 ? `<tr class="adj-row">
+        <td colspan="3" class="adj-label">Descuento ${ventaDescuentoTipo === "percent" ? `(${ventaDescuento}%)` : ""}</td>
+        <td class="adj-value discount">−$${Math.round(ventaDescuentoAmount).toLocaleString("es-AR")}</td>
       </tr>` : "",
-      hasEnvioAdj ? `<tr class="adj-row">
+      ventaEnvio > 0 ? `<tr class="adj-row">
         <td colspan="3" class="adj-label">Envío</td>
-        <td class="adj-value">+$${Math.round(savedEnvio!).toLocaleString("es-AR")}</td>
+        <td class="adj-value">+$${Math.round(ventaEnvio).toLocaleString("es-AR")}</td>
       </tr>` : "",
-      ...savedCustomCharges.map(c => `<tr class="adj-row">
+      ...ventaCustomCharges.filter(c => c.value > 0).map(c => `<tr class="adj-row">
         <td colspan="3" class="adj-label">${c.label}</td>
         <td class="adj-value">+$${Math.round(c.value).toLocaleString("es-AR")}</td>
       </tr>`),
       `<tr class="total-row">
         <td colspan="3" class="total-label">Total</td>
-        <td class="total-value">$${displayTotal.toLocaleString("es-AR")}</td>
+        <td class="total-value">$${Math.round(venta.total).toLocaleString("es-AR")}</td>
       </tr>`,
     ].join("")
 
@@ -549,7 +609,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: 210mm; background: #fff; font-family: 'Inter', -apple-system, sans-serif; color: #0f172a; }
   @page { size: A4; margin: 0; }
-  @media print { html, body { width: 210mm; } .page { padding: 14mm 16mm 14mm 16mm; } }
 
   .page { padding: 14mm 16mm 14mm 16mm; min-height: 297mm; display: flex; flex-direction: column; }
 
@@ -566,13 +625,11 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
   /* ── Divider ── */
   .rule { border: none; border-top: 1px solid #e2e8f0; margin: 0 0 8mm 0; }
-  .rule-light { border: none; border-top: 1px solid #f1f5f9; }
 
   /* ── Client row ── */
-  .client-row { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8mm; }
+  .client-row { display: flex; align-items: flex-start; margin-bottom: 8mm; }
   .field-label { font-size: 9px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #94a3b8; margin-bottom: 3px; }
   .field-value { font-size: 13px; font-weight: 500; color: #0f172a; }
-  .field-value-sm { font-size: 11px; color: #475569; }
 
   /* ── Items table ── */
   table { width: 100%; border-collapse: collapse; margin-bottom: 0; }
@@ -587,13 +644,14 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   .price-cell { padding: 9px 12px; width: 22%; text-align: right; vertical-align: middle; }
   .subtotal-cell { padding: 9px 0 9px 12px; width: 18%; text-align: right; font-size: 13px; font-weight: 600; color: #0f172a; vertical-align: middle; }
 
+  .item-name-row { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
   .item-name { font-size: 12px; font-weight: 500; color: #0f172a; line-height: 1.4; }
-  .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
   .tag { font-size: 9px; padding: 2px 6px; border-radius: 4px; background: #f1f5f9; color: #475569; font-weight: 500; letter-spacing: 0.02em; }
 
   .price-original { font-size: 10px; color: #94a3b8; text-decoration: line-through; }
   .price-final { font-size: 12px; font-weight: 500; color: #0f172a; }
   .badge { font-size: 9px; font-weight: 600; color: #ef4444; background: #fef2f2; padding: 1px 5px; border-radius: 4px; margin-left: 4px; }
+  .badge-green { font-size: 9px; font-weight: 600; color: #16a34a; background: #f0fdf4; padding: 1px 5px; border-radius: 4px; }
 
   /* ── Totals ── */
   .totals-wrapper { margin-top: 6mm; display: flex; justify-content: flex-end; }
@@ -633,15 +691,11 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
   <hr class="rule"/>
 
-  <!-- Client + hour -->
+  <!-- Client -->
   <div class="client-row">
     <div>
       <div class="field-label">Cliente</div>
       <div class="field-value">${clienteNombre}</div>
-    </div>
-    <div style="text-align:right">
-      <div class="field-label">Hora</div>
-      <div class="field-value-sm">${venta.hora}</div>
     </div>
   </div>
 
@@ -676,15 +730,24 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   </div>
 
 </div>
-<script>window.onload = function(){ window.print(); window.onafterprint = function(){ window.close(); }; }</script>
 </body>
 </html>`
 
-    const printWindow = window.open("", "_blank", "width=900,height=700")
-    if (printWindow) {
-      printWindow.document.write(html)
-      printWindow.document.close()
-    }
+    // Render HTML to PDF using jsPDF and download directly (no print dialog)
+    const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" })
+    await new Promise<void>((resolve) => {
+      doc.html(html, {
+        callback: (d) => {
+          d.save(`Venta-${venta.id}.pdf`)
+          resolve()
+        },
+        x: 0,
+        y: 0,
+        width: 210,
+        windowWidth: 794,
+        autoPaging: "text",
+      })
+    })
   }
   const fechaCreacion = new Date(venta.fecha).toLocaleDateString("es-AR", {
     day: "2-digit",
@@ -1298,6 +1361,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     const discountAmount =
                       item.discountType === "percent"
                         ? baseGross * (item.discount / 100)
+                        : item.discountType === "unit"
+                        ? Math.min(item.discount, item.quantity) * item.unitPrice
                         : item.discount * item.quantity
                     const adjustedUnitPrice = Math.max(0, item.unitPrice - (discountAmount / Math.max(item.quantity, 1)))
                     const delivered = itemEntregaMap.get(item.sku) ?? 0
@@ -1525,9 +1590,19 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                               <span className="text-xs text-slate-400">{item.quantity === 1 ? "unidad" : "unidades"}</span>
                             </div>
 
-                            {/* Precio Unit. col — with promo logic for % and $ */}
+                            {/* Precio Unit. col — with promo logic for %, $, and unit bonificadas */}
                             <div className="flex flex-col items-center justify-center gap-0.5 py-2">
-                              {item.discount > 0 && (item.discountType === "percent" || item.discountType === "fixed") ? (
+                              {item.discount > 0 && item.discountType === "unit" ? (
+                                <>
+                                  <div className="flex items-baseline gap-1">
+                                    <span className="text-sm text-slate-700 tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
+                                    <span className="text-xs text-slate-400">c/u</span>
+                                  </div>
+                                  <span className="text-[10px] text-emerald-600 font-medium">
+                                    {Math.min(item.discount, item.quantity)} unidades bonificadas
+                                  </span>
+                                </>
+                              ) : item.discount > 0 && (item.discountType === "percent" || item.discountType === "fixed") ? (
                                 <>
                                   <div className="flex items-center gap-1">
                                     <span className="text-xs text-slate-400 line-through tabular-nums">
@@ -1614,10 +1689,17 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       <div>
                         {ventaItems.map((item, idx) => {
                           const display = getVentaItemDisplay(item)
+                          const paidQty = item.discountType === "unit"
+                            ? Math.max(0, item.quantity - Math.min(item.discount, item.quantity))
+                            : item.quantity
                           const adjustedUnit = item.discountType === "percent"
                             ? item.unitPrice * (1 - item.discount / 100)
+                            : item.discountType === "unit"
+                            ? item.unitPrice
                             : item.unitPrice - (item.discount / Math.max(item.quantity, 1))
-                          const lineTotal = Math.round(adjustedUnit * item.quantity)
+                          const lineTotal = item.discountType === "unit"
+                            ? Math.round(adjustedUnit * paidQty)
+                            : Math.round(adjustedUnit * item.quantity)
                           return (
                             <div key={idx} className="flex justify-between items-start gap-3 py-2.5 -mx-5 px-5">
                               <div className="min-w-0 flex-1">
@@ -1629,27 +1711,20 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                                 </div>
                               </div>
                               <div className="text-right shrink-0">
-                                <p className="text-[11px] text-slate-400 tabular-nums">{item.quantity} × ${Math.round(adjustedUnit).toLocaleString("es-AR")}</p>
+                                {item.discountType === "unit" && item.discount > 0 ? (
+                                  <>
+                                    <p className="text-[10px] text-emerald-600">{Math.min(item.discount, item.quantity)} bonificadas</p>
+                                    <p className="text-[11px] text-slate-400 tabular-nums">{paidQty} × ${Math.round(adjustedUnit).toLocaleString("es-AR")}</p>
+                                  </>
+                                ) : (
+                                  <p className="text-[11px] text-slate-400 tabular-nums">{item.quantity} × ${Math.round(adjustedUnit).toLocaleString("es-AR")}</p>
+                                )}
                                 <p className="text-xs font-medium text-slate-700 tabular-nums">${lineTotal.toLocaleString("es-AR")}</p>
                               </div>
                             </div>
                           )
                         })}
                         <div className="-mx-5 w-[calc(100%+2.5rem)] border-b border-slate-100" />
-                      </div>
-                    )}
-
-                    {venta.descuento > 0 && (
-                      <div className="flex justify-between items-center py-2.5">
-                        <span className="text-sm text-slate-500">
-                          Descuento{" "}
-                          <span className="text-[10px] text-slate-400">
-                            ({venta.descuentoTipo === "percent" ? `${venta.descuento}%` : `$${venta.descuento.toLocaleString("es-AR")}`})
-                          </span>
-                        </span>
-                        <span className="text-sm text-red-500 tabular-nums">
-                          −${Math.round(venta.descuentoTipo === "percent" ? venta.subtotal * (venta.descuento / 100) : venta.descuento).toLocaleString("es-AR")}
-                        </span>
                       </div>
                     )}
 
@@ -1786,8 +1861,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       <span className="text-base font-bold text-slate-900 tabular-nums">
                         ${Math.round(
                           isEditMode
-                            ? venta.total - globalDiscountAmount + envioAmount + customCharges.reduce((s, c) => s + c.value, 0)
-                            : venta.total + savedAdjTotal
+                            ? venta.subtotal - globalDiscountAmount + envioAmount + customCharges.reduce((s, c) => s + c.value, 0)
+                            : venta.total
                         ).toLocaleString("es-AR")}
                       </span>
                     </div>

@@ -183,13 +183,19 @@ export interface StockAdjustment {
 
 export type PaymentMethod = "efectivo" | "posnet" | "transferencia" | "no_especificado"
 
+export interface VentaCustomCharge {
+  id: number
+  label: string
+  value: number
+}
+
 export interface VentaItem {
   sku: string
   name: string
   quantity: number
   unitPrice: number
   discount: number
-  discountType: "percent" | "fixed"
+  discountType: "percent" | "fixed" | "unit"
   total: number
   categoria?: string
 }
@@ -249,6 +255,8 @@ export interface Venta {
   subtotal: number
   descuento: number
   descuentoTipo: "percent" | "fixed"
+  envio?: number
+  customCharges?: VentaCustomCharge[]
   total: number
   // Entrega: tracks delivered units per item. Missing sku = 0 delivered.
   entregaItems: VentaEntregaItem[]
