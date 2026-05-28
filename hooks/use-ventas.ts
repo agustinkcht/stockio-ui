@@ -1,12 +1,12 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import type { Venta, VentaItem, VentaCobro, VentaEntregaItem, VentaEntregaEntry, VentaEstado } from "@/lib/types"
+import type { Venta, VentaItem, VentaCobro, VentaEntregaItem, VentaEntregaEntry, VentaDevolucionItem, VentaDevolucionEntry, VentaEstado } from "@/lib/types"
 import { VENTAS } from "@/lib/data/ventas"
 import { useAccount } from "@/lib/contexts/account-context"
 
 // Bump this when the Venta type or seed data changes to force re-seeding
-const VENTAS_SEED_VERSION = "v5"
+const VENTAS_SEED_VERSION = "v6"
 
 // Ensures a venta object loaded from localStorage has all required fields,
 // even if it was saved before a type extension.
@@ -17,6 +17,8 @@ function migrateVenta(raw: Partial<Venta> & Record<string, unknown>): Venta {
     cobros: Array.isArray(raw.cobros) ? raw.cobros : [],
     entregaItems: Array.isArray(raw.entregaItems) ? raw.entregaItems : [],
     entregaEntries: Array.isArray(raw.entregaEntries) ? raw.entregaEntries : [],
+    devolucionItems: Array.isArray(raw.devolucionItems) ? raw.devolucionItems : [],
+    devolucionEntries: Array.isArray(raw.devolucionEntries) ? raw.devolucionEntries : [],
     subtotal: raw.subtotal ?? 0,
     total: raw.total ?? 0,
     descuento: raw.descuento ?? 0,
@@ -334,6 +336,68 @@ export function useVentas() {
     [ventas, saveVentas],
   )
 
+  // Register a devolucion: reduce entregaItems, append devolucionItems + devolucionEntries, add negative cobro
+  const addDevolucion = useCallback(
+    (ventaId: string, devoluciones: VentaDevolucionItem[], montoDevuelto: number) => {
+      const now = new Date()
+      const fecha = now.toISOString().slice(0, 10)
+      const hora = now.toTimeString().slice(0, 5)
+
+      const updatedVentas = ventas.map((v) => {
+        if (v.id !== ventaId) return v
+
+        // Reduce entregaItems by devueltas (floors at 0)
+        const nextEntregaItems = [...(v.entregaItems ?? [])].map((ei) => {
+          const dev = devoluciones.find((d) => d.sku === ei.sku)
+          if (!dev) return ei
+          return { ...ei, quantityEntregada: Math.max(0, ei.quantityEntregada - dev.quantityDevuelta) }
+        })
+
+        // Update running devolucionItems totals
+        const nextDevItems = [...(v.devolucionItems ?? [])]
+        for (const d of devoluciones) {
+          const idx = nextDevItems.findIndex((di) => di.sku === d.sku)
+          if (idx >= 0) nextDevItems[idx] = { ...nextDevItems[idx], quantityDevuelta: nextDevItems[idx].quantityDevuelta + d.quantityDevuelta }
+          else nextDevItems.push({ sku: d.sku, quantityDevuelta: d.quantityDevuelta })
+        }
+
+        // Last cobro medioPago for the refund entry
+        const lastCobro = [...v.cobros].reverse().find((c) => c.monto > 0)
+        const medioPago = lastCobro?.medioPago ?? "no_especificado"
+
+        // New devolucion entry
+        const newEntry: VentaDevolucionEntry = {
+          id: `${ventaId}-DEV-${(v.devolucionEntries ?? []).length + 1}-${Date.now()}`,
+          fecha,
+          hora,
+          items: devoluciones.map((d) => ({ sku: d.sku, quantity: d.quantityDevuelta })),
+          montoDevuelto,
+          medioPago,
+        }
+
+        // Negative cobro entry (refund)
+        const refundCobro: VentaCobro = {
+          id: `${ventaId}-COB-${v.cobros.length + 1}-${Date.now()}`,
+          fecha,
+          hora,
+          medioPago: medioPago as VentaCobro["medioPago"],
+          monto: -montoDevuelto,
+        }
+
+        return recomputeVenta({
+          ...v,
+          entregaItems: nextEntregaItems,
+          devolucionItems: nextDevItems,
+          devolucionEntries: [...(v.devolucionEntries ?? []), newEntry],
+          cobros: [...v.cobros, refundCobro],
+        })
+      })
+      setVentas(updatedVentas)
+      saveVentas(updatedVentas)
+    },
+    [ventas, saveVentas],
+  )
+
   // Cancel a venta. Optionally creates a refund cobro and/or a "devolucion" entrega entry.
   const cancelarVenta = useCallback(
     (ventaId: string, opts: { devolverUnidades: boolean; devolverCobros: boolean }) => {
@@ -398,6 +462,7 @@ export function useVentas() {
     addItemsToVenta,
     addCobro,
     addEntregas,
+    addDevolucion,
     setEstado,
     finalizarVenta,
     undoCobro,

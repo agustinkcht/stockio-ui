@@ -34,7 +34,7 @@ import {
   ShoppingCart,
 } from "lucide-react"
 import Image from "next/image"
-import type { Venta, VentaItem, PaymentMethod, Item, ItemVariant, VentaEntregaItem, VentaEntregaEntry } from "@/lib/types"
+import type { Venta, VentaItem, PaymentMethod, Item, ItemVariant, VentaEntregaItem, VentaEntregaEntry, VentaDevolucionItem } from "@/lib/types"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import { VentaItemDetailModal } from "@/components/ventas/venta-item-detail-modal"
@@ -146,7 +146,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const router = useRouter()
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
 
-  const { ventas, isLoading: isLoadingVentas, addItemsToVenta, updateVenta, addCobro, addEntregas, setEstado, finalizarVenta, undoCobro, undoEntregaEntry, cancelarVenta } = useVentas()
+  const { ventas, isLoading: isLoadingVentas, addItemsToVenta, updateVenta, addCobro, addEntregas, addDevolucion, setEstado, finalizarVenta, undoCobro, undoEntregaEntry, cancelarVenta } = useVentas()
   const venta = useMemo(() => ventas.find((v) => v.id === id) || null, [ventas, id])
 
   const [showExportDropdown, setShowExportDropdown] = useState(false)
@@ -160,7 +160,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const [cancelarDevolverCobros, setCancelarDevolverCobros] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [showSaveSuccess, setShowSaveSuccess] = useState(false)
-  const [entregaMode, setEntregaMode] = useState(false)
   const [showClientePanel, setShowClientePanel] = useState(false)
   // estado is derived from venta (persisted via useVentas)
   const [showEstadoDropdown, setShowEstadoDropdown] = useState(false)
@@ -169,6 +168,13 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const [showRegistrarCobro, setShowRegistrarCobro] = useState(false)
   const [showRegistrarEntrega, setShowRegistrarEntrega] = useState(false)
   const [showFinalizarVenta, setShowFinalizarVenta] = useState(false)
+  // Devolución modal
+  const [showDevolucion, setShowDevolucion] = useState(false)
+  const [devolucionStep, setDevolucionStep] = useState<1 | 2>(1)
+  const [devolucionSelectedItems, setDevolucionSelectedItems] = useState<{ [sku: string]: boolean }>({})
+  const [devolucionQuantities, setDevolucionQuantities] = useState<{ [sku: string]: string }>({})
+  // View mode toggle: "productos" | "entrega" | "devolucion"
+  const [viewMode, setViewMode] = useState<"productos" | "entrega" | "devolucion">("productos")
   const [finalizarMedioPago, setFinalizarMedioPago] = useState<PaymentMethod | "no_especificado">("no_especificado")
   const [entregaSelectedItems, setEntregaSelectedItems] = useState<{ [sku: string]: boolean }>({})
   const [viewingEntregaEntry, setViewingEntregaEntry] = useState<VentaEntregaEntry | null>(null)
@@ -270,6 +276,18 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const ventaCobros = venta?.cobros ?? []
   const ventaEntregaItems = venta?.entregaItems ?? []
   const ventaEntregaEntries = venta?.entregaEntries ?? []
+  const ventaDevolucionItems = venta?.devolucionItems ?? []
+  const ventaDevolucionEntries = venta?.devolucionEntries ?? []
+
+  const itemDevolucionMap = useMemo(() => new Map(
+    ventaItems.map((item) => {
+      const d = ventaDevolucionItems.find(di => di.sku === item.sku)
+      return [item.sku, d?.quantityDevuelta ?? 0]
+    })
+  ), [ventaItems, ventaDevolucionItems])
+
+  const totalDevueltas = useMemo(() => ventaDevolucionItems.reduce((s, d) => s + d.quantityDevuelta, 0), [ventaDevolucionItems])
+  const montoTotalDevuelto = useMemo(() => ventaDevolucionEntries.reduce((s, e) => s + e.montoDevuelto, 0), [ventaDevolucionEntries])
 
   const montoCobrado = useMemo(() => ventaCobros.reduce((sum, c) => sum + c.monto, 0), [ventaCobros])
   const montoRestante = useMemo(() => Math.max(0, (venta?.total ?? 0) - montoCobrado), [venta, montoCobrado])
@@ -888,6 +906,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             <div className="flex items-center gap-2 w-full justify-center">
                               <button
                                 type="button"
+                                onClick={() => { setShowDevolucion(true); setDevolucionStep(1) }}
                                 className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer group"
                               >
                                 <RotateCcw className="w-4 h-4 text-slate-500 group-hover:text-slate-700 shrink-0" />
@@ -1013,9 +1032,9 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                 <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setEntregaMode(false)}
+                    onClick={() => setViewMode("productos")}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                      !entregaMode ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                      viewMode === "productos" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
                     }`}
                   >
                     <Package className="w-3.5 h-3.5" />
@@ -1023,23 +1042,42 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   </button>
                   <button
                     type="button"
-                    onClick={() => setEntregaMode(true)}
+                    onClick={() => setViewMode("entrega")}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                      entregaMode ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                      viewMode === "entrega" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
                     }`}
                   >
                     <Truck className="w-3.5 h-3.5" />
                     Entrega
                   </button>
+                  {ventaDevolucionEntries.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setViewMode("devolucion")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                        viewMode === "devolucion" ? "bg-red-600 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                      }`}
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      Devolución
+                    </button>
+                  )}
                 </div>
 
                 {/* ── Grid title ── */}
                 <div className="px-4 pt-3 pb-1 flex items-center gap-2">
-                  {entregaMode ? (
+                  {viewMode === "entrega" ? (
                     <>
                       <Truck className="w-4 h-4 text-slate-600" />
                       <span className="text-base font-bold text-slate-900 tabular-nums">
                         {entregadasUnidades}/{totalUnidades} {totalUnidades === 1 ? "unidad entregada" : "unidades entregadas"}
+                      </span>
+                    </>
+                  ) : viewMode === "devolucion" ? (
+                    <>
+                      <RotateCcw className="w-4 h-4 text-red-500" />
+                      <span className="text-base font-bold text-slate-900 tabular-nums">
+                        {totalDevueltas}/{totalUnidades} {totalUnidades === 1 ? "unidad devuelta" : "unidades devueltas"}
                       </span>
                     </>
                   ) : (
@@ -1052,8 +1090,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   )}
                 </div>
 
-                {/* ── Entrega activity log — between title and grid ── */}
-                {entregaMode && (
+                {/* ── Entrega activity log ── */}
+                {viewMode === "entrega" && (
                   <div className="px-4 pb-2 flex flex-col">
                     {ventaEntregaEntries.length === 0 ? (
                       <p className="text-xs text-slate-400 py-1">Sin entregas registradas</p>
@@ -1089,6 +1127,33 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   </div>
                 )}
 
+                {/* ── Devolución activity log ── */}
+                {viewMode === "devolucion" && (
+                  <div className="px-4 pb-2 flex flex-col">
+                    {ventaDevolucionEntries.length === 0 ? (
+                      <p className="text-xs text-slate-400 py-1">Sin devoluciones registradas</p>
+                    ) : (
+                      [...ventaDevolucionEntries].reverse().map((entry) => {
+                        const totalEntryUnits = entry.items.reduce((s, i) => s + i.quantity, 0)
+                        const dateLabel = new Date(entry.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })
+                        return (
+                          <div key={entry.id} className="flex items-center border-b border-slate-100 last:border-0">
+                            <div className="flex-1 flex items-center gap-2 py-1.5">
+                              <span className="text-xs text-red-400 tabular-nums">{dateLabel}</span>
+                              <span className="text-xs text-slate-300">·</span>
+                              <span className="text-xs text-red-400 tabular-nums">{entry.hora}</span>
+                              <span className="text-xs text-slate-300">·</span>
+                              <span className="text-xs text-red-400 tabular-nums">{totalEntryUnits} {totalEntryUnits === 1 ? "unidad devuelta" : "unidades devueltas"}</span>
+                              <span className="text-xs text-slate-300">·</span>
+                              <span className="text-xs font-medium text-red-500 tabular-nums">−${entry.montoDevuelto.toLocaleString("es-AR")}</span>
+                            </div>
+                          </div>
+                        )
+                      })
+                    )}
+                  </div>
+                )}
+
                 {/* ── Grid (padded inside card) ── */}
                 <div className="px-3 pb-3">
                 <div className="rounded-md border border-slate-200/80 overflow-hidden">
@@ -1096,7 +1161,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
 
                 {/* ── Edit mode column headers ── */}
-                {isEditMode && !entregaMode && (
+                {isEditMode && viewMode === "productos" && (
                   <div className="grid grid-cols-[2fr_0.8fr_1fr_1.2fr_1.2fr_auto] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider border-b border-slate-100 bg-slate-50/80">
                     <div className="flex items-center px-4">Item</div>
                     <div className="flex items-center justify-center">Cantidad</div>
@@ -1129,10 +1194,10 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     return (
                       <div
                         key={`${venta.id}-item-${idx}`}
-                        onClick={() => !isEditMode && !entregaMode && setViewingItem(item)}
-                        className={`border-b border-slate-100 last:border-b-0 transition-colors ${!isEditMode && !entregaMode ? "hover:bg-slate-50/50 cursor-pointer" : ""}`}
+                        onClick={() => !isEditMode && viewMode === "productos" && setViewingItem(item)}
+                        className={`border-b border-slate-100 last:border-b-0 transition-colors ${!isEditMode && viewMode === "productos" ? "hover:bg-slate-50/50 cursor-pointer" : ""}`}
                       >
-                        {entregaMode ? (
+                        {viewMode === "entrega" ? (
                           <div className="flex items-center h-[56px] gap-3 px-4">
                             {/* Item Info */}
                             <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -1166,6 +1231,44 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                               )}
                             </div>
                           </div>
+                        ) : viewMode === "devolucion" ? (
+                          (() => {
+                            const devuelta = itemDevolucionMap.get(item.sku) ?? 0
+                            return (
+                              <div className="flex items-center h-[56px] gap-3 px-4">
+                                {/* Item Info */}
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                  <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                    <Image src={getCategoryImage(display.categoria || "") || "/placeholder.svg"} alt={item.name} width={32} height={32} className="object-cover" />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-medium text-gray-900 truncate leading-tight">{display.name}</p>
+                                    {(display.marca || display.categoria) && (
+                                      <div className="flex items-center gap-1 mt-0.5">
+                                        {display.marca && <span className="text-xs text-slate-400 leading-tight">{display.marca}</span>}
+                                        {display.marca && display.categoria && <span className="text-xs text-slate-300">·</span>}
+                                        {display.categoria && <span className="text-xs text-slate-400 leading-tight">{display.categoria}</span>}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                {/* Devueltas col */}
+                                <div className="flex items-center gap-2 shrink-0 pr-2">
+                                  {devuelta > 0 ? (
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-sm font-semibold text-red-500 tabular-nums">{devuelta}/{item.quantity}</span>
+                                      <span className="text-xs text-slate-400">devueltas</span>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-sm text-slate-300 tabular-nums">0/{item.quantity}</span>
+                                      <span className="text-xs text-slate-300">devueltas</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )
+                          })()
                         ) : isEditMode ? (
                           /* ── Edit mode row (presupuesto-style) ── */
                           (() => {
@@ -1349,7 +1452,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     )
                   })
                 )}
-              {isEditMode && !entregaMode && (
+              {isEditMode && viewMode === "productos" && (
                 <button
                   type="button"
                   onClick={() => setShowAgregarProductos(true)}
@@ -1557,8 +1660,15 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         <span className="text-sm text-slate-700 tabular-nums">+${c.value.toLocaleString("es-AR")}</span>
                       </div>
                     ))}
+                    {/* Devolución line */}
+                    {!isEditMode && montoTotalDevuelto > 0 && (
+                      <div className="flex justify-between items-center py-2.5">
+                        <span className="text-sm text-red-500">Devolución</span>
+                        <span className="text-sm font-medium text-red-500 tabular-nums">−${Math.round(montoTotalDevuelto).toLocaleString("es-AR")}</span>
+                      </div>
+                    )}
                     {/* Border below adjustments only if any exist */}
-                    {!isEditMode && (savedGlobalDiscount?.value > 0 || (savedEnvio != null && savedEnvio > 0) || savedCustomCharges.length > 0) && (
+                    {!isEditMode && (savedGlobalDiscount?.value > 0 || (savedEnvio != null && savedEnvio > 0) || savedCustomCharges.length > 0 || montoTotalDevuelto > 0) && (
                       <div className="-mx-5 w-[calc(100%+2.5rem)] border-b border-slate-100" />
                     )}
 
@@ -1589,10 +1699,13 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                               {new Date(cobro.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}
                             </span>
                             <span className="text-xs text-slate-300">·</span>
-                            <span className="text-xs text-slate-500">{metodoPagoLabels[cobro.medioPago]}</span>
+                            <span className={`text-xs ${cobro.monto < 0 ? "text-red-400" : "text-slate-500"}`}>{metodoPagoLabels[cobro.medioPago as PaymentMethod] ?? cobro.medioPago}</span>
+                            {cobro.monto < 0 && (
+                              <span className="text-xs text-red-400 font-medium">· Devolución</span>
+                            )}
                           </div>
-                          <span className="text-sm font-semibold text-slate-900 tabular-nums">
-                            ${cobro.monto.toLocaleString("es-AR")}
+                          <span className={`text-sm font-semibold tabular-nums ${cobro.monto < 0 ? "text-red-500" : "text-slate-900"}`}>
+                            {cobro.monto < 0 ? `−$${Math.abs(cobro.monto).toLocaleString("es-AR")}` : `$${cobro.monto.toLocaleString("es-AR")}`}
                           </span>
                           <button
                             type="button"
@@ -2056,6 +2169,249 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   Registrar entrega
                 </button>
               </div>
+
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* ── Registrar Devolución Modal ── */}
+      {showDevolucion && (() => {
+        // Items that have been delivered (can be returned)
+        const deliverableItems = ventaItems.filter(item => {
+          const delivered = itemEntregaMap.get(item.sku) ?? 0
+          return delivered > 0
+        })
+
+        const devSkus = deliverableItems.map(i => i.sku)
+        const allSelected = devSkus.length > 0 && devSkus.every(sku => devolucionSelectedItems[sku])
+        const someSelected = devSkus.some(sku => devolucionSelectedItems[sku])
+        const indeterminate = someSelected && !allSelected
+        const selectedCount = devSkus.filter(sku => devolucionSelectedItems[sku]).length
+
+        // Calculate total units and amount for selected items
+        const selectedEntries = deliverableItems
+          .filter(item => devolucionSelectedItems[item.sku])
+          .map(item => {
+            const qty = parseInt(devolucionQuantities[item.sku] ?? "0", 10) || 0
+            const unitPrice = item.total / Math.max(item.quantity, 1)
+            return { item, qty, amount: qty * unitPrice }
+          })
+        const totalDevUnits = selectedEntries.reduce((s, e) => s + e.qty, 0)
+        const totalDevAmount = selectedEntries.reduce((s, e) => s + e.amount, 0)
+
+        const handleSelectAll = () => {
+          const selecting = !allSelected && !indeterminate
+          const nextSelected: { [sku: string]: boolean } = {}
+          const nextQty: { [sku: string]: string } = { ...devolucionQuantities }
+          for (const item of deliverableItems) {
+            nextSelected[item.sku] = selecting
+            if (selecting) {
+              const delivered = itemEntregaMap.get(item.sku) ?? 0
+              nextQty[item.sku] = String(delivered)
+            } else {
+              delete nextQty[item.sku]
+            }
+          }
+          setDevolucionSelectedItems(nextSelected)
+          setDevolucionQuantities(nextQty)
+        }
+
+        const handleToggleItem = (sku: string) => {
+          const willBeSelected = !devolucionSelectedItems[sku]
+          setDevolucionSelectedItems(prev => ({ ...prev, [sku]: willBeSelected }))
+          if (willBeSelected) {
+            const item = deliverableItems.find(i => i.sku === sku)
+            if (item) {
+              const delivered = itemEntregaMap.get(sku) ?? 0
+              setDevolucionQuantities(prev => ({ ...prev, [sku]: String(delivered) }))
+            }
+          } else {
+            setDevolucionQuantities(prev => { const next = { ...prev }; delete next[sku]; return next })
+          }
+        }
+
+        const closeModal = () => {
+          setShowDevolucion(false)
+          setDevolucionStep(1)
+          setDevolucionSelectedItems({})
+          setDevolucionQuantities({})
+        }
+
+        const handleConfirmDevolucion = () => {
+          if (!venta) return
+          const devoluciones: VentaDevolucionItem[] = selectedEntries
+            .filter(e => e.qty > 0)
+            .map(e => ({ sku: e.item.sku, quantityDevuelta: e.qty }))
+          if (devoluciones.length === 0) return
+          addDevolucion(venta.id, devoluciones, Math.round(totalDevAmount))
+          setViewMode("devolucion")
+          closeModal()
+        }
+
+        return (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeModal} />
+            <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[85vh] flex flex-col overflow-hidden">
+
+              {/* Header */}
+              <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
+                <div>
+                  <h3 className="text-base font-semibold text-slate-900">Registrar devolución</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Indicá las unidades para generar la devolución</p>
+                </div>
+                <button onClick={closeModal} className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {devolucionStep === 1 ? (
+                <>
+                  {/* Column headers */}
+                  <div className="bg-slate-50 border-b border-slate-100 flex-shrink-0">
+                    <div className="grid grid-cols-[3fr_1fr_1.4fr] h-9 text-[10px] font-medium text-slate-500 uppercase tracking-wider">
+                      <div className="flex items-center px-4 gap-3">
+                        <button
+                          onClick={handleSelectAll}
+                          className="w-4 h-4 rounded border border-slate-300 flex items-center justify-center hover:border-slate-600 transition-colors bg-white"
+                        >
+                          {allSelected && <Check className="w-3 h-3 text-slate-800" />}
+                          {indeterminate && <Minus className="w-3 h-3 text-slate-800" />}
+                        </button>
+                        <span>Producto</span>
+                      </div>
+                      <div className="flex items-center justify-center">Entregadas</div>
+                      <div className="flex items-center justify-center">Devolver</div>
+                    </div>
+                  </div>
+
+                  {/* Items list */}
+                  <div className="flex-1 overflow-y-auto bg-white">
+                    {deliverableItems.length === 0 ? (
+                      <div className="py-12 text-center">
+                        <Package className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                        <p className="text-sm text-slate-500">No hay unidades entregadas para devolver</p>
+                      </div>
+                    ) : (
+                      deliverableItems.map((item, idx) => {
+                        const delivered = itemEntregaMap.get(item.sku) ?? 0
+                        const display = getVentaItemDisplay(item)
+                        const isSelected = !!devolucionSelectedItems[item.sku]
+                        const qtyValue = devolucionQuantities[item.sku] ?? ""
+
+                        return (
+                          <div
+                            key={idx}
+                            className={`grid grid-cols-[3fr_1fr_1.4fr] items-center py-3 px-4 border-b border-slate-100 hover:bg-slate-50/50 transition-colors cursor-pointer ${isSelected ? "bg-slate-50/70" : ""}`}
+                            onClick={() => handleToggleItem(item.sku)}
+                          >
+                            {/* Product info */}
+                            <div className="flex items-center gap-3">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleToggleItem(item.sku) }}
+                                className="w-4 h-4 rounded border border-slate-300 flex items-center justify-center hover:border-slate-600 transition-colors bg-white flex-shrink-0"
+                              >
+                                {isSelected && <Check className="w-3 h-3 text-slate-800" />}
+                              </button>
+                              <div className="w-9 h-9 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+                                <Image src={getCategoryImage(display.categoria || "") || "/placeholder.svg"} alt={display.name} width={36} height={36} className="w-full h-full object-cover" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium text-slate-800 truncate">{display.name}</p>
+                                <p className="text-xs text-slate-400">{[display.marca, display.categoria].filter(Boolean).join(" · ")}</p>
+                              </div>
+                            </div>
+
+                            {/* Entregadas */}
+                            <div className="flex items-center justify-center">
+                              <span className="text-sm text-slate-600 tabular-nums">{delivered}</span>
+                            </div>
+
+                            {/* Devolver input */}
+                            <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                              {isSelected && (
+                                <input
+                                  type="number"
+                                  min={0}
+                                  max={delivered}
+                                  value={qtyValue}
+                                  placeholder={String(delivered)}
+                                  onChange={(e) => {
+                                    const raw = e.target.value
+                                    if (raw === "") { setDevolucionQuantities(prev => ({ ...prev, [item.sku]: "" })); return }
+                                    const num = parseInt(raw, 10)
+                                    if (isNaN(num) || num < 0) { setDevolucionQuantities(prev => ({ ...prev, [item.sku]: "0" })); return }
+                                    if (num > delivered) { setDevolucionQuantities(prev => ({ ...prev, [item.sku]: String(delivered) })); return }
+                                    setDevolucionQuantities(prev => ({ ...prev, [item.sku]: String(num) }))
+                                  }}
+                                  className="w-14 text-center text-sm tabular-nums bg-slate-50 border border-slate-200 rounded-md px-2 py-1.5 focus:outline-none focus:border-slate-400 transition-colors"
+                                />
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })
+                    )}
+                  </div>
+
+                  {/* Footer step 1 */}
+                  <div className="border-t border-slate-200 bg-slate-50 py-3 px-5 flex items-center justify-between flex-shrink-0">
+                    <span className="text-sm text-slate-500">
+                      {selectedCount > 0
+                        ? `${selectedCount} producto${selectedCount !== 1 ? "s" : ""} seleccionado${selectedCount !== 1 ? "s" : ""}`
+                        : "Seleccioná productos para devolver"}
+                    </span>
+                    <button
+                      onClick={() => setDevolucionStep(2)}
+                      disabled={selectedCount === 0 || totalDevUnits === 0}
+                      className="px-5 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Continuar
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Step 2 — confirmation */}
+                  <div className="flex-1 flex flex-col items-center justify-center px-8 py-10 gap-4">
+                    <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center">
+                      <RotateCcw className="w-6 h-6 text-red-500" />
+                    </div>
+                    <p className="text-base text-slate-700 text-center leading-relaxed">
+                      <span className="font-semibold text-slate-900">{totalDevUnits} {totalDevUnits === 1 ? "unidad" : "unidades"}</span>
+                      {" "}se registrar{totalDevUnits === 1 ? "á" : "án"} como devuelta{totalDevUnits !== 1 ? "s" : ""}, y se generará una devolución por{" "}
+                      <span className="font-semibold text-red-600">${Math.round(totalDevAmount).toLocaleString("es-AR")}</span>
+                    </p>
+                    <ul className="w-full max-w-xs flex flex-col gap-1.5 mt-2">
+                      {selectedEntries.filter(e => e.qty > 0).map(e => {
+                        const display = getVentaItemDisplay(e.item)
+                        return (
+                          <li key={e.item.sku} className="flex items-center justify-between text-sm text-slate-600">
+                            <span className="truncate">{display.name}</span>
+                            <span className="tabular-nums ml-4 text-slate-500 shrink-0">{e.qty} ud.</span>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </div>
+
+                  {/* Footer step 2 */}
+                  <div className="border-t border-slate-200 bg-slate-50 py-3 px-5 flex items-center justify-end gap-3 flex-shrink-0">
+                    <button
+                      onClick={() => setDevolucionStep(1)}
+                      className="px-5 py-2 bg-white border border-slate-200 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors"
+                    >
+                      Volver
+                    </button>
+                    <button
+                      onClick={handleConfirmDevolucion}
+                      className="px-5 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      Aceptar
+                    </button>
+                  </div>
+                </>
+              )}
 
             </div>
           </div>

@@ -208,6 +208,22 @@ export interface VentaEntregaEntry {
   items: { sku: string; quantity: number }[]
 }
 
+// Tracks how many units of a given item have been returned (running total)
+export interface VentaDevolucionItem {
+  sku: string
+  quantityDevuelta: number
+}
+
+// A single return event (log entry)
+export interface VentaDevolucionEntry {
+  id: string
+  fecha: string   // "YYYY-MM-DD"
+  hora: string    // "HH:mm"
+  items: { sku: string; quantity: number }[]
+  montoDevuelto: number
+  medioPago: string
+}
+
 // A single payment entry against the venta
 export interface VentaCobro {
   id: string
@@ -244,6 +260,10 @@ export interface Venta {
   estado: VentaEstado
   observaciones?: string
   facturaEmitida?: boolean
+  // Devoluciones: returned units per item
+  devolucionItems?: VentaDevolucionItem[]
+  // Devoluciones log: ordered list of return events
+  devolucionEntries?: VentaDevolucionEntry[]
 }
 
 export interface CompraItem {
