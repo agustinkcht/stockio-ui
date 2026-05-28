@@ -425,19 +425,26 @@ export function useVentas() {
           }
         }
 
-        // Devolucion for cobros — negative cobro entry visible in cobro card
+        // Devolucion for cobros — only a negative cobro entry (no devolucionEntry, to avoid ghost log row)
+        // The montoDevuelto on the units entry (if present) carries the amount for the resumen
         if (opts.devolverCobros) {
           const totalCobrado = v.cobros.filter((c) => c.monto > 0).reduce((s, c) => s + c.monto, 0)
           if (totalCobrado > 0) {
-            // Add devolucion entry for the monto
-            devolucionEntriesNext.push({
-              id: `${ventaId}-DEV-COB-${devolucionEntriesNext.length + 1}-${Date.now()}`,
-              fecha,
-              hora,
-              items: [],
-              montoDevuelto: totalCobrado,
-              medioPago: "devolucion",
-            })
+            // Patch the montoDevuelto on the units entry we may have just pushed
+            const lastDevIdx = devolucionEntriesNext.length - 1
+            if (opts.devolverUnidades && lastDevIdx >= 0) {
+              devolucionEntriesNext[lastDevIdx] = { ...devolucionEntriesNext[lastDevIdx], montoDevuelto: totalCobrado }
+            } else {
+              // No units entry — create a minimal one just to carry the monto for recomputeVenta
+              devolucionEntriesNext.push({
+                id: `${ventaId}-DEV-COB-${devolucionEntriesNext.length + 1}-${Date.now()}`,
+                fecha,
+                hora,
+                items: [],
+                montoDevuelto: totalCobrado,
+                medioPago: "devolucion",
+              })
+            }
             // Negative cobro entry for the cobro card
             cobrosNext.push({
               id: `${ventaId}-COB-DEV-${cobrosNext.length + 1}-${Date.now()}`,
@@ -449,13 +456,13 @@ export function useVentas() {
           }
         }
 
-        return {
+        return recomputeVenta({
           ...v,
           estado: "cancelada" as VentaEstado,
           cobros: cobrosNext,
           devolucionItems: devolucionItemsNext,
           devolucionEntries: devolucionEntriesNext,
-        }
+        })
       })
       setVentas(updatedVentas)
       saveVentas(updatedVentas)

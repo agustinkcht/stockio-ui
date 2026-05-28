@@ -1124,7 +1124,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     {ventaDevolucionEntries.length === 0 ? (
                       <p className="text-xs text-slate-400 py-1">Sin devoluciones registradas</p>
                     ) : (
-                      [...ventaDevolucionEntries].reverse().map((entry) => {
+                      [...ventaDevolucionEntries].filter(e => e.items.length > 0).reverse().map((entry) => {
                         const totalEntryUnits = entry.items.reduce((s, i) => s + i.quantity, 0)
                         const dateLabel = new Date(entry.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })
                         return (
