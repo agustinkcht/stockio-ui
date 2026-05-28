@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import type { Venta, VentaItem, VentaCobro, VentaEntregaItem, VentaEntregaEntry, VentaDevolucionItem, VentaDevolucionEntry, VentaEstado } from "@/lib/types"
+import type { Venta, VentaItem, VentaCobro, VentaEntregaItem, VentaEntregaEntry, VentaDevolucionItem, VentaDevolucionEntry, VentaEstado, PaymentMethod } from "@/lib/types"
 import { VENTAS } from "@/lib/data/ventas"
 import { useAccount } from "@/lib/contexts/account-context"
 
@@ -336,9 +336,9 @@ export function useVentas() {
     [ventas, saveVentas],
   )
 
-  // Register a devolucion: reduce entregaItems, append devolucionItems + devolucionEntries, add negative cobro
+  // Register a devolucion: record devolucionItems/entries, add negative cobro. Does NOT touch entregaItems.
   const addDevolucion = useCallback(
-    (ventaId: string, devoluciones: VentaDevolucionItem[], montoDevuelto: number) => {
+    (ventaId: string, devoluciones: VentaDevolucionItem[], montoDevuelto: number, medioPago: string) => {
       const now = new Date()
       const fecha = now.toISOString().slice(0, 10)
       const hora = now.toTimeString().slice(0, 5)
@@ -346,24 +346,13 @@ export function useVentas() {
       const updatedVentas = ventas.map((v) => {
         if (v.id !== ventaId) return v
 
-        // Reduce entregaItems by devueltas (floors at 0)
-        const nextEntregaItems = [...(v.entregaItems ?? [])].map((ei) => {
-          const dev = devoluciones.find((d) => d.sku === ei.sku)
-          if (!dev) return ei
-          return { ...ei, quantityEntregada: Math.max(0, ei.quantityEntregada - dev.quantityDevuelta) }
-        })
-
-        // Update running devolucionItems totals
+        // Update running devolucionItems totals (entregaItems untouched)
         const nextDevItems = [...(v.devolucionItems ?? [])]
         for (const d of devoluciones) {
           const idx = nextDevItems.findIndex((di) => di.sku === d.sku)
           if (idx >= 0) nextDevItems[idx] = { ...nextDevItems[idx], quantityDevuelta: nextDevItems[idx].quantityDevuelta + d.quantityDevuelta }
           else nextDevItems.push({ sku: d.sku, quantityDevuelta: d.quantityDevuelta })
         }
-
-        // Last cobro medioPago for the refund entry
-        const lastCobro = [...v.cobros].reverse().find((c) => c.monto > 0)
-        const medioPago = lastCobro?.medioPago ?? "no_especificado"
 
         // New devolucion entry
         const newEntry: VentaDevolucionEntry = {
@@ -386,7 +375,6 @@ export function useVentas() {
 
         return recomputeVenta({
           ...v,
-          entregaItems: nextEntregaItems,
           devolucionItems: nextDevItems,
           devolucionEntries: [...(v.devolucionEntries ?? []), newEntry],
           cobros: [...v.cobros, refundCobro],
