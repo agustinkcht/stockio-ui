@@ -206,31 +206,6 @@ export default function VentasPage() {
             <div className="flex-1 overflow-y-auto">
               <div className="px-8 pb-8 mt-4">
 
-              {/* Status tabs */}
-              <div className="flex items-center gap-1 mb-4">
-                {tabs.map(tab => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-1.5 h-8 px-3.5 rounded-full text-sm font-medium transition-colors cursor-pointer ${
-                      activeTab === tab.id
-                        ? "bg-slate-900 text-white"
-                        : "text-slate-500 hover:bg-slate-100"
-                    }`}
-                  >
-                    {tab.label}
-                    {tab.count !== undefined && tab.count > 0 && (
-                      <span className={`text-xs px-1.5 py-0.5 rounded-full leading-none tabular-nums ${
-                        activeTab === tab.id ? "bg-white/20 text-white" : "bg-slate-200 text-slate-600"
-                      }`}>
-                        {tab.count}
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
-
               {/* Widgets row */}
               <div className="grid grid-cols-3 gap-3 mb-5">
                 {/* Pendientes de cobro */}
@@ -307,9 +282,36 @@ export default function VentasPage() {
                 </div>
               </div>
 
-              {/* Search + Período + right-side actions */}
+              {/* Search + tabs + right-side actions */}
               <div className="flex items-center mb-3 gap-2">
-                <div className="w-[30%] h-8 flex items-center gap-2 px-3 rounded-md border shadow-sm border-[rgba(228,230,235,0.6)] bg-white">
+                {/* All selector inline */}
+                <div className="flex items-center gap-0.5 shrink-0">
+                  {tabs.map(tab => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`flex items-center gap-1.5 h-8 px-3.5 rounded-full text-xs font-medium transition-colors cursor-pointer ${
+                        activeTab === tab.id
+                          ? "bg-slate-900 text-white"
+                          : "text-slate-500 hover:bg-slate-100"
+                      }`}
+                    >
+                      {tab.label}
+                      {tab.count !== undefined && tab.count > 0 && (
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full leading-none tabular-nums ${
+                          activeTab === tab.id ? "bg-white/20 text-white" : "bg-slate-200 text-slate-600"
+                        }`}>
+                          {tab.count}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="w-px h-5 bg-slate-200 shrink-0" />
+
+                <div className="w-[28%] h-8 flex items-center gap-2 px-3 rounded-md border shadow-sm border-[rgba(228,230,235,0.6)] bg-white">
                   <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                   <input
                     type="text"
@@ -319,6 +321,24 @@ export default function VentasPage() {
                     className="flex-1 bg-transparent text-xs text-slate-700 placeholder:text-slate-400 outline-none"
                   />
                 </div>
+
+                <div className="ml-auto flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] gap-1.5 shrink-0 px-3 rounded-md flex items-center hover:bg-gray-100 cursor-pointer"
+                  >
+                    <ListFilter className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Filtrar</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] gap-1.5 shrink-0 px-3 rounded-md flex items-center hover:bg-gray-100 cursor-pointer"
+                  >
+                    <ArrowUpDown className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Ordenar</span>
+                  </button>
+                </div>
+              </div>
                 <button
                   type="button"
                   className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] gap-1.5 shrink-0 px-3 rounded-md flex items-center hover:bg-gray-100 cursor-pointer"
