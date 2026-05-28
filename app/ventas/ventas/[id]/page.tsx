@@ -516,45 +516,62 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
     cancelEditMode()
   }
 
-  const handleDownloadPDF = () => {
-    // Synchronous jsPDF drawing — same pattern as ODC, no html2canvas needed
+  const handleDownloadPDF = async () => {
     const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" })
-    const pw = doc.internal.pageSize.getWidth()   // 210
-    const ph = doc.internal.pageSize.getHeight()  // 297
-    const ml = 16  // margin left
-    const mr = pw - 16  // margin right
+    const pw = doc.internal.pageSize.getWidth()
+    const ph = doc.internal.pageSize.getHeight()
+    const ml = 16
+    const mr = pw - 16
     let y = 16
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
     const newPageIfNeeded = (needed = 10) => {
       if (y + needed > ph - 16) { doc.addPage(); y = 16 }
     }
 
-    // ── Brand block (top-left) + doc meta (top-right) ──────────────────────
+    // ── Brand block ──────────────────────────────────────────────────────────
     const businessName = miNegocio.razonSocial || miNegocio.nombre || miNegocio.nombreApp || "Negocio"
     const businessSub = miNegocio.ciudad
       ? `${miNegocio.ciudad}${miNegocio.provincia ? `, ${miNegocio.provincia}` : ""}`
       : miNegocio.email || ""
+    const logoSize = 11
 
-    // Logo placeholder circle
-    doc.setFillColor(15, 23, 42)
-    doc.roundedRect(ml, y - 1, 10, 10, 2, 2, "F")
-    doc.setFont("helvetica", "bold")
-    doc.setFontSize(7)
-    doc.setTextColor(255, 255, 255)
-    const initials = businessName.charAt(0).toUpperCase()
-    doc.text(initials, ml + 5, y + 5.5, { align: "center" })
+    // Try to load the real logo image
+    let logoLoaded = false
+    if (miNegocio.fotoUrl) {
+      try {
+        const logoDataUrl = await fetch(miNegocio.fotoUrl)
+          .then(r => r.blob())
+          .then(blob => new Promise<string>((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onload = () => resolve(reader.result as string)
+            reader.onerror = reject
+            reader.readAsDataURL(blob)
+          }))
+        doc.addImage(logoDataUrl, "JPEG", ml, y - 1, logoSize, logoSize, undefined, "FAST")
+        logoLoaded = true
+      } catch {
+        // fall through to placeholder
+      }
+    }
+    if (!logoLoaded) {
+      doc.setFillColor(15, 23, 42)
+      doc.roundedRect(ml, y - 1, logoSize, logoSize, 2, 2, "F")
+      doc.setFont("helvetica", "bold")
+      doc.setFontSize(7)
+      doc.setTextColor(255, 255, 255)
+      doc.text(businessName.charAt(0).toUpperCase(), ml + logoSize / 2, y + 5.5, { align: "center" })
+    }
 
-    // Business name
+    const nameX = ml + logoSize + 2
     doc.setFont("helvetica", "bold")
     doc.setFontSize(12)
     doc.setTextColor(15, 23, 42)
-    doc.text(businessName, ml + 13, y + 4)
+    doc.text(businessName, nameX, y + 4)
     if (businessSub) {
       doc.setFont("helvetica", "normal")
       doc.setFontSize(8)
       doc.setTextColor(148, 163, 184)
-      doc.text(businessSub, ml + 13, y + 8.5)
+      doc.text(businessSub, nameX, y + 8.5)
     }
 
     // Venta ID + date (top-right)
@@ -589,7 +606,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
     y += 9
 
     // ── Column headers ────────────────────────────────────────────────────────
-    // Col positions: Item 16–106 | Cant 106–130 | Precio 130–172 | Subtotal 172–194
     const colItem = ml
     const colQty = 106
     const colPrice = 130
@@ -607,10 +623,9 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
     doc.setDrawColor(15, 23, 42)
     doc.setLineWidth(0.5)
     doc.line(ml, y, mr, y)
-    y += 4
+    y += 5
 
     // ── Item rows ─────────────────────────────────────────────────────────────
-    doc.setLineWidth(0.2)
     for (const item of venta.items) {
       const display = getVentaItemDisplay(item)
       const hasDiscount = item.discount > 0
@@ -623,62 +638,63 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
         : item.discountType === "fixed"
         ? Math.max(0, item.unitPrice - item.discount)
         : item.unitPrice
-      const lineTotal = isUnit
-        ? Math.round(adjustedUnit * paidQty)
-        : Math.round(item.total)
+      const lineTotal = isUnit ? Math.round(adjustedUnit * paidQty) : Math.round(item.total)
 
-      // Determine row height
-      const hasTags = display.tags.length > 0
+      // Row height: base 8mm + 4 if second price line + 4 if bonificadas in CANT col
       const hasSecondPriceLine = hasDiscount && !isUnit
-      const rowH = (hasTags || hasSecondPriceLine) ? 11 : 7.5
+      const hasBonif = isUnit && hasDiscount
+      const rowH = 8 + (hasSecondPriceLine ? 4 : 0) + (hasBonif ? 4 : 0)
 
-      newPageIfNeeded(rowH + 2)
+      newPageIfNeeded(rowH + 3)
 
-      // Name
-      const maxNameW = colQty - colItem - 3
-      const nameStr = display.name.length > 52 ? display.name.slice(0, 49) + "..." : display.name
+      // Name — center vertically in the row
+      const nameY = y + (hasBonif ? 4 : hasSecondPriceLine ? 3.5 : 5)
+      const nameStr = display.name.length > 50 ? display.name.slice(0, 47) + "..." : display.name
       doc.setFont("helvetica", "normal")
       doc.setFontSize(9)
       doc.setTextColor(15, 23, 42)
-      doc.text(nameStr, colItem, y + 5)
+      doc.text(nameStr, colItem, nameY)
 
-      // Tags — inline after name on same y, or below if overflow (simplified: below)
-      if (hasTags) {
-        const tagsStr = display.tags.join("  ·  ")
+      // Tags — inline after the name on the same baseline
+      if (display.tags.length > 0) {
         doc.setFont("helvetica", "normal")
         doc.setFontSize(7)
         doc.setTextColor(100, 116, 139)
-        doc.text(tagsStr, colItem, y + 9.5)
+        const nameW = doc.getTextWidth(nameStr)
+        const tagsStr = display.tags.join("  ·  ")
+        doc.text(tagsStr, colItem + nameW + 2, nameY)
       }
 
-      // Quantity
+      // CANT. column: quantity centered + "x bonif." below if unit discount
+      const qtyBaseY = hasBonif ? y + 3.5 : y + 5
       doc.setFont("helvetica", "normal")
       doc.setFontSize(9)
       doc.setTextColor(71, 85, 105)
-      doc.text(String(item.quantity), colQty + 6, y + 5, { align: "center" })
+      doc.text(String(item.quantity), colQty + 6, qtyBaseY, { align: "center" })
+      if (hasBonif) {
+        doc.setFontSize(7)
+        doc.setTextColor(22, 163, 74)
+        doc.text(`${Math.min(item.discount, item.quantity)} bonif.`, colQty + 6, y + 8.5, { align: "center" })
+      }
 
-      // Precio unit
+      // PRECIO UNIT. column
       if (isUnit && hasDiscount) {
+        // Just show the unit price — bonif is in the CANT col
         doc.setFont("helvetica", "normal")
         doc.setFontSize(9)
         doc.setTextColor(15, 23, 42)
-        doc.text(`$${item.unitPrice.toLocaleString("es-AR")} c/u`, colPrice, y + 4)
-        doc.setFontSize(7)
-        doc.setTextColor(22, 163, 74) // green
-        doc.text(`${Math.min(item.discount, item.quantity)} bonificadas`, colPrice, y + 8.5)
+        doc.text(`$${item.unitPrice.toLocaleString("es-AR")} c/u`, colPrice, y + 5)
       } else if (hasDiscount) {
-        // Strikethrough price
+        // Strikethrough original + badge on first line, adjusted price on second line
         doc.setFont("helvetica", "normal")
         doc.setFontSize(7.5)
         doc.setTextColor(148, 163, 184)
         const origStr = `$${item.unitPrice.toLocaleString("es-AR")}`
         const origW = doc.getTextWidth(origStr)
         doc.text(origStr, colPrice, y + 3.5)
-        // draw strikethrough line
         doc.setDrawColor(148, 163, 184)
         doc.setLineWidth(0.25)
         doc.line(colPrice, y + 2.8, colPrice + origW, y + 2.8)
-        // Badge label
         const badgeLabel = item.discountType === "percent"
           ? `-${item.discount}%`
           : `-$${item.discount.toLocaleString("es-AR")}`
@@ -686,7 +702,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
         doc.setFont("helvetica", "bold")
         doc.setTextColor(239, 68, 68)
         doc.text(badgeLabel, colPrice + origW + 1.5, y + 3.5)
-        // Adjusted price
         doc.setFont("helvetica", "normal")
         doc.setFontSize(9)
         doc.setTextColor(15, 23, 42)
@@ -698,7 +713,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
         doc.text(`$${item.unitPrice.toLocaleString("es-AR")} c/u`, colPrice, y + 5)
       }
 
-      // Subtotal
+      // SUBTOTAL column
       doc.setFont("helvetica", "bold")
       doc.setFontSize(9)
       doc.setTextColor(15, 23, 42)
@@ -710,7 +725,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
       doc.setDrawColor(241, 245, 249)
       doc.setLineWidth(0.2)
       doc.line(ml, y, mr, y)
-      y += 1.5
+      y += 2
     }
 
     // ── Adjustments + Total ───────────────────────────────────────────────────

@@ -905,9 +905,8 @@ export default function NuevaVentaPage() {
                                   <span className="text-sm font-medium text-slate-900 tabular-nums">
                                     ${Math.round(hasDiscount && (aj.type === "percent" || aj.type === "cash") ? adjUnitPrice : item.unitPrice).toLocaleString("es-AR")}
                                   </span>
-                                  {/* Unit discount */}
                                   {hasDiscount && aj.type === "unit" && (
-                                    <span className="text-[10px] text-emerald-600">{aj.value} unidades bonificadas</span>
+                                    <span className="text-[10px] text-emerald-600 font-medium">{Math.min(aj.value, item.quantity)} bonificadas</span>
                                   )}
                                 </div>
                                 {/* Pencil always opens the modal */}
@@ -1419,8 +1418,8 @@ export default function NuevaVentaPage() {
                       {/* Resumen */}
                       <div>
                         <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Resumen</p>
-                        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-                          {/* 10-col grid: 4 item | 2 cantidad | 2 precio | 2 subtotal */}
+                        {/* Products table */}
+                        <div className="bg-white border border-slate-200 overflow-hidden">
                           {selectedItems.map((it, idx) => {
                             const aj = editAjustes[idx] ?? { value: 0, type: "percent" as const }
                             const display = getVentaItemDisplay(it)
@@ -1449,29 +1448,18 @@ export default function NuevaVentaPage() {
                                   ))}
                                 </div>
                                 {/* Cantidad — 2 cols */}
-                                <div className="col-span-2 flex items-center justify-end pr-4">
-                                  <span className="text-sm text-slate-500 tabular-nums">
-                                    {aj.type === "unit" && hasDiscount
-                                      ? <>{it.quantity} unidades <span className="text-amber-500 text-xs">({aj.value} bonif.)</span></>
-                                      : <>{it.quantity} unidades</>
-                                    }
-                                  </span>
+                                <div className="col-span-2 flex flex-col items-end justify-center pr-4">
+                                  <span className="text-sm text-slate-500 tabular-nums">{it.quantity} unidades</span>
+                                  {aj.type === "unit" && hasDiscount && (
+                                    <span className="text-[10px] text-emerald-600 font-medium">{Math.min(aj.value, it.quantity)} bonificadas</span>
+                                  )}
                                 </div>
                                 {/* Precio c/u — 2 cols */}
                                 <div className="col-span-2 flex flex-col items-end justify-center pr-4">
-                                  {hasDiscount && aj.type === "unit" ? (
-                                    <>
-                                      <span className="text-sm text-slate-500 tabular-nums">${Math.round(it.unitPrice).toLocaleString("es-AR")} c/u</span>
-                                      <span className="text-[10px] text-emerald-600 font-medium">{Math.min(aj.value, it.quantity)} unidades bonificadas</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      {hasDiscount && (
-                                        <span className="text-xs text-slate-300 line-through tabular-nums">${Math.round(it.unitPrice).toLocaleString("es-AR")} c/u</span>
-                                      )}
-                                      <span className="text-sm text-slate-500 tabular-nums">${Math.round(adjustedUnit).toLocaleString("es-AR")} c/u</span>
-                                    </>
+                                  {hasDiscount && aj.type !== "unit" && (
+                                    <span className="text-xs text-slate-300 line-through tabular-nums">${Math.round(it.unitPrice).toLocaleString("es-AR")} c/u</span>
                                   )}
+                                  <span className="text-sm text-slate-500 tabular-nums">${Math.round(adjustedUnit).toLocaleString("es-AR")} c/u</span>
                                 </div>
                                 {/* Subtotal — 2 cols */}
                                 <div className="col-span-2 flex items-center justify-end px-4">
@@ -1480,64 +1468,35 @@ export default function NuevaVentaPage() {
                               </div>
                             )
                           })}
+                        </div>
 
-                          {/* Subtotal productos */}
-                          <div className="grid grid-cols-10 border-t border-slate-200 py-3">
-                            <div className="col-span-4 flex items-center px-4">
-                              <span className="text-sm font-semibold text-slate-500">Subtotal productos</span>
+                        {/* Totals — right-aligned compact block, separate from products */}
+                        <div className="flex justify-end px-4 pt-3 pb-4 border border-t-0 border-slate-200">
+                          <div className="w-64 space-y-2">
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-slate-500">Subtotal</span>
+                              <span className="text-sm text-slate-700 tabular-nums">${Math.round(total).toLocaleString("es-AR")}</span>
                             </div>
-                            <div className="col-span-4" />
-                            <div className="col-span-2 flex items-center justify-end px-4">
-                              <span className="text-sm font-semibold text-slate-700 tabular-nums">${Math.round(total).toLocaleString("es-AR")}</span>
-                            </div>
-                          </div>
-
-                          {/* Descuento global */}
-                          {showGlobalDiscount && globalDiscount.value > 0 && (
-                            <div className="grid grid-cols-10 border-t border-slate-100 py-2.5">
-                              <div className="col-span-4 flex items-center px-4">
+                            {showGlobalDiscount && globalDiscount.value > 0 && (
+                              <div className="flex justify-between items-center">
                                 <span className="text-sm text-slate-500">Descuento{globalDiscount.type === "percent" ? ` (${globalDiscount.value}%)` : ""}</span>
-                              </div>
-                              <div className="col-span-4" />
-                              <div className="col-span-2 flex items-center justify-end px-4">
                                 <span className="text-sm text-red-500 tabular-nums">−${Math.round(globalDiscountAmount).toLocaleString("es-AR")}</span>
                               </div>
-                            </div>
-                          )}
-
-                          {/* Envío */}
-                          {showEnvio && envioAmount > 0 && (
-                            <div className="grid grid-cols-10 border-t border-slate-100 py-2.5">
-                              <div className="col-span-4 flex items-center px-4">
-                                <span className="text-sm text-slate-500">Envío</span>
+                            )}
+                            {showEnvio && envioAmount > 0 && (
+                              <div className="flex justify-between items-center">
+                                <span className="text-sm text-slate-500">Envio</span>
+                                <span className="text-sm text-slate-700 tabular-nums">+${Math.round(envioAmount).toLocaleString("es-AR")}</span>
                               </div>
-                              <div className="col-span-4" />
-                              <div className="col-span-2 flex items-center justify-end px-4">
-                                <span className="text-sm text-slate-600 tabular-nums">+${Math.round(envioAmount).toLocaleString("es-AR")}</span>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Custom charges */}
-                          {customCharges.filter(c => c.value > 0).map(charge => (
-                            <div key={charge.id} className="grid grid-cols-10 border-t border-slate-100 py-2.5">
-                              <div className="col-span-4 flex items-center px-4">
+                            )}
+                            {customCharges.filter(c => c.value > 0).map(charge => (
+                              <div key={charge.id} className="flex justify-between items-center">
                                 <span className="text-sm text-slate-500">{charge.label}</span>
+                                <span className="text-sm text-slate-700 tabular-nums">+${Math.round(charge.value).toLocaleString("es-AR")}</span>
                               </div>
-                              <div className="col-span-4" />
-                              <div className="col-span-2 flex items-center justify-end px-4">
-                                <span className="text-sm text-slate-600 tabular-nums">+${Math.round(charge.value).toLocaleString("es-AR")}</span>
-                              </div>
-                            </div>
-                          ))}
-
-                          {/* Total — strong border above */}
-                          <div className="grid grid-cols-10 border-t-2 border-slate-200 py-3.5">
-                            <div className="col-span-4 flex items-center px-4">
+                            ))}
+                            <div className="flex justify-between items-center border-t-2 border-slate-800 pt-2.5">
                               <span className="text-base font-bold text-slate-900">Total</span>
-                            </div>
-                            <div className="col-span-4" />
-                            <div className="col-span-2 flex items-center justify-end px-4">
                               <span className="text-base font-bold text-slate-900 tabular-nums">${Math.round(grandTotal).toLocaleString("es-AR")}</span>
                             </div>
                           </div>
