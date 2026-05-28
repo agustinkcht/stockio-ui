@@ -252,6 +252,7 @@ export default function VentasPage() {
               <div className="sticky top-0 z-30">
                 <div className="bg-slate-50/80 backdrop-blur-md">
                   <div className="px-8 py-8">
+                    <div className="max-w-6xl mx-auto">
                     <div className="flex items-start justify-between gap-6">
                       <div className="min-w-0">
                         <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
@@ -297,11 +298,13 @@ export default function VentasPage() {
                         Nueva Venta
                       </button>
                     </div>
+                    </div>{/* /max-w-6xl hero */}
                   </div>
                 </div>
               </div>
 
               <div className="px-8 pb-8 mt-2">
+                <div className="max-w-6xl mx-auto">
 
               {/* 4 Widgets — clickable to filter: Totales / Finalizadas / En Curso / Canceladas */}
               <div className="grid grid-cols-4 gap-3 mb-5">
@@ -766,6 +769,7 @@ export default function VentasPage() {
                   )
                 })}
               </div>
+                </div>{/* /max-w-6xl content */}
               </div>
             </div>
           </main>
