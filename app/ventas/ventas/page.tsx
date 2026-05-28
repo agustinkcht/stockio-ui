@@ -22,6 +22,7 @@ import {
   Plus,
   XCircle,
   BarChart3,
+  CheckCheck,
 } from "lucide-react"
 import type { Venta, VentaItem } from "@/lib/types"
 import { getCategoryImage } from "@/lib/utils/category-images"
@@ -92,7 +93,7 @@ export default function VentasPage() {
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
   const router = useRouter()
   const allCheckboxRef = useRef<HTMLInputElement>(null)
-  const { ventas } = useVentas()
+  const { ventas, cancelarVenta, finalizarVenta } = useVentas()
 
   const { periodKey, customRange, setPeriodKey, setCustomRange } = usePeriod()
   const [periodOpen, setPeriodOpen] = useState(false)
@@ -129,14 +130,13 @@ export default function VentasPage() {
   const [viewingClienteId, setViewingClienteId] = useState<string | null>(null)
   const [viewingTicketVenta, setViewingTicketVenta] = useState<Venta | null>(null)
 
-  // Tabs: default to "en_curso" if there are any, else "finalizada"
-  const hasEnCurso = ventas.some(v => v.estado === "en_curso")
+  // Tabs: default to "todas"
   const [activeTab, setActiveTab] = useState<StatusTab>("todas")
-  useEffect(() => {
-    // Only auto-select on first mount when user hasn't picked a tab
-    setActiveTab(hasEnCurso ? "en_curso" : "finalizada")
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // intentionally run once on mount
+
+  // Cancelar modal
+  const [cancelarModalVenta, setCancelarModalVenta] = useState<Venta | null>(null)
+  const [cancelarDevolverUnidades, setCancelarDevolverUnidades] = useState(true)
+  const [cancelarDevolverCobros, setCancelarDevolverCobros] = useState(true)
 
   // Widget counts
   const pendientesCobro = ventas.filter(isPendienteCobro)
@@ -306,68 +306,82 @@ export default function VentasPage() {
               <div className="px-8 pb-8 mt-2">
                 <div className="max-w-6xl mx-auto">
 
-              {/* 4 Widgets — clickable to filter: Totales / Finalizadas / En Curso / Canceladas */}
-              <div className="grid grid-cols-4 gap-3 mb-5">
-                {/* Widget 1 — Totales */}
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("todas")}
-                  className={`border rounded-xl px-5 py-4 shadow-sm text-left transition-all cursor-pointer ${activeTab === "todas" ? "bg-blue-50 border-blue-200" : "bg-white border-slate-200/80 hover:border-blue-200 hover:shadow-md"}`}
-                >
-                  <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center mb-3 shadow-sm border border-slate-100">
-                    <BarChart3 className="w-4 h-4 text-blue-500" />
-                  </div>
-                  <div className="flex items-baseline gap-2.5 min-w-0">
-                    <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{ventas.length}</p>
-                    <p className="text-sm font-medium text-blue-500 truncate">Totales</p>
-                  </div>
-                </button>
+              {/* 4 Widgets — clickable to filter; inactive (non-clickable, greyed) when count = 0 */}
+              {(() => {
+                const countFinalizadas = ventas.filter(v => v.estado === "finalizada").length
+                const countEnCurso = ventas.filter(v => v.estado === "en_curso").length
+                const countCanceladas = canceladas.length
 
-                {/* Widget 2 — Finalizadas */}
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("finalizada")}
-                  className={`border rounded-xl px-5 py-4 shadow-sm text-left transition-all cursor-pointer ${activeTab === "finalizada" ? "bg-emerald-50 border-emerald-200" : "bg-white border-slate-200/80 hover:border-emerald-200 hover:shadow-md"}`}
-                >
-                  <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center mb-3 shadow-sm border border-slate-100">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                  </div>
-                  <div className="flex items-baseline gap-2.5 min-w-0">
-                    <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{ventas.filter(v => v.estado === "finalizada").length}</p>
-                    <p className="text-sm font-medium text-emerald-500 truncate">Finalizadas</p>
-                  </div>
-                </button>
+                const widgetCls = (active: boolean, disabled: boolean, activeColor: string, hoverColor: string) => {
+                  if (disabled) return "border rounded-xl px-5 py-4 shadow-sm text-left border-slate-100 bg-slate-50 opacity-40 cursor-not-allowed"
+                  if (active) return `border rounded-xl px-5 py-4 shadow-sm text-left transition-all cursor-pointer ${activeColor}`
+                  return `border rounded-xl px-5 py-4 shadow-sm text-left transition-all cursor-pointer bg-white border-slate-200/80 ${hoverColor}`
+                }
 
-                {/* Widget 3 — En Curso */}
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("en_curso")}
-                  className={`border rounded-xl px-5 py-4 shadow-sm text-left transition-all cursor-pointer ${activeTab === "en_curso" ? "bg-orange-50 border-orange-200" : "bg-white border-slate-200/80 hover:border-orange-200 hover:shadow-md"}`}
-                >
-                  <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center mb-3 shadow-sm border border-slate-100">
-                    <Clock className="w-4 h-4 text-orange-400" />
-                  </div>
-                  <div className="flex items-baseline gap-2.5 min-w-0">
-                    <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{ventas.filter(v => v.estado === "en_curso").length}</p>
-                    <p className="text-sm font-medium text-orange-500 truncate">En Curso</p>
-                  </div>
-                </button>
+                return (
+                  <div className="grid grid-cols-4 gap-3 mb-5">
+                    {/* Widget 1 — Totales (never disabled) */}
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("todas")}
+                      className={widgetCls(activeTab === "todas", false, "bg-blue-50 border-blue-200", "hover:border-blue-200 hover:shadow-md")}
+                    >
+                      <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center mb-3 shadow-sm border border-slate-100">
+                        <BarChart3 className="w-4 h-4 text-blue-500" />
+                      </div>
+                      <div className="flex items-baseline gap-2.5 min-w-0">
+                        <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{ventas.length}</p>
+                        <p className="text-sm font-medium text-blue-500 truncate">Totales</p>
+                      </div>
+                    </button>
 
-                {/* Widget 4 — Canceladas */}
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("cancelada")}
-                  className={`border rounded-xl px-5 py-4 shadow-sm text-left transition-all cursor-pointer ${activeTab === "cancelada" ? "bg-red-50 border-red-200" : "bg-white border-slate-200/80 hover:border-red-200 hover:shadow-md"}`}
-                >
-                  <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center mb-3 shadow-sm border border-slate-100">
-                    <XCircle className="w-4 h-4 text-red-400" />
+                    {/* Widget 2 — Finalizadas */}
+                    <button
+                      type="button"
+                      onClick={() => countFinalizadas > 0 && setActiveTab("finalizada")}
+                      className={widgetCls(activeTab === "finalizada", countFinalizadas === 0, "bg-emerald-50 border-emerald-200", "hover:border-emerald-200 hover:shadow-md")}
+                    >
+                      <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center mb-3 shadow-sm border border-slate-100">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                      </div>
+                      <div className="flex items-baseline gap-2.5 min-w-0">
+                        <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{countFinalizadas}</p>
+                        <p className="text-sm font-medium text-emerald-500 truncate">Finalizadas</p>
+                      </div>
+                    </button>
+
+                    {/* Widget 3 — En Curso */}
+                    <button
+                      type="button"
+                      onClick={() => countEnCurso > 0 && setActiveTab("en_curso")}
+                      className={widgetCls(activeTab === "en_curso", countEnCurso === 0, "bg-orange-50 border-orange-200", "hover:border-orange-200 hover:shadow-md")}
+                    >
+                      <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center mb-3 shadow-sm border border-slate-100">
+                        <Clock className="w-4 h-4 text-orange-400" />
+                      </div>
+                      <div className="flex items-baseline gap-2.5 min-w-0">
+                        <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{countEnCurso}</p>
+                        <p className="text-sm font-medium text-orange-500 truncate">En Curso</p>
+                      </div>
+                    </button>
+
+                    {/* Widget 4 — Canceladas */}
+                    <button
+                      type="button"
+                      onClick={() => countCanceladas > 0 && setActiveTab("cancelada")}
+                      className={widgetCls(activeTab === "cancelada", countCanceladas === 0, "bg-red-50 border-red-200", "hover:border-red-200 hover:shadow-md")}
+                    >
+                      <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center mb-3 shadow-sm border border-slate-100">
+                        <XCircle className="w-4 h-4 text-red-400" />
+                      </div>
+                      <div className="flex items-baseline gap-2.5 min-w-0">
+                        <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{countCanceladas}</p>
+                        <p className="text-sm font-medium text-red-400 truncate">Canceladas</p>
+                      </div>
+                    </button>
                   </div>
-                  <div className="flex items-baseline gap-2.5 min-w-0">
-                    <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{canceladas.length}</p>
-                    <p className="text-sm font-medium text-red-400 truncate">Canceladas</p>
-                  </div>
-                </button>
-              </div>
+                )
+              })()}
 
               {/* Combined header bar: checkbox | divider | search — then Filtrar/Ordenar on the right */}
               <div className="mb-2 flex items-center gap-2">
@@ -593,16 +607,34 @@ export default function VentasPage() {
                           </button>
                           {openMoreMenu === venta.id && (
                             <div
-                              className="absolute top-full right-2 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[160px]"
+                              className="absolute top-full right-2 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[180px]"
                               onMouseLeave={() => setOpenMoreMenu(null)}
                             >
+                              {venta.estado === "en_curso" && (
+                                <button
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                                  onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); finalizarVenta(venta.id) }}
+                                >
+                                  <CheckCheck className="w-4 h-4 text-slate-400" />
+                                  Marcar como finalizada
+                                </button>
+                              )}
                               <button
                                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
-                                onClick={() => setOpenMoreMenu(null)}
+                                onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null) }}
                               >
                                 <FileDown className="w-4 h-4 text-slate-400" />
-                                Exportar PDF
+                                Descargar PDF
                               </button>
+                              {(venta.estado === "en_curso" || venta.estado === "finalizada") && (
+                                <button
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors text-left"
+                                  onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); setCancelarModalVenta(venta); setCancelarDevolverUnidades(true); setCancelarDevolverCobros(true) }}
+                                >
+                                  <XCircle className="w-4 h-4 text-red-400" />
+                                  Cancelar venta
+                                </button>
+                              )}
                             </div>
                           )}
                         </div>
@@ -794,6 +826,81 @@ export default function VentasPage() {
       {viewingTicketVenta && (
         <TicketModal venta={viewingTicketVenta} onClose={() => setViewingTicketVenta(null)} />
       )}
+
+      {/* Cancelar venta modal */}
+      {cancelarModalVenta && (() => {
+        const v = cancelarModalVenta
+        const totalEntregadas = v.entregaItems.reduce((s, ei) => s + ei.quantityEntregada, 0)
+        const totalCobrado = v.cobros.filter(c => c.monto > 0).reduce((s, c) => s + c.monto, 0)
+        const hasEntregas = totalEntregadas > 0
+        const hasCobros = totalCobrado > 0
+        return (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setCancelarModalVenta(null)} />
+            <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+              <div className="px-5 py-5 border-b border-slate-100">
+                <div className="flex items-center gap-3 mb-1">
+                  <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center shrink-0">
+                    <XCircle className="w-4 h-4 text-red-500" />
+                  </div>
+                  <h3 className="text-base font-semibold text-slate-900">Cancelar venta</h3>
+                </div>
+                <p className="text-sm text-slate-500 mt-2 ml-12">
+                  Vas a cancelar la venta <span className="font-semibold text-slate-800">{v.id}</span>. Esta acción es irreversible.
+                </p>
+              </div>
+              {(hasEntregas || hasCobros) && (
+                <div className="px-5 py-4 flex flex-col gap-3 border-b border-slate-100">
+                  <p className="text-xs text-slate-400 uppercase tracking-wider font-medium">¿Qué hacer con los registros existentes?</p>
+                  {hasEntregas && (
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-slate-800">{totalEntregadas} {totalEntregadas === 1 ? "unidad entregada" : "unidades entregadas"}</p>
+                        <p className="text-xs text-slate-400">Unidades ya despachadas</p>
+                      </div>
+                      <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
+                        <button onClick={() => setCancelarDevolverUnidades(true)} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${cancelarDevolverUnidades ? "bg-white shadow-sm text-slate-900" : "text-slate-500 hover:text-slate-700"}`}>Devolver</button>
+                        <button onClick={() => setCancelarDevolverUnidades(false)} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${!cancelarDevolverUnidades ? "bg-white shadow-sm text-slate-900" : "text-slate-500 hover:text-slate-700"}`}>No hacer nada</button>
+                      </div>
+                    </div>
+                  )}
+                  {hasCobros && (
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-slate-800">${totalCobrado.toLocaleString("es-AR")} cobrados</p>
+                        <p className="text-xs text-slate-400">Pagos ya registrados</p>
+                      </div>
+                      <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
+                        <button onClick={() => setCancelarDevolverCobros(true)} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${cancelarDevolverCobros ? "bg-white shadow-sm text-slate-900" : "text-slate-500 hover:text-slate-700"}`}>Devolver</button>
+                        <button onClick={() => setCancelarDevolverCobros(false)} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${!cancelarDevolverCobros ? "bg-white shadow-sm text-slate-900" : "text-slate-500 hover:text-slate-700"}`}>No hacer nada</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              <div className="px-5 py-4 flex items-center justify-end gap-2">
+                <button onClick={() => setCancelarModalVenta(null)} className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
+                  Salir
+                </button>
+                <button
+                  onClick={() => {
+                    cancelarVenta(v.id, {
+                      devolverUnidades: hasEntregas ? cancelarDevolverUnidades : false,
+                      devolverCobros: hasCobros ? cancelarDevolverCobros : false,
+                    })
+                    setCancelarModalVenta(null)
+                    setCancelarDevolverUnidades(true)
+                    setCancelarDevolverCobros(true)
+                  }}
+                  className="px-4 py-2 text-sm font-medium bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                >
+                  Cancelar venta
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }
