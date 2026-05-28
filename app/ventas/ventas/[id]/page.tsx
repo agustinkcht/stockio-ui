@@ -1156,7 +1156,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     <div className="flex items-center justify-center">Cantidad</div>
                     <div className="flex items-center justify-center">Precio Unit.</div>
                     <div className="flex items-center justify-center">Promoción</div>
-                    <div className="flex items-center justify-end pr-4">Subtotal</div>
                     <div className="w-10" />
                   </div>
                 )}
@@ -1373,7 +1372,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             )
                           })()
                         ) : (
-                          <div className="grid grid-cols-[40%_20%_20%_20%] min-h-[56px]">
+                          <div className="grid grid-cols-[50%_25%_25%] min-h-[56px]">
                             {/* Item Info */}
                             <div className="flex items-center gap-3 px-4 py-2 overflow-hidden">
                               <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
@@ -1431,10 +1430,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                               )}
                             </div>
 
-                            {/* Subtotal col */}
-                            <div className="flex flex-col items-end justify-center pr-6 py-2 gap-0.5">
-                              <span className="text-sm font-bold text-slate-900 tabular-nums">${item.total.toLocaleString("es-AR")}</span>
-                            </div>
                           </div>
                         )}
                       </div>
