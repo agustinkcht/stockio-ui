@@ -331,41 +331,12 @@ export default function VentasPage() {
                 </button>
               </div>
 
-              {/* Search + right-side actions */}
-              <div className="flex items-center mb-3 gap-2">
-                <div className="w-[28%] h-8 flex items-center gap-2 px-3 rounded-md border shadow-sm border-[rgba(228,230,235,0.6)] bg-white">
-                  <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Buscar"
-                    className="flex-1 bg-transparent text-xs text-slate-700 placeholder:text-slate-400 outline-none"
-                  />
-                </div>
-
-                <div className="ml-auto flex items-center gap-2">
-                  <button
-                    type="button"
-                    className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] gap-1.5 shrink-0 px-3 rounded-md flex items-center hover:bg-gray-100 cursor-pointer"
-                  >
-                    <ListFilter className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Filtrar</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] gap-1.5 shrink-0 px-3 rounded-md flex items-center hover:bg-gray-100 cursor-pointer"
-                  >
-                    <ArrowUpDown className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Ordenar</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Column header */}
-              <div className="mb-2">
-                <div className="grid grid-cols-100 h-9 bg-slate-100 border border-slate-200/80 rounded-md shadow-sm">
-                  <div className="col-span-4 flex items-center justify-center">
+              {/* Combined header bar: checkbox | divider | search — then Filtrar/Ordenar on the right */}
+              <div className="mb-2 flex items-center gap-2">
+                {/* Header block — shrinks to fit checkbox + search, not full width */}
+                <div className="flex items-center h-9 bg-slate-100 border border-slate-200/80 rounded-md shadow-sm min-w-0">
+                  {/* Checkbox cell */}
+                  <div className="flex items-center justify-center px-3 shrink-0">
                     <input
                       ref={allCheckboxRef}
                       type="checkbox"
@@ -375,7 +346,37 @@ export default function VentasPage() {
                       className="w-4 h-4 rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                     />
                   </div>
-                  <div className="col-span-96 flex items-center border-l border-slate-200/80" />
+                  {/* Divider */}
+                  <div className="w-px h-full bg-slate-200/80 shrink-0" />
+                  {/* Search input */}
+                  <div className="flex items-center gap-2 px-3 h-full w-56">
+                    <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Buscar"
+                      className="flex-1 bg-transparent text-xs text-slate-700 placeholder:text-slate-400 outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Filtrar / Ordenar — pushed to the far right */}
+                <div className="ml-auto flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="h-9 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] gap-1.5 shrink-0 px-3 rounded-md flex items-center hover:bg-gray-100 cursor-pointer"
+                  >
+                    <ListFilter className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Filtrar</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="h-9 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] gap-1.5 shrink-0 px-3 rounded-md flex items-center hover:bg-gray-100 cursor-pointer"
+                  >
+                    <ArrowUpDown className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Ordenar</span>
+                  </button>
                 </div>
               </div>
 
