@@ -20,6 +20,7 @@ import {
   Search,
   Plus,
   XCircle,
+  BarChart3,
 } from "lucide-react"
 import type { Venta, VentaItem } from "@/lib/types"
 import { getCategoryImage } from "@/lib/utils/category-images"
@@ -210,29 +211,35 @@ export default function VentasPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTab("todas")}
-                  className={`bg-white border rounded-xl p-4 shadow-sm text-left transition-all cursor-pointer ${activeTab === "todas" ? "border-slate-900 ring-1 ring-slate-900" : "border-slate-200/80 hover:border-slate-300"}`}
+                  className={`group bg-white border rounded-2xl p-5 shadow-sm text-left transition-all cursor-pointer ${activeTab === "todas" ? "border-blue-300 ring-1 ring-blue-200 shadow-blue-50" : "border-slate-200/80 hover:border-blue-200 hover:shadow-md"}`}
                 >
-                  <p className="text-xl font-bold text-slate-900 leading-tight">{ventas.length} Ventas</p>
-                  <p className="text-xs text-slate-400 mt-1">totales en el período</p>
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                      <BarChart3 className="w-5 h-5 text-blue-500" />
+                    </div>
+                  </div>
+                  <p className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{ventas.length}</p>
+                  <p className="text-sm font-medium text-blue-500 mt-1.5">Ventas Totales</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">en el período</p>
                 </button>
 
                 {/* Widget 2 — En Curso */}
                 <button
                   type="button"
                   onClick={() => setActiveTab("en_curso")}
-                  className={`bg-white border rounded-xl p-4 shadow-sm text-left transition-all cursor-pointer ${activeTab === "en_curso" ? "border-slate-900 ring-1 ring-slate-900" : "border-slate-200/80 hover:border-slate-300"}`}
+                  className={`group bg-white border rounded-2xl p-5 shadow-sm text-left transition-all cursor-pointer ${activeTab === "en_curso" ? "border-orange-300 ring-1 ring-orange-200 shadow-orange-50" : "border-slate-200/80 hover:border-orange-200 hover:shadow-md"}`}
                 >
-                  <p className="text-xl font-bold text-slate-900 leading-tight">{ventas.filter(v => v.estado === "en_curso").length} Ventas En Curso</p>
-                  <div className="flex flex-col gap-1 mt-2">
-                    <button type="button" onClick={e => { e.stopPropagation(); setActiveTab("en_curso") }} className="text-xs text-slate-500 hover:text-slate-800 transition-colors text-left tabular-nums">
-                      {pendientesEntrega.length} pendientes de entrega
-                    </button>
-                    <button type="button" onClick={e => { e.stopPropagation(); setActiveTab("en_curso") }} className="text-xs text-slate-500 hover:text-slate-800 transition-colors text-left tabular-nums">
-                      {pendientesCobro.length} pendientes de cobro
-                    </button>
-                    <button type="button" onClick={e => { e.stopPropagation(); setActiveTab("en_curso") }} className="text-xs text-slate-500 hover:text-slate-800 transition-colors text-left tabular-nums">
-                      {ventas.filter(v => isPendienteCobro(v) && isPendienteEntrega(v)).length} pendientes de entrega y cobro
-                    </button>
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
+                      <Clock className="w-5 h-5 text-orange-400" />
+                    </div>
+                  </div>
+                  <p className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{ventas.filter(v => v.estado === "en_curso").length}</p>
+                  <p className="text-sm font-medium text-orange-500 mt-1.5">Ventas En Curso</p>
+                  <div className="flex flex-col gap-0.5 mt-2.5 border-t border-slate-100 pt-2.5">
+                    <span className="text-[11px] text-slate-400 tabular-nums">{pendientesEntrega.length} pendientes de entrega</span>
+                    <span className="text-[11px] text-slate-400 tabular-nums">{pendientesCobro.length} pendientes de cobro</span>
+                    <span className="text-[11px] text-slate-400 tabular-nums">{ventas.filter(v => isPendienteCobro(v) && isPendienteEntrega(v)).length} pendientes de ambos</span>
                   </div>
                 </button>
 
@@ -240,13 +247,17 @@ export default function VentasPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTab("finalizada")}
-                  className={`bg-white border rounded-xl p-4 shadow-sm text-left transition-all cursor-pointer ${activeTab === "finalizada" ? "border-slate-900 ring-1 ring-slate-900" : "border-slate-200/80 hover:border-slate-300"}`}
+                  className={`group bg-white border rounded-2xl p-5 shadow-sm text-left transition-all cursor-pointer ${activeTab === "finalizada" ? "border-emerald-300 ring-1 ring-emerald-200 shadow-emerald-50" : "border-slate-200/80 hover:border-emerald-200 hover:shadow-md"}`}
                 >
-                  <p className="text-xl font-bold text-slate-900 leading-tight">{ventas.filter(v => v.estado === "finalizada").length} Ventas Finalizadas</p>
-                  <div className="flex flex-col gap-1 mt-2">
-                    <button type="button" onClick={e => { e.stopPropagation(); setActiveTab("finalizada") }} className="text-xs text-slate-500 hover:text-slate-800 transition-colors text-left tabular-nums">
-                      0 con cambios/devoluciones
-                    </button>
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                    </div>
+                  </div>
+                  <p className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{ventas.filter(v => v.estado === "finalizada").length}</p>
+                  <p className="text-sm font-medium text-emerald-500 mt-1.5">Ventas Finalizadas</p>
+                  <div className="flex flex-col gap-0.5 mt-2.5 border-t border-slate-100 pt-2.5">
+                    <span className="text-[11px] text-slate-400 tabular-nums">0 con cambios/devoluciones</span>
                   </div>
                 </button>
 
@@ -254,39 +265,20 @@ export default function VentasPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTab("cancelada")}
-                  className={`bg-white border rounded-xl p-4 shadow-sm text-left transition-all cursor-pointer ${activeTab === "cancelada" ? "border-slate-900 ring-1 ring-slate-900" : "border-slate-200/80 hover:border-slate-300"}`}
+                  className={`group bg-white border rounded-2xl p-5 shadow-sm text-left transition-all cursor-pointer ${activeTab === "cancelada" ? "border-red-300 ring-1 ring-red-200 shadow-red-50" : "border-slate-200/80 hover:border-red-200 hover:shadow-md"}`}
                 >
-                  <p className="text-xl font-bold text-slate-900 leading-tight">{canceladas.length} Ventas Canceladas</p>
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
+                      <XCircle className="w-5 h-5 text-red-400" />
+                    </div>
+                  </div>
+                  <p className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{canceladas.length}</p>
+                  <p className="text-sm font-medium text-red-400 mt-1.5">Ventas Canceladas</p>
                 </button>
               </div>
 
-              {/* Search + tabs inline + right-side actions */}
+              {/* Search + right-side actions */}
               <div className="flex items-center mb-3 gap-2">
-                {/* Tabs inline */}
-                <div className="flex items-center gap-0.5 shrink-0">
-                  {tabs.map(tab => (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium transition-colors cursor-pointer ${
-                        activeTab === tab.id ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-100"
-                      }`}
-                    >
-                      {tab.label}
-                      {tab.count !== undefined && tab.count > 0 && (
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full leading-none tabular-nums ${
-                          activeTab === tab.id ? "bg-white/20 text-white" : "bg-slate-200 text-slate-600"
-                        }`}>
-                          {tab.count}
-                        </span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="w-px h-5 bg-slate-200 shrink-0" />
-
                 <div className="w-[28%] h-8 flex items-center gap-2 px-3 rounded-md border shadow-sm border-[rgba(228,230,235,0.6)] bg-white">
                   <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                   <input
