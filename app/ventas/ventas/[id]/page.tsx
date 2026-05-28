@@ -1055,7 +1055,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       type="button"
                       onClick={() => setViewMode("devolucion")}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                        viewMode === "devolucion" ? "bg-red-600 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                        viewMode === "devolucion" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
                       }`}
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
@@ -1139,13 +1139,11 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         return (
                           <div key={entry.id} className="flex items-center border-b border-slate-100 last:border-0">
                             <div className="flex-1 flex items-center gap-2 py-1.5">
-                              <span className="text-xs text-red-400 tabular-nums">{dateLabel}</span>
+                              <span className="text-xs text-slate-400 tabular-nums">{dateLabel}</span>
                               <span className="text-xs text-slate-300">·</span>
-                              <span className="text-xs text-red-400 tabular-nums">{entry.hora}</span>
+                              <span className="text-xs text-slate-400 tabular-nums">{entry.hora}</span>
                               <span className="text-xs text-slate-300">·</span>
-                              <span className="text-xs text-red-400 tabular-nums">{totalEntryUnits} {totalEntryUnits === 1 ? "unidad devuelta" : "unidades devueltas"}</span>
-                              <span className="text-xs text-slate-300">·</span>
-                              <span className="text-xs font-medium text-red-500 tabular-nums">−${entry.montoDevuelto.toLocaleString("es-AR")}</span>
+                              <span className="text-xs text-slate-400 tabular-nums">{totalEntryUnits} {totalEntryUnits === 1 ? "unidad" : "unidades"}</span>
                             </div>
                           </div>
                         )
@@ -1663,7 +1661,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     {/* Devolución line */}
                     {!isEditMode && montoTotalDevuelto > 0 && (
                       <div className="flex justify-between items-center py-2.5">
-                        <span className="text-sm text-red-500">Devolución</span>
+                        <span className="text-sm text-slate-500">Devolución</span>
                         <span className="text-sm font-medium text-red-500 tabular-nums">−${Math.round(montoTotalDevuelto).toLocaleString("es-AR")}</span>
                       </div>
                     )}
@@ -1699,9 +1697,10 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                               {new Date(cobro.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}
                             </span>
                             <span className="text-xs text-slate-300">·</span>
-                            <span className={`text-xs ${cobro.monto < 0 ? "text-red-400" : "text-slate-500"}`}>{metodoPagoLabels[cobro.medioPago as PaymentMethod] ?? cobro.medioPago}</span>
-                            {cobro.monto < 0 && (
-                              <span className="text-xs text-red-400 font-medium">· Devolución</span>
+                            {cobro.monto < 0 ? (
+                              <span className="text-xs text-slate-500">Devolución</span>
+                            ) : (
+                              <span className="text-xs text-slate-500">{metodoPagoLabels[cobro.medioPago as PaymentMethod] ?? cobro.medioPago}</span>
                             )}
                           </div>
                           <span className={`text-sm font-semibold tabular-nums ${cobro.monto < 0 ? "text-red-500" : "text-slate-900"}`}>
