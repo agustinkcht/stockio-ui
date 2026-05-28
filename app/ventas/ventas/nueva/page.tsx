@@ -481,7 +481,7 @@ export default function NuevaVentaPage() {
   if (createdVentaId) {
     return (
       <div className="min-h-screen bg-[rgb(243,242,238)]">
-        <div className="px-8 py-8 flex gap-[6px] h-screen justify-center">
+        <div className="px-[6px] py-[6px] flex gap-[6px] h-screen">
           <div className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
             <Sidebar
               sidebarItems={SIDEBAR_ITEMS}
@@ -536,7 +536,7 @@ export default function NuevaVentaPage() {
   // ── Main view ─────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[rgb(243,242,238)]">
-      <div className="px-8 py-8 flex gap-[6px] h-screen max-w-7xl mx-auto">
+      <div className="px-[6px] py-[6px] flex gap-[6px] h-screen">
         <div className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
           <Sidebar
             sidebarItems={SIDEBAR_ITEMS}
