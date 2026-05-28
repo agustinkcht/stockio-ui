@@ -1904,27 +1904,16 @@ export default function NuevaVentaPage() {
             </div>
             {/* Body */}
             <div className="px-5 py-5 flex flex-col gap-4">
-              {/* Fecha + Hora */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] text-slate-400 uppercase tracking-wider">Fecha</label>
-                  <input
-                    type="date"
-                    max={getTodayDateStr()}
-                    value={cobroModalFecha}
-                    onChange={(e) => setCobroModalFecha(e.target.value)}
-                    className="px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-md outline-none focus:border-slate-400 transition-colors"
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] text-slate-400 uppercase tracking-wider">Hora</label>
-                  <input
-                    type="time"
-                    value={cobroModalHora}
-                    onChange={(e) => setCobroModalHora(e.target.value)}
-                    className="px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-md outline-none focus:border-slate-400 transition-colors"
-                  />
-                </div>
+              {/* Fecha */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider">Fecha</label>
+                <input
+                  type="date"
+                  max={getTodayDateStr()}
+                  value={cobroModalFecha}
+                  onChange={(e) => setCobroModalFecha(e.target.value)}
+                  className="px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-md outline-none focus:border-slate-400 transition-colors"
+                />
               </div>
               {/* Medio de pago */}
               <div className="flex flex-col gap-1.5">

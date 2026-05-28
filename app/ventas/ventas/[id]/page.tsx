@@ -29,7 +29,6 @@ import {
   Undo2,
   Pencil,
   RotateCcw,
-  RefreshCw,
   ShoppingCart,
 } from "lucide-react"
 import Image from "next/image"
@@ -52,6 +51,7 @@ const metodoPagoLabels: Record<PaymentMethod, string> = {
   posnet: "Posnet",
   transferencia: "Transferencia",
   no_especificado: "No especificado",
+  anulacion: "Anulación",
 }
 
 function ClienteSelectorInlineModal({
@@ -146,7 +146,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const router = useRouter()
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
 
-  const { ventas, isLoading: isLoadingVentas, addItemsToVenta, updateVenta, addCobro, addEntregas, addDevolucion, setEstado, finalizarVenta, undoCobro, undoEntregaEntry, cancelarVenta } = useVentas()
+  const { ventas, isLoading: isLoadingVentas, addItemsToVenta, updateVenta, addCobro, addEntregas, addDevolucion, setEstado, finalizarVenta, undoCobro, undoEntregaEntry, updateCobroMedioPago, cancelarVenta } = useVentas()
   const { miNegocio } = useSettings()
   const venta = useMemo(() => ventas.find((v) => v.id === id) || null, [ventas, id])
 
@@ -181,6 +181,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const [viewingEntregaEntry, setViewingEntregaEntry] = useState<VentaEntregaEntry | null>(null)
   const [undoCobroTarget, setUndoCobroTarget] = useState<{ id: string; monto: number } | null>(null)
   const [undoEntregaTarget, setUndoEntregaTarget] = useState<VentaEntregaEntry | null>(null)
+  const [editarMedioPagoTarget, setEditarMedioPagoTarget] = useState<{ id: string; current: PaymentMethod } | null>(null)
+  const [editarMedioPagoValue, setEditarMedioPagoValue] = useState<PaymentMethod>("efectivo")
 
   // Edit mode
   const [isEditMode, setIsEditMode] = useState(false)
@@ -287,7 +289,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const [modalSortDirection, setModalSortDirection] = useState<"asc" | "desc">("asc")
   const [showModalFilters, setShowModalFilters] = useState(false)
   const [cobroFecha, setCobroFecha] = useState(() => new Date().toISOString().slice(0, 10))
-  const [cobroHora, setCobroHora] = useState(() => new Date().toTimeString().slice(0, 5))
   const [cobroMedio, setCobroMedio] = useState<"efectivo" | "posnet" | "transferencia">("efectivo")
   const [cobroMonto, setCobroMonto] = useState("")
 
@@ -924,7 +925,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
     if (!monto || monto <= 0) return
     addCobro(venta.id, {
       fecha: cobroFecha,
-      hora: cobroHora,
+      hora: new Date().toTimeString().slice(0, 5),
       medioPago: cobroMedio,
       monto,
     })
@@ -1166,15 +1167,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                                 className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer group"
                               >
                                 <RotateCcw className="w-4 h-4 text-slate-500 group-hover:text-slate-700 shrink-0" />
-                                <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-800">Devoluciones</span>
-                              </button>
-                              <span className="text-slate-300 text-base">·</span>
-                              <button
-                                type="button"
-                                className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer group"
-                              >
-                                <RefreshCw className="w-4 h-4 text-slate-500 group-hover:text-slate-700 shrink-0" />
-                                <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-800">Cambios</span>
+                                <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-800">Gestionar devoluciones</span>
                               </button>
                             </div>
                           )}
@@ -1345,29 +1338,36 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       <p className="text-xs text-slate-400 py-1">Sin entregas registradas</p>
                     ) : (
                       [...ventaEntregaEntries].reverse().map((entry) => {
-                        const totalEntryUnits = entry.items.reduce((s, i) => s + i.quantity, 0)
+                        const isAnulacion = !!entry.anulacion
+                        const totalEntryUnits = isAnulacion
+                          ? (entry.anulacionTotal ?? Math.abs(entry.items.reduce((s, i) => s + i.quantity, 0)))
+                          : entry.items.reduce((s, i) => s + i.quantity, 0)
                         const dateLabel = new Date(entry.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })
                         return (
                           <div key={entry.id} className="flex items-center group border-b border-slate-100 last:border-0">
                             <button
                               type="button"
-                              onClick={() => setViewingEntregaEntry(entry)}
-                              className="flex-1 flex items-center gap-2 py-1.5 hover:bg-slate-50/60 -ml-4 pl-4 pr-2 transition-colors text-left"
+                              onClick={() => !isAnulacion && setViewingEntregaEntry(entry)}
+                              className={`flex-1 flex items-center gap-2 py-1.5 -ml-4 pl-4 pr-2 transition-colors text-left ${!isAnulacion ? "hover:bg-slate-50/60" : "cursor-default"}`}
                             >
-                              <span className="text-xs text-slate-400 tabular-nums">{dateLabel}</span>
+                              <span className={`text-xs tabular-nums ${isAnulacion ? "text-red-400" : "text-slate-400"}`}>{dateLabel}</span>
                               <span className="text-xs text-slate-300">·</span>
-                              <span className="text-xs text-slate-400 tabular-nums">{entry.hora}</span>
-                              <span className="text-xs text-slate-300">·</span>
-                              <span className="text-xs text-slate-400 tabular-nums">{totalEntryUnits} {totalEntryUnits === 1 ? "unidad" : "unidades"}</span>
+                              {isAnulacion ? (
+                                <span className="text-xs text-red-400">Anulación de entrega: {totalEntryUnits} {totalEntryUnits === 1 ? "unidad" : "unidades"}</span>
+                              ) : (
+                                <span className="text-xs text-slate-400 tabular-nums">{totalEntryUnits} {totalEntryUnits === 1 ? "unidad" : "unidades"}</span>
+                              )}
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => setUndoEntregaTarget(entry)}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 pr-0"
-                              title="Deshacer entrega"
-                            >
-                              <Undo2 className="w-3.5 h-3.5" />
-                            </button>
+                            {!isAnulacion && estadoUI === "en_curso" && (
+                              <button
+                                type="button"
+                                onClick={() => setUndoEntregaTarget(entry)}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 pr-0"
+                                title="Deshacer entrega"
+                              >
+                                <Undo2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
                           </div>
                         )
                       })
@@ -1945,32 +1945,53 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     <p className="text-sm font-semibold text-slate-800 mb-3">Detalle del Cobro</p>
 
                     {ventaCobros.length > 0 ? (
-                      ventaCobros.map((cobro) => (
-                        <div key={cobro.id} className="flex items-center py-2.5 border-b border-slate-100 gap-2 group">
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <span className="text-xs text-slate-400 tabular-nums">
-                              {new Date(cobro.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}
+                      ventaCobros.map((cobro) => {
+                        const isAnulacion = cobro.medioPago === "anulacion"
+                        const isNegative = cobro.monto < 0
+                        const isEditable = !isAnulacion && !isNegative
+                        return (
+                          <div key={cobro.id} className="flex items-center py-2.5 border-b border-slate-100 gap-2 group">
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <span className={`text-xs tabular-nums ${isAnulacion ? "text-red-400" : "text-slate-400"}`}>
+                                {new Date(cobro.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}
+                              </span>
+                              <span className="text-xs text-slate-300">·</span>
+                              {isAnulacion ? (
+                                <span className="text-xs text-red-400">Anulación</span>
+                              ) : isNegative ? (
+                                <span className="text-xs text-slate-500">Devolución</span>
+                              ) : (
+                                <span className="flex items-center gap-1 group/mp cursor-default">
+                                  <span className="text-xs text-slate-500">{metodoPagoLabels[cobro.medioPago as PaymentMethod] ?? cobro.medioPago}</span>
+                                  {isEditable && (
+                                    <button
+                                      type="button"
+                                      onClick={() => { setEditarMedioPagoTarget({ id: cobro.id, current: cobro.medioPago }); setEditarMedioPagoValue(cobro.medioPago) }}
+                                      className="opacity-0 group-hover/mp:opacity-100 transition-opacity p-0.5 rounded hover:bg-slate-100 text-slate-300 hover:text-slate-500"
+                                      title="Editar medio de pago"
+                                    >
+                                      <Pencil className="w-3 h-3" />
+                                    </button>
+                                  )}
+                                </span>
+                              )}
+                            </div>
+                            <span className={`text-sm font-semibold tabular-nums ${isAnulacion || isNegative ? "text-red-500" : "text-slate-900"}`}>
+                              {isNegative || isAnulacion ? `−$${Math.abs(cobro.monto).toLocaleString("es-AR")}` : `$${cobro.monto.toLocaleString("es-AR")}`}
                             </span>
-                            <span className="text-xs text-slate-300">·</span>
-                            {cobro.monto < 0 ? (
-                              <span className="text-xs text-slate-500">Devolución</span>
-                            ) : (
-                              <span className="text-xs text-slate-500">{metodoPagoLabels[cobro.medioPago as PaymentMethod] ?? cobro.medioPago}</span>
+                            {!isAnulacion && !isNegative && estadoUI === "en_curso" && (
+                              <button
+                                type="button"
+                                onClick={() => setUndoCobroTarget({ id: cobro.id, monto: cobro.monto })}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-400"
+                                title="Deshacer cobro"
+                              >
+                                <Undo2 className="w-3.5 h-3.5" />
+                              </button>
                             )}
                           </div>
-                          <span className={`text-sm font-semibold tabular-nums ${cobro.monto < 0 ? "text-red-500" : "text-slate-900"}`}>
-                            {cobro.monto < 0 ? `−$${Math.abs(cobro.monto).toLocaleString("es-AR")}` : `$${cobro.monto.toLocaleString("es-AR")}`}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => setUndoCobroTarget({ id: cobro.id, monto: cobro.monto })}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-400"
-                            title="Deshacer cobro"
-                          >
-                            <Undo2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ))
+                        )
+                      })
                     ) : (
                       <div className="flex items-center justify-center py-4">
                         <span className="text-xs text-slate-400">Sin cobros registrados</span>
@@ -2120,6 +2141,51 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
           </div>
         )
       })()}
+
+      {/* ── Editar Medio de Pago Modal ── */}
+      {editarMedioPagoTarget && venta && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setEditarMedioPagoTarget(null)} />
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-xs mx-4 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-slate-900">Editar medio de pago</h3>
+              <button onClick={() => setEditarMedioPagoTarget(null)} className="p-1 rounded hover:bg-slate-100 text-slate-400 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="px-5 py-4 flex flex-col gap-2">
+              {(["efectivo", "posnet", "transferencia"] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setEditarMedioPagoValue(m)}
+                  className={`w-full py-2.5 px-4 text-sm font-medium rounded-lg border transition-colors text-left ${
+                    editarMedioPagoValue === m
+                      ? "bg-slate-900 text-white border-slate-900"
+                      : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                  }`}
+                >
+                  {metodoPagoLabels[m]}
+                </button>
+              ))}
+            </div>
+            <div className="px-5 pb-4 flex gap-2 justify-end">
+              <button onClick={() => setEditarMedioPagoTarget(null)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  updateCobroMedioPago(venta.id, editarMedioPagoTarget.id, editarMedioPagoValue)
+                  setEditarMedioPagoTarget(null)
+                }}
+                className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Undo Cobro Modal ── */}
       {undoCobroTarget && venta && (
@@ -3040,26 +3106,15 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
             </div>
             {/* Body */}
             <div className="px-5 py-5 flex flex-col gap-4">
-              {/* Fecha + Hora */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] text-slate-400 uppercase tracking-wider">Fecha</label>
-                  <input
-                    type="date"
-                    value={cobroFecha}
-                    onChange={(e) => setCobroFecha(e.target.value)}
-                    className="px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-md outline-none focus:border-slate-400 transition-colors"
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] text-slate-400 uppercase tracking-wider">Hora</label>
-                  <input
-                    type="time"
-                    value={cobroHora}
-                    onChange={(e) => setCobroHora(e.target.value)}
-                    className="px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-md outline-none focus:border-slate-400 transition-colors"
-                  />
-                </div>
+              {/* Fecha */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider">Fecha</label>
+                <input
+                  type="date"
+                  value={cobroFecha}
+                  onChange={(e) => setCobroFecha(e.target.value)}
+                  className="px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-md outline-none focus:border-slate-400 transition-colors"
+                />
               </div>
               {/* Medio de pago */}
               <div className="flex flex-col gap-1.5">

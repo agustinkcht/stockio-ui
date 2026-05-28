@@ -314,13 +314,24 @@ export function useVentas() {
     [ventas, saveVentas],
   )
 
-  // Remove a cobro entry by id and recompute totals
+  // Preserve the original cobro entry and append a negative "Anulación" entry
   const undoCobro = useCallback(
     (ventaId: string, cobroId: string) => {
+      const now = new Date()
+      const fecha = now.toISOString().slice(0, 10)
+      const hora = now.toTimeString().slice(0, 5)
       const updatedVentas = ventas.map((v) => {
         if (v.id !== ventaId) return v
-        const cobros = v.cobros.filter((c) => c.id !== cobroId)
-        return recomputeVenta({ ...v, cobros })
+        const original = v.cobros.find((c) => c.id === cobroId)
+        if (!original) return v
+        const anulacion: VentaCobro = {
+          id: `${ventaId}-COB-ANUL-${Date.now()}`,
+          fecha,
+          hora,
+          medioPago: "anulacion",
+          monto: -Math.abs(original.monto),
+        }
+        return recomputeVenta({ ...v, cobros: [...v.cobros, anulacion] })
       })
       setVentas(updatedVentas)
       saveVentas(updatedVentas)
@@ -328,20 +339,34 @@ export function useVentas() {
     [ventas, saveVentas],
   )
 
-  // Remove an entrega entry by id, subtract its units from entregaItems, and recompute
+  // Preserve the original entrega entry, subtract its units from entregaItems,
+  // and append a negative "Anulación" entry to the log.
   const undoEntregaEntry = useCallback(
     (ventaId: string, entryId: string) => {
+      const now = new Date()
+      const fecha = now.toISOString().slice(0, 10)
+      const hora = now.toTimeString().slice(0, 5)
       const updatedVentas = ventas.map((v) => {
         if (v.id !== ventaId) return v
         const entry = (v.entregaEntries ?? []).find((e) => e.id === entryId)
         if (!entry) return v
+        // Subtract units
         const entregaItems = v.entregaItems.map((ei) => {
           const undone = entry.items.find((i) => i.sku === ei.sku)
           if (!undone) return ei
           return { ...ei, quantityEntregada: Math.max(0, ei.quantityEntregada - undone.quantity) }
         })
-        const entregaEntries = (v.entregaEntries ?? []).filter((e) => e.id !== entryId)
-        return recomputeVenta({ ...v, entregaItems, entregaEntries })
+        // Append anulación entry with negative quantities
+        const totalUnits = entry.items.reduce((s, i) => s + i.quantity, 0)
+        const anulacionEntry: VentaEntregaEntry = {
+          id: `${ventaId}-ENT-ANUL-${Date.now()}`,
+          fecha,
+          hora,
+          items: entry.items.map((i) => ({ sku: i.sku, quantity: -i.quantity })),
+          anulacion: true,
+          anulacionTotal: totalUnits,
+        }
+        return recomputeVenta({ ...v, entregaItems, entregaEntries: [...(v.entregaEntries ?? []), anulacionEntry] })
       })
       setVentas(updatedVentas)
       saveVentas(updatedVentas)
@@ -478,6 +503,20 @@ export function useVentas() {
     [ventas, saveVentas],
   )
 
+  // Update the medioPago of an existing cobro entry
+  const updateCobroMedioPago = useCallback(
+    (ventaId: string, cobroId: string, medioPago: VentaCobro["medioPago"]) => {
+      const updatedVentas = ventas.map((v) => {
+        if (v.id !== ventaId) return v
+        const cobros = v.cobros.map((c) => c.id === cobroId ? { ...c, medioPago } : c)
+        return recomputeVenta({ ...v, cobros })
+      })
+      setVentas(updatedVentas)
+      saveVentas(updatedVentas)
+    },
+    [ventas, saveVentas],
+  )
+
   return {
     ventas,
     isLoading,
@@ -491,6 +530,7 @@ export function useVentas() {
     finalizarVenta,
     undoCobro,
     undoEntregaEntry,
+    updateCobroMedioPago,
     cancelarVenta,
   }
 }
