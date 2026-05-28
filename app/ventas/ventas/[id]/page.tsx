@@ -858,118 +858,65 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       {/* Row 2: Cliente widget (left) + Estado widget (right) */}
                       <div className="grid grid-cols-2 gap-3">
 
-                        {/* Cliente widget */}
-                        <div className="bg-slate-50 border border-slate-200/60 rounded-lg shadow-sm flex items-stretch overflow-hidden">
-                          {/* Cliente info — clickable */}
-                          <button
-                            type="button"
-                            onClick={() => isEditMode ? setShowClienteSelectorModal(true) : (clienteId ? setShowClienteInfoModal(true) : undefined)}
-                            className={`px-4 py-3 flex items-center gap-4 transition-colors text-left flex-1 min-w-0 ${clienteId || isEditMode ? "hover:bg-slate-100 cursor-pointer" : "cursor-default"}`}
-                          >
-                            <div className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
-                              <span className="text-sm font-bold text-white">{clienteNombre.charAt(0).toUpperCase()}</span>
-                            </div>
-                            <div className="min-w-0">
-                              <span className="text-[10px] text-slate-400 uppercase tracking-wider block leading-none mb-1">Cliente</span>
-                              <span className="text-base font-semibold text-slate-900 truncate block">{clienteNombre}</span>
-                            </div>
-                            {isEditMode && <ChevronDown className="w-4 h-4 text-slate-400 ml-auto shrink-0" />}
-                          </button>
+                        {/* Cliente widget — original */}
+                        <button
+                          type="button"
+                          onClick={() => isEditMode ? setShowClienteSelectorModal(true) : (clienteId ? setShowClienteInfoModal(true) : undefined)}
+                          className={`bg-slate-50 border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex items-center gap-4 transition-colors text-left ${clienteId || isEditMode ? "hover:bg-slate-100 cursor-pointer" : "cursor-default"}`}
+                        >
+                          <div className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
+                            <span className="text-sm font-bold text-white">{clienteNombre.charAt(0).toUpperCase()}</span>
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-[10px] text-slate-400 uppercase tracking-wider block leading-none mb-1">Cliente</span>
+                            <span className="text-base font-semibold text-slate-900 truncate block">{clienteNombre}</span>
+                          </div>
+                          {isEditMode && <ChevronDown className="w-4 h-4 text-slate-400 ml-auto shrink-0" />}
+                        </button>
 
-                          {/* Action section — only when en_curso or finalizada, not in edit mode */}
-                          {!isEditMode && estadoUI === "en_curso" && (
-                            <>
-                              <div className="w-px bg-slate-200 self-stretch shrink-0" />
+                        {/* Actions widget */}
+                        <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm flex items-center justify-center px-4 py-3">
+                          {estadoUI === "en_curso" && !isEditMode && (
+                            <button
+                              type="button"
+                              onClick={() => setShowFinalizarVenta(true)}
+                              className="flex items-center gap-2.5 px-4 py-2 rounded-lg hover:bg-emerald-50 transition-colors cursor-pointer group w-full justify-center"
+                            >
+                              <CheckCircle2 className="w-5 h-5 text-emerald-500 group-hover:text-emerald-600 shrink-0" />
+                              <span className="text-sm font-semibold text-emerald-600 group-hover:text-emerald-700">Marcar como finalizada</span>
+                            </button>
+                          )}
+                          {estadoUI === "finalizada" && !isEditMode && (
+                            <div className="flex items-center gap-2 w-full justify-center">
                               <button
                                 type="button"
-                                onClick={() => setShowFinalizarVenta(true)}
-                                className="flex items-center gap-2 px-5 py-3 hover:bg-emerald-50 transition-colors cursor-pointer group shrink-0"
+                                className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer group"
                               >
-                                <CheckCircle2 className="w-4 h-4 text-emerald-500 group-hover:text-emerald-600 shrink-0" />
-                                <span className="text-sm font-semibold text-emerald-600 group-hover:text-emerald-700 whitespace-nowrap">Marcar como finalizada</span>
+                                <RotateCcw className="w-4 h-4 text-slate-500 group-hover:text-slate-700 shrink-0" />
+                                <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-800">Devoluciones</span>
                               </button>
-                            </>
-                          )}
-                          {!isEditMode && estadoUI === "finalizada" && (
-                            <>
-                              <div className="w-px bg-slate-200 self-stretch shrink-0" />
-                              <div className="flex items-center gap-1 px-5 py-3 shrink-0">
-                                <button
-                                  type="button"
-                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-slate-200 transition-colors cursor-pointer group"
-                                >
-                                  <RotateCcw className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-700 shrink-0" />
-                                  <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-800 whitespace-nowrap">Devoluciones</span>
-                                </button>
-                                <span className="text-slate-300 text-sm">·</span>
-                                <button
-                                  type="button"
-                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-slate-200 transition-colors cursor-pointer group"
-                                >
-                                  <RefreshCw className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-700 shrink-0" />
-                                  <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-800 whitespace-nowrap">Cambios</span>
-                                </button>
-                              </div>
-                            </>
-                          )}
-                        </div>
-
-                        {/* Estado widget — 3-col internal grid: indicator | divider | actions */}
-                        <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 grid grid-cols-3 gap-0 items-center">
-                          {/* Col 1 — indicator */}
-                          <div className="flex flex-col gap-1 pr-3">
-                            {estadoUI === "finalizada" ? (
-                              <div className="flex items-center gap-2">
-                                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                                <span className="text-sm font-semibold text-emerald-600">Finalizada</span>
-                              </div>
-                            ) : estadoUI === "cancelada" ? (
-                              <div className="flex items-center gap-2">
-                                <XCircle className="w-4 h-4 text-red-400 shrink-0" />
-                                <span className="text-sm font-semibold text-red-600">Cancelada</span>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <Clock className="w-4 h-4 text-amber-500 shrink-0" />
-                                <span className="text-sm font-semibold text-amber-700">En Curso</span>
-                              </div>
-                            )}
-                          </div>
-                          {/* Vertical divider */}
-                          <div className="col-span-2 flex items-stretch gap-0">
-                            <div className="w-px bg-slate-200 self-stretch mx-0 shrink-0" />
-                            {/* Col 3 — actions */}
-                            <div className="flex flex-col gap-1.5 pl-3 justify-center">
-                              {estadoUI === "en_curso" && (
-                                <button
-                                  type="button"
-                                  onClick={() => setShowFinalizarVenta(true)}
-                                  className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 hover:text-emerald-900 transition-colors text-left"
-                                >
-                                  <CheckCircle2 className="w-3 h-3 shrink-0" />
-                                  Finalizar venta
-                                </button>
-                              )}
-                              {estadoUI === "finalizada" && (
-                                <>
-                                  <button type="button" className="flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors text-left">
-                                    <RotateCcw className="w-3 h-3 shrink-0" />
-                                    Devoluciones
-                                  </button>
-                                  <button type="button" className="flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors text-left">
-                                    <RefreshCw className="w-3 h-3 shrink-0" />
-                                    Cambios
-                                  </button>
-                                </>
-                              )}
-                              {estadoUI === "cancelada" && (
-                                <button type="button" className="flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors text-left">
-                                  <Copy className="w-3 h-3 shrink-0" />
-                                  Duplicar venta
-                                </button>
-                              )}
+                              <span className="text-slate-300 text-base">·</span>
+                              <button
+                                type="button"
+                                className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer group"
+                              >
+                                <RefreshCw className="w-4 h-4 text-slate-500 group-hover:text-slate-700 shrink-0" />
+                                <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-800">Cambios</span>
+                              </button>
                             </div>
-                          </div>
+                          )}
+                          {estadoUI === "cancelada" && (
+                            <button
+                              type="button"
+                              className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer group w-full justify-center"
+                            >
+                              <Copy className="w-4 h-4 text-slate-500 group-hover:text-slate-700 shrink-0" />
+                              <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-800">Duplicar venta</span>
+                            </button>
+                          )}
+                          {isEditMode && (
+                            <span className="text-xs text-slate-400">—</span>
+                          )}
                         </div>
 
                       </div>
