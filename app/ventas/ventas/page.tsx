@@ -210,62 +210,62 @@ export default function VentasPage() {
             </div>
           </div>
 
-          <main className="flex-1 flex flex-col bg-slate-50 overflow-hidden">
-            {/* Sticky hero — matches dashboard style */}
-            <div className="sticky top-0 z-30">
-              <div className="bg-slate-50/80 backdrop-blur-md">
-                <div className="px-8 py-8">
-                  <div className="flex items-start justify-between gap-6">
-                    <div className="min-w-0">
-                      <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
-                        Ventas
-                      </h1>
-                      <div className="mt-2 flex items-center gap-3 flex-wrap">
-                        <VentasPeriodSelector
-                          open={periodOpen}
-                          setOpen={setPeriodOpen}
-                          currentLabel={periodLabel}
-                          currentKey={periodKey}
-                          onSelect={(k) => {
-                            if (k === "personalizado") {
+          <main className="flex-1 flex flex-col overflow-hidden">
+            {/* Single scroll container — sticky hero lives inside it so backdrop-blur works */}
+            <div className="flex-1 overflow-y-auto bg-slate-50">
+              {/* Sticky hero */}
+              <div className="sticky top-0 z-30">
+                <div className="bg-slate-50/80 backdrop-blur-md">
+                  <div className="px-8 py-8">
+                    <div className="flex items-start justify-between gap-6">
+                      <div className="min-w-0">
+                        <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
+                          Ventas
+                        </h1>
+                        <div className="mt-2 flex items-center gap-3 flex-wrap">
+                          <VentasPeriodSelector
+                            open={periodOpen}
+                            setOpen={setPeriodOpen}
+                            currentLabel={periodLabel}
+                            currentKey={periodKey}
+                            onSelect={(k) => {
+                              if (k === "personalizado") {
+                                setPeriodOpen(false)
+                                setCalendarOpen(true)
+                                return
+                              }
+                              setPeriodKey(k)
+                              setCustomRange(null)
                               setPeriodOpen(false)
-                              setCalendarOpen(true)
-                              return
-                            }
-                            setPeriodKey(k)
-                            setCustomRange(null)
-                            setPeriodOpen(false)
-                          }}
-                        />
-                        <span className="text-sm text-slate-500 font-mono">{rangeLabel}</span>
-                        {calendarOpen && (
-                          <VentasRangeCalendarDialog
-                            initialRange={customRange}
-                            onCancel={() => setCalendarOpen(false)}
-                            onApply={(start, end) => {
-                              setCustomRange({ start, end })
-                              setPeriodKey("personalizado")
-                              setCalendarOpen(false)
                             }}
                           />
-                        )}
+                          <span className="text-sm text-slate-500 font-mono">{rangeLabel}</span>
+                          {calendarOpen && (
+                            <VentasRangeCalendarDialog
+                              initialRange={customRange}
+                              onCancel={() => setCalendarOpen(false)}
+                              onApply={(start, end) => {
+                                setCustomRange({ start, end })
+                                setPeriodKey("personalizado")
+                                setCalendarOpen(false)
+                              }}
+                            />
+                          )}
+                        </div>
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => router.push("/ventas/ventas/nueva")}
+                        className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer mt-1"
+                      >
+                        <Plus className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
+                        Nueva Venta
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => router.push("/ventas/ventas/nueva")}
-                      className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer mt-1"
-                    >
-                      <Plus className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
-                      Nueva Venta
-                    </button>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Items Grid */}
-            <div className="flex-1 overflow-y-auto">
               <div className="px-8 pb-8 mt-2">
 
               {/* 4 Widgets — clickable to filter: Totales / Finalizadas / En Curso / Canceladas */}
@@ -644,7 +644,6 @@ export default function VentasPage() {
                     </div>
                   )
                 })}
-              </div>
               </div>
             </div>
           </main>
