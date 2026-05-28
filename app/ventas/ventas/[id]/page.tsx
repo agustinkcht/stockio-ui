@@ -775,6 +775,10 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             <span className="text-2xl font-bold text-slate-900 leading-none tracking-tight">{venta.id}</span>
                           </div>
                           <div className="h-5 w-px bg-slate-300 shrink-0 mx-5" />
+                          <span className="text-sm font-medium text-slate-600 tabular-nums shrink-0">
+                            {dia} {mesCorto} {fechaObj.getFullYear()} · {venta.hora}
+                          </span>
+                          <div className="h-5 w-px bg-slate-300 shrink-0 mx-5" />
                           {/* Estado badge */}
                           {estadoUI === "finalizada" ? (
                             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 shrink-0">
@@ -792,10 +796,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                               <span className="text-xs font-medium text-amber-700">En Curso</span>
                             </div>
                           )}
-                          <div className="h-5 w-px bg-slate-300 shrink-0 mx-5" />
-                          <span className="text-sm font-medium text-slate-600 tabular-nums shrink-0">
-                            {dia} {mesCorto} {fechaObj.getFullYear()} · {venta.hora}
-                          </span>
                         </div>
 
                         {/* Actions — moved here from row 2 */}
@@ -927,7 +927,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                 {estadoUI !== "finalizada" && <div className="grid grid-cols-2 gap-3">
 
                   {/* Widget 1 — Entrega */}
-                  <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-2">
+                  <div className={`bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-2 ${entregaPct === 100 && estadoUI !== "cancelada" ? "items-center justify-center" : ""}`}>
                     {estadoUI === "cancelada" ? (
                       <div className="flex items-center gap-2">
                         <XCircle className="w-4 h-4 text-red-400" />
@@ -935,19 +935,17 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       </div>
                     ) : (
                       <>
-                        <div className="flex items-center gap-2">
-                          <Package className="w-4 h-4 text-slate-400" />
-                          {entregaPct === 100 ? (
-                            <>
-                              <span className="text-base font-semibold text-emerald-600">Entregada</span>
-                              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                            </>
-                          ) : (
-                            <span className="text-base font-semibold text-slate-700">Entrega {entregaPct}%</span>
-                          )}
-                        </div>
-                        {entregaPct < 100 && (
+                        {entregaPct === 100 ? (
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-slate-800" />
+                            <span className="text-base font-semibold text-slate-900">Entregada</span>
+                          </div>
+                        ) : (
                           <>
+                            <div className="flex items-center gap-2">
+                              <Package className="w-4 h-4 text-slate-400" />
+                              <span className="text-base font-semibold text-slate-700">Entrega {entregaPct}%</span>
+                            </div>
                             <span className="text-sm text-slate-400 tabular-nums">
                               {totalUnidades - entregadasUnidades} {totalUnidades - entregadasUnidades === 1 ? "unidad pendiente" : "unidades pendientes"} de entrega
                             </span>
@@ -966,7 +964,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   </div>
 
                   {/* Widget 2 — Cobro */}
-                  <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-2">
+                  <div className={`bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-2 ${pagoPct === 100 && estadoUI !== "cancelada" ? "items-center justify-center" : ""}`}>
                     {estadoUI === "cancelada" ? (
                       <div className="flex items-center gap-2">
                         <XCircle className="w-4 h-4 text-red-400" />
@@ -974,17 +972,17 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       </div>
                     ) : (
                       <>
-                        <div className="flex items-center gap-2">
-                          <Wallet className="w-4 h-4 text-slate-400" />
-                          {pagoPct === 100 ? (
-                            <>
-                              <span className="text-base font-semibold text-emerald-600">Cobrada</span>
-                              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                            </>
-                          ) : (
-                            <span className="text-base font-semibold text-slate-700">Cobro {pagoPct}%</span>
-                          )}
-                        </div>
+                        {pagoPct === 100 ? (
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-slate-800" />
+                            <span className="text-base font-semibold text-slate-900">Cobrada</span>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex items-center gap-2">
+                              <Wallet className="w-4 h-4 text-slate-400" />
+                              <span className="text-base font-semibold text-slate-700">Cobro {pagoPct}%</span>
+                            </div>
                         {pagoPct < 100 && (
                           <>
                             <span className="text-sm text-slate-400 tabular-nums">
@@ -998,6 +996,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                               <Plus className="w-3 h-3" />
                               Registrar cobro
                             </button>
+                          </>
+                        )}
                           </>
                         )}
                       </>
