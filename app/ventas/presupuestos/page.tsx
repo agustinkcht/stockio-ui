@@ -567,7 +567,7 @@ export default function PresupuestosPage() {
                                       onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); handleAceptar(presupuesto) }}
                                     >
                                       <Receipt className="w-4 h-4 text-slate-400" />
-                                      Aceptar y llevar a ventas
+                                      Aceptar y llevar a compras
                                     </button>
                                   )}
                                   <button
