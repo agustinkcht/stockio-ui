@@ -10,6 +10,7 @@ interface SidebarProps {
   hoveredDropdown: number | null
   onDropdownOpen: (index: number) => void
   onDropdownClose: () => void
+  onNavigate?: (href: string) => void
 }
 
 export function Sidebar({
@@ -18,8 +19,10 @@ export function Sidebar({
   hoveredDropdown,
   onDropdownOpen,
   onDropdownClose,
+  onNavigate,
 }: SidebarProps) {
   const router = useRouter()
+  const navigate = (href: string) => onNavigate ? onNavigate(href) : router.push(href)
   const pathname = usePathname()
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const openTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -91,7 +94,7 @@ export function Sidebar({
   }
 
   const handleDropdownItemClick = (href: string) => {
-    router.push(href)
+    navigate(href)
     onDropdownClose()
   }
 
@@ -119,7 +122,7 @@ export function Sidebar({
                 onMouseLeave={() => handleModuleLeave(hasDropdown)}
                 onClick={() => {
                   if (!hasDropdown && item.href) {
-                    router.push(item.href)
+                    navigate(item.href)
                     onDropdownClose()
                   }
                 }}
@@ -175,7 +178,7 @@ export function Sidebar({
                             key={dropdownIndex}
                             onClick={() => {
                               if (dropdownItem === "Depósitos") {
-                                router.push("/depositos")
+                                navigate("/depositos")
                               }
                               onDropdownClose()
                             }}
@@ -211,7 +214,7 @@ export function Sidebar({
                 className="flex flex-col items-center gap-1 w-full py-2 rounded-lg transition-colors cursor-pointer"
                 onClick={() => {
                   if (isAjustes) {
-                    router.push("/ajustes")
+                    navigate("/ajustes")
                   }
                 }}
               >

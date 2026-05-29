@@ -266,9 +266,27 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
 
   const hasAnyEditChanges = hasItemChanges || hasResumenChanges
 
+  // Real-time subtotal from editItems + editAjustes (used in resumen while editing)
+  const editSubtotal = useMemo(() => {
+    return editItems.reduce((sum, item, idx) => {
+      const aj = editAjustes[idx] ?? { value: 0, type: "percent" as const }
+      if (aj.value > 0) {
+        if (aj.type === "unit") {
+          const paid = Math.max(0, item.quantity - Math.min(aj.value, item.quantity))
+          return sum + paid * item.unitPrice
+        }
+        if (aj.type === "percent") return sum + item.quantity * item.unitPrice * (1 - aj.value / 100)
+        if (aj.type === "cash") return sum + item.quantity * Math.max(0, item.unitPrice - aj.value)
+      }
+      return sum + item.quantity * item.unitPrice
+    }, 0)
+  }, [editItems, editAjustes])
+
+  const activeSubtotal = isEditMode ? editSubtotal : (presupuesto?.subtotal ?? 0)
+
   const globalDiscountAmount = showGlobalDiscount
     ? globalDiscount.type === "percent"
-      ? (presupuesto?.subtotal ?? 0) * (globalDiscount.value / 100)
+      ? activeSubtotal * (globalDiscount.value / 100)
       : globalDiscount.value
     : 0
 
@@ -277,6 +295,7 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
       ? (presupuesto?.subtotal ?? 0) * (savedGlobalDiscount.value / 100)
       : savedGlobalDiscount.value
     : 0
+
 
   // ── Modal computed values ─────────────────────────────────────────────────
   const allModalItems = INITIAL_ITEMS
@@ -667,6 +686,7 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
             hoveredDropdown={hoveredDropdown}
             onDropdownOpen={handleDropdownMouseEnter}
             onDropdownClose={handleDropdownMouseLeave}
+            onNavigate={safeNavigate}
           />
         </div>
 
@@ -750,22 +770,30 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
                         </button>
                       )}
                       {estado === "borrador" && isEditMode && (
-                        <div className="flex items-center rounded-md overflow-hidden border border-slate-200 shadow-sm">
-                          <button
-                            type="button"
-                            onClick={cancelEditMode}
-                            className="h-8 text-xs transition-colors bg-white hover:bg-slate-50 cursor-pointer px-3 flex items-center text-slate-600 font-medium border-r border-slate-200"
-                          >
-                            Cancelar
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleGuardar}
-                            disabled={isSaving}
-                            className="h-8 text-xs transition-colors bg-slate-900 hover:bg-slate-800 cursor-pointer px-3 flex items-center text-white font-medium disabled:opacity-50"
-                          >
-                            {isSaving ? "Guardando..." : "Guardar cambios"}
-                          </button>
+                        <div className="flex items-center gap-2">
+                          {hasAnyEditChanges && (
+                            <span className="flex items-center gap-1.5 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                              Cambios sin guardar
+                            </span>
+                          )}
+                          <div className="flex items-center rounded-md overflow-hidden border border-slate-200 shadow-sm">
+                            <button
+                              type="button"
+                              onClick={cancelEditMode}
+                              className="h-8 text-xs transition-colors bg-white hover:bg-slate-50 cursor-pointer px-3 flex items-center text-slate-600 font-medium border-r border-slate-200"
+                            >
+                              Cancelar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleGuardar}
+                              disabled={isSaving}
+                              className="h-8 text-xs transition-colors bg-slate-900 hover:bg-slate-800 cursor-pointer px-3 flex items-center text-white font-medium disabled:opacity-50"
+                            >
+                              {isSaving ? "Guardando..." : "Guardar cambios"}
+                            </button>
+                          </div>
                         </div>
                       )}
                       <button
@@ -1141,24 +1169,36 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
                       className="flex items-center py-3 border-b border-slate-100 text-left hover:bg-slate-50/50 transition-colors -mx-5 px-5 w-[calc(100%+2.5rem)]"
                     >
                       <span className="text-sm text-slate-500 flex-1">Productos</span>
-                      <span className="text-sm text-slate-700 tabular-nums mr-1.5">${Math.round(presupuesto.subtotal).toLocaleString("es-AR")}</span>
+                      <span className="text-sm text-slate-700 tabular-nums mr-1.5">${Math.round(activeSubtotal).toLocaleString("es-AR")}</span>
                       <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${showSubtotalBreakdown ? "rotate-180" : ""}`} />
                     </button>
                     {showSubtotalBreakdown && (
                       <div>
-                        {presupuestoItems.map((item, idx) => {
+                        {(isEditMode ? editItems : presupuestoItems).map((item, idx) => {
                           const display = getVentaItemDisplay(item)
-                          const paidQty = item.discountType === "unit"
-                            ? Math.max(0, item.quantity - Math.min(item.discount, item.quantity))
-                            : item.quantity
-                          const adjustedUnit = item.discountType === "percent"
-                            ? item.unitPrice * (1 - item.discount / 100)
-                            : item.discountType === "unit"
-                            ? item.unitPrice
-                            : item.unitPrice - (item.discount / Math.max(item.quantity, 1))
-                          const lineTotal = item.discountType === "unit"
-                            ? Math.round(adjustedUnit * paidQty)
-                            : Math.round(adjustedUnit * item.quantity)
+                          let lineTotal: number
+                          if (isEditMode) {
+                            const aj = editAjustes[idx] ?? { value: 0, type: "percent" as const }
+                            if (aj.value > 0) {
+                              if (aj.type === "unit") lineTotal = Math.max(0, item.quantity - Math.min(aj.value, item.quantity)) * item.unitPrice
+                              else if (aj.type === "percent") lineTotal = item.quantity * item.unitPrice * (1 - aj.value / 100)
+                              else lineTotal = item.quantity * Math.max(0, item.unitPrice - aj.value)
+                            } else {
+                              lineTotal = item.quantity * item.unitPrice
+                            }
+                          } else {
+                            const paidQty = item.discountType === "unit"
+                              ? Math.max(0, item.quantity - Math.min(item.discount, item.quantity))
+                              : item.quantity
+                            const adjustedUnit = item.discountType === "percent"
+                              ? item.unitPrice * (1 - item.discount / 100)
+                              : item.discountType === "unit"
+                              ? item.unitPrice
+                              : item.unitPrice - (item.discount / Math.max(item.quantity, 1))
+                            lineTotal = item.discountType === "unit"
+                              ? Math.round(adjustedUnit * paidQty)
+                              : Math.round(adjustedUnit * item.quantity)
+                          }
                           return (
                             <div key={idx} className="flex justify-between items-start gap-3 py-2.5 -mx-5 px-5">
                               <div className="min-w-0 flex-1">
@@ -1169,17 +1209,7 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
                                   ))}
                                 </div>
                               </div>
-                              <div className="text-right shrink-0">
-                                {item.discountType === "unit" && item.discount > 0 ? (
-                                  <>
-                                    <p className="text-[10px] text-emerald-600">{Math.min(item.discount, item.quantity)} bonificadas</p>
-                                    <p className="text-[11px] text-slate-400 tabular-nums">{paidQty} × ${Math.round(adjustedUnit).toLocaleString("es-AR")}</p>
-                                  </>
-                                ) : (
-                                  <p className="text-[11px] text-slate-400 tabular-nums">{item.quantity} × ${Math.round(adjustedUnit).toLocaleString("es-AR")}</p>
-                                )}
-                                <p className="text-xs font-medium text-slate-700 tabular-nums">${lineTotal.toLocaleString("es-AR")}</p>
-                              </div>
+                              <p className="text-xs font-medium text-slate-700 tabular-nums shrink-0">${Math.round(lineTotal).toLocaleString("es-AR")}</p>
                             </div>
                           )
                         })}
@@ -1312,7 +1342,7 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
                       <span className="text-base font-bold text-slate-900 tabular-nums">
                         ${Math.round(
                           isEditMode
-                            ? presupuesto.subtotal - globalDiscountAmount + envioAmount + customCharges.reduce((s, c) => s + c.value, 0)
+                            ? activeSubtotal - globalDiscountAmount + envioAmount + customCharges.reduce((s, c) => s + c.value, 0)
                             : presupuesto.total
                         ).toLocaleString("es-AR")}
                       </span>
