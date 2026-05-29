@@ -609,16 +609,33 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
       }
     }
     if (newItems.length > 0) {
-      const merged = [...presupuestoItems]
-      for (const it of newItems) {
-        const idx = merged.findIndex(x => x.sku === it.sku)
-        if (idx >= 0) {
-          merged[idx] = { ...merged[idx], quantity: merged[idx].quantity + 1 }
-        } else {
-          merged.push(it)
+      if (isEditMode) {
+        // In edit mode: buffer into editItems, don't save yet
+        setEditItems(prev => {
+          const merged = [...prev]
+          for (const it of newItems) {
+            const idx = merged.findIndex(x => x.sku === it.sku)
+            if (idx >= 0) {
+              merged[idx] = { ...merged[idx], quantity: merged[idx].quantity + 1 }
+            } else {
+              merged.push(it)
+            }
+          }
+          return merged
+        })
+      } else {
+        // Outside edit mode: save immediately (e.g. after accepting)
+        const merged = [...presupuestoItems]
+        for (const it of newItems) {
+          const idx = merged.findIndex(x => x.sku === it.sku)
+          if (idx >= 0) {
+            merged[idx] = { ...merged[idx], quantity: merged[idx].quantity + 1 }
+          } else {
+            merged.push(it)
+          }
         }
+        updatePresupuesto(presupuesto.id, { items: merged })
       }
-      updatePresupuesto(presupuesto.id, { items: merged })
     }
     closeAgregarProductos()
   }
@@ -879,14 +896,14 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
                   )}
 
                   {/* Items */}
-                  {presupuestoItems.length === 0 ? (
+                  {(isEditMode ? editItems : presupuestoItems).length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16">
                       <Package className="w-12 h-12 text-slate-200 mb-3" />
                       <p className="text-slate-500 mb-1">Sin productos</p>
                       <p className="text-xs text-slate-400">Este presupuesto no tiene productos asociados</p>
                     </div>
                   ) : (
-                    presupuestoItems.map((item, idx) => {
+                    (isEditMode ? editItems : presupuestoItems).map((item, idx) => {
                       const display = getVentaItemDisplay(item)
                       const baseGross = item.unitPrice * item.quantity
                       const discountAmount =
