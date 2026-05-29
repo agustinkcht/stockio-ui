@@ -493,38 +493,32 @@ export interface OrdenDeCompra {
 
 export type EstadoPresupuesto = "borrador" | "aceptado" | "rechazado"
 
-export interface PresupuestoItem {
-  sku: string
-  name: string
-  quantity: number
-  unitPrice: number
-  total: number
-  categoria?: string
-  marca?: string
-  thumbnail?: string
-  tags?: string[]
-  isDescripcionLibre?: boolean
-}
+/** @deprecated Presupuesto.items now reuses VentaItem for parity with ventas. */
+export type PresupuestoItem = VentaItem
 
+// Presupuesto mirrors the Venta shape (minus entrega/cobro) so the same
+// UI (list, nuevo wizard, detail) can be reused for both.
 export interface Presupuesto {
   id: string
   numero: number
-  fechaCreacion: string
+  fecha: string        // "YYYY-MM-DD" creation date
+  hora: string         // "HH:mm"
   fechaModificacion?: string
   fechaValidez?: string
-  clienteId: string
-  clienteNombre: string
+  cliente: VentaCliente
+  items: VentaItem[]
+  subtotal: number
+  descuento: number
+  descuentoTipo: "percent" | "fixed"
+  envio?: number
+  customCharges?: VentaCustomCharge[]
+  total: number
   estado: EstadoPresupuesto
-  items: PresupuestoItem[]
-  importeTotal: number
-  descuento?: number
-  descuentoTipo?: "percent" | "fixed"
   observaciones?: string
+  // Set when the presupuesto is aceptado → links to the created venta
   ventaId?: string
   // Persisted detail-page state
   itemAjustes?: Record<number, { value: number; type: "percent" | "cash" | "unit" }>
   itemIvas?: Record<number, number>
   globalDiscount?: { value: number; type: "cash" | "percent" }
-  envio?: number
-  customCharges?: { id: number; label: string; value: number }[]
 }

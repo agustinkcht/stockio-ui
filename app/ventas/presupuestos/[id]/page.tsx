@@ -1,904 +1,677 @@
 "use client"
 
-import { useState, useMemo, Suspense, use, useEffect, useRef } from "react"
+import { useState, useMemo, use, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Sidebar } from "@/components/layout/sidebar"
 import { useSidebar } from "@/hooks/use-sidebar"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 import { UserPanel } from "@/components/layout/user-panel"
+import { Breadcrumb } from "@/components/layout/breadcrumb"
 import {
-  Plus,
-  Trash2,
-  FileText,
   FileDown,
-  Receipt,
-  X,
-  Search,
-  Check,
-  Minus,
+
   ChevronDown,
-  ChevronUp,
-  Filter,
-  ArrowUpDown,
   MoreVertical,
   Package,
   Clock,
   CheckCircle2,
   XCircle,
-  Eye,
+  Truck,
+  Wallet,
+  ScanLine,
+  Plus,
+  Search,
+  Check,
+  Minus,
+  Filter,
+  ArrowUpDown,
+  X,
+  Undo2,
   Pencil,
+  RotateCcw,
+  Copy,
+  ShoppingCart,
 } from "lucide-react"
-import { Breadcrumb } from "@/components/layout/breadcrumb"
-import { getCategoryImage } from "@/lib/utils/category-images"
 import Image from "next/image"
-import type { EstadoPresupuesto, PresupuestoItem, Presupuesto } from "@/lib/types"
-import { Button } from "@/components/ui/button"
+import type { Venta, VentaItem, PaymentMethod, Item, ItemVariant, VentaEntregaItem, VentaEntregaEntry, VentaDevolucionItem } from "@/lib/types"
+import { getCategoryImage } from "@/lib/utils/category-images"
+import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
+import { VentaItemDetailModal } from "@/components/ventas/venta-item-detail-modal"
+import { ClienteModal } from "@/components/ventas/cliente-modal"
+import { TicketModal } from "@/components/ventas/ticket-modal"
+import { CLIENTES } from "@/lib/data/clientes"
 import { INITIAL_ITEMS } from "@/lib/data/initial-items"
-import { usePresupuestos } from "@/hooks/use-presupuestos"
-import { useItems } from "@/hooks/use-items"
-import { useClientes } from "@/hooks/use-clientes"
 import { useVentaStockSync } from "@/hooks/use-venta-stock-sync"
-import { NuevoClienteModal } from "@/components/modals/nuevo-cliente-modal"
-import type { Cliente } from "@/lib/data/clientes"
-import jsPDF from "jspdf"
+import { useSettings } from "@/lib/contexts/settings-context"
+import { downloadVentasPDF } from "@/lib/utils/generate-venta-pdf"
 
-const estadoLabels: Record<EstadoPresupuesto, string> = {
-  borrador: "Borrador",
-  aceptado: "Aceptado",
-  rechazado: "Rechazado",
+type VentaEstadoUI = "en_curso" | "finalizada" | "cancelada"
+
+const metodoPagoLabels: Record<PaymentMethod, string> = {
+  efectivo: "Efectivo",
+  posnet: "Posnet",
+  transferencia: "Transferencia",
+  no_especificado: "No especificado",
+  anulacion: "Anulación",
 }
 
-const estadoColors: Record<EstadoPresupuesto, { bg: string; text: string; border: string }> = {
-  borrador: { bg: "bg-slate-100", text: "text-slate-600", border: "border-slate-300" },
-  aceptado: { bg: "bg-emerald-50", text: "text-emerald-600", border: "border-emerald-300" },
-  rechazado: { bg: "bg-red-50", text: "text-red-600", border: "border-red-300" },
+function ClienteSelectorInlineModal({
+  currentClienteId,
+  onSelect,
+  onClose,
+}: {
+  currentClienteId: string | null
+  onSelect: (id: string, nombre: string) => void
+  onClose: () => void
+}) {
+  const [search, setSearch] = useState("")
+  const filtered = CLIENTES.filter((c) => {
+    const name = c.tipo === "empresa" ? (c.razonSocial ?? "") : `${c.nombre} ${c.apellido}`.trim()
+    return name.toLowerCase().includes(search.toLowerCase()) || c.id.toLowerCase().includes(search.toLowerCase())
+  })
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden flex flex-col max-h-[70vh]">
+        <div className="px-4 py-4 border-b border-slate-100 flex items-center justify-between">
+          <h3 className="text-base font-semibold text-slate-900">Seleccionar cliente</h3>
+          <button onClick={onClose} className="p-1 rounded hover:bg-slate-100 text-slate-400 transition-colors"><X className="w-4 h-4" /></button>
+        </div>
+        <div className="px-4 py-2 border-b border-slate-100">
+          <div className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2">
+            <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <input
+              autoFocus
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Buscar cliente..."
+              className="flex-1 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none"
+            />
+          </div>
+        </div>
+        <div className="overflow-y-auto flex-1">
+          {/* Consumidor Final — always pinned at top */}
+          {("consumidor final".includes(search.toLowerCase()) || search === "") && (
+            <>
+              <button
+                onClick={() => onSelect("__consumidor_final__", "Consumidor Final")}
+                className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left ${currentClienteId === null ? "bg-slate-50" : ""}`}
+              >
+                <div className="w-8 h-8 rounded-full bg-slate-300 border border-slate-300 flex items-center justify-center shrink-0">
+                  <span className="text-xs font-semibold text-slate-600">CF</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-slate-900">Consumidor Final</p>
+                  <p className="text-xs text-slate-400">Sin cuenta registrada</p>
+                </div>
+                {currentClienteId === null && <Check className="w-4 h-4 text-emerald-500 shrink-0" />}
+              </button>
+              {filtered.length > 0 && <div className="mx-4 border-t border-slate-100" />}
+            </>
+          )}
+          {/* Named clients */}
+          <div className="divide-y divide-slate-50">
+            {filtered.map((c) => {
+              const name = c.tipo === "empresa" ? (c.razonSocial ?? "") : `${c.nombre} ${c.apellido}`.trim()
+              const initials = name.slice(0, 2).toUpperCase()
+              const isSelected = c.id === currentClienteId
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => onSelect(c.id, name)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors text-left ${isSelected ? "bg-slate-50" : ""}`}
+                >
+                  <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
+                    <span className="text-xs font-semibold text-white">{initials}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-900 truncate">{name}</p>
+                    <p className="text-xs text-slate-400">{c.tipo === "empresa" ? "Empresa" : "Particular"} · {c.condicionIva}</p>
+                  </div>
+                  {isSelected && <Check className="w-4 h-4 text-emerald-500 shrink-0" />}
+                </button>
+              )
+            })}
+            {filtered.length === 0 && search !== "" && !("consumidor final".includes(search.toLowerCase())) && (
+              <p className="text-sm text-slate-400 text-center py-6">Sin resultados</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
-function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> }) {
+export default function VentaDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
 
-  const { presupuestos, updatePresupuesto, deletePresupuesto } = usePresupuestos()
-  const { items: allItems } = useItems()
-  const { clientes, addCliente } = useClientes()
-  const { addVenta } = useVentaStockSync()
-  
-  // Track mousedown target for selection
-  const mouseDownTargetRef = useRef<EventTarget | null>(null)
-  // Track if persisted state has been loaded (prevents premature overwrite)
-  const isLoadedRef = useRef(false)
-  
-  // Cliente change state
-  const [showClienteDropdown, setShowClienteDropdown] = useState(false)
-  const [clienteSearch, setClienteSearch] = useState("")
-  const [isHoveringCliente, setIsHoveringCliente] = useState(false)
-  const clienteDropdownRef = useRef<HTMLDivElement>(null)
-  const [showNuevoClienteModal, setShowNuevoClienteModal] = useState(false)
+  const { ventas, isLoading: isLoadingVentas, addItemsToVenta, updateVenta, addCobro, addEntregas, addDevolucion, setEstado, finalizarVenta, undoCobro, undoEntregaEntry, updateCobroMedioPago, cancelarVenta } = useVentaStockSync()
+  const { miNegocio } = useSettings()
+  const venta = useMemo(() => ventas.find((v) => v.id === id) || null, [ventas, id])
+
+  const [showExportDropdown, setShowExportDropdown] = useState(false)
+  const [showMoreOptionsMenu, setShowMoreOptionsMenu] = useState(false)
+  const [viewingItem, setViewingItem] = useState<VentaItem | null>(null)
+  const [showClienteInfoModal, setShowClienteInfoModal] = useState(false)
+  const [showClienteSelectorModal, setShowClienteSelectorModal] = useState(false)
+  const [showTicketModal, setShowTicketModal] = useState(false)
+  const [showCancelarVentaModal, setShowCancelarVentaModal] = useState(false)
+  const [cancelarDevolverUnidades, setCancelarDevolverUnidades] = useState(true)
+  const [cancelarDevolverCobros, setCancelarDevolverCobros] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  const [showSaveSuccess, setShowSaveSuccess] = useState(false)
+  const [showClientePanel, setShowClientePanel] = useState(false)
+  // estado is derived from venta (persisted via useVentas)
   const [showEstadoDropdown, setShowEstadoDropdown] = useState(false)
+  const [showSubtotalBreakdown, setShowSubtotalBreakdown] = useState(false)
+  const [showAgregarProductos, setShowAgregarProductos] = useState(false)
+  const [showRegistrarCobro, setShowRegistrarCobro] = useState(false)
+  const [showRegistrarEntrega, setShowRegistrarEntrega] = useState(false)
+  const [showFinalizarVenta, setShowFinalizarVenta] = useState(false)
+  // Devolución modal
+  const [showDevolucion, setShowDevolucion] = useState(false)
+  const [devolucionStep, setDevolucionStep] = useState<1 | 2>(1)
+  const [devolucionSelectedItems, setDevolucionSelectedItems] = useState<{ [sku: string]: boolean }>({})
+  const [devolucionQuantities, setDevolucionQuantities] = useState<{ [sku: string]: string }>({})
+  // View mode toggle: "productos" | "entrega" | "devolucion"
+  const [viewMode, setViewMode] = useState<"productos" | "entrega" | "devolucion">("productos")
+  const [finalizarMedioPago, setFinalizarMedioPago] = useState<PaymentMethod | "no_especificado">("no_especificado")
+  const [entregaSelectedItems, setEntregaSelectedItems] = useState<{ [sku: string]: boolean }>({})
+  const [viewingEntregaEntry, setViewingEntregaEntry] = useState<VentaEntregaEntry | null>(null)
+  const [undoCobroTarget, setUndoCobroTarget] = useState<{ id: string; monto: number } | null>(null)
+  const [undoEntregaTarget, setUndoEntregaTarget] = useState<VentaEntregaEntry | null>(null)
+  const [editarMedioPagoTarget, setEditarMedioPagoTarget] = useState<{ id: string; current: PaymentMethod } | null>(null)
+  const [editarMedioPagoValue, setEditarMedioPagoValue] = useState<PaymentMethod>("efectivo")
+
+  // Edit mode
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [editItems, setEditItems] = useState<VentaItem[]>([])
+  const [editAjustes, setEditAjustes] = useState<{ [idx: number]: { value: number; type: "percent" | "cash" | "unit" } }>({})
+
+  const enterEditMode = () => {
+    setEditItems(ventaItems.map(i => ({ ...i })))
+    setEditAjustes(
+      Object.fromEntries(ventaItems.map((item, idx) => [
+        idx,
+        item.discount > 0
+          ? { value: item.discount, type: (item.discountType === "fixed" ? "cash" : item.discountType === "unit" ? "unit" : "percent") as "percent" | "cash" | "unit" }
+          : { value: 0, type: "percent" as const },
+      ]))
+    )
+    // Restore current venta adjustments into edit mode
+    if (venta && venta.descuento > 0) {
+      setShowGlobalDiscount(true)
+      setGlobalDiscount({ value: venta.descuento, type: venta.descuentoTipo === "fixed" ? "cash" : "percent" })
+    } else {
+      setShowGlobalDiscount(false)
+      setGlobalDiscount({ value: 0, type: "percent" })
+    }
+    if (venta && venta.envio && venta.envio > 0) {
+      setShowEnvio(true)
+      setEnvioAmount(venta.envio)
+    } else {
+      setShowEnvio(false)
+      setEnvioAmount(0)
+    }
+    setCustomCharges(venta?.customCharges?.filter(c => c.value > 0) ?? [])
+    setIsEditMode(true)
+  }
+
+  const cancelEditMode = () => { setIsEditMode(false); setEditItems([]); setEditAjustes({}) }
+
+  const saveEditMode = () => {
+    if (!venta) return
+    const saved: VentaItem[] = editItems.map((item, idx) => {
+      const aj = editAjustes[idx] ?? { value: 0, type: "percent" }
+      return {
+        ...item,
+        discount: aj.value,
+        discountType: aj.type === "cash" ? "fixed" : aj.type,
+        total: (() => {
+          if (aj.value === 0) return item.quantity * item.unitPrice
+          if (aj.type === "unit") return Math.max(0, item.quantity - Math.min(aj.value, item.quantity)) * item.unitPrice
+          const adj = aj.type === "percent" ? item.unitPrice * (1 - aj.value / 100) : Math.max(0, item.unitPrice - aj.value)
+          return item.quantity * adj
+        })(),
+      }
+    })
+    const newDescuento = showGlobalDiscount && globalDiscount.value > 0 ? globalDiscount.value : 0
+    const newDescuentoTipo: "percent" | "fixed" = globalDiscount.type === "cash" ? "fixed" : "percent"
+    const newEnvio = showEnvio && envioAmount > 0 ? envioAmount : 0
+    const newCustomCharges = customCharges.filter(c => c.value > 0)
+    updateVenta(venta.id, {
+      items: saved,
+      descuento: newDescuento,
+      descuentoTipo: newDescuentoTipo,
+      envio: newEnvio,
+      customCharges: newCustomCharges,
+    })
+    // Commit resumen adjustments to view mode
+    if (newDescuento > 0) setSavedGlobalDiscount({ ...globalDiscount })
+    else setSavedGlobalDiscount(null)
+    setSavedEnvio(newEnvio > 0 ? newEnvio : null)
+    setSavedCustomCharges(newCustomCharges)
+    cancelEditMode()
+  }
+
+  // Resumen adjustments (local, en_curso only)
+  const [showGlobalDiscount, setShowGlobalDiscount] = useState(false)
+  const [globalDiscount, setGlobalDiscount] = useState<{ value: number; type: "percent" | "cash" }>({ value: 0, type: "percent" })
+  const [showEnvio, setShowEnvio] = useState(false)
+  const [envioAmount, setEnvioAmount] = useState(0)
+  const [customCharges, setCustomCharges] = useState<{ id: number; label: string; value: number }[]>([])
+
+  // Saved (committed) adjustments shown in view mode — initialized from venta once loaded
+  const [savedGlobalDiscount, setSavedGlobalDiscount] = useState<{ value: number; type: "percent" | "cash" } | null>(null)
+  const [savedEnvio, setSavedEnvio] = useState<number | null>(null)
+  const [savedCustomCharges, setSavedCustomCharges] = useState<{ id: number; label: string; value: number }[]>([])
+  const [adjustmentsInitialized, setAdjustmentsInitialized] = useState(false)
+
+  // Saved adjustment totals for view mode
+  const savedGlobalDiscountAmount = savedGlobalDiscount
+    ? savedGlobalDiscount.type === "percent"
+      ? (venta?.subtotal ?? 0) * (savedGlobalDiscount.value / 100)
+      : savedGlobalDiscount.value
+    : 0
+  const savedAdjTotal = savedGlobalDiscountAmount * -1 + (savedEnvio ?? 0) + savedCustomCharges.reduce((s, c) => s + c.value, 0)
+
+  const globalDiscountAmount = showGlobalDiscount
+    ? globalDiscount.type === "percent"
+      ? (venta?.subtotal ?? 0) * (globalDiscount.value / 100)
+      : globalDiscount.value
+    : 0
+  const [entregaQuantities, setEntregaQuantities] = useState<{ [sku: string]: string }>({})
+  const [selectedModalItems, setSelectedModalItems] = useState<{ [id: string]: boolean }>({})
+  const [modalSearch, setModalSearch] = useState("")
+  const [modalFilters, setModalFilters] = useState<{ categoria: string; marca: string }>({ categoria: "", marca: "" })
+  const [modalSort, setModalSort] = useState<"name" | "precio">("name")
+  const [modalSortDirection, setModalSortDirection] = useState<"asc" | "desc">("asc")
+  const [showModalFilters, setShowModalFilters] = useState(false)
+  const [cobroFecha, setCobroFecha] = useState(() => new Date().toISOString().slice(0, 10))
+  const [cobroMedio, setCobroMedio] = useState<"efectivo" | "posnet" | "transferencia">("efectivo")
+  const [cobroMonto, setCobroMonto] = useState("")
+
   const estadoDropdownRef = useRef<HTMLDivElement>(null)
-  
+
+  const exportDropdownRef = useRef<HTMLDivElement>(null)
+  const moreMenuRef = useRef<HTMLDivElement>(null)
+
+  // ── All useMemo hooks MUST be above any early return (Rules of Hooks) ──
+
+  // Defensive aliases — safe even when venta is null
+  const ventaItems = venta?.items ?? []
+  const ventaCobros = venta?.cobros ?? []
+  const ventaEntregaItems = venta?.entregaItems ?? []
+  const ventaEntregaEntries = venta?.entregaEntries ?? []
+  const ventaDevolucionItems = venta?.devolucionItems ?? []
+  const ventaDevolucionEntries = venta?.devolucionEntries ?? []
+
+  const itemDevolucionMap = useMemo(() => new Map(
+    ventaItems.map((item) => {
+      const d = ventaDevolucionItems.find(di => di.sku === item.sku)
+      return [item.sku, d?.quantityDevuelta ?? 0]
+    })
+  ), [ventaItems, ventaDevolucionItems])
+
+  const totalDevueltas = useMemo(() => ventaDevolucionItems.reduce((s, d) => s + d.quantityDevuelta, 0), [ventaDevolucionItems])
+  const montoTotalDevuelto = useMemo(() => ventaDevolucionEntries.reduce((s, e) => s + e.montoDevuelto, 0), [ventaDevolucionEntries])
+
+  const montoCobrado = useMemo(() => ventaCobros.reduce((sum, c) => sum + c.monto, 0), [ventaCobros])
+  const montoRestante = useMemo(() => Math.max(0, (venta?.total ?? 0) - montoCobrado), [venta, montoCobrado])
+  const pagoPct = useMemo(() => (venta?.total ?? 0) > 0 ? Math.min(100, Math.round((montoCobrado / venta!.total) * 100)) : 0, [venta, montoCobrado])
+
+  const totalUnidades = useMemo(() => ventaItems.reduce((s, it) => s + it.quantity, 0), [ventaItems])
+  const entregadasUnidades = useMemo(() => ventaItems.reduce((s, item) => {
+    const e = ventaEntregaItems.find(ei => ei.sku === item.sku)
+    return s + (e?.quantityEntregada ?? 0)
+  }, 0), [ventaItems, ventaEntregaItems])
+  const entregaPct = useMemo(() => totalUnidades > 0 ? Math.min(100, Math.round((entregadasUnidades / totalUnidades) * 100)) : 0, [entregadasUnidades, totalUnidades])
+
+  const itemEntregaMap = useMemo(() => new Map(
+    ventaItems.map((item) => {
+      const e = ventaEntregaItems.find(ei => ei.sku === item.sku)
+      return [item.sku, e?.quantityEntregada ?? 0]
+    })
+  ), [ventaItems, ventaEntregaItems])
+
+  const itemDiscountAmount = useMemo(() => ventaItems.reduce((sum, it) => {
+    if (it.discountType === "unit") {
+      return sum + Math.min(it.discount, it.quantity) * it.unitPrice
+    }
+    const baseGross = it.unitPrice * it.quantity
+    const discount =
+      it.discountType === "percent" ? baseGross * (it.discount / 100) : it.discount * it.quantity
+    return sum + discount
+  }, 0), [ventaItems])
+
+  // Detect pending changes in edit mode — must be after ventaItems is defined
+  const hasItemChanges = useMemo(() => {
+    if (!isEditMode) return false
+    if (editItems.length !== ventaItems.length) return true
+    return editItems.some((ei, i) => {
+      const orig = ventaItems[i]
+      const aj = editAjustes[i] ?? { value: 0, type: "percent" }
+      return ei.quantity !== orig.quantity || ei.unitPrice !== orig.unitPrice || aj.value !== orig.discount
+    })
+  }, [isEditMode, editItems, editAjustes, ventaItems])
+
+  const hasResumenChanges = useMemo(() => {
+    if (!isEditMode) return false
+    return (showGlobalDiscount && globalDiscount.value > 0) || (showEnvio && envioAmount > 0) || customCharges.some(c => c.value > 0)
+  }, [isEditMode, showGlobalDiscount, globalDiscount, showEnvio, envioAmount, customCharges])
+
+  const hasAnyEditChanges = hasItemChanges || hasResumenChanges
+
+  // Modal computed values
+  const allModalItems = INITIAL_ITEMS
+
+  const uniqueModalCategorias = useMemo(() => {
+    const cats = new Set<string>()
+    allModalItems.forEach(item => { if (item.categoria) cats.add(item.categoria) })
+    return Array.from(cats).sort()
+  }, [])
+
+  const uniqueModalMarcas = useMemo(() => {
+    const marcas = new Set<string>()
+    allModalItems.forEach(item => { if (item.marca) marcas.add(item.marca) })
+    return Array.from(marcas).sort()
+  }, [])
+
+  const filteredModalItems = useMemo(() => {
+    let items = [...allModalItems]
+    if (modalSearch.trim()) {
+      const words = modalSearch.toLowerCase().trim().split(/\s+/)
+      items = items.filter(item => {
+        const text = [item.name, item.sku, item.marca, item.categoria, item.proveedor].filter(Boolean).join(" ").toLowerCase()
+        return words.every(w => text.includes(w))
+      })
+    }
+    if (modalFilters.categoria) items = items.filter(i => i.categoria === modalFilters.categoria)
+    if (modalFilters.marca) items = items.filter(i => i.marca === modalFilters.marca)
+    const dir = modalSortDirection === "asc" ? 1 : -1
+    items.sort((a, b) => {
+      if (modalSort === "precio") return ((a.precio?.precioFinal || 0) - (b.precio?.precioFinal || 0)) * dir
+      return a.name.localeCompare(b.name) * dir
+    })
+    return items
+  }, [modalSearch, modalFilters, modalSort, modalSortDirection])
+
+  const getModalItemId = (item: any): string => item.id || item.sku || item.name || ""
+
+  const getAllModalSelectableIds = useMemo(() => {
+    return filteredModalItems.flatMap(item => {
+      if (item.hasVariants && item.variants?.length) {
+        return item.variants.map((v: any) => getModalItemId(v))
+      }
+      return [getModalItemId(item)]
+    }).filter(Boolean)
+  }, [filteredModalItems])
+
+  const modalSelectAllActive = useMemo(() =>
+    getAllModalSelectableIds.length > 0 && getAllModalSelectableIds.every(id => selectedModalItems[id]),
+    [getAllModalSelectableIds, selectedModalItems])
+
+  const modalSelectAllIndeterminate = useMemo(() => {
+    const some = getAllModalSelectableIds.some(id => selectedModalItems[id])
+    return some && !modalSelectAllActive
+  }, [getAllModalSelectableIds, selectedModalItems, modalSelectAllActive])
+
+  const selectedModalCount = useMemo(() =>
+    Object.values(selectedModalItems).filter(Boolean).length,
+    [selectedModalItems])
+
+  // ── useEffect hooks MUST also be above early returns ──
+
+  // Initialize saved adjustments from venta once it's available
+  useEffect(() => {
+    if (!venta || adjustmentsInitialized) return
+    setAdjustmentsInitialized(true)
+    if (venta.descuento > 0) {
+      setSavedGlobalDiscount({ value: venta.descuento, type: venta.descuentoTipo === "fixed" ? "cash" : "percent" })
+    }
+    if (venta.envio && venta.envio > 0) {
+      setSavedEnvio(venta.envio)
+    }
+    if (venta.customCharges && venta.customCharges.length > 0) {
+      setSavedCustomCharges(venta.customCharges)
+    }
+  }, [venta, adjustmentsInitialized])
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (clienteDropdownRef.current && !clienteDropdownRef.current.contains(event.target as Node)) {
-        setShowClienteDropdown(false)
+      if (exportDropdownRef.current && !exportDropdownRef.current.contains(event.target as Node)) {
+        setShowExportDropdown(false)
+      }
+      if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
+        setShowMoreOptionsMenu(false)
       }
       if (estadoDropdownRef.current && !estadoDropdownRef.current.contains(event.target as Node)) {
         setShowEstadoDropdown(false)
       }
     }
-    if (showClienteDropdown || showEstadoDropdown) {
+    if (showExportDropdown || showMoreOptionsMenu || showEstadoDropdown) {
       document.addEventListener("mousedown", handleClickOutside)
     }
     return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [showClienteDropdown, showEstadoDropdown])
-  
-  // Promoción state (always discount - percent, cash, or unit)
-  const [itemAjustes, setItemAjustes] = useState<{ [idx: number]: { value: number; type: "percent" | "cash" | "unit" } }>({})
-  const [itemIvas, setItemIvas] = useState<{ [idx: number]: number }>({})
-  const [globalDiscount, setGlobalDiscount] = useState<{ value: number; type: "cash" | "percent" }>({ value: 0, type: "percent" })
-  const [showGlobalDiscount, setShowGlobalDiscount] = useState(false)
-  const [showEnvio, setShowEnvio] = useState(false)
-  const [envioAmount, setEnvioAmount] = useState(0)
-  const [customCharges, setCustomCharges] = useState<{ id: number; label: string; value: number }[]>([])
-  const [editingCustomChargeId, setEditingCustomChargeId] = useState<number | null>(null)
-  const [showIvaColumn, setShowIvaColumn] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("presupuesto_show_iva") === "true"
-    }
-    return false
-  })
-  const [showColumnMenu, setShowColumnMenu] = useState(false)
+  }, [showExportDropdown, showMoreOptionsMenu, showEstadoDropdown])
 
-  const foundPresupuesto = useMemo(() => {
-    return presupuestos.find(p => p.id === id) || null
-  }, [presupuestos, id])
-  
-  const [presupuesto, setPresupuesto] = useState<Presupuesto | null>(null)
-  const [hasChanges, setHasChanges] = useState(false)
-  
-  useEffect(() => {
-    if (foundPresupuesto && !isLoadedRef.current) {
-      setPresupuesto(foundPresupuesto)
-      // Restore persisted detail-page state
-      if (foundPresupuesto.itemAjustes) setItemAjustes(foundPresupuesto.itemAjustes)
-      if (foundPresupuesto.itemIvas) setItemIvas(foundPresupuesto.itemIvas)
-      if (foundPresupuesto.globalDiscount) {
-        setGlobalDiscount(foundPresupuesto.globalDiscount)
-        setShowGlobalDiscount(foundPresupuesto.globalDiscount.value > 0)
-      }
-      if (typeof foundPresupuesto.envio === "number") {
-        setEnvioAmount(foundPresupuesto.envio)
-        setShowEnvio(foundPresupuesto.envio > 0)
-      }
-      if (foundPresupuesto.customCharges) setCustomCharges(foundPresupuesto.customCharges)
-      isLoadedRef.current = true
-    } else if (foundPresupuesto) {
-      // Subsequent updates (e.g., from updatePresupuesto on item changes) - just update presupuesto reference
-      setPresupuesto(foundPresupuesto)
-    }
-  }, [foundPresupuesto])
-  
-  useEffect(() => {
-    localStorage.setItem("presupuesto_show_iva", showIvaColumn.toString())
-  }, [showIvaColumn])
-  
-  // Persist itemAjustes, itemIvas, globalDiscount, envio, customCharges to the presupuesto
-  useEffect(() => {
-    if (!presupuesto || !isLoadedRef.current) return
-    updatePresupuesto(presupuesto.id, {
-      itemAjustes,
-      itemIvas,
-      globalDiscount: showGlobalDiscount ? globalDiscount : { value: 0, type: "percent" },
-      envio: showEnvio ? envioAmount : 0,
-      customCharges,
-    })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [itemAjustes, itemIvas, globalDiscount, showGlobalDiscount, envioAmount, showEnvio, customCharges])
-  
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (showColumnMenu && !(e.target as HTMLElement).closest("[data-column-menu]")) {
-        setShowColumnMenu(false)
-      }
-    }
-    document.addEventListener("click", handleClickOutside)
-    return () => document.removeEventListener("click", handleClickOutside)
-  }, [showColumnMenu])
-  
-  const isEditable = presupuesto?.estado === "borrador"
-  
-  const [showAddItemModal, setShowAddItemModal] = useState(false)
-  const [showExportDropdown, setShowExportDropdown] = useState(false)
-  const [selectedModalSkus, setSelectedModalSkus] = useState<Set<string>>(new Set())
-  const [modalSearch, setModalSearch] = useState("")
-  const [modalFilters, setModalFilters] = useState<{
-    categoria: string
-    marca: string
-    stockRange: string
-  }>({ categoria: "", marca: "", stockRange: "" })
-  const [modalSort, setModalSort] = useState<"name" | "stock" | "precio">("name")
-  const [modalSortDirection, setModalSortDirection] = useState<"asc" | "desc">("asc")
-  const [showModalFilters, setShowModalFilters] = useState(false)
-  
-  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false)
-  const [showMoreOptionsMenu, setShowMoreOptionsMenu] = useState(false)
-  
-  // Mass actions
-  const [showCantidadMassMenu, setShowCantidadMassMenu] = useState(false)
-  const [showPrecioMassMenu, setShowPrecioMassMenu] = useState(false)
-  const [showPromocionMassMenu, setShowPromocionMassMenu] = useState(false)
-  const [showIvaMassMenu, setShowIvaMassMenu] = useState(false)
-  const [massCantidadValue, setMassCantidadValue] = useState("")
-  const [massPrecioValue, setMassPrecioValue] = useState("")
-  const [massPrecioType, setMassPrecioType] = useState<"set" | "add" | "subtract" | "addPercent" | "subtractPercent">("set")
-  const [massPromocionValue, setMassPromocionValue] = useState("")
-  const [massPromocionType, setMassPromocionType] = useState<"percent" | "cash" | "unit">("percent")
-  const [massIvaValue, setMassIvaValue] = useState("")
-  
-  // Column visibility
-  const [showPromocionColumn, setShowPromocionColumn] = useState(true)
-  const [showSectionMenu, setShowSectionMenu] = useState(false)
-  
-  const [editingLibreItem, setEditingLibreItem] = useState<{ idx: number; field: "name" | "sku" | "marca" | "categoria"; value: string } | null>(null)
-  
-  // Selection state for bulk actions
-  const [selectedItemIndices, setSelectedItemIndices] = useState<Set<number>>(new Set())
-  
-  // Individual price adjustment modal
-  const [showIndividualPriceModal, setShowIndividualPriceModal] = useState<{ idx: number; value: string; type: "set" | "add" | "subtract" | "addPercent" | "subtractPercent" } | null>(null)
-  
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement
-      if (!target.closest('[data-mass-menu]')) {
-        setShowCantidadMassMenu(false)
-        setShowPrecioMassMenu(false)
-        setShowPromocionMassMenu(false)
-        setShowIvaMassMenu(false)
-      }
-      if (!target.closest('[data-section-menu]')) {
-        setShowSectionMenu(false)
-      }
-    }
-    if (showCantidadMassMenu || showPrecioMassMenu || showPromocionMassMenu || showIvaMassMenu || showSectionMenu) {
-      document.addEventListener("mousedown", handleClickOutside)
-    }
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [showCantidadMassMenu, showPrecioMassMenu])
-  
-  const uniqueClientes = useMemo(() => {
-    return clientes.map(c => {
-      if (c.tipo === "empresa" && c.razonSocial) {
-        return c.razonSocial
-      }
-      return `${c.nombre} ${c.apellido}`.trim()
-    }).sort()
-  }, [clientes])
-  
-  const filteredClientes = useMemo(() => {
-    if (!clienteSearch) return uniqueClientes
-    return uniqueClientes.filter(c => 
-      c.toLowerCase().includes(clienteSearch.toLowerCase())
-    )
-  }, [clienteSearch, uniqueClientes])
-  
-  // Helper to get precio for an item by SKU (uses precioFinal for presupuestos)
-  const getPrecioBySku = (sku: string): number => {
-    const standaloneItem = allItems.find(item => item.sku === sku)
-    if (standaloneItem?.precio?.precioFinal !== undefined) {
-      return standaloneItem.precio.precioFinal
-    }
-    
-    for (const item of allItems) {
-      if (item.variants) {
-        const variant = item.variants.find(v => v.sku === sku || `${item.skuPrefix}-${v.skuSuffix}` === sku)
-        if (variant?.precio?.precioFinal !== undefined) {
-          return variant.precio.precioFinal
-        }
-      }
-    }
-    return 0
-  }
-  
-  const getMarcaBySku = (sku: string): string | undefined => {
-    const standaloneItem = allItems.find(item => item.sku === sku)
-    if (standaloneItem?.marca) return standaloneItem.marca
-    
-    for (const item of allItems) {
-      if (item.variants) {
-        const variant = item.variants.find(v => v.sku === sku || `${item.skuPrefix}-${v.skuSuffix}` === sku)
-        if (variant) return variant.marca || item.marca
-      }
-    }
-    return undefined
-  }
-  
-  const getStockBySku = (sku: string): number => {
-    const standaloneItem = allItems.find(item => item.sku === sku)
-    if (standaloneItem?.stock?.disponible) return parseInt(standaloneItem.stock.disponible) || 0
-    
-    for (const item of allItems) {
-      if (item.variants) {
-        const variant = item.variants.find((v: any) => v.sku === sku || `${item.skuPrefix}-${v.skuSuffix}` === sku)
-        if (variant?.stock?.disponible) return parseInt(variant.stock.disponible) || 0
-      }
-    }
-    return 0
-  }
-  
-  const getIvaBySku = (sku: string): number => {
-    const standaloneItem = allItems.find(item => item.sku === sku)
-    if (standaloneItem?.precio?.iva !== undefined) return standaloneItem.precio.iva
-    
-    for (const item of allItems) {
-      if (item.variants) {
-        const variant = item.variants.find((v: any) => v.sku === sku || `${item.skuPrefix}-${v.skuSuffix}` === sku)
-        if (variant?.precio?.iva !== undefined) return variant.precio.iva
-      }
-    }
-    return 21 // Default IVA
-  }
+  // ── Early returns AFTER all hooks ──
 
-  // Get items for the modal (all catalog items)
-  const catalogItems = useMemo(() => {
-    return allItems.map(item => ({
-      ...item,
-      hasVariants: item.hasVariants || false,
-    }))
-  }, [allItems])
-
-  const getItemId = (item: any) => item.sku || item.id || `${item.skuPrefix}-${item.skuSuffix}` || item.name
-  
-  const filteredModalItems = useMemo(() => {
-    let items = [...catalogItems]
-    
-    if (modalSearch) {
-      const search = modalSearch.toLowerCase()
-      items = items.filter(item => {
-        const nameMatch = item.name.toLowerCase().includes(search)
-        const skuMatch = (item.sku || item.skuPrefix || "").toLowerCase().includes(search)
-        const marcaMatch = (item.marca || "").toLowerCase().includes(search)
-        
-        if (item.hasVariants && item.variants) {
-          const variantMatch = item.variants.some((v: any) => 
-            v.name?.toLowerCase().includes(search) ||
-            v.sku?.toLowerCase().includes(search) ||
-            v.skuSuffix?.toLowerCase().includes(search)
-          )
-          return nameMatch || skuMatch || marcaMatch || variantMatch
-        }
-        return nameMatch || skuMatch || marcaMatch
-      })
-    }
-    
-    if (modalFilters.categoria) {
-      items = items.filter(item => item.categoria === modalFilters.categoria)
-    }
-    
-    if (modalFilters.marca) {
-      items = items.filter(item => item.marca === modalFilters.marca)
-    }
-    
-    // Filter out items already in the presupuesto
-    const existingSkus = new Set(presupuesto?.items.map(i => i.sku) || [])
-    items = items.map(item => {
-      if (item.hasVariants && item.variants) {
-        const remainingVariants = item.variants.filter((v: any) => {
-          const sku = `${item.skuPrefix}-${v.skuSuffix}`
-          return !existingSkus.has(sku)
-        })
-        if (remainingVariants.length === 0) return null
-        return { ...item, variants: remainingVariants }
-      } else {
-        if (existingSkus.has(item.sku)) return null
-        return item
-      }
-    }).filter(Boolean) as typeof items
-    
-    // Sort
-    items.sort((a, b) => {
-      let comparison = 0
-      switch (modalSort) {
-        case "name":
-          comparison = a.name.localeCompare(b.name)
-          break
-        case "precio":
-          comparison = (a.precio?.precioFinal || 0) - (b.precio?.precioFinal || 0)
-          break
-      }
-      return modalSortDirection === "asc" ? comparison : -comparison
-    })
-    
-    return items
-  }, [catalogItems, modalSearch, modalFilters, modalSort, modalSortDirection, presupuesto?.items])
-
-  const handleAddSelectedItems = () => {
-    if (!presupuesto) return
-    
-    const existingSkus = new Set(presupuesto.items.map(i => i.sku))
-    const newItems: PresupuestoItem[] = []
-    
-    for (const item of catalogItems) {
-      const isParent = item.hasVariants && item.variants && item.variants.length > 0
-      
-      if (isParent) {
-        for (const variant of item.variants!) {
-          const sku = `${item.skuPrefix}-${variant.skuSuffix}`
-          if (selectedModalSkus.has(sku) && !existingSkus.has(sku)) {
-            const unitPrice = variant.precio?.precioFinal || 0
-            newItems.push({
-              sku,
-              name: variant.name || item.name,
-              quantity: 1,
-              unitPrice,
-              total: unitPrice,
-              categoria: variant.categoria || item.categoria,
-              marca: variant.marca || item.marca,
-              tags: variant.atributosPrincipales?.map(a => a.value),
-            })
-          }
-        }
-      } else {
-        const sku = item.sku || ""
-        if (selectedModalSkus.has(sku) && !existingSkus.has(sku)) {
-          const unitPrice = item.precio?.precioFinal || 0
-          newItems.push({
-            sku,
-            name: item.name,
-            quantity: 1,
-            unitPrice,
-            total: unitPrice,
-            categoria: item.categoria,
-            marca: item.marca,
-          })
-        }
-      }
-    }
-    
-    if (newItems.length > 0) {
-      const updatedItems = [...presupuesto.items, ...newItems]
-      const newTotal = updatedItems.reduce((sum, it) => sum + it.total, 0)
-      setPresupuesto({ ...presupuesto, items: updatedItems, importeTotal: newTotal })
-      updatePresupuesto(presupuesto.id, { items: updatedItems, importeTotal: newTotal })
-      setHasChanges(true)
-    }
-    
-    setShowAddItemModal(false)
-    setSelectedModalSkus(new Set())
-    setModalSearch("")
-  }
-  
-  // Toggle selection for a single SKU
-  const toggleModalSku = (sku: string) => {
-    setSelectedModalSkus(prev => {
-      const next = new Set(prev)
-      if (next.has(sku)) {
-        next.delete(sku)
-      } else {
-        next.add(sku)
-      }
-      return next
-    })
-  }
-  
-  // Toggle all variants of a parent item
-  const toggleParentSelection = (item: CatalogItem) => {
-    if (!item.variants) return
-    const variantSkus = item.variants.map(v => `${item.skuPrefix}-${v.skuSuffix}`)
-    const allSelected = variantSkus.every(sku => selectedModalSkus.has(sku))
-    
-    setSelectedModalSkus(prev => {
-      const next = new Set(prev)
-      if (allSelected) {
-        // Deselect all
-        variantSkus.forEach(sku => next.delete(sku))
-      } else {
-        // Select all
-        variantSkus.forEach(sku => next.add(sku))
-      }
-      return next
-    })
-  }
-  
-  // Check if all variants of a parent are selected
-  const areAllVariantsSelected = (item: CatalogItem) => {
-    if (!item.variants) return false
-    return item.variants.every(v => selectedModalSkus.has(`${item.skuPrefix}-${v.skuSuffix}`))
-  }
-  
-  // Check if some (but not all) variants are selected
-  const areSomeVariantsSelected = (item: CatalogItem) => {
-    if (!item.variants) return false
-    const variantSkus = item.variants.map(v => `${item.skuPrefix}-${v.skuSuffix}`)
-    const selectedCount = variantSkus.filter(sku => selectedModalSkus.has(sku)).length
-    return selectedCount > 0 && selectedCount < variantSkus.length
-  }
-  
-  const handleAddFreeItem = () => {
-    if (!presupuesto || !modalSearch.trim()) return
-    const newItem: PresupuestoItem = {
-      sku: "",
-      name: modalSearch.trim(),
-      quantity: 1,
-      unitPrice: 0,
-      total: 0,
-      isDescripcionLibre: true,
-    }
-    const newItems = [...presupuesto.items, newItem]
-    setPresupuesto({ ...presupuesto, items: newItems })
-    updatePresupuesto(presupuesto.id, { items: newItems })
-    setHasChanges(true)
-    setShowAddItemModal(false)
-    setModalSearch("")
-  }
-  
-  const handleUpdateLibreItem = (idx: number, field: "name" | "sku" | "marca" | "categoria", value: string) => {
-    if (!presupuesto) return
-    const newItems = [...presupuesto.items]
-    newItems[idx] = { ...newItems[idx], [field]: value }
-    setPresupuesto({ ...presupuesto, items: newItems })
-    updatePresupuesto(presupuesto.id, { items: newItems })
-    setHasChanges(true)
-    setEditingLibreItem(null)
-  }
-  
-  // Mass actions - apply to selected items only if any are selected, otherwise all
-  const handleApplyMassCantidad = () => {
-    if (!presupuesto || !massCantidadValue) return
-    const value = parseInt(massCantidadValue) || 0
-    const hasSelection = selectedItemIndices.size > 0
-    const newItems = presupuesto.items.map((item, idx) => {
-      if (hasSelection && !selectedItemIndices.has(idx)) return item
-      return {
-        ...item,
-        quantity: value,
-        total: value * item.unitPrice
-      }
-    })
-    const newTotal = newItems.reduce((sum, it) => sum + it.total, 0)
-    setPresupuesto({ ...presupuesto, items: newItems, importeTotal: newTotal })
-    updatePresupuesto(presupuesto.id, { items: newItems, importeTotal: newTotal })
-    setHasChanges(true)
-    setShowCantidadMassMenu(false)
-    setMassCantidadValue("")
-  }
-  
-  const handleApplyMassPrecio = () => {
-    if (!presupuesto || !massPrecioValue) return
-    const value = parseFloat(massPrecioValue) || 0
-    const hasSelection = selectedItemIndices.size > 0
-    const newItems = presupuesto.items.map((item, idx) => {
-      if (hasSelection && !selectedItemIndices.has(idx)) return item
-      let newPrice = item.unitPrice
-      switch (massPrecioType) {
-        case "set": newPrice = value; break
-        case "add": newPrice = item.unitPrice + value; break
-        case "subtract": newPrice = Math.max(0, item.unitPrice - value); break
-        case "addPercent": newPrice = item.unitPrice * (1 + value / 100); break
-        case "subtractPercent": newPrice = item.unitPrice * (1 - value / 100); break
-      }
-      newPrice = Math.round(newPrice)
-      return { ...item, unitPrice: newPrice, total: item.quantity * newPrice }
-    })
-    const newTotal = newItems.reduce((sum, it) => sum + it.total, 0)
-    setPresupuesto({ ...presupuesto, items: newItems, importeTotal: newTotal })
-    updatePresupuesto(presupuesto.id, { items: newItems, importeTotal: newTotal })
-    setHasChanges(true)
-    setShowPrecioMassMenu(false)
-    setMassPrecioValue("")
-    setMassPrecioType("set")
-  }
-  
-  const handleApplyMassPromocion = () => {
-    if (!presupuesto) return
-    const value = parseFloat(massPromocionValue) || 0
-    const hasSelection = selectedItemIndices.size > 0
-    
-    const newAjustes = { ...itemAjustes }
-    presupuesto.items.forEach((item, idx) => {
-      if (hasSelection && !selectedItemIndices.has(idx)) return
-      // For unit type, limit to quantity
-      const adjustedValue = massPromocionType === "unit" ? Math.min(value, item.quantity) : value
-      newAjustes[idx] = { type: massPromocionType, value: adjustedValue }
-    })
-    setItemAjustes(newAjustes)
-    setShowPromocionMassMenu(false)
-    setMassPromocionValue("")
-  }
-  
-  const handleApplyMassIva = () => {
-    if (!presupuesto) return
-    const value = parseFloat(massIvaValue) || 0
-    const hasSelection = selectedItemIndices.size > 0
-    
-    const newIva = { ...itemIvas }
-    presupuesto.items.forEach((_, idx) => {
-      if (hasSelection && !selectedItemIndices.has(idx)) return
-      newIva[idx] = value
-    })
-    setItemIvas(newIva)
-    setShowIvaMassMenu(false)
-    setMassIvaValue("")
-  }
-  
-  const handleBulkDelete = () => {
-    if (!presupuesto || selectedItemIndices.size === 0) return
-    const newItems = presupuesto.items.filter((_, idx) => !selectedItemIndices.has(idx))
-    const newTotal = newItems.reduce((sum, it) => sum + it.total, 0)
-    setPresupuesto({ ...presupuesto, items: newItems, importeTotal: newTotal })
-    updatePresupuesto(presupuesto.id, { items: newItems, importeTotal: newTotal })
-    setHasChanges(true)
-    setSelectedItemIndices(new Set())
-  }
-
-  const handleRemoveItem = (idx: number) => {
-    if (!presupuesto) return
-    const newItems = presupuesto.items.filter((_, i) => i !== idx)
-    const newTotal = newItems.reduce((sum, it) => sum + it.total, 0)
-    setPresupuesto({ ...presupuesto, items: newItems, importeTotal: newTotal })
-    updatePresupuesto(presupuesto.id, { items: newItems, importeTotal: newTotal })
-    setHasChanges(true)
-  }
-  
-  const handleQuantityChange = (idx: number, newQuantity: number) => {
-    if (!presupuesto || newQuantity < 0) return
-    const newItems = [...presupuesto.items]
-    newItems[idx] = {
-      ...newItems[idx],
-      quantity: newQuantity,
-      total: newQuantity * newItems[idx].unitPrice
-    }
-    const newTotal = newItems.reduce((sum, it) => sum + it.total, 0)
-    setPresupuesto({ ...presupuesto, items: newItems, importeTotal: newTotal })
-    updatePresupuesto(presupuesto.id, { items: newItems, importeTotal: newTotal })
-    setHasChanges(true)
-  }
-  
-  const handlePriceChange = (idx: number, newPrice: number) => {
-    if (!presupuesto || newPrice < 0) return
-    const newItems = [...presupuesto.items]
-    newItems[idx] = {
-      ...newItems[idx],
-      unitPrice: newPrice,
-      total: newItems[idx].quantity * newPrice
-    }
-    const newTotal = newItems.reduce((sum, it) => sum + it.total, 0)
-    setPresupuesto({ ...presupuesto, items: newItems, importeTotal: newTotal })
-    updatePresupuesto(presupuesto.id, { items: newItems, importeTotal: newTotal })
-    setHasChanges(true)
-  }
-  
-  // Selection helpers
-  const toggleItemSelection = (idx: number) => {
-    setSelectedItemIndices(prev => {
-      const next = new Set(prev)
-      if (next.has(idx)) {
-        next.delete(idx)
-      } else {
-        next.add(idx)
-      }
-      return next
-    })
-  }
-  
-  // Individual price adjustment
-  const handleApplyIndividualPrice = () => {
-    if (!presupuesto || !showIndividualPriceModal) return
-    const { idx, value, type } = showIndividualPriceModal
-    const numValue = parseFloat(value) || 0
-    if (numValue === 0) return
-    
-    const newItems = [...presupuesto.items]
-    const item = newItems[idx]
-    let newPrice = item.unitPrice
-    
-    if (type === "set") {
-      newPrice = numValue
-    } else if (type === "add") {
-      newPrice = item.unitPrice + numValue
-    } else if (type === "subtract") {
-      newPrice = item.unitPrice - numValue
-    } else if (type === "addPercent") {
-      newPrice = item.unitPrice * (1 + numValue / 100)
-    } else if (type === "subtractPercent") {
-      newPrice = item.unitPrice * (1 - numValue / 100)
-    }
-    
-    newPrice = Math.max(0, Math.round(newPrice))
-    newItems[idx] = { ...item, unitPrice: newPrice, total: item.quantity * newPrice }
-    
-    const newTotal = newItems.reduce((sum, it) => sum + it.total, 0)
-    setPresupuesto({ ...presupuesto, items: newItems, importeTotal: newTotal })
-    updatePresupuesto(presupuesto.id, { items: newItems, importeTotal: newTotal })
-    setHasChanges(true)
-    setShowIndividualPriceModal(null)
-  }
-  
-  const handleEstadoChange = (newEstado: EstadoPresupuesto) => {
-    if (!presupuesto) return
-    setPresupuesto({ ...presupuesto, estado: newEstado })
-    updatePresupuesto(presupuesto.id, { estado: newEstado })
-    setHasChanges(true)
-  }
-  
-  const handleClienteChange = (newCliente: string) => {
-    if (!presupuesto) return
-    setPresupuesto({ ...presupuesto, clienteNombre: newCliente })
-    updatePresupuesto(presupuesto.id, { clienteNombre: newCliente })
-    setShowClienteDropdown(false)
-    setClienteSearch("")
-    setHasChanges(true)
-  }
-  
-  const handleSaveNuevoCliente = (clienteData: Omit<Cliente, "id">) => {
-    const newCliente = addCliente(clienteData)
-    // Select the new client for this presupuesto
-    const clienteName = clienteData.tipo === "empresa" && clienteData.razonSocial 
-      ? clienteData.razonSocial 
-      : `${clienteData.nombre} ${clienteData.apellido}`.trim()
-    handleClienteChange(clienteName)
-    setShowNuevoClienteModal(false)
-  }
-  
-  const handleDeletePresupuesto = () => {
-    if (!presupuesto) return
-    deletePresupuesto(presupuesto.id)
-    router.push("/ventas/presupuestos")
-  }
-  
-  // Export PDF
-  const handleExportPDF = () => {
-    if (!presupuesto) return
-    setShowExportDropdown(false)
-    
-    const doc = new jsPDF()
-    const pageWidth = doc.internal.pageSize.getWidth()
-    
-    doc.setFontSize(20)
-    doc.setFont("helvetica", "bold")
-    doc.text(`Presupuesto PRE-${presupuesto.numero}`, 14, 20)
-    
-    doc.setFontSize(10)
-    doc.setFont("helvetica", "normal")
-    doc.text(`Cliente: ${presupuesto.clienteNombre}`, 14, 35)
-    doc.text(`Fecha: ${new Date(presupuesto.fechaCreacion).toLocaleDateString("es-AR")}`, 14, 42)
-    doc.text(`Estado: ${presupuesto.estado.charAt(0).toUpperCase() + presupuesto.estado.slice(1)}`, 14, 49)
-    
-    let yPos = 65
-    doc.setFillColor(240, 240, 240)
-    doc.rect(14, yPos - 5, pageWidth - 28, 10, "F")
-    doc.setFont("helvetica", "bold")
-    doc.text("Item", 16, yPos)
-    doc.text("Cant.", 100, yPos)
-    doc.text("Precio Unit.", 120, yPos)
-    doc.text("Subtotal", 160, yPos)
-    
-    doc.setFont("helvetica", "normal")
-    yPos += 10
-    
-    presupuesto.items.forEach((item) => {
-      if (yPos > 270) {
-        doc.addPage()
-        yPos = 20
-      }
-      
-      const name = item.name.length > 40 ? item.name.substring(0, 37) + "..." : item.name
-      doc.text(name, 16, yPos)
-      doc.text(String(item.quantity), 100, yPos)
-      doc.text(`$${item.unitPrice.toLocaleString("es-AR")}`, 120, yPos)
-      doc.text(`$${item.total.toLocaleString("es-AR")}`, 160, yPos)
-      yPos += 8
-    })
-    
-    yPos += 10
-    doc.setDrawColor(200, 200, 200)
-    doc.line(14, yPos - 5, pageWidth - 14, yPos - 5)
-    doc.setFont("helvetica", "bold")
-    doc.setFontSize(12)
-    doc.text(`Total: $${Math.round(finalTotal).toLocaleString("es-AR")}`, pageWidth - 14, yPos, { align: "right" })
-    
-    doc.save(`PRE-${presupuesto.numero}.pdf`)
-  }
-  
-  // Export Text
-  const handleExportText = () => {
-    if (!presupuesto) return
-    setShowExportDropdown(false)
-    
-    let content = `PRESUPUESTO PRE-${presupuesto.numero}\n`
-    content += `${"=".repeat(40)}\n\n`
-    content += `Cliente: ${presupuesto.clienteNombre}\n`
-    content += `Fecha: ${new Date(presupuesto.fechaCreacion).toLocaleDateString("es-AR")}\n`
-    content += `Estado: ${presupuesto.estado.charAt(0).toUpperCase() + presupuesto.estado.slice(1)}\n\n`
-    content += `ITEMS\n`
-    content += `${"-".repeat(40)}\n`
-    
-    presupuesto.items.forEach((item, idx) => {
-      content += `${idx + 1}. ${item.name}\n`
-      content += `   SKU: ${item.sku || "N/A"}\n`
-      content += `   Cantidad: ${item.quantity}\n`
-      content += `   Precio Unit.: $${item.unitPrice.toLocaleString("es-AR")}\n`
-      content += `   Subtotal: $${item.total.toLocaleString("es-AR")}\n\n`
-    })
-    
-    content += `${"-".repeat(40)}\n`
-    content += `TOTAL: $${Math.round(finalTotal).toLocaleString("es-AR")}\n`
-    
-    const blob = new Blob([content], { type: "text/plain;charset=utf-8" })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement("a")
-    link.href = url
-    link.download = `PRE-${presupuesto.numero}.txt`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-  }
-  
-  // Llevar a ventas - converts presupuesto to aceptado and creates a venta
-  const handleLlevarAVentas = () => {
-    if (!presupuesto || presupuesto.items.length === 0) return
-    
-    const now = new Date()
-    const isConsumidorFinal = !presupuesto.clienteId || presupuesto.clienteNombre === "Consumidor Final"
-    const newVenta = addVenta({
-      fecha: now.toISOString().split("T")[0],
-      hora: now.toTimeString().split(" ")[0].substring(0, 5),
-      cliente: isConsumidorFinal
-        ? { tipo: "consumidor_final" }
-        : { tipo: "cuenta", id: presupuesto.clienteId, nombre: presupuesto.clienteNombre },
-      items: presupuesto.items.map(item => ({
-        sku: item.sku,
-        name: item.name,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        discount: 0,
-        discountType: "percent" as const,
-        total: item.total,
-        categoria: item.categoria,
-      })),
-      subtotal: rawSubtotal,
-      descuento: showGlobalDiscount ? globalDiscount.value : 0,
-      descuentoTipo: showGlobalDiscount ? (globalDiscount.type === "cash" ? "fixed" : "percent") : "percent",
-      total: finalTotal,
-      entregaItems: [],
-      cobros: [],
-      estado: "en_curso",
-    })
-    
-    updatePresupuesto(presupuesto.id, { estado: "aceptado", ventaId: newVenta.id })
-    router.push("/ventas/ventasb")
-  }
-  
-  // Ver en ventas - just navigate
-  const handleVerEnVentas = () => {
-    router.push("/ventas/ventasb")
-  }
-
-  const breadcrumbs = [
-    { label: "Ventas" },
-    { label: "Presupuestos", href: "/ventas/presupuestos" },
-    { label: presupuesto?.id || id },
-  ]
-
-  if (!presupuesto) {
+  if (isLoadingVentas) {
     return (
       <div className="min-h-screen bg-[rgb(243,242,238)] flex items-center justify-center">
-        <div className="text-center">
-          <Package className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-500">Presupuesto no encontrado</p>
-          <button 
-            onClick={() => router.push("/ventas/presupuestos")}
-            className="mt-4 text-blue-600 hover:underline text-sm"
-          >
-            Volver a Presupuestos
-          </button>
+        <p className="text-sm text-slate-400">Cargando venta...</p>
+      </div>
+    )
+  }
+
+  if (!venta) {
+    return (
+      <div className="min-h-screen bg-[rgb(243,242,238)]">
+        <div className="px-[6px] py-[6px] flex gap-[6px] h-screen">
+          <div className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
+            <Sidebar
+              sidebarItems={SIDEBAR_ITEMS}
+              bottomSidebarItems={BOTTOM_SIDEBAR_ITEMS}
+              hoveredDropdown={hoveredDropdown}
+              onDropdownOpen={handleDropdownMouseEnter}
+              onDropdownClose={handleDropdownMouseLeave}
+            />
+          </div>
+          <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden items-center justify-center">
+            <Package className="w-12 h-12 text-slate-200 mb-3" />
+            <p className="text-slate-500 mb-1">Venta no encontrada</p>
+            <p className="text-xs text-slate-400 mb-4">La venta {id} no existe</p>
+            <button
+              onClick={() => router.push("/ventas/ventas")}
+              className="text-sm text-blue-600 hover:underline"
+            >
+              Volver a ventas
+            </button>
+          </div>
         </div>
       </div>
     )
   }
-  
-  const estadoStyle = estadoColors[presupuesto.estado]
 
-  // Calculate raw subtotal (without any discounts)
-  const rawSubtotal = presupuesto.items.reduce((sum, item) => {
-    return sum + (item.quantity * item.unitPrice)
-  }, 0)
-  
-  // Calculate subtotal with item-level promociones applied
-  const subtotalWithAjustes = presupuesto.items.reduce((sum, item, idx) => {
-    const ajuste = itemAjustes[idx] || { value: 0, type: "percent" }
-    
-    if (ajuste.type === "unit") {
-      // Unit discount: reduce quantity by discount units (max is item.quantity)
-      const discountUnits = Math.min(ajuste.value, item.quantity)
-      const effectiveQuantity = Math.max(0, item.quantity - discountUnits)
-      return sum + (effectiveQuantity * item.unitPrice)
-    } else {
-      // Percent or cash discount on unit price
-      const ajusteAmt = ajuste.type === "percent"
-        ? item.unitPrice * (ajuste.value / 100)
-        : ajuste.value
-      const adjustedUnitPrice = Math.max(0, item.unitPrice - ajusteAmt)
-      return sum + (item.quantity * adjustedUnitPrice)
+  const clienteNombre = venta.cliente.tipo === "cuenta" ? venta.cliente.nombre : "Consumidor Final"
+  const clienteId = venta.cliente.tipo === "cuenta" ? venta.cliente.id : null
+  const isFacturada = !!venta.facturaEmitida
+  const estadoUI = venta.estado
+  const setEstadoUI = (next: typeof venta.estado) => setEstado(venta.id, next)
+
+  const handleGuardar = async () => {
+    setIsSaving(true)
+    try {
+      saveEditMode()
+      setShowSaveSuccess(true)
+      await new Promise(r => setTimeout(r, 1500))
+      setShowSaveSuccess(false)
+    } finally {
+      setIsSaving(false)
     }
-  }, 0)
-  
-  // Calculate item-level discount amount
-  const itemDiscountAmount = rawSubtotal - subtotalWithAjustes
-  
-  const globalDiscountAmount = globalDiscount.type === "percent"
-    ? subtotalWithAjustes * (globalDiscount.value / 100)
-    : globalDiscount.value
-  
-  // Total discount (item-level + global)
-  const totalDiscountAmount = itemDiscountAmount + globalDiscountAmount
-  
-  // Calculate additional charges (envio + custom)
-  const totalAdditionalCharges = (showEnvio ? envioAmount : 0) + customCharges.reduce((sum, c) => sum + c.value, 0)
-  
-  const finalTotal = Math.max(0, subtotalWithAjustes - globalDiscountAmount + totalAdditionalCharges)
+  }
+
+  const handleDeshacer = () => {
+    cancelEditMode()
+  }
+
+  const handleDownloadPDF = () => downloadVentasPDF([venta], miNegocio)
+  const fechaCreacion = new Date(venta.fecha).toLocaleDateString("es-AR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  })
+
+  const getModalSelectionState = (item: any, isChild = false): { checked: boolean; indeterminate: boolean } => {
+    const isParent = !isChild && item.hasVariants && item.variants?.length > 0
+    if (isParent) {
+      const childIds = item.variants.map((v: any) => getModalItemId(v)).filter(Boolean)
+      const all = childIds.every((id: string) => selectedModalItems[id])
+      const some = childIds.some((id: string) => selectedModalItems[id])
+      return { checked: all, indeterminate: some && !all }
+    }
+    const id = getModalItemId(item)
+    return { checked: !!selectedModalItems[id], indeterminate: false }
+  }
+
+  const handleModalItemSelection = (item: any, isChild = false) => {
+    const isParent = !isChild && item.hasVariants && item.variants?.length > 0
+    if (isParent) {
+      const childIds = item.variants.map((v: any) => getModalItemId(v)).filter(Boolean)
+      const allSel = childIds.every((id: string) => selectedModalItems[id])
+      setSelectedModalItems(prev => {
+        const next = { ...prev }
+        for (const id of childIds) next[id] = !allSel
+        return next
+      })
+    } else {
+      const id = getModalItemId(item)
+      if (id) setSelectedModalItems(prev => ({ ...prev, [id]: !prev[id] }))
+    }
+  }
+
+  const handleSelectAllModal = () => {
+    const shouldSelect = !modalSelectAllActive && !modalSelectAllIndeterminate
+    const next: { [id: string]: boolean } = {}
+    for (const id of getAllModalSelectableIds) next[id] = shouldSelect
+    setSelectedModalItems(next)
+  }
+
+  const closeAgregarProductos = () => {
+    setShowAgregarProductos(false)
+    setModalSearch("")
+    setSelectedModalItems({})
+    setModalFilters({ categoria: "", marca: "" })
+    setShowModalFilters(false)
+  }
+
+  // Build VentaItems from currently selected modal selections and persist them.
+  const handleConfirmAgregarProductos = () => {
+    if (!venta) return
+    const newVentaItems: VentaItem[] = []
+
+    for (const item of allModalItems) {
+      const isParent = item.hasVariants && (item as Item).variants && (item as Item).variants!.length > 0
+
+      if (isParent) {
+        for (const variant of (item as Item).variants!) {
+          const id = (variant as ItemVariant).id || `${(item as Item).skuPrefix}-${(variant as ItemVariant).skuSuffix}`
+          if (!selectedModalItems[id]) continue
+          const sku = `${(item as Item).skuPrefix}-${(variant as ItemVariant).skuSuffix}`
+          const unitPrice = (variant as ItemVariant).precio?.precioFinal || 0
+          newVentaItems.push({
+            sku,
+            name: `${item.name}${(variant as ItemVariant).atributosPrincipales?.length ? " · " + (variant as ItemVariant).atributosPrincipales!.map(a => a.value).join(" · ") : ""}`,
+            quantity: 1,
+            unitPrice,
+            discount: 0,
+            discountType: "percent",
+            total: unitPrice,
+            categoria: (variant as ItemVariant).categoria || (item as Item).categoria,
+          })
+        }
+      } else {
+        const id = (item as Item).id || (item as Item).sku || (item as Item).name
+        if (!selectedModalItems[id]) continue
+        const sku = (item as Item).sku || id
+        const unitPrice = (item as Item).precio?.precioFinal || 0
+        newVentaItems.push({
+          sku,
+          name: (item as Item).name,
+          quantity: 1,
+          unitPrice,
+          discount: 0,
+          discountType: "percent",
+          total: unitPrice,
+          categoria: (item as Item).categoria,
+        })
+      }
+    }
+
+    if (newVentaItems.length > 0) {
+      addItemsToVenta(venta.id, newVentaItems)
+    }
+    closeAgregarProductos()
+  }
+
+  // Persist a new cobro entry from the Registrar Cobro modal.
+  const handleConfirmCobro = () => {
+    if (!venta) return
+    const monto = Number(cobroMonto)
+    if (!monto || monto <= 0) return
+    addCobro(venta.id, {
+      fecha: cobroFecha,
+      hora: new Date().toTimeString().slice(0, 5),
+      medioPago: cobroMedio,
+      monto,
+    })
+    setShowRegistrarCobro(false)
+    setCobroMonto("")
+    setCobroMedio("efectivo")
+  }
+
+  // Persist deliveries for currently selected rows in the Registrar Entrega modal.
+  const handleConfirmEntrega = () => {
+    if (!venta) return
+    const entregas: VentaEntregaItem[] = []
+    for (const item of ventaItems) {
+      if (!entregaSelectedItems[item.sku]) continue
+      const delivered = ventaEntregaItems.find(e => e.sku === item.sku)?.quantityEntregada ?? 0
+      const remaining = item.quantity - delivered
+      const raw = entregaQuantities[item.sku]
+      const qty = raw === "" || raw === undefined ? remaining : Math.max(0, Math.min(remaining, parseInt(raw, 10) || 0))
+      if (qty > 0) entregas.push({ sku: item.sku, quantityEntregada: qty })
+    }
+    if (entregas.length > 0) {
+      addEntregas(venta.id, entregas)
+    }
+    setShowRegistrarEntrega(false)
+    setEntregaSelectedItems({})
+    setEntregaQuantities({})
+  }
+
+  // Confirm "Marcar como Finalizada": atomic — delivers all pending units + registers cobro in one save.
+  const handleConfirmFinalizar = () => {
+    if (!venta) return
+    const now = new Date()
+    finalizarVenta(
+      venta.id,
+      finalizarMedioPago,
+      now.toISOString().slice(0, 10),
+      now.toTimeString().slice(0, 5),
+    )
+    setShowFinalizarVenta(false)
+    setFinalizarMedioPago("no_especificado")
+  }
+
+  const breadcrumbs = [
+    { label: "Ventas" },
+    { label: "Ventas", href: "/ventas/ventas" },
+    { label: venta.id },
+  ]
 
   return (
     <div className="min-h-screen bg-[rgb(243,242,238)]">
@@ -923,1496 +696,2183 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
               <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2">
                 <UserPanel />
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  disabled={!hasChanges}
-                  className="px-4 py-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground hover:bg-muted text-sm font-medium"
-                >
-                  Deshacer
-                </button>
-                <button
-                  disabled={!hasChanges}
-                  className="px-4 py-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-primary hover:bg-muted text-sm font-medium"
-                >
-                  Guardar
-                </button>
+              <div className="flex items-center gap-2 min-w-[200px] justify-end">
+                {showSaveSuccess && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md">
+                    <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    <span className="text-sm text-green-700 font-medium">Cambios guardados</span>
+                  </div>
+                )}
+                {isEditMode && hasAnyEditChanges && !showSaveSuccess && (
+                  <>
+                    <button
+                      onClick={handleDeshacer}
+                      className="px-4 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 rounded transition-all cursor-pointer text-red-700 text-sm font-medium"
+                    >
+                      Deshacer
+                    </button>
+                    <button
+                      onClick={handleGuardar}
+                      disabled={isSaving}
+                      className="px-4 py-1.5 bg-green-50 hover:bg-green-100 border border-green-200 rounded transition-all cursor-pointer text-green-700 text-sm font-medium disabled:opacity-50"
+                    >
+                      {isSaving ? "Guardando..." : "Guardar"}
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
 
           <main className="flex-1 flex flex-col bg-[rgba(250,251,253,1)] overflow-hidden">
-            {/* Order Header - styled like ODC */}
-            <div className="px-6 py-4 border-b border-border/20 bg-white">
-              <div className="flex items-center justify-between">
-                {/* Left: Title and info */}
-                <div className="flex items-center gap-6">
-                  {/* Presupuesto ID */}
-                  <div>
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Presupuesto</span>
-                    <div className="flex items-center gap-3">
-                      <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{presupuesto.id}</h1>
-                    </div>
-                  </div>
-                  
-                  <div className="h-10 w-px bg-border/40" />
-                  
-                  {/* Cliente */}
-                  <div className="relative" ref={clienteDropdownRef}>
-                    <div 
-                      className={`flex flex-col ${isEditable ? "cursor-pointer group" : ""}`}
-                      onMouseEnter={() => setIsHoveringCliente(true)}
-                      onMouseLeave={() => setIsHoveringCliente(false)}
-                      onClick={() => isEditable && setShowClienteDropdown(!showClienteDropdown)}
-                    >
-                      <span className="text-[10px] text-slate-400 uppercase tracking-wider">Cliente</span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm font-semibold text-gray-800">{presupuesto.clienteNombre}</span>
-                        {isEditable && <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${showClienteDropdown ? "rotate-180" : ""}`} />}
+            {/* Items Grid + Totals side by side */}
+            <div className="flex-1 overflow-y-auto px-8 pb-8 pt-4">
+              <div className="max-w-[1240px] mx-auto">
+              <div className="grid grid-cols-3 gap-4 items-start">
+
+              {/* Left col-span-2 */}
+              <div className="col-span-2 flex flex-col gap-4">
+
+                {/* ── Venta Info card ── */}
+                {(() => {
+                  const fechaObj = new Date(venta.fecha)
+                  const mesCorto = fechaObj.toLocaleDateString("es-AR", { month: "short" }).replace(".", "")
+                  const dia = fechaObj.toLocaleDateString("es-AR", { day: "2-digit" })
+                  const inicial = clienteNombre.charAt(0).toUpperCase()
+                  return (
+                    <div className="pt-8 px-0 pb-3 flex flex-col">
+
+                      {/* Row 1: Venta ID · fecha · origen (same for all estados) */}
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center flex-1 min-w-0">
+                          <div className="flex items-baseline gap-1.5 shrink-0">
+                            <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Venta</span>
+                            <span className="text-2xl font-bold text-slate-900 leading-none tracking-tight">{venta.id}</span>
+                          </div>
+                          <div className="h-5 w-px bg-slate-300 shrink-0 mx-5" />
+                          <span className="text-sm font-medium text-slate-600 tabular-nums shrink-0">
+                            {dia} {mesCorto} {fechaObj.getFullYear()} · {venta.hora}
+                          </span>
+                          <div className="h-5 w-px bg-slate-300 shrink-0 mx-5" />
+                          <span className="text-sm font-medium text-slate-500 shrink-0">
+                            {(venta as any).origen === "pdv" ? "Punto de Venta" : (venta as any).origen === "presupuesto" ? "Presupuesto" : "Manual"}
+                          </span>
+                        </div>
+
                       </div>
-                    </div>
-                    
-                    {/* Cliente Dropdown */}
-                    {showClienteDropdown && (
-                      <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg w-64">
-                        <div className="p-2 border-b border-slate-100">
-                          <div className="relative">
-                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                            <input
-                              type="text"
-                              value={clienteSearch}
-                              onChange={(e) => setClienteSearch(e.target.value)}
-                              placeholder="Buscar cliente..."
-                              className="w-full pl-8 pr-3 py-1.5 text-sm border border-slate-200 rounded-md focus:outline-none focus:border-blue-400"
-                              autoFocus
-                            />
+
+                      {/* Row 2: Cliente pill (left) + PDF / more options (right) */}
+                      <div className="flex items-center justify-between gap-3 mt-8">
+                        {/* Cliente pill */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (isEditMode) { setShowClienteSelectorModal(true) }
+                            else if (clienteId) { setShowClienteInfoModal(true) }
+                          }}
+                          className={`inline-flex items-center gap-3 pl-3 pr-5 py-2.5 rounded-2xl border bg-slate-50 shadow-sm transition-colors text-left ${clienteId || isEditMode ? "hover:bg-slate-100 cursor-pointer border-slate-200" : "cursor-default border-slate-200/60"}`}
+                        >
+                          <div className="w-9 h-9 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
+                            <span className="text-sm font-bold text-white leading-none">{clienteNombre.charAt(0).toUpperCase()}</span>
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-[10px] text-slate-400 uppercase tracking-wider leading-none mb-1">Cliente</span>
+                            <span className="text-sm font-bold text-slate-900 truncate max-w-[220px]">{clienteNombre}</span>
+                          </div>
+                          {isEditMode && <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" />}
+                        </button>
+
+                        {/* PDF + more options */}
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={handleDownloadPDF}
+                            className="h-8 text-xs transition-colors bg-white border border-slate-200 hover:bg-slate-50 cursor-pointer gap-1.5 px-3 rounded-md flex items-center text-slate-700 font-medium shadow-sm"
+                          >
+                            <FileDown className="w-3.5 h-3.5 text-slate-500" />
+                            Descargar PDF
+                          </button>
+                          <div className="relative" ref={moreMenuRef}>
+                            <button
+                              onClick={() => setShowMoreOptionsMenu(!showMoreOptionsMenu)}
+                              className="h-8 w-8 flex items-center justify-center transition-colors bg-white border border-slate-200 hover:bg-slate-50 cursor-pointer rounded-md shadow-sm"
+                            >
+                              <MoreVertical className="w-4 h-4 text-slate-500" />
+                            </button>
+                            {showMoreOptionsMenu && (
+                              <div className="absolute top-full right-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[180px]">
+                                <button
+                                  onClick={() => { setShowMoreOptionsMenu(false); router.push(`/ventas/ventas/nueva?duplicar=${venta.id}`) }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                                >
+                                  <Copy className="w-4 h-4 text-slate-400" />
+                                  Duplicar venta
+                                </button>
+                                {estadoUI !== "cancelada" && (
+                                  <button
+                                    onClick={() => { setShowMoreOptionsMenu(false); setShowCancelarVentaModal(true) }}
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors text-left"
+                                  >
+                                    <XCircle className="w-4 h-4 text-red-400" />
+                                    Cancelar venta
+                                  </button>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
-                        <div className="max-h-48 overflow-y-auto py-1">
-                          {/* Consumidor Final - always first */}
-                          <button
-                            onClick={() => handleClienteChange("Consumidor Final")}
-                            className={`w-full text-left px-3 py-2 text-sm hover:bg-slate-50 transition-colors ${
-                              presupuesto.clienteNombre === "Consumidor Final" ? "bg-blue-50 text-blue-700 font-medium" : "text-slate-700"
-                            }`}
-                          >
-                            Consumidor Final
-                          </button>
-                          
-                          {/* Nuevo Cliente option */}
-                          <button
-                            onClick={() => {
-                              setShowClienteDropdown(false)
-                              setShowNuevoClienteModal(true)
-                            }}
-                            className="w-full text-left px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 transition-colors font-medium"
-                          >
-                            + Nuevo cliente
-                          </button>
-                          
-                          {/* Separator */}
-                          <div className="h-px bg-slate-200 my-1" />
-                          
-                          {/* Saved clients (alphabetically sorted, excluding "Consumidor Final") */}
-                          {filteredClientes
-                            .filter(c => c !== "Consumidor Final")
-                            .map((cliente) => (
-                              <button
-                                key={cliente}
-                                onClick={() => handleClienteChange(cliente)}
-                                className={`w-full text-left px-3 py-2 text-sm hover:bg-slate-50 transition-colors ${
-                                  presupuesto.clienteNombre === cliente ? "bg-blue-50 text-blue-700 font-medium" : "text-slate-700"
-                                }`}
-                              >
-                                {cliente}
-                              </button>
-                            ))}
-                        </div>
                       </div>
-                    )}
-                  </div>
-                  
-                  <div className="h-10 w-px bg-border/40" />
-                  
-                  {/* Estado */}
-                  <div className="relative flex flex-col" ref={estadoDropdownRef}>
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Estado</span>
-                    <button
-                      onClick={() => isEditable && setShowEstadoDropdown(!showEstadoDropdown)}
-                      className={`flex items-center gap-1.5 ${isEditable ? "cursor-pointer" : ""}`}
-                    >
-                      <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${estadoStyle.bg} ${estadoStyle.text}`}>
-                        {estadoLabels[presupuesto.estado]}
-                      </span>
-                      {isEditable && <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${showEstadoDropdown ? "rotate-180" : ""}`} />}
-                    </button>
-                    
-                    {showEstadoDropdown && (
-                      <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[140px]">
-                        <button
-                          onClick={() => { handleEstadoChange("borrador"); setShowEstadoDropdown(false) }}
-                          className={`w-full text-left px-3 py-2 text-sm hover:bg-slate-50 transition-colors ${presupuesto.estado === "borrador" ? "bg-slate-50 font-medium" : ""}`}
-                        >
-                          <span className="inline-flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-amber-400" />
-                            Borrador
-                          </span>
-                        </button>
-                        <button
-                          onClick={() => { handleEstadoChange("aceptado"); setShowEstadoDropdown(false) }}
-                          className={`w-full text-left px-3 py-2 text-sm hover:bg-slate-50 transition-colors ${presupuesto.estado === "aceptado" ? "bg-slate-50 font-medium" : ""}`}
-                        >
-                          <span className="inline-flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                            Aceptado
-                          </span>
-                        </button>
-                        <button
-                          onClick={() => { handleEstadoChange("rechazado"); setShowEstadoDropdown(false) }}
-                          className={`w-full text-left px-3 py-2 text-sm hover:bg-slate-50 transition-colors ${presupuesto.estado === "rechazado" ? "bg-slate-50 font-medium" : ""}`}
-                        >
-                          <span className="inline-flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-red-500" />
-                            Rechazado
-                          </span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="h-10 w-px bg-border/40" />
-                  
-                  {/* Fecha Creación */}
-                  <div className="flex flex-col">
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Fecha Creación</span>
-                    <span className="text-sm font-medium text-gray-700">
-                      {new Date(presupuesto.fechaCreacion).toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" })}
-                    </span>
-                  </div>
-                </div>
 
-                {/* Right: Action buttons */}
-                <div className="flex items-center gap-2">
-                  {/* Export dropdown */}
-                  <div className="relative">
+                      {/* Row 3: Estado widget (left) + action widget (right) — all estados */}
+                      {!isEditMode && (
+                        <div className="grid grid-cols-2 gap-3 mt-4">
+                          {/* Estado widget */}
+                          {estadoUI === "finalizada" && (
+                            <div className="bg-emerald-50 border border-emerald-200/60 rounded-lg shadow-sm px-5 py-4 flex items-center gap-3">
+                              <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                              <span className="text-lg font-bold text-emerald-700">Finalizada</span>
+                            </div>
+                          )}
+                          {estadoUI === "en_curso" && (
+                            <div className="bg-amber-50 border border-amber-200/60 rounded-lg shadow-sm px-5 py-4 flex items-center gap-3">
+                              <Clock className="w-5 h-5 text-amber-500 shrink-0" />
+                              <span className="text-lg font-bold text-amber-700">En Curso</span>
+                            </div>
+                          )}
+                          {estadoUI === "cancelada" && (
+                            <div className="bg-red-50 border border-red-200/60 rounded-lg shadow-sm px-5 py-4 flex items-center gap-3">
+                              <XCircle className="w-5 h-5 text-red-400 shrink-0" />
+                              <span className="text-lg font-bold text-red-600">Cancelada</span>
+                            </div>
+                          )}
+
+                          {/* Action widget */}
+                          <div className="bg-slate-50 border border-slate-200/60 rounded-lg shadow-sm px-4 py-4 flex items-center justify-center">
+                            {estadoUI === "finalizada" && (
+                              <button
+                                type="button"
+                                onClick={() => { setShowDevolucion(true); setDevolucionStep(1) }}
+                                className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-white transition-colors cursor-pointer group"
+                              >
+                                <RotateCcw className="w-4 h-4 text-slate-500 group-hover:text-slate-700 shrink-0" />
+                                <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-800">Gestionar devoluciones</span>
+                              </button>
+                            )}
+                            {estadoUI === "en_curso" && (
+                              <button
+                                type="button"
+                                onClick={() => setShowFinalizarVenta(true)}
+                                className="flex items-center gap-2.5 px-4 py-2 rounded-lg hover:bg-emerald-50 transition-colors cursor-pointer group"
+                              >
+                                <CheckCircle2 className="w-5 h-5 text-emerald-500 group-hover:text-emerald-600 shrink-0" />
+                                <span className="text-sm font-semibold text-emerald-600 group-hover:text-emerald-700">Marcar como finalizada</span>
+                              </button>
+                            )}
+                            {estadoUI === "cancelada" && (
+                              <span className="text-sm text-slate-400">Esta venta fue cancelada</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                    </div>
+                  )
+                })()}
+
+                {/* ── Entrega / Cobro — only shown when en_curso ── */}
+                {estadoUI === "en_curso" && <div className="grid grid-cols-2 gap-3">
+
+                  {/* Widget 1 — Entrega */}
+                  <div className={`bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-2 ${entregaPct === 100 && estadoUI !== "cancelada" ? "items-center justify-center" : ""}`}>
+                    {estadoUI === "cancelada" ? (
+                      <div className="flex items-center gap-2">
+                        <XCircle className="w-4 h-4 text-red-400" />
+                        <span className="text-base font-semibold text-red-600">No Concretada</span>
+                      </div>
+                    ) : (
+                      <>
+                        {entregaPct === 100 ? (
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-slate-800" />
+                            <span className="text-base font-semibold text-slate-900">Entregada</span>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex items-center gap-2">
+                              <Package className="w-4 h-4 text-slate-400" />
+                              <span className="text-base font-semibold text-slate-700">Entrega {entregaPct}%</span>
+                            </div>
+                            <span className="text-sm text-slate-400 tabular-nums">
+                              {totalUnidades - entregadasUnidades} {totalUnidades - entregadasUnidades === 1 ? "unidad pendiente" : "unidades pendientes"} de entrega
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setShowRegistrarEntrega(true)}
+                              className="flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                            >
+                              <Plus className="w-3 h-3" />
+                              Registrar entrega
+                            </button>
+                          </>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  {/* Widget 2 — Cobro */}
+                  <div className={`bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-2 ${pagoPct === 100 && estadoUI !== "cancelada" ? "items-center justify-center" : ""}`}>
+                    {estadoUI === "cancelada" ? (
+                      <div className="flex items-center gap-2">
+                        <XCircle className="w-4 h-4 text-red-400" />
+                        <span className="text-base font-semibold text-red-600">No Concretado</span>
+                      </div>
+                    ) : (
+                      <>
+                        {pagoPct === 100 ? (
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-slate-800" />
+                            <span className="text-base font-semibold text-slate-900">Cobrada</span>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex items-center gap-2">
+                              <Wallet className="w-4 h-4 text-slate-400" />
+                              <span className="text-base font-semibold text-slate-700">Cobro {pagoPct}%</span>
+                            </div>
+                        {pagoPct < 100 && (
+                          <>
+                            <span className="text-sm text-slate-400 tabular-nums">
+                              ${Math.round(montoRestante).toLocaleString("es-AR")} pendiente de cobro
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setShowRegistrarCobro(true)}
+                              className="flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                            >
+                              <Plus className="w-3 h-3" />
+                              Registrar cobro
+                            </button>
+                          </>
+                        )}
+                          </>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                </div>}
+
+                {/* Entrega + Items card */}
+              <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm overflow-hidden">
+
+                {/* ── Title strip — toggle buttons ── */}
+                <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("productos")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                      viewMode === "productos" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                    }`}
+                  >
+                    <Package className="w-3.5 h-3.5" />
+                    Productos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("entrega")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                      viewMode === "entrega" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                    }`}
+                  >
+                    <Truck className="w-3.5 h-3.5" />
+                    Entrega
+                  </button>
+                  {ventaDevolucionEntries.length > 0 && (
                     <button
-                      onClick={() => setShowExportDropdown(!showExportDropdown)}
-                      disabled={presupuesto.items.length === 0}
-                      className={`h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] gap-1.5 shrink-0 px-3 rounded-md flex items-center ${
-                        presupuesto.items.length === 0
-                          ? "opacity-50 cursor-not-allowed"
-                          : "hover:bg-gray-100 cursor-pointer"
+                      type="button"
+                      onClick={() => setViewMode("devolucion")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                        viewMode === "devolucion" ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
                       }`}
                     >
-                      <FileDown className="w-3.5 h-3.5 text-slate-500" />
-                      Exportar
-                    </button>
-                    {showExportDropdown && (
-                      <div
-                        className="absolute top-full right-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[140px]"
-                        onMouseLeave={() => setShowExportDropdown(false)}
-                      >
-                        <button
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
-                          onClick={handleExportPDF}
-                        >
-                          <FileDown className="w-4 h-4 text-slate-400" />
-                          Exportar PDF
-                        </button>
-                        <button
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
-                          onClick={handleExportText}
-                        >
-                          <FileText className="w-4 h-4 text-slate-400" />
-                          Exportar Texto
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Llevar a ventas / Ver en ventas */}
-                  {presupuesto.estado === "borrador" && (
-                    <button
-                      onClick={handleLlevarAVentas}
-                      disabled={presupuesto.items.length === 0}
-                      className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer gap-1.5 shrink-0 px-3 rounded-md flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <Receipt className="w-3.5 h-3.5 text-blue-600" />
-                      Llevar a ventas
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      Devolución
                     </button>
                   )}
-                  {presupuesto.estado === "aceptado" && (
-                    <button
-                      onClick={handleVerEnVentas}
-                      className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer gap-1.5 shrink-0 px-3 rounded-md flex items-center"
-                    >
-                      <Eye className="w-3.5 h-3.5 text-slate-500" />
-                      Ver en ventas
-                    </button>
-                  )}
-                  
-                  {/* More Options Menu */}
-                  <div className="relative">
-                    <button
-                      onClick={() => setShowMoreOptionsMenu(!showMoreOptionsMenu)}
-                      className="h-8 w-8 flex items-center justify-center text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer rounded-md"
-                    >
-                      <MoreVertical className="w-4 h-4 text-slate-500" />
-                    </button>
-                    {showMoreOptionsMenu && (
-                      <div
-                        className="absolute top-full right-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[200px]"
-                        onMouseLeave={() => setShowMoreOptionsMenu(false)}
-                      >
-                        <button
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors text-left"
-                          onClick={() => {
-                            setShowMoreOptionsMenu(false)
-                            setShowDeleteConfirmModal(true)
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          Eliminar Presupuesto
-                        </button>
-                      </div>
-                    )}
-                  </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Items Grid */}
-            <div className="flex-1 overflow-y-auto px-6 pb-6 mt-4">
-              {/* Action buttons above grid */}
-              {isEditable && (
-                <div className="flex items-center gap-2 mb-2">
-                  {/* Secciones button */}
-                  <div className="relative" data-section-menu>
-                    <button
-                      onClick={() => setShowSectionMenu(!showSectionMenu)}
-                      className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] gap-1.5 shrink-0 px-3 rounded-md flex items-center hover:bg-gray-100 cursor-pointer"
-                    >
-                      <Eye className="w-3.5 h-3.5 text-slate-500" />
-                      <span>Secciones</span>
-                      <ChevronDown className="w-3 h-3 text-slate-400" />
-                    </button>
-                    {showSectionMenu && (
-                      <div className="absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-50 min-w-[140px]">
-                        <label className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-xs text-slate-600">
-                          <input
-                            type="checkbox"
-                            checked={showIvaColumn}
-                            onChange={(e) => setShowIvaColumn(e.target.checked)}
-                            className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                          />
-                          IVA
-                        </label>
-                      </div>
+                {/* ── Grid title ── */}
+                <div className="px-4 pt-3 pb-1 flex items-center gap-2">
+                  {viewMode === "entrega" ? (
+                    <>
+                      <Truck className="w-4 h-4 text-slate-600" />
+                      <span className="text-base font-bold text-slate-900 tabular-nums">
+                        {entregadasUnidades}/{totalUnidades} {totalUnidades === 1 ? "unidad entregada" : "unidades entregadas"}
+                      </span>
+                    </>
+                  ) : viewMode === "devolucion" ? (
+                    <>
+                      <RotateCcw className="w-4 h-4 text-red-500" />
+                      <span className="text-base font-bold text-slate-900 tabular-nums">
+                        {totalDevueltas}/{totalUnidades} {totalUnidades === 1 ? "unidad devuelta" : "unidades devueltas"}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Package className="w-4 h-4 text-slate-600" />
+                      <span className="text-base font-bold text-slate-900 tabular-nums">
+                        {ventaItems.length} {ventaItems.length === 1 ? "producto" : "productos"} · {totalUnidades} {totalUnidades === 1 ? "unidad" : "unidades"}
+                      </span>
+                    </>
+                  )}
+                </div>
+
+                {/* ── Entrega activity log ── */}
+                {viewMode === "entrega" && (
+                  <div className="px-4 pb-2 flex flex-col">
+                    {ventaEntregaEntries.length === 0 ? (
+                      <p className="text-xs text-slate-400 py-1">Sin entregas registradas</p>
+                    ) : (
+                      [...ventaEntregaEntries].reverse().map((entry) => {
+                        const isAnulacion = !!entry.anulacion
+                        const totalEntryUnits = isAnulacion
+                          ? (entry.anulacionTotal ?? Math.abs(entry.items.reduce((s, i) => s + i.quantity, 0)))
+                          : entry.items.reduce((s, i) => s + i.quantity, 0)
+                        const dateLabel = new Date(entry.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })
+                        return (
+                          <div key={entry.id} className="flex items-center group border-b border-slate-100 last:border-0">
+                            <button
+                              type="button"
+                              onClick={() => !isAnulacion && setViewingEntregaEntry(entry)}
+                              className={`flex-1 flex items-center gap-2 py-1.5 -ml-4 pl-4 pr-2 transition-colors text-left ${!isAnulacion ? "hover:bg-slate-50/60" : "cursor-default"}`}
+                            >
+                              <span className="text-xs text-slate-400 tabular-nums">{dateLabel}</span>
+                              <span className="text-xs text-slate-300">·</span>
+                              {isAnulacion ? (
+                                <span className="text-xs text-red-400 tabular-nums">
+                                  {totalEntryUnits} {totalEntryUnits === 1 ? "unidad" : "unidades"} reingresadas
+                                </span>
+                              ) : (
+                                <span className="text-xs text-slate-400 tabular-nums">{totalEntryUnits} {totalEntryUnits === 1 ? "unidad" : "unidades"} entregadas</span>
+                              )}
+                            </button>
+                            {!isAnulacion && estadoUI === "en_curso" && (
+                              <button
+                                type="button"
+                                onClick={() => setUndoEntregaTarget(entry)}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 pr-0"
+                                title="Anular entrega"
+                              >
+                                <Undo2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        )
+                      })
                     )}
                   </div>
-                  {/* Bulk delete button when items selected */}
-                  {selectedItemIndices.size > 0 && (
-                    <button
-                      onClick={handleBulkDelete}
-                      className="h-8 text-xs transition-colors border shadow-sm border-red-200 bg-red-50 gap-1.5 shrink-0 px-3 rounded-md flex items-center hover:bg-red-100 cursor-pointer text-red-600"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>Eliminar {selectedItemIndices.size}</span>
-                    </button>
-                  )}
-                </div>
-              )}
-              <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm">
-                {/* Grid Header */}
-                <div className="bg-slate-100 border-b border-slate-200/80 rounded-t-lg">
-                  {isEditable ? (
-                    <div className={`grid ${showIvaColumn && showPromocionColumn ? "grid-cols-[2fr_0.8fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr_auto]" : showPromocionColumn ? "grid-cols-[2fr_0.8fr_1fr_auto_1.2fr_auto_1.2fr_auto]" : showIvaColumn ? "grid-cols-[2fr_0.8fr_1fr_auto_0.8fr_auto_1.2fr_auto]" : "grid-cols-[2fr_0.8fr_1fr_auto_1.2fr_auto]"} h-9 text-xs font-medium text-slate-500 uppercase tracking-wider`}>
-                      {/* Item */}
-                      <div className="flex items-center px-4">Item</div>
-                      
-                      {/* Cantidad with mass action */}
-                      <div className="flex items-center justify-center gap-1 relative" data-mass-menu>
-                        <span>Cantidad</span>
-                        <button
-                          onClick={() => { setShowCantidadMassMenu(!showCantidadMassMenu); setShowPrecioMassMenu(false) }}
-                          className="p-0.5 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
-                        >
-                          <MoreVertical className="w-3.5 h-3.5" />
-                        </button>
-                        {showCantidadMassMenu && (
-                          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg p-3 z-50 min-w-[180px]">
-                            <p className="text-[10px] text-slate-500 mb-2 normal-case tracking-normal font-normal">
-                              Modificar cantidad de {selectedItemIndices.size > 0 ? `${selectedItemIndices.size} item${selectedItemIndices.size > 1 ? "s" : ""}` : "todos"}
-                            </p>
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="number"
-                                placeholder="Cantidad"
-                                value={massCantidadValue}
-                                onChange={(e) => setMassCantidadValue(e.target.value)}
-                                className="flex-1 text-sm px-2 py-1.5 border border-slate-200 rounded focus:outline-none focus:border-blue-400"
-                                min={0}
-                              />
-                              <button
-                                onClick={handleApplyMassCantidad}
-                                disabled={!massCantidadValue}
-                                className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 disabled:opacity-50"
-                              >
-                                Aplicar
-                              </button>
+                )}
+
+                {/* ── Devolución activity log ── */}
+                {viewMode === "devolucion" && (
+                  <div className="px-4 pb-2 flex flex-col">
+                    {ventaDevolucionEntries.length === 0 ? (
+                      <p className="text-xs text-slate-400 py-1">Sin devoluciones registradas</p>
+                    ) : (
+                      [...ventaDevolucionEntries].filter(e => e.items.length > 0).reverse().map((entry) => {
+                        const totalEntryUnits = entry.items.reduce((s, i) => s + i.quantity, 0)
+                        const dateLabel = new Date(entry.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })
+                        return (
+                          <div key={entry.id} className="flex items-center border-b border-slate-100 last:border-0">
+                            <div className="flex-1 flex items-center gap-2 py-1.5">
+                              <span className="text-xs text-slate-400 tabular-nums">{dateLabel}</span>
+                              <span className="text-xs text-slate-300">·</span>
+                              <span className="text-xs text-red-400 tabular-nums">
+                                {totalEntryUnits} {totalEntryUnits === 1 ? "unidad" : "unidades"} devueltas
+                              </span>
                             </div>
                           </div>
-                        )}
-                      </div>
-                      
-                      {/* Precio with mass action */}
-                      <div className="flex items-center justify-center gap-1 relative" data-mass-menu>
-                        <span>Precio Unit.</span>
-                        <button
-                          onClick={() => { setShowPrecioMassMenu(!showPrecioMassMenu); setShowCantidadMassMenu(false) }}
-                          className="p-0.5 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
-                        >
-                          <MoreVertical className="w-3.5 h-3.5" />
-                        </button>
-                        {showPrecioMassMenu && (
-                          <div className="absolute top-full right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg p-3 z-50 min-w-[220px]">
-                            <p className="text-[10px] text-slate-500 mb-2 normal-case tracking-normal font-normal">
-                              Modificar precio de {selectedItemIndices.size > 0 ? `${selectedItemIndices.size} item${selectedItemIndices.size > 1 ? "s" : ""}` : "todos"}
-                            </p>
-                            <div className="flex flex-col gap-2">
-                              <select
-                                value={massPrecioType}
-                                onChange={(e) => setMassPrecioType(e.target.value as any)}
-                                className="text-sm px-2 py-1.5 border border-slate-200 rounded focus:outline-none focus:border-blue-400"
-                              >
-                                <option value="set">Reemplazar por $</option>
-                                <option value="add">Agregar $</option>
-                                <option value="subtract">Disminuir $</option>
-                                <option value="addPercent">Agregar %</option>
-                                <option value="subtractPercent">Disminuir %</option>
-                              </select>
-                              <div className="flex items-center gap-2">
-                                <input
-                                  type="number"
-                                  placeholder={massPrecioType.includes("Percent") ? "%" : "$"}
-                                  value={massPrecioValue}
-                                  onChange={(e) => setMassPrecioValue(e.target.value)}
-                                  className="flex-1 text-sm px-2 py-1.5 border border-slate-200 rounded focus:outline-none focus:border-blue-400"
-                                  min={0}
-                                />
-                                <button
-                                  onClick={handleApplyMassPrecio}
-                                  disabled={!massPrecioValue}
-                                  className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 disabled:opacity-50"
-                                >
-                                  Aplicar
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Arrow between Precio and Promoción/IVA/Subtotal */}
-                      <div className="flex items-center justify-center w-6 text-slate-300">→</div>
-                      
-                      {showPromocionColumn && (
-                        <>
-                          {/* Promoción with mass action */}
-                          <div className="flex items-center justify-center gap-1 relative" data-mass-menu>
-                            <span>Promoción</span>
-                            <button
-                              onClick={() => { 
-                                setShowPromocionMassMenu(!showPromocionMassMenu)
-                                setShowCantidadMassMenu(false)
-                                setShowPrecioMassMenu(false)
-                                setShowIvaMassMenu(false)
-                              }}
-                              className="p-0.5 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
-                            >
-                              <MoreVertical className="w-3.5 h-3.5" />
-                            </button>
-                            {showPromocionMassMenu && (
-                              <div className="absolute top-full right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg p-3 z-50 min-w-[200px]">
-                                <p className="text-[10px] text-slate-500 mb-2 normal-case tracking-normal font-normal">
-                                  Modificar promoción de {selectedItemIndices.size > 0 ? `${selectedItemIndices.size} item${selectedItemIndices.size > 1 ? "s" : ""}` : "todos"}
-                                </p>
-                                <div className="flex flex-col gap-2">
-                                  <div className="flex border border-slate-200 rounded overflow-hidden">
-                                    <button
-                                      onClick={() => setMassPromocionType("percent")}
-                                      className={`flex-1 px-2 py-1.5 text-xs cursor-pointer ${massPromocionType === "percent" ? "bg-blue-50 text-blue-600" : "text-slate-500 hover:bg-slate-50"}`}
-                                    >
-                                      %
-                                    </button>
-                                    <button
-                                      onClick={() => setMassPromocionType("cash")}
-                                      className={`flex-1 px-2 py-1.5 text-xs cursor-pointer ${massPromocionType === "cash" ? "bg-blue-50 text-blue-600" : "text-slate-500 hover:bg-slate-50"}`}
-                                    >
-                                      $
-                                    </button>
-                                    <button
-                                      onClick={() => setMassPromocionType("unit")}
-                                      className={`flex-1 px-2 py-1.5 text-xs cursor-pointer ${massPromocionType === "unit" ? "bg-blue-50 text-blue-600" : "text-slate-500 hover:bg-slate-50"}`}
-                                      title="Unidades"
-                                    >
-                                      U
-                                    </button>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <input
-                                      type="number"
-                                      placeholder={massPromocionType === "percent" ? "%" : massPromocionType === "cash" ? "$" : "Unidades"}
-                                      value={massPromocionValue}
-                                      onChange={(e) => setMassPromocionValue(e.target.value)}
-                                      className="flex-1 text-sm px-2 py-1.5 border border-slate-200 rounded focus:outline-none focus:border-blue-400"
-                                      min={0}
-                                    />
-                                    <button
-                                      onClick={handleApplyMassPromocion}
-                                      className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
-                                    >
-                                      Aplicar
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                          
-                          {showIvaColumn && (
-                            <div className="flex items-center justify-center w-6 text-slate-300">→</div>
-                          )}
-                        </>
-                      )}
-                      
-                      {showIvaColumn && (
-                        <>
-                          {/* IVA with mass action */}
-                          <div className="flex items-center justify-center gap-1 relative" data-mass-menu>
-                            <span>IVA Cont.</span>
-                            <button
-                              onClick={() => { 
-                                setShowIvaMassMenu(!showIvaMassMenu)
-                                setShowCantidadMassMenu(false)
-                                setShowPrecioMassMenu(false)
-                                setShowPromocionMassMenu(false)
-                              }}
-                              className="p-0.5 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
-                            >
-                              <MoreVertical className="w-3.5 h-3.5" />
-                            </button>
-                            {showIvaMassMenu && (
-                              <div className="absolute top-full right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg p-3 z-50 min-w-[180px]">
-                                <p className="text-[10px] text-slate-500 mb-2 normal-case tracking-normal font-normal">
-                                  Modificar IVA de {selectedItemIndices.size > 0 ? `${selectedItemIndices.size} item${selectedItemIndices.size > 1 ? "s" : ""}` : "todos"}
-                                </p>
-                                <div className="flex items-center gap-2">
-                                  <input
-                                    type="number"
-                                    placeholder="%"
-                                    value={massIvaValue}
-                                    onChange={(e) => setMassIvaValue(e.target.value)}
-                                    className="flex-1 text-sm px-2 py-1.5 border border-slate-200 rounded focus:outline-none focus:border-blue-400"
-                                    min={0}
-                                  />
-                                  <button
-                                    onClick={handleApplyMassIva}
-                                    className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
-                                  >
-                                    Aplicar
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </>
-                      )}
-                      
-                      {/* Arrow between Promoción/IVA and Subtotal */}
-                      <div className="flex items-center justify-center w-6 text-slate-300">→</div>
-                      
-                      <div className="flex items-center justify-end pr-2">Subtotal</div>
-                      
-                      {/* X delete button column */}
-                      <div className="w-10" />
-                    </div>
-                  ) : (
-                    <div className={`grid ${showIvaColumn ? "grid-cols-[2.5fr_0.8fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr]" : "grid-cols-[2.5fr_0.8fr_1fr_auto_1.2fr_auto_1.2fr]"} h-9 text-xs font-medium text-slate-500 uppercase tracking-wider`}>
-                      <div className="flex items-center px-4">Item</div>
-                      <div className="flex items-center justify-center">Cantidad</div>
-                      <div className="flex items-center justify-center">Precio Unit.</div>
-                      <div className="flex items-center justify-center w-6 text-slate-300">→</div>
-                      <div className="flex items-center justify-center">Promoción</div>
-                      {showIvaColumn && (
-                        <>
-                          <div className="flex items-center justify-center w-6 text-slate-300">→</div>
-                          <div className="flex items-center justify-center">IVA Cont.</div>
-                        </>
-                      )}
-                      <div className="flex items-center justify-center w-6 text-slate-300">→</div>
-                      <div className="flex items-center justify-end pr-4">Subtotal</div>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Items or Empty State */}
-                {presupuesto.items.length === 0 ? (
+                        )
+                      })
+                    )}
+                  </div>
+                )}
+
+                {/* ── Grid (padded inside card) ── */}
+                <div className="px-3 pb-3">
+                <div className="rounded-md border border-slate-200/80 overflow-hidden">
+
+
+
+                {/* ── Edit mode column headers ── */}
+                {isEditMode && viewMode === "productos" && (
+                  <div className="grid grid-cols-[2fr_0.8fr_1fr_1.2fr_1.2fr_auto] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider border-b border-slate-100 bg-slate-50/80">
+                    <div className="flex items-center px-4">Item</div>
+                    <div className="flex items-center justify-center">Cantidad</div>
+                    <div className="flex items-center justify-center">Precio Unit.</div>
+                    <div className="flex items-center justify-center">Promoción</div>
+                    <div className="w-10" />
+                  </div>
+                )}
+
+                {/* ── Items ── */}
+                {ventaItems.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16">
                     <Package className="w-12 h-12 text-slate-200 mb-3" />
                     <p className="text-slate-500 mb-1">Sin items</p>
-                    <p className="text-xs text-slate-400 mb-4">Agrega items al presupuesto</p>
-                    {isEditable && (
-                      <Button
-                        onClick={() => setShowAddItemModal(true)}
-                        className="bg-blue-500 hover:bg-blue-600 text-white gap-1.5"
-                      >
-                        <Plus className="w-4 h-4" />
-                        Agregar Item
-                      </Button>
-                    )}
+                    <p className="text-xs text-slate-400">Esta venta no tiene items asociados</p>
                   </div>
                 ) : (
-                  <>
-                  {presupuesto.items.map((item, idx) => {
-                    const displayMarca = item.marca || getMarcaBySku(item.sku)
-                    const ajuste = itemAjustes[idx] || { value: 0, type: "percent" }
-                    
-                    // Calculate values based on promoción type
-                    let adjustedUnitPrice = item.unitPrice
-                    let effectiveQuantity = item.quantity
-                    let finalItemTotal = 0
-                    
-                    if (ajuste.type === "unit") {
-                      // Unit discount: reduce quantity
-                      const discountUnits = Math.min(ajuste.value, item.quantity)
-                      effectiveQuantity = Math.max(0, item.quantity - discountUnits)
-                      finalItemTotal = effectiveQuantity * item.unitPrice
-                    } else {
-                      // Percent or cash discount on unit price
-                      const ajusteAmt = ajuste.type === "percent" 
-                        ? item.unitPrice * (ajuste.value / 100) 
-                        : ajuste.value
-                      adjustedUnitPrice = Math.max(0, item.unitPrice - ajusteAmt)
-                      finalItemTotal = item.quantity * adjustedUnitPrice
-                    }
-                    
-                    const stockDisponible = getStockBySku(item.sku)
-                    const exceedsStock = !item.isDescripcionLibre && item.quantity > stockDisponible
-                    
+                  ventaItems.map((item, idx) => {
+                    const display = getVentaItemDisplay(item)
+                    const baseGross = item.unitPrice * item.quantity
+                    const discountAmount =
+                      item.discountType === "percent"
+                        ? baseGross * (item.discount / 100)
+                        : item.discountType === "unit"
+                        ? Math.min(item.discount, item.quantity) * item.unitPrice
+                        : item.discount * item.quantity
+                    const adjustedUnitPrice = Math.max(0, item.unitPrice - (discountAmount / Math.max(item.quantity, 1)))
+                    const delivered = itemEntregaMap.get(item.sku) ?? 0
+                    const itemPct = item.quantity === 0 ? 0 : Math.round((delivered / item.quantity) * 100)
+
                     return (
-                      <div 
-                        key={idx} 
-                        className={`border-b border-slate-100 last:border-b-0 transition-colors ${isEditable ? "cursor-pointer" : ""} ${selectedItemIndices.has(idx) ? "bg-blue-50/50 border-l-2 border-l-blue-400" : isEditable ? "hover:bg-slate-50/50" : ""}`}
-                        onMouseDown={(e) => {
-                          mouseDownTargetRef.current = e.target
-                        }}
-                        onClick={(e) => {
-                          // Only allow selection in borrador
-                          if (!isEditable) return
-                          const target = e.target as HTMLElement
-                          // The click must end on a non-interactive element (not input/button/select)
-                          if (target.closest('input') || target.closest('button') || target.closest('select') || target.closest('textarea')) return
-                          // The click must have started on the same target (not a drag from an interactive element)
-                          if (mouseDownTargetRef.current !== e.target) return
-                          toggleItemSelection(idx)
-                        }}
+                      <div
+                        key={`${venta.id}-item-${idx}`}
+                        onClick={() => !isEditMode && viewMode === "productos" && setViewingItem(item)}
+                        className={`border-b border-slate-100 last:border-b-0 transition-colors ${!isEditMode && viewMode === "productos" ? "hover:bg-slate-50/50 cursor-pointer" : ""}`}
                       >
-                        {isEditable ? (
-                          <div className={`grid ${showIvaColumn && showPromocionColumn ? "grid-cols-[2fr_0.8fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr_auto]" : showPromocionColumn ? "grid-cols-[2fr_0.8fr_1fr_auto_1.2fr_auto_1.2fr_auto]" : showIvaColumn ? "grid-cols-[2fr_0.8fr_1fr_auto_0.8fr_auto_1.2fr_auto]" : "grid-cols-[2fr_0.8fr_1fr_auto_1.2fr_auto]"} min-h-[72px]`}>
+                        {viewMode === "entrega" ? (
+                          <div className="flex items-center h-[56px] gap-3 px-4">
                             {/* Item Info */}
-                            <div className="flex items-center gap-3 px-4 py-3">
-                              <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-                                <Image
-                                  src={getCategoryImage(item.categoria || "")}
-                                  alt={item.name}
-                                  width={40}
-                                  height={40}
-                                  className="object-cover"
-                                />
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                <Image src={getCategoryImage(display.categoria || "") || "/placeholder.svg"} alt={item.name} width={32} height={32} className="object-cover" />
                               </div>
                               <div className="min-w-0">
-                                <div className="flex items-center gap-2">
-                                  {item.isDescripcionLibre && isEditable ? (
-                                    editingLibreItem?.idx === idx && editingLibreItem?.field === "name" ? (
-                                      <input
-                                        type="text"
-                                        value={editingLibreItem.value}
-                                        onChange={(e) => setEditingLibreItem({ idx, field: "name", value: e.target.value })}
-                                        onBlur={() => handleUpdateLibreItem(idx, "name", editingLibreItem.value)}
-                                        onKeyDown={(e) => {
-                                          if (e.key === "Enter") handleUpdateLibreItem(idx, "name", editingLibreItem.value)
-                                          if (e.key === "Escape") setEditingLibreItem(null)
-                                        }}
-                                        autoFocus
-                                        className="text-sm font-medium text-gray-900 bg-blue-50 border border-blue-200 rounded px-1 py-0.5 focus:outline-none focus:border-blue-400 w-full"
-                                      />
-                                    ) : (
-                                      <button
-                                        onClick={() => setEditingLibreItem({ idx, field: "name", value: item.name })}
-                                        className="text-sm font-medium text-gray-900 truncate hover:text-blue-600 hover:underline cursor-pointer transition-colors text-left"
-                                      >
-                                        {item.name}
-                                      </button>
-                                    )
-                                  ) : (
-                                    <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
-                                  )}
-                                  {item.tags && item.tags.length > 0 && (
-                                    <div className="flex items-center gap-1">
-                                      {item.tags.map((tag, i) => (
-                                        <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-600">
-                                          {tag}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  )}
-                                  {item.isDescripcionLibre && (
-                                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-medium">Libre</span>
-                                  )}
-                                </div>
-                                <p className="text-xs text-slate-400 mt-0.5">sku: {item.sku || "Sin SKU"}</p>
-                                {(displayMarca || item.categoria) && (
+                                <p className="text-sm font-medium text-gray-900 truncate leading-tight">{display.name}</p>
+                                {(display.marca || display.categoria) && (
                                   <div className="flex items-center gap-1 mt-0.5">
-                                    {displayMarca && <span className="text-xs text-slate-400">{displayMarca}</span>}
-                                    {displayMarca && item.categoria && <span className="text-xs text-slate-300">·</span>}
-                                    {item.categoria && <span className="text-xs text-slate-400">{item.categoria}</span>}
+                                    {display.marca && <span className="text-xs text-slate-400 leading-tight">{display.marca}</span>}
+                                    {display.marca && display.categoria && <span className="text-xs text-slate-300">·</span>}
+                                    {display.categoria && <span className="text-xs text-slate-400 leading-tight">{display.categoria}</span>}
                                   </div>
                                 )}
                               </div>
                             </div>
-                            
-                            {/* Cantidad */}
-                            <div className="flex flex-col items-center justify-center">
-                              <div className="flex items-center border border-slate-200 rounded-full px-1 py-0.5 bg-white">
-                                <button
-                                  onClick={() => handleQuantityChange(idx, item.quantity - 1)}
-                                  className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors cursor-pointer"
-                                >
-                                  <Minus className="w-3 h-3" />
-                                </button>
-                                <input
-                                  type="number"
-                                  value={item.quantity || ""}
-                                  placeholder="0"
-                                  onChange={(e) => handleQuantityChange(idx, parseInt(e.target.value) || 0)}
-                                  onFocus={(e) => { if (item.quantity === 0) e.target.value = "" }}
-                                  className="w-10 text-center text-sm py-1 focus:outline-none placeholder:text-slate-300 bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                />
-                                <button
-                                  onClick={() => handleQuantityChange(idx, item.quantity + 1)}
-                                  className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-teal-300 hover:bg-teal-50 text-slate-400 hover:text-teal-500 transition-colors cursor-pointer"
-                                >
-                                  <Plus className="w-3 h-3" />
-                                </button>
-                              </div>
-                              {exceedsStock && (
-                                <span className="text-[10px] text-red-500 mt-0.5 text-center leading-tight">Supera stock disponible</span>
-                              )}
-                            </div>
-                            
-                            {/* Precio */}
-                            <div className="flex items-center justify-center gap-1">
-                              <div className="flex items-center gap-1">
-                                <span className="text-slate-400 text-sm">$</span>
-                                <input
-                                  type="number"
-                                  value={item.unitPrice || ""}
-                                  placeholder="0"
-                                  onChange={(e) => handlePriceChange(idx, parseFloat(e.target.value) || 0)}
-                                  onFocus={(e) => { if (item.unitPrice === 0) e.target.value = "" }}
-                                  className="w-20 text-center text-sm py-1.5 border border-slate-200 rounded focus:outline-none focus:border-blue-400 placeholder:text-slate-300"
-                                />
-                              </div>
-                              <button
-                                onClick={() => setShowIndividualPriceModal({ idx, value: "", type: "set" })}
-                                className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
-                                title="Ajustar precio"
-                              >
-                                <Pencil className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                            
-                            {/* Arrow */}
-                            <div className="flex items-center justify-center w-6 text-slate-300">→</div>
-                            
-                            {/* Promoción */}
-                            {showPromocionColumn && (
-                            <div className="flex items-center justify-center gap-1.5">
-                              <input
-                                type="number"
-                                placeholder="0"
-                                min="0"
-                                max={ajuste.type === "unit" ? item.quantity : undefined}
-                                value={ajuste.value || ""}
-                                onChange={(e) => {
-                                  let val = parseFloat(e.target.value) || 0
-                                  // Limit unit discount to quantity
-                                  if (ajuste.type === "unit" && val > item.quantity) {
-                                    val = item.quantity
-                                  }
-                                  setItemAjustes(prev => ({
-                                    ...prev,
-                                    [idx]: { ...ajuste, value: val }
-                                  }))
-                                }}
-                                className="w-12 text-center text-xs py-1 border border-slate-200 rounded focus:outline-none focus:border-blue-400 placeholder:text-slate-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                              />
-                              <div className="flex border border-slate-200 rounded overflow-hidden">
-                                <button
-                                  onClick={() => setItemAjustes(prev => ({
-                                    ...prev,
-                                    [idx]: { ...ajuste, type: "percent" }
-                                  }))}
-                                  className={`px-1.5 py-1 text-xs cursor-pointer ${ajuste.type === "percent" ? "bg-blue-50 text-blue-600" : "text-slate-400"}`}
-                                >
-                                  %
-                                </button>
-                                <button
-                                  onClick={() => setItemAjustes(prev => ({
-                                    ...prev,
-                                    [idx]: { ...ajuste, type: "cash" }
-                                  }))}
-                                  className={`px-1.5 py-1 text-xs cursor-pointer ${ajuste.type === "cash" ? "bg-blue-50 text-blue-600" : "text-slate-400"}`}
-                                >
-                                  $
-                                </button>
-                                <button
-                                  onClick={() => setItemAjustes(prev => ({
-                                    ...prev,
-                                    [idx]: { ...ajuste, type: "unit", value: Math.min(ajuste.value, item.quantity) }
-                                  }))}
-                                  className={`px-1.5 py-1 text-xs cursor-pointer ${ajuste.type === "unit" ? "bg-blue-50 text-blue-600" : "text-slate-400"}`}
-                                  title="Unidades"
-                                >
-                                  <Package className="w-3 h-3" />
-                                </button>
-                              </div>
-                            </div>
-                            )}
-                            
-                            {showIvaColumn && (
-                              <>
-                                {/* Arrow between Promocion and IVA */}
-                                {showPromocionColumn && (
-                                  <div className="flex items-center justify-center w-6 text-slate-300">→</div>
-                                )}
-                                
-                                {/* IVA Contenido */}
-                                <div className="flex items-center justify-center">
-                                  <select
-                                    value={itemIvas[idx] ?? getIvaBySku(item.sku)}
-                                    onChange={(e) => setItemIvas(prev => ({ ...prev, [idx]: parseInt(e.target.value) }))}
-                                    className="text-xs py-1 px-2 border border-slate-200 rounded focus:outline-none focus:border-blue-400 cursor-pointer bg-white"
-                                  >
-                                    <option value={0}>0%</option>
-                                    <option value={10}>10%</option>
-                                    <option value={21}>21%</option>
-                                  </select>
+                            {/* Entregadas col */}
+                            <div className="flex items-center gap-2 shrink-0 pr-2">
+                              {itemPct === 100 ? (
+                                <div className="flex items-center gap-1.5">
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                                  <span className="text-sm font-medium text-emerald-700 tabular-nums">{item.quantity}/{item.quantity}</span>
+                                  <span className="text-xs text-slate-400">entregadas</span>
                                 </div>
-                              </>
-                            )}
-                            
-                            {/* Arrow */}
-                            <div className="flex items-center justify-center w-6 text-slate-300">→</div>
-                            
-                            {/* Subtotal */}
-                            <div className="flex flex-col items-end justify-center">
-                              {ajuste.value > 0 ? (
-                                // With promoción applied
-                                ajuste.type === "unit" ? (
-                                  // Unit discount
-                                  <>
-                                    <span className="text-xs font-medium text-slate-700">
-                                      {item.quantity} × ${Math.round(item.unitPrice).toLocaleString("es-AR")}
-                                    </span>
-                                    <span className="text-[10px] text-orange-600 font-medium">
-                                      -{Math.min(ajuste.value, item.quantity)} unidad{Math.min(ajuste.value, item.quantity) > 1 ? "es" : ""} OFF
-                                    </span>
-                                    <span className="text-base font-bold text-slate-900">
-                                      ${Math.round(finalItemTotal).toLocaleString("es-AR")}
-                                    </span>
-                                  </>
-                                ) : ajuste.type === "percent" ? (
-                                  // Percent discount
-                                  <>
-                                    <span className="text-[10px] text-slate-400 line-through">
-                                      {item.quantity} × ${Math.round(item.unitPrice).toLocaleString("es-AR")}
-                                    </span>
-                                    <span className="text-[10px] text-red-500 font-medium">
-                                      {ajuste.value}% OFF
-                                    </span>
-                                    <span className="text-xs font-medium text-slate-700">
-                                      {item.quantity} × ${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}
-                                    </span>
-                                    <span className="text-base font-bold text-slate-900">
-                                      ${Math.round(finalItemTotal).toLocaleString("es-AR")}
-                                    </span>
-                                  </>
-                                ) : (
-                                  // Cash discount
-                                  <>
-                                    <span className="text-[10px] text-slate-400 line-through">
-                                      {item.quantity} × ${Math.round(item.unitPrice).toLocaleString("es-AR")}
-                                    </span>
-                                    <span className="text-[10px] text-red-500 font-medium">
-                                      -${ajuste.value.toLocaleString("es-AR")} OFF c/u
-                                    </span>
-                                    <span className="text-xs font-medium text-slate-700">
-                                      {item.quantity} × ${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}
-                                    </span>
-                                    <span className="text-base font-bold text-slate-900">
-                                      ${Math.round(finalItemTotal).toLocaleString("es-AR")}
-                                    </span>
-                                  </>
-                                )
                               ) : (
-                                // No promoción
-                                <>
-                                  <span className="text-xs font-medium text-slate-600">
-                                    {item.quantity} × ${Math.round(item.unitPrice).toLocaleString("es-AR")}
-                                  </span>
-                                  <span className="text-base font-bold text-slate-900">
-                                    ${Math.round(finalItemTotal).toLocaleString("es-AR")}
-                                  </span>
-                                </>
+                                <div className="flex items-center gap-1.5">
+                                  <span className={`text-sm font-semibold tabular-nums ${delivered > 0 ? "text-amber-600" : "text-slate-400"}`}>{delivered}/{item.quantity}</span>
+                                  <span className="text-xs text-slate-400">entregadas</span>
+                                </div>
                               )}
-                            </div>
-                            
-                            {/* Delete button */}
-                            <div className="flex items-center justify-center w-10">
-                              <button
-                                onClick={() => handleRemoveItem(idx)}
-                                className="p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors cursor-pointer"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
                             </div>
                           </div>
-                        ) : (
-                          <div className={`grid ${showIvaColumn ? "grid-cols-[2.5fr_0.8fr_1fr_auto_1.2fr_auto_0.8fr_auto_1.2fr]" : "grid-cols-[2.5fr_0.8fr_1fr_auto_1.2fr_auto_1.2fr]"} min-h-[56px]`}>
-                            <div className="flex items-center gap-3 px-4 py-3">
-                              <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center overflow-hidden">
-                                <Image
-                                  src={getCategoryImage(item.categoria || "")}
-                                  alt={item.name}
-                                  width={40}
-                                  height={40}
-                                  className="object-cover"
-                                />
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium text-gray-900">{item.name}</p>
-                                <p className="text-xs text-slate-400">sku: {item.sku || "Sin SKU"}</p>
-                              </div>
-                            </div>
-                            <div className="flex items-center justify-center">
-                              <span className="text-sm text-slate-700">{item.quantity}</span>
-                            </div>
-                            <div className="flex items-center justify-center">
-                              <span className="text-sm text-slate-700">${item.unitPrice.toLocaleString("es-AR")}</span>
-                            </div>
-                            <div className="flex items-center justify-center w-6 text-slate-300">→</div>
-                            <div className="flex items-center justify-center">
-                              {ajuste.value > 0 ? (
-                                <span className="text-sm text-red-500">
-                                  -{ajuste.value}{ajuste.type === "percent" ? "%" : ajuste.type === "unit" ? " u." : "$"}
-                                </span>
-                              ) : (
-                                <span className="text-sm text-slate-300">-</span>
-                              )}
-                            </div>
-                            {showIvaColumn && (
-                              <>
-                                <div className="flex items-center justify-center w-6 text-slate-300">→</div>
-                                <div className="flex items-center justify-center">
-                                  <span className="text-sm text-slate-700">{itemIvas[idx] ?? getIvaBySku(item.sku)}%</span>
+                        ) : viewMode === "devolucion" ? (
+                          (() => {
+                            const devuelta = itemDevolucionMap.get(item.sku) ?? 0
+                            return (
+                              <div className="flex items-center h-[56px] gap-3 px-4">
+                                {/* Item Info */}
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                  <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                    <Image src={getCategoryImage(display.categoria || "") || "/placeholder.svg"} alt={item.name} width={32} height={32} className="object-cover" />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-medium text-gray-900 truncate leading-tight">{display.name}</p>
+                                    {(display.marca || display.categoria) && (
+                                      <div className="flex items-center gap-1 mt-0.5">
+                                        {display.marca && <span className="text-xs text-slate-400 leading-tight">{display.marca}</span>}
+                                        {display.marca && display.categoria && <span className="text-xs text-slate-300">·</span>}
+                                        {display.categoria && <span className="text-xs text-slate-400 leading-tight">{display.categoria}</span>}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
-                              </>
-                            )}
-                            <div className="flex items-center justify-center w-6 text-slate-300">→</div>
-                            <div className="flex flex-col items-end justify-center pr-4">
-                              {ajuste.value > 0 ? (
-                                // With promoción applied
-                                ajuste.type === "unit" ? (
-                                  <>
-                                    <span className="text-xs font-medium text-slate-700">
-                                      {item.quantity} × ${Math.round(item.unitPrice).toLocaleString("es-AR")}
-                                    </span>
-                                    <span className="text-[10px] text-orange-600 font-medium">
-                                      -{Math.min(ajuste.value, item.quantity)} unidad{Math.min(ajuste.value, item.quantity) > 1 ? "es" : ""} OFF
-                                    </span>
-                                    <span className="text-base font-bold text-slate-900">
-                                      ${Math.round(finalItemTotal).toLocaleString("es-AR")}
-                                    </span>
-                                  </>
-                                ) : ajuste.type === "percent" ? (
-                                  <>
-                                    <span className="text-[10px] text-slate-400 line-through">
-                                      {item.quantity} × ${Math.round(item.unitPrice).toLocaleString("es-AR")}
-                                    </span>
-                                    <span className="text-[10px] text-red-500 font-medium">
-                                      {ajuste.value}% OFF
-                                    </span>
-                                    <span className="text-xs font-medium text-slate-700">
-                                      {item.quantity} × ${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}
-                                    </span>
-                                    <span className="text-base font-bold text-slate-900">
-                                      ${Math.round(finalItemTotal).toLocaleString("es-AR")}
-                                    </span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <span className="text-[10px] text-slate-400 line-through">
-                                      {item.quantity} × ${Math.round(item.unitPrice).toLocaleString("es-AR")}
-                                    </span>
-                                    <span className="text-[10px] text-red-500 font-medium">
-                                      -${ajuste.value.toLocaleString("es-AR")} OFF c/u
-                                    </span>
-                                    <span className="text-xs font-medium text-slate-700">
-                                      {item.quantity} × ${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}
-                                    </span>
-                                    <span className="text-base font-bold text-slate-900">
-                                      ${Math.round(finalItemTotal).toLocaleString("es-AR")}
-                                    </span>
-                                  </>
-                                )
-                              ) : (
+                                {/* Devueltas col */}
+                                <div className="flex items-center gap-2 shrink-0 pr-2">
+                                  {devuelta > 0 ? (
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-sm font-semibold text-red-500 tabular-nums">{devuelta}/{item.quantity}</span>
+                                      <span className="text-xs text-slate-400">devueltas</span>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-sm text-slate-300 tabular-nums">0/{item.quantity}</span>
+                                      <span className="text-xs text-slate-300">devueltas</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )
+                          })()
+                        ) : isEditMode ? (
+                          /* ── Edit mode row (presupuesto-style) ── */
+                          (() => {
+                            const editItem = editItems[idx] ?? item
+                            const aj = editAjustes[idx] ?? { value: 0, type: "percent" as const }
+                            let adjUnit = editItem.unitPrice
+                            let finalTotal = 0
+                            if (aj.value > 0) {
+                              if (aj.type === "unit") {
+                                finalTotal = Math.max(0, editItem.quantity - Math.min(aj.value, editItem.quantity)) * editItem.unitPrice
+                              } else {
+                                adjUnit = aj.type === "percent"
+                                  ? editItem.unitPrice * (1 - aj.value / 100)
+                                  : Math.max(0, editItem.unitPrice - aj.value)
+                                finalTotal = editItem.quantity * adjUnit
+                              }
+                            } else {
+                              finalTotal = editItem.quantity * editItem.unitPrice
+                            }
+                            return (
+                              <div className="grid grid-cols-[2fr_0.8fr_1fr_1.2fr_1.2fr_auto] min-h-[72px]">
+                                {/* Item Info */}
+                                <div className="flex items-center gap-3 px-4 py-3">
+                                  <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                    <Image src={getCategoryImage(display.categoria || "") || "/placeholder.svg"} alt={item.name} width={32} height={32} className="object-cover" />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <div className="flex flex-wrap items-center gap-1.5">
+                                      <p className="text-sm font-medium text-gray-900 break-words leading-tight">{display.name}</p>
+                                      {display.tags.length > 0 && display.tags.map((tag, i) => (
+                                        <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-600 whitespace-nowrap">{tag}</span>
+                                      ))}
+                                    </div>
+                                    {(display.marca || display.categoria) && (
+                                      <div className="flex items-center gap-1 mt-0.5">
+                                        {display.marca && <span className="text-xs text-slate-400">{display.marca}</span>}
+                                        {display.marca && display.categoria && <span className="text-xs text-slate-300">·</span>}
+                                        {display.categoria && <span className="text-xs text-slate-400">{display.categoria}</span>}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                {/* Cantidad */}
+                                <div className="flex items-center justify-center">
+                                  <div className="flex items-center border border-slate-200 rounded-full px-1 py-0.5 bg-white">
+                                    <button onClick={() => setEditItems(prev => prev.map((it, i) => i === idx ? { ...it, quantity: Math.max(1, it.quantity - 1) } : it))} className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-400 transition-colors">
+                                      <Minus className="w-3 h-3" />
+                                    </button>
+                                    <input
+                                      type="number"
+                                      value={editItem.quantity || ""}
+                                      onChange={(e) => setEditItems(prev => prev.map((it, i) => i === idx ? { ...it, quantity: parseInt(e.target.value) || 1 } : it))}
+                                      className="w-10 text-center text-sm py-1 focus:outline-none bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    />
+                                    <button onClick={() => setEditItems(prev => prev.map((it, i) => i === idx ? { ...it, quantity: it.quantity + 1 } : it))} className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-400 transition-colors">
+                                      <Plus className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                </div>
+                                {/* Precio Unit. */}
+                                <div className="flex items-center justify-center gap-1">
+                                  <span className="text-slate-400 text-sm">$</span>
+                                  <input
+                                    type="number"
+                                    value={editItem.unitPrice || ""}
+                                    onChange={(e) => setEditItems(prev => prev.map((it, i) => i === idx ? { ...it, unitPrice: parseFloat(e.target.value) || 0 } : it))}
+                                    className="w-20 text-center text-sm py-1.5 border border-slate-200 rounded focus:outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                  />
+                                </div>
+                                {/* Promocion */}
+                                <div className="flex items-center justify-center gap-1.5">
+                                  <input
+                                    type="number"
+                                    placeholder="0"
+                                    min="0"
+                                    value={aj.value || ""}
+                                    onChange={(e) => {
+                                      let val = parseFloat(e.target.value) || 0
+                                      if (aj.type === "unit") val = Math.min(val, editItem.quantity)
+                                      setEditAjustes(prev => ({ ...prev, [idx]: { ...aj, value: val } }))
+                                    }}
+                                    className="w-12 text-center text-xs py-1 border border-slate-200 rounded focus:outline-none focus:border-slate-400 placeholder:text-slate-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                  />
+                                  <div className="flex border border-slate-200 rounded overflow-hidden">
+                                    {(["percent", "cash", "unit"] as const).map((t) => (
+                                      <button key={t} onClick={() => setEditAjustes(prev => ({ ...prev, [idx]: { ...aj, type: t } }))} className={`px-1.5 py-1 text-xs cursor-pointer ${aj.type === t ? "bg-slate-900 text-white" : "text-slate-400 hover:bg-slate-50"}`}>
+                                        {t === "percent" ? "%" : t === "cash" ? "$" : <Package className="w-3 h-3" />}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                                {/* Subtotal */}
+                                <div className="flex flex-col items-end justify-center pr-4">
+                                  {aj.value > 0 ? (
+                                    <>
+                                      <span className="text-[10px] text-slate-400 line-through tabular-nums">{editItem.quantity} × ${Math.round(editItem.unitPrice).toLocaleString("es-AR")}</span>
+                                      <span className="text-sm font-bold text-slate-900 tabular-nums">${Math.round(finalTotal).toLocaleString("es-AR")}</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <span className="text-[10px] text-slate-500 tabular-nums">{editItem.quantity} × ${Math.round(editItem.unitPrice).toLocaleString("es-AR")}</span>
+                                      <span className="text-sm font-bold text-slate-900 tabular-nums">${Math.round(finalTotal).toLocaleString("es-AR")}</span>
+                                    </>
+                                  )}
+                                </div>
+                                {/* Delete */}
+                                <div className="flex items-center justify-center w-10">
+                                  <button onClick={() => { setEditItems(prev => prev.filter((_, i) => i !== idx)); setEditAjustes(prev => { const next = { ...prev }; delete next[idx]; return next }) }} className="p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors">
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </div>
+                            )
+                          })()
+                        ) : (
+                          <div className="grid grid-cols-[50%_25%_25%] min-h-[56px]">
+                            {/* Item Info */}
+                            <div className="flex items-center gap-3 px-4 py-2 overflow-hidden">
+                              <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                <Image src={getCategoryImage(display.categoria || "") || "/placeholder.svg"} alt={item.name} width={32} height={32} className="object-cover" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  <p className="text-sm font-medium text-gray-900 break-words leading-tight">{display.name}</p>
+                                  {display.tags.length > 0 && display.tags.map((tag, i) => (
+                                    <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-600 whitespace-nowrap">{tag}</span>
+                                  ))}
+                                </div>
+                                {(display.marca || display.categoria) && (
+                                  <div className="flex items-center gap-1 mt-0.5">
+                                    {display.marca && <span className="text-xs text-slate-400 leading-tight">{display.marca}</span>}
+                                    {display.marca && display.categoria && <span className="text-xs text-slate-300">·</span>}
+                                    {display.categoria && <span className="text-xs text-slate-400 leading-tight">{display.categoria}</span>}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Cantidad col */}
+                            <div className="flex items-center justify-center gap-1.5">
+                              <span className="text-sm text-slate-700 tabular-nums">{item.quantity}</span>
+                              <span className="text-xs text-slate-400">{item.quantity === 1 ? "unidad" : "unidades"}</span>
+                            </div>
+
+                            {/* Precio Unit. col — with promo logic for %, $, and unit bonificadas */}
+                            <div className="flex flex-col items-center justify-center gap-0.5 py-2">
+                              {item.discount > 0 && item.discountType === "unit" ? (
                                 <>
-                                  <span className="text-xs font-medium text-slate-600">
-                                    {item.quantity} × ${Math.round(item.unitPrice).toLocaleString("es-AR")}
-                                  </span>
-                                  <span className="text-base font-bold text-slate-900">
-                                    ${Math.round(finalItemTotal).toLocaleString("es-AR")}
+                                  <div className="flex items-baseline gap-1">
+                                    <span className="text-sm text-slate-700 tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
+                                    <span className="text-xs text-slate-400">c/u</span>
+                                  </div>
+                                  <span className="text-[10px] text-emerald-600 font-medium">
+                                    {Math.min(item.discount, item.quantity)} unidades bonificadas
                                   </span>
                                 </>
+                              ) : item.discount > 0 && (item.discountType === "percent" || item.discountType === "fixed") ? (
+                                <>
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-xs text-slate-400 line-through tabular-nums">
+                                      ${item.unitPrice.toLocaleString("es-AR")}
+                                    </span>
+                                    <span className="text-[10px] font-semibold text-red-500">
+                                      {item.discountType === "percent"
+                                        ? `-${item.discount}%`
+                                        : `-$${item.discount.toLocaleString("es-AR")}`}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-baseline gap-1">
+                                    <span className="text-sm font-medium text-slate-800 tabular-nums">
+                                      ${Math.round(adjustedUnitPrice).toLocaleString("es-AR")}
+                                    </span>
+                                    <span className="text-xs text-slate-400">c/u</span>
+                                  </div>
+                                </>
+                              ) : (
+                                <div className="flex items-baseline gap-1">
+                                  <span className="text-sm text-slate-700 tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
+                                  <span className="text-xs text-slate-400">c/u</span>
+                                </div>
                               )}
                             </div>
+
                           </div>
                         )}
                       </div>
                     )
-                  })}
-                  
-                  {/* Add item button */}
-                  {isEditable && presupuesto.items.length > 0 && (
-                    <button
-                      className="w-full py-4 text-sm text-slate-400 hover:text-blue-600 hover:bg-blue-50/30 transition-colors flex items-center justify-center gap-2 border-t border-dashed border-slate-200 cursor-pointer"
-                      onClick={() => setShowAddItemModal(true)}
-                    >
-                      <Plus className="w-4 h-4" />
-                      Agregar item
-                    </button>
-                  )}
-                  </>
+                  })
                 )}
-                
+              {isEditMode && viewMode === "productos" && (
+                <button
+                  type="button"
+                  onClick={() => setShowAgregarProductos(true)}
+                  className="w-full flex items-center gap-2 px-4 py-3 text-sm text-slate-500 hover:bg-slate-50 transition-colors border-t border-slate-100"
+                >
+                  <Plus className="w-4 h-4 text-slate-400" />
+                  Agregar productos
+                </button>
+              )}
+
+              </div>{/* end rounded inner grid */}
+              </div>{/* end p-3 padding wrapper */}
+              </div>{/* end entrega+items card */}
+
+              {/* ── Notas card ── */}
+              <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-2">
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider">Notas</span>
+                <textarea
+                  placeholder="Agregar una nota sobre esta venta..."
+                  defaultValue={venta.observaciones ?? ""}
+                  rows={3}
+                  className="w-full resize-none text-sm text-slate-700 placeholder:text-slate-300 bg-transparent border-none outline-none leading-relaxed"
+                />
               </div>
-              
-              {/* Totals Card - Separate from grid */}
-              {presupuesto.items.length > 0 && (
-                <div className="flex justify-end mt-3">
-                  <div className="w-1/2 bg-white border border-slate-200/60 rounded-lg shadow-sm p-4">
-                    <div className="space-y-2">
-                      {/* Subtotal */}
-                      <div className="flex justify-between text-sm">
-                        <span className="text-slate-500">Subtotal</span>
-                        <span className="text-slate-700">${Math.round(rawSubtotal).toLocaleString("es-AR")}</span>
-                      </div>
-                      
-                      {/* Promociones (item-level discount amount) */}
-                      {itemDiscountAmount > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-red-500">Promociones</span>
-                          <span className="text-red-500">-${Math.round(itemDiscountAmount).toLocaleString("es-AR")}</span>
-                        </div>
-                      )}
-                      
-                      {/* Additional items column (Descuento Global, Envío, Otro) */}
-                      {showGlobalDiscount && (
-                        <div className="flex justify-between items-center text-sm">
-                          <div className="flex items-center gap-1">
-                            {isEditable && (
-                              <button
-                                onClick={() => {
-                                  setShowGlobalDiscount(false)
-                                  setGlobalDiscount({ value: 0, type: "percent" })
-                                }}
-                                className="p-0.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-                            <span className="text-slate-500">Descuento global</span>
-                            {!isEditable && globalDiscountAmount > 0 && (
-                              <span className="text-xs text-slate-400">
-                                ({globalDiscount.type === "cash" ? `$${globalDiscount.value.toLocaleString("es-AR")}` : `${globalDiscount.value}%`})
-                              </span>
-                            )}
-                          </div>
-                          {isEditable ? (
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="number"
-                                value={globalDiscount.value || ""}
-                                onChange={(e) => setGlobalDiscount(prev => ({ ...prev, value: parseFloat(e.target.value) || 0 }))}
-                                className="w-16 text-right text-sm px-2 py-1 border border-slate-200 rounded focus:outline-none focus:border-blue-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                              />
-                              <div className="flex border border-slate-200 rounded overflow-hidden">
-                                <button
-                                  onClick={() => setGlobalDiscount(prev => ({ ...prev, type: "cash" }))}
-                                  className={`px-2 py-1 text-xs cursor-pointer ${globalDiscount.type === "cash" ? "bg-blue-50 text-blue-600" : "text-slate-400"}`}
-                                >
-                                  $
-                                </button>
-                                <button
-                                  onClick={() => setGlobalDiscount(prev => ({ ...prev, type: "percent" }))}
-                                  className={`px-2 py-1 text-xs cursor-pointer ${globalDiscount.type === "percent" ? "bg-blue-50 text-blue-600" : "text-slate-400"}`}
-                                >
-                                  %
-                                </button>
+
+              </div>{/* end col-span-2 flex column */}
+
+              {/* Right col-span-1: two stacked cards */}
+              {ventaItems.length > 0 && (
+                <div className="col-span-1 flex flex-col gap-4">
+                <div className="bg-white rounded-lg shadow-sm">
+                  <div className="px-5 py-5 flex flex-col gap-0">
+
+                    {/* ── Resumen section ── */}
+                    <div className="flex items-center gap-2 mb-4">
+                      <ShoppingCart className="w-4 h-4 text-slate-500" />
+                      <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">Resumen</h3>
+                    </div>
+
+                    {/* Productos — expandable */}
+                    <button
+                      type="button"
+                      onClick={() => setShowSubtotalBreakdown(!showSubtotalBreakdown)}
+                      className="flex items-center py-3 border-b border-slate-100 text-left hover:bg-slate-50/50 transition-colors -mx-5 px-5 w-[calc(100%+2.5rem)]"
+                    >
+                      <span className="text-sm text-slate-500 flex-1">Productos</span>
+                      <span className="text-sm text-slate-700 tabular-nums mr-1.5">${Math.round(venta.subtotal).toLocaleString("es-AR")}</span>
+                      <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${showSubtotalBreakdown ? "rotate-180" : ""}`} />
+                    </button>
+                    {showSubtotalBreakdown && (
+                      <div>
+                        {ventaItems.map((item, idx) => {
+                          const display = getVentaItemDisplay(item)
+                          const paidQty = item.discountType === "unit"
+                            ? Math.max(0, item.quantity - Math.min(item.discount, item.quantity))
+                            : item.quantity
+                          const adjustedUnit = item.discountType === "percent"
+                            ? item.unitPrice * (1 - item.discount / 100)
+                            : item.discountType === "unit"
+                            ? item.unitPrice
+                            : item.unitPrice - (item.discount / Math.max(item.quantity, 1))
+                          const lineTotal = item.discountType === "unit"
+                            ? Math.round(adjustedUnit * paidQty)
+                            : Math.round(adjustedUnit * item.quantity)
+                          return (
+                            <div key={idx} className="flex justify-between items-start gap-3 py-2.5 -mx-5 px-5">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <p className="text-xs text-slate-700 leading-tight">{display.name}</p>
+                                  {display.tags.map((tag, i) => (
+                                    <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 whitespace-nowrap">{tag}</span>
+                                  ))}
+                                </div>
+                              </div>
+                              <div className="text-right shrink-0">
+                                {item.discountType === "unit" && item.discount > 0 ? (
+                                  <>
+                                    <p className="text-[10px] text-emerald-600">{Math.min(item.discount, item.quantity)} bonificadas</p>
+                                    <p className="text-[11px] text-slate-400 tabular-nums">{paidQty} × ${Math.round(adjustedUnit).toLocaleString("es-AR")}</p>
+                                  </>
+                                ) : (
+                                  <p className="text-[11px] text-slate-400 tabular-nums">{item.quantity} × ${Math.round(adjustedUnit).toLocaleString("es-AR")}</p>
+                                )}
+                                <p className="text-xs font-medium text-slate-700 tabular-nums">${lineTotal.toLocaleString("es-AR")}</p>
                               </div>
                             </div>
-                          ) : (
-                            <span className="text-red-500">-${Math.round(globalDiscountAmount).toLocaleString("es-AR")}</span>
-                          )}
-                        </div>
-                      )}
-                      
-                      {showEnvio && (
-                        <div className="flex justify-between items-center text-sm">
-                          <div className="flex items-center gap-1">
-                            {isEditable && (
-                              <button
-                                onClick={() => {
-                                  setShowEnvio(false)
-                                  setEnvioAmount(0)
-                                }}
-                                className="p-0.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-                            <span className="text-slate-500">Envío</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <span className="text-slate-400 text-sm">$</span>
-                            {isEditable ? (
-                              <input
-                                type="number"
-                                value={envioAmount || ""}
-                                onChange={(e) => setEnvioAmount(parseFloat(e.target.value) || 0)}
-                                className="w-20 text-right text-sm px-2 py-1 border border-slate-200 rounded focus:outline-none focus:border-blue-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                              />
-                            ) : (
-                              <span className="text-slate-700">{envioAmount.toLocaleString("es-AR")}</span>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {customCharges.map((charge) => (
-                        <div key={charge.id} className="flex justify-between items-center text-sm">
-                          <div className="flex items-center gap-1">
-                            {isEditable && (
-                              <button
-                                onClick={() => setCustomCharges(prev => prev.filter(c => c.id !== charge.id))}
-                                className="p-0.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-                            {isEditable && editingCustomChargeId === charge.id ? (
-                              <input
-                                type="text"
-                                value={charge.label}
-                                onChange={(e) => setCustomCharges(prev => prev.map(c => c.id === charge.id ? { ...c, label: e.target.value } : c))}
-                                onBlur={() => setEditingCustomChargeId(null)}
-                                onKeyDown={(e) => e.key === "Enter" && setEditingCustomChargeId(null)}
-                                className="text-sm px-1 py-0.5 border border-slate-200 rounded focus:outline-none focus:border-blue-400 w-24"
-                                autoFocus
-                              />
-                            ) : (
-                              <span 
-                                className={`text-slate-500 ${isEditable ? "cursor-pointer hover:text-slate-700" : ""}`}
-                                onClick={() => isEditable && setEditingCustomChargeId(charge.id)}
-                              >
-                                {charge.label || "Otro"}
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <span className="text-slate-400 text-sm">$</span>
-                            {isEditable ? (
-                              <input
-                                type="number"
-                                value={charge.value || ""}
-                                onChange={(e) => setCustomCharges(prev => prev.map(c => c.id === charge.id ? { ...c, value: parseFloat(e.target.value) || 0 } : c))}
-                                className="w-20 text-right text-sm px-2 py-1 border border-slate-200 rounded focus:outline-none focus:border-blue-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                              />
-                            ) : (
-                              <span className="text-slate-700">{charge.value.toLocaleString("es-AR")}</span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                      
-                      {/* Agregar tags - only the ones not yet added */}
-                      {isEditable && (!showGlobalDiscount || !showEnvio || customCharges.length === 0) && (
-                        <div className="flex items-center gap-2 flex-wrap pt-1">
-                          <span className="text-xs text-slate-400">Agregar:</span>
-                          {!showGlobalDiscount && (
-                            <button
-                              onClick={() => setShowGlobalDiscount(true)}
-                              className="text-xs px-2 py-0.5 rounded-full border border-slate-200 text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 transition-colors cursor-pointer"
-                            >
-                              Descuento Global
-                            </button>
-                          )}
-                          {!showEnvio && (
-                            <button
-                              onClick={() => setShowEnvio(true)}
-                              className="text-xs px-2 py-0.5 rounded-full border border-slate-200 text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 transition-colors cursor-pointer"
-                            >
-                              Envío
-                            </button>
-                          )}
-                          {customCharges.length === 0 && (
-                            <button
-                              onClick={() => setCustomCharges([{ id: Date.now(), label: "Otro", value: 0 }])}
-                              className="text-xs px-2 py-0.5 rounded-full border border-slate-200 text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 transition-colors cursor-pointer"
-                            >
-                              Otro
-                            </button>
-                          )}
-                        </div>
-                      )}
-                      
-                      {/* Total */}
-                      <div className="flex justify-between text-base font-semibold pt-2 border-t border-slate-200">
-                        <span className="text-slate-700">Total</span>
-                        <span className="text-slate-900">${Math.round(finalTotal).toLocaleString("es-AR")}</span>
+                          )
+                        })}
+                        <div className="-mx-5 w-[calc(100%+2.5rem)] border-b border-slate-100" />
                       </div>
+                    )}
+
+                    {/* ── Edit mode ajuste inputs ── */}
+                    {isEditMode && showGlobalDiscount && (
+                      <div className="flex justify-between items-center py-2">
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => { setShowGlobalDiscount(false); setGlobalDiscount({ value: 0, type: "percent" }) }} className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors">
+                            <X className="w-3 h-3" />
+                          </button>
+                          <span className="text-sm text-slate-500">Descuento global</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            value={globalDiscount.value || ""}
+                            onChange={(e) => setGlobalDiscount(prev => ({ ...prev, value: parseFloat(e.target.value) || 0 }))}
+                            className="w-16 text-right text-sm px-2 py-1 border border-slate-200 rounded focus:outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          />
+                          <div className="flex border border-slate-200 rounded overflow-hidden">
+                            <button onClick={() => setGlobalDiscount(prev => ({ ...prev, type: "cash" }))} className={`px-2 py-1 text-xs cursor-pointer ${globalDiscount.type === "cash" ? "bg-slate-900 text-white" : "text-slate-400 hover:bg-slate-50"}`}>$</button>
+                            <button onClick={() => setGlobalDiscount(prev => ({ ...prev, type: "percent" }))} className={`px-2 py-1 text-xs cursor-pointer ${globalDiscount.type === "percent" ? "bg-slate-900 text-white" : "text-slate-400 hover:bg-slate-50"}`}>%</button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {isEditMode && showEnvio && (
+                      <div className="flex justify-between items-center py-2">
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => { setShowEnvio(false); setEnvioAmount(0) }} className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors">
+                            <X className="w-3 h-3" />
+                          </button>
+                          <span className="text-sm text-slate-500">Envío</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm text-slate-400">$</span>
+                          <input
+                            type="number"
+                            value={envioAmount || ""}
+                            onChange={(e) => setEnvioAmount(parseFloat(e.target.value) || 0)}
+                            className="w-20 text-right text-sm px-2 py-1 border border-slate-200 rounded focus:outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          />
+                        </div>
+                      </div>
+                    )}
+                    {isEditMode && customCharges.map((charge, idx) => (
+                      <div key={charge.id} className="flex justify-between items-center py-2">
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => setCustomCharges(prev => prev.filter((_, i) => i !== idx))} className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors">
+                            <X className="w-3 h-3" />
+                          </button>
+                          <input
+                            type="text"
+                            value={charge.label}
+                            onChange={(e) => setCustomCharges(prev => prev.map((c, i) => i === idx ? { ...c, label: e.target.value } : c))}
+                            className="text-sm text-slate-500 bg-transparent border-none outline-none w-24"
+                          />
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm text-slate-400">$</span>
+                          <input
+                            type="number"
+                            value={charge.value || ""}
+                            onChange={(e) => setCustomCharges(prev => prev.map((c, i) => i === idx ? { ...c, value: parseFloat(e.target.value) || 0 } : c))}
+                            className="w-20 text-right text-sm px-2 py-1 border border-slate-200 rounded focus:outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          />
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Agregar tags — only shown in edit mode */}
+                    {isEditMode && estadoUI === "en_curso" && (!showGlobalDiscount || !showEnvio || customCharges.length === 0) && (
+                      <div className="flex items-center gap-2 flex-wrap py-2">
+                        <span className="text-xs text-slate-400">Agregar:</span>
+                        {!showGlobalDiscount && (
+                          <button onClick={() => setShowGlobalDiscount(true)} className="text-xs px-2 py-0.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors">
+                            Descuento Global
+                          </button>
+                        )}
+                        {!showEnvio && (
+                          <button onClick={() => setShowEnvio(true)} className="text-xs px-2 py-0.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors">
+                            Envío
+                          </button>
+                        )}
+                        {customCharges.length === 0 && (
+                          <button onClick={() => setCustomCharges([{ id: Date.now(), label: "Otro", value: 0 }])} className="text-xs px-2 py-0.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors">
+                            Otro
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* ── View mode: saved adjustments ── */}
+                    {!isEditMode && savedGlobalDiscount && savedGlobalDiscount.value > 0 && (
+                      <div className="flex justify-between items-center py-2.5">
+                        <span className="text-sm text-slate-500">
+                          Descuento Global{" "}
+                          <span className="text-xs text-slate-400">
+                            ({savedGlobalDiscount.type === "percent" ? `${savedGlobalDiscount.value}%` : `$${savedGlobalDiscount.value.toLocaleString("es-AR")}`})
+                          </span>
+                        </span>
+                        <span className="text-sm text-red-500 tabular-nums">
+                          −${Math.round(savedGlobalDiscountAmount).toLocaleString("es-AR")}
+                        </span>
+                      </div>
+                    )}
+                    {!isEditMode && savedEnvio != null && savedEnvio > 0 && (
+                      <div className="flex justify-between items-center py-2.5">
+                        <span className="text-sm text-slate-500">Envío</span>
+                        <span className="text-sm text-slate-700 tabular-nums">+${savedEnvio.toLocaleString("es-AR")}</span>
+                      </div>
+                    )}
+                    {!isEditMode && savedCustomCharges.map((c) => (
+                      <div key={c.id} className="flex justify-between items-center py-2.5">
+                        <span className="text-sm text-slate-500">{c.label}</span>
+                        <span className="text-sm text-slate-700 tabular-nums">+${c.value.toLocaleString("es-AR")}</span>
+                      </div>
+                    ))}
+                    {/* Border below adjustments only if any exist */}
+                    {!isEditMode && (savedGlobalDiscount?.value > 0 || (savedEnvio != null && savedEnvio > 0) || savedCustomCharges.length > 0) && (
+                      <div className="-mx-5 w-[calc(100%+2.5rem)] border-b border-slate-100" />
+                    )}
+
+                    {/* Total */}
+                    <div className="flex justify-between items-center py-3 mt-1">
+                      <span className="text-base font-bold text-slate-900">Total</span>
+                      <span className="text-base font-bold text-slate-900 tabular-nums">
+                        ${Math.round(
+                          isEditMode
+                            ? venta.subtotal - globalDiscountAmount + envioAmount + customCharges.reduce((s, c) => s + c.value, 0)
+                            : venta.total
+                        ).toLocaleString("es-AR")}
+                      </span>
                     </div>
                   </div>
+                </div>{/* end resumen card */}
+
+                {/* ── Detalle del Cobro card ── */}
+                <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                  <div className="px-5 py-5 flex flex-col gap-0">
+                    <p className="text-sm font-semibold text-slate-800 mb-3">Detalle del Cobro</p>
+
+                    {ventaCobros.length > 0 ? (
+                      ventaCobros.map((cobro) => {
+                        const isAnulacion = cobro.medioPago === "anulacion"
+                        const isNegative = cobro.monto < 0
+                        const isEditable = !isAnulacion && !isNegative
+                        return (
+                          <div key={cobro.id} className="flex items-center py-2.5 border-b border-slate-100 gap-2 group">
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <span className="text-xs tabular-nums text-slate-400">
+                                {new Date(cobro.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}
+                              </span>
+                              <span className="text-xs text-slate-300">·</span>
+                              {isAnulacion ? (
+                                <span className="text-xs text-red-400">Anulación de cobro</span>
+                              ) : isNegative ? (
+                                <span className="text-xs text-red-400">Devolución</span>
+                              ) : (
+                                <span className="flex items-center gap-1 group/mp cursor-default">
+                                  <span className="text-xs text-slate-500">{metodoPagoLabels[cobro.medioPago as PaymentMethod] ?? cobro.medioPago}</span>
+                                  {isEditable && (
+                                    <button
+                                      type="button"
+                                      onClick={() => { setEditarMedioPagoTarget({ id: cobro.id, current: cobro.medioPago }); setEditarMedioPagoValue(cobro.medioPago) }}
+                                      className="opacity-0 group-hover/mp:opacity-100 transition-opacity p-0.5 rounded hover:bg-slate-100 text-slate-300 hover:text-slate-500"
+                                      title="Editar medio de pago"
+                                    >
+                                      <Pencil className="w-3 h-3" />
+                                    </button>
+                                  )}
+                                </span>
+                              )}
+                            </div>
+                            <span className={`text-sm font-semibold tabular-nums ${isAnulacion || isNegative ? "text-red-500" : "text-slate-900"}`}>
+                              {isNegative || isAnulacion ? `−$${Math.abs(cobro.monto).toLocaleString("es-AR")}` : `$${cobro.monto.toLocaleString("es-AR")}`}
+                            </span>
+                            {!isAnulacion && !isNegative && estadoUI === "en_curso" && (
+                              <button
+                                type="button"
+                                onClick={() => setUndoCobroTarget({ id: cobro.id, monto: cobro.monto })}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-400"
+                                title="Anular cobro"
+                              >
+                                <Undo2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        )
+                      })
+                    ) : (
+                      <div className="flex items-center justify-center py-4">
+                        <span className="text-xs text-slate-400">Sin cobros registrados</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
                 </div>
               )}
+
+              </div>{/* end grid grid-cols-3 */}
+              </div>{/* end max-w-[1240px] */}
             </div>
           </main>
         </div>
       </div>
-      
-      {/* Add Item Modal */}
-      {showAddItemModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100010]">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl mx-4 max-h-[85vh] flex flex-col">
-            {/* Header */}
-            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-semibold text-slate-900">Agregar Items</h2>
-                <p className="text-sm text-slate-500 mt-0.5">Selecciona items del catálogo</p>
+
+      {viewingItem && (
+        <VentaItemDetailModal ventaItem={viewingItem} onClose={() => setViewingItem(null)} />
+      )}
+
+      {/* ── Cliente Info Modal (view mode) ── */}
+      {showClienteInfoModal && clienteId && (
+        <ClienteModal clienteId={clienteId} onClose={() => setShowClienteInfoModal(false)} />
+      )}
+
+      {/* ── Cliente Selector Modal (edit mode) ── */}
+      {showClienteSelectorModal && (() => {
+        return (
+          <ClienteSelectorInlineModal
+            currentClienteId={clienteId}
+            onSelect={(id, nombre) => {
+              updateVenta(venta.id, { cliente: { tipo: "cuenta", id, nombre } })
+              setShowClienteSelectorModal(false)
+            }}
+            onClose={() => setShowClienteSelectorModal(false)}
+          />
+        )
+      })()}
+
+      {/* ── Ticket Modal ── */}
+      {showTicketModal && (
+        <TicketModal venta={venta} onClose={() => setShowTicketModal(false)} />
+      )}
+
+      {/* ── Cancelar Venta Modal ── */}
+      {showCancelarVentaModal && (() => {
+        const totalEntregadas = venta.entregaItems.reduce((s, ei) => s + ei.quantityEntregada, 0)
+        const totalCobrado = venta.cobros.reduce((s, c) => s + Math.max(0, c.monto), 0)
+        const hasEntregas = totalEntregadas > 0
+        const hasCobros = totalCobrado > 0
+        return (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowCancelarVentaModal(false)} />
+            <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+              {/* Header */}
+              <div className="px-5 py-5 border-b border-slate-100">
+                <div className="flex items-center gap-3 mb-1">
+                  <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center shrink-0">
+                    <XCircle className="w-4 h-4 text-red-500" />
+                  </div>
+                  <h3 className="text-base font-semibold text-slate-900">Cancelar venta</h3>
+                </div>
+                <p className="text-sm text-slate-500 mt-2 ml-12">
+                  Vas a cancelar la venta <span className="font-semibold text-slate-800">{venta.id}</span>. Esta acción es irreversible.
+                </p>
               </div>
-              <button
-                onClick={() => {
-                  setShowAddItemModal(false)
-                  setSelectedModalSkus(new Set())
-                  setModalSearch("")
-                }}
-                className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
-              >
-                <X className="w-5 h-5 text-slate-500" />
-              </button>
-            </div>
-            
-            {/* Search & Filters */}
-            <div className="px-6 py-3 border-b border-slate-100 flex items-center gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Buscar items..."
-                  value={modalSearch}
-                  onChange={(e) => setModalSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-blue-400"
-                />
-              </div>
-              <button
-                onClick={() => setShowModalFilters(!showModalFilters)}
-                className={`p-2 rounded-lg border transition-colors ${showModalFilters ? "border-blue-400 bg-blue-50" : "border-slate-200 hover:bg-slate-50"}`}
-              >
-                <Filter className={`w-4 h-4 ${showModalFilters ? "text-blue-600" : "text-slate-500"}`} />
-              </button>
-            </div>
-            
-            {/* Items List */}
-            <div className="flex-1 overflow-y-auto px-6 py-3">
-              {filteredModalItems.length === 0 ? (
-                <div className="text-center py-8">
-                  <Package className="w-10 h-10 text-slate-200 mx-auto mb-2" />
-                  <p className="text-sm text-slate-500">No se encontraron items</p>
-                  {modalSearch && (
-                    <button
-                      onClick={handleAddFreeItem}
-                      className="mt-3 text-sm text-blue-600 hover:underline"
-                    >
-                      Agregar &quot;{modalSearch}&quot; como item
-                    </button>
+
+              {/* Body */}
+              {(hasEntregas || hasCobros) && (
+                <div className="px-5 py-4 flex flex-col gap-3 border-b border-slate-100">
+                  <p className="text-xs text-slate-400 uppercase tracking-wider font-medium">¿Qué hacer con los registros existentes?</p>
+
+                  {hasEntregas && (
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-slate-800">{totalEntregadas} {totalEntregadas === 1 ? "unidad entregada" : "unidades entregadas"}</p>
+                        <p className="text-xs text-slate-400">Unidades ya despachadas</p>
+                      </div>
+                      <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
+                        <button
+                          onClick={() => setCancelarDevolverUnidades(true)}
+                          className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${cancelarDevolverUnidades ? "bg-white shadow-sm text-slate-900" : "text-slate-500 hover:text-slate-700"}`}
+                        >
+                          Devolver
+                        </button>
+                        <button
+                          onClick={() => setCancelarDevolverUnidades(false)}
+                          className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${!cancelarDevolverUnidades ? "bg-white shadow-sm text-slate-900" : "text-slate-500 hover:text-slate-700"}`}
+                        >
+                          No hacer nada
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {hasCobros && (
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-slate-800">${totalCobrado.toLocaleString("es-AR")} cobrados</p>
+                        <p className="text-xs text-slate-400">Pagos ya registrados</p>
+                      </div>
+                      <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
+                        <button
+                          onClick={() => setCancelarDevolverCobros(true)}
+                          className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${cancelarDevolverCobros ? "bg-white shadow-sm text-slate-900" : "text-slate-500 hover:text-slate-700"}`}
+                        >
+                          Devolver
+                        </button>
+                        <button
+                          onClick={() => setCancelarDevolverCobros(false)}
+                          className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${!cancelarDevolverCobros ? "bg-white shadow-sm text-slate-900" : "text-slate-500 hover:text-slate-700"}`}
+                        >
+                          No hacer nada
+                        </button>
+                      </div>
+                    </div>
                   )}
                 </div>
-              ) : (
-                <div className="space-y-1">
-                  {filteredModalItems.map((item) => {
-                    const hasVariants = item.hasVariants && item.variants && item.variants.length > 0
-                    const itemId = getItemId(item)
-                    
-                    if (hasVariants) {
-                      const allSelected = areAllVariantsSelected(item)
-                      const someSelected = areSomeVariantsSelected(item)
-                      
-                      return (
-                        <div key={itemId} className="border border-slate-100 rounded-lg">
-                          <div 
-                            className={`px-4 py-3 flex items-center gap-3 rounded-t-lg cursor-pointer transition-colors ${
-                              allSelected ? "bg-blue-50/50" : someSelected ? "bg-blue-50/30" : "bg-slate-50/50 hover:bg-slate-100/50"
-                            }`}
-                            onClick={() => toggleParentSelection(item)}
-                          >
-                            <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-                              <Image
-                                src={getCategoryImage(item.categoria || "")}
-                                alt={item.name}
-                                width={40}
-                                height={40}
-                                className="object-cover"
-                              />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <p className="text-sm font-medium text-slate-900 truncate">{item.name}</p>
-                                <span className="text-xs text-slate-400">{item.variants?.length} variantes</span>
-                              </div>
-                              <p className="text-xs text-slate-400 mt-0.5">
-                                {item.marca}{item.marca && item.categoria && " · "}{item.categoria}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="divide-y divide-slate-100">
-                            {item.variants?.map((variant: any, variantIdx: number) => {
-                              const variantSku = `${item.skuPrefix}-${variant.skuSuffix}`
-                              const stock = parseInt(variant.stock?.disponible || "0")
-                              const isSelected = selectedModalSkus.has(variantSku)
-                              const isLastChild = variantIdx === (item.variants?.length || 0) - 1
-                              
-                              return (
-                                <div
-                                  key={variantSku}
-                                  onClick={() => toggleModalSku(variantSku)}
-                                  className={`flex items-center gap-3 pl-10 pr-4 py-2.5 cursor-pointer transition-colors ${isLastChild ? "rounded-b-lg" : ""} ${isSelected ? "bg-blue-50/50 border-l-2 border-l-blue-400" : "hover:bg-slate-50"}`}
-                                >
-                                  <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-                                    <Image
-                                      src={getCategoryImage(item.categoria || "")}
-                                      alt={variant.name || item.name}
-                                      width={32}
-                                      height={32}
-                                      className="object-cover"
-                                    />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2">
-                                      <p className="text-sm text-slate-700 truncate">{variant.name || item.name}</p>
-                                      {variant.atributosPrincipales?.map((attr: any, i: number) => (
-                                        <span key={i} className="text-[10px] px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded whitespace-nowrap">
-                                          {attr.value}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  </div>
-                                  
-                                  <span className="text-sm font-medium text-slate-900 whitespace-nowrap">
-                                    ${(variant.precio?.precioFinal || 0).toLocaleString("es-AR")}
-                                  </span>
-                                  
-                                  <span className="text-sm font-medium text-slate-500 whitespace-nowrap">
-                                    {stock} {stock === 1 ? "disponible" : "disponibles"}
-                                  </span>
-                                </div>
-                              )
-                            })}
-                          </div>
-                        </div>
-                      )
-                    }
-                    
-                    const sku = item.sku || ""
-                    const stock = parseInt(item.stock?.disponible || "0")
-                    const isSelected = selectedModalSkus.has(sku)
-                    
-                    return (
-                      <div
-                        key={itemId}
-                        onClick={() => toggleModalSku(sku)}
-                        className={`flex items-center gap-4 px-4 py-3 rounded-lg border cursor-pointer transition-colors ${
-                          isSelected ? "border-blue-200 bg-blue-50/50 border-l-2 border-l-blue-400" : "border-slate-100 hover:bg-slate-50"
-                        }`}
-                      >
-                        <div className="w-10 h-10 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-                          <Image
-                            src={getCategoryImage(item.categoria || "")}
-                            alt={item.name}
-                            width={40}
-                            height={40}
-                            className="object-cover"
-                          />
-                        </div>
-                        
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-900 truncate">{item.name}</p>
-                          <p className="text-xs text-slate-400">
-                            {item.marca}{item.marca && item.categoria && " · "}{item.categoria}
-                          </p>
-                        </div>
-                        
-                        <span className="text-sm font-medium text-slate-900 whitespace-nowrap">
-                          ${(item.precio?.precioFinal || 0).toLocaleString("es-AR")}
-                        </span>
-                        
-                        <span className="text-sm font-medium text-slate-500 whitespace-nowrap">
-                          {stock} {stock === 1 ? "disponible" : "disponibles"}
-                        </span>
-                      </div>
-                    )
-                  })}
-                </div>
               )}
-            </div>
-            
-            {/* Footer */}
-            <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between bg-slate-50 rounded-b-xl">
-              <span className="text-sm text-slate-500">
-                {selectedModalSkus.size > 0 ? `${selectedModalSkus.size} item${selectedModalSkus.size > 1 ? "s" : ""} seleccionado${selectedModalSkus.size > 1 ? "s" : ""}` : "Ningún item seleccionado"}
-              </span>
-              <div className="flex items-center gap-3">
+
+              {/* Footer */}
+              <div className="px-5 py-4 flex items-center justify-end gap-2">
+                <button
+                  onClick={() => setShowCancelarVentaModal(false)}
+                  className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  Salir
+                </button>
                 <button
                   onClick={() => {
-                    setShowAddItemModal(false)
-                    setSelectedModalSkus(new Set())
-                    setModalSearch("")
+                    cancelarVenta(venta.id, {
+                      devolverUnidades: hasEntregas ? cancelarDevolverUnidades : false,
+                      devolverCobros: hasCobros ? cancelarDevolverCobros : false,
+                    })
+                    setShowCancelarVentaModal(false)
+                    setCancelarDevolverUnidades(true)
+                    setCancelarDevolverCobros(true)
+                    if (isEditMode) cancelEditMode()
                   }}
-                  className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900"
+                  className="px-4 py-2 text-sm font-medium bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                >
+                  Cancelar venta
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* ── Editar Medio de Pago Modal ── */}
+      {editarMedioPagoTarget && venta && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setEditarMedioPagoTarget(null)} />
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-xs mx-4 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-slate-900">Editar medio de pago</h3>
+              <button onClick={() => setEditarMedioPagoTarget(null)} className="p-1 rounded hover:bg-slate-100 text-slate-400 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="px-5 py-4 flex flex-col gap-2">
+              {(["efectivo", "posnet", "transferencia"] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setEditarMedioPagoValue(m)}
+                  className={`w-full py-2.5 px-4 text-sm font-medium rounded-lg border transition-colors text-left ${
+                    editarMedioPagoValue === m
+                      ? "bg-slate-900 text-white border-slate-900"
+                      : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                  }`}
+                >
+                  {metodoPagoLabels[m]}
+                </button>
+              ))}
+            </div>
+            <div className="px-5 pb-4 flex gap-2 justify-end">
+              <button onClick={() => setEditarMedioPagoTarget(null)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  updateCobroMedioPago(venta.id, editarMedioPagoTarget.id, editarMedioPagoValue)
+                  setEditarMedioPagoTarget(null)
+                }}
+                className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Undo Cobro Modal ── */}
+      {undoCobroTarget && venta && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setUndoCobroTarget(null)} />
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
+            <div className="px-5 py-5 flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center shrink-0">
+                  <Undo2 className="w-4 h-4 text-red-500" />
+                </div>
+                <h3 className="text-base font-semibold text-slate-900">Anular cobro</h3>
+              </div>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                {"¿Estás seguro? "}
+                <span className="font-semibold text-slate-900">${undoCobroTarget.monto.toLocaleString("es-AR")}</span>
+                {" van a volver a estar pendientes de cobro."}
+              </p>
+            </div>
+            <div className="px-5 pb-5 flex gap-2 justify-end">
+              <button onClick={() => setUndoCobroTarget(null)} className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
+                Cancelar
+              </button>
+              <button
+                onClick={() => { undoCobro(venta.id, undoCobroTarget.id); setUndoCobroTarget(null) }}
+                className="px-4 py-2 text-sm font-medium bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              >
+                Aceptar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Undo Entrega Modal ── */}
+      {undoEntregaTarget && venta && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setUndoEntregaTarget(null)} />
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
+            <div className="px-5 py-5 flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center shrink-0">
+                  <Undo2 className="w-4 h-4 text-red-500" />
+                </div>
+                <h3 className="text-base font-semibold text-slate-900">Anular entrega</h3>
+              </div>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                {"¿Estás seguro? "}
+                <span className="font-semibold text-slate-900">
+                  {undoEntregaTarget.items.reduce((s, i) => s + i.quantity, 0)}{" "}
+                  {undoEntregaTarget.items.reduce((s, i) => s + i.quantity, 0) === 1 ? "unidad va" : "unidades van"}
+                </span>
+                {" a volver a estar pendientes de entrega."}
+              </p>
+            </div>
+            <div className="px-5 pb-5 flex gap-2 justify-end">
+              <button onClick={() => setUndoEntregaTarget(null)} className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
+                Cancelar
+              </button>
+              <button
+                onClick={() => { undoEntregaEntry(venta.id, undoEntregaTarget.id); setUndoEntregaTarget(null) }}
+                className="px-4 py-2 text-sm font-medium bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              >
+                Aceptar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Entrega Entry Detail Modal ── */}
+      {viewingEntregaEntry && (() => {
+        const entry = viewingEntregaEntry
+        const dateLabel = new Date(entry.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "long", year: "numeric" })
+        const totalUnits = entry.items.reduce((s, i) => s + i.quantity, 0)
+        return (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setViewingEntregaEntry(null)} />
+            <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 flex flex-col overflow-hidden">
+              {/* Header */}
+              <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-semibold text-slate-900">Detalle de entrega</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">{dateLabel} · {entry.hora}</p>
+                </div>
+                <button onClick={() => setViewingEntregaEntry(null)} className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              {/* Items */}
+              <div className="flex flex-col divide-y divide-slate-100 overflow-y-auto max-h-80">
+                {entry.items.map((ei, idx) => {
+                  const ventaItem = ventaItems.find(it => it.sku === ei.sku)
+                  const display = ventaItem ? getVentaItemDisplay(ventaItem) : null
+                  const name = display?.name ?? ei.sku
+                  return (
+                    <div key={idx} className="flex items-center justify-between px-5 py-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        {display && (
+                          <div className="w-8 h-8 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+                            <Image src={getCategoryImage(display.categoria || "") || "/placeholder.svg"} alt={name} width={32} height={32} className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                        <span className="text-sm text-slate-800 truncate">{name}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0 ml-3">
+                        <span className="text-sm font-semibold text-slate-900 tabular-nums">{ei.quantity}</span>
+                        <span className="text-xs text-slate-400">{ei.quantity === 1 ? "unidad" : "unidades"}</span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+              {/* Footer */}
+              <div className="border-t border-slate-200 bg-slate-50 px-5 py-3 flex items-center justify-between">
+                <span className="text-xs text-slate-500">{totalUnits} {totalUnits === 1 ? "unidad entregada" : "unidades entregadas"}</span>
+                <button onClick={() => setViewingEntregaEntry(null)} className="px-4 py-1.5 text-sm text-slate-600 hover:text-slate-900 transition-colors">
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* ── Registrar Entrega Modal ── */}
+      {showRegistrarEntrega && (() => {
+        // Items with units still pending delivery
+        const pendingItems = ventaItems.filter(item => {
+          const delivered = itemEntregaMap.get(item.sku) ?? 0
+          return delivered < item.quantity
+        })
+
+        const pendingSkus = pendingItems.map(i => i.sku)
+
+        const allSelected = pendingSkus.length > 0 && pendingSkus.every(sku => entregaSelectedItems[sku])
+        const someSelected = pendingSkus.some(sku => entregaSelectedItems[sku])
+        const indeterminate = someSelected && !allSelected
+
+        const selectedCount = pendingSkus.filter(sku => entregaSelectedItems[sku]).length
+
+        const handleSelectAllEntrega = () => {
+          const selecting = !allSelected && !indeterminate
+          const nextSelected: { [sku: string]: boolean } = {}
+          const nextQty: { [sku: string]: string } = { ...entregaQuantities }
+          for (const item of pendingItems) {
+            nextSelected[item.sku] = selecting
+            if (selecting) {
+              const delivered = itemEntregaMap.get(item.sku) ?? 0
+              nextQty[item.sku] = String(item.quantity - delivered)
+            } else {
+              delete nextQty[item.sku]
+            }
+          }
+          setEntregaSelectedItems(nextSelected)
+          setEntregaQuantities(nextQty)
+        }
+
+        const handleToggleEntregaItem = (sku: string) => {
+          const willBeSelected = !entregaSelectedItems[sku]
+          setEntregaSelectedItems(prev => ({ ...prev, [sku]: willBeSelected }))
+          if (willBeSelected) {
+            const item = pendingItems.find(i => i.sku === sku)
+            if (item) {
+              const delivered = itemEntregaMap.get(sku) ?? 0
+              setEntregaQuantities(prev => ({ ...prev, [sku]: String(item.quantity - delivered) }))
+            }
+          } else {
+            setEntregaQuantities(prev => { const next = { ...prev }; delete next[sku]; return next })
+          }
+        }
+
+        const closeEntrega = () => {
+          setShowRegistrarEntrega(false)
+          setEntregaSelectedItems({})
+          setEntregaQuantities({})
+        }
+
+        return (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeEntrega} />
+            <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[85vh] flex flex-col overflow-hidden">
+
+              {/* Header */}
+              <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
+                <div>
+                  <h3 className="text-base font-semibold text-slate-900">Registrar entrega</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Indicá las unidades a marcar como entregadas</p>
+                </div>
+                <button onClick={closeEntrega} className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Column headers */}
+              <div className="bg-slate-50 border-b border-slate-100 flex-shrink-0">
+                <div className="grid grid-cols-[3fr_1fr_1.4fr] h-9 text-[10px] font-medium text-slate-500 uppercase tracking-wider">
+                  <div className="flex items-center px-4 gap-3">
+                    <button
+                      onClick={handleSelectAllEntrega}
+                      className="w-4 h-4 rounded border border-slate-300 flex items-center justify-center hover:border-slate-600 transition-colors bg-white"
+                    >
+                      {allSelected && <Check className="w-3 h-3 text-slate-800" />}
+                      {indeterminate && <Minus className="w-3 h-3 text-slate-800" />}
+                    </button>
+                    <span>Producto</span>
+                  </div>
+                  <div className="flex items-center justify-center">Restantes</div>
+                  <div className="flex items-center justify-center">Entregar</div>
+                </div>
+              </div>
+
+              {/* Items list */}
+              <div className="flex-1 overflow-y-auto bg-white">
+                {pendingItems.length === 0 ? (
+                  <div className="py-12 text-center">
+                    <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto mb-3" />
+                    <p className="text-sm text-slate-500">Todos los productos ya fueron entregados</p>
+                  </div>
+                ) : (
+                  pendingItems.map((item, idx) => {
+                    const delivered = itemEntregaMap.get(item.sku) ?? 0
+                    const remaining = item.quantity - delivered
+                    const display = getVentaItemDisplay(item)
+                    const isSelected = !!entregaSelectedItems[item.sku]
+                    const qtyValue = entregaQuantities[item.sku] ?? ""
+
+                    return (
+                      <div
+                        key={idx}
+                        className={`grid grid-cols-[3fr_1fr_1.4fr] items-center py-3 px-4 border-b border-slate-100 hover:bg-slate-50/50 transition-colors cursor-pointer ${isSelected ? "bg-slate-50/70" : ""}`}
+                        onClick={() => handleToggleEntregaItem(item.sku)}
+                      >
+                        {/* Product info */}
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleToggleEntregaItem(item.sku) }}
+                            className="w-4 h-4 rounded border border-slate-300 flex items-center justify-center hover:border-slate-600 transition-colors bg-white flex-shrink-0"
+                          >
+                            {isSelected && <Check className="w-3 h-3 text-slate-800" />}
+                          </button>
+                          <div className="w-9 h-9 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+                            <Image
+                              src={getCategoryImage(display.categoria || "") || "/placeholder.svg"}
+                              alt={display.name}
+                              width={36}
+                              height={36}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-slate-800 truncate">{display.name}</p>
+                            <p className="text-xs text-slate-400">{[display.marca, display.categoria].filter(Boolean).join(" · ")}</p>
+                          </div>
+                        </div>
+
+                        {/* Restantes */}
+                        <div className="flex items-center justify-center">
+                          <span className="text-sm text-slate-600 tabular-nums">{remaining}</span>
+                        </div>
+
+                        {/* Entregar input */}
+                        <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                          {isSelected && (
+                            <input
+                              type="number"
+                              min={0}
+                              max={remaining}
+                              value={qtyValue}
+                              placeholder={String(remaining)}
+                              onChange={(e) => {
+                                const raw = e.target.value
+                                if (raw === "") { setEntregaQuantities(prev => ({ ...prev, [item.sku]: "" })); return }
+                                const num = parseInt(raw, 10)
+                                if (isNaN(num) || num < 0) { setEntregaQuantities(prev => ({ ...prev, [item.sku]: "0" })); return }
+                                if (num > remaining) { setEntregaQuantities(prev => ({ ...prev, [item.sku]: String(remaining) })); return }
+                                setEntregaQuantities(prev => ({ ...prev, [item.sku]: String(num) }))
+                              }}
+                              className="w-14 text-center text-sm tabular-nums bg-slate-50 border border-slate-200 rounded-md px-2 py-1.5 focus:outline-none focus:border-slate-400 transition-colors"
+                            />
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="border-t border-slate-200 bg-slate-50 py-3 px-5 flex items-center justify-between flex-shrink-0">
+                <span className="text-sm text-slate-500">
+                  {selectedCount > 0
+                    ? `${selectedCount} producto${selectedCount !== 1 ? "s" : ""} seleccionado${selectedCount !== 1 ? "s" : ""}`
+                    : "Seleccioná productos para registrar"}
+                </span>
+                <button
+                  onClick={handleConfirmEntrega}
+                  disabled={selectedCount === 0}
+                  className="px-5 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Registrar entrega
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* ── Registrar Devolución Modal ── */}
+      {showDevolucion && (() => {
+        // Items that have been delivered (can be returned)
+        const deliverableItems = ventaItems.filter(item => {
+          const delivered = itemEntregaMap.get(item.sku) ?? 0
+          return delivered > 0
+        })
+
+        const devSkus = deliverableItems.map(i => i.sku)
+        const allSelected = devSkus.length > 0 && devSkus.every(sku => devolucionSelectedItems[sku])
+        const someSelected = devSkus.some(sku => devolucionSelectedItems[sku])
+        const indeterminate = someSelected && !allSelected
+        const selectedCount = devSkus.filter(sku => devolucionSelectedItems[sku]).length
+
+        // Calculate total units and amount for selected items
+        const selectedEntries = deliverableItems
+          .filter(item => devolucionSelectedItems[item.sku])
+          .map(item => {
+            const qty = parseInt(devolucionQuantities[item.sku] ?? "0", 10) || 0
+            const unitPrice = item.total / Math.max(item.quantity, 1)
+            return { item, qty, amount: qty * unitPrice }
+          })
+        const totalDevUnits = selectedEntries.reduce((s, e) => s + e.qty, 0)
+        const totalDevAmount = selectedEntries.reduce((s, e) => s + e.amount, 0)
+
+        const handleSelectAll = () => {
+          const selecting = !allSelected && !indeterminate
+          const nextSelected: { [sku: string]: boolean } = {}
+          const nextQty: { [sku: string]: string } = { ...devolucionQuantities }
+          for (const item of deliverableItems) {
+            nextSelected[item.sku] = selecting
+            if (selecting) {
+              const delivered = itemEntregaMap.get(item.sku) ?? 0
+              nextQty[item.sku] = String(delivered)
+            } else {
+              delete nextQty[item.sku]
+            }
+          }
+          setDevolucionSelectedItems(nextSelected)
+          setDevolucionQuantities(nextQty)
+        }
+
+        const handleToggleItem = (sku: string) => {
+          const willBeSelected = !devolucionSelectedItems[sku]
+          setDevolucionSelectedItems(prev => ({ ...prev, [sku]: willBeSelected }))
+          if (willBeSelected) {
+            const item = deliverableItems.find(i => i.sku === sku)
+            if (item) {
+              const delivered = itemEntregaMap.get(sku) ?? 0
+              setDevolucionQuantities(prev => ({ ...prev, [sku]: String(delivered) }))
+            }
+          } else {
+            setDevolucionQuantities(prev => { const next = { ...prev }; delete next[sku]; return next })
+          }
+        }
+
+        const closeModal = () => {
+          setShowDevolucion(false)
+          setDevolucionStep(1)
+          setDevolucionSelectedItems({})
+          setDevolucionQuantities({})
+        }
+
+        const handleConfirmDevolucion = () => {
+          if (!venta) return
+          const devoluciones: VentaDevolucionItem[] = selectedEntries
+            .filter(e => e.qty > 0)
+            .map(e => ({ sku: e.item.sku, quantityDevuelta: e.qty }))
+          if (devoluciones.length === 0) return
+          addDevolucion(venta.id, devoluciones, Math.round(totalDevAmount))
+          setViewMode("devolucion")
+          closeModal()
+        }
+
+        return (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeModal} />
+            <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[85vh] flex flex-col overflow-hidden">
+
+              {/* Header */}
+              <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
+                <div>
+                  <h3 className="text-base font-semibold text-slate-900">Registrar devolución</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Indicá las unidades para generar la devolución</p>
+                </div>
+                <button onClick={closeModal} className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {devolucionStep === 1 ? (
+                <>
+                  {/* Column headers */}
+                  <div className="bg-slate-50 border-b border-slate-100 flex-shrink-0">
+                    <div className="grid grid-cols-[3fr_1fr_1.4fr] h-9 text-[10px] font-medium text-slate-500 uppercase tracking-wider">
+                      <div className="flex items-center px-4 gap-3">
+                        <button
+                          onClick={handleSelectAll}
+                          className="w-4 h-4 rounded border border-slate-300 flex items-center justify-center hover:border-slate-600 transition-colors bg-white"
+                        >
+                          {allSelected && <Check className="w-3 h-3 text-slate-800" />}
+                          {indeterminate && <Minus className="w-3 h-3 text-slate-800" />}
+                        </button>
+                        <span>Producto</span>
+                      </div>
+                      <div className="flex items-center justify-center">Entregadas</div>
+                      <div className="flex items-center justify-center">Devolver</div>
+                    </div>
+                  </div>
+
+                  {/* Items list */}
+                  <div className="flex-1 overflow-y-auto bg-white">
+                    {deliverableItems.length === 0 ? (
+                      <div className="py-12 text-center">
+                        <Package className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                        <p className="text-sm text-slate-500">No hay unidades entregadas para devolver</p>
+                      </div>
+                    ) : (
+                      deliverableItems.map((item, idx) => {
+                        const delivered = itemEntregaMap.get(item.sku) ?? 0
+                        const display = getVentaItemDisplay(item)
+                        const isSelected = !!devolucionSelectedItems[item.sku]
+                        const qtyValue = devolucionQuantities[item.sku] ?? ""
+
+                        return (
+                          <div
+                            key={idx}
+                            className={`grid grid-cols-[3fr_1fr_1.4fr] items-center py-3 px-4 border-b border-slate-100 hover:bg-slate-50/50 transition-colors cursor-pointer ${isSelected ? "bg-slate-50/70" : ""}`}
+                            onClick={() => handleToggleItem(item.sku)}
+                          >
+                            {/* Product info */}
+                            <div className="flex items-center gap-3">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleToggleItem(item.sku) }}
+                                className="w-4 h-4 rounded border border-slate-300 flex items-center justify-center hover:border-slate-600 transition-colors bg-white flex-shrink-0"
+                              >
+                                {isSelected && <Check className="w-3 h-3 text-slate-800" />}
+                              </button>
+                              <div className="w-9 h-9 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+                                <Image src={getCategoryImage(display.categoria || "") || "/placeholder.svg"} alt={display.name} width={36} height={36} className="w-full h-full object-cover" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium text-slate-800 truncate">{display.name}</p>
+                                <p className="text-xs text-slate-400">{[display.marca, display.categoria].filter(Boolean).join(" · ")}</p>
+                              </div>
+                            </div>
+
+                            {/* Entregadas */}
+                            <div className="flex items-center justify-center">
+                              <span className="text-sm text-slate-600 tabular-nums">{delivered}</span>
+                            </div>
+
+                            {/* Devolver input */}
+                            <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                              {isSelected && (
+                                <input
+                                  type="number"
+                                  min={0}
+                                  max={delivered}
+                                  value={qtyValue}
+                                  placeholder={String(delivered)}
+                                  onChange={(e) => {
+                                    const raw = e.target.value
+                                    if (raw === "") { setDevolucionQuantities(prev => ({ ...prev, [item.sku]: "" })); return }
+                                    const num = parseInt(raw, 10)
+                                    if (isNaN(num) || num < 0) { setDevolucionQuantities(prev => ({ ...prev, [item.sku]: "0" })); return }
+                                    if (num > delivered) { setDevolucionQuantities(prev => ({ ...prev, [item.sku]: String(delivered) })); return }
+                                    setDevolucionQuantities(prev => ({ ...prev, [item.sku]: String(num) }))
+                                  }}
+                                  className="w-14 text-center text-sm tabular-nums bg-slate-50 border border-slate-200 rounded-md px-2 py-1.5 focus:outline-none focus:border-slate-400 transition-colors"
+                                />
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })
+                    )}
+                  </div>
+
+                  {/* Footer step 1 */}
+                  <div className="border-t border-slate-200 bg-slate-50 py-3 px-5 flex items-center justify-between flex-shrink-0">
+                    <span className="text-sm text-slate-500">
+                      {selectedCount > 0
+                        ? `${selectedCount} producto${selectedCount !== 1 ? "s" : ""} seleccionado${selectedCount !== 1 ? "s" : ""}`
+                        : "Seleccioná productos para devolver"}
+                    </span>
+                    <button
+                      onClick={() => setDevolucionStep(2)}
+                      disabled={selectedCount === 0 || totalDevUnits === 0}
+                      className="px-5 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Continuar
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Step 2 — confirmation */}
+                  <div className="flex-1 flex flex-col items-center justify-center px-8 py-10 gap-4">
+                    <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center">
+                      <RotateCcw className="w-6 h-6 text-red-500" />
+                    </div>
+                    <p className="text-base text-slate-700 text-center leading-relaxed">
+                      <span className="font-semibold text-slate-900">{totalDevUnits} {totalDevUnits === 1 ? "unidad" : "unidades"}</span>
+                      {" "}se registrar{totalDevUnits === 1 ? "á" : "án"} como devuelta{totalDevUnits !== 1 ? "s" : ""}, y se generará una devolución por{" "}
+                      <span className="font-semibold text-red-600">${Math.round(totalDevAmount).toLocaleString("es-AR")}</span>
+                    </p>
+                    <ul className="w-full max-w-xs flex flex-col gap-1.5 mt-2">
+                      {selectedEntries.filter(e => e.qty > 0).map(e => {
+                        const display = getVentaItemDisplay(e.item)
+                        return (
+                          <li key={e.item.sku} className="flex items-center justify-between text-sm text-slate-600">
+                            <span className="truncate">{display.name}</span>
+                            <span className="tabular-nums ml-4 text-slate-500 shrink-0">{e.qty} ud.</span>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </div>
+
+                  {/* Footer step 2 */}
+                  <div className="border-t border-slate-200 bg-slate-50 py-3 px-5 flex items-center justify-end gap-3 flex-shrink-0">
+                    <button
+                      onClick={() => setDevolucionStep(1)}
+                      className="px-5 py-2 bg-white border border-slate-200 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors"
+                    >
+                      Volver
+                    </button>
+                    <button
+                      onClick={handleConfirmDevolucion}
+                      className="px-5 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      Aceptar
+                    </button>
+                  </div>
+                </>
+              )}
+
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* ── Finalizar Venta Modal ── */}
+      {showFinalizarVenta && (() => {
+        const pendingItems = ventaItems.filter(item => {
+          const delivered = itemEntregaMap.get(item.sku) ?? 0
+          return delivered < item.quantity
+        })
+        const hasPendingEntrega = pendingItems.length > 0
+        const hasPendingCobro = montoRestante > 0
+
+        const metodoOptions: { value: PaymentMethod | "no_especificado"; label: string }[] = [
+          { value: "no_especificado", label: "No especificado" },
+          { value: "efectivo", label: "Efectivo" },
+          { value: "posnet", label: "Posnet" },
+          { value: "transferencia", label: "Transferencia" },
+        ]
+
+        const closeModal = () => {
+          setShowFinalizarVenta(false)
+          setFinalizarMedioPago("no_especificado")
+        }
+
+        return (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeModal} />
+            <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 flex flex-col overflow-hidden">
+
+              {/* Header */}
+              <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-semibold text-slate-900">Marcar como Finalizada</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Revisá los cambios que se aplicarán al confirmar</p>
+                </div>
+                <button onClick={closeModal} className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="px-5 py-4 flex flex-col gap-4">
+
+                {/* Summary items */}
+                <div className="flex flex-col gap-2">
+                  {/* Entrega */}
+                  <div className={`flex items-start gap-3 p-3 rounded-lg border ${hasPendingEntrega ? "border-amber-200 bg-amber-50" : "border-emerald-200 bg-emerald-50"}`}>
+                    <div className={`mt-0.5 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${hasPendingEntrega ? "bg-amber-100" : "bg-emerald-100"}`}>
+                      {hasPendingEntrega
+                        ? <Package className="w-3.5 h-3.5 text-amber-600" />
+                        : <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
+                    </div>
+                    <div className="min-w-0">
+                      <p className={`text-sm font-semibold ${hasPendingEntrega ? "text-amber-800" : "text-emerald-800"}`}>
+                        {hasPendingEntrega ? "Entrega pendiente" : "Entrega completa"}
+                      </p>
+                      <p className={`text-xs mt-0.5 ${hasPendingEntrega ? "text-amber-700" : "text-emerald-700"}`}>
+                        {hasPendingEntrega
+                          ? `${pendingItems.length} producto${pendingItems.length !== 1 ? "s" : ""} sin entregar serán marcados como entregados`
+                          : "Todos los productos ya fueron entregados"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Cobro */}
+                  <div className={`flex items-start gap-3 p-3 rounded-lg border ${hasPendingCobro ? "border-amber-200 bg-amber-50" : "border-emerald-200 bg-emerald-50"}`}>
+                    <div className={`mt-0.5 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${hasPendingCobro ? "bg-amber-100" : "bg-emerald-100"}`}>
+                      {hasPendingCobro
+                        ? <Wallet className="w-3.5 h-3.5 text-amber-600" />
+                        : <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
+                    </div>
+                    <div className="min-w-0">
+                      <p className={`text-sm font-semibold ${hasPendingCobro ? "text-amber-800" : "text-emerald-800"}`}>
+                        {hasPendingCobro ? "Cobro pendiente" : "Cobro completo"}
+                      </p>
+                      <p className={`text-xs mt-0.5 ${hasPendingCobro ? "text-amber-700" : "text-emerald-700"}`}>
+                        {hasPendingCobro
+                          ? `Se registrará un cobro de $${Math.round(montoRestante).toLocaleString("es-AR")} para cubrir el saldo restante`
+                          : "El total de la venta ya fue cobrado"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Medio de pago — only shown if there's a pending cobro */}
+                {hasPendingCobro && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">
+                      Medio de pago del cobro
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {metodoOptions.map(opt => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setFinalizarMedioPago(opt.value)}
+                          className={`px-3 py-2.5 rounded-lg border text-sm font-medium text-left transition-colors ${
+                            finalizarMedioPago === opt.value
+                              ? "border-slate-900 bg-slate-900 text-white"
+                              : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="border-t border-slate-200 bg-slate-50 px-5 py-3 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
-                  onClick={handleAddSelectedItems}
-                  disabled={selectedModalSkus.size === 0}
-                  className="px-5 py-2 bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  type="button"
+                  onClick={handleConfirmFinalizar}
+                  className="px-5 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-2"
                 >
-                  Agregar items
+                  <CheckCircle2 className="w-4 h-4" />
+                  Confirmar y Finalizar
                 </button>
               </div>
+
             </div>
           </div>
-        </div>
-      )}
-      
-      {/* Individual Price Adjustment Modal */}
-      {showIndividualPriceModal && presupuesto && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100010]">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-xs mx-4">
-            <div className="px-5 py-4 border-b border-slate-200">
-              <h3 className="text-sm font-semibold text-slate-900">Ajustar precio</h3>
-              <p className="text-xs text-slate-500 mt-1">
-                {presupuesto.items[showIndividualPriceModal.idx]?.name}
-              </p>
-              <p className="text-xs text-slate-400">
-                Precio actual: ${presupuesto.items[showIndividualPriceModal.idx]?.unitPrice.toLocaleString("es-AR")}
-              </p>
+        )
+      })()}
+
+      {/* ���─ Agregar Productos Modal ── */}
+      {showAgregarProductos && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeAgregarProductos} />
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-3xl mx-4 max-h-[85vh] flex flex-col overflow-hidden">
+
+            {/* Header */}
+            <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
+              <div>
+                <h3 className="text-base font-semibold text-slate-900">Agregar productos</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Selecciona los productos a agregar a la venta</p>
+              </div>
+              <button onClick={closeAgregarProductos} className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            <div className="px-5 py-4">
-              <div className="flex flex-col gap-3">
-                <select
-                  value={showIndividualPriceModal.type}
-                  onChange={(e) => setShowIndividualPriceModal({ ...showIndividualPriceModal, type: e.target.value as any })}
-                  className="text-sm px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-400"
-                >
-                  <option value="set">Reemplazar por $</option>
-                  <option value="add">Agregar $</option>
-                  <option value="subtract">Disminuir $</option>
-                  <option value="addPercent">Agregar %</option>
-                  <option value="subtractPercent">Disminuir %</option>
-                </select>
-                <input
-                  type="number"
-                  placeholder={showIndividualPriceModal.type.includes("Percent") ? "%" : "$"}
-                  value={showIndividualPriceModal.value}
-                  onChange={(e) => setShowIndividualPriceModal({ ...showIndividualPriceModal, value: e.target.value })}
-                  className="text-sm px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-blue-400"
-                  min={0}
-                  autoFocus
-                />
+
+            {/* Search + Filters */}
+            <div className="border-b border-slate-100 flex-shrink-0">
+              <div className="flex items-center gap-3 p-3">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    value={modalSearch}
+                    onChange={(e) => setModalSearch(e.target.value)}
+                    placeholder="Buscar productos..."
+                    className="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-400"
+                    autoFocus
+                  />
+                </div>
+                {/* Filter button */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowModalFilters(!showModalFilters)}
+                    className={`flex items-center gap-1.5 px-3 py-2 text-sm border rounded-lg transition-colors ${
+                      Object.values(modalFilters).some(v => v)
+                        ? "border-slate-800 bg-slate-900 text-white"
+                        : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                    }`}
+                  >
+                    <Filter className="w-4 h-4" />
+                    Filtrar
+                  </button>
+                  {showModalFilters && (
+                    <div className="absolute top-full right-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg w-56 p-3 space-y-3">
+                      <div>
+                        <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Categoría</label>
+                        <select
+                          value={modalFilters.categoria}
+                          onChange={(e) => setModalFilters(prev => ({ ...prev, categoria: e.target.value }))}
+                          className="w-full mt-1 px-2 py-1.5 text-sm border border-slate-200 rounded-md focus:outline-none focus:border-slate-400"
+                        >
+                          <option value="">Todas</option>
+                          {uniqueModalCategorias.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Marca</label>
+                        <select
+                          value={modalFilters.marca}
+                          onChange={(e) => setModalFilters(prev => ({ ...prev, marca: e.target.value }))}
+                          className="w-full mt-1 px-2 py-1.5 text-sm border border-slate-200 rounded-md focus:outline-none focus:border-slate-400"
+                        >
+                          <option value="">Todas</option>
+                          {uniqueModalMarcas.map(m => <option key={m} value={m}>{m}</option>)}
+                        </select>
+                      </div>
+                      {Object.values(modalFilters).some(v => v) && (
+                        <button onClick={() => setModalFilters({ categoria: "", marca: "" })} className="w-full text-xs text-slate-500 hover:text-slate-700 py-1">
+                          Limpiar filtros
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {/* Sort */}
+                <div className="flex items-center gap-1">
+                  <select
+                    value={modalSort}
+                    onChange={(e) => setModalSort(e.target.value as "name" | "precio")}
+                    className="appearance-none pl-3 pr-7 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:border-slate-400 cursor-pointer"
+                  >
+                    <option value="name">Nombre</option>
+                    <option value="precio">Precio</option>
+                  </select>
+                  <button
+                    onClick={() => setModalSortDirection(d => d === "asc" ? "desc" : "asc")}
+                    className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                  >
+                    <ArrowUpDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${modalSortDirection === "desc" ? "rotate-180" : ""}`} />
+                  </button>
+                </div>
               </div>
             </div>
-            <div className="px-5 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2 rounded-b-xl">
-              <button
-                onClick={() => setShowIndividualPriceModal(null)}
-                className="px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleApplyIndividualPrice}
-                disabled={!showIndividualPriceModal.value}
-                className="px-4 py-1.5 bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
-              >
-                Aplicar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirmModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100010]">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4">
-            <div className="px-6 py-5">
-              <h3 className="text-lg font-semibold text-slate-900">Eliminar presupuesto</h3>
-              <p className="text-sm text-slate-500 mt-2">
-                ¿Estás seguro de que deseas eliminar este presupuesto? Esta acción no se puede deshacer.
-              </p>
-            </div>
-            <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3 rounded-b-xl">
-              <button
-                onClick={() => setShowDeleteConfirmModal(false)}
-                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleDeletePresupuesto}
-                className="px-5 py-2 bg-red-500 text-white text-sm font-medium rounded-lg hover:bg-red-600 transition-colors"
-              >
-                Eliminar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Nuevo Cliente Modal */}
-      <NuevoClienteModal
-        isOpen={showNuevoClienteModal}
-        onClose={() => setShowNuevoClienteModal(false)}
-        onSave={handleSaveNuevoCliente}
-      />
-    </div>
-  )
-}
 
-export default function PresupuestoDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  return (
-    <Suspense fallback={null}>
-      <PresupuestoDetailContent params={params} />
-    </Suspense>
+            {/* Column headers */}
+            <div className="bg-slate-50 border-b border-slate-100 flex-shrink-0">
+              <div className="grid grid-cols-[3fr_1fr_1.2fr] h-9 text-[10px] font-medium text-slate-500 uppercase tracking-wider">
+                <div className="flex items-center px-4 gap-3">
+                  <button
+                    onClick={handleSelectAllModal}
+                    className="w-4 h-4 rounded border border-slate-300 flex items-center justify-center hover:border-slate-600 transition-colors bg-white"
+                  >
+                    {modalSelectAllActive && <Check className="w-3 h-3 text-slate-800" />}
+                    {modalSelectAllIndeterminate && <Minus className="w-3 h-3 text-slate-800" />}
+                  </button>
+                  <span>Producto</span>
+                </div>
+                <div className="flex items-center justify-center">Stock</div>
+                <div className="flex items-center justify-center">Precio</div>
+              </div>
+            </div>
+
+            {/* Items list */}
+            <div className="flex-1 overflow-y-auto bg-white">
+              {filteredModalItems.length === 0 ? (
+                <div className="py-12 text-center">
+                  <p className="text-sm text-slate-500">No se encontraron productos{modalSearch ? ` para "${modalSearch}"` : ""}</p>
+                </div>
+              ) : (
+                filteredModalItems.map((item, idx) => {
+                  const isParent = item.hasVariants && item.variants && item.variants.length > 0
+                  const selState = getModalSelectionState(item)
+                  return (
+                    <div key={idx}>
+                      {/* Parent / standalone row */}
+                      <div
+                        className={`grid grid-cols-[3fr_1fr_1.2fr] items-center py-3 px-4 border-b border-slate-100 hover:bg-slate-50/50 transition-colors cursor-pointer ${selState.checked || selState.indeterminate ? "bg-slate-50/70" : ""}`}
+                        onClick={() => handleModalItemSelection(item)}
+                      >
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleModalItemSelection(item) }}
+                            className="w-4 h-4 rounded border border-slate-300 flex items-center justify-center hover:border-slate-600 transition-colors bg-white flex-shrink-0"
+                          >
+                            {selState.checked && <Check className="w-3 h-3 text-slate-800" />}
+                            {selState.indeterminate && <Minus className="w-3 h-3 text-slate-800" />}
+                          </button>
+                          <div className="w-9 h-9 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+                            <Image src={getCategoryImage(item.categoria || "") || "/placeholder.svg"} alt={item.name} width={36} height={36} className="w-full h-full object-cover" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-sm font-medium text-slate-800 truncate">{item.name}</p>
+                              {isParent && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-500">{item.variants!.length} var.</span>
+                              )}
+                            </div>
+                            <p className="text-xs text-slate-400">{[item.marca, item.categoria].filter(Boolean).join(" · ")}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-center">
+                          {!isParent && <span className="text-sm text-slate-600 tabular-nums">{parseInt(item.stock?.disponible || "0")}</span>}
+                        </div>
+                        <div className="flex items-center justify-center">
+                          {!isParent && <span className="text-sm font-medium text-slate-800">${(item.precio?.precioFinal || 0).toLocaleString("es-AR")}</span>}
+                        </div>
+                      </div>
+
+                      {/* Variant rows */}
+                      {isParent && item.variants!.map((variant: any, vIdx: number) => {
+                        const vState = getModalSelectionState(variant, true)
+                        return (
+                          <div
+                            key={vIdx}
+                            className={`grid grid-cols-[3fr_1fr_1.2fr] items-center py-2.5 px-4 border-b border-slate-100 hover:bg-slate-50/50 transition-colors cursor-pointer pl-12 ${vState.checked ? "bg-slate-50/70" : ""}`}
+                            onClick={() => handleModalItemSelection(variant, true)}
+                          >
+                            <div className="flex items-center gap-3">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleModalItemSelection(variant, true) }}
+                                className="w-4 h-4 rounded border border-slate-300 flex items-center justify-center hover:border-slate-600 transition-colors bg-white flex-shrink-0"
+                              >
+                                {vState.checked && <Check className="w-3 h-3 text-slate-800" />}
+                              </button>
+                              <div className="w-8 h-8 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+                                <Image src={getCategoryImage(variant.categoria || item.categoria || "") || "/placeholder.svg"} alt={variant.name || item.name} width={32} height={32} className="w-full h-full object-cover" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <p className="text-sm text-slate-700 truncate">{variant.name || item.name}</p>
+                                  {variant.atributosPrincipales?.map((a: any, i: number) => (
+                                    <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-500">{a.value}</span>
+                                  ))}
+                                </div>
+                                <p className="text-xs text-slate-400">{`${item.skuPrefix}-${variant.skuSuffix}`}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-center">
+                              <span className="text-sm text-slate-600 tabular-nums">{parseInt(variant.stock?.disponible || "0")}</span>
+                            </div>
+                            <div className="flex items-center justify-center">
+                              <span className="text-sm font-medium text-slate-800">${(variant.precio?.precioFinal || 0).toLocaleString("es-AR")}</span>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )
+                })
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-slate-200 bg-slate-50 py-3 px-5 flex items-center justify-between flex-shrink-0">
+              <span className="text-sm text-slate-500">
+                {selectedModalCount > 0
+                  ? `${selectedModalCount} producto${selectedModalCount > 1 ? "s" : ""} seleccionado${selectedModalCount > 1 ? "s" : ""}`
+                  : "Seleccioná productos para agregar"}
+              </span>
+              <button
+                onClick={handleConfirmAgregarProductos}
+                disabled={selectedModalCount === 0}
+                className="px-5 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Agregar seleccionados
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Registrar Cobro Modal ── */}
+      {showRegistrarCobro && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowRegistrarCobro(false)} />
+          <div className="relative bg-white rounded-xl shadow-2xl w-[420px] flex flex-col overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <h2 className="text-sm font-semibold text-slate-900">Registrar cobro</h2>
+              <button onClick={() => setShowRegistrarCobro(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                <XCircle className="w-4 h-4" />
+              </button>
+            </div>
+            {/* Body */}
+            <div className="px-5 py-5 flex flex-col gap-4">
+              {/* Fecha */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider">Fecha</label>
+                <input
+                  type="date"
+                  value={cobroFecha}
+                  onChange={(e) => setCobroFecha(e.target.value)}
+                  className="px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-md outline-none focus:border-slate-400 transition-colors"
+                />
+              </div>
+              {/* Medio de pago */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider">Medio de pago</label>
+                <div className="flex gap-2">
+                  {(["efectivo", "posnet", "transferencia"] as const).map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setCobroMedio(m)}
+                      className={`flex-1 py-2 text-xs font-medium rounded-md border transition-colors capitalize ${
+                        cobroMedio === m
+                          ? "bg-slate-900 text-white border-slate-900"
+                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                      }`}
+                    >
+                      {m.charAt(0).toUpperCase() + m.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {/* Monto */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider">Monto</label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">$</span>
+                    <input
+                      type="number"
+                      value={cobroMonto}
+                      onChange={(e) => setCobroMonto(e.target.value)}
+                      placeholder="0"
+                      className="w-full pl-7 pr-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-md outline-none focus:border-slate-400 transition-colors"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCobroMonto(String(montoRestante))}
+                    className="px-3 py-2 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors border border-slate-200 shrink-0"
+                  >
+                    Total
+                  </button>
+                </div>
+                <p className="text-[11px] text-slate-400 tabular-nums">Restante: ${montoRestante.toLocaleString("es-AR")}</p>
+              </div>
+            </div>
+            {/* Footer */}
+            <div className="px-5 pb-5 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowRegistrarCobro(false)}
+                className="flex-1 py-2.5 text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors font-medium"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmCobro}
+                disabled={!cobroMonto || Number(cobroMonto) <= 0}
+                className="flex-1 py-2.5 text-sm text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Registrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
