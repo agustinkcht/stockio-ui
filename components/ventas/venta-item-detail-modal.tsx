@@ -73,14 +73,13 @@ export function VentaItemDetailModal({ ventaItem, onClose }: VentaItemDetailModa
         {/* FLIPPING CARD */}
         <div
           className="relative shrink-0"
-          style={{ perspective: "1200px", width: "360px" }}
+          style={{ perspective: "1200px", width: "360px", height: "600px" }}
         >
           <div
-            className="relative transition-transform duration-500"
+            className="relative w-full h-full transition-transform duration-500"
             style={{
               transformStyle: "preserve-3d",
               transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
-              minHeight: "600px",
             }}
           >
             {/* FRONT */}
@@ -115,18 +114,18 @@ export function VentaItemDetailModal({ ventaItem, onClose }: VentaItemDetailModa
               </div>
 
               {/* Image */}
-              <div className="mt-2 w-full h-64 flex items-center justify-center">
+              <div className="mt-6 w-full h-56 flex items-center justify-center">
                 <Image
                   src={imageSrc || "/placeholder.svg"}
                   alt={name}
                   width={200}
-                  height={256}
+                  height={224}
                   className="object-contain rounded-xl drop-shadow-2xl"
                 />
               </div>
 
               {/* Title + variant pills */}
-              <div className="mt-6 flex flex-col items-center gap-2">
+              <div className="mt-8 flex flex-col items-center gap-2">
                 <h2 className="font-semibold text-white text-2xl text-center text-balance leading-tight">
                   {name}
                 </h2>
@@ -210,7 +209,7 @@ export function VentaItemDetailModal({ ventaItem, onClose }: VentaItemDetailModa
         </div>
 
         {/* INFO / ATRIBUTOS PANEL */}
-        <div className="flex-1 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 max-h-[600px] overflow-y-auto">
+        <div className="flex-1 bg-white rounded-xl shadow-md border border-slate-200 max-h-[600px] overflow-y-auto">
           <div className="flex items-start justify-between p-5 border-b border-slate-100">
             <div className="min-w-0">
               <h3 className="font-semibold text-slate-900 text-lg truncate">{name}</h3>
@@ -230,14 +229,15 @@ export function VentaItemDetailModal({ ventaItem, onClose }: VentaItemDetailModa
             </button>
           </div>
 
-          {/* Información del Producto */}
+          {/* Información section */}
           <div className="p-5 border-b border-slate-100">
-            <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-4">Información del Producto</h4>
-            <dl className="grid grid-cols-2 gap-x-6 gap-y-4">
+            <h4 className="text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-3">Información</h4>
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
               <InfoField label="SKU" value={sku} mono />
               {codigoUniversal && <InfoField label="Código universal" value={codigoUniversal} mono />}
               {marca && <InfoField label="Marca" value={marca} />}
               {categoria && <InfoField label="Categoría" value={categoria} />}
+              {proveedor && <InfoField label="Proveedor" value={proveedor} />}
               {formatoVenta && <InfoField label="Formato de venta" value={formatoVenta} />}
             </dl>
           </div>
@@ -245,10 +245,10 @@ export function VentaItemDetailModal({ ventaItem, onClose }: VentaItemDetailModa
           {/* Atributos principales (only for children) */}
           {atributosPrincipales.length > 0 && (
             <div className="p-5 border-b border-slate-100">
-              <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-4">
+              <h4 className="text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-3">
                 Atributos principales
               </h4>
-              <dl className="grid grid-cols-2 gap-x-6 gap-y-4">
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
                 {atributosPrincipales.map((attr, i) => (
                   <InfoField key={i} label={attr.key} value={attr.value} />
                 ))}
@@ -258,8 +258,8 @@ export function VentaItemDetailModal({ ventaItem, onClose }: VentaItemDetailModa
 
           {/* Atributos informativos */}
           {atributosInformativos.length > 0 && (
-            <div className={`p-5 ${proveedor ? "border-b border-slate-100" : ""}`}>
-              <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-4">
+            <div className="p-5">
+              <h4 className="text-[10px] uppercase tracking-wider text-slate-400 font-medium mb-3">
                 Atributos informativos
               </h4>
               <dl className="flex flex-col gap-3">
@@ -269,16 +269,6 @@ export function VentaItemDetailModal({ ventaItem, onClose }: VentaItemDetailModa
                     <dd className="text-sm text-slate-800">{attr.value || "—"}</dd>
                   </div>
                 ))}
-              </dl>
-            </div>
-          )}
-
-          {/* Información del Proveedor */}
-          {proveedor && (
-            <div className="p-5">
-              <h4 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-4">Información del Proveedor</h4>
-              <dl className="grid grid-cols-2 gap-x-6 gap-y-4">
-                <InfoField label="Proveedor" value={proveedor} />
               </dl>
             </div>
           )}
