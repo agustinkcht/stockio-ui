@@ -589,14 +589,23 @@ export default function VentasPage() {
                             {formatVentaDateTime(venta.fecha, venta.hora)}
                           </span>
                         </div>
-                        {/* Origen (where estado badge used to be) */}
-                        <div className="col-span-14 flex items-center justify-start px-3 border-r border-slate-200/70">
-                          <span className="text-sm text-slate-600 truncate">
-                            {(venta as any).origen === "pdv" ? "Punto de Venta" : (venta as any).origen === "presupuesto" ? "Presupuesto" : "Manual"}
+                        {/* Origen */}
+                        <div className="col-span-42 flex items-center justify-start px-3 gap-2">
+                          <span className="text-sm text-slate-600 shrink-0">
+                            {(venta as any).origen === "pdv" ? "Punto de Venta" : (venta as any).origen === "presupuesto" ? "Creada desde presupuesto" : "Creada manualmente"}
                           </span>
+                          {(venta as any).origen === "presupuesto" && (venta as any).presupuestoId && (
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); router.push(`/ventas/presupuestos/${(venta as any).presupuestoId}`) }}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-medium text-slate-600 transition-colors shrink-0"
+                            >
+                              Ver presupuesto
+                            </button>
+                          )}
                         </div>
                         {/* Spacer */}
-                        <div className="col-span-40" />
+                        <div className="col-span-12" />
                         {/* Descargar PDF */}
                         <div className="col-span-14 flex items-center justify-end pr-3 border-r border-slate-200/70">
                           <button

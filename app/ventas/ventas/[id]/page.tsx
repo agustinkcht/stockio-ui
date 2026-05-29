@@ -804,9 +804,20 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             {dia} {mesCorto} {fechaObj.getFullYear()} · {venta.hora}
                           </span>
                           <div className="h-5 w-px bg-slate-300 shrink-0 mx-5" />
-                          <span className="text-sm font-medium text-slate-500 shrink-0">
-                            {venta.origen === "pdv" ? "Punto de Venta" : venta.origen === "presupuesto" ? "Creada desde presupuesto" : "Manual"}
-                          </span>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="text-sm font-medium text-slate-500">
+                              {venta.origen === "pdv" ? "Punto de Venta" : venta.origen === "presupuesto" ? "Creada desde presupuesto" : "Creada manualmente"}
+                            </span>
+                            {venta.origen === "presupuesto" && (venta as any).presupuestoId && (
+                              <button
+                                type="button"
+                                onClick={() => router.push(`/ventas/presupuestos/${(venta as any).presupuestoId}`)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-medium text-slate-600 transition-colors"
+                              >
+                                Ver presupuesto
+                              </button>
+                            )}
+                          </div>
                         </div>
 
                       </div>
@@ -2550,7 +2561,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       </p>
                       <p className={`text-xs mt-0.5 ${hasPendingCobro ? "text-amber-700" : "text-emerald-700"}`}>
                         {hasPendingCobro
-                          ? `Se registrará un cobro de $${Math.round(montoRestante).toLocaleString("es-AR")} para cubrir el saldo restante`
+                          ? `Se registrar�� un cobro de $${Math.round(montoRestante).toLocaleString("es-AR")} para cubrir el saldo restante`
                           : "El total de la venta ya fue cobrado"}
                       </p>
                     </div>
