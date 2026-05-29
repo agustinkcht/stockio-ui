@@ -752,7 +752,7 @@ export default function VentasPage() {
                           return (
                               <div className={`flex flex-col justify-center gap-0 ${className}`}>
                               <div className="flex items-baseline gap-1">
-                                <span className="text-xs font-semibold text-slate-700 tabular-nums">{item.quantity}</span>
+                                <span className="text-xs text-slate-700 tabular-nums">{item.quantity}</span>
                                 <span className="text-[10px] text-slate-400">{item.quantity === 1 ? "unidad" : "unidades"}</span>
                               </div>
                               {hasUnitDiscount && (
@@ -834,7 +834,7 @@ export default function VentasPage() {
                                 <QtyCell item={firstItem} />
                               ) : (
                                 <div className="flex items-baseline gap-1">
-                                  <span className="text-sm font-semibold text-slate-700 tabular-nums">{totalUnits}</span>
+                                  <span className="text-sm text-slate-700 tabular-nums">{totalUnits}</span>
                                   <span className="text-xs text-slate-400">{totalUnits === 1 ? "unidad" : "unidades"}</span>
                                 </div>
                               )}
@@ -847,7 +847,7 @@ export default function VentasPage() {
 
                             {/* TOTAL — col-span-24, left-aligned to match subtotal column */}
                             <div className={`col-span-24 bg-slate-50 ${isExpanded ? "rounded-tr-md" : "rounded-r-md"} flex items-center px-3`}>
-                              <span className="text-sm font-semibold text-slate-800">${venta.total.toLocaleString("es-AR")}</span>
+                              <span className="text-sm font-semibold text-slate-800">Total: ${venta.total.toLocaleString("es-AR")}</span>
                             </div>
                             <div className="col-span-4" />
 
@@ -897,10 +897,8 @@ export default function VentasPage() {
                                   <div className="col-span-16 bg-slate-50 px-3 py-2 border-t border-slate-200/60 flex items-center">
                                     <PrecioCell item={item} />
                                   </div>
-                                  {/* Subtotal */}
-                                  <div className={`col-span-24 bg-slate-50 px-3 py-2 border-t border-slate-200/60 flex flex-col justify-center ${isLast ? "rounded-br-md" : ""}`}>
-                                    <span className="text-sm font-semibold text-slate-800 leading-tight">${item.total.toLocaleString("es-AR")}</span>
-                                  </div>
+                                  {/* Subtotal — empty cell to preserve grid structure */}
+                                  <div className={`col-span-24 bg-slate-50 border-t border-slate-200/60 ${isLast ? "rounded-br-md" : ""}`} />
                                   <div className="col-span-4" />
                                 </Fragment>
                               )
