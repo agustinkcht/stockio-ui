@@ -1527,7 +1527,12 @@ export default function NuevaVentaPage() {
                                 {/* Precio c/u — 2 cols */}
                                 <div className="col-span-2 flex flex-col items-end justify-center pr-4">
                                   {hasDiscount && aj.type !== "unit" && (
-                                    <span className="text-xs text-slate-300 line-through tabular-nums">${Math.round(it.unitPrice).toLocaleString("es-AR")} c/u</span>
+                                    <div className="flex items-center gap-1">
+                                      <span className="text-xs text-slate-300 line-through tabular-nums">${Math.round(it.unitPrice).toLocaleString("es-AR")} c/u</span>
+                                      <span className="text-[10px] text-red-500 font-medium">
+                                        {aj.type === "percent" ? `-${aj.value}%` : `-$${aj.value.toLocaleString("es-AR")}`}
+                                      </span>
+                                    </div>
                                   )}
                                   <span className="text-sm text-slate-500 tabular-nums">${Math.round(adjustedUnit).toLocaleString("es-AR")} c/u</span>
                                 </div>
