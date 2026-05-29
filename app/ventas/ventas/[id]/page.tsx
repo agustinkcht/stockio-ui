@@ -55,6 +55,54 @@ const metodoPagoLabels: Record<PaymentMethod, string> = {
   anulacion: "Anulación",
 }
 
+// ── NotasCard ─────────────────────────────────────────────────────────────────
+function NotasCard({
+  value,
+  readOnly,
+  placeholder,
+  onSave,
+}: {
+  value: string
+  readOnly: boolean
+  placeholder: string
+  onSave: (v: string) => void
+}) {
+  const [draft, setDraft] = useState(value)
+  const isDirty = draft !== value
+
+  return (
+    <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-2">
+      <span className="text-[10px] text-slate-400 uppercase tracking-wider">Notas</span>
+      <textarea
+        value={draft}
+        onChange={(e) => !readOnly && setDraft(e.target.value)}
+        placeholder={placeholder}
+        rows={3}
+        readOnly={readOnly}
+        className="w-full resize-none text-sm text-slate-700 placeholder:text-slate-300 bg-transparent border-none outline-none leading-relaxed"
+      />
+      {!readOnly && isDirty && (
+        <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-100">
+          <button
+            type="button"
+            onClick={() => setDraft(value)}
+            className="text-xs font-medium text-slate-500 hover:text-slate-700 transition-colors px-2.5 py-1 rounded hover:bg-slate-100"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={() => onSave(draft)}
+            className="text-xs font-medium text-white bg-slate-900 hover:bg-slate-800 transition-colors px-2.5 py-1 rounded"
+          >
+            Guardar
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function ClienteSelectorInlineModal({
   currentClienteId,
   onSelect,
@@ -1419,15 +1467,12 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
               </div>{/* end entrega+items card */}
 
               {/* ── Notas card ── */}
-              <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-2">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider">Notas</span>
-                <textarea
-                  placeholder="Agregar una nota sobre esta venta..."
-                  defaultValue={venta.observaciones ?? ""}
-                  rows={3}
-                  className="w-full resize-none text-sm text-slate-700 placeholder:text-slate-300 bg-transparent border-none outline-none leading-relaxed"
-                />
-              </div>
+              <NotasCard
+                value={venta.observaciones ?? ""}
+                readOnly={estadoUI !== "en_curso"}
+                placeholder="Agregar una nota sobre esta venta..."
+                onSave={(v) => updateVenta(venta.id, { observaciones: v })}
+              />
 
               </div>{/* end col-span-2 flex column */}
 

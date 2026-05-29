@@ -41,6 +41,54 @@ import { useVentas } from "@/hooks/use-ventas"
 import { useSettings } from "@/lib/contexts/settings-context"
 import { downloadPresupuestosPDF } from "@/lib/utils/generate-presupuesto-pdf"
 
+// ── NotasCard ─────────────────────────────────────────────────────────────────
+function NotasCard({
+  value,
+  readOnly,
+  placeholder,
+  onSave,
+}: {
+  value: string
+  readOnly: boolean
+  placeholder: string
+  onSave: (v: string) => void
+}) {
+  const [draft, setDraft] = useState(value)
+  const isDirty = draft !== value
+
+  return (
+    <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-2">
+      <span className="text-[10px] text-slate-400 uppercase tracking-wider">Notas</span>
+      <textarea
+        value={draft}
+        onChange={(e) => !readOnly && setDraft(e.target.value)}
+        placeholder={placeholder}
+        rows={3}
+        readOnly={readOnly}
+        className="w-full resize-none text-sm text-slate-700 placeholder:text-slate-300 bg-transparent border-none outline-none leading-relaxed"
+      />
+      {!readOnly && isDirty && (
+        <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-100">
+          <button
+            type="button"
+            onClick={() => setDraft(value)}
+            className="text-xs font-medium text-slate-500 hover:text-slate-700 transition-colors px-2.5 py-1 rounded hover:bg-slate-100"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={() => onSave(draft)}
+            className="text-xs font-medium text-white bg-slate-900 hover:bg-slate-800 transition-colors px-2.5 py-1 rounded"
+          >
+            Guardar
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── ClienteSelectorInlineModal ────────────────────────────────────────────────
 function ClienteSelectorInlineModal({
   currentClienteId,
@@ -299,7 +347,7 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [showMoreOptionsMenu])
 
-  // ── Early returns AFTER all hooks ─────────────────────────────────────────
+  // ── Early returns AFTER all hooks ───��─────────────────────────────────────
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[rgb(243,242,238)] flex items-center justify-center">
@@ -589,23 +637,6 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
                     <span className="text-sm text-green-700 font-medium">Cambios guardados</span>
                   </div>
                 )}
-                {isEditMode && hasAnyEditChanges && !showSaveSuccess && (
-                  <>
-                    <button
-                      onClick={cancelEditMode}
-                      className="px-4 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 rounded transition-all cursor-pointer text-red-700 text-sm font-medium"
-                    >
-                      Deshacer
-                    </button>
-                    <button
-                      onClick={handleGuardar}
-                      disabled={isSaving}
-                      className="px-4 py-1.5 bg-green-50 hover:bg-green-100 border border-green-200 rounded transition-all cursor-pointer text-green-700 text-sm font-medium disabled:opacity-50"
-                    >
-                      {isSaving ? "Guardando..." : "Guardar"}
-                    </button>
-                  </>
-                )}
               </div>
             </div>
           </div>
@@ -655,8 +686,38 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
                       {isEditMode && estado === "borrador" && <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" />}
                     </button>
 
-                    {/* PDF + more options */}
+                    {/* PDF + edit controls + more options */}
                     <div className="flex items-center gap-2 shrink-0">
+                      {/* Pencil / Cancelar+Guardar — borrador only */}
+                      {estado === "borrador" && !isEditMode && (
+                        <button
+                          type="button"
+                          onClick={enterEditMode}
+                          className="h-8 w-8 flex items-center justify-center transition-colors bg-white border border-slate-200 hover:bg-slate-50 cursor-pointer rounded-md shadow-sm"
+                          title="Editar presupuesto"
+                        >
+                          <Pencil className="w-3.5 h-3.5 text-slate-500" />
+                        </button>
+                      )}
+                      {estado === "borrador" && isEditMode && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={cancelEditMode}
+                            className="h-8 text-xs transition-colors bg-white border border-slate-200 hover:bg-slate-50 cursor-pointer gap-1.5 px-3 rounded-md flex items-center text-slate-600 font-medium shadow-sm"
+                          >
+                            Cancelar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleGuardar}
+                            disabled={isSaving}
+                            className="h-8 text-xs transition-colors bg-slate-900 hover:bg-slate-800 border border-slate-900 cursor-pointer gap-1.5 px-3 rounded-md flex items-center text-white font-medium shadow-sm disabled:opacity-50"
+                          >
+                            {isSaving ? "Guardando..." : "Guardar cambios"}
+                          </button>
+                        </>
+                      )}
                       <button
                         type="button"
                         onClick={handleDownloadPDF}
@@ -1007,32 +1068,13 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
                   </div>{/* end padding wrapper */}
                 </div>{/* end productos card */}
 
-                {/* Edit mode toggle — only for borradores */}
-                {estado === "borrador" && !isEditMode && (
-                  <button
-                    type="button"
-                    onClick={enterEditMode}
-                    className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 transition-colors"
-                  >
-                    <Pencil className="w-3 h-3" />
-                    Editar presupuesto
-                  </button>
-                )}
-
                 {/* ── Notas card ── */}
-                <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-2">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider">Notas</span>
-                  <textarea
-                    placeholder="Agregar una nota sobre este presupuesto..."
-                    defaultValue={presupuesto.observaciones ?? ""}
-                    rows={3}
-                    readOnly={estado !== "borrador"}
-                    onBlur={(e) => {
-                      if (estado === "borrador") updatePresupuesto(presupuesto.id, { observaciones: e.target.value })
-                    }}
-                    className="w-full resize-none text-sm text-slate-700 placeholder:text-slate-300 bg-transparent border-none outline-none leading-relaxed"
-                  />
-                </div>
+                <NotasCard
+                  value={presupuesto.observaciones ?? ""}
+                  readOnly={estado !== "borrador"}
+                  placeholder="Agregar una nota sobre este presupuesto..."
+                  onSave={(v) => updatePresupuesto(presupuesto.id, { observaciones: v })}
+                />
 
               </div>{/* end col-span-2 */}
 
