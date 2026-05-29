@@ -4,8 +4,9 @@ import { useEffect, useState } from "react"
 import Image from "next/image"
 import { X, Copy, Check } from "lucide-react"
 import type { VentaItem } from "@/lib/types"
+import { useItems } from "@/hooks/use-items"
 import { getCategoryImage } from "@/lib/utils/category-images"
-import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
+import { getVentaItemDisplay, lookupLiveItemBySku } from "@/lib/utils/venta-item-lookup"
 
 interface VentaItemDetailModalProps {
   ventaItem: VentaItem
@@ -18,6 +19,9 @@ export function VentaItemDetailModal({ ventaItem, onClose }: VentaItemDetailModa
   const [skuCopied, setSkuCopied] = useState(false)
   const [codigoCopied, setCodigoCopied] = useState(false)
 
+  // Live items for up-to-date stock values
+  const { items: liveItems } = useItems()
+
   const display = getVentaItemDisplay(ventaItem)
   const { resolved, parent, isChild, name, marca, categoria, tags } = display
 
@@ -26,11 +30,17 @@ export function VentaItemDetailModal({ ventaItem, onClose }: VentaItemDetailModa
   const r = resolved as any
   const p = parent as any
 
+  // Look up live stock from the current useItems store
+  const liveResolved = lookupLiveItemBySku(sku, liveItems)
+  const lr = liveResolved.resolved as any
+  const lp = liveResolved.parent as any
+
   const isActive = r?.isActive !== false
   const codigoUniversal = r?.codigoUniversal || p?.codigoUniversal || ""
   const precioFinal = r?.precio?.precioFinal || p?.precio?.precioFinal || 0
-  const stockTotal = Number.parseInt(r?.stock?.total || p?.stock?.total || "0")
-  const stockReservado = Number.parseInt(r?.stock?.reservado || p?.stock?.reservado || "0")
+  // Always use live stock — falls back to snapshot if item not found in live store
+  const stockTotal = Number.parseInt(lr?.stock?.total ?? lp?.stock?.total ?? r?.stock?.total ?? p?.stock?.total ?? "0")
+  const stockReservado = Number.parseInt(lr?.stock?.reservado ?? lp?.stock?.reservado ?? r?.stock?.reservado ?? p?.stock?.reservado ?? "0")
   const stockDisponible = stockTotal - stockReservado
 
   // Info fields

@@ -22,44 +22,50 @@ export interface VentaItemDisplay {
 }
 
 /**
- * Look up a SKU in the catalog. SKUs are either:
- * - Standalone item SKU (matches `item.sku` directly)
- * - Parent SKU (matches `item.skuPrefix`)
- * - Child SKU formatted as `${parent.skuPrefix}-${variant.skuSuffix}`
+ * Core SKU lookup logic against any items array.
+ * Used by both the static INITIAL_ITEMS lookup and the live useItems store lookup.
  */
-export function lookupCatalogItemBySku(sku: string): ResolvedVentaItem {
+function lookupSkuInList(sku: string, list: Item[]): ResolvedVentaItem {
   if (!sku) return { resolved: null, parent: null, isChild: false }
 
   // Try standalone first (exact match on item.sku)
-  const standalone = INITIAL_ITEMS.find((it) => !it.hasVariants && !it.isAgrupador && it.sku === sku)
-  if (standalone) {
-    return { resolved: standalone, parent: null, isChild: false }
-  }
+  const standalone = list.find((it) => !it.hasVariants && !it.isAgrupador && it.sku === sku)
+  if (standalone) return { resolved: standalone, parent: null, isChild: false }
 
   // Try parent (sku === skuPrefix or sku === sku)
-  const parentMatch = INITIAL_ITEMS.find(
+  const parentMatch = list.find(
     (it) => (it.hasVariants || it.isAgrupador) && (it.skuPrefix === sku || it.sku === sku),
   )
-  if (parentMatch) {
-    return { resolved: parentMatch, parent: null, isChild: false }
-  }
+  if (parentMatch) return { resolved: parentMatch, parent: null, isChild: false }
 
   // Try parent + variant: sku startsWith parent.skuPrefix + "-"
-  for (const parent of INITIAL_ITEMS) {
+  for (const parent of list) {
     const prefix = parent.skuPrefix || parent.sku
-    if (!prefix) continue
-    if (!parent.variants?.length) continue
+    if (!prefix || !parent.variants?.length) continue
     const fullPrefix = `${prefix}-`
     if (!sku.startsWith(fullPrefix)) continue
-
     const suffix = sku.slice(fullPrefix.length)
     const variant = parent.variants.find((v) => v.skuSuffix === suffix || v.sku === suffix || v.sku === sku)
-    if (variant) {
-      return { resolved: variant, parent, isChild: true }
-    }
+    if (variant) return { resolved: variant, parent, isChild: true }
   }
 
   return { resolved: null, parent: null, isChild: false }
+}
+
+/**
+ * Look up a SKU against the static INITIAL_ITEMS snapshot.
+ * Use for display/name resolution where live stock is not needed.
+ */
+export function lookupCatalogItemBySku(sku: string): ResolvedVentaItem {
+  return lookupSkuInList(sku, INITIAL_ITEMS)
+}
+
+/**
+ * Look up a SKU against the live items array from useItems().
+ * Use this anywhere you need live stock values (disponible, total, reservado).
+ */
+export function lookupLiveItemBySku(sku: string, liveItems: Item[]): ResolvedVentaItem {
+  return lookupSkuInList(sku, liveItems)
 }
 
 /**
