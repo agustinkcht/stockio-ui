@@ -9,7 +9,7 @@ import { UserPanel } from "@/components/layout/user-panel"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import {
   FileDown,
-  ReceiptText,
+
   ChevronDown,
   MoreVertical,
   Package,
@@ -789,11 +789,11 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                           )}
                           <button
                             type="button"
-                            onClick={() => setShowTicketModal(true)}
+                            onClick={handleDownloadPDF}
                             className="h-8 text-xs transition-colors bg-white border border-slate-200 hover:bg-slate-50 cursor-pointer gap-1.5 px-3 rounded-md flex items-center text-slate-700 font-medium shadow-sm"
                           >
-                            <ReceiptText className="w-3.5 h-3.5 text-slate-500" />
-                            Ver ticket
+                            <FileDown className="w-3.5 h-3.5 text-slate-500" />
+                            Descargar PDF
                           </button>
                           <div className="relative" ref={moreMenuRef}>
                             <button
@@ -804,13 +804,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             </button>
                             {showMoreOptionsMenu && (
                               <div className="absolute top-full right-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[160px]">
-                                <button
-                                  onClick={() => { setShowMoreOptionsMenu(false); handleDownloadPDF() }}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
-                                >
-                                  <FileDown className="w-4 h-4 text-slate-400" />
-                                  Descargar PDF
-                                </button>
                                 {estadoUI !== "cancelada" && (
                                   <button
                                     onClick={() => { setShowMoreOptionsMenu(false); setShowCancelarVentaModal(true) }}

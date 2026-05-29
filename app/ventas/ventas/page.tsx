@@ -16,8 +16,7 @@ import {
   ArrowUpDown,
   CheckCircle2,
   Clock,
-  Receipt,
-  ReceiptText,
+
   Search,
   Plus,
   XCircle,
@@ -598,23 +597,16 @@ export default function VentasPage() {
                         </div>
                         {/* Spacer */}
                         <div className="col-span-40" />
-                        {/* Ver ticket */}
+                        {/* Descargar PDF */}
                         <div className="col-span-14 flex items-center justify-end pr-3 border-r border-slate-200/70">
-                          {isFacturada ? (
-                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50">
-                              <Receipt className="w-3.5 h-3.5 text-blue-600" />
-                              <span className="text-xs font-medium text-blue-600">Facturada</span>
-                            </div>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={(e) => { e.stopPropagation(); setViewingTicketVenta(venta) }}
-                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-colors cursor-pointer"
-                            >
-                              <ReceiptText className="w-3.5 h-3.5 text-slate-500" />
-                              <span className="text-xs font-medium text-slate-600">Ver ticket</span>
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); downloadVentasPDF([venta], miNegocio) }}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-colors cursor-pointer"
+                          >
+                            <FileDown className="w-3.5 h-3.5 text-slate-500" />
+                            <span className="text-xs font-medium text-slate-600">Descargar PDF</span>
+                          </button>
                         </div>
                         <div
                           className="col-span-4 flex items-center justify-center border-l border-slate-200/70 relative"
@@ -641,13 +633,6 @@ export default function VentasPage() {
                                   Marcar como finalizada
                                 </button>
                               )}
-                              <button
-                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
-                                onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); downloadVentasPDF([venta], miNegocio) }}
-                              >
-                                <FileDown className="w-4 h-4 text-slate-400" />
-                                Descargar PDF
-                              </button>
                               {(venta.estado === "en_curso" || venta.estado === "finalizada") && (
                                 <button
                                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors text-left"
