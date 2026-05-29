@@ -836,19 +836,19 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                           {estadoUI === "finalizada" && (
                             <div className="bg-emerald-50 border border-emerald-200/60 rounded-lg shadow-sm px-5 py-4 flex items-center gap-3">
                               <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
-                              <span className="text-xl font-bold text-emerald-700">Finalizada</span>
+                              <span className="text-lg font-bold text-emerald-700">Finalizada</span>
                             </div>
                           )}
                           {estadoUI === "en_curso" && (
                             <div className="bg-amber-50 border border-amber-200/60 rounded-lg shadow-sm px-5 py-4 flex items-center gap-3">
                               <Clock className="w-5 h-5 text-amber-500 shrink-0" />
-                              <span className="text-xl font-bold text-amber-700">En Curso</span>
+                              <span className="text-lg font-bold text-amber-700">En Curso</span>
                             </div>
                           )}
                           {estadoUI === "cancelada" && (
                             <div className="bg-red-50 border border-red-200/60 rounded-lg shadow-sm px-5 py-4 flex items-center gap-3">
                               <XCircle className="w-5 h-5 text-red-400 shrink-0" />
-                              <span className="text-xl font-bold text-red-600">Cancelada</span>
+                              <span className="text-lg font-bold text-red-600">Cancelada</span>
                             </div>
                           )}
 
