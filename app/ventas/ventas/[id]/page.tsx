@@ -795,9 +795,9 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       {/* Row 1: Venta ID · fecha · origen (same for all estados) */}
                       <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center flex-1 min-w-0">
-                          <div className="flex items-baseline gap-1.5 shrink-0">
-                            <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Venta</span>
-                            <span className="text-2xl font-bold text-slate-900 leading-none tracking-tight">{venta.id}</span>
+                          <div className="flex items-baseline gap-2 shrink-0">
+                            <span className="text-lg font-bold text-slate-900 leading-none">Venta</span>
+                            <span className="text-sm font-medium text-slate-400 leading-none tabular-nums">{venta.id}</span>
                           </div>
                           <div className="h-5 w-px bg-slate-300 shrink-0 mx-5" />
                           <span className="text-sm font-medium text-slate-600 tabular-nums shrink-0">
@@ -806,7 +806,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                           <div className="h-5 w-px bg-slate-300 shrink-0 mx-5" />
                           <div className="flex items-center gap-2 shrink-0">
                             <span className="text-sm font-medium text-slate-500">
-                              {venta.origen === "pdv" ? "Punto de Venta" : venta.origen === "presupuesto" ? "Creada desde presupuesto" : "Creada manualmente"}
+                              {venta.origen === "pdv" ? "Punto de venta" : venta.origen === "presupuesto" ? "Creada desde presupuesto" : "Creada manualmente"}
                             </span>
                             {venta.origen === "presupuesto" && (venta as any).presupuestoId && (
                               <button

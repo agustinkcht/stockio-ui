@@ -592,7 +592,7 @@ export default function VentasPage() {
                         {/* Origen */}
                         <div className="col-span-42 flex items-center justify-start px-3 gap-2">
                           <span className="text-sm text-slate-600 shrink-0">
-                            {(venta as any).origen === "pdv" ? "Punto de Venta" : (venta as any).origen === "presupuesto" ? "Creada desde presupuesto" : "Creada manualmente"}
+                            {(venta as any).origen === "pdv" ? "Punto de venta" : (venta as any).origen === "presupuesto" ? "Creada desde presupuesto" : "Creada manualmente"}
                           </span>
                           {(venta as any).origen === "presupuesto" && (venta as any).presupuestoId && (
                             <button
