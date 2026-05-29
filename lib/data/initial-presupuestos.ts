@@ -1,375 +1,541 @@
 import type { Presupuesto } from "@/lib/types"
 
-// Helper: apply item discount and compute total for a single item
-function itemTotal(
-  unitPrice: number,
-  quantity: number,
-  discount: number,
-  discountType: "percent" | "fixed" | "unit",
-): number {
-  if (discountType === "unit") {
-    const paidQty = Math.max(0, quantity - Math.min(discount, quantity))
-    return paidQty * unitPrice
-  }
-  const gross = unitPrice * quantity
-  const disc =
-    discountType === "percent" ? gross * (discount / 100) : discount * quantity
-  return gross - disc
-}
+// All SKUs and prices match records in initial-items.ts (precioFinal values).
+// All client IDs match records in clientes.ts.
 
 export const INITIAL_PRESUPUESTOS: Presupuesto[] = [
-  // ─────────────────────────────────────────────
-  // PRE-001 · BORRADOR · Distribuidora Norte S.A.
-  // ─────────────────────────────────────────────
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // PRE-001 · BORRADOR · Distribuidora Norte S.A. · vinos Proemio Grand Reserve
+  // ─────────────────────────────────────────────────────────────────────────
   {
     id: "PRE-001",
     numero: 1,
-    fecha: "2025-12-20",
-    hora: "09:15",
+    fecha: "2026-04-18",
+    hora: "10:05",
     cliente: { tipo: "cuenta", id: "CLI-003", nombre: "Distribuidora Norte S.A." },
     items: [
       {
-        sku: "ESP-CHAND-BRUT",
-        name: "Chandon Brut",
-        quantity: 12,
-        unitPrice: 18500,
-        discount: 10,
-        discountType: "percent",
-        total: itemTotal(18500, 12, 10, "percent"),
-        categoria: "Espumantes",
-      },
-      {
         sku: "VNO-PROGRES-MALB-2019",
         name: "Proemio Grand Reserve Malbec 2019",
-        quantity: 6,
-        unitPrice: 42000,
-        discount: 0,
+        quantity: 12,
+        unitPrice: 76230,
+        discount: 10,
         discountType: "percent",
-        total: itemTotal(42000, 6, 0, "percent"),
+        total: 823284,
+        categoria: "Vinos",
+      },
+      {
+        sku: "VNO-PROGRES-CABS-2019",
+        name: "Proemio Grand Reserve Cabernet Sauvignon 2019",
+        quantity: 6,
+        unitPrice: 83490,
+        discount: 10,
+        discountType: "percent",
+        total: 450846,
+        categoria: "Vinos",
+      },
+      {
+        sku: "VNO-PROGRES-SYGA-2019",
+        name: "Proemio Grand Reserve Syrah Garnacha 2019",
+        quantity: 6,
+        unitPrice: 78045,
+        discount: 10,
+        discountType: "percent",
+        total: 421443,
         categoria: "Vinos",
       },
     ],
-    subtotal: itemTotal(18500, 12, 10, "percent") + itemTotal(42000, 6, 0, "percent"),
-    descuento: 5,
+    subtotal: 1695573,
+    descuento: 0,
     descuentoTipo: "percent",
-    envio: 0,
-    total:
-      (itemTotal(18500, 12, 10, "percent") + itemTotal(42000, 6, 0, "percent")) * 0.95,
+    envio: 15000,
+    total: 1710573,
     estado: "borrador",
-    observaciones: "Cliente solicitó cotización para fin de año.",
-    fechaValidez: "2026-01-05",
+    observaciones: "Pedido para reposición de stock premium. Validez 30 días.",
   },
 
-  // ─────────────────────────────────────────────
-  // PRE-002 · BORRADOR · Vinoteca El Sabor SRL
-  // ─────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────
+  // PRE-002 · BORRADOR · Vinoteca Moderna S.A. · whiskies + gin
+  // ─────────────────────────────────────────────────────────────────────────
   {
     id: "PRE-002",
     numero: 2,
-    fecha: "2025-12-22",
-    hora: "11:40",
-    cliente: { tipo: "cuenta", id: "CLI-004", nombre: "Vinoteca El Sabor SRL" },
+    fecha: "2026-04-19",
+    hora: "14:30",
+    cliente: { tipo: "cuenta", id: "CLI-010", nombre: "Vinoteca Moderna S.A." },
     items: [
       {
-        sku: "ESP-NAVCOR-EXBR",
-        name: "Navarro Correas Extra Brut",
-        quantity: 24,
-        unitPrice: 15000,
-        discount: 8,
-        discountType: "percent",
-        total: itemTotal(15000, 24, 8, "percent"),
-        categoria: "Espumantes",
-      },
-      {
-        sku: "ESP-CHAND-BRUT",
-        name: "Chandon Brut",
-        quantity: 12,
-        unitPrice: 18500,
-        discount: 8,
-        discountType: "percent",
-        total: itemTotal(18500, 12, 8, "percent"),
-        categoria: "Espumantes",
-      },
-      {
-        sku: "VNO-PROGRES-MALB-2019",
-        name: "Proemio Grand Reserve Malbec 2019",
-        quantity: 12,
-        unitPrice: 42000,
+        sku: "WHKY-JW750-BLACK",
+        name: "Johnnie Walker Black Label",
+        quantity: 6,
+        unitPrice: 52500,
         discount: 5,
         discountType: "percent",
-        total: itemTotal(42000, 12, 5, "percent"),
-        categoria: "Vinos",
+        total: 299250,
+        categoria: "Whiskies",
+      },
+      {
+        sku: "WHKY-JDOLD7",
+        name: "Jack Daniel's Old No.7",
+        quantity: 6,
+        unitPrice: 34020,
+        discount: 5,
+        discountType: "percent",
+        total: 193914,
+        categoria: "Whiskies",
+      },
+      {
+        sku: "GIN-BOMSAPH",
+        name: "Bombay Sapphire",
+        quantity: 4,
+        unitPrice: 29040,
+        discount: 0,
+        discountType: "percent",
+        total: 116160,
+        categoria: "Gin",
+      },
+      {
+        sku: "GIN-RESTINGA-ORIG",
+        name: "Restinga Original",
+        quantity: 4,
+        unitPrice: 19965,
+        discount: 0,
+        discountType: "percent",
+        total: 79860,
+        categoria: "Gin",
       },
     ],
-    subtotal:
-      itemTotal(15000, 24, 8, "percent") +
-      itemTotal(18500, 12, 8, "percent") +
-      itemTotal(42000, 12, 5, "percent"),
+    subtotal: 689184,
     descuento: 0,
     descuentoTipo: "percent",
-    envio: 3500,
-    total:
-      itemTotal(15000, 24, 8, "percent") +
-      itemTotal(18500, 12, 8, "percent") +
-      itemTotal(42000, 12, 5, "percent") +
-      3500,
+    total: 689184,
     estado: "borrador",
-    fechaValidez: "2026-01-10",
   },
 
-  // ─────────────────────────────────────────────
-  // PRE-003 · ACEPTADO · Juan Pérez
-  // ─────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────
+  // PRE-003 · ACEPTADO · Restaurant La Esquina · vinos + espumantes + licores
+  // Generó VTA-002
+  // ─────────────────────────────────────────────────────────────────────────
   {
     id: "PRE-003",
     numero: 3,
-    fecha: "2025-12-10",
-    hora: "14:20",
-    cliente: { tipo: "cuenta", id: "CLI-001", nombre: "Juan Pérez" },
+    fecha: "2026-04-01",
+    hora: "11:00",
+    cliente: { tipo: "cuenta", id: "CLI-006", nombre: "Restaurant La Esquina" },
     items: [
       {
-        sku: "VNO-PROGRES-MALB-2019",
-        name: "Proemio Grand Reserve Malbec 2019",
-        quantity: 3,
-        unitPrice: 42000,
+        sku: "VNO-DOMESTE-MALB",
+        name: "Domiciano Estelar Malbec",
+        quantity: 12,
+        unitPrice: 25410,
         discount: 0,
         discountType: "percent",
-        total: itemTotal(42000, 3, 0, "percent"),
+        total: 304920,
         categoria: "Vinos",
       },
       {
-        sku: "ESP-CHAND-BRUT",
-        name: "Chandon Brut",
-        quantity: 6,
-        unitPrice: 18500,
+        sku: "VNO-DOMESTE-CHRD",
+        name: "Domiciano Estelar Chardonnay",
+        quantity: 12,
+        unitPrice: 29040,
         discount: 0,
         discountType: "percent",
-        total: itemTotal(18500, 6, 0, "percent"),
+        total: 348480,
+        categoria: "Vinos",
+      },
+      {
+        sku: "ESP-SALENT-EXBR",
+        name: "Salentein Extra Brut",
+        quantity: 6,
+        unitPrice: 39930,
+        discount: 0,
+        discountType: "percent",
+        total: 239580,
         categoria: "Espumantes",
       },
+      {
+        sku: "ESP-SALENT-BRRO",
+        name: "Salentein Brut Rosé",
+        quantity: 6,
+        unitPrice: 41730,
+        discount: 0,
+        discountType: "percent",
+        total: 250380,
+        categoria: "Espumantes",
+      },
+      {
+        sku: "LICR-JGRM700",
+        name: "Jägermeister 700 ml",
+        quantity: 4,
+        unitPrice: 27615,
+        discount: 0,
+        discountType: "percent",
+        total: 110460,
+        categoria: "Licores",
+      },
     ],
-    subtotal: itemTotal(42000, 3, 0, "percent") + itemTotal(18500, 6, 0, "percent"),
-    descuento: 0,
+    subtotal: 1253820,
+    descuento: 5,
     descuentoTipo: "percent",
-    total: itemTotal(42000, 3, 0, "percent") + itemTotal(18500, 6, 0, "percent"),
+    total: 1191129,
     estado: "aceptado",
-    ventaId: "VTA-005",
-    fechaValidez: "2025-12-25",
+    ventaId: "VTA-002",
   },
 
-  // ─────────────────────────────────────────────
-  // PRE-004 · ACEPTADO · Distribuidora Norte S.A.
-  // ─────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────
+  // PRE-004 · ACEPTADO · Vinoteca El Sabor SRL · DV Catena
+  // Generó VTA-003
+  // ─────────────────────────────────────────────────────────────────────────
   {
     id: "PRE-004",
     numero: 4,
-    fecha: "2025-12-05",
-    hora: "10:00",
-    cliente: { tipo: "cuenta", id: "CLI-003", nombre: "Distribuidora Norte S.A." },
-    items: [
-      {
-        sku: "ESP-NAVCOR-EXBR",
-        name: "Navarro Correas Extra Brut",
-        quantity: 48,
-        unitPrice: 15000,
-        discount: 12,
-        discountType: "percent",
-        total: itemTotal(15000, 48, 12, "percent"),
-        categoria: "Espumantes",
-      },
-    ],
-    subtotal: itemTotal(15000, 48, 12, "percent"),
-    descuento: 0,
-    descuentoTipo: "percent",
-    envio: 5000,
-    total: itemTotal(15000, 48, 12, "percent") + 5000,
-    estado: "aceptado",
-    ventaId: "VTA-001",
-    fechaValidez: "2025-12-15",
-  },
-
-  // ─────────────────────────────────────────────
-  // PRE-005 · BORRADOR · María González
-  // ─────────────────────────────────────────────
-  {
-    id: "PRE-005",
-    numero: 5,
-    fecha: "2025-12-28",
-    hora: "16:55",
-    cliente: { tipo: "cuenta", id: "CLI-002", nombre: "María González" },
-    items: [
-      {
-        sku: "ESP-CHAND-BRUT",
-        name: "Chandon Brut",
-        quantity: 2,
-        unitPrice: 18500,
-        discount: 0,
-        discountType: "percent",
-        total: itemTotal(18500, 2, 0, "percent"),
-        categoria: "Espumantes",
-      },
-      {
-        sku: "ESP-NAVCOR-EXBR",
-        name: "Navarro Correas Extra Brut",
-        quantity: 4,
-        unitPrice: 15000,
-        discount: 0,
-        discountType: "percent",
-        total: itemTotal(15000, 4, 0, "percent"),
-        categoria: "Espumantes",
-      },
-    ],
-    subtotal: itemTotal(18500, 2, 0, "percent") + itemTotal(15000, 4, 0, "percent"),
-    descuento: 0,
-    descuentoTipo: "percent",
-    total: itemTotal(18500, 2, 0, "percent") + itemTotal(15000, 4, 0, "percent"),
-    estado: "borrador",
-    observaciones: "Cliente consultó para evento de cumpleaños.",
-    fechaValidez: "2026-01-15",
-  },
-
-  // ─────────────────────────────────────────────
-  // PRE-006 · RECHAZADO · Consumidor Final
-  // ─────────────────────────────────────────────
-  {
-    id: "PRE-006",
-    numero: 6,
-    fecha: "2025-11-30",
-    hora: "13:10",
-    cliente: { tipo: "consumidor_final" },
-    items: [
-      {
-        sku: "VNO-PROGRES-MALB-2019",
-        name: "Proemio Grand Reserve Malbec 2019",
-        quantity: 6,
-        unitPrice: 42000,
-        discount: 0,
-        discountType: "percent",
-        total: itemTotal(42000, 6, 0, "percent"),
-        categoria: "Vinos",
-      },
-      {
-        sku: "ESP-CHAND-BRUT",
-        name: "Chandon Brut",
-        quantity: 6,
-        unitPrice: 18500,
-        discount: 0,
-        discountType: "percent",
-        total: itemTotal(18500, 6, 0, "percent"),
-        categoria: "Espumantes",
-      },
-    ],
-    subtotal: itemTotal(42000, 6, 0, "percent") + itemTotal(18500, 6, 0, "percent"),
-    descuento: 0,
-    descuentoTipo: "percent",
-    total: itemTotal(42000, 6, 0, "percent") + itemTotal(18500, 6, 0, "percent"),
-    estado: "rechazado",
-    observaciones: "Cliente indicó que encontró mejor precio en otro proveedor.",
-    fechaValidez: "2025-12-10",
-  },
-
-  // ─────────────────────────────────────────────
-  // PRE-007 · ACEPTADO · Vinoteca El Sabor SRL
-  // ─────────────────────────────────────────────
-  {
-    id: "PRE-007",
-    numero: 7,
-    fecha: "2025-12-01",
-    hora: "09:30",
+    fecha: "2026-04-05",
+    hora: "09:45",
     cliente: { tipo: "cuenta", id: "CLI-004", nombre: "Vinoteca El Sabor SRL" },
     items: [
       {
-        sku: "ESP-NAVCOR-EXBR",
-        name: "Navarro Correas Extra Brut",
-        quantity: 36,
-        unitPrice: 15000,
-        discount: 10,
+        sku: "VNO-DVCAT-MALB",
+        name: "DV Catena Malbec",
+        quantity: 6,
+        unitPrice: 97860,
+        discount: 8,
         discountType: "percent",
-        total: itemTotal(15000, 36, 10, "percent"),
+        total: 540050,
+        categoria: "Vinos",
+      },
+      {
+        sku: "VNO-DVCAT-CABS",
+        name: "DV Catena Cabernet Sauvignon",
+        quantity: 6,
+        unitPrice: 96090,
+        discount: 8,
+        discountType: "percent",
+        total: 530657,
+        categoria: "Vinos",
+      },
+    ],
+    subtotal: 1070707,
+    descuento: 0,
+    descuentoTipo: "percent",
+    total: 1070707,
+    estado: "aceptado",
+    ventaId: "VTA-003",
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // PRE-005 · BORRADOR · Distribuciones Cortés · whiskies
+  // ─────────────────────────────────────────────────────────────────────────
+  {
+    id: "PRE-005",
+    numero: 5,
+    fecha: "2026-04-20",
+    hora: "16:15",
+    cliente: { tipo: "cuenta", id: "CLI-011", nombre: "Distribuciones Cortés" },
+    items: [
+      {
+        sku: "WHKY-JMSOR",
+        name: "Jameson Original",
+        quantity: 6,
+        unitPrice: 35940,
+        discount: 0,
+        discountType: "percent",
+        total: 215640,
+        categoria: "Whiskies",
+      },
+      {
+        sku: "WHKY-JMSBB",
+        name: "Jameson Black Barrel",
+        quantity: 4,
+        unitPrice: 41250,
+        discount: 0,
+        discountType: "percent",
+        total: 165000,
+        categoria: "Whiskies",
+      },
+      {
+        sku: "WHKY-JW750-DBLK",
+        name: "Johnnie Walker Double Black",
+        quantity: 3,
+        unitPrice: 60000,
+        discount: 0,
+        discountType: "percent",
+        total: 180000,
+        categoria: "Whiskies",
+      },
+    ],
+    subtotal: 560640,
+    descuento: 0,
+    descuentoTipo: "percent",
+    total: 560640,
+    estado: "borrador",
+    observaciones: "Pendiente confirmación de cantidades con el cliente.",
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // PRE-006 · RECHAZADO · Valentina Gómez · espumantes + licores
+  // ─────────────────────────────────────────────────────────────────────────
+  {
+    id: "PRE-006",
+    numero: 6,
+    fecha: "2026-04-10",
+    hora: "12:00",
+    cliente: { tipo: "cuenta", id: "CLI-012", nombre: "Valentina Gómez" },
+    items: [
+      {
+        sku: "ESP-SALENT-BRNA",
+        name: "Salentein Brut Nature",
+        quantity: 3,
+        unitPrice: 43560,
+        discount: 0,
+        discountType: "percent",
+        total: 130680,
         categoria: "Espumantes",
       },
+      {
+        sku: "ESP-NAVCOR-EXBR",
+        name: "Navarro Correas Extra Brut",
+        quantity: 3,
+        unitPrice: 27150,
+        discount: 0,
+        discountType: "percent",
+        total: 81450,
+        categoria: "Espumantes",
+      },
+      {
+        sku: "LICR-SHEROR",
+        name: "Sheridan's Original",
+        quantity: 2,
+        unitPrice: 30240,
+        discount: 0,
+        discountType: "percent",
+        total: 60480,
+        categoria: "Licores",
+      },
+    ],
+    subtotal: 272610,
+    descuento: 0,
+    descuentoTipo: "percent",
+    total: 272610,
+    estado: "rechazado",
+    observaciones: "Cliente rechazó por presupuesto fuera de su rango.",
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // PRE-007 · ACEPTADO · Distribuidora Norte S.A. · vinos Proemio + espumante
+  // Generó VTA-001
+  // ─────────────────────────────────────────────────────────────────────────
+  {
+    id: "PRE-007",
+    numero: 7,
+    fecha: "2026-03-28",
+    hora: "09:00",
+    cliente: { tipo: "cuenta", id: "CLI-003", nombre: "Distribuidora Norte S.A." },
+    items: [
       {
         sku: "VNO-PROGRES-MALB-2019",
         name: "Proemio Grand Reserve Malbec 2019",
         quantity: 6,
-        unitPrice: 42000,
-        discount: 5,
+        unitPrice: 76230,
+        discount: 10,
         discountType: "percent",
-        total: itemTotal(42000, 6, 5, "percent"),
+        total: 411642,
         categoria: "Vinos",
       },
-    ],
-    subtotal:
-      itemTotal(15000, 36, 10, "percent") + itemTotal(42000, 6, 5, "percent"),
-    descuento: 3,
-    descuentoTipo: "percent",
-    envio: 4000,
-    total:
-      (itemTotal(15000, 36, 10, "percent") + itemTotal(42000, 6, 5, "percent")) *
-        0.97 +
-      4000,
-    estado: "aceptado",
-    ventaId: "VTA-003",
-    fechaValidez: "2025-12-12",
-  },
-
-  // ─────────────────────────────────────────────
-  // PRE-008 · BORRADOR · Distribuidora Norte S.A.
-  // Large quote, descuento global + envío
-  // ─────────────────────────────────────────────
-  {
-    id: "PRE-008",
-    numero: 8,
-    fecha: "2025-12-29",
-    hora: "08:45",
-    cliente: { tipo: "cuenta", id: "CLI-003", nombre: "Distribuidora Norte S.A." },
-    items: [
       {
-        sku: "ESP-CHAND-BRUT",
-        name: "Chandon Brut",
-        quantity: 60,
-        unitPrice: 18500,
-        discount: 15,
+        sku: "VNO-PROGRES-CABS-2019",
+        name: "Proemio Grand Reserve Cabernet Sauvignon 2019",
+        quantity: 6,
+        unitPrice: 83490,
+        discount: 10,
         discountType: "percent",
-        total: itemTotal(18500, 60, 15, "percent"),
-        categoria: "Espumantes",
+        total: 450846,
+        categoria: "Vinos",
       },
       {
         sku: "ESP-NAVCOR-EXBR",
         name: "Navarro Correas Extra Brut",
-        quantity: 60,
-        unitPrice: 15000,
-        discount: 15,
+        quantity: 12,
+        unitPrice: 27150,
+        discount: 5,
         discountType: "percent",
-        total: itemTotal(15000, 60, 15, "percent"),
+        total: 309510,
+        categoria: "Espumantes",
+      },
+    ],
+    subtotal: 1171998,
+    descuento: 0,
+    descuentoTipo: "percent",
+    envio: 8500,
+    total: 1180498,
+    estado: "aceptado",
+    ventaId: "VTA-001",
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // PRE-008 · BORRADOR · Consumidor final · vodka + tequila + ron
+  // ─────────────────────────────────────────────────────────────────────────
+  {
+    id: "PRE-008",
+    numero: 8,
+    fecha: "2026-04-21",
+    hora: "17:50",
+    cliente: { tipo: "consumidor_final" },
+    items: [
+      {
+        sku: "TEQ-PATSLVR",
+        name: "Patrón Silver",
+        quantity: 2,
+        unitPrice: 47030,
+        discount: 0,
+        discountType: "percent",
+        total: 94060,
+        categoria: "Tequila",
+      },
+      {
+        sku: "VDKA-CRCOR",
+        name: "Cîroc Original",
+        quantity: 2,
+        unitPrice: 36300,
+        discount: 0,
+        discountType: "percent",
+        total: 72600,
+        categoria: "Vodka",
+      },
+      {
+        sku: "RON-MALIBU",
+        name: "Malibu",
+        quantity: 2,
+        unitPrice: 25550,
+        discount: 0,
+        discountType: "percent",
+        total: 51100,
+        categoria: "Ron",
+      },
+    ],
+    subtotal: 217760,
+    descuento: 0,
+    descuentoTipo: "percent",
+    total: 217760,
+    estado: "borrador",
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // PRE-009 · BORRADOR · Martín López · línea Domiciano completa
+  // ─────────────────────────────────────────────────────────────────────────
+  {
+    id: "PRE-009",
+    numero: 9,
+    fecha: "2026-04-22",
+    hora: "11:20",
+    cliente: { tipo: "cuenta", id: "CLI-009", nombre: "Martín López" },
+    items: [
+      {
+        sku: "VNO-DOMGRES-BLND",
+        name: "Domiciano Gran Reserva Blend",
+        quantity: 4,
+        unitPrice: 32580,
+        discount: 0,
+        discountType: "percent",
+        total: 130320,
+        categoria: "Vinos",
+      },
+      {
+        sku: "VNO-DOMESTE-BLND",
+        name: "Domiciano Estelar Blend",
+        quantity: 4,
+        unitPrice: 27150,
+        discount: 0,
+        discountType: "percent",
+        total: 108600,
+        categoria: "Vinos",
+      },
+      {
+        sku: "ESP-DOMES-BRNA",
+        name: "Domiciano Estelar Brut Nature",
+        quantity: 3,
+        unitPrice: 27150,
+        discount: 0,
+        discountType: "percent",
+        total: 81450,
         categoria: "Espumantes",
       },
       {
-        sku: "VNO-PROGRES-MALB-2019",
-        name: "Proemio Grand Reserve Malbec 2019",
-        quantity: 24,
-        unitPrice: 42000,
-        discount: 10,
+        sku: "LICR-DOMIMST",
+        name: "Domiciano Mistela",
+        quantity: 2,
+        unitPrice: 21720,
+        discount: 0,
         discountType: "percent",
-        total: itemTotal(42000, 24, 10, "percent"),
-        categoria: "Vinos",
+        total: 43440,
+        categoria: "Licores",
       },
     ],
-    subtotal:
-      itemTotal(18500, 60, 15, "percent") +
-      itemTotal(15000, 60, 15, "percent") +
-      itemTotal(42000, 24, 10, "percent"),
-    descuento: 5,
+    subtotal: 363810,
+    descuento: 0,
     descuentoTipo: "percent",
-    envio: 12000,
-    total:
-      (itemTotal(18500, 60, 15, "percent") +
-        itemTotal(15000, 60, 15, "percent") +
-        itemTotal(42000, 24, 10, "percent")) *
-        0.95 +
-      12000,
+    total: 363810,
     estado: "borrador",
-    observaciones: "Cotización para pedido mayorista enero 2026.",
-    fechaValidez: "2026-01-20",
+    observaciones: "Cliente evalúa la línea Domiciano para su local.",
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // PRE-010 · ACEPTADO · Juan Pérez · whiskies + gin + vodka + licor
+  // Generó VTA-004
+  // ─────────────────────────────────────────────────────────────────────────
+  {
+    id: "PRE-010",
+    numero: 10,
+    fecha: "2026-04-08",
+    hora: "16:30",
+    cliente: { tipo: "cuenta", id: "CLI-001", nombre: "Juan Pérez" },
+    items: [
+      {
+        sku: "WHKY-JW750-BLACK",
+        name: "Johnnie Walker Black Label",
+        quantity: 4,
+        unitPrice: 52500,
+        discount: 0,
+        discountType: "percent",
+        total: 210000,
+        categoria: "Whiskies",
+      },
+      {
+        sku: "GIN-BOMSAPH",
+        name: "Bombay Sapphire",
+        quantity: 2,
+        unitPrice: 29040,
+        discount: 0,
+        discountType: "percent",
+        total: 58080,
+        categoria: "Gin",
+      },
+      {
+        sku: "VDKA-ABSO-ORIG",
+        name: "Absolut Original",
+        quantity: 2,
+        unitPrice: 21720,
+        discount: 0,
+        discountType: "percent",
+        total: 43440,
+        categoria: "Vodka",
+      },
+      {
+        sku: "LICR-SHEROR",
+        name: "Sheridan's Original",
+        quantity: 1,
+        unitPrice: 30240,
+        discount: 0,
+        discountType: "percent",
+        total: 30240,
+        categoria: "Licores",
+      },
+    ],
+    subtotal: 341760,
+    descuento: 0,
+    descuentoTipo: "percent",
+    total: 341760,
+    estado: "aceptado",
+    ventaId: "VTA-004",
   },
 ]
