@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect, useRef, useMemo } from "react"
-import { ChevronDown, ChevronUp, MoreVertical, Layers, Trash2, Copy, Minus, Plus, Check } from "lucide-react"
+import { ChevronDown, ChevronUp, MoreVertical, Layers, Trash2, Copy, Minus, Plus, Check, X } from "lucide-react"
 import type { Item } from "@/lib/types"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { getCategoryImage } from "@/lib/utils/category-images"
@@ -1035,8 +1035,37 @@ export function ItemCard({
       {isPrecioModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/50" onClick={() => setIsPrecioModalOpen(false)} />
-          <div className="relative bg-white rounded-xl shadow-xl p-6 w-full max-w-lg mx-4">
-            <h3 className="text-lg font-semibold text-slate-900 mb-4">Editar Precio</h3>
+          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 overflow-hidden">
+            {/* Item info header */}
+            <div className="px-6 pt-5 pb-4 border-b border-slate-100">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
+                    <img
+                      src={getCategoryImage(item.categoria || parentItem?.categoria) || "/placeholder.svg"}
+                      alt={item.categoria || ""}
+                      className="w-6 h-6 object-contain opacity-70"
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-semibold text-slate-900">Editar Precio</h3>
+                    {item.nombre && <p className="text-sm font-medium text-slate-700 mt-0.5 truncate">{item.nombre}</p>}
+                    {(item.marca || item.categoria || parentItem?.marca || parentItem?.categoria) && (
+                      <p className="text-xs text-slate-400 truncate">
+                        {[item.marca || parentItem?.marca, item.categoria || parentItem?.categoria].filter(Boolean).join(" · ")}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsPrecioModalOpen(false)}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0"
+                >
+                  <X className="w-4 h-4 text-slate-400" />
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
             <div className="grid grid-cols-4 gap-3 mb-6">
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Costo</label>
@@ -1107,9 +1136,10 @@ export function ItemCard({
                 }}
                 className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
               >
-                Aceptar
+                Guardar
               </button>
             </div>
+            </div>{/* end p-6 */}
           </div>
         </div>
       )}
@@ -1122,6 +1152,8 @@ export function ItemCard({
         initialTotal={currentStockTotal}
         initialReservado={currentStockReservado}
         itemName={item.nombre}
+        itemMarca={item.marca || parentItem?.marca}
+        itemCategoria={item.categoria || parentItem?.categoria}
         stockMinimo={stock?.stockMinimo}
       />
     </div>
