@@ -40,7 +40,7 @@ import { ClienteModal } from "@/components/ventas/cliente-modal"
 import { TicketModal } from "@/components/ventas/ticket-modal"
 import { CLIENTES } from "@/lib/data/clientes"
 import { INITIAL_ITEMS } from "@/lib/data/initial-items"
-import { useVentas } from "@/hooks/use-ventas"
+import { useVentaStockSync } from "@/hooks/use-venta-stock-sync"
 import { useSettings } from "@/lib/contexts/settings-context"
 import { downloadVentasPDF } from "@/lib/utils/generate-venta-pdf"
 
@@ -146,7 +146,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const router = useRouter()
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
 
-  const { ventas, isLoading: isLoadingVentas, addItemsToVenta, updateVenta, addCobro, addEntregas, addDevolucion, setEstado, finalizarVenta, undoCobro, undoEntregaEntry, updateCobroMedioPago, cancelarVenta } = useVentas()
+  const { ventas, isLoading: isLoadingVentas, addItemsToVenta, updateVenta, addCobro, addEntregas, addDevolucion, setEstado, finalizarVenta, undoCobro, undoEntregaEntry, updateCobroMedioPago, cancelarVenta } = useVentaStockSync()
   const { miNegocio } = useSettings()
   const venta = useMemo(() => ventas.find((v) => v.id === id) || null, [ventas, id])
 

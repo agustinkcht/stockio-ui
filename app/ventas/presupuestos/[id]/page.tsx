@@ -37,7 +37,7 @@ import { INITIAL_ITEMS } from "@/lib/data/initial-items"
 import { usePresupuestos } from "@/hooks/use-presupuestos"
 import { useItems } from "@/hooks/use-items"
 import { useClientes } from "@/hooks/use-clientes"
-import { useVentas } from "@/hooks/use-ventas"
+import { useVentaStockSync } from "@/hooks/use-venta-stock-sync"
 import { NuevoClienteModal } from "@/components/modals/nuevo-cliente-modal"
 import type { Cliente } from "@/lib/data/clientes"
 import jsPDF from "jspdf"
@@ -62,7 +62,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
   const { presupuestos, updatePresupuesto, deletePresupuesto } = usePresupuestos()
   const { items: allItems } = useItems()
   const { clientes, addCliente } = useClientes()
-  const { addVenta } = useVentas()
+  const { addVenta } = useVentaStockSync()
   
   // Track mousedown target for selection
   const mouseDownTargetRef = useRef<EventTarget | null>(null)

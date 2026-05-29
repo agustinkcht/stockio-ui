@@ -32,7 +32,7 @@ import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import { VentaItemDetailModal } from "@/components/ventas/venta-item-detail-modal"
 import { ClienteModal } from "@/components/ventas/cliente-modal"
 import { TicketModal } from "@/components/ventas/ticket-modal"
-import { useVentas } from "@/hooks/use-ventas"
+import { useVentaStockSync } from "@/hooks/use-venta-stock-sync"
 import { useSettings } from "@/lib/contexts/settings-context"
 import { downloadVentasPDF } from "@/lib/utils/generate-venta-pdf"
 import {
@@ -97,7 +97,7 @@ export default function VentasPage() {
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
   const router = useRouter()
   const allCheckboxRef = useRef<HTMLInputElement>(null)
-  const { ventas, cancelarVenta, finalizarVenta } = useVentas()
+  const { ventas, cancelarVenta, finalizarVenta } = useVentaStockSync()
   const { miNegocio } = useSettings()
 
   const { periodKey, customRange, setPeriodKey, setCustomRange } = usePeriod()

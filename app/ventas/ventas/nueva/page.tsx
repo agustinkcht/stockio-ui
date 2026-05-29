@@ -34,7 +34,7 @@ import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 
 import { CLIENTES } from "@/lib/data/clientes"
 import { INITIAL_ITEMS } from "@/lib/data/initial-items"
-import { useVentas } from "@/hooks/use-ventas"
+import { useVentaStockSync } from "@/hooks/use-venta-stock-sync"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import type {
@@ -91,7 +91,7 @@ function getNowTimeStr() {
 export default function NuevaVentaPage() {
   const router = useRouter()
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave } = useSidebar()
-  const { addVenta } = useVentas()
+  const { addVenta } = useVentaStockSync()
   const stepsContainerRef = useRef<HTMLDivElement>(null)
 
   const [currentStep, setCurrentStep] = useState(1)
