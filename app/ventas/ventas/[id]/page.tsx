@@ -755,7 +755,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                           </span>
                           <div className="h-5 w-px bg-slate-300 shrink-0 mx-5" />
                           <span className="text-sm font-medium text-slate-500 shrink-0">
-                            {(venta as any).origen === "pdv" ? "Punto de Venta" : (venta as any).origen === "presupuesto" ? "Presupuesto" : "Manual"}
+                            {venta.origen === "pdv" ? "Punto de Venta" : venta.origen === "presupuesto" ? "Creada desde presupuesto" : "Manual"}
                           </span>
                         </div>
 

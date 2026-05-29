@@ -270,6 +270,10 @@ export interface Venta {
   estado: VentaEstado
   observaciones?: string
   facturaEmitida?: boolean
+  // Origin of the venta: "manual" (default), "pdv" (point of sale), "presupuesto" (created from a presupuesto)
+  origen?: "manual" | "pdv" | "presupuesto"
+  // When origen === "presupuesto", this links back to the source presupuesto id
+  presupuestoId?: string
   // Devoluciones: returned units per item
   devolucionItems?: VentaDevolucionItem[]
   // Devoluciones log: ordered list of return events

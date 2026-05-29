@@ -45,7 +45,7 @@ import {
 type StatusTab = "todas" | "borrador" | "aceptado" | "rechazado"
 
 const estadoConfig: Record<EstadoPresupuesto, { bg: string; text: string; icon: typeof Clock; label: string }> = {
-  borrador:  { bg: "bg-amber-50",    text: "text-amber-600",   icon: Clock,        label: "Borrador"  },
+  borrador:  { bg: "bg-slate-100",   text: "text-slate-600",   icon: Clock,        label: "Borrador"  },
   aceptado:  { bg: "bg-emerald-50",  text: "text-emerald-600", icon: CheckCircle2, label: "Aceptado"  },
   rechazado: { bg: "bg-red-50",      text: "text-red-500",     icon: XCircle,      label: "Rechazado" },
 }
@@ -325,14 +325,14 @@ export default function PresupuestosPage() {
                         <button
                           type="button"
                           onClick={() => countBorrador > 0 && setActiveTab("borrador")}
-                          className={widgetCls(activeTab === "borrador", countBorrador === 0, "bg-amber-50 border-amber-200", "hover:border-amber-200 hover:shadow-md")}
+                          className={widgetCls(activeTab === "borrador", countBorrador === 0, "bg-slate-100 border-slate-300", "hover:border-slate-300 hover:shadow-md")}
                         >
                           <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center mb-3 shadow-sm border border-slate-100">
-                            <Clock className="w-4 h-4 text-amber-400" />
+                            <Clock className="w-4 h-4 text-slate-400" />
                           </div>
                           <div className="flex items-baseline gap-1.5 min-w-0 flex-wrap">
                             <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{countBorrador}</p>
-                            <p className="text-sm font-medium text-amber-500 truncate">presupuestos en borrador</p>
+                            <p className="text-sm font-medium text-slate-500 truncate">presupuestos en borrador</p>
                           </div>
                         </button>
 
