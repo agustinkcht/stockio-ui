@@ -690,9 +690,85 @@ export default function VentasPage() {
                         const lastItemIdx = venta.items.length - 1
                         const firstItemDisplay = firstItem ? getVentaItemDisplay(firstItem) : null
 
+                        // Shared discount calc helper
+                        const calcItemPrices = (item: VentaItem) => {
+                          const baseGross = item.unitPrice * item.quantity
+                          const discountAmount =
+                            item.discountType === "percent"
+                              ? baseGross * (item.discount / 100)
+                              : item.discountType === "unit"
+                              ? Math.min(item.discount, item.quantity) * item.unitPrice
+                              : item.discount * item.quantity
+                          const adjustedUnit = Math.max(0, item.unitPrice - (discountAmount / Math.max(item.quantity, 1)))
+                          const paidQty = item.discountType === "unit"
+                            ? Math.max(0, item.quantity - Math.min(item.discount, item.quantity))
+                            : item.quantity
+                          return { adjustedUnit, paidQty }
+                        }
+
+                        // Precio unitario cell — mirrors venta detail's price column
+                        const PrecioCell = ({ item, className = "" }: { item: VentaItem; className?: string }) => {
+                          const { adjustedUnit } = calcItemPrices(item)
+                          const hasDiscount = item.discount > 0
+                          return (
+                            <div className={`flex flex-col justify-center gap-0 ${className}`}>
+                              {hasDiscount && item.discountType === "unit" ? (
+                                <>
+                                  <div className="flex items-baseline gap-1">
+                                    <span className="text-xs text-slate-700 tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
+                                    <span className="text-[10px] text-slate-400">c/u</span>
+                                  </div>
+                                  <span className="text-[10px] text-emerald-600 font-medium leading-tight">
+                                    {Math.min(item.discount, item.quantity)} bonif.
+                                  </span>
+                                </>
+                              ) : hasDiscount && (item.discountType === "percent" || item.discountType === "fixed") ? (
+                                <>
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-[10px] text-slate-400 line-through tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
+                                    <span className="text-[10px] font-semibold text-red-500">
+                                      {item.discountType === "percent" ? `-${item.discount}%` : `-$${item.discount.toLocaleString("es-AR")}`}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-baseline gap-1">
+                                    <span className="text-xs font-medium text-slate-800 tabular-nums">${Math.round(adjustedUnit).toLocaleString("es-AR")}</span>
+                                    <span className="text-[10px] text-slate-400">c/u</span>
+                                  </div>
+                                </>
+                              ) : (
+                                <div className="flex items-baseline gap-1">
+                                  <span className="text-xs text-slate-700 tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
+                                  <span className="text-[10px] text-slate-400">c/u</span>
+                                </div>
+                              )}
+                            </div>
+                          )
+                        }
+
+                        // Quantity cell — shows paid qty, with bonificadas hint for unit discount
+                        const QtyCell = ({ item, className = "" }: { item: VentaItem; className?: string }) => {
+                          const { paidQty } = calcItemPrices(item)
+                          const hasUnitDiscount = item.discount > 0 && item.discountType === "unit"
+                          return (
+                            <div className={`flex flex-col justify-center gap-0 ${className}`}>
+                              <div className="flex items-baseline gap-1">
+                                <span className="text-xs text-slate-700 tabular-nums">{item.quantity}</span>
+                                <span className="text-[10px] text-slate-400">{item.quantity === 1 ? "ud." : "uds."}</span>
+                              </div>
+                              {hasUnitDiscount && (
+                                <span className="text-[10px] text-emerald-600 font-medium leading-tight">
+                                  paga {paidQty}
+                                </span>
+                              )}
+                            </div>
+                          )
+                        }
+
                         return (
                           <div className="grid grid-cols-100 pt-1 pb-2" onClick={(e) => e.stopPropagation()}>
                             <div className="col-span-4" />
+
+                            {/* ITEM cell */}
                             <div className={`col-span-48 bg-slate-50 ${isExpanded ? "rounded-tl-md" : "rounded-l-md"} py-2.5 pl-3 pr-2 flex items-center gap-2`}>
                               {isMulti && (
                                 <button
@@ -751,10 +827,22 @@ export default function VentasPage() {
                               ) : null}
                             </div>
 
+                            {/* PRECIO UNITARIO cell — single product only; multi shows nothing here */}
                             <div className="col-span-20 bg-slate-50 flex items-center px-3">
-                              <span className="text-xs text-slate-600">{totalUnits} unidades</span>
+                              {!isMulti && firstItem ? (
+                                <PrecioCell item={firstItem} />
+                              ) : (
+                                <span className="text-xs text-slate-400">{totalUnits} uds.</span>
+                              )}
                             </div>
-                            <div className={`col-span-24 bg-slate-50 ${isExpanded ? "rounded-tr-md" : "rounded-r-md"} flex items-center px-3`}>
+
+                            {/* UNIDADES cell — single only */}
+                            <div className="col-span-12 bg-slate-50 flex items-center px-3">
+                              {!isMulti && firstItem && <QtyCell item={firstItem} />}
+                            </div>
+
+                            {/* TOTAL cell */}
+                            <div className={`col-span-12 bg-slate-50 ${isExpanded ? "rounded-tr-md" : "rounded-r-md"} flex items-center px-3`}>
                               <span className="text-sm font-semibold text-slate-800">${venta.total.toLocaleString("es-AR")}</span>
                             </div>
                             <div className="col-span-4" />
@@ -766,6 +854,7 @@ export default function VentasPage() {
                               return (
                                 <Fragment key={`${venta.id}-exp-${idx}`}>
                                   <div className="col-span-4" />
+                                  {/* Item name */}
                                   <div className={`col-span-32 bg-slate-50 border-t border-slate-200/60 ${isLast ? "rounded-bl-md" : ""}`}>
                                     <button
                                       type="button"
@@ -796,14 +885,16 @@ export default function VentasPage() {
                                       </div>
                                     </button>
                                   </div>
+                                  {/* Precio unitario */}
                                   <div className="col-span-16 bg-slate-50 px-3 py-2 border-t border-slate-200/60 flex items-center">
-                                    <span className="text-xs text-slate-600">${item.unitPrice.toLocaleString("es-AR")}</span>
+                                    <PrecioCell item={item} />
                                   </div>
+                                  {/* Unidades */}
                                   <div className="col-span-20 bg-slate-50 px-3 py-2 border-t border-slate-200/60 flex items-center">
-                                    <span className="text-xs text-slate-600">{item.quantity} unidades</span>
+                                    <QtyCell item={item} />
                                   </div>
+                                  {/* Subtotal */}
                                   <div className={`col-span-24 bg-slate-50 px-3 py-2 border-t border-slate-200/60 flex flex-col justify-center ${isLast ? "rounded-br-md" : ""}`}>
-                                    <span className="text-[11px] text-slate-400 leading-tight">{item.quantity} x ${item.unitPrice.toLocaleString("es-AR")}</span>
                                     <span className="text-sm font-semibold text-slate-800 leading-tight">${item.total.toLocaleString("es-AR")}</span>
                                   </div>
                                   <div className="col-span-4" />
