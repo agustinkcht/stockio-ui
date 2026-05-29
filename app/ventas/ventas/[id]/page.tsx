@@ -780,12 +780,15 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         <button
                           type="button"
                           onClick={() => isEditMode ? setShowClienteSelectorModal(true) : (clienteId ? setShowClienteInfoModal(true) : undefined)}
-                          className={`inline-flex items-center gap-2.5 pl-1 pr-3.5 py-1 rounded-full border bg-white shadow-sm transition-colors text-left ${clienteId || isEditMode ? "hover:bg-slate-50 cursor-pointer border-slate-200" : "cursor-default border-slate-200/60"}`}
+                          className={`inline-flex items-center gap-3 pl-2 pr-4 py-2 rounded-full border bg-white shadow-sm transition-colors text-left ${clienteId || isEditMode ? "hover:bg-slate-50 cursor-pointer border-slate-200" : "cursor-default border-slate-200/60"}`}
                         >
-                          <div className="w-7 h-7 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
-                            <span className="text-xs font-bold text-white leading-none">{clienteNombre.charAt(0).toUpperCase()}</span>
+                          <div className="w-9 h-9 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
+                            <span className="text-sm font-bold text-white leading-none">{clienteNombre.charAt(0).toUpperCase()}</span>
                           </div>
-                          <span className="text-sm font-semibold text-slate-800 truncate max-w-[200px]">{clienteNombre}</span>
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-[10px] text-slate-400 uppercase tracking-wider leading-none mb-0.5">Cliente</span>
+                            <span className="text-sm font-semibold text-slate-800 truncate max-w-[200px]">{clienteNombre}</span>
+                          </div>
                           {isEditMode && <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />}
                         </button>
 
