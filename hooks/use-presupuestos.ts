@@ -3,12 +3,13 @@
 import { useState, useEffect, useCallback } from "react"
 import type { Presupuesto, EstadoPresupuesto } from "@/lib/types"
 import { useAccount } from "@/lib/contexts/account-context"
+import { INITIAL_PRESUPUESTOS as SEED_PRESUPUESTOS } from "@/lib/data/initial-presupuestos"
 
 const STORAGE_KEY_PREFIX = "stockio_presupuestos"
-// Bump when the Presupuesto type changes to force a clean reset of stale data.
-const PRESUPUESTOS_SEED_VERSION = "v2"
+// Bump when the Presupuesto type changes or seed data changes to force a clean reset.
+const PRESUPUESTOS_SEED_VERSION = "v3"
 
-const INITIAL_PRESUPUESTOS: Presupuesto[] = []
+const INITIAL_PRESUPUESTOS: Presupuesto[] = SEED_PRESUPUESTOS
 
 // Recomputes derived totals from items + ajustes (mirrors recomputeVenta, no cobro/entrega).
 function recomputePresupuesto(p: Presupuesto): Presupuesto {
