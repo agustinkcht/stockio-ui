@@ -221,6 +221,12 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
   const [savedCustomCharges, setSavedCustomCharges] = useState<{ id: number; label: string; value: number }[]>([])
   const [adjustmentsInitialized, setAdjustmentsInitialized] = useState(false)
 
+  // Per-item discount modal (pencil → agregar descuento)
+  const [discountModalIdx, setDiscountModalIdx] = useState<number | null>(null)
+  const [modalAjuste, setModalAjuste] = useState<{ value: number; type: "percent" | "cash" | "unit" }>({ value: 0, type: "percent" })
+  const [modalPrice, setModalPrice] = useState<string>("")
+  const [showModalDescuento, setShowModalDescuento] = useState(false)
+
   // Modal items
   const [selectedModalItems, setSelectedModalItems] = useState<{ [id: string]: boolean }>({})
   const [modalSearch, setModalSearch] = useState("")
@@ -885,12 +891,10 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
 
                   {/* Edit mode column headers */}
                   {isEditMode && (
-                    <div className="grid grid-cols-[2fr_0.8fr_1fr_1.2fr_1.2fr_auto] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider border-b border-slate-100 bg-slate-50/80">
+                    <div className="grid grid-cols-[2fr_0.8fr_1fr_auto] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider border-b border-slate-100 bg-slate-50/80">
                       <div className="flex items-center px-4">Item</div>
                       <div className="flex items-center justify-center">Cantidad</div>
-                      <div className="flex items-center justify-center">Precio Unit.</div>
-                      <div className="flex items-center justify-center">Promoción</div>
-                      <div className="flex items-center justify-end pr-4">Total</div>
+                      <div className="flex items-center justify-center">Precio</div>
                       <div className="w-10" />
                     </div>
                   )}
@@ -922,29 +926,22 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
                         >
                           {isEditMode ? (
                             (() => {
-                              const editItem = editItems[idx] ?? item
                               const aj = editAjustes[idx] ?? { value: 0, type: "percent" as const }
-                              let finalTotal = 0
-                              if (aj.value > 0) {
-                                if (aj.type === "unit") {
-                                  finalTotal = Math.max(0, editItem.quantity - Math.min(aj.value, editItem.quantity)) * editItem.unitPrice
-                                } else {
-                                  const adjUnit = aj.type === "percent"
-                                    ? editItem.unitPrice * (1 - aj.value / 100)
-                                    : Math.max(0, editItem.unitPrice - aj.value)
-                                  finalTotal = editItem.quantity * adjUnit
-                                }
-                              } else {
-                                finalTotal = editItem.quantity * editItem.unitPrice
+                              const hasDiscount = aj.value > 0
+                              let adjUnitPrice = item.unitPrice
+                              if (hasDiscount) {
+                                if (aj.type === "percent") adjUnitPrice = item.unitPrice * (1 - aj.value / 100)
+                                else if (aj.type === "cash") adjUnitPrice = Math.max(0, item.unitPrice - aj.value)
                               }
                               return (
-                                <div className="grid grid-cols-[2fr_0.8fr_1fr_1.2fr_1.2fr_auto] min-h-[72px]">
+                                <div className="grid grid-cols-[2fr_0.8fr_1fr_auto] min-h-[72px]">
+                                  {/* ITEM */}
                                   <div className="flex items-center gap-3 px-4 py-3">
                                     <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                                       <Image src={getCategoryImage(display.categoria || "") || "/placeholder.svg"} alt={item.name} width={32} height={32} className="object-cover" />
                                     </div>
                                     <div className="min-w-0">
-                                      <div className="flex flex-wrap items-center gap-1.5">
+                                      <div className="flex items-center gap-1.5 flex-wrap">
                                         <p className="text-sm font-medium text-gray-900 break-words leading-tight">{display.name}</p>
                                         {display.tags.length > 0 && display.tags.map((tag, i) => (
                                           <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-600 whitespace-nowrap">{tag}</span>
@@ -952,13 +949,14 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
                                       </div>
                                       {(display.marca || display.categoria) && (
                                         <div className="flex items-center gap-1 mt-0.5">
-                                          {display.marca && <span className="text-xs text-slate-400">{display.marca}</span>}
+                                          {display.marca && <span className="text-xs text-slate-400 leading-tight">{display.marca}</span>}
                                           {display.marca && display.categoria && <span className="text-xs text-slate-300">·</span>}
-                                          {display.categoria && <span className="text-xs text-slate-400">{display.categoria}</span>}
+                                          {display.categoria && <span className="text-xs text-slate-400 leading-tight">{display.categoria}</span>}
                                         </div>
                                       )}
                                     </div>
                                   </div>
+                                  {/* CANTIDAD */}
                                   <div className="flex items-center justify-center">
                                     <div className="flex items-center border border-slate-200 rounded-full px-1 py-0.5 bg-white">
                                       <button onClick={() => setEditItems(prev => prev.map((it, i) => i === idx ? { ...it, quantity: Math.max(1, it.quantity - 1) } : it))} className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-400 transition-colors">
@@ -966,7 +964,7 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
                                       </button>
                                       <input
                                         type="number"
-                                        value={editItem.quantity || ""}
+                                        value={item.quantity || ""}
                                         onChange={(e) => setEditItems(prev => prev.map((it, i) => i === idx ? { ...it, quantity: parseInt(e.target.value) || 1 } : it))}
                                         className="w-10 text-center text-sm py-1 focus:outline-none bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                       />
@@ -975,51 +973,53 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
                                       </button>
                                     </div>
                                   </div>
-                                  <div className="flex items-center justify-center gap-1">
-                                    <span className="text-slate-400 text-sm">$</span>
-                                    <input
-                                      type="number"
-                                      value={editItem.unitPrice || ""}
-                                      onChange={(e) => setEditItems(prev => prev.map((it, i) => i === idx ? { ...it, unitPrice: parseFloat(e.target.value) || 0 } : it))}
-                                      className="w-20 text-center text-sm py-1.5 border border-slate-200 rounded focus:outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                    />
-                                  </div>
-                                  <div className="flex items-center justify-center gap-1.5">
-                                    <input
-                                      type="number"
-                                      placeholder="0"
-                                      min="0"
-                                      value={aj.value || ""}
-                                      onChange={(e) => {
-                                        let val = parseFloat(e.target.value) || 0
-                                        if (aj.type === "unit") val = Math.min(val, editItem.quantity)
-                                        setEditAjustes(prev => ({ ...prev, [idx]: { ...aj, value: val } }))
-                                      }}
-                                      className="w-12 text-center text-xs py-1 border border-slate-200 rounded focus:outline-none focus:border-slate-400 placeholder:text-slate-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                    />
-                                    <div className="flex border border-slate-200 rounded overflow-hidden">
-                                      {(["percent", "cash", "unit"] as const).map((t) => (
-                                        <button key={t} onClick={() => setEditAjustes(prev => ({ ...prev, [idx]: { ...aj, type: t } }))} className={`px-1.5 py-1 text-xs cursor-pointer ${aj.type === t ? "bg-slate-900 text-white" : "text-slate-400 hover:bg-slate-50"}`}>
-                                          {t === "percent" ? "%" : t === "cash" ? "$" : <Package className="w-3 h-3" />}
-                                        </button>
-                                      ))}
+                                  {/* PRECIO with pencil → opens descuento modal */}
+                                  <div className="flex flex-col items-center justify-center gap-0.5 py-2 px-1">
+                                    <div className="flex items-center gap-1.5">
+                                      <div className="flex flex-col items-end">
+                                        {hasDiscount && (aj.type === "percent" || aj.type === "cash") && (
+                                          <div className="flex items-center gap-1">
+                                            <span className="text-[11px] text-slate-400 line-through tabular-nums">${Math.round(item.unitPrice).toLocaleString("es-AR")}</span>
+                                            <span className="text-[10px] text-red-500 font-medium">{aj.type === "percent" ? `-${aj.value}%` : `-$${aj.value.toLocaleString("es-AR")}`}</span>
+                                          </div>
+                                        )}
+                                        <span className="text-sm font-medium text-slate-900 tabular-nums">
+                                          ${Math.round(hasDiscount && (aj.type === "percent" || aj.type === "cash") ? adjUnitPrice : item.unitPrice).toLocaleString("es-AR")}
+                                        </span>
+                                        {hasDiscount && aj.type === "unit" && (
+                                          <span className="text-[10px] text-emerald-600 font-medium">{Math.min(aj.value, item.quantity)} bonificadas</span>
+                                        )}
+                                      </div>
+                                      <button
+                                        onClick={() => {
+                                          setDiscountModalIdx(idx)
+                                          setModalAjuste(hasDiscount ? { ...aj } : { value: 0, type: "percent" })
+                                          setModalPrice(String(item.unitPrice))
+                                          setShowModalDescuento(hasDiscount)
+                                        }}
+                                        className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                                      >
+                                        <Pencil className="w-3 h-3" />
+                                      </button>
                                     </div>
                                   </div>
-                                  <div className="flex flex-col items-end justify-center pr-4">
-                                    {aj.value > 0 ? (
-                                      <>
-                                        <span className="text-[10px] text-slate-400 line-through tabular-nums">{editItem.quantity} × ${Math.round(editItem.unitPrice).toLocaleString("es-AR")}</span>
-                                        <span className="text-sm font-bold text-slate-900 tabular-nums">${Math.round(finalTotal).toLocaleString("es-AR")}</span>
-                                      </>
-                                    ) : (
-                                      <>
-                                        <span className="text-[10px] text-slate-500 tabular-nums">{editItem.quantity} × ${Math.round(editItem.unitPrice).toLocaleString("es-AR")}</span>
-                                        <span className="text-sm font-bold text-slate-900 tabular-nums">${Math.round(finalTotal).toLocaleString("es-AR")}</span>
-                                      </>
-                                    )}
-                                  </div>
+                                  {/* REMOVE */}
                                   <div className="flex items-center justify-center w-10">
-                                    <button onClick={() => { setEditItems(prev => prev.filter((_, i) => i !== idx)); setEditAjustes(prev => { const next = { ...prev }; delete next[idx]; return next }) }} className="p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors">
+                                    <button
+                                      onClick={() => {
+                                        setEditItems(prev => prev.filter((_, i) => i !== idx))
+                                        setEditAjustes(prev => {
+                                          const next: typeof prev = {}
+                                          Object.entries(prev).forEach(([k, v]) => {
+                                            const ki = parseInt(k)
+                                            if (ki < idx) next[ki] = v
+                                            else if (ki > idx) next[ki - 1] = v
+                                          })
+                                          return next
+                                        })
+                                      }}
+                                      className="p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors"
+                                    >
                                       <X className="w-4 h-4" />
                                     </button>
                                   </div>
@@ -1328,6 +1328,159 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
           </main>
         </div>
       </div>
+
+      {/* ── Per-item Descuento Modal ── */}
+      {discountModalIdx !== null && (() => {
+        const item = editItems[discountModalIdx]
+        if (!item) return null
+        const display = getVentaItemDisplay(item)
+        const parsedPrice = parseFloat(modalPrice) || item.unitPrice
+        let finalPrice = parsedPrice
+        if (modalAjuste.value > 0) {
+          if (modalAjuste.type === "percent") finalPrice = parsedPrice * (1 - modalAjuste.value / 100)
+          else if (modalAjuste.type === "cash") finalPrice = Math.max(0, parsedPrice - modalAjuste.value)
+        }
+        return (
+          <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+              <div className="flex items-center gap-3 px-6 pt-6 pb-4 border-b border-slate-100">
+                <div className="w-10 h-10 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0 relative">
+                  <Image
+                    src={getCategoryImage(display.categoria || "") || "/placeholder.svg"}
+                    alt={display.name}
+                    width={40}
+                    height={40}
+                    className="object-cover w-full h-full"
+                  />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <p className="text-sm font-semibold text-slate-900">{display.name}</p>
+                    {display.tags.map((tag, i) => (
+                      <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">{tag}</span>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    {display.marca && <span className="text-xs text-slate-400">{display.marca}</span>}
+                    {display.marca && display.categoria && <span className="text-xs text-slate-300">·</span>}
+                    {display.categoria && <span className="text-xs text-slate-400">{display.categoria}</span>}
+                  </div>
+                </div>
+              </div>
+
+              <div className="px-6 py-5 space-y-4">
+                <div>
+                  <label className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Precio</label>
+                  <div className="flex items-center border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 focus-within:border-slate-400 transition-colors">
+                    <span className="text-slate-400 text-sm mr-1.5">$</span>
+                    <input
+                      type="number"
+                      value={modalPrice}
+                      onChange={(e) => setModalPrice(e.target.value)}
+                      className="flex-1 text-sm bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                  </div>
+                </div>
+
+                {!showModalDescuento && (
+                  <button
+                    onClick={() => setShowModalDescuento(true)}
+                    className="text-sm text-blue-500 hover:text-blue-600 transition-colors"
+                  >
+                    + agregar descuento
+                  </button>
+                )}
+
+                {showModalDescuento && (
+                  <>
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Descuento</label>
+                        <button
+                          onClick={() => {
+                            setShowModalDescuento(false)
+                            setModalAjuste({ value: 0, type: "percent" })
+                          }}
+                          className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
+                          title="Quitar descuento"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 focus-within:border-slate-400 transition-colors flex-1">
+                          <input
+                            type="number"
+                            placeholder="0"
+                            min="0"
+                            autoFocus
+                            value={modalAjuste.value || ""}
+                            onChange={(e) => {
+                              let val = parseFloat(e.target.value) || 0
+                              if (modalAjuste.type === "unit") val = Math.min(val, item.quantity)
+                              setModalAjuste(prev => ({ ...prev, value: val }))
+                            }}
+                            className="w-full text-sm bg-transparent focus:outline-none placeholder:text-slate-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          />
+                        </div>
+                        <div className="flex border border-slate-200 rounded-lg overflow-hidden">
+                          {(["percent", "cash", "unit"] as const).map((t) => (
+                            <button
+                              key={t}
+                              onClick={() => setModalAjuste(prev => ({ ...prev, type: t }))}
+                              className={`px-3 py-2 text-xs font-medium cursor-pointer transition-colors ${modalAjuste.type === t ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"}`}
+                            >
+                              {t === "percent" ? "% porcentaje" : t === "cash" ? "$ dinero" : "unidades"}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {modalAjuste.value > 0 && (
+                      <div className="flex items-center justify-between py-3 px-4 bg-slate-50 rounded-xl">
+                        <span className="text-sm font-medium text-slate-600">Precio final</span>
+                        <div className="text-right">
+                          <span className="text-base font-bold text-slate-900 tabular-nums">
+                            ${Math.round(finalPrice).toLocaleString("es-AR")}
+                          </span>
+                          {modalAjuste.type === "unit" && (
+                            <p className="text-[11px] text-emerald-600">{modalAjuste.value} unidades bonificadas</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+
+              <div className="flex items-center justify-end gap-2 px-6 pb-6">
+                <button
+                  onClick={() => { setDiscountModalIdx(null); setShowModalDescuento(false) }}
+                  className="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    const newPrice = parseFloat(modalPrice)
+                    if (!isNaN(newPrice) && newPrice >= 0) {
+                      setEditItems(prev => prev.map((it, i) => i === discountModalIdx ? { ...it, unitPrice: newPrice } : it))
+                    }
+                    const ajuste = showModalDescuento ? { ...modalAjuste } : { value: 0, type: "percent" as const }
+                    setEditAjustes(prev => ({ ...prev, [discountModalIdx]: ajuste }))
+                    setDiscountModalIdx(null)
+                    setShowModalDescuento(false)
+                  }}
+                  className="px-5 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
+                >
+                  Aceptar
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* ── Unsaved Changes Guard Modal ── */}
       {showUnsavedModal && (
