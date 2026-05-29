@@ -311,7 +311,7 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
       return a.name.localeCompare(b.name) * dir
     })
     return items
-  }, [modalSearch, modalFilters, modalSort, modalSortDirection, allProducts])
+  }, [modalSearch, modalFilters, modalSort, modalSortDirection])
 
   const getModalItemId = (item: any): string => item.id || item.sku || item.name || ""
 
