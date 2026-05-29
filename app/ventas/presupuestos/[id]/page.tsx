@@ -68,21 +68,23 @@ function NotasCard({
         className="w-full resize-none text-sm text-slate-700 placeholder:text-slate-300 bg-transparent border-none outline-none leading-relaxed"
       />
       {!readOnly && isDirty && (
-        <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-100">
-          <button
-            type="button"
-            onClick={() => setDraft(value)}
-            className="text-xs font-medium text-slate-500 hover:text-slate-700 transition-colors px-2.5 py-1 rounded hover:bg-slate-100"
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            onClick={() => onSave(draft)}
-            className="text-xs font-medium text-white bg-slate-900 hover:bg-slate-800 transition-colors px-2.5 py-1 rounded"
-          >
-            Guardar
-          </button>
+        <div className="flex items-center justify-end pt-1 border-t border-slate-100">
+          <div className="flex items-center rounded-md overflow-hidden border border-slate-200 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setDraft(value)}
+              className="h-7 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors px-3 flex items-center border-r border-slate-200 bg-white"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={() => onSave(draft)}
+              className="h-7 text-xs font-medium text-white bg-slate-900 hover:bg-slate-800 transition-colors px-3 flex items-center"
+            >
+              Guardar
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -196,6 +198,8 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
   const [showClienteSelectorModal, setShowClienteSelectorModal] = useState(false)
   const [showRechazarModal, setShowRechazarModal] = useState(false)
   const [showAceptarModal, setShowAceptarModal] = useState(false)
+  const [showUnsavedModal, setShowUnsavedModal] = useState(false)
+  const [pendingNavHref, setPendingNavHref] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [showSaveSuccess, setShowSaveSuccess] = useState(false)
   const [showSubtotalBreakdown, setShowSubtotalBreakdown] = useState(false)
@@ -347,6 +351,18 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [showMoreOptionsMenu])
 
+  // Block browser navigation (refresh/close tab) when there are unsaved changes
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (isEditMode && hasAnyEditChanges) {
+        e.preventDefault()
+        e.returnValue = ""
+      }
+    }
+    window.addEventListener("beforeunload", handler)
+    return () => window.removeEventListener("beforeunload", handler)
+  }, [isEditMode, hasAnyEditChanges])
+
   // ── Early returns AFTER all hooks ───��─────────────────────────────────────
   if (isLoading) {
     return (
@@ -497,6 +513,16 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
   const handleRechazar = () => {
     updateEstado(presupuesto.id, "rechazado")
     setShowRechazarModal(false)
+  }
+
+  // Guard navigation when in edit mode with pending changes
+  const safeNavigate = (href: string) => {
+    if (isEditMode && hasAnyEditChanges) {
+      setPendingNavHref(href)
+      setShowUnsavedModal(true)
+    } else {
+      router.push(href)
+    }
   }
 
   // ── Modal items selection ─────────────────────────────────────────────────
@@ -693,18 +719,18 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
                         <button
                           type="button"
                           onClick={enterEditMode}
-                          className="h-8 w-8 flex items-center justify-center transition-colors bg-white border border-slate-200 hover:bg-slate-50 cursor-pointer rounded-md shadow-sm"
-                          title="Editar presupuesto"
+                          className="h-8 text-xs transition-colors bg-white border border-slate-200 hover:bg-slate-50 cursor-pointer gap-1.5 px-3 rounded-md flex items-center text-slate-600 font-medium shadow-sm"
                         >
                           <Pencil className="w-3.5 h-3.5 text-slate-500" />
+                          Editar
                         </button>
                       )}
                       {estado === "borrador" && isEditMode && (
-                        <>
+                        <div className="flex items-center rounded-md overflow-hidden border border-slate-200 shadow-sm">
                           <button
                             type="button"
                             onClick={cancelEditMode}
-                            className="h-8 text-xs transition-colors bg-white border border-slate-200 hover:bg-slate-50 cursor-pointer gap-1.5 px-3 rounded-md flex items-center text-slate-600 font-medium shadow-sm"
+                            className="h-8 text-xs transition-colors bg-white hover:bg-slate-50 cursor-pointer px-3 flex items-center text-slate-600 font-medium border-r border-slate-200"
                           >
                             Cancelar
                           </button>
@@ -712,11 +738,11 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
                             type="button"
                             onClick={handleGuardar}
                             disabled={isSaving}
-                            className="h-8 text-xs transition-colors bg-slate-900 hover:bg-slate-800 border border-slate-900 cursor-pointer gap-1.5 px-3 rounded-md flex items-center text-white font-medium shadow-sm disabled:opacity-50"
+                            className="h-8 text-xs transition-colors bg-slate-900 hover:bg-slate-800 cursor-pointer px-3 flex items-center text-white font-medium disabled:opacity-50"
                           >
                             {isSaving ? "Guardando..." : "Guardar cambios"}
                           </button>
-                        </>
+                        </div>
                       )}
                       <button
                         type="button"
@@ -847,6 +873,7 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
                       <div className="flex items-center justify-center">Cantidad</div>
                       <div className="flex items-center justify-center">Precio Unit.</div>
                       <div className="flex items-center justify-center">Promoción</div>
+                      <div className="flex items-center justify-end pr-4">Total</div>
                       <div className="w-10" />
                     </div>
                   )}
@@ -1284,6 +1311,50 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
           </main>
         </div>
       </div>
+
+      {/* ── Unsaved Changes Guard Modal ── */}
+      {showUnsavedModal && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowUnsavedModal(false)} />
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
+            <div className="px-5 py-5 flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-amber-50 flex items-center justify-center shrink-0">
+                  <Pencil className="w-4 h-4 text-amber-500" />
+                </div>
+                <h3 className="text-base font-semibold text-slate-900">Cambios sin guardar</h3>
+              </div>
+              <p className="text-sm text-slate-600 leading-relaxed ml-12">
+                Guardá los cambios antes de continuar, o descartá las modificaciones.
+              </p>
+            </div>
+            <div className="px-5 pb-5 flex gap-2 justify-end">
+              <button
+                onClick={() => {
+                  setShowUnsavedModal(false)
+                  cancelEditMode()
+                  if (pendingNavHref) router.push(pendingNavHref)
+                  setPendingNavHref(null)
+                }}
+                className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                Descartar cambios
+              </button>
+              <button
+                onClick={async () => {
+                  setShowUnsavedModal(false)
+                  await handleGuardar()
+                  if (pendingNavHref) router.push(pendingNavHref)
+                  setPendingNavHref(null)
+                }}
+                className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
+              >
+                Guardar y continuar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Item detail modal ── */}
       {viewingItem && (

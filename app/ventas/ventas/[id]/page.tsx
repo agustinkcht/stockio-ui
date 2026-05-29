@@ -82,21 +82,23 @@ function NotasCard({
         className="w-full resize-none text-sm text-slate-700 placeholder:text-slate-300 bg-transparent border-none outline-none leading-relaxed"
       />
       {!readOnly && isDirty && (
-        <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-100">
-          <button
-            type="button"
-            onClick={() => setDraft(value)}
-            className="text-xs font-medium text-slate-500 hover:text-slate-700 transition-colors px-2.5 py-1 rounded hover:bg-slate-100"
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            onClick={() => onSave(draft)}
-            className="text-xs font-medium text-white bg-slate-900 hover:bg-slate-800 transition-colors px-2.5 py-1 rounded"
-          >
-            Guardar
-          </button>
+        <div className="flex items-center justify-end pt-1 border-t border-slate-100">
+          <div className="flex items-center rounded-md overflow-hidden border border-slate-200 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setDraft(value)}
+              className="h-7 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors px-3 flex items-center border-r border-slate-200 bg-white"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={() => onSave(draft)}
+              className="h-7 text-xs font-medium text-white bg-slate-900 hover:bg-slate-800 transition-colors px-3 flex items-center"
+            >
+              Guardar
+            </button>
+          </div>
         </div>
       )}
     </div>
