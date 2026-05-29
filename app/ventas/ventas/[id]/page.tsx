@@ -1611,15 +1611,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         <span className="text-sm text-slate-700 tabular-nums">+${c.value.toLocaleString("es-AR")}</span>
                       </div>
                     ))}
-                    {/* Devolución line */}
-                    {!isEditMode && montoTotalDevuelto > 0 && (
-                      <div className="flex justify-between items-center py-2.5">
-                        <span className="text-sm text-red-400">Devolución</span>
-                        <span className="text-sm font-medium text-red-500 tabular-nums">−${Math.round(montoTotalDevuelto).toLocaleString("es-AR")}</span>
-                      </div>
-                    )}
                     {/* Border below adjustments only if any exist */}
-                    {!isEditMode && (savedGlobalDiscount?.value > 0 || (savedEnvio != null && savedEnvio > 0) || savedCustomCharges.length > 0 || montoTotalDevuelto > 0) && (
+                    {!isEditMode && (savedGlobalDiscount?.value > 0 || (savedEnvio != null && savedEnvio > 0) || savedCustomCharges.length > 0) && (
                       <div className="-mx-5 w-[calc(100%+2.5rem)] border-b border-slate-100" />
                     )}
 

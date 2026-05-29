@@ -338,9 +338,9 @@ export default function VentasPage() {
                       <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center mb-3 shadow-sm border border-slate-100">
                         <BarChart3 className="w-4 h-4 text-blue-500" />
                       </div>
-                      <div className="flex items-baseline gap-2.5 min-w-0">
+                      <div className="flex items-baseline gap-1.5 min-w-0 flex-wrap">
                         <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{ventas.length}</p>
-                        <p className="text-sm font-medium text-blue-500 truncate">Totales</p>
+                        <p className="text-sm font-medium text-blue-500 truncate">ventas totales</p>
                       </div>
                     </button>
 
@@ -353,9 +353,9 @@ export default function VentasPage() {
                       <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center mb-3 shadow-sm border border-slate-100">
                         <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                       </div>
-                      <div className="flex items-baseline gap-2.5 min-w-0">
+                      <div className="flex items-baseline gap-1.5 min-w-0 flex-wrap">
                         <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{countFinalizadas}</p>
-                        <p className="text-sm font-medium text-emerald-500 truncate">Finalizadas</p>
+                        <p className="text-sm font-medium text-emerald-500 truncate">ventas finalizadas</p>
                       </div>
                     </button>
 
@@ -368,9 +368,9 @@ export default function VentasPage() {
                       <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center mb-3 shadow-sm border border-slate-100">
                         <Clock className="w-4 h-4 text-orange-400" />
                       </div>
-                      <div className="flex items-baseline gap-2.5 min-w-0">
+                      <div className="flex items-baseline gap-1.5 min-w-0 flex-wrap">
                         <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{countEnCurso}</p>
-                        <p className="text-sm font-medium text-orange-500 truncate">En Curso</p>
+                        <p className="text-sm font-medium text-orange-500 truncate">ventas en curso</p>
                       </div>
                     </button>
 
@@ -383,9 +383,9 @@ export default function VentasPage() {
                       <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center mb-3 shadow-sm border border-slate-100">
                         <XCircle className="w-4 h-4 text-red-400" />
                       </div>
-                      <div className="flex items-baseline gap-2.5 min-w-0">
+                      <div className="flex items-baseline gap-1.5 min-w-0 flex-wrap">
                         <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{countCanceladas}</p>
-                        <p className="text-sm font-medium text-red-400 truncate">Canceladas</p>
+                        <p className="text-sm font-medium text-red-400 truncate">ventas canceladas</p>
                       </div>
                     </button>
                   </div>

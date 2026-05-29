@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { Minus, Plus, Check, X } from "lucide-react"
+import { getCategoryImage } from "@/lib/utils/category-images"
 
 interface StockEditModalProps {
   isOpen: boolean
@@ -10,6 +11,8 @@ interface StockEditModalProps {
   initialTotal: number
   initialReservado: number
   itemName?: string
+  itemMarca?: string
+  itemCategoria?: string
   stockMinimo?: number
 }
 
@@ -20,6 +23,8 @@ export function StockEditModal({
   initialTotal,
   initialReservado,
   itemName,
+  itemMarca,
+  itemCategoria,
   stockMinimo = 1,
 }: StockEditModalProps) {
   const [total, setTotal] = useState(initialTotal)
@@ -103,17 +108,35 @@ export function StockEditModal({
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <div className="relative bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-          <div>
-            <h3 className="text-sm font-semibold text-slate-900">Editar Stock</h3>
-            {itemName && <p className="text-xs text-slate-500 mt-0.5 truncate max-w-[200px]">{itemName}</p>}
+        <div className="px-5 pt-4 pb-3 border-b border-slate-100">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              {(itemName || itemCategoria) && (
+                <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
+                  <img
+                    src={getCategoryImage(itemCategoria) || "/placeholder.svg"}
+                    alt={itemCategoria || ""}
+                    className="w-6 h-6 object-contain opacity-70"
+                  />
+                </div>
+              )}
+              <div className="min-w-0">
+                <h3 className="text-sm font-semibold text-slate-900">Editar Stock</h3>
+                {itemName && <p className="text-sm font-medium text-slate-700 mt-0.5 truncate">{itemName}</p>}
+                {(itemMarca || itemCategoria) && (
+                  <p className="text-xs text-slate-400 truncate">
+                    {[itemMarca, itemCategoria].filter(Boolean).join(" · ")}
+                  </p>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0"
+            >
+              <X className="w-4 h-4 text-slate-400" />
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
-          >
-            <X className="w-4 h-4 text-slate-400" />
-          </button>
         </div>
 
         {/* Content */}

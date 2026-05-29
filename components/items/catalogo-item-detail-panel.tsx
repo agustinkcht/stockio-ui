@@ -3414,9 +3414,38 @@ export function CatalogoItemDetailPanel({
       {isPrecioModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/50" onClick={() => setIsPrecioModalOpen(false)} />
-          <div className="relative bg-white rounded-xl shadow-xl p-6 w-full max-w-lg mx-4">
-            <h3 className="text-lg font-semibold text-slate-900 mb-4">Editar Precio</h3>
+          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 overflow-hidden">
+            {/* Item info header */}
+            <div className="px-6 pt-5 pb-4 border-b border-slate-100">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
+                    <img
+                      src={getCategoryImage(selectedItem?.categoria) || "/placeholder.svg"}
+                      alt={selectedItem?.categoria || ""}
+                      className="w-6 h-6 object-contain opacity-70"
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-semibold text-slate-900">Editar Precio</h3>
+                    {selectedItem?.nombre && <p className="text-sm font-medium text-slate-700 mt-0.5 truncate">{selectedItem.nombre}</p>}
+                    {(selectedItem?.marca || selectedItem?.categoria) && (
+                      <p className="text-xs text-slate-400 truncate">
+                        {[selectedItem?.marca, selectedItem?.categoria].filter(Boolean).join(" · ")}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsPrecioModalOpen(false)}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0"
+                >
+                  <X className="w-4 h-4 text-slate-400" />
+                </button>
+              </div>
+            </div>
 
+            <div className="p-6">
             <div className="grid grid-cols-4 gap-3 mb-6">
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Costo</label>
@@ -3500,6 +3529,7 @@ export function CatalogoItemDetailPanel({
                 Guardar
               </button>
             </div>
+            </div>{/* end p-6 inner */}
           </div>
         </div>
       )}
@@ -3528,6 +3558,8 @@ export function CatalogoItemDetailPanel({
         initialTotal={Number.parseInt(selectedItem?.stock?.total || "0")}
         initialReservado={Number.parseInt(selectedItem?.stock?.reservado || "0")}
         itemName={selectedItem?.nombre}
+        itemMarca={selectedItem?.marca}
+        itemCategoria={selectedItem?.categoria}
         stockMinimo={stock?.stockMinimo}
       />
 

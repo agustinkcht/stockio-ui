@@ -16,10 +16,10 @@ import { useItemSelection } from "@/hooks/use-item-selection"
 import { useModals } from "@/hooks/use-modals"
 import { useSidebar } from "@/hooks/use-sidebar"
 import { useChangeTracker } from "@/hooks/use-change-tracker"
-import { useNavigationGuard } from "@/hooks/use-navigation-guard"
-import { UnsavedChangesModal } from "@/components/modals/unsaved-changes-modal"
+
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 import type { Item } from "@/lib/types"
+import { getCategoryImage } from "@/lib/utils/category-images"
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -208,21 +208,7 @@ export default function CatalogoPage() {
     }
   }, [items, editField, editVariantField, updateItemsActiveStatus, saveEdit])
 
-  // Navigation guard for unsaved changes
-  const {
-    showNavigationModal,
-    handleSaveAndNavigate,
-    handleDiscardAndNavigate,
-    handleCancelNavigation,
-  } = useNavigationGuard({
-    hasUnsavedChanges: hasChanges,
-    onSave: async () => {
-      await handleGuardar()
-    },
-    onDiscard: () => {
-      handleDeshacer()
-    },
-  })
+
 
   useEffect(() => {
     setGridSize("md")
@@ -573,6 +559,24 @@ export default function CatalogoPage() {
       {itemToDelete && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100010]" onClick={handleCancelDelete}>
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6" onClick={(e) => e.stopPropagation()}>
+            {/* Item info */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
+                <img
+                  src={getCategoryImage(itemToDelete?.categoria) || "/placeholder.svg"}
+                  alt={itemToDelete?.categoria || ""}
+                  className="w-6 h-6 object-contain opacity-70"
+                />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-slate-900 truncate">{itemToDelete?.nombre}</p>
+                {(itemToDelete?.marca || itemToDelete?.categoria) && (
+                  <p className="text-xs text-slate-400 truncate">
+                    {[itemToDelete?.marca, itemToDelete?.categoria].filter(Boolean).join(" · ")}
+                  </p>
+                )}
+              </div>
+            </div>
             <h3 className="text-lg font-semibold text-foreground mb-2">
               ¿Seguro deseas eliminar este item?
             </h3>
@@ -625,13 +629,7 @@ export default function CatalogoPage() {
         </div>
       )}
 
-      {/* Unsaved Changes Navigation Modal */}
-      <UnsavedChangesModal
-        isOpen={showNavigationModal}
-        onSave={handleSaveAndNavigate}
-        onDiscard={handleDiscardAndNavigate}
-        onCancel={handleCancelNavigation}
-      />
+
     </div>
   )
 }
