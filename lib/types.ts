@@ -270,6 +270,7 @@ export interface Venta {
   estado: VentaEstado
   observaciones?: string
   facturaEmitida?: boolean
+  origen?: "pdv" | "presupuesto" | "manual"
   // Devoluciones: returned units per item
   devolucionItems?: VentaDevolucionItem[]
   // Devoluciones log: ordered list of return events

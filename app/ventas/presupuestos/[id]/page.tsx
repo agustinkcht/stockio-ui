@@ -825,6 +825,7 @@ function PresupuestoDetailContent({ params }: { params: Promise<{ id: string }> 
       entregaItems: [],
       cobros: [],
       estado: "en_curso",
+      origen: "presupuesto",
     })
     
     updatePresupuesto(presupuesto.id, { estado: "aceptado", ventaId: newVenta.id })

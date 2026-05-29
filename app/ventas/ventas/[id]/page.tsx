@@ -739,8 +739,13 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   const dia = fechaObj.toLocaleDateString("es-AR", { day: "2-digit" })
                   const inicial = clienteNombre.charAt(0).toUpperCase()
                   return (
-                    <div className="pt-8 px-0 pb-3 flex flex-col gap-6">
-                      {/* Row 1: Venta ID + estado + fecha + origen + actions */}
+                    {/* Helper: origen label */}
+                    {(() => {
+                      const origenLabel = venta.origen === "pdv" ? "Punto de Venta" : venta.origen === "presupuesto" ? "Presupuesto" : venta.origen === "manual" ? "Manual" : null
+                      return (
+                    <div className="pt-8 px-0 pb-3 flex flex-col gap-4">
+
+                      {/* Row 1: Venta ID · fecha · origen */}
                       <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center flex-1 min-w-0">
                           <div className="flex items-baseline gap-1.5 shrink-0">
@@ -751,46 +756,55 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                           <span className="text-sm font-medium text-slate-600 tabular-nums shrink-0">
                             {dia} {mesCorto} {fechaObj.getFullYear()} · {venta.hora}
                           </span>
-                          <div className="h-5 w-px bg-slate-300 shrink-0 mx-5" />
-                          {/* Estado badge */}
-                          {estadoUI === "finalizada" ? (
-                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 shrink-0">
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                              <span className="text-xs font-medium text-emerald-700">Finalizada</span>
-                            </div>
-                          ) : estadoUI === "cancelada" ? (
-                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-50 shrink-0">
-                              <XCircle className="w-3.5 h-3.5 text-red-400" />
-                              <span className="text-xs font-medium text-red-600">Cancelada</span>
-                            </div>
-                          ) : (
-                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 shrink-0">
-                              <Clock className="w-3.5 h-3.5 text-amber-500" />
-                              <span className="text-xs font-medium text-amber-700">En Curso</span>
-                            </div>
+                          {origenLabel && (
+                            <>
+                              <div className="h-5 w-px bg-slate-300 shrink-0 mx-5" />
+                              <span className="text-sm font-medium text-slate-500 shrink-0">{origenLabel}</span>
+                            </>
                           )}
                         </div>
 
-                        {/* Actions — moved here from row 2 */}
-                        <div className="flex items-center gap-2 shrink-0">
-                          {estadoUI === "en_curso" && (
-                            <button
-                              type="button"
-                              onClick={() => isEditMode ? cancelEditMode() : enterEditMode()}
-                              className={`h-8 text-xs cursor-pointer gap-1.5 px-3 rounded-md flex items-center font-medium transition-colors shadow-sm ${
-                                isEditMode
-                                  ? "bg-slate-900 text-white border border-slate-900"
-                                  : "bg-white border border-slate-200 hover:bg-slate-50 text-slate-700"
-                              }`}
-                            >
-                              <Pencil className="w-3.5 h-3.5" />
-                              Editar
-                            </button>
-                          )}
+                        {/* Edit button — only when en_curso */}
+                        {estadoUI === "en_curso" && (
+                          <button
+                            type="button"
+                            onClick={() => isEditMode ? cancelEditMode() : enterEditMode()}
+                            className={`h-8 text-xs cursor-pointer gap-1.5 px-3 rounded-md flex items-center font-medium transition-colors shadow-sm ${
+                              isEditMode
+                                ? "bg-slate-900 text-white border border-slate-900"
+                                : "bg-white border border-slate-200 hover:bg-slate-50 text-slate-700"
+                            }`}
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                            Editar
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Row 2: Cliente (left) + PDF / more options (right) */}
+                      <div className="grid grid-cols-2 gap-3">
+                        {/* Cliente widget */}
+                        <button
+                          type="button"
+                          onClick={() => isEditMode ? setShowClienteSelectorModal(true) : (clienteId ? setShowClienteInfoModal(true) : undefined)}
+                          className={`bg-slate-50 border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex items-center gap-4 transition-colors text-left ${clienteId || isEditMode ? "hover:bg-slate-100 cursor-pointer" : "cursor-default"}`}
+                        >
+                          <div className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
+                            <span className="text-sm font-bold text-white">{clienteNombre.charAt(0).toUpperCase()}</span>
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-[10px] text-slate-400 uppercase tracking-wider block leading-none mb-1">Cliente</span>
+                            <span className="text-base font-semibold text-slate-900 truncate block">{clienteNombre}</span>
+                          </div>
+                          {isEditMode && <ChevronDown className="w-4 h-4 text-slate-400 ml-auto shrink-0" />}
+                        </button>
+
+                        {/* PDF + more options */}
+                        <div className="flex items-center justify-end gap-2 px-1">
                           <button
                             type="button"
                             onClick={handleDownloadPDF}
-                            className="h-8 text-xs transition-colors bg-white border border-slate-200 hover:bg-slate-50 cursor-pointer gap-1.5 px-3 rounded-md flex items-center text-slate-700 font-medium shadow-sm"
+                            className="h-9 text-xs transition-colors bg-white border border-slate-200 hover:bg-slate-50 cursor-pointer gap-1.5 px-3 rounded-md flex items-center text-slate-700 font-medium shadow-sm"
                           >
                             <FileDown className="w-3.5 h-3.5 text-slate-500" />
                             Descargar PDF
@@ -798,7 +812,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                           <div className="relative" ref={moreMenuRef}>
                             <button
                               onClick={() => setShowMoreOptionsMenu(!showMoreOptionsMenu)}
-                              className="h-8 w-8 flex items-center justify-center transition-colors bg-white border border-slate-200 hover:bg-slate-50 cursor-pointer rounded-md shadow-sm"
+                              className="h-9 w-9 flex items-center justify-center transition-colors bg-white border border-slate-200 hover:bg-slate-50 cursor-pointer rounded-md shadow-sm"
                             >
                               <MoreVertical className="w-4 h-4 text-slate-500" />
                             </button>
@@ -819,63 +833,61 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         </div>
                       </div>
 
-                      {/* Row 2: Cliente widget (left) + Estado widget (right) */}
-                      <div className="grid grid-cols-2 gap-3">
-
-                        {/* Cliente widget — original */}
-                        <button
-                          type="button"
-                          onClick={() => isEditMode ? setShowClienteSelectorModal(true) : (clienteId ? setShowClienteInfoModal(true) : undefined)}
-                          className={`bg-slate-50 border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex items-center gap-4 transition-colors text-left ${clienteId || isEditMode ? "hover:bg-slate-100 cursor-pointer" : "cursor-default"}`}
-                        >
-                          <div className="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
-                            <span className="text-sm font-bold text-white">{clienteNombre.charAt(0).toUpperCase()}</span>
+                      {/* Row 3: Estado (big, left) + action (right) */}
+                      {!isEditMode && (
+                        <div className="grid grid-cols-2 gap-3">
+                          {/* Estado widget */}
+                          <div className="bg-slate-50 border border-slate-200/60 rounded-lg shadow-sm px-5 py-3 flex items-center">
+                            {estadoUI === "finalizada" ? (
+                              <div className="flex items-center gap-2.5">
+                                <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                                <span className="text-lg font-bold text-emerald-700">Finalizada</span>
+                              </div>
+                            ) : estadoUI === "cancelada" ? (
+                              <div className="flex items-center gap-2.5">
+                                <XCircle className="w-5 h-5 text-red-400 shrink-0" />
+                                <span className="text-lg font-bold text-red-600">Cancelada</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2.5">
+                                <Clock className="w-5 h-5 text-amber-500 shrink-0" />
+                                <span className="text-lg font-bold text-amber-700">En Curso</span>
+                              </div>
+                            )}
                           </div>
-                          <div className="min-w-0">
-                            <span className="text-[10px] text-slate-400 uppercase tracking-wider block leading-none mb-1">Cliente</span>
-                            <span className="text-base font-semibold text-slate-900 truncate block">{clienteNombre}</span>
-                          </div>
-                          {isEditMode && <ChevronDown className="w-4 h-4 text-slate-400 ml-auto shrink-0" />}
-                        </button>
 
-                        {/* Actions widget */}
-                        <div className="flex items-center justify-center px-4 py-3">
-                          {estadoUI === "en_curso" && !isEditMode && (
-                            <button
-                              type="button"
-                              onClick={() => setShowFinalizarVenta(true)}
-                              className="flex items-center gap-2.5 px-4 py-2 rounded-lg hover:bg-emerald-50 transition-colors cursor-pointer group w-full justify-center"
-                            >
-                              <CheckCircle2 className="w-5 h-5 text-emerald-500 group-hover:text-emerald-600 shrink-0" />
-                              <span className="text-sm font-semibold text-emerald-600 group-hover:text-emerald-700">Marcar como finalizada</span>
-                            </button>
-                          )}
-                          {estadoUI === "finalizada" && !isEditMode && (
-                            <div className="flex items-center gap-2 w-full justify-center">
+                          {/* Action widget */}
+                          <div className="flex items-center justify-center px-4 py-3">
+                            {estadoUI === "en_curso" && (
+                              <button
+                                type="button"
+                                onClick={() => setShowFinalizarVenta(true)}
+                                className="flex items-center gap-2.5 px-4 py-2 rounded-lg hover:bg-emerald-50 transition-colors cursor-pointer group w-full justify-center"
+                              >
+                                <CheckCircle2 className="w-5 h-5 text-emerald-500 group-hover:text-emerald-600 shrink-0" />
+                                <span className="text-sm font-semibold text-emerald-600 group-hover:text-emerald-700">Marcar como finalizada</span>
+                              </button>
+                            )}
+                            {estadoUI === "finalizada" && (
                               <button
                                 type="button"
                                 onClick={() => { setShowDevolucion(true); setDevolucionStep(1) }}
-                                className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer group"
+                                className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer group w-full justify-center"
                               >
                                 <RotateCcw className="w-4 h-4 text-slate-500 group-hover:text-slate-700 shrink-0" />
                                 <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-800">Gestionar devoluciones</span>
                               </button>
-                            </div>
-                          )}
-                          {estadoUI === "cancelada" && !isEditMode && (
-                            <div className="flex items-center justify-center w-full">
+                            )}
+                            {estadoUI === "cancelada" && (
                               <span className="text-sm text-slate-500">Esta venta fué cancelada</span>
-                            </div>
-                          )}
-
-                          {isEditMode && (
-                            <span className="text-xs text-slate-400">—</span>
-                          )}
+                            )}
+                          </div>
                         </div>
-
-                      </div>
+                      )}
 
                     </div>
+                      )
+                    })()}
                   )
                 })()}
 
