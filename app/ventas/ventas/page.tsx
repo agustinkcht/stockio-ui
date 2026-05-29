@@ -601,7 +601,7 @@ export default function VentasPage() {
                           <button
                             type="button"
                             onClick={(e) => { e.stopPropagation(); downloadVentasPDF([venta], miNegocio) }}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer"
                           >
                             <FileDown className="w-3.5 h-3.5 text-slate-500" />
                             <span className="text-xs font-medium text-slate-600">Descargar PDF</span>
@@ -838,7 +838,7 @@ export default function VentasPage() {
                               ) : null}
                             </div>
 
-                            {/* UNIDADES — col-span-20: qty for single, summary for multi */}
+                            {/* UNIDADES ��� col-span-20: qty for single, summary for multi */}
                             <div className="col-span-20 bg-slate-50 flex items-center px-3">
                               {!isMulti && firstItem ? (
                                 <QtyCell item={firstItem} />
