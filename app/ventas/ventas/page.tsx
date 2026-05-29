@@ -588,12 +588,11 @@ export default function VentasPage() {
                             {formatVentaDateTime(venta.fecha, venta.hora)}
                           </span>
                         </div>
-                        {/* Estado */}
+                        {/* Origen (where estado badge used to be) */}
                         <div className="col-span-14 flex items-center justify-start px-3 border-r border-slate-200/70">
-                          <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full shrink-0 ${estadoStyle.bg}`}>
-                            <EstadoIcon className={`w-3 h-3 ${estadoStyle.text}`} />
-                            <span className={`text-xs font-medium ${estadoStyle.text}`}>{estadoStyle.label}</span>
-                          </div>
+                          <span className="text-xs text-slate-400 truncate">
+                            {(venta as any).origen === "pdv" ? "Punto de Venta" : (venta as any).origen === "presupuesto" ? "Presupuesto" : "Manual"}
+                          </span>
                         </div>
                         {/* Spacer */}
                         <div className="col-span-40" />
@@ -648,39 +647,50 @@ export default function VentasPage() {
                       </div>
 
                       {/* MIDDLE ROW */}
-                      <div className="flex items-center gap-3 py-1.5" style={{ paddingLeft: "calc(4% + 12px)" }}>
-                        {/* Mini cliente widget — no label, smaller avatar */}
+                      <div className="flex items-center justify-between gap-3 py-1.5 pr-3" style={{ paddingLeft: "calc(4% + 12px)" }}>
+                        <div className="flex items-center gap-3">
+                          {/* Estado badge (moved from top row) */}
+                          <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full shrink-0 ${estadoStyle.bg}`}>
+                            <EstadoIcon className={`w-3 h-3 ${estadoStyle.text}`} />
+                            <span className={`text-xs font-medium ${estadoStyle.text}`}>{estadoStyle.label}</span>
+                          </div>
+
+                          {/* Pendientes — inline after estado */}
+                          {venta.estado === "en_curso" && (isPendienteCobro(venta) || isPendienteEntrega(venta)) && (
+                            <div className="flex items-center gap-2 text-[11px] font-light text-slate-400">
+                              {isPendienteCobro(venta) && (
+                                <span className="flex items-center gap-1">
+                                  <span>•</span>
+                                  Cobro pendiente
+                                </span>
+                              )}
+                              {isPendienteEntrega(venta) && (
+                                <span className="flex items-center gap-1">
+                                  <span>•</span>
+                                  Entrega pendiente
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Cliente pill — moved to the right */}
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation()
                             if (venta.cliente.tipo === "cuenta") setViewingClienteId(venta.cliente.id)
                           }}
-                          className="flex items-center gap-2 px-2 py-1 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
+                          className="inline-flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 transition-colors cursor-pointer shrink-0 shadow-sm"
                         >
-                          <div className="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center shrink-0">
-                            <span className="text-[9px] font-bold text-white uppercase">{getClienteNombre(venta).charAt(0)}</span>
+                          <div className="w-6 h-6 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
+                            <span className="text-[10px] font-bold text-white uppercase">{getClienteNombre(venta).charAt(0)}</span>
                           </div>
-                          <span className="text-xs font-semibold text-slate-800 whitespace-nowrap">{getClienteNombre(venta)}</span>
+                          <div className="flex flex-col leading-none">
+                            <span className="text-[9px] text-slate-400 uppercase tracking-wider mb-0.5">Cliente</span>
+                            <span className="text-xs font-semibold text-slate-800 whitespace-nowrap">{getClienteNombre(venta)}</span>
+                          </div>
                         </button>
-
-                        {/* Pendientes — inline after cliente pill */}
-                        {venta.estado === "en_curso" && (isPendienteCobro(venta) || isPendienteEntrega(venta)) && (
-                          <div className="flex items-center gap-2 text-[11px] font-light text-slate-400">
-                            {isPendienteCobro(venta) && (
-                              <span className="flex items-center gap-1">
-                                <span>•</span>
-                                Cobro pendiente
-                              </span>
-                            )}
-                            {isPendienteEntrega(venta) && (
-                              <span className="flex items-center gap-1">
-                                <span>•</span>
-                                Entrega pendiente
-                              </span>
-                            )}
-                          </div>
-                        )}
                       </div>
 
                       {/* BOTTOM ROW */}

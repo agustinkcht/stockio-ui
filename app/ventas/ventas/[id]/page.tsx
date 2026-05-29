@@ -779,17 +779,20 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         {/* Cliente pill */}
                         <button
                           type="button"
-                          onClick={() => isEditMode ? setShowClienteSelectorModal(true) : (clienteId ? setShowClienteInfoModal(true) : undefined)}
-                          className={`inline-flex items-center gap-3 pl-2 pr-4 py-2 rounded-full border bg-white shadow-sm transition-colors text-left ${clienteId || isEditMode ? "hover:bg-slate-50 cursor-pointer border-slate-200" : "cursor-default border-slate-200/60"}`}
+                          onClick={() => {
+                            if (isEditMode) { setShowClienteSelectorModal(true) }
+                            else if (clienteId) { setShowClienteInfoModal(true) }
+                          }}
+                          className={`inline-flex items-center gap-3 pl-3 pr-5 py-2.5 rounded-2xl border bg-white shadow-sm transition-colors text-left ${clienteId || isEditMode ? "hover:bg-slate-50 cursor-pointer border-slate-200" : "cursor-default border-slate-200/60"}`}
                         >
                           <div className="w-9 h-9 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
                             <span className="text-sm font-bold text-white leading-none">{clienteNombre.charAt(0).toUpperCase()}</span>
                           </div>
                           <div className="flex flex-col min-w-0">
-                            <span className="text-[10px] text-slate-400 uppercase tracking-wider leading-none mb-0.5">Cliente</span>
-                            <span className="text-sm font-semibold text-slate-800 truncate max-w-[200px]">{clienteNombre}</span>
+                            <span className="text-[10px] text-slate-400 uppercase tracking-wider leading-none mb-1">Cliente</span>
+                            <span className="text-sm font-bold text-slate-900 truncate max-w-[220px]">{clienteNombre}</span>
                           </div>
-                          {isEditMode && <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />}
+                          {isEditMode && <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" />}
                         </button>
 
                         {/* PDF + more options */}
