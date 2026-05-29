@@ -862,6 +862,11 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                               </button>
                             </div>
                           )}
+                          {estadoUI === "cancelada" && !isEditMode && (
+                            <div className="flex items-center justify-center w-full">
+                              <span className="text-sm text-slate-500">Esta venta fué cancelada</span>
+                            </div>
+                          )}
 
                           {isEditMode && (
                             <span className="text-xs text-slate-400">—</span>
@@ -1041,12 +1046,15 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                               onClick={() => !isAnulacion && setViewingEntregaEntry(entry)}
                               className={`flex-1 flex items-center gap-2 py-1.5 -ml-4 pl-4 pr-2 transition-colors text-left ${!isAnulacion ? "hover:bg-slate-50/60" : "cursor-default"}`}
                             >
-                              <span className={`text-xs tabular-nums ${isAnulacion ? "text-red-400" : "text-slate-400"}`}>{dateLabel}</span>
+                              <span className="text-xs text-slate-400 tabular-nums">{dateLabel}</span>
                               <span className="text-xs text-slate-300">·</span>
                               {isAnulacion ? (
-                                <span className="text-xs text-red-400">Anulación de entrega: {totalEntryUnits} {totalEntryUnits === 1 ? "unidad" : "unidades"}</span>
+                                <span className="text-xs text-slate-400 tabular-nums">
+                                  {totalEntryUnits} {totalEntryUnits === 1 ? "unidad" : "unidades"} reingresadas
+                                  <span className="text-slate-400"> (anulación de entrega)</span>
+                                </span>
                               ) : (
-                                <span className="text-xs text-slate-400 tabular-nums">{totalEntryUnits} {totalEntryUnits === 1 ? "unidad" : "unidades"}</span>
+                                <span className="text-xs text-slate-400 tabular-nums">{totalEntryUnits} {totalEntryUnits === 1 ? "unidad" : "unidades"} entregadas</span>
                               )}
                             </button>
                             {!isAnulacion && estadoUI === "en_curso" && (
@@ -1054,7 +1062,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                                 type="button"
                                 onClick={() => setUndoEntregaTarget(entry)}
                                 className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 pr-0"
-                                title="Deshacer entrega"
+                                title="Anular entrega"
                               >
                                 <Undo2 className="w-3.5 h-3.5" />
                               </button>
@@ -1080,9 +1088,10 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             <div className="flex-1 flex items-center gap-2 py-1.5">
                               <span className="text-xs text-slate-400 tabular-nums">{dateLabel}</span>
                               <span className="text-xs text-slate-300">·</span>
-                              <span className="text-xs text-slate-400 tabular-nums">{entry.hora}</span>
-                              <span className="text-xs text-slate-300">·</span>
-                              <span className="text-xs text-slate-400 tabular-nums">{totalEntryUnits} {totalEntryUnits === 1 ? "unidad" : "unidades"}</span>
+                              <span className="text-xs tabular-nums">
+                                <span className="text-red-400">{totalEntryUnits} {totalEntryUnits === 1 ? "unidad" : "unidades"}</span>
+                                <span className="text-slate-400"> devueltas</span>
+                              </span>
                             </div>
                           </div>
                         )
@@ -1643,12 +1652,12 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         return (
                           <div key={cobro.id} className="flex items-center py-2.5 border-b border-slate-100 gap-2 group">
                             <div className="flex items-center gap-2 flex-1 min-w-0">
-                              <span className={`text-xs tabular-nums ${isAnulacion ? "text-red-400" : "text-slate-400"}`}>
+                              <span className="text-xs tabular-nums text-slate-400">
                                 {new Date(cobro.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}
                               </span>
                               <span className="text-xs text-slate-300">·</span>
                               {isAnulacion ? (
-                                <span className="text-xs text-red-400">Anulación</span>
+                                <span className="text-xs text-slate-500">Anulación de cobro</span>
                               ) : isNegative ? (
                                 <span className="text-xs text-slate-500">Devolución</span>
                               ) : (
@@ -1675,7 +1684,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                                 type="button"
                                 onClick={() => setUndoCobroTarget({ id: cobro.id, monto: cobro.monto })}
                                 className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-400"
-                                title="Deshacer cobro"
+                                title="Anular cobro"
                               >
                                 <Undo2 className="w-3.5 h-3.5" />
                               </button>
@@ -1888,7 +1897,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                 <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center shrink-0">
                   <Undo2 className="w-4 h-4 text-red-500" />
                 </div>
-                <h3 className="text-base font-semibold text-slate-900">Deshacer cobro</h3>
+                <h3 className="text-base font-semibold text-slate-900">Anular cobro</h3>
               </div>
               <p className="text-sm text-slate-600 leading-relaxed">
                 {"¿Estás seguro? "}
@@ -1921,7 +1930,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                 <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center shrink-0">
                   <Undo2 className="w-4 h-4 text-red-500" />
                 </div>
-                <h3 className="text-base font-semibold text-slate-900">Deshacer entrega</h3>
+                <h3 className="text-base font-semibold text-slate-900">Anular entrega</h3>
               </div>
               <p className="text-sm text-slate-600 leading-relaxed">
                 {"¿Estás seguro? "}
