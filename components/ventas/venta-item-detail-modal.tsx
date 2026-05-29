@@ -91,7 +91,7 @@ export function VentaItemDetailModal({ ventaItem, onClose }: VentaItemDetailModa
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── LEFT: FLIPPING CARD ── */}
-        <div className="relative shrink-0" style={{ perspective: "1200px", width: "360px" }}>
+        <div className="relative shrink-0" style={{ perspective: "1200px", width: "414px" }}>
           <div
             className="relative transition-transform duration-500"
             style={{
@@ -257,13 +257,13 @@ export function VentaItemDetailModal({ ventaItem, onClose }: VentaItemDetailModa
             <div className="flex-1 flex rounded-lg border border-slate-200 p-1 bg-slate-50">
               <button
                 onClick={() => setRightTab("info")}
-                className={`flex-1 px-3 py-2 rounded-md text-xs font-medium uppercase tracking-wider transition-all ${rightTab === "info" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
+                className={`flex-1 px-3 py-2 rounded-md text-xs font-medium uppercase tracking-wider transition-all cursor-pointer ${rightTab === "info" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
               >
                 Info
               </button>
               <button
                 onClick={() => setRightTab("atributos")}
-                className={`flex-1 px-3 py-2 rounded-md text-xs font-medium uppercase tracking-wider transition-all ${rightTab === "atributos" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
+                className={`flex-1 px-3 py-2 rounded-md text-xs font-medium uppercase tracking-wider transition-all cursor-pointer ${rightTab === "atributos" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
               >
                 Atributos
               </button>
@@ -309,21 +309,13 @@ export function VentaItemDetailModal({ ventaItem, onClose }: VentaItemDetailModa
                     />
                   </div>
 
-                  {/* Volumen */}
-                  <div className="mt-4 flex flex-col gap-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-medium text-gray-600 uppercase tracking-wider">Volumen de la unidad</span>
-                      <div className={`w-8 h-4 rounded-full relative transition-colors ${volumenActive ? "bg-slate-800" : "bg-gray-300"}`}>
-                        <div className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform ${volumenActive ? "translate-x-4" : "translate-x-0"}`} />
-                      </div>
+                  {/* Volumen — only shown when there is actual data */}
+                  {volumenActive && (volumenCantidad != null || volumenUnidad) && (
+                    <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-4">
+                      <ReadField label="Cantidad" value={volumenCantidad != null ? String(volumenCantidad) : undefined} />
+                      <ReadField label="Unidad de medida" value={volumenUnidad} />
                     </div>
-                    {volumenActive && (
-                      <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                        <ReadField label="Cantidad" value={volumenCantidad != null ? String(volumenCantidad) : undefined} />
-                        <ReadField label="Unidad de medida" value={volumenUnidad} />
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </section>
 
                 {(proveedor || codigoProveedor) && (
