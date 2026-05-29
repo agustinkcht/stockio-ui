@@ -745,7 +745,7 @@ export default function VentasPage() {
                           )
                         }
 
-                        // Quantity cell — shows paid qty, with bonificadas hint for unit discount
+                        // Quantity cell — shows qty, with "paga X" hint for unit discount
                         const QtyCell = ({ item, className = "" }: { item: VentaItem; className?: string }) => {
                           const { paidQty } = calcItemPrices(item)
                           const hasUnitDiscount = item.discount > 0 && item.discountType === "unit"
@@ -753,7 +753,7 @@ export default function VentasPage() {
                             <div className={`flex flex-col justify-center gap-0 ${className}`}>
                               <div className="flex items-baseline gap-1">
                                 <span className="text-xs text-slate-700 tabular-nums">{item.quantity}</span>
-                                <span className="text-[10px] text-slate-400">{item.quantity === 1 ? "ud." : "uds."}</span>
+                                <span className="text-[10px] text-slate-400">{item.quantity === 1 ? "unidad" : "unidades"}</span>
                               </div>
                               {hasUnitDiscount && (
                                 <span className="text-[10px] text-emerald-600 font-medium leading-tight">
@@ -764,12 +764,13 @@ export default function VentasPage() {
                           )
                         }
 
+                        // All rows share the same 4 column widths: 32 (item) + 16 (precio) + 20 (qty) + 24 (total/subtotal)
                         return (
                           <div className="grid grid-cols-100 pt-1 pb-2" onClick={(e) => e.stopPropagation()}>
                             <div className="col-span-4" />
 
-                            {/* ITEM cell */}
-                            <div className={`col-span-48 bg-slate-50 ${isExpanded ? "rounded-tl-md" : "rounded-l-md"} py-2.5 pl-3 pr-2 flex items-center gap-2`}>
+                            {/* ITEM cell — col-span-32 for all row types */}
+                            <div className={`col-span-32 bg-slate-50 ${isExpanded ? "rounded-tl-md" : "rounded-l-md"} py-2.5 pl-3 pr-2 flex items-center gap-2`}>
                               {isMulti && (
                                 <button
                                   onClick={(e) => { e.stopPropagation(); toggleExpandVenta(venta.id) }}
@@ -793,7 +794,7 @@ export default function VentasPage() {
                                       </div>
                                     ))}
                                   </div>
-                                  <span className="text-sm text-slate-700 truncate">{venta.items.length} productos</span>
+                                  <span className="text-sm font-semibold text-slate-800 truncate">{venta.items.length} productos</span>
                                 </>
                               ) : firstItem && firstItemDisplay ? (
                                 <button
@@ -827,22 +828,25 @@ export default function VentasPage() {
                               ) : null}
                             </div>
 
-                            {/* PRECIO UNITARIO cell — single product only; multi shows nothing here */}
+                            {/* PRECIO UNITARIO — col-span-16 */}
+                            <div className="col-span-16 bg-slate-50 flex items-center px-3">
+                              {!isMulti && firstItem && <PrecioCell item={firstItem} />}
+                            </div>
+
+                            {/* UNIDADES — col-span-20: qty for single, "X unidades" summary for multi */}
                             <div className="col-span-20 bg-slate-50 flex items-center px-3">
                               {!isMulti && firstItem ? (
-                                <PrecioCell item={firstItem} />
+                                <QtyCell item={firstItem} />
                               ) : (
-                                <span className="text-xs text-slate-400">{totalUnits} uds.</span>
+                                <div className="flex items-baseline gap-1">
+                                  <span className="text-sm font-semibold text-slate-700 tabular-nums">{totalUnits}</span>
+                                  <span className="text-xs text-slate-400">{totalUnits === 1 ? "unidad" : "unidades"}</span>
+                                </div>
                               )}
                             </div>
 
-                            {/* UNIDADES cell — single only */}
-                            <div className="col-span-12 bg-slate-50 flex items-center px-3">
-                              {!isMulti && firstItem && <QtyCell item={firstItem} />}
-                            </div>
-
-                            {/* TOTAL cell */}
-                            <div className={`col-span-12 bg-slate-50 ${isExpanded ? "rounded-tr-md" : "rounded-r-md"} flex items-center px-3`}>
+                            {/* TOTAL — col-span-24, left-aligned to match subtotal column */}
+                            <div className={`col-span-24 bg-slate-50 ${isExpanded ? "rounded-tr-md" : "rounded-r-md"} flex items-center px-3`}>
                               <span className="text-sm font-semibold text-slate-800">${venta.total.toLocaleString("es-AR")}</span>
                             </div>
                             <div className="col-span-4" />
