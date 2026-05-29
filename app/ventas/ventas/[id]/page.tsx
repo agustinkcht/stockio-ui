@@ -739,7 +739,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   const dia = fechaObj.toLocaleDateString("es-AR", { day: "2-digit" })
                   const inicial = clienteNombre.charAt(0).toUpperCase()
                   return (
-                    <div className="pt-8 px-0 pb-3 flex flex-col gap-4">
+                    <div className="pt-8 px-0 pb-3 flex flex-col">
 
                       {/* Row 1: Venta ID · fecha · origen (same for all estados) */}
                       <div className="flex items-center justify-between gap-4">
@@ -775,7 +775,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       </div>
 
                       {/* Row 2: Cliente pill (left) + PDF / more options (right) */}
-                      <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center justify-between gap-3 mt-8">
                         {/* Cliente pill */}
                         <button
                           type="button"
@@ -783,7 +783,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             if (isEditMode) { setShowClienteSelectorModal(true) }
                             else if (clienteId) { setShowClienteInfoModal(true) }
                           }}
-                          className={`inline-flex items-center gap-3 pl-3 pr-5 py-2.5 rounded-2xl border bg-white shadow-sm transition-colors text-left ${clienteId || isEditMode ? "hover:bg-slate-50 cursor-pointer border-slate-200" : "cursor-default border-slate-200/60"}`}
+                          className={`inline-flex items-center gap-3 pl-3 pr-5 py-2.5 rounded-2xl border bg-slate-50 shadow-sm transition-colors text-left ${clienteId || isEditMode ? "hover:bg-slate-100 cursor-pointer border-slate-200" : "cursor-default border-slate-200/60"}`}
                         >
                           <div className="w-9 h-9 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
                             <span className="text-sm font-bold text-white leading-none">{clienteNombre.charAt(0).toUpperCase()}</span>
@@ -831,7 +831,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
                       {/* Row 3: Estado widget (left) + action widget (right) — all estados */}
                       {!isEditMode && (
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-2 gap-3 mt-4">
                           {/* Estado widget */}
                           {estadoUI === "finalizada" && (
                             <div className="bg-emerald-50 border border-emerald-200/60 rounded-lg shadow-sm px-5 py-4 flex items-center gap-3">
