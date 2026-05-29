@@ -796,8 +796,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center flex-1 min-w-0">
                           <div className="flex items-baseline gap-2 shrink-0">
-                            <span className="text-lg font-bold text-slate-900 leading-none">Venta</span>
-                            <span className="text-sm font-medium text-slate-400 leading-none tabular-nums">{venta.id}</span>
+                            <span className="text-xl font-bold text-slate-900 leading-none uppercase tracking-wide">Venta</span>
+                            <span className="text-base font-medium text-slate-400 leading-none tabular-nums">{venta.id}</span>
                           </div>
                           <div className="h-5 w-px bg-slate-300 shrink-0 mx-5" />
                           <span className="text-sm font-medium text-slate-600 tabular-nums shrink-0">
