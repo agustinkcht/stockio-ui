@@ -179,20 +179,47 @@ export default function NuevaVentaPage() {
       setCliente({ tipo: "consumidor_final" })
     }
 
-    // Prefill items (strip discount/total, keep sku/name/quantity/unitPrice)
+    // Prefill items preserving per-item discounts
     const prefillItems: VentaItem[] = source.items.map((it) => ({
       sku: it.sku,
       name: it.name,
       quantity: it.quantity,
       unitPrice: it.unitPrice,
-      total: it.unitPrice * it.quantity,
-      discount: 0,
-      discountType: "percent" as const,
+      discount: it.discount,
+      discountType: it.discountType,
+      total: it.total,
       categoria: it.categoria,
-      marca: it.marca,
     }))
     setSelectedItems(prefillItems)
-    setEditAjustes({})
+
+    // Rebuild editAjustes from per-item discounts
+    const ajustes: Record<number, { value: number; type: "percent" | "cash" | "unit" }> = {}
+    source.items.forEach((it, idx) => {
+      if (it.discount && it.discount !== 0) {
+        ajustes[idx] = {
+          value: it.discount,
+          type: it.discountType === "fixed" ? "cash" : it.discountType === "unit" ? "unit" : "percent",
+        }
+      }
+    })
+    setEditAjustes(ajustes)
+
+    // Global discount
+    if (source.globalDiscount && source.globalDiscount.value !== 0) {
+      setGlobalDiscount(source.globalDiscount)
+      setShowGlobalDiscount(true)
+    }
+
+    // Envio
+    if (source.envio && source.envio > 0) {
+      setEnvioAmount(source.envio)
+      setShowEnvio(true)
+    }
+
+    // Custom charges (otro, etc.)
+    if (source.customCharges && source.customCharges.length > 0) {
+      setCustomCharges(source.customCharges)
+    }
 
     // Default entrega and cobro to en_el_acto
     setEntregaMode("en_el_acto")
