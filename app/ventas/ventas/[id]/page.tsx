@@ -1049,9 +1049,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                               <span className="text-xs text-slate-400 tabular-nums">{dateLabel}</span>
                               <span className="text-xs text-slate-300">·</span>
                               {isAnulacion ? (
-                                <span className="text-xs tabular-nums">
-                                  <span className="text-red-400">{totalEntryUnits} {totalEntryUnits === 1 ? "unidad" : "unidades"} reingresadas</span>
-                                  <span className="text-slate-400"> (anulación de entrega)</span>
+                                <span className="text-xs text-red-400 tabular-nums">
+                                  {totalEntryUnits} {totalEntryUnits === 1 ? "unidad" : "unidades"} reingresadas
                                 </span>
                               ) : (
                                 <span className="text-xs text-slate-400 tabular-nums">{totalEntryUnits} {totalEntryUnits === 1 ? "unidad" : "unidades"} entregadas</span>
@@ -1658,7 +1657,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                               {isAnulacion ? (
                                 <span className="text-xs text-red-400">Anulación de cobro</span>
                               ) : isNegative ? (
-                                <span className="text-xs text-slate-500">Devolución</span>
+                                <span className="text-xs text-red-400">Devolución</span>
                               ) : (
                                 <span className="flex items-center gap-1 group/mp cursor-default">
                                   <span className="text-xs text-slate-500">{metodoPagoLabels[cobro.medioPago as PaymentMethod] ?? cobro.medioPago}</span>
