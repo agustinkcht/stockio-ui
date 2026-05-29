@@ -29,6 +29,7 @@ import {
   Undo2,
   Pencil,
   RotateCcw,
+  Copy,
   ShoppingCart,
 } from "lucide-react"
 import Image from "next/image"
@@ -757,21 +758,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             {(venta as any).origen === "pdv" ? "Punto de Venta" : (venta as any).origen === "presupuesto" ? "Presupuesto" : "Manual"}
                           </span>
                         </div>
-                        {/* Edit button for en_curso only */}
-                        {estadoUI === "en_curso" && (
-                          <button
-                            type="button"
-                            onClick={() => isEditMode ? cancelEditMode() : enterEditMode()}
-                            className={`h-8 text-xs cursor-pointer gap-1.5 px-3 rounded-md flex items-center font-medium transition-colors shadow-sm shrink-0 ${
-                              isEditMode
-                                ? "bg-slate-900 text-white border border-slate-900"
-                                : "bg-white border border-slate-200 hover:bg-slate-50 text-slate-700"
-                            }`}
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                            Editar
-                          </button>
-                        )}
+
                       </div>
 
                       {/* Row 2: Cliente pill (left) + PDF / more options (right) */}
@@ -813,7 +800,14 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                               <MoreVertical className="w-4 h-4 text-slate-500" />
                             </button>
                             {showMoreOptionsMenu && (
-                              <div className="absolute top-full right-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[160px]">
+                              <div className="absolute top-full right-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[180px]">
+                                <button
+                                  onClick={() => { setShowMoreOptionsMenu(false); router.push(`/ventas/ventas/nueva?duplicar=${venta.id}`) }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                                >
+                                  <Copy className="w-4 h-4 text-slate-400" />
+                                  Duplicar venta
+                                </button>
                                 {estadoUI !== "cancelada" && (
                                   <button
                                     onClick={() => { setShowMoreOptionsMenu(false); setShowCancelarVentaModal(true) }}

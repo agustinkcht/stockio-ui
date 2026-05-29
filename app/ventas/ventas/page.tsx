@@ -25,6 +25,7 @@ import {
   X,
   Package,
   Wallet,
+  Copy,
 } from "lucide-react"
 import type { Venta, VentaItem, PaymentMethod } from "@/lib/types"
 import { getCategoryImage } from "@/lib/utils/category-images"
@@ -632,6 +633,13 @@ export default function VentasPage() {
                                   Marcar como finalizada
                                 </button>
                               )}
+                              <button
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                                onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); router.push(`/ventas/ventas/nueva?duplicar=${venta.id}`) }}
+                              >
+                                <Copy className="w-4 h-4 text-slate-400" />
+                                Duplicar venta
+                              </button>
                               {(venta.estado === "en_curso" || venta.estado === "finalizada") && (
                                 <button
                                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors text-left"
@@ -838,7 +846,7 @@ export default function VentasPage() {
                               ) : null}
                             </div>
 
-                            {/* UNIDADES ��� col-span-20: qty for single, summary for multi */}
+                            {/* UNIDADES ���� col-span-20: qty for single, summary for multi */}
                             <div className="col-span-20 bg-slate-50 flex items-center px-3">
                               {!isMulti && firstItem ? (
                                 <QtyCell item={firstItem} />

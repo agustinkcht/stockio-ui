@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useMemo, useRef } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useMemo, useRef, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import {
   CheckCircle2,
@@ -35,6 +35,7 @@ import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 import { CLIENTES } from "@/lib/data/clientes"
 import { INITIAL_ITEMS } from "@/lib/data/initial-items"
 import { useVentaStockSync } from "@/hooks/use-venta-stock-sync"
+import { useVentas } from "@/hooks/use-ventas"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import type {
@@ -90,8 +91,10 @@ function getNowTimeStr() {
 
 export default function NuevaVentaPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave } = useSidebar()
   const { addVenta } = useVentaStockSync()
+  const { ventas } = useVentas()
   const stepsContainerRef = useRef<HTMLDivElement>(null)
 
   const [currentStep, setCurrentStep] = useState(1)
@@ -161,6 +164,46 @@ export default function NuevaVentaPage() {
   // Creation state
   const [isCreating, setIsCreating] = useState(false)
   const [createdVentaId, setCreatedVentaId] = useState<string | null>(null)
+
+  // Duplicar venta: prefill from existing venta and jump to step 4
+  useEffect(() => {
+    const duplicarId = searchParams.get("duplicar")
+    if (!duplicarId || ventas.length === 0) return
+    const source = ventas.find((v) => v.id === duplicarId)
+    if (!source) return
+
+    // Prefill cliente
+    if (source.cliente.tipo === "cuenta") {
+      setCliente(source.cliente)
+    } else {
+      setCliente({ tipo: "consumidor_final" })
+    }
+
+    // Prefill items (strip discount/total, keep sku/name/quantity/unitPrice)
+    const prefillItems: VentaItem[] = source.items.map((it) => ({
+      sku: it.sku,
+      name: it.name,
+      quantity: it.quantity,
+      unitPrice: it.unitPrice,
+      total: it.unitPrice * it.quantity,
+      discount: 0,
+      discountType: "percent" as const,
+      categoria: it.categoria,
+      marca: it.marca,
+    }))
+    setSelectedItems(prefillItems)
+    setEditAjustes({})
+
+    // Default entrega and cobro to en_el_acto
+    setEntregaMode("en_el_acto")
+    setCobroMode("en_el_acto")
+    setMedioPago("efectivo")
+
+    // Jump straight to confirmación
+    setCurrentStep(4)
+    setMaxUnlockedStep(4)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ventas.length])
 
   const breadcrumbs = [
     { label: "Ventas" },
