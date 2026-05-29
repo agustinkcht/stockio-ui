@@ -1399,7 +1399,7 @@ export default function NuevoPresupuestoPage() {
                     value={modalSearch}
                     onChange={(e) => setModalSearch(e.target.value)}
                     placeholder="Buscar productos..."
-                    className="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-full focus:outline-none focus:border-slate-400"
+                    className="w-full pl-10 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-400"
                     autoFocus
                   />
                 </div>
@@ -1408,12 +1408,12 @@ export default function NuevoPresupuestoPage() {
                     onClick={() => setShowModalFilters(!showModalFilters)}
                     className={`flex items-center gap-1.5 px-3 py-2 text-sm border rounded-lg transition-colors ${
                       Object.values(modalFilters).some(v => v)
-                        ? "border-slate-900 text-white bg-slate-900"
+                        ? "border-blue-500 text-blue-600 bg-blue-50"
                         : "border-slate-200 text-slate-600 hover:bg-slate-50"
                     }`}
                   >
                     <Filter className="w-4 h-4" />
-                    Filtros
+                    Filtrar
                   </button>
                   {showModalFilters && (
                     <>
@@ -1450,13 +1450,24 @@ export default function NuevoPresupuestoPage() {
                     </>
                   )}
                 </div>
-                <button
-                  onClick={() => setModalSortDirection(d => d === "asc" ? "desc" : "asc")}
-                  className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
-                  title={modalSortDirection === "asc" ? "Ascendente" : "Descendente"}
-                >
-                  <ArrowUpDown className="w-4 h-4" />
-                </button>
+                <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden bg-white">
+                  <button
+                    onClick={() => setModalSortDirection(d => d === "asc" ? "desc" : "asc")}
+                    className="px-2.5 py-2 hover:bg-slate-50 transition-colors border-r border-slate-200"
+                    title={modalSortDirection === "asc" ? "Ascendente" : "Descendente"}
+                  >
+                    <ArrowUpDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${modalSortDirection === "desc" ? "rotate-180" : ""}`} />
+                  </button>
+                  <select
+                    value={modalSort}
+                    onChange={(e) => setModalSort(e.target.value as "name" | "precio" | "stock")}
+                    className="appearance-none pl-2.5 pr-7 py-2 text-sm bg-transparent focus:outline-none cursor-pointer text-slate-700"
+                  >
+                    <option value="name">Nombre</option>
+                    <option value="precio">Precio</option>
+                    <option value="stock">Stock</option>
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -1472,8 +1483,8 @@ export default function NuevoPresupuestoPage() {
                   </button>
                   <span>Producto</span>
                 </div>
-                <div className="flex items-center justify-center">Precio</div>
-                <div className="flex items-center justify-center">Seleccionado</div>
+                <div className="flex items-center justify-center">Stock</div>
+                <div className="flex items-center justify-end pr-6">Precio</div>
               </div>
             </div>
 
@@ -1486,23 +1497,22 @@ export default function NuevoPresupuestoPage() {
                 filteredModalItems.map((item, idx) => {
                   const isParent = item.hasVariants && item.variants && item.variants.length > 0
                   const selState = getModalSelectionState(item)
-                  const unitPrice = item.precio?.precioFinal
                   return (
-                    <div key={idx} className="border-b border-slate-100 last:border-b-0">
+                    <div key={idx}>
                       <div
-                        className={`grid grid-cols-[3fr_1fr_1.2fr] items-center py-2.5 px-4 hover:bg-slate-50/50 transition-colors cursor-pointer ${selState.checked || selState.indeterminate ? "bg-slate-50/70" : ""}`}
-                        onClick={() => !isParent && handleModalItemSelection(item)}
+                        className={`grid grid-cols-[3fr_1fr_1.2fr] items-center py-3 px-4 border-b border-slate-100 hover:bg-slate-50/50 transition-colors cursor-pointer ${selState.checked || selState.indeterminate ? "bg-slate-50/70" : ""}`}
+                        onClick={() => handleModalItemSelection(item)}
                       >
                         <div className="flex items-center gap-3">
                           <button
                             onClick={(e) => { e.stopPropagation(); handleModalItemSelection(item) }}
                             className="w-4 h-4 rounded border border-slate-300 flex items-center justify-center hover:border-slate-600 transition-colors bg-white flex-shrink-0"
                           >
-                            {selState.checked && !selState.indeterminate && <Check className="w-3 h-3 text-slate-800" />}
+                            {selState.checked && <Check className="w-3 h-3 text-slate-800" />}
                             {selState.indeterminate && <Minus className="w-3 h-3 text-slate-800" />}
                           </button>
-                          <div className="w-8 h-8 rounded bg-slate-100 overflow-hidden flex-shrink-0">
-                            <Image src={getCategoryImage(item.categoria || "") || "/placeholder.svg"} alt={item.name} width={32} height={32} className="w-full h-full object-cover" />
+                          <div className="w-9 h-9 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+                            <Image src={getCategoryImage(item.categoria || "") || "/placeholder.svg"} alt={item.name} width={36} height={36} className="w-full h-full object-cover" />
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
@@ -1515,28 +1525,24 @@ export default function NuevoPresupuestoPage() {
                           </div>
                         </div>
                         <div className="flex items-center justify-center">
-                          {!isParent && unitPrice != null ? (
-                            <span className="text-sm text-slate-700 tabular-nums">${unitPrice.toLocaleString("es-AR")}</span>
-                          ) : (
-                            <span className="text-xs text-slate-300">—</span>
-                          )}
+                          {!isParent && (() => {
+                            const disp = parseInt(item.stock?.disponible || "0")
+                            return disp > 0
+                              ? <span className="text-sm text-slate-600 tabular-nums">{disp} <span className="text-xs text-slate-400">disponibles</span></span>
+                              : <span className="text-xs text-slate-400">sin stock</span>
+                          })()}
                         </div>
-                        <div className="flex items-center justify-center">
-                          {selState.checked && !isParent && <Check className="w-4 h-4 text-emerald-500" />}
-                          {isParent && selState.indeterminate && <Minus className="w-3.5 h-3.5 text-slate-400" />}
+                        <div className="flex items-center justify-end pr-6">
+                          {!isParent && <span className="text-sm font-medium text-slate-800">${(item.precio?.precioFinal || 0).toLocaleString("es-AR")}</span>}
                         </div>
                       </div>
 
                       {isParent && item.variants!.map((variant: any, vIdx: number) => {
                         const vState = getModalSelectionState(variant, true)
-                        const variantPrice = variant.precio?.precioFinal
-                        const variantName = variant.atributosPrincipales?.length
-                          ? variant.atributosPrincipales.map((a: any) => a.value).join(" · ")
-                          : variant.name
                         return (
                           <div
                             key={vIdx}
-                            className={`grid grid-cols-[3fr_1fr_1.2fr] items-center py-2 px-4 pl-12 hover:bg-slate-50/50 transition-colors cursor-pointer border-t border-slate-50 ${vState.checked ? "bg-slate-50/70" : ""}`}
+                            className={`grid grid-cols-[3fr_1fr_1.2fr] items-center py-2.5 px-4 border-b border-slate-100 hover:bg-slate-50/50 transition-colors cursor-pointer pl-12 ${vState.checked ? "bg-slate-50/70" : ""}`}
                             onClick={() => handleModalItemSelection(variant, true)}
                           >
                             <div className="flex items-center gap-3">
@@ -1546,15 +1552,29 @@ export default function NuevoPresupuestoPage() {
                               >
                                 {vState.checked && <Check className="w-3 h-3 text-slate-800" />}
                               </button>
-                              <p className="text-sm text-slate-700">{variantName}</p>
+                              <div className="w-8 h-8 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+                                <Image src={getCategoryImage(variant.categoria || item.categoria || "") || "/placeholder.svg"} alt={variant.name || item.name} width={32} height={32} className="w-full h-full object-cover" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <p className="text-sm text-slate-700 truncate">{variant.name || item.name}</p>
+                                  {variant.atributosPrincipales?.map((a: any, i: number) => (
+                                    <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-500">{a.value}</span>
+                                  ))}
+                                </div>
+                                <p className="text-xs text-slate-400">{`${item.skuPrefix}-${variant.skuSuffix}`}</p>
+                              </div>
                             </div>
                             <div className="flex items-center justify-center">
-                              {variantPrice != null ? (
-                                <span className="text-sm text-slate-700 tabular-nums">${variantPrice.toLocaleString("es-AR")}</span>
-                              ) : <span className="text-xs text-slate-300">—</span>}
+                              {(() => {
+                                const disp = parseInt(variant.stock?.disponible || "0")
+                                return disp > 0
+                                  ? <span className="text-sm text-slate-600 tabular-nums">{disp} <span className="text-xs text-slate-400">disponibles</span></span>
+                                  : <span className="text-xs text-slate-400">sin stock</span>
+                              })()}
                             </div>
-                            <div className="flex items-center justify-center">
-                              {vState.checked && <Check className="w-4 h-4 text-emerald-500" />}
+                            <div className="flex items-center justify-end pr-6">
+                              <span className="text-sm font-medium text-slate-800">${(variant.precio?.precioFinal || 0).toLocaleString("es-AR")}</span>
                             </div>
                           </div>
                         )
@@ -1568,7 +1588,7 @@ export default function NuevoPresupuestoPage() {
             <div className="border-t border-slate-200 bg-slate-50 py-3 px-5 flex items-center justify-between flex-shrink-0">
               <span className="text-sm text-slate-500">
                 {selectedModalCount > 0
-                  ? `${selectedModalCount} producto${selectedModalCount !== 1 ? "s" : ""} seleccionado${selectedModalCount !== 1 ? "s" : ""}`
+                  ? `${selectedModalCount} producto${selectedModalCount > 1 ? "s" : ""} seleccionado${selectedModalCount > 1 ? "s" : ""}`
                   : "Seleccioná productos para agregar"}
               </span>
               <button
@@ -1576,7 +1596,7 @@ export default function NuevoPresupuestoPage() {
                 disabled={selectedModalCount === 0}
                 className="px-5 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                Agregar al presupuesto
+                Agregar seleccionados
               </button>
             </div>
 
