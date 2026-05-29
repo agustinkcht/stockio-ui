@@ -34,6 +34,8 @@ import { VentaItemDetailModal } from "@/components/ventas/venta-item-detail-moda
 import { ClienteModal } from "@/components/ventas/cliente-modal"
 import { TicketModal } from "@/components/ventas/ticket-modal"
 import { useVentas } from "@/hooks/use-ventas"
+import { useSettings } from "@/lib/contexts/settings-context"
+import { downloadVentasPDF } from "@/lib/utils/generate-venta-pdf"
 import {
   PERIOD_OPTIONS,
   usePeriod,
@@ -97,6 +99,7 @@ export default function VentasPage() {
   const router = useRouter()
   const allCheckboxRef = useRef<HTMLInputElement>(null)
   const { ventas, cancelarVenta, finalizarVenta } = useVentas()
+  const { miNegocio } = useSettings()
 
   const { periodKey, customRange, setPeriodKey, setCustomRange } = usePeriod()
   const [periodOpen, setPeriodOpen] = useState(false)
@@ -431,7 +434,10 @@ export default function VentasPage() {
                     <button
                       type="button"
                       className="h-8 flex items-center gap-1.5 px-3 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-md hover:bg-slate-50 hover:border-slate-300 shadow-sm transition-colors"
-                      onClick={() => {/* PDF bulk download */}}
+                      onClick={() => {
+                        const selected = ventas.filter(v => selectedVentas.has(v.id))
+                        downloadVentasPDF(selected, miNegocio)
+                      }}
                     >
                       <FileDown className="w-3.5 h-3.5 text-slate-400" />
                       Descargar PDF
@@ -637,7 +643,7 @@ export default function VentasPage() {
                               )}
                               <button
                                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
-                                onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null) }}
+                                onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); downloadVentasPDF([venta], miNegocio) }}
                               >
                                 <FileDown className="w-4 h-4 text-slate-400" />
                                 Descargar PDF
