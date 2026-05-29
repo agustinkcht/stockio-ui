@@ -120,27 +120,21 @@ export default function CatalogoPage() {
   // Use the built-in hasUnsavedEdits from useItems for precio/stock changes
   const hasChanges = hasUnsavedEdits || hasUnsavedDeletes
 
-  // Handle precio updates - check if it's a variant or standalone
+  // Handle precio updates - check if it's a variant or standalone, then auto-save
   const handleUpdatePrecio = useCallback((itemId: string, precio: { costo: number; margen: number; iva: number; precioFinal: number }) => {
-    // Check if this is a variant by looking through parent items
-    let isVariant = false
-    let parentSku: string | undefined
-
     for (const item of items) {
       if (item.variants) {
         const variant = item.variants.find((v: any) => v.id === itemId || v.sku === itemId)
         if (variant) {
-          isVariant = true
-          parentSku = item.sku
-          editVariantField(parentSku, variant.sku, "precio", precio)
+          editVariantField(item.sku, variant.sku, "precio", precio)
+          setTimeout(() => saveEdit(), 0)
           return
         }
       }
     }
-
-    // Not a variant, use regular editField
     editField(itemId, "precio", precio)
-  }, [items, editField, editVariantField])
+    setTimeout(() => saveEdit(), 0)
+  }, [items, editField, editVariantField, saveEdit])
 
   // Handle stock updates - uses the built-in tracking from useItems
   // Auto-reactivates items when stock disponible becomes > 0
@@ -165,6 +159,7 @@ export default function CatalogoPage() {
             disponible: newDisponible.toString()
           }
           editVariantField(parentIdentifier!, itemId, "stock", newStock)
+          setTimeout(() => saveEdit(), 0)
           
           // Auto-reactivate if was paused due to 0 stock and now has stock
           const wasInactive = (variant as any).isActive === false
@@ -197,6 +192,7 @@ export default function CatalogoPage() {
         disponible: newDisponible.toString()
       }
       editField(itemId, "stock", newStock)
+      setTimeout(() => saveEdit(), 0)
       
       // Auto-reactivate if was paused due to 0 stock and now has stock
       const wasInactive = item.isActive === false
@@ -210,7 +206,7 @@ export default function CatalogoPage() {
         updateItemsActiveStatus([item.id], false)
       }
     }
-  }, [items, editField, editVariantField, updateItemsActiveStatus])
+  }, [items, editField, editVariantField, updateItemsActiveStatus, saveEdit])
 
   // Navigation guard for unsaved changes
   const {
@@ -480,23 +476,7 @@ export default function CatalogoPage() {
                   </div>
                 )}
 
-                {/* Deshacer/Guardar buttons - appear when there are unsaved changes */}
-                {hasChanges && !isSaving && !showSaveSuccess && (
-                  <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2 duration-300">
-                    <button
-                      onClick={handleDeshacer}
-                      className="px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors cursor-pointer"
-                    >
-                      Deshacer
-                    </button>
-                    <button
-                      onClick={handleGuardar}
-                      className="px-3 py-1.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-md transition-colors cursor-pointer"
-                    >
-                      Guardar
-                    </button>
-                  </div>
-                )}
+
               </div>
             </div>
           </div>
@@ -594,8 +574,11 @@ export default function CatalogoPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100010]" onClick={handleCancelDelete}>
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold text-foreground mb-2">
-              ¿Seguro deseas eliminar el item?
+              ¿Seguro deseas eliminar este item?
             </h3>
+            <p className="text-sm text-muted-foreground">
+              Dejará de existir en la grilla, pero seguirá formando parte del histórico de ventas y actividad.
+            </p>
             <div className="flex items-center gap-3 justify-end mt-6">
               <button
                 onClick={handleCancelDelete}
@@ -607,7 +590,7 @@ export default function CatalogoPage() {
                 onClick={handleConfirmDelete}
                 className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors cursor-pointer"
               >
-                Aceptar
+                Eliminar item
               </button>
             </div>
           </div>
@@ -621,6 +604,9 @@ export default function CatalogoPage() {
             <h3 className="text-lg font-semibold text-foreground mb-2">
               ¿Seguro deseas eliminar los items seleccionados?
             </h3>
+            <p className="text-sm text-muted-foreground">
+              Dejarán de existir en la grilla, pero seguirán formando parte del histórico de ventas y actividad.
+            </p>
             <div className="flex items-center gap-3 justify-end mt-6">
               <button
                 onClick={handleCancelBatchDelete}
@@ -632,7 +618,7 @@ export default function CatalogoPage() {
                 onClick={handleConfirmBatchDelete}
                 className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors cursor-pointer"
               >
-                Aceptar
+                Eliminar items
               </button>
             </div>
           </div>

@@ -255,6 +255,7 @@ export default function CatalogoItemDetailPage() {
               onDelete={handleDeleteWithTracking}
               variantChangeHandlers={{}}
               isExpanded={false}
+              onSaveNow={saveEdit}
             />
           </main>
         </div>

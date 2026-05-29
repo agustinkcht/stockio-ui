@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Minus, Plus, Check, X } from "lucide-react"
 
 interface StockEditModalProps {
@@ -28,16 +28,22 @@ export function StockEditModal({
   const [inputValue, setInputValue] = useState("")
   const [activeField, setActiveField] = useState<"total" | "reservado" | null>(null)
 
-  // Reset state when modal opens
+  // Track the previous open state to detect the rising edge (closed→open)
+  const wasOpenRef = useRef(false)
+
+  // Reset ALL local state whenever the modal transitions from closed to open,
+  // capturing the latest initialTotal / initialReservado at that exact moment.
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !wasOpenRef.current) {
       setTotal(initialTotal)
       setReservado(initialReservado)
       setOperation("add")
       setInputValue("")
       setActiveField(null)
     }
-  }, [isOpen, initialTotal, initialReservado])
+    wasOpenRef.current = isOpen
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen])
 
   const disponible = total - reservado
   const hasChanges = total !== initialTotal || reservado !== initialReservado
@@ -271,7 +277,7 @@ export function StockEditModal({
                 : "bg-slate-200 text-slate-400 cursor-not-allowed"
             }`}
           >
-            Aceptar
+            Guardar
           </button>
         </div>
       </div>

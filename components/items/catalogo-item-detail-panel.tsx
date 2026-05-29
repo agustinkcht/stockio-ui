@@ -88,6 +88,7 @@ interface ItemDetailPanelProps {
   onDelete?: (item: any) => void
   variantChangeHandlers: any
   isExpanded?: boolean
+  onSaveNow?: () => void
 }
 
 export function CatalogoItemDetailPanel({
@@ -108,6 +109,7 @@ export function CatalogoItemDetailPanel({
   onDelete,
   variantChangeHandlers,
   isExpanded = true,
+  onSaveNow,
 }: ItemDetailPanelProps) {
   const router = useRouter()
   const { catalogo, stock } = useSettings()
@@ -3489,12 +3491,13 @@ export function CatalogoItemDetailPanel({
                 onClick={() => {
                   if (selectedItem?.sku) {
                     onFieldChange(selectedItem.id, "precio", precioModalValues)
+                    onSaveNow?.()
                   }
                   setIsPrecioModalOpen(false)
                 }}
                 className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
               >
-                Aceptar
+                Guardar
               </button>
             </div>
           </div>
@@ -3508,11 +3511,17 @@ export function CatalogoItemDetailPanel({
         onAccept={(newTotal, newReservado) => {
           const id = selectedItem?.id || selectedItem?.sku
           if (id) {
-            if (newTotal !== Number.parseInt(selectedItem?.stock?.total || "0")) {
-              updateStock(id, "total", newTotal)
-            }
-            if (newReservado !== Number.parseInt(selectedItem?.stock?.reservado || "0")) {
-              updateStock(id, "reservado", newReservado)
+            const currentTotal = Number.parseInt(selectedItem?.stock?.total || "0")
+            const currentReservado = Number.parseInt(selectedItem?.stock?.reservado || "0")
+            if (newTotal !== currentTotal || newReservado !== currentReservado) {
+              // Build the full stock object directly so a single editField call covers both fields
+              const newStock = {
+                total: newTotal.toString(),
+                reservado: newReservado.toString(),
+                disponible: (newTotal - newReservado).toString(),
+              }
+              onFieldChange(id, "stock", newStock)
+              onSaveNow?.()
             }
           }
         }}
@@ -3628,6 +3637,7 @@ export function CatalogoItemDetailPanel({
               ov.id === expandedMatrixStockModal.variant.id ? { ...ov, stock: newStock } : ov
             )
             onFieldChange(selectedItem.id, "variants", updatedVariants)
+            onSaveNow?.()
           }
         }}
         initialTotal={expandedMatrixStockValues.total}
