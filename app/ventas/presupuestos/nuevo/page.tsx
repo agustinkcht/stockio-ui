@@ -8,21 +8,17 @@ import {
   ChevronDown,
   User,
   Package,
-  Truck,
-  Wallet,
   Plus,
   Minus,
   Search,
   Check,
   X,
   ClipboardCheck,
-  CreditCard,
-  Banknote,
-  ArrowRightLeft,
   Filter,
   ArrowUpDown,
   Pencil,
   ShoppingCart,
+  FileText,
 } from "lucide-react"
 
 import { Sidebar } from "@/components/layout/sidebar"
@@ -34,46 +30,22 @@ import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 
 import { CLIENTES } from "@/lib/data/clientes"
 import { INITIAL_ITEMS } from "@/lib/data/initial-items"
-import { useVentaStockSync } from "@/hooks/use-venta-stock-sync"
-import { useVentas } from "@/hooks/use-ventas"
+import { usePresupuestos } from "@/hooks/use-presupuestos"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import type {
-  Item,
   ItemVariant,
-  PaymentMethod,
-  Venta,
   VentaCliente,
-  VentaCobro,
   VentaCustomCharge,
-  VentaEntregaEntry,
-  VentaEntregaItem,
   VentaItem,
 } from "@/lib/types"
 
+// ── Steps: 3 steps only (no Entrega y Cobro) ─────────────────
 const STEPS = [
   { id: 1, label: "Cliente" },
   { id: 2, label: "Productos" },
-  { id: 3, label: "Entrega y Cobro" },
-  { id: 4, label: "Confirmación" },
+  { id: 3, label: "Confirmación" },
 ]
-
-type EntregaMode = "en_el_acto" | "diferida"
-type CobroMode = "en_el_acto" | "diferida"
-
-const medioPagoLabels: Record<PaymentMethod, string> = {
-  efectivo: "Efectivo",
-  posnet: "Posnet",
-  transferencia: "Transferencia",
-  no_especificado: "No especificado",
-}
-
-const medioPagoIcons: Record<PaymentMethod, typeof Banknote> = {
-  efectivo: Banknote,
-  posnet: CreditCard,
-  transferencia: ArrowRightLeft,
-  no_especificado: Wallet,
-}
 
 function pad(n: number) {
   return String(n).padStart(2, "0")
@@ -89,16 +61,14 @@ function getNowTimeStr() {
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-export default function NuevaVentaPage() {
+export default function NuevoPresupuestoPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave } = useSidebar()
-  const { addVenta } = useVentaStockSync()
-  const { ventas } = useVentas()
+  const { addPresupuesto, presupuestos } = usePresupuestos()
   const stepsContainerRef = useRef<HTMLDivElement>(null)
 
   const [currentStep, setCurrentStep] = useState(1)
-  // maxUnlockedStep tracks how far the user has explicitly advanced
   const [maxUnlockedStep, setMaxUnlockedStep] = useState(1)
 
   // Step 1: Cliente
@@ -106,20 +76,16 @@ export default function NuevaVentaPage() {
   const [clienteSearch, setClienteSearch] = useState("")
   const [showNuevoClienteModal, setShowNuevoClienteModal] = useState(false)
 
-  // Step 2: Productos — edit-mode state
+  // Step 2: Productos
   const [selectedItems, setSelectedItems] = useState<VentaItem[]>([])
   const [editAjustes, setEditAjustes] = useState<Record<number, { value: number; type: "percent" | "cash" | "unit" }>>({})
   const [showAgregarProductos, setShowAgregarProductos] = useState(false)
-  // Inline price editing (idx → temp string value)
-  const [editingPriceIdx, setEditingPriceIdx] = useState<number | null>(null)
-  const [tempPriceVal, setTempPriceVal] = useState("")
-  // Editar precio modal
   const [discountModalIdx, setDiscountModalIdx] = useState<number | null>(null)
   const [modalAjuste, setModalAjuste] = useState<{ value: number; type: "percent" | "cash" | "unit" }>({ value: 0, type: "percent" })
   const [modalPrice, setModalPrice] = useState<string>("")
   const [showModalDescuento, setShowModalDescuento] = useState(false)
 
-  // Modal state (exact copy from venta detail)
+  // Agregar productos modal state
   const [modalSearch, setModalSearch] = useState("")
   const [selectedModalItems, setSelectedModalItems] = useState<{ [id: string]: boolean }>({})
   const [modalFilters, setModalFilters] = useState<{ categoria: string; marca: string }>({ categoria: "", marca: "" })
@@ -129,57 +95,29 @@ export default function NuevaVentaPage() {
 
   // Resumen sidebar
   const [showProductosBreakdown, setShowProductosBreakdown] = useState(false)
-
-  // Step 3: Resumen adjustments
   const [showGlobalDiscount, setShowGlobalDiscount] = useState(false)
   const [globalDiscount, setGlobalDiscount] = useState<{ value: number; type: "percent" | "cash" }>({ value: 0, type: "percent" })
   const [showEnvio, setShowEnvio] = useState(false)
   const [envioAmount, setEnvioAmount] = useState(0)
   const [customCharges, setCustomCharges] = useState<VentaCustomCharge[]>([])
 
-  // Step 3: Entrega
-  const [entregaMode, setEntregaMode] = useState<EntregaMode>("en_el_acto")
-  // Entrega inicial (diferida)
-  const [showEntregaInicialModal, setShowEntregaInicialModal] = useState(false)
-  const [entregaInicialEntries, setEntregaInicialEntries] = useState<Array<{
-    sku: string; name: string; categoria?: string; quantity: number; max: number; date: string; editingDate: boolean
-  }>>([])
-  const [entregaModalSelected, setEntregaModalSelected] = useState<{ [sku: string]: boolean }>({})
-  const [entregaModalQtys, setEntregaModalQtys] = useState<{ [sku: string]: string }>({})
-
-  // Step 4: Cobro
-  const [cobroMode, setCobroMode] = useState<CobroMode>("en_el_acto")
-  const [medioPago, setMedioPago] = useState<PaymentMethod>("efectivo")
-  // Cobro inicial (diferida)
-  const [showCobroInicialModal, setShowCobroInicialModal] = useState(false)
-  const [cobroInicialEntries, setCobroInicialEntries] = useState<Array<{
-    id: number; monto: string; medioPago: PaymentMethod; date: string; editingDate: boolean
-  }>>([])
-  // Cobro modal state
-  const [cobroModalMonto, setCobroModalMonto] = useState("")
-  const [cobroModalMedio, setCobroModalMedio] = useState<PaymentMethod>("efectivo")
-  const [cobroModalFecha, setCobroModalFecha] = useState(getTodayDateStr())
-  const [cobroModalHora, setCobroModalHora] = useState(getNowTimeStr())
-
   // Creation state
   const [isCreating, setIsCreating] = useState(false)
-  const [createdVentaId, setCreatedVentaId] = useState<string | null>(null)
+  const [createdPresupuestoId, setCreatedPresupuestoId] = useState<string | null>(null)
 
-  // Duplicar venta: prefill from existing venta and jump to step 4
+  // Duplicar presupuesto: prefill from existing and jump to step 3
   useEffect(() => {
     const duplicarId = searchParams.get("duplicar")
-    if (!duplicarId || ventas.length === 0) return
-    const source = ventas.find((v) => v.id === duplicarId)
+    if (!duplicarId || presupuestos.length === 0) return
+    const source = presupuestos.find((p) => p.id === duplicarId)
     if (!source) return
 
-    // Prefill cliente
     if (source.cliente.tipo === "cuenta") {
       setCliente(source.cliente)
     } else {
       setCliente({ tipo: "consumidor_final" })
     }
 
-    // Prefill items preserving per-item discounts
     const prefillItems: VentaItem[] = source.items.map((it) => ({
       sku: it.sku,
       name: it.name,
@@ -192,7 +130,6 @@ export default function NuevaVentaPage() {
     }))
     setSelectedItems(prefillItems)
 
-    // Rebuild editAjustes from per-item discounts
     const ajustes: Record<number, { value: number; type: "percent" | "cash" | "unit" }> = {}
     source.items.forEach((it, idx) => {
       if (it.discount && it.discount !== 0) {
@@ -204,38 +141,29 @@ export default function NuevaVentaPage() {
     })
     setEditAjustes(ajustes)
 
-    // Global discount
     if (source.globalDiscount && source.globalDiscount.value !== 0) {
       setGlobalDiscount(source.globalDiscount)
       setShowGlobalDiscount(true)
     }
 
-    // Envio
     if (source.envio && source.envio > 0) {
       setEnvioAmount(source.envio)
       setShowEnvio(true)
     }
 
-    // Custom charges (otro, etc.)
     if (source.customCharges && source.customCharges.length > 0) {
       setCustomCharges(source.customCharges)
     }
 
-    // Default entrega and cobro to en_el_acto
-    setEntregaMode("en_el_acto")
-    setCobroMode("en_el_acto")
-    setMedioPago("efectivo")
-
-    // Jump straight to confirmación
-    setCurrentStep(4)
-    setMaxUnlockedStep(4)
+    setCurrentStep(3)
+    setMaxUnlockedStep(3)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ventas.length])
+  }, [presupuestos.length])
 
   const breadcrumbs = [
     { label: "Ventas" },
-    { label: "Ventas", href: "/ventas/ventas" },
-    { label: "Nueva Venta" },
+    { label: "Presupuestos", href: "/ventas/presupuestos" },
+    { label: "Nuevo Presupuesto" },
   ]
 
   // ── Derived ───────────────────────────────────────────────
@@ -273,13 +201,11 @@ export default function NuevaVentaPage() {
         c.tipo === "empresa"
           ? c.razonSocial ?? ""
           : `${c.nombre} ${c.apellido}`.trim()
-      return (
-        name.toLowerCase().includes(q) || c.id.toLowerCase().includes(q)
-      )
+      return name.toLowerCase().includes(q) || c.id.toLowerCase().includes(q)
     })
   }, [clienteSearch])
 
-  // ── Modal derived (exact copy from venta detail) ─────────
+  // ── Modal derived ─────────────────────────────────────────
   const allModalItems = INITIAL_ITEMS
 
   const uniqueModalCategorias = useMemo(() => {
@@ -389,12 +315,7 @@ export default function NuevaVentaPage() {
           if (!selectedModalItems[id]) continue
           const sku = `${item.skuPrefix}-${(variant as ItemVariant).skuSuffix}`
           const unitPrice = (variant as ItemVariant).precio?.precioFinal || 0
-          // if already in list bump qty
-          const existingIdx = selectedItems.findIndex(it => it.sku === sku)
-          if (existingIdx >= 0) {
-            // skip — already present, don't duplicate
-            continue
-          }
+          if (selectedItems.findIndex(it => it.sku === sku) >= 0) continue
           newItems.push({
             sku,
             name: `${item.name}${(variant as ItemVariant).atributosPrincipales?.length ? " · " + (variant as ItemVariant).atributosPrincipales!.map(a => a.value).join(" · ") : ""}`,
@@ -410,8 +331,7 @@ export default function NuevaVentaPage() {
         const id = item.id || item.sku || item.name
         if (!selectedModalItems[id]) continue
         const sku = item.sku || id
-        const existingIdx = selectedItems.findIndex(it => it.sku === sku)
-        if (existingIdx >= 0) continue
+        if (selectedItems.findIndex(it => it.sku === sku) >= 0) continue
         const unitPrice = item.precio?.precioFinal || 0
         newItems.push({
           sku,
@@ -444,10 +364,8 @@ export default function NuevaVentaPage() {
   const canAdvance = useMemo(() => {
     if (currentStep === 1) return cliente !== null
     if (currentStep === 2) return selectedItems.length > 0
-    if (currentStep === 3) return true
-    if (currentStep === 4) return true
-    return false
-  }, [currentStep, selectedItems])
+    return true
+  }, [currentStep, cliente, selectedItems])
 
   // ── Confirm / Create ──────────────────────────────────────
   const handleCreate = () => {
@@ -477,53 +395,9 @@ export default function NuevaVentaPage() {
       })
 
       const subtotal = items.reduce((s, it) => s + it.total, 0)
-      const ventaTotal = Math.round(grandTotal)
+      const presupuestoTotal = Math.round(grandTotal)
 
-      const entregaItems: VentaEntregaItem[] =
-        entregaMode === "en_el_acto"
-          ? items.map((it) => ({ sku: it.sku, quantityEntregada: it.quantity }))
-          : items.map((it) => ({ sku: it.sku, quantityEntregada: 0 as number }))
-
-      const entregaEntries: VentaEntregaEntry[] =
-        entregaMode === "en_el_acto"
-          ? [{ id: `ENT-${Date.now()}`, fecha, hora, items: items.map((it) => ({ sku: it.sku, quantity: it.quantity })) }]
-          : entregaInicialEntries.length > 0
-            ? entregaInicialEntries.reduce<VentaEntregaEntry[]>((acc, en) => {
-                const existing = acc.find(e => e.fecha === en.date)
-                if (existing) {
-                  existing.items.push({ sku: en.sku, quantity: en.quantity })
-                } else {
-                  acc.push({ id: `ENT-${Date.now()}-${en.sku}`, fecha: en.date, hora, items: [{ sku: en.sku, quantity: en.quantity }] })
-                }
-                return acc
-              }, [])
-            : []
-
-      // Update entregaItems to reflect any entrega inicial
-      if (entregaMode === "diferida" && entregaInicialEntries.length > 0) {
-        for (const en of entregaInicialEntries) {
-          const idx = entregaItems.findIndex(ei => ei.sku === en.sku)
-          if (idx >= 0) entregaItems[idx].quantityEntregada = en.quantity
-        }
-      }
-
-      const cobros: VentaCobro[] =
-        cobroMode === "en_el_acto"
-          ? [{ id: `COB-${Date.now()}`, fecha, hora, medioPago, monto: ventaTotal }]
-          : cobroInicialEntries.length > 0
-            ? cobroInicialEntries.map((en, i) => ({
-                id: `COB-${Date.now()}-${i}`,
-                fecha: en.date,
-                hora,
-                medioPago: en.medioPago,
-                monto: Number(en.monto),
-              }))
-            : []
-
-      const fullyPaid = cobros.reduce((s, c) => s + c.monto, 0) >= subtotal && subtotal > 0
-      const fullyDelivered = entregaMode === "en_el_acto"
-
-      const newVenta: Omit<Venta, "id"> = {
+      const created = addPresupuesto({
         fecha,
         hora,
         cliente: cliente ?? { tipo: "consumidor_final" },
@@ -533,25 +407,22 @@ export default function NuevaVentaPage() {
         descuentoTipo: globalDiscount.type === "cash" ? "fixed" : "percent",
         envio: showEnvio && envioAmount > 0 ? envioAmount : 0,
         customCharges: customCharges.filter(c => c.value > 0),
-        total: ventaTotal,
-        entregaItems,
-        entregaEntries,
-        cobros,
-        estado: fullyPaid && fullyDelivered ? "finalizada" : "en_curso",
-      }
-
-      const created = addVenta(newVenta)
-      setCreatedVentaId(created.id)
+        total: presupuestoTotal,
+        estado: "borrador",
+        globalDiscount: showGlobalDiscount ? globalDiscount : undefined,
+        itemAjustes: editAjustes,
+      })
+      setCreatedPresupuestoId(created.id)
     } catch (err) {
-      console.error("[v0] Error creando venta:", err)
-      alert("Error al crear la venta. Intenta nuevamente.")
+      console.error("[v0] Error creando presupuesto:", err)
+      alert("Error al crear el presupuesto. Intenta nuevamente.")
     } finally {
       setIsCreating(false)
     }
   }
 
   // ── Success view ──────────────────────────────────────────
-  if (createdVentaId) {
+  if (createdPresupuestoId) {
     return (
       <div className="min-h-screen bg-[rgb(243,242,238)]">
         <div className="px-[6px] py-[6px] flex gap-[6px] h-screen">
@@ -580,21 +451,21 @@ export default function NuevaVentaPage() {
                   <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-6">
                     <CheckCircle2 className="w-10 h-10 text-green-500" />
                   </div>
-                  <h2 className="text-2xl font-semibold text-gray-900 mb-2">Venta Creada Exitosamente</h2>
-                  <p className="text-sm text-gray-400 font-mono mb-2">{createdVentaId}</p>
+                  <h2 className="text-2xl font-semibold text-gray-900 mb-2">Presupuesto Creado</h2>
+                  <p className="text-sm text-gray-400 font-mono mb-2">{createdPresupuestoId}</p>
                   <p className="text-gray-500 mb-8">{clienteNombre}</p>
                   <div className="flex gap-4">
                     <button
-                      onClick={() => router.push(`/ventas/ventas/${createdVentaId}`)}
+                      onClick={() => router.push(`/ventas/presupuestos/${createdPresupuestoId}`)}
                       className="px-6 py-2.5 bg-slate-900 text-white rounded-lg font-medium hover:bg-slate-800 transition-colors cursor-pointer"
                     >
-                      Ver Venta
+                      Ver Presupuesto
                     </button>
                     <button
-                      onClick={() => router.push("/ventas/ventas")}
+                      onClick={() => router.push("/ventas/presupuestos")}
                       className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors cursor-pointer"
                     >
-                      Volver a Ventas
+                      Volver a Presupuestos
                     </button>
                   </div>
                 </div>
@@ -644,7 +515,7 @@ export default function NuevaVentaPage() {
               {/* Left: Stepper */}
               <div className="col-span-4 bg-transparent p-6 flex flex-col">
                 <div className="mb-8">
-                  <h2 className="text-sm font-semibold text-gray-900 mb-1">Creando Nueva Venta</h2>
+                  <h2 className="text-sm font-semibold text-gray-900 mb-1">Creando Nuevo Presupuesto</h2>
                   <p className="text-xs text-gray-500 truncate max-w-[180px]">{clienteNombre}</p>
                 </div>
 
@@ -697,7 +568,7 @@ export default function NuevaVentaPage() {
 
                 <div className="mt-auto">
                   <button
-                    onClick={() => router.push("/ventas/ventas")}
+                    onClick={() => router.push("/ventas/presupuestos")}
                     className="text-xs text-gray-500 hover:text-gray-700 transition-colors cursor-pointer"
                   >
                     Cancelar
@@ -716,10 +587,9 @@ export default function NuevaVentaPage() {
                       <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">Cliente</h3>
                     </div>
                     <p className="text-[11px] text-slate-400 mb-4 italic">
-                      Selecciona el cliente para esta venta.
+                      Selecciona el cliente para este presupuesto.
                     </p>
 
-                    {/* ── Selected state: compact card, shrinks to content ── */}
                     {cliente !== null ? (
                       <div className="inline-flex items-center gap-3 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl max-w-full">
                         <div className="w-9 h-9 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
@@ -746,7 +616,6 @@ export default function NuevaVentaPage() {
                         </button>
                       </div>
                     ) : (
-                      /* ── Search + dropdown ── */
                       <>
                         <div className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2 mb-3">
                           <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -765,7 +634,6 @@ export default function NuevaVentaPage() {
                         </div>
 
                         <div className="border border-slate-200 rounded-lg overflow-hidden max-h-[360px] overflow-y-auto">
-                          {/* CF + Nuevo Cliente — ONLY when search is empty */}
                           {clienteSearch.trim() === "" && (
                             <>
                               <button
@@ -800,7 +668,6 @@ export default function NuevaVentaPage() {
                             </>
                           )}
 
-                          {/* Real clients */}
                           <div className="divide-y divide-slate-50">
                             {filteredClientes.map((c) => {
                               const name =
@@ -831,7 +698,6 @@ export default function NuevaVentaPage() {
                               )
                             })}
 
-                            {/* No results — ONLY sin resultados + nuevo cliente link, nothing else */}
                             {clienteSearch.trim() !== "" && filteredClientes.length === 0 && (
                               <div className="py-6 flex flex-col items-center gap-2">
                                 <p className="text-sm text-slate-400">Sin resultados</p>
@@ -851,19 +717,17 @@ export default function NuevaVentaPage() {
                   </div>
                 )}
 
-                {/* ── Step 2: Productos (edit-mode grid) + Resumen ── */}
+                {/* ── Step 2: Productos + Resumen ── */}
                 {currentStep === 2 && (
                   <div className="p-6 border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.08)]">
                   <div className="flex gap-5 items-start w-full">
-                  {/* Products card — 6/10 width */}
+                  {/* Products card */}
                   <div className="w-[60%] min-w-0 bg-white border border-slate-200/60 rounded-xl shadow-sm overflow-hidden">
-                    {/* Header */}
                     <div className="flex items-center gap-2 px-6 pt-6 pb-4 border-b border-slate-100">
                       <Package className="w-4 h-4 text-slate-500" />
                       <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">Productos</h3>
                     </div>
 
-                    {/* Column headers */}
                     {selectedItems.length > 0 && (
                       <div className="grid grid-cols-[2fr_0.8fr_1fr_auto] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider border-b border-slate-100 bg-slate-50/80">
                         <div className="flex items-center px-4">Item</div>
@@ -873,7 +737,6 @@ export default function NuevaVentaPage() {
                       </div>
                     )}
 
-                    {/* Items or empty state */}
                     {selectedItems.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-16 px-6">
                         <Package className="w-12 h-12 text-slate-200 mb-3" />
@@ -893,19 +756,15 @@ export default function NuevaVentaPage() {
                         const aj = editAjustes[idx] ?? { value: 0, type: "percent" as const }
                         const hasDiscount = aj.value > 0
                         const display = getVentaItemDisplay(item)
-                        const isEditingPrice = editingPriceIdx === idx
 
-                        // Derived adjusted unit price for display
                         let adjUnitPrice = item.unitPrice
                         if (hasDiscount) {
                           if (aj.type === "percent") adjUnitPrice = item.unitPrice * (1 - aj.value / 100)
                           else if (aj.type === "cash") adjUnitPrice = Math.max(0, item.unitPrice - aj.value)
-                          // "unit" type: adjUnitPrice stays same, units are free
                         }
 
                         return (
                           <div key={item.sku} className="grid grid-cols-[2fr_0.8fr_1fr_auto] min-h-[72px] border-b border-slate-100 last:border-b-0">
-                            {/* Item Info */}
                             <div className="flex items-center gap-3 px-4 py-3">
                               <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                                 <Image
@@ -933,7 +792,6 @@ export default function NuevaVentaPage() {
                               </div>
                             </div>
 
-                            {/* Cantidad */}
                             <div className="flex items-center justify-center">
                               <div className="flex items-center border border-slate-200 rounded-full px-1 py-0.5 bg-white">
                                 <button
@@ -957,11 +815,9 @@ export default function NuevaVentaPage() {
                               </div>
                             </div>
 
-                            {/* Precio */}
                             <div className="flex flex-col items-center justify-center gap-0.5 py-2 px-1">
                               <div className="flex items-center gap-1.5">
                                 <div className="flex flex-col items-end">
-                                  {/* $ or % discount: original struck-through + badge */}
                                   {hasDiscount && (aj.type === "percent" || aj.type === "cash") && (
                                     <div className="flex items-center gap-1">
                                       <span className="text-[11px] text-slate-400 line-through tabular-nums">
@@ -979,7 +835,6 @@ export default function NuevaVentaPage() {
                                     <span className="text-[10px] text-emerald-600 font-medium">{Math.min(aj.value, item.quantity)} bonificadas</span>
                                   )}
                                 </div>
-                                {/* Pencil always opens the modal */}
                                 <button
                                   onClick={() => {
                                     setModalAjuste(hasDiscount ? { ...aj } : { value: 0, type: "percent" })
@@ -994,7 +849,6 @@ export default function NuevaVentaPage() {
                               </div>
                             </div>
 
-                            {/* Delete */}
                             <div className="flex items-center justify-center w-10">
                               <button
                                 onClick={() => {
@@ -1019,7 +873,6 @@ export default function NuevaVentaPage() {
                       })
                     )}
 
-                    {/* Agregar productos row — only when items exist */}
                     {selectedItems.length > 0 && (
                       <button
                         type="button"
@@ -1031,13 +884,11 @@ export default function NuevaVentaPage() {
                       </button>
                     )}
 
-                    <div className="px-6 pb-6">
-                    </div>
+                    <div className="px-6 pb-6" />
                   </div>
 
-                  {/* Resumen card — right side */}
+                  {/* Resumen card */}
                   <div className="w-[40%] shrink-0 sticky top-0 bg-white border border-slate-200/60 rounded-xl shadow-sm p-5">
-                    {/* Title — same style as other step labels */}
                     <div className="flex items-center gap-2 mb-4">
                       <ShoppingCart className="w-4 h-4 text-slate-500" />
                       <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">Resumen</h3>
@@ -1047,7 +898,6 @@ export default function NuevaVentaPage() {
                       <p className="text-sm text-slate-400 text-center py-4">Sin productos aún</p>
                     ) : (
                       <>
-                        {/* Productos — collapsible subtotal row, full-bleed via negative margin */}
                         <button
                           type="button"
                           onClick={() => setShowProductosBreakdown(v => !v)}
@@ -1094,10 +944,7 @@ export default function NuevaVentaPage() {
                           </div>
                         )}
 
-                        {/* Adjustments */}
                         <div className="space-y-2 mt-1.5">
-
-                          {/* Global discount row */}
                           {showGlobalDiscount && (
                             <div className="flex justify-between items-center">
                               <div className="flex items-center gap-1.5">
@@ -1124,7 +971,6 @@ export default function NuevaVentaPage() {
                             </div>
                           )}
 
-                          {/* Envío row */}
                           {showEnvio && (
                             <div className="flex justify-between items-center">
                               <div className="flex items-center gap-1.5">
@@ -1145,7 +991,6 @@ export default function NuevaVentaPage() {
                             </div>
                           )}
 
-                          {/* Custom charges */}
                           {customCharges.map((charge, cidx) => (
                             <div key={charge.id} className="flex justify-between items-center">
                               <div className="flex items-center gap-1.5">
@@ -1172,7 +1017,6 @@ export default function NuevaVentaPage() {
                           ))}
                         </div>
 
-                        {/* Agregar tags */}
                         {(!showGlobalDiscount || !showEnvio || customCharges.length === 0) && (
                           <div className="flex items-center gap-2 flex-wrap pt-3 mt-1">
                             <span className="text-xs text-slate-400">Agregar:</span>
@@ -1194,12 +1038,10 @@ export default function NuevaVentaPage() {
                           </div>
                         )}
 
-                        {/* Border below adjustments if any exist */}
                         {(showGlobalDiscount || showEnvio || customCharges.length > 0) && (
                           <div className="-mx-5 w-[calc(100%+2.5rem)] border-b border-slate-100 mt-1" />
                         )}
 
-                        {/* Grand Total */}
                         <div className="flex justify-between items-center pt-3 mt-1">
                           <span className="text-sm font-bold text-slate-900">Total</span>
                           <span className="text-sm font-bold text-slate-900 tabular-nums">${Math.round(grandTotal).toLocaleString("es-AR")}</span>
@@ -1208,6 +1050,7 @@ export default function NuevaVentaPage() {
                     )}
                   </div>
                   </div>
+
                   <div className="flex items-center justify-end gap-2 mt-6 pt-6 border-t border-slate-100">
                     <button
                       onClick={() => setCurrentStep(1)}
@@ -1226,269 +1069,25 @@ export default function NuevaVentaPage() {
                   </div>
                 )}
 
-                {/* ── Step 3: Entrega + Cobro ── */}
+                {/* ── Step 3: Confirmación ── */}
                 {currentStep === 3 && (
-                  <div className="p-6 border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.08)]">
-                    <div className="grid grid-cols-2 gap-5 mb-6">
-
-                      {/* Entrega card */}
-                      <div className="bg-white border border-slate-200 rounded-xl p-4">
-                        <div className="flex items-center gap-2 mb-3">
-                          <Truck className="w-4 h-4 text-slate-500" />
-                          <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">Entrega</h3>
-                        </div>
-
-                        {/* Selector */}
-                        <div className="relative mb-3">
-                          <select
-                            value={entregaMode}
-                            onChange={(e) => setEntregaMode(e.target.value as EntregaMode)}
-                            className="w-full appearance-none px-3 py-2.5 pr-8 border border-slate-200 rounded-lg bg-white text-sm font-medium focus:outline-none focus:border-slate-400 cursor-pointer text-slate-700"
-                          >
-                            <option value="en_el_acto">En el acto</option>
-                            <option value="diferida">Diferida</option>
-                          </select>
-                          <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                        </div>
-
-                        {/* Status badge */}
-                        <div className={`flex items-start gap-2 px-3 py-2.5 rounded-lg mb-4 ${entregaMode === "en_el_acto" ? "bg-emerald-50 border border-emerald-100" : "bg-orange-50 border border-orange-100"}`}>
-                          <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${entregaMode === "en_el_acto" ? "bg-emerald-500" : "bg-orange-400"}`} />
-                          <div>
-                            <p className={`text-sm font-medium ${entregaMode === "en_el_acto" ? "text-emerald-700" : "text-orange-600"}`}>
-                              {entregaMode === "en_el_acto" ? "En el acto" : "Diferida"}
-                            </p>
-                            <p className={`text-xs mt-0.5 ${entregaMode === "en_el_acto" ? "text-emerald-600" : "text-orange-500"}`}>
-                              {entregaMode === "en_el_acto"
-                                ? "Los productos se entregan en el momento de la venta."
-                                : "La venta queda pendiente de entrega de forma parcial o total."}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Entrega inicial opcional — only when diferida */}
-                        {entregaMode === "diferida" && (
-                          <div>
-                            <p className="text-sm font-medium text-slate-700 mb-2">
-                              Entrega inicial <span className="text-slate-400 font-normal text-xs">(opcional)</span>
-                            </p>
-
-                            {/* Aggregate all entries into one row per "session" */}
-                            {entregaInicialEntries.length > 0 && (() => {
-                              const totalUnits = entregaInicialEntries.reduce((s, e) => s + e.quantity, 0)
-                              const firstEntry = entregaInicialEntries[0]
-                              const dateLabel = new Date(firstEntry.date + "T12:00:00").toLocaleDateString("es-AR", { day: "2-digit", month: "short" })
-                              const isEditing = firstEntry.editingDate
-                              return (
-                                <div className="flex items-center group border-b border-slate-100 last:border-0 mb-1">
-                                  <div className="flex-1 flex items-center gap-2 py-1.5">
-                                    {isEditing ? (
-                                      <input
-                                        type="date"
-                                        max={getTodayDateStr()}
-                                        value={firstEntry.date}
-                                        autoFocus
-                                        onChange={(e) => setEntregaInicialEntries(prev => prev.map(en => ({ ...en, date: e.target.value })))}
-                                        onBlur={() => setEntregaInicialEntries(prev => prev.map(en => ({ ...en, editingDate: false })))}
-                                        className="text-xs px-2 py-0.5 border border-slate-200 rounded focus:outline-none focus:border-slate-400 bg-white"
-                                      />
-                                    ) : (
-                                      <button
-                                        onClick={() => setEntregaInicialEntries(prev => prev.map(en => ({ ...en, editingDate: true })))}
-                                        className="text-xs text-slate-400 tabular-nums hover:text-slate-600 transition-colors cursor-pointer"
-                                      >
-                                        {dateLabel}
-                                      </button>
-                                    )}
-                                    <span className="text-xs text-slate-300">·</span>
-                                    <span className="text-xs text-slate-400 tabular-nums">{totalUnits} {totalUnits === 1 ? "unidad" : "unidades"}</span>
-                                  </div>
-                                  <button
-                                    onClick={() => setEntregaInicialEntries([])}
-                                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-400"
-                                  >
-                                    <X className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                              )
-                            })()}
-
-                            {entregaInicialEntries.length === 0 && (
-                              <button
-                                onClick={() => {
-                                  setEntregaModalSelected({})
-                                  setEntregaModalQtys({})
-                                  setShowEntregaInicialModal(true)
-                                }}
-                                className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
-                              >
-                                <Plus className="w-3 h-3" />
-                                <span>Registrar entrega</span>
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Cobro card */}
-                      <div className="bg-white border border-slate-200 rounded-xl p-4">
-                        <div className="flex items-center gap-2 mb-3">
-                          <Wallet className="w-4 h-4 text-slate-500" />
-                          <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">Cobro</h3>
-                        </div>
-
-                        {/* Selector */}
-                        <div className="relative mb-3">
-                          <select
-                            value={cobroMode}
-                            onChange={(e) => setCobroMode(e.target.value as CobroMode)}
-                            className="w-full appearance-none px-3 py-2.5 pr-8 border border-slate-200 rounded-lg bg-white text-sm font-medium focus:outline-none focus:border-slate-400 cursor-pointer text-slate-700"
-                          >
-                            <option value="en_el_acto">En el acto</option>
-                            <option value="diferida">Diferido</option>
-                          </select>
-                          <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                        </div>
-
-                        {/* Status badge */}
-                        <div className={`flex items-start gap-2 px-3 py-2.5 rounded-lg mb-4 ${cobroMode === "en_el_acto" ? "bg-emerald-50 border border-emerald-100" : "bg-orange-50 border border-orange-100"}`}>
-                          <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${cobroMode === "en_el_acto" ? "bg-emerald-500" : "bg-orange-400"}`} />
-                          <div>
-                            <p className={`text-sm font-medium ${cobroMode === "en_el_acto" ? "text-emerald-700" : "text-orange-600"}`}>
-                              {cobroMode === "en_el_acto" ? "En el acto" : "Diferido"}
-                            </p>
-                            <p className={`text-xs mt-0.5 ${cobroMode === "en_el_acto" ? "text-emerald-600" : "text-orange-500"}`}>
-                              {cobroMode === "en_el_acto"
-                                ? "El cobro se realiza en el momento de la venta."
-                                : "La venta queda pendiente de cobro de forma total o parcial."}
-                            </p>
-                          </div>
-                        </div>
-
-                        {cobroMode === "en_el_acto" && (
-                          <div>
-                            <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
-                              Medio de Pago
-                            </label>
-                            <div className="grid grid-cols-1 gap-2">
-                              {(["efectivo", "transferencia", "posnet"] as PaymentMethod[]).map((mp) => {
-                                const Icon = medioPagoIcons[mp]
-                                const active = medioPago === mp
-                                return (
-                                  <button
-                                    key={mp}
-                                    onClick={() => setMedioPago(mp)}
-                                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors cursor-pointer ${
-                                      active
-                                        ? "border-slate-800 bg-slate-900 text-white"
-                                        : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
-                                    }`}
-                                  >
-                                    <Icon className={`w-3.5 h-3.5 ${active ? "text-white" : "text-slate-400"}`} />
-                                    <span className="text-xs font-medium">{medioPagoLabels[mp]}</span>
-                                  </button>
-                                )
-                              })}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Cobro inicial opcional — only when diferida */}
-                        {cobroMode === "diferida" && (
-                          <div>
-                            <p className="text-sm font-medium text-slate-700 mb-2">
-                              Cobro inicial <span className="text-slate-400 font-normal text-xs">(opcional)</span>
-                            </p>
-
-                            {cobroInicialEntries.map((entry, i) => {
-                              const dateLabel = new Date(entry.date + "T12:00:00").toLocaleDateString("es-AR", { day: "2-digit", month: "short" })
-                              return (
-                                <div key={entry.id} className="flex items-center group border-b border-slate-100 last:border-0 mb-1">
-                                  <div className="flex items-center gap-2 flex-1 min-w-0 py-1.5">
-                                    {entry.editingDate ? (
-                                      <input
-                                        type="date"
-                                        max={getTodayDateStr()}
-                                        value={entry.date}
-                                        autoFocus
-                                        onChange={(e) => setCobroInicialEntries(prev => prev.map((en, j) => j === i ? { ...en, date: e.target.value } : en))}
-                                        onBlur={() => setCobroInicialEntries(prev => prev.map((en, j) => j === i ? { ...en, editingDate: false } : en))}
-                                        className="text-xs px-2 py-0.5 border border-slate-200 rounded focus:outline-none focus:border-slate-400 bg-white"
-                                      />
-                                    ) : (
-                                      <button
-                                        onClick={() => setCobroInicialEntries(prev => prev.map((en, j) => j === i ? { ...en, editingDate: true } : en))}
-                                        className="text-xs text-slate-400 tabular-nums hover:text-slate-600 transition-colors cursor-pointer"
-                                      >
-                                        {dateLabel}
-                                      </button>
-                                    )}
-                                    <span className="text-xs text-slate-300">·</span>
-                                    <span className="text-xs text-slate-500">{medioPagoLabels[entry.medioPago]}</span>
-                                  </div>
-                                  <span className="text-xs font-semibold text-slate-800 tabular-nums mr-1.5">
-                                    ${Number(entry.monto).toLocaleString("es-AR")}
-                                  </span>
-                                  <button
-                                    onClick={() => setCobroInicialEntries(prev => prev.filter((_, j) => j !== i))}
-                                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-400"
-                                  >
-                                    <X className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                              )
-                            })}
-
-                            {cobroInicialEntries.length === 0 && (
-                              <button
-                                onClick={() => {
-                                  setCobroModalMonto("")
-                                  setCobroModalMedio("efectivo")
-                                  setCobroModalFecha(getTodayDateStr())
-                                  setCobroModalHora(getNowTimeStr())
-                                  setShowCobroInicialModal(true)
-                                }}
-                                className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
-                              >
-                                <Plus className="w-3 h-3" />
-                                <span>Registrar cobro</span>
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <StepNav
-                      onBack={() => setCurrentStep(2)}
-                      onNext={() => { setMaxUnlockedStep(s => Math.max(s, 4)); setCurrentStep(4) }}
-                      canAdvance={canAdvance}
-                    />
-                  </div>
-                )}
-
-                {/* ── Step 4: Confirmación ── */}
-                {currentStep === 4 && (
                   <div className="p-6 border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.08)]">
                     <div className="flex items-center gap-2 mb-1">
                       <ClipboardCheck className="w-4 h-4 text-slate-500" />
                       <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">Confirmación</h3>
                     </div>
                     <p className="text-[11px] text-slate-400 mb-4 italic">
-                      Revisa los detalles antes de crear la venta.
+                      Revisa los detalles antes de crear el presupuesto.
                     </p>
 
                     <div className="space-y-4">
-                      {/* Cliente — label + value inline on the left */}
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Cliente</span>
                         <span className="text-sm text-slate-700">{clienteNombre}</span>
                       </div>
 
-                      {/* Resumen */}
                       <div>
                         <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Resumen</p>
-                        {/* Products table */}
                         <div className="bg-white border border-slate-200 overflow-hidden">
                           {selectedItems.map((it, idx) => {
                             const aj = editAjustes[idx] ?? { value: 0, type: "percent" as const }
@@ -1510,21 +1109,18 @@ export default function NuevaVentaPage() {
                             }
                             return (
                               <div key={it.sku} className="grid grid-cols-10 border-b border-slate-100 last:border-b-0 py-3">
-                                {/* Item — 4 cols */}
                                 <div className="col-span-4 flex items-center gap-2 px-4 min-w-0">
                                   <p className="text-sm font-medium text-slate-700 truncate">{display.name}</p>
                                   {display.tags.map((tag, ti) => (
                                     <span key={ti} className="text-xs px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 whitespace-nowrap">{tag}</span>
                                   ))}
                                 </div>
-                                {/* Cantidad — 2 cols */}
                                 <div className="col-span-2 flex flex-col items-end justify-center pr-4">
                                   <span className="text-sm text-slate-500 tabular-nums">{it.quantity} unidades</span>
                                   {aj.type === "unit" && hasDiscount && (
                                     <span className="text-[10px] text-emerald-600 font-medium">{Math.min(aj.value, it.quantity)} bonificadas</span>
                                   )}
                                 </div>
-                                {/* Precio c/u — 2 cols */}
                                 <div className="col-span-2 flex flex-col items-end justify-center pr-4">
                                   {hasDiscount && aj.type !== "unit" && (
                                     <div className="flex items-center gap-1">
@@ -1536,7 +1132,6 @@ export default function NuevaVentaPage() {
                                   )}
                                   <span className="text-sm text-slate-500 tabular-nums">${Math.round(adjustedUnit).toLocaleString("es-AR")} c/u</span>
                                 </div>
-                                {/* Subtotal — 2 cols */}
                                 <div className="col-span-2 flex items-center justify-end px-4">
                                   <span className="text-sm font-semibold text-slate-700 tabular-nums">${Math.round(lineTotal).toLocaleString("es-AR")}</span>
                                 </div>
@@ -1545,7 +1140,6 @@ export default function NuevaVentaPage() {
                           })}
                         </div>
 
-                        {/* Totals — right-aligned compact block, separate from products */}
                         <div className="flex justify-end px-4 pt-3 pb-4 border border-t-0 border-slate-200">
                           <div className="w-64 space-y-2">
                             <div className="flex justify-between items-center">
@@ -1560,7 +1154,7 @@ export default function NuevaVentaPage() {
                             )}
                             {showEnvio && envioAmount > 0 && (
                               <div className="flex justify-between items-center">
-                                <span className="text-sm text-slate-500">Envio</span>
+                                <span className="text-sm text-slate-500">Envío</span>
                                 <span className="text-sm text-slate-700 tabular-nums">+${Math.round(envioAmount).toLocaleString("es-AR")}</span>
                               </div>
                             )}
@@ -1578,25 +1172,19 @@ export default function NuevaVentaPage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3">
-                        <SummaryCard
-                          icon={Truck}
-                          label="Entrega"
-                          value={entregaMode === "en_el_acto" ? "En el acto · 100%" : "Diferida"}
-                          tone={entregaMode === "en_el_acto" ? "green" : "amber"}
-                        />
-                        <SummaryCard
-                          icon={Wallet}
-                          label="Cobro"
-                          value={cobroMode === "en_el_acto" ? `En el acto · ${medioPagoLabels[medioPago]}` : "Diferido"}
-                          tone={cobroMode === "en_el_acto" ? "green" : "amber"}
-                        />
+                      {/* Presupuesto estado info */}
+                      <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                        <FileText className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium text-slate-700">En borrador</p>
+                          <p className="text-xs text-slate-400 mt-0.5">El presupuesto se creará en estado borrador. Podrás aceptarlo o rechazarlo desde el detalle.</p>
+                        </div>
                       </div>
                     </div>
 
                     <div className="flex items-center justify-end gap-2 mt-6 pt-6 border-t border-slate-100">
                       <button
-                        onClick={() => setCurrentStep(3)}
+                        onClick={() => setCurrentStep(2)}
                         className="px-4 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
                       >
                         Volver
@@ -1606,7 +1194,7 @@ export default function NuevaVentaPage() {
                         disabled={isCreating || selectedItems.length === 0}
                         className="px-6 py-2.5 bg-slate-900 text-white rounded-lg font-medium hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {isCreating ? "Creando..." : "Crear Venta"}
+                        {isCreating ? "Creando..." : "Crear Presupuesto"}
                       </button>
                     </div>
                   </div>
@@ -1628,12 +1216,10 @@ export default function NuevaVentaPage() {
         if (modalAjuste.value > 0) {
           if (modalAjuste.type === "percent") finalPrice = parsedPrice * (1 - modalAjuste.value / 100)
           else if (modalAjuste.type === "cash") finalPrice = Math.max(0, parsedPrice - modalAjuste.value)
-          else if (modalAjuste.type === "unit") finalPrice = parsedPrice // unit doesn't change price per unit
         }
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
-              {/* Item info header */}
               <div className="flex items-center gap-3 px-6 pt-6 pb-4 border-b border-slate-100">
                 <div className="w-10 h-10 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0 relative">
                   <Image
@@ -1660,7 +1246,6 @@ export default function NuevaVentaPage() {
               </div>
 
               <div className="px-6 py-5 space-y-4">
-                {/* Precio editable */}
                 <div>
                   <label className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Precio</label>
                   <div className="flex items-center border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 focus-within:border-slate-400 transition-colors">
@@ -1674,7 +1259,6 @@ export default function NuevaVentaPage() {
                   </div>
                 </div>
 
-                {/* + agregar descuento — shown when discount area is collapsed */}
                 {!showModalDescuento && (
                   <button
                     onClick={() => setShowModalDescuento(true)}
@@ -1684,7 +1268,6 @@ export default function NuevaVentaPage() {
                   </button>
                 )}
 
-                {/* Descuento area — shown when expanded */}
                 {showModalDescuento && (
                   <>
                     <div>
@@ -1731,7 +1314,6 @@ export default function NuevaVentaPage() {
                       </div>
                     </div>
 
-                    {/* Precio final — only when a discount value is entered */}
                     {modalAjuste.value > 0 && (
                       <div className="flex items-center justify-between py-3 px-4 bg-slate-50 rounded-xl">
                         <span className="text-sm font-medium text-slate-600">Precio final</span>
@@ -1749,7 +1331,6 @@ export default function NuevaVentaPage() {
                 )}
               </div>
 
-              {/* Footer */}
               <div className="flex items-center justify-end gap-2 px-6 pb-6">
                 <button
                   onClick={() => { setDiscountModalIdx(null); setShowModalDescuento(false) }}
@@ -1763,7 +1344,6 @@ export default function NuevaVentaPage() {
                     if (!isNaN(newPrice) && newPrice >= 0) {
                       setSelectedItems(prev => prev.map((it, i) => i === discountModalIdx ? { ...it, unitPrice: newPrice } : it))
                     }
-                    // If discount section was closed, clear any discount
                     const ajuste = showModalDescuento ? { ...modalAjuste } : { value: 0, type: "percent" as const }
                     setEditAjustes(prev => ({ ...prev, [discountModalIdx]: ajuste }))
                     setDiscountModalIdx(null)
@@ -1784,7 +1364,6 @@ export default function NuevaVentaPage() {
         isOpen={showNuevoClienteModal}
         onClose={() => setShowNuevoClienteModal(false)}
         onSave={(nuevoCliente) => {
-          // Use name from the new client and advance
           const name = nuevoCliente.tipo === "empresa"
             ? nuevoCliente.razonSocial ?? ""
             : `${nuevoCliente.nombre} ${nuevoCliente.apellido}`.trim()
@@ -1795,295 +1374,22 @@ export default function NuevaVentaPage() {
         }}
       />
 
-      {/* ── Registrar Entrega Inicial Modal ── */}
-      {showEntregaInicialModal && (() => {
-        const pendingSkus = selectedItems.map(it => it.sku)
-        const allSel = pendingSkus.length > 0 && pendingSkus.every(s => entregaModalSelected[s])
-        const someSel = pendingSkus.some(s => entregaModalSelected[s])
-        const indeterminate = someSel && !allSel
-        const selectedCount = pendingSkus.filter(s => entregaModalSelected[s]).length
-
-        const handleSelectAll = () => {
-          const selecting = !allSel && !indeterminate
-          const next: { [sku: string]: boolean } = {}
-          const nextQtys: { [sku: string]: string } = { ...entregaModalQtys }
-          for (const it of selectedItems) {
-            next[it.sku] = selecting
-            if (selecting) nextQtys[it.sku] = String(it.quantity)
-            else delete nextQtys[it.sku]
-          }
-          setEntregaModalSelected(next)
-          setEntregaModalQtys(nextQtys)
-        }
-
-        const handleToggle = (sku: string) => {
-          const willSelect = !entregaModalSelected[sku]
-          setEntregaModalSelected(prev => ({ ...prev, [sku]: willSelect }))
-          if (willSelect) {
-            const it = selectedItems.find(i => i.sku === sku)
-            if (it) setEntregaModalQtys(prev => ({ ...prev, [sku]: String(it.quantity) }))
-          } else {
-            setEntregaModalQtys(prev => { const n = { ...prev }; delete n[sku]; return n })
-          }
-        }
-
-        const handleConfirm = () => {
-          const today = getTodayDateStr()
-          const newEntries = selectedItems
-            .filter(it => entregaModalSelected[it.sku])
-            .map(it => {
-              const qty = parseInt(entregaModalQtys[it.sku] || "0", 10) || it.quantity
-              const display = getVentaItemDisplay(it)
-              return {
-                sku: it.sku,
-                name: display.name,
-                categoria: display.categoria,
-                quantity: Math.min(qty, it.quantity),
-                max: it.quantity,
-                date: today,
-                editingDate: false,
-              }
-            })
-          setEntregaInicialEntries(prev => {
-            const next = [...prev]
-            for (const entry of newEntries) {
-              const idx = next.findIndex(e => e.sku === entry.sku)
-              if (idx >= 0) next[idx] = entry
-              else next.push(entry)
-            }
-            return next
-          })
-          setShowEntregaInicialModal(false)
-        }
-
-        return (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowEntregaInicialModal(false)} />
-            <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[85vh] flex flex-col overflow-hidden">
-              {/* Header */}
-              <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
-                <div>
-                  <h3 className="text-base font-semibold text-slate-900">Registrar entrega</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Indicá las unidades a marcar como entregadas</p>
-                </div>
-                <button onClick={() => setShowEntregaInicialModal(false)} className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              {/* Column headers */}
-              <div className="bg-slate-50 border-b border-slate-100 flex-shrink-0">
-                <div className="grid grid-cols-[3fr_1fr_1.4fr] h-9 text-[10px] font-medium text-slate-500 uppercase tracking-wider">
-                  <div className="flex items-center px-4 gap-3">
-                    <button
-                      onClick={handleSelectAll}
-                      className="w-4 h-4 rounded border border-slate-300 flex items-center justify-center hover:border-slate-600 transition-colors bg-white"
-                    >
-                      {allSel && <Check className="w-3 h-3 text-slate-800" />}
-                      {indeterminate && <Minus className="w-3 h-3 text-slate-800" />}
-                    </button>
-                    <span>Producto</span>
-                  </div>
-                  <div className="flex items-center justify-center">Cantidad</div>
-                  <div className="flex items-center justify-center">Entregar</div>
-                </div>
-              </div>
-              {/* Items */}
-              <div className="flex-1 overflow-y-auto bg-white">
-                {selectedItems.map((it, idx) => {
-                  const display = getVentaItemDisplay(it)
-                  const isSel = !!entregaModalSelected[it.sku]
-                  const qtyVal = entregaModalQtys[it.sku] ?? ""
-                  return (
-                    <div
-                      key={idx}
-                      className={`grid grid-cols-[3fr_1fr_1.4fr] items-center py-3 px-4 border-b border-slate-100 hover:bg-slate-50/50 transition-colors cursor-pointer ${isSel ? "bg-slate-50/70" : ""}`}
-                      onClick={() => handleToggle(it.sku)}
-                    >
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleToggle(it.sku) }}
-                          className="w-4 h-4 rounded border border-slate-300 flex items-center justify-center hover:border-slate-600 transition-colors bg-white flex-shrink-0"
-                        >
-                          {isSel && <Check className="w-3 h-3 text-slate-800" />}
-                        </button>
-                        <div className="w-9 h-9 rounded bg-slate-100 overflow-hidden flex-shrink-0">
-                          <Image
-                            src={getCategoryImage(display.categoria || "") || "/placeholder.svg"}
-                            alt={display.name}
-                            width={36}
-                            height={36}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-slate-800 truncate">{display.name}</p>
-                          <p className="text-xs text-slate-400">{[display.marca, display.categoria].filter(Boolean).join(" · ")}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-center">
-                        <span className="text-sm text-slate-600 tabular-nums">{it.quantity}</span>
-                      </div>
-                      <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-                        {isSel && (
-                          <input
-                            type="number"
-                            min={0}
-                            max={it.quantity}
-                            value={qtyVal}
-                            placeholder={String(it.quantity)}
-                            onChange={(e) => {
-                              const raw = e.target.value
-                              if (raw === "") { setEntregaModalQtys(prev => ({ ...prev, [it.sku]: "" })); return }
-                              const num = parseInt(raw, 10)
-                              if (isNaN(num) || num < 0) { setEntregaModalQtys(prev => ({ ...prev, [it.sku]: "0" })); return }
-                              if (num > it.quantity) { setEntregaModalQtys(prev => ({ ...prev, [it.sku]: String(it.quantity) })); return }
-                              setEntregaModalQtys(prev => ({ ...prev, [it.sku]: String(num) }))
-                            }}
-                            className="w-14 text-center text-sm tabular-nums bg-slate-50 border border-slate-200 rounded-md px-2 py-1.5 focus:outline-none focus:border-slate-400 transition-colors"
-                          />
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-              {/* Footer */}
-              <div className="border-t border-slate-200 bg-slate-50 py-3 px-5 flex items-center justify-between flex-shrink-0">
-                <span className="text-sm text-slate-500">
-                  {selectedCount > 0 ? `${selectedCount} producto${selectedCount !== 1 ? "s" : ""} seleccionado${selectedCount !== 1 ? "s" : ""}` : "Seleccioná productos para registrar"}
-                </span>
-                <button
-                  onClick={handleConfirm}
-                  disabled={selectedCount === 0}
-                  className="px-5 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  Registrar entrega
-                </button>
-              </div>
-            </div>
-          </div>
-        )
-      })()}
-
-      {/* ── Registrar Cobro Inicial Modal ── */}
-      {showCobroInicialModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowCobroInicialModal(false)} />
-          <div className="relative bg-white rounded-xl shadow-2xl w-[420px] flex flex-col overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-              <h2 className="text-sm font-semibold text-slate-900">Registrar cobro</h2>
-              <button onClick={() => setShowCobroInicialModal(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            {/* Body */}
-            <div className="px-5 py-5 flex flex-col gap-4">
-              {/* Fecha */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] text-slate-400 uppercase tracking-wider">Fecha</label>
-                <input
-                  type="date"
-                  max={getTodayDateStr()}
-                  value={cobroModalFecha}
-                  onChange={(e) => setCobroModalFecha(e.target.value)}
-                  className="px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-md outline-none focus:border-slate-400 transition-colors"
-                />
-              </div>
-              {/* Medio de pago */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] text-slate-400 uppercase tracking-wider">Medio de pago</label>
-                <div className="flex gap-2">
-                  {(["efectivo", "posnet", "transferencia"] as PaymentMethod[]).map((m) => (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => setCobroModalMedio(m)}
-                      className={`flex-1 py-2 text-xs font-medium rounded-md border transition-colors ${
-                        cobroModalMedio === m
-                          ? "bg-slate-900 text-white border-slate-900"
-                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-                      }`}
-                    >
-                      {medioPagoLabels[m]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              {/* Monto */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] text-slate-400 uppercase tracking-wider">Monto</label>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">$</span>
-                    <input
-                      type="number"
-                      value={cobroModalMonto}
-                      onChange={(e) => setCobroModalMonto(e.target.value)}
-                      placeholder="0"
-                      className="w-full pl-7 pr-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-md outline-none focus:border-slate-400 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setCobroModalMonto(String(Math.round(grandTotal)))}
-                    className="px-3 py-2 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors border border-slate-200 shrink-0"
-                  >
-                    Total
-                  </button>
-                </div>
-                <p className="text-[11px] text-slate-400 tabular-nums">Total de la venta: ${Math.round(grandTotal).toLocaleString("es-AR")}</p>
-              </div>
-            </div>
-            {/* Footer */}
-            <div className="px-5 pb-5 flex gap-2">
-              <button
-                type="button"
-                onClick={() => setShowCobroInicialModal(false)}
-                className="flex-1 py-2.5 text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors font-medium"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                disabled={!cobroModalMonto || Number(cobroModalMonto) <= 0}
-                onClick={() => {
-                  setCobroInicialEntries(prev => [...prev, {
-                    id: Date.now(),
-                    monto: cobroModalMonto,
-                    medioPago: cobroModalMedio,
-                    date: cobroModalFecha,
-                    editingDate: false,
-                  }])
-                  setShowCobroInicialModal(false)
-                }}
-                className="flex-1 py-2.5 text-sm text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors font-medium disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                Registrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Agregar Productos Modal (exact copy from venta detail) ── */}
+      {/* ── Agregar Productos Modal ── */}
       {showAgregarProductos && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeAgregarProductos} />
           <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-3xl mx-4 max-h-[85vh] flex flex-col overflow-hidden">
 
-            {/* Header */}
             <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
               <div>
                 <h3 className="text-base font-semibold text-slate-900">Agregar productos</h3>
-                <p className="text-xs text-slate-500 mt-0.5">Selecciona los productos a agregar a la venta</p>
+                <p className="text-xs text-slate-500 mt-0.5">Selecciona los productos a agregar al presupuesto</p>
               </div>
               <button onClick={closeAgregarProductos} className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Search + Filters */}
             <div className="border-b border-slate-100 flex-shrink-0">
               <div className="flex items-center gap-3 p-3">
                 <div className="flex-1 relative">
@@ -2097,7 +1403,6 @@ export default function NuevaVentaPage() {
                     autoFocus
                   />
                 </div>
-                {/* Filter button */}
                 <div className="relative">
                   <button
                     onClick={() => setShowModalFilters(!showModalFilters)}
@@ -2114,38 +1419,37 @@ export default function NuevaVentaPage() {
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setShowModalFilters(false)} />
                       <div className="absolute top-full right-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg w-56 p-3 space-y-3">
-                      <div>
-                        <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Categoría</label>
-                        <select
-                          value={modalFilters.categoria}
-                          onChange={(e) => setModalFilters(prev => ({ ...prev, categoria: e.target.value }))}
-                          className="w-full mt-1 px-2 py-1.5 text-sm border border-slate-200 rounded-md focus:outline-none focus:border-slate-400"
-                        >
-                          <option value="">Todas</option>
-                          {uniqueModalCategorias.map(c => <option key={c} value={c}>{c}</option>)}
-                        </select>
+                        <div>
+                          <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">{"Categoría"}</label>
+                          <select
+                            value={modalFilters.categoria}
+                            onChange={(e) => setModalFilters(prev => ({ ...prev, categoria: e.target.value }))}
+                            className="w-full mt-1 px-2 py-1.5 text-sm border border-slate-200 rounded-md focus:outline-none focus:border-slate-400"
+                          >
+                            <option value="">Todas</option>
+                            {uniqueModalCategorias.map(c => <option key={c} value={c}>{c}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Marca</label>
+                          <select
+                            value={modalFilters.marca}
+                            onChange={(e) => setModalFilters(prev => ({ ...prev, marca: e.target.value }))}
+                            className="w-full mt-1 px-2 py-1.5 text-sm border border-slate-200 rounded-md focus:outline-none focus:border-slate-400"
+                          >
+                            <option value="">Todas</option>
+                            {uniqueModalMarcas.map(m => <option key={m} value={m}>{m}</option>)}
+                          </select>
+                        </div>
+                        {Object.values(modalFilters).some(v => v) && (
+                          <button onClick={() => setModalFilters({ categoria: "", marca: "" })} className="w-full text-xs text-slate-500 hover:text-slate-700 py-1">
+                            Limpiar filtros
+                          </button>
+                        )}
                       </div>
-                      <div>
-                        <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Marca</label>
-                        <select
-                          value={modalFilters.marca}
-                          onChange={(e) => setModalFilters(prev => ({ ...prev, marca: e.target.value }))}
-                          className="w-full mt-1 px-2 py-1.5 text-sm border border-slate-200 rounded-md focus:outline-none focus:border-slate-400"
-                        >
-                          <option value="">Todas</option>
-                          {uniqueModalMarcas.map(m => <option key={m} value={m}>{m}</option>)}
-                        </select>
-                      </div>
-                      {Object.values(modalFilters).some(v => v) && (
-                        <button onClick={() => setModalFilters({ categoria: "", marca: "" })} className="w-full text-xs text-slate-500 hover:text-slate-700 py-1">
-                          Limpiar filtros
-                        </button>
-                      )}
-                    </div>
                     </>
                   )}
                 </div>
-                {/* Sort — up/down + field selector as one unified control */}
                 <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden bg-white">
                   <button
                     onClick={() => setModalSortDirection(d => d === "asc" ? "desc" : "asc")}
@@ -2167,7 +1471,6 @@ export default function NuevaVentaPage() {
               </div>
             </div>
 
-            {/* Column headers */}
             <div className="bg-slate-50 border-b border-slate-100 flex-shrink-0">
               <div className="grid grid-cols-[3fr_1fr_1.2fr] h-9 text-[10px] font-medium text-slate-500 uppercase tracking-wider">
                 <div className="flex items-center px-4 gap-3">
@@ -2185,7 +1488,6 @@ export default function NuevaVentaPage() {
               </div>
             </div>
 
-            {/* Items list */}
             <div className="flex-1 overflow-y-auto bg-white">
               {filteredModalItems.length === 0 ? (
                 <div className="py-12 text-center">
@@ -2197,7 +1499,6 @@ export default function NuevaVentaPage() {
                   const selState = getModalSelectionState(item)
                   return (
                     <div key={idx}>
-                      {/* Parent / standalone row */}
                       <div
                         className={`grid grid-cols-[3fr_1fr_1.2fr] items-center py-3 px-4 border-b border-slate-100 hover:bg-slate-50/50 transition-colors cursor-pointer ${selState.checked || selState.indeterminate ? "bg-slate-50/70" : ""}`}
                         onClick={() => handleModalItemSelection(item)}
@@ -2236,7 +1537,6 @@ export default function NuevaVentaPage() {
                         </div>
                       </div>
 
-                      {/* Variant rows */}
                       {isParent && item.variants!.map((variant: any, vIdx: number) => {
                         const vState = getModalSelectionState(variant, true)
                         return (
@@ -2285,7 +1585,6 @@ export default function NuevaVentaPage() {
               )}
             </div>
 
-            {/* Footer */}
             <div className="border-t border-slate-200 bg-slate-50 py-3 px-5 flex items-center justify-between flex-shrink-0">
               <span className="text-sm text-slate-500">
                 {selectedModalCount > 0
@@ -2304,112 +1603,6 @@ export default function NuevaVentaPage() {
           </div>
         </div>
       )}
-    </div>
-  )
-}
-
-// ── Sub-components ──────────────────────────────────────────
-
-function StepNav({
-  onBack,
-  onNext,
-  canAdvance,
-}: {
-  onBack?: () => void
-  onNext: () => void
-  canAdvance: boolean
-}) {
-  return (
-    <div className="flex items-center justify-end gap-2 mt-6 pt-6 border-t border-slate-100">
-      {onBack && (
-        <button
-          onClick={onBack}
-          className="px-4 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
-        >
-          Volver
-        </button>
-      )}
-      <button
-        onClick={onNext}
-        disabled={!canAdvance}
-        className="px-6 py-2.5 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        Continuar
-      </button>
-    </div>
-  )
-}
-
-function ModeCard({
-  active,
-  onClick,
-  color,
-  icon: Icon,
-  title,
-  description,
-}: {
-  active: boolean
-  onClick: () => void
-  color: "blue" | "amber"
-  icon: typeof CheckCircle2
-  title: string
-  description: string
-}) {
-  const activeBorder = color === "blue" ? "border-blue-500" : "border-amber-500"
-  const activeBg = color === "blue" ? "bg-blue-50" : "bg-amber-50"
-  const activeText = color === "blue" ? "text-blue-700" : "text-amber-700"
-  const activeIcon = color === "blue" ? "text-blue-600" : "text-amber-600"
-  return (
-    <button
-      onClick={onClick}
-      className={`relative flex flex-col items-start p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer text-left ${
-        active ? `${activeBorder} ${activeBg} shadow-sm` : "border-slate-200 bg-white hover:border-slate-300"
-      }`}
-    >
-      <div className={`w-9 h-9 rounded-full flex items-center justify-center mb-3 ${active ? "bg-white" : "bg-slate-100"}`}>
-        <Icon className={`w-4 h-4 ${active ? activeIcon : "text-slate-400"}`} />
-      </div>
-      <span className={`text-sm font-semibold ${active ? activeText : "text-slate-700"}`}>{title}</span>
-      <span className="text-xs text-slate-400 mt-1">{description}</span>
-      {active && (
-        <div className="absolute top-3 right-3">
-          <CheckCircle2 className={`w-4 h-4 ${color === "blue" ? "text-blue-500" : "text-amber-500"}`} />
-        </div>
-      )}
-    </button>
-  )
-}
-
-function SummaryRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between py-2 border-b border-slate-100">
-      <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{label}</span>
-      <span className="text-sm font-medium text-slate-900">{value}</span>
-    </div>
-  )
-}
-
-function SummaryCard({
-  icon: Icon,
-  label,
-  value,
-  tone,
-}: {
-  icon: typeof Truck
-  label: string
-  value: string
-  tone: "green" | "amber"
-}) {
-  const bg = tone === "green" ? "bg-emerald-50" : "bg-amber-50"
-  const text = tone === "green" ? "text-emerald-700" : "text-amber-700"
-  const iconColor = tone === "green" ? "text-emerald-600" : "text-amber-600"
-  return (
-    <div className={`p-3 rounded-lg ${bg}`}>
-      <div className="flex items-center gap-2 mb-1">
-        <Icon className={`w-3.5 h-3.5 ${iconColor}`} />
-        <span className={`text-xs font-semibold uppercase tracking-wider ${text}`}>{label}</span>
-      </div>
-      <p className={`text-sm font-medium ${text}`}>{value}</p>
     </div>
   )
 }
