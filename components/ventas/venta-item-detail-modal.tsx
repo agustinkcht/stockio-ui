@@ -102,7 +102,7 @@ export function VentaItemDetailModal({ ventaItem, onClose }: VentaItemDetailModa
           >
             {/* FRONT */}
             <div
-              className="absolute inset-0 p-6 px-9 border border-black rounded-xl bg-black shadow-md"
+              className={`absolute inset-0 p-6 px-9 border border-black rounded-xl bg-black shadow-md ${isFlipped ? "pointer-events-none" : ""}`}
               style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
             >
               {/* Estado — top left */}
@@ -183,17 +183,17 @@ export function VentaItemDetailModal({ ventaItem, onClose }: VentaItemDetailModa
 
             {/* BACK */}
             <div
-              className="absolute inset-0 p-6 px-9 border border-black rounded-xl bg-black shadow-md overflow-y-auto"
+              className={`absolute inset-0 p-6 px-9 border border-black rounded-xl bg-black shadow-md overflow-y-auto ${!isFlipped ? "pointer-events-none" : ""}`}
               style={{
                 backfaceVisibility: "hidden",
                 WebkitBackfaceVisibility: "hidden",
                 transform: "rotateY(180deg)",
               }}
             >
-              {/* Volver — top left */}
+              {/* Volver — absolute top-right, same pattern as catalogo */}
               <button
                 onClick={() => setIsFlipped(false)}
-                className="flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors"
+                className="absolute top-0 right-0 w-32 h-12 cursor-pointer z-10 flex items-center justify-end pr-6 gap-1 text-slate-500 hover:text-slate-300 transition-colors"
                 aria-label="Volver"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -250,31 +250,11 @@ export function VentaItemDetailModal({ ventaItem, onClose }: VentaItemDetailModa
         </div>
 
         {/* ── RIGHT: TECHNICAL SHEET ── */}
-        <div className="flex-1 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 flex flex-col max-h-[630px]">
+        <div className="flex-1 bg-white rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 flex flex-col max-h-[630px]">
 
-          {/* Header */}
-          <div className="flex items-start justify-between px-7 pt-6 pb-5 border-b border-slate-200/60">
-            <div className="min-w-0">
-              <h3 className="font-semibold text-slate-900 text-lg truncate">{name}</h3>
-              <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
-                {marca && <span>{marca}</span>}
-                {marca && categoria && <span>·</span>}
-                {categoria && <span>{categoria}</span>}
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="p-1.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors shrink-0"
-              aria-label="Cerrar"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Tab switcher */}
-          <div className="px-7 pt-4 pb-0">
-            <div className="flex rounded-lg border border-slate-200 p-1 bg-slate-50">
+          {/* Close + Tab switcher */}
+          <div className="flex items-center gap-3 px-7 pt-6 pb-0">
+            <div className="flex-1 flex rounded-lg border border-slate-200 p-1 bg-slate-50">
               <button
                 onClick={() => setRightTab("info")}
                 className={`flex-1 px-3 py-2 rounded-md text-xs font-medium uppercase tracking-wider transition-all ${rightTab === "info" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
@@ -288,6 +268,14 @@ export function VentaItemDetailModal({ ventaItem, onClose }: VentaItemDetailModa
                 Atributos
               </button>
             </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors shrink-0"
+              aria-label="Cerrar"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
 
           {/* Scrollable content */}
