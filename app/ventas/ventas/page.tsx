@@ -750,9 +750,9 @@ export default function VentasPage() {
                           const { paidQty } = calcItemPrices(item)
                           const hasUnitDiscount = item.discount > 0 && item.discountType === "unit"
                           return (
-                            <div className={`flex flex-col justify-center gap-0 ${className}`}>
+                              <div className={`flex flex-col justify-center gap-0 ${className}`}>
                               <div className="flex items-baseline gap-1">
-                                <span className="text-xs text-slate-700 tabular-nums">{item.quantity}</span>
+                                <span className="text-xs font-semibold text-slate-700 tabular-nums">{item.quantity}</span>
                                 <span className="text-[10px] text-slate-400">{item.quantity === 1 ? "unidad" : "unidades"}</span>
                               </div>
                               {hasUnitDiscount && (
@@ -828,12 +828,7 @@ export default function VentasPage() {
                               ) : null}
                             </div>
 
-                            {/* PRECIO UNITARIO — col-span-16 */}
-                            <div className="col-span-16 bg-slate-50 flex items-center px-3">
-                              {!isMulti && firstItem && <PrecioCell item={firstItem} />}
-                            </div>
-
-                            {/* UNIDADES — col-span-20: qty for single, "X unidades" summary for multi */}
+                            {/* UNIDADES — col-span-20: qty for single, summary for multi */}
                             <div className="col-span-20 bg-slate-50 flex items-center px-3">
                               {!isMulti && firstItem ? (
                                 <QtyCell item={firstItem} />
@@ -843,6 +838,11 @@ export default function VentasPage() {
                                   <span className="text-xs text-slate-400">{totalUnits === 1 ? "unidad" : "unidades"}</span>
                                 </div>
                               )}
+                            </div>
+
+                            {/* PRECIO UNITARIO — col-span-16 */}
+                            <div className="col-span-16 bg-slate-50 flex items-center px-3">
+                              {!isMulti && firstItem && <PrecioCell item={firstItem} />}
                             </div>
 
                             {/* TOTAL — col-span-24, left-aligned to match subtotal column */}
@@ -889,13 +889,13 @@ export default function VentasPage() {
                                       </div>
                                     </button>
                                   </div>
-                                  {/* Precio unitario */}
-                                  <div className="col-span-16 bg-slate-50 px-3 py-2 border-t border-slate-200/60 flex items-center">
-                                    <PrecioCell item={item} />
-                                  </div>
                                   {/* Unidades */}
                                   <div className="col-span-20 bg-slate-50 px-3 py-2 border-t border-slate-200/60 flex items-center">
                                     <QtyCell item={item} />
+                                  </div>
+                                  {/* Precio unitario */}
+                                  <div className="col-span-16 bg-slate-50 px-3 py-2 border-t border-slate-200/60 flex items-center">
+                                    <PrecioCell item={item} />
                                   </div>
                                   {/* Subtotal */}
                                   <div className={`col-span-24 bg-slate-50 px-3 py-2 border-t border-slate-200/60 flex flex-col justify-center ${isLast ? "rounded-br-md" : ""}`}>
