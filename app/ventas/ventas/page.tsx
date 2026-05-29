@@ -674,19 +674,19 @@ export default function VentasPage() {
                           )}
                         </div>
 
-                        {/* Cliente pill — right-aligned, ending at same right edge as bottom row */}
+                        {/* Cliente pill — constrained width, right-aligned */}
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation()
                             if (venta.cliente.tipo === "cuenta") setViewingClienteId(venta.cliente.id)
                           }}
-                          className="inline-flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer shrink-0 shadow-sm"
+                          className="inline-flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer shrink-0 shadow-sm max-w-xs"
                         >
                           <div className="w-6 h-6 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
                             <span className="text-[10px] font-bold text-white uppercase">{getClienteNombre(venta).charAt(0)}</span>
                           </div>
-                          <div className="flex flex-col leading-none">
+                          <div className="flex flex-col leading-none text-left">
                             <span className="text-[9px] text-slate-400 uppercase tracking-wider mb-0.5">Cliente</span>
                             <span className="text-sm text-slate-800 whitespace-nowrap">{getClienteNombre(venta)}</span>
                           </div>
