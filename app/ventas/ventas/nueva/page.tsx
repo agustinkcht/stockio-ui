@@ -468,7 +468,6 @@ export default function NuevaVentaPage() {
         entregaEntries,
         cobros,
         estado: fullyPaid && fullyDelivered ? "finalizada" : "en_curso",
-        origen: "manual",
       }
 
       const created = addVenta(newVenta)

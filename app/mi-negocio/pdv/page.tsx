@@ -147,7 +147,6 @@ export default function PuntoDeVentaPage() {
       entregaEntries,
       // estado will be derived as "finalizada" by recomputeVenta (paid + delivered = 100%)
       estado: "finalizada",
-      origen: "pdv",
     })
 
     // 5. Add movimiento to caja if session is active and payment affects caja
