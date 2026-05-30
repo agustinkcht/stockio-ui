@@ -1,255 +1,206 @@
 "use client"
 
-import { useState, useMemo, Suspense, useRef, useEffect } from "react"
+import { useState, useEffect, useRef, useMemo, Fragment } from "react"
 import { useRouter } from "next/navigation"
 import { Sidebar } from "@/components/layout/sidebar"
 import { useSidebar } from "@/hooks/use-sidebar"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 import { UserPanel } from "@/components/layout/user-panel"
-import {
-  Search,
-  Package,
-  Plus,
-  ArrowUpDown,
-  ListFilterIcon,
-  X,
-  CheckCircle2,
-  FileText,
-  FileDown,
-  ShoppingCart,
-  MoreVertical,
-  ChevronDown,
-} from "lucide-react"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
-
-import type { EstadoOrdenDeCompra } from "@/lib/types"
-import { Button } from "@/components/ui/button"
-import { INITIAL_ITEMS } from "@/lib/data/initial-items"
+import {
+  ChevronRight,
+  ChevronDown,
+  FileDown,
+  MoreVertical,
+  ListFilter,
+  ArrowUpDown,
+  CheckCircle2,
+  Clock,
+  Search,
+  Plus,
+  XCircle,
+  BarChart3,
+  X,
+  Copy,
+  Trash2,
+  Send,
+} from "lucide-react"
+import type { OrdenDeCompra, EstadoOrdenDeCompra } from "@/lib/types"
+import { getCategoryImage } from "@/lib/utils/category-images"
 import { useOrdenesDeCompra } from "@/hooks/use-ordenes-de-compra"
+import {
+  PERIOD_OPTIONS,
+  usePeriod,
+  usePeriodRange,
+  type PeriodKey,
+} from "@/lib/contexts/period-context"
 
-const estadoLabels: Record<EstadoOrdenDeCompra, string> = {
-  borrador: "Borrador",
-  enviada: "Enviada",
-  aceptada: "Aceptada",
-  rechazada: "Rechazada",
-  cancelada: "Cancelada",
+type StatusTab = "todas" | "borrador" | "enviada" | "aceptada" | "rechazada"
+
+const estadoConfig: Record<EstadoOrdenDeCompra, { bg: string; text: string; icon: typeof Clock; label: string }> = {
+  borrador:  { bg: "bg-slate-100",   text: "text-slate-600",   icon: Clock,        label: "Borrador"  },
+  enviada:   { bg: "bg-blue-50",     text: "text-blue-600",    icon: Send,         label: "Enviada"   },
+  aceptada:  { bg: "bg-emerald-50",  text: "text-emerald-600", icon: CheckCircle2, label: "Aceptada"  },
+  rechazada: { bg: "bg-red-50",      text: "text-red-500",     icon: XCircle,      label: "Rechazada" },
+  cancelada: { bg: "bg-slate-100",   text: "text-slate-500",   icon: XCircle,      label: "Cancelada" },
 }
 
-const estadoColors: Record<EstadoOrdenDeCompra, { bg: string; text: string; icon: string }> = {
-  borrador: { bg: "bg-gray-100", text: "text-gray-600", icon: "text-gray-400" },
-  enviada: { bg: "bg-blue-50", text: "text-blue-600", icon: "text-blue-500" },
-  aceptada: { bg: "bg-green-50", text: "text-green-600", icon: "text-green-500" },
-  rechazada: { bg: "bg-red-50", text: "text-red-600", icon: "text-red-500" },
-  cancelada: { bg: "bg-gray-100", text: "text-gray-500", icon: "text-gray-400" },
-}
+const monthsAbbr = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
 
-type SortDirection = "asc" | "desc"
-type SortFactor = "fecha" | "total" | "proveedor" | "numero" | "items"
-
-interface SortConfig {
-  factor: SortFactor
-  direction: SortDirection
-}
-
-interface FilterConfig {
-  estado: EstadoOrdenDeCompra[]
-}
-
-const FILTRO_OPTIONS = {
-  estado: [
-    { value: "borrador", label: "Borrador" },
-    { value: "enviada", label: "Enviada" },
-    { value: "aceptada", label: "Aceptada" },
-    { value: "rechazada", label: "Rechazada" },
-    { value: "cancelada", label: "Cancelada" },
-  ],
-}
-
-function formatDateShort(dateStr: string): string {
-  const date = new Date(dateStr)
+function formatOrdenDateTime(dateStr: string): string {
+  const date = new Date(dateStr + "T12:00:00")
   const day = date.getDate()
-  const months = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
-  const month = months[date.getMonth()]
-  const year = String(date.getFullYear()).slice(-2)
-  return `${day}/${month}/${year}`
+  const month = monthsAbbr[date.getMonth()]
+  return `${day}\u00A0\u00A0${month}`
 }
 
-function OrdenesDeCompraContent() {
-  const router = useRouter()
+export default function OrdenesDeCompraPage() {
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
-  const [searchQuery, setSearchQuery] = useState("")
+  const router = useRouter()
+  const allCheckboxRef = useRef<HTMLInputElement>(null)
+  const { ordenes, deleteOrden, addOrden, getNextOrderNumber } = useOrdenesDeCompra()
+
+  const { periodKey, customRange, setPeriodKey, setCustomRange } = usePeriod()
+  const [periodOpen, setPeriodOpen] = useState(false)
+  const [calendarOpen, setCalendarOpen] = useState(false)
+  const range = usePeriodRange()
+
+  const periodLabel = useMemo(() => {
+    return PERIOD_OPTIONS.find((o) => o.key === periodKey)?.label ?? "Período"
+  }, [periodKey])
+
+  const rangeLabel = useMemo(() => {
+    const fmt = (d: Date) => d.toLocaleDateString("es-AR", { day: "numeric", month: "short" })
+    if (periodKey === "hoy") return fmt(range.start)
+    return `${fmt(range.start)} — ${fmt(range.end)}`
+  }, [range, periodKey])
+
   const [selectedOrdenes, setSelectedOrdenes] = useState<Set<string>>(new Set())
   const [openMoreMenu, setOpenMoreMenu] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
 
-  const [showOrderModal, setShowOrderModal] = useState(false)
-  const [showFilterModal, setShowFilterModal] = useState(false)
-  const [showExportDropdown, setShowExportDropdown] = useState(false)
-  const orderRef = useRef<HTMLDivElement>(null)
-  const filterRef = useRef<HTMLDivElement>(null)
-  const exportRef = useRef<HTMLDivElement>(null)
-  
-  // Use ordenes de compra hook for localStorage persistence
-  const { ordenes, addOrden, updateEstado, getNextOrderNumber } = useOrdenesDeCompra()
-  
-  // Nueva Orden Modal state
+  // Sort
+  const [sortField, setSortField] = useState<"fecha" | "precio">("fecha")
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc")
+
+  // Filters
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [filterProveedor, setFilterProveedor] = useState("")
+  const [filterEstados, setFilterEstados] = useState<EstadoOrdenDeCompra[]>([])
+  const hasActiveFilters = !!filterProveedor || filterEstados.length > 0
+
+  const [expandedOrdenes, setExpandedOrdenes] = useState<Set<string>>(new Set())
+
+  // Nueva orden modal
   const [showNuevaOrdenModal, setShowNuevaOrdenModal] = useState(false)
   const [nuevaOrdenProveedor, setNuevaOrdenProveedor] = useState("")
-  const [proveedorDropdownOpen, setProveedorDropdownOpen] = useState(false)
   const proveedorInputRef = useRef<HTMLDivElement>(null)
-  
-  // Get unique proveedores from items
+  const [proveedorDropdownOpen, setProveedorDropdownOpen] = useState(false)
+
+  // Tabs: default to "todas"
+  const [activeTab, setActiveTab] = useState<StatusTab>("todas")
+
+  // Unique proveedores for filter dropdown
   const uniqueProveedores = useMemo(() => {
-    const proveedores = new Set<string>()
-    INITIAL_ITEMS.forEach(item => {
-      if (item.proveedor) proveedores.add(item.proveedor)
-    })
-    return Array.from(proveedores).sort()
-  }, [])
-  
-  // Filter proveedores based on input
-  const filteredProveedores = useMemo(() => {
+    const names = ordenes.map(o => o.proveedorNombre).filter(Boolean)
+    return Array.from(new Set(names)).sort()
+  }, [ordenes])
+
+  // Filtered proveedores for nueva orden dropdown
+  const filteredProveedoresInput = useMemo(() => {
     if (!nuevaOrdenProveedor) return uniqueProveedores
-    return uniqueProveedores.filter(p => 
-      p.toLowerCase().includes(nuevaOrdenProveedor.toLowerCase())
-    )
+    return uniqueProveedores.filter(p => p.toLowerCase().includes(nuevaOrdenProveedor.toLowerCase()))
   }, [nuevaOrdenProveedor, uniqueProveedores])
-  
-  // Generate next order ID
-  const nextOrderNumber = getNextOrderNumber()
-  const nextOrderId = `ODC-${nextOrderNumber}`
-  
-  // Handle creating new order
+
+  // Filtered + sorted list
+  const filteredOrdenes = useMemo(() => {
+    const filtered = ordenes.filter(o => {
+      const matchesTab =
+        activeTab === "todas" ? true :
+        activeTab === "borrador" ? o.estado === "borrador" :
+        activeTab === "enviada" ? o.estado === "enviada" :
+        activeTab === "aceptada" ? o.estado === "aceptada" :
+        o.estado === "rechazada"
+      const q = searchQuery.toLowerCase()
+      const matchesSearch = !q || o.id.toLowerCase().includes(q) || o.proveedorNombre.toLowerCase().includes(q)
+      const matchesProveedor = !filterProveedor || o.proveedorNombre === filterProveedor
+      const matchesEstado = filterEstados.length === 0 || filterEstados.includes(o.estado)
+      return matchesTab && matchesSearch && matchesProveedor && matchesEstado
+    })
+    filtered.sort((a, b) => {
+      let diff = 0
+      if (sortField === "fecha") {
+        diff = new Date(a.fechaCreacion).getTime() - new Date(b.fechaCreacion).getTime()
+      } else {
+        diff = a.importeEstimado - b.importeEstimado
+      }
+      return sortDir === "asc" ? diff : -diff
+    })
+    return filtered
+  }, [ordenes, activeTab, searchQuery, filterProveedor, filterEstados, sortField, sortDir])
+
+  const allSelected = selectedOrdenes.size === filteredOrdenes.length && filteredOrdenes.length > 0
+  const someSelected = selectedOrdenes.size > 0 && selectedOrdenes.size < filteredOrdenes.length
+
+  useEffect(() => {
+    if (allCheckboxRef.current) {
+      allCheckboxRef.current.indeterminate = someSelected
+    }
+  }, [someSelected])
+
+  // Close proveedor dropdown on outside click
+  useEffect(() => {
+    const handle = (e: MouseEvent) => {
+      if (proveedorInputRef.current && !proveedorInputRef.current.contains(e.target as Node)) {
+        setProveedorDropdownOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handle)
+    return () => document.removeEventListener("mousedown", handle)
+  }, [])
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedOrdenes(new Set())
+    } else {
+      setSelectedOrdenes(new Set(filteredOrdenes.map((o) => o.id)))
+    }
+  }
+
+  const toggleSelectOrden = (id: string) => {
+    const next = new Set(selectedOrdenes)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    setSelectedOrdenes(next)
+  }
+
+  const toggleExpandOrden = (id: string) => {
+    const next = new Set(expandedOrdenes)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    setExpandedOrdenes(next)
+  }
+
+  const toggleFilterEstado = (estado: EstadoOrdenDeCompra) => {
+    setFilterEstados(prev => prev.includes(estado) ? prev.filter(e => e !== estado) : [...prev, estado])
+  }
+
   const handleCreateOrden = () => {
     if (!nuevaOrdenProveedor.trim()) return
-    
-    // Create new order using the hook (persists to localStorage)
     const newOrden = addOrden({
-      fechaCreacion: new Date().toISOString().split("T")[0],
+      fechaCreacion: new Date().toISOString().slice(0, 10),
       proveedorId: "",
       proveedorNombre: nuevaOrdenProveedor.trim(),
       estado: "borrador" as EstadoOrdenDeCompra,
       items: [],
       importeEstimado: 0,
     })
-    
-    // Navigate to the new order page
     router.push(`/compras/ordenes-de-compra/${newOrden.id}`)
     setShowNuevaOrdenModal(false)
     setNuevaOrdenProveedor("")
   }
 
-  const [activeFilters, setActiveFilters] = useState<FilterConfig>({
-    estado: [],
-  })
-
-  const [sortConfig, setSortConfig] = useState<SortConfig>({
-    factor: "numero",
-    direction: "desc",
-  })
-
-  const breadcrumbs = [{ label: "Compras" }, { label: "Ordenes de Compra", href: "/compras/ordenes-de-compra" }]
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (orderRef.current && !orderRef.current.contains(event.target as Node)) {
-        setShowOrderModal(false)
-      }
-      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
-        setShowFilterModal(false)
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [])
-  
-  // Close proveedor dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (proveedorInputRef.current && !proveedorInputRef.current.contains(event.target as Node)) {
-        setProveedorDropdownOpen(false)
-      }
-      if (exportRef.current && !exportRef.current.contains(event.target as Node)) {
-        setShowExportDropdown(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
-
-  const filteredOrdenes = useMemo(() => {
-    let result = ordenes.filter((orden) => {
-      const matchesSearch =
-        searchQuery === "" ||
-        orden.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        orden.proveedorNombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        orden.items.some((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
-
-      return matchesSearch
-    })
-
-    if (activeFilters.estado.length > 0) {
-      result = result.filter((o) => activeFilters.estado.includes(o.estado))
-    }
-
-    result.sort((a, b) => {
-      let comparison = 0
-      switch (sortConfig.factor) {
-        case "fecha":
-          comparison = a.fechaCreacion.localeCompare(b.fechaCreacion)
-          break
-        case "total":
-          comparison = a.importeEstimado - b.importeEstimado
-          break
-        case "proveedor":
-          comparison = a.proveedorNombre.localeCompare(b.proveedorNombre)
-          break
-        case "numero":
-          comparison = a.numero - b.numero
-          break
-        case "items":
-          comparison = a.items.length - b.items.length
-          break
-      }
-      return sortConfig.direction === "asc" ? comparison : -comparison
-    })
-
-    return result
-  }, [ordenes, searchQuery, activeFilters, sortConfig])
-
-  const hasActiveFilters = activeFilters.estado.length > 0
-
-  const toggleFilter = (category: keyof FilterConfig, value: string) => {
-    setActiveFilters((prev) => {
-      const current = prev[category] as string[]
-      const newValues = current.includes(value) ? current.filter((v) => v !== value) : [...current, value]
-      return { ...prev, [category]: newValues }
-    })
-  }
-
-  const toggleSelectOrden = (id: string) => {
-    setSelectedOrdenes(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(id)) {
-        newSet.delete(id)
-      } else {
-        newSet.add(id)
-      }
-      return newSet
-    })
-  }
-
-  const toggleSelectAll = () => {
-    if (selectedOrdenes.size === filteredOrdenes.length) {
-      setSelectedOrdenes(new Set())
-    } else {
-      setSelectedOrdenes(new Set(filteredOrdenes.map(o => o.id)))
-    }
-  }
-
-  const hasSelection = selectedOrdenes.size > 0
+  const breadcrumbs = [{ label: "Compras" }, { label: "Órdenes de Compra", href: "/compras/ordenes-de-compra" }]
 
   return (
     <div className="min-h-screen bg-[rgb(243,242,238)]">
@@ -265,510 +216,635 @@ function OrdenesDeCompraContent() {
         </div>
 
         <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
+          {/* Utility Bar */}
           <div className="relative border-b border-border h-[44px] bg-white">
             <div className="px-4 flex items-center justify-between h-full">
               <div className="flex items-center">
                 <Breadcrumb items={breadcrumbs} />
               </div>
-
-              <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center gap-3 mt-0">
+              <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2">
                 <UserPanel />
               </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  disabled
-                  className="px-4 py-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground hover:bg-muted text-sm font-medium"
-                  title="Deshacer cambios"
-                >
-                  Deshacer
-                </button>
-
-                <button
-                  disabled
-                  className="px-4 py-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-primary hover:bg-muted text-sm font-medium"
-                  title="Guardar cambios"
-                >
-                  Guardar
-                </button>
-              </div>
+              <div />
             </div>
           </div>
 
-          <main className="flex-1 flex flex-col bg-[rgba(250,251,253,1)] overflow-hidden">
-            {/* Toolbar */}
-            <div className="px-6 pt-6 pb-4">
-              <div className="bg-white border border-border/40 rounded-lg shadow-sm">
-                <div className="px-4 py-3 flex items-center justify-between gap-4">
-                  {/* Left: Nueva Orden Button + Selection Actions */}
-                  <div className="flex items-center gap-3 shrink-0">
-                    <Button
-                      onClick={() => setShowNuevaOrdenModal(true)}
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer gap-1.5 shrink-0"
-                    >
-                      <Plus className="w-3.5 h-3.5 text-amber-600" />
-                      Nueva Orden
-                    </Button>
-                    
-                    {/* Selection Actions */}
-                    {hasSelection && (
-                      <>
-                        <div className="h-5 w-px bg-slate-200" />
-                        <span className="text-xs text-slate-500">{selectedOrdenes.size} seleccionadas</span>
-                        
-                        {/* Exportar Dropdown */}
-                        <div className="relative" ref={exportRef}>
-                          <button
-                            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors"
-                            onClick={() => setShowExportDropdown(!showExportDropdown)}
-                          >
-                            <FileDown className="w-3.5 h-3.5" />
-                            Exportar
-                            <ChevronDown className={`w-3 h-3 transition-transform ${showExportDropdown ? "rotate-180" : ""}`} />
-                          </button>
-                          {showExportDropdown && (
-                            <div className="absolute top-full left-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[140px] z-50">
-                              <button
-                                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors text-left"
-                                onClick={() => {
-                                  // TODO: Export PDF
-                                  setShowExportDropdown(false)
-                                }}
-                              >
-                                <FileDown className="w-3.5 h-3.5 text-slate-400" />
-                                Exportar PDF
-                              </button>
-                              <button
-                                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors text-left"
-                                onClick={() => {
-                                  // TODO: Export Text
-                                  setShowExportDropdown(false)
-                                }}
-                              >
-                                <FileText className="w-3.5 h-3.5 text-slate-400" />
-                                Exportar Texto
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                        
-                        <button
-                          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded transition-colors"
-                          onClick={() => {/* TODO: Convert to Compras */}}
-                        >
-                          <ShoppingCart className="w-3.5 h-3.5" />
-                          Llevar a Compras
-                        </button>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Right: Search Bar + Order and Filter Buttons */}
-                  <div className="flex items-center gap-3 flex-shrink-0">
-                    {/* Search Bar */}
-                    <div className="relative w-56">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-black opacity-100 z-10" />
-                      <input
-                        type="text"
-                        placeholder="Buscar ordenes..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full h-8 pl-9 pr-9 border shadow-sm rounded-md text-xs placeholder:text-gray-600 text-gray-600 focus:outline-none focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500/50 bg-white backdrop-blur-sm transition-all duration-300 border-[rgba(202,213,227,0.842391304347826)]"
-                      />
-                      {searchQuery && (
-                        <button
-                          onClick={() => setSearchQuery("")}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors z-10"
-                          title="Limpiar busqueda"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-                    <div className="relative mr-3" ref={orderRef}>
-                      <button
-                        onClick={() => setShowOrderModal(!showOrderModal)}
-                        className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors group cursor-pointer border border-gray-200/40 shadow-sm mr-[-4px]"
-                        title="Ordenar"
-                      >
-                        <ArrowUpDown className="w-4 h-4 text-gray-600 group-hover:text-gray-900" />
-                      </button>
-
-                      {/* Order Modal */}
-                      {showOrderModal && (
-                        <div className="absolute right-0 top-10 bg-white border border-border/40 rounded-lg shadow-lg z-50 w-48 py-2">
-                          <p className="px-3 py-1 text-xs font-medium text-muted-foreground">Ordenar por</p>
-                          {[
-                            { value: "numero", label: "Numero" },
-                            { value: "fecha", label: "Fecha" },
-                            { value: "total", label: "Importe" },
-                            { value: "proveedor", label: "Proveedor" },
-                            { value: "items", label: "Cantidad Items" },
-                          ].map((option) => (
-                            <button
-                              key={option.value}
-                              onClick={() => {
-                                setSortConfig((prev) => ({
-                                  factor: option.value as SortFactor,
-                                  direction:
-                                    prev.factor === option.value ? (prev.direction === "asc" ? "desc" : "asc") : "desc",
-                                }))
+          <main className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 overflow-y-auto bg-slate-50">
+              {/* Sticky hero */}
+              <div className="sticky top-0 z-30">
+                <div className="bg-slate-50/80 backdrop-blur-md">
+                  <div className="px-8 py-8">
+                    <div className="max-w-6xl mx-auto">
+                      <div className="flex items-start justify-between gap-6">
+                        <div className="min-w-0">
+                          <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
+                            Órdenes de Compra
+                          </h1>
+                          <div className="mt-2 flex items-center gap-3 flex-wrap">
+                            <OrdenesComprasPeriodSelector
+                              open={periodOpen}
+                              setOpen={setPeriodOpen}
+                              currentLabel={periodLabel}
+                              currentKey={periodKey}
+                              onSelect={(k) => {
+                                if (k === "personalizado") {
+                                  setPeriodOpen(false)
+                                  setCalendarOpen(true)
+                                  return
+                                }
+                                setPeriodKey(k)
+                                setCustomRange(null)
+                                setPeriodOpen(false)
                               }}
-                              className={`w-full px-3 py-1.5 text-left text-sm hover:bg-muted/50 flex items-center justify-between cursor-pointer ${
-                                sortConfig.factor === option.value ? "text-amber-600 font-medium" : ""
-                              }`}
-                            >
-                              {option.label}
-                              {sortConfig.factor === option.value && (
-                                <span className="text-xs">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="relative" ref={filterRef}>
-                      <button
-                        onClick={() => setShowFilterModal(!showFilterModal)}
-                        className={`w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors group cursor-pointer border shadow-sm mr-2 ${
-                          hasActiveFilters ? "border-amber-500 bg-amber-50" : "border-gray-200/40"
-                        }`}
-                        title="Filtros"
-                      >
-                        <ListFilterIcon
-                          className={`w-4 h-4 ${hasActiveFilters ? "text-amber-600" : "text-gray-600 group-hover:text-gray-900"}`}
-                        />
-                      </button>
-
-                      {/* Filter Modal */}
-                      {showFilterModal && (
-                        <div className="absolute right-0 top-10 bg-white border border-border/40 rounded-lg shadow-lg z-50 w-56 py-2">
-                          <div className="px-3 py-2">
-                            <p className="text-xs font-medium text-muted-foreground">Estado</p>
-                            <div className="mt-2 space-y-1">
-                              {FILTRO_OPTIONS.estado.map((option) => (
-                                <label
-                                  key={option.value}
-                                  className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 px-1 py-0.5 rounded"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={activeFilters.estado.includes(option.value as EstadoOrdenDeCompra)}
-                                    onChange={() => toggleFilter("estado", option.value)}
-                                    className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
-                                  />
-                                  {option.label}
-                                </label>
-                              ))}
-                            </div>
-                          </div>
-                          {hasActiveFilters && (
-                            <div className="px-3 pt-2 border-t border-border/30">
-                              <button
-                                onClick={() => setActiveFilters({ estado: [] })}
-                                className="text-xs text-amber-600 hover:underline cursor-pointer"
-                              >
-                                Limpiar filtros
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Tab Header */}
-            <div className="px-6">
-              <div className="bg-slate-200 border border-[rgba(202,213,227,0.61)] rounded-t-sm">
-                <div className="grid grid-cols-100 h-9">
-                  {/* Checkbox */}
-                  <div className="col-span-4 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
-                    <input
-                      type="checkbox"
-                      checked={selectedOrdenes.size === filteredOrdenes.length && filteredOrdenes.length > 0}
-                      onChange={toggleSelectAll}
-                      className="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
-                    />
-                  </div>
-                  {/* ID */}
-                  <div className="col-span-10 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
-                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">ID</span>
-                  </div>
-                  {/* Estado Orden */}
-                  <div className="col-span-13 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
-                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Estado</span>
-                  </div>
-                  {/* Proveedor */}
-                  <div className="col-span-30 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
-                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Proveedor</span>
-                  </div>
-                  {/* Cantidad Items */}
-                  <div className="col-span-13 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
-                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Items</span>
-                  </div>
-                  {/* Importe Estimado */}
-                  <div className="col-span-22 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
-                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Importe</span>
-                  </div>
-                  {/* More */}
-                  <div className="col-span-8 flex items-center justify-center">
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Grid Content */}
-            <div className="flex-1 overflow-y-auto px-6 pb-6">
-              {filteredOrdenes.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                  <FileText className="w-12 h-12 mb-3 opacity-30" />
-                  <p>No se encontraron ordenes de compra</p>
-                </div>
-              ) : (
-                <div className="space-y-[1px]">
-                  {filteredOrdenes.map((orden) => {
-                    const estadoStyle = estadoColors[orden.estado]
-                    const totalItems = orden.items.reduce((sum, item) => sum + item.quantity, 0)
-                    const isSelected = selectedOrdenes.has(orden.id)
-
-                    return (
-                      <div
-                        key={orden.id}
-                        className={`bg-white border-x border-b border-[rgba(202,213,227,0.61)] first:border-t-0 cursor-pointer transition-colors ${
-                          isSelected ? "bg-amber-50/40" : "hover:bg-gray-50/50"
-                        }`}
-                        onClick={() => router.push(`/compras/ordenes-de-compra/${orden.id}`)}
-                      >
-                        {/* Main Row */}
-                        <div className="grid grid-cols-100 min-h-[56px]">
-                          {/* Checkbox */}
-                          <div
-                            className="col-span-4 flex items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              toggleSelectOrden(orden.id)
-                            }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => {}}
-                              className="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
                             />
-                          </div>
-
-                          {/* ID */}
-                          <div className="col-span-10 flex flex-col items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]">
-                            <span className="text-sm font-medium text-gray-900">ODC-{orden.numero}</span>
-                            <span className="text-xs text-muted-foreground">{formatDateShort(orden.fechaCreacion)}</span>
-                          </div>
-
-                          {/* Estado Orden */}
-                          <div className="col-span-13 flex items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]">
-                            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${estadoStyle.bg}`}>
-                              <CheckCircle2 className={`w-3.5 h-3.5 ${estadoStyle.icon}`} />
-                              <span className={`text-xs font-medium ${estadoStyle.text}`}>
-                                {estadoLabels[orden.estado]}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Proveedor */}
-                          <div className="col-span-30 flex items-center px-4 py-2 border-r border-[rgba(202,213,227,0.3)]">
-                            <span className="text-sm font-semibold text-gray-800 truncate">{orden.proveedorNombre}</span>
-                          </div>
-
-                          {/* Cantidad Items */}
-                          <div className="col-span-13 flex items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]">
-                            <div className="flex items-center gap-1.5">
-                              <Package className="w-3.5 h-3.5 text-gray-400" />
-                              <span className="text-sm text-gray-700">
-                                {orden.items.length}
-                              </span>
-                            </div>
-                            <span className="text-xs text-muted-foreground ml-1">
-                              ({totalItems} u.)
-                            </span>
-                          </div>
-
-                          {/* Importe Estimado */}
-                          <div className="col-span-22 flex items-center justify-center py-2 border-r border-[rgba(202,213,227,0.3)]">
-                            <span className="text-sm font-semibold text-gray-900">
-                              ${orden.importeEstimado.toLocaleString("es-AR", { minimumFractionDigits: 0 })}
-                            </span>
-                          </div>
-
-                          {/* More Options */}
-                          <div
-                            className="col-span-8 flex items-center justify-center py-2 relative"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <button
-                              className="p-1.5 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
-                              onClick={() => setOpenMoreMenu(openMoreMenu === orden.id ? null : orden.id)}
-                            >
-                              <MoreVertical className="w-4 h-4" />
-                            </button>
-                            
-                            {openMoreMenu === orden.id && (
-                              <div
-                                className="absolute top-full right-2 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[160px]"
-                                onMouseLeave={() => setOpenMoreMenu(null)}
-                              >
-                                <button
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
-                                  onClick={() => {
-                                    // TODO: Export PDF
-                                    setOpenMoreMenu(null)
-                                  }}
-                                >
-                                  <FileDown className="w-4 h-4 text-slate-400" />
-                                  Exportar PDF
-                                </button>
-                                <button
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
-                                  onClick={() => {
-                                    // TODO: Export Text
-                                    setOpenMoreMenu(null)
-                                  }}
-                                >
-                                  <FileText className="w-4 h-4 text-slate-400" />
-                                  Exportar Texto
-                                </button>
-                                <div className="h-px bg-slate-100 my-1" />
-                                <button
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-amber-700 hover:bg-amber-50 transition-colors text-left"
-                                  onClick={() => {
-                                    // TODO: Convert to Compra
-                                    setOpenMoreMenu(null)
-                                  }}
-                                >
-                                  <ShoppingCart className="w-4 h-4 text-amber-600" />
-                                  Llevar a Compras
-                                </button>
-                              </div>
+                            <span className="text-sm text-slate-500 font-mono">{rangeLabel}</span>
+                            {calendarOpen && (
+                              <OrdenesComprasRangeCalendarDialog
+                                initialRange={customRange}
+                                onCancel={() => setCalendarOpen(false)}
+                                onApply={(start, end) => {
+                                  setCustomRange({ start, end })
+                                  setPeriodKey("personalizado")
+                                  setCalendarOpen(false)
+                                }}
+                              />
                             )}
                           </div>
                         </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowNuevaOrdenModal(true)}
+                          className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer mt-1"
+                        >
+                          <Plus className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
+                          Nueva Orden
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="px-8 pb-8 mt-2">
+                <div className="max-w-6xl mx-auto">
+
+                  {/* Widgets */}
+                  {(() => {
+                    const countAceptadas = ordenes.filter(o => o.estado === "aceptada").length
+                    const countBorrador = ordenes.filter(o => o.estado === "borrador").length
+                    const countRechazadas = ordenes.filter(o => o.estado === "rechazada").length
+
+                    const widgetCls = (active: boolean, disabled: boolean, activeColor: string, hoverColor: string) => {
+                      if (disabled) return "border rounded-xl px-5 py-4 shadow-sm text-left border-slate-100 bg-slate-50 opacity-40 cursor-not-allowed"
+                      if (active) return `border rounded-xl px-5 py-4 shadow-sm text-left transition-all cursor-pointer ${activeColor}`
+                      return `border rounded-xl px-5 py-4 shadow-sm text-left transition-all cursor-pointer bg-white border-slate-200/80 ${hoverColor}`
+                    }
+
+                    return (
+                      <div className="grid grid-cols-4 gap-3 mb-5">
+                        {/* Totales */}
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab("todas")}
+                          className={widgetCls(activeTab === "todas", false, "bg-blue-50 border-blue-200", "hover:border-blue-200 hover:shadow-md")}
+                        >
+                          <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center mb-3 shadow-sm border border-slate-100">
+                            <BarChart3 className="w-4 h-4 text-blue-500" />
+                          </div>
+                          <div className="flex items-baseline gap-1.5 min-w-0 flex-wrap">
+                            <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{ordenes.length}</p>
+                            <p className="text-sm font-medium text-blue-500 truncate">órdenes totales</p>
+                          </div>
+                        </button>
+
+                        {/* Aceptadas */}
+                        <button
+                          type="button"
+                          onClick={() => countAceptadas > 0 && setActiveTab("aceptada")}
+                          className={widgetCls(activeTab === "aceptada", countAceptadas === 0, "bg-emerald-50 border-emerald-200", "hover:border-emerald-200 hover:shadow-md")}
+                        >
+                          <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center mb-3 shadow-sm border border-slate-100">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                          </div>
+                          <div className="flex items-baseline gap-1.5 min-w-0 flex-wrap">
+                            <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{countAceptadas}</p>
+                            <p className="text-sm font-medium text-emerald-500 truncate">órdenes aceptadas</p>
+                          </div>
+                        </button>
+
+                        {/* En borrador */}
+                        <button
+                          type="button"
+                          onClick={() => countBorrador > 0 && setActiveTab("borrador")}
+                          className={widgetCls(activeTab === "borrador", countBorrador === 0, "bg-slate-100 border-slate-300", "hover:border-slate-300 hover:shadow-md")}
+                        >
+                          <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center mb-3 shadow-sm border border-slate-100">
+                            <Clock className="w-4 h-4 text-slate-400" />
+                          </div>
+                          <div className="flex items-baseline gap-1.5 min-w-0 flex-wrap">
+                            <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{countBorrador}</p>
+                            <p className="text-sm font-medium text-slate-500 truncate">órdenes en borrador</p>
+                          </div>
+                        </button>
+
+                        {/* Rechazadas */}
+                        <button
+                          type="button"
+                          onClick={() => countRechazadas > 0 && setActiveTab("rechazada")}
+                          className={widgetCls(activeTab === "rechazada", countRechazadas === 0, "bg-red-50 border-red-200", "hover:border-red-200 hover:shadow-md")}
+                        >
+                          <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center mb-3 shadow-sm border border-slate-100">
+                            <XCircle className="w-4 h-4 text-red-400" />
+                          </div>
+                          <div className="flex items-baseline gap-1.5 min-w-0 flex-wrap">
+                            <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{countRechazadas}</p>
+                            <p className="text-sm font-medium text-red-400 truncate">órdenes rechazadas</p>
+                          </div>
+                        </button>
                       </div>
                     )
-                  })}
+                  })()}
+
+                  {/* Combined header bar */}
+                  <div className="mb-2 flex items-center gap-2">
+                    <div className="flex items-center h-9 border border-[rgba(228,230,235,0.6)] shadow-sm rounded-md min-w-0 overflow-hidden bg-white">
+                      <div className="flex items-center justify-center w-[52px] shrink-0 h-full bg-white">
+                        <input
+                          ref={allCheckboxRef}
+                          type="checkbox"
+                          checked={allSelected}
+                          onChange={toggleSelectAll}
+                          aria-label={allSelected ? "Deseleccionar todo" : "Seleccionar todo"}
+                          className="w-4 h-4 rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        />
+                      </div>
+                      <div className="w-px h-full bg-slate-200/80 shrink-0" />
+                      <div className="flex items-center gap-2 px-3 h-full w-64 bg-white">
+                        <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <input
+                          type="text"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="Buscar"
+                          className="flex-1 bg-transparent text-xs text-slate-700 placeholder:text-slate-400 outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Selection count + bulk actions */}
+                    {selectedOrdenes.size > 0 && (
+                      <div className="flex items-center gap-2.5 h-9">
+                        <div className="w-px h-5 bg-slate-300" />
+                        <span className="text-xs text-slate-500 whitespace-nowrap">
+                          {selectedOrdenes.size} seleccionada{selectedOrdenes.size !== 1 ? "s" : ""}
+                        </span>
+                        <div className="w-px h-5 bg-slate-200" />
+                        <button
+                          type="button"
+                          className="h-8 flex items-center gap-1.5 px-3 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-md hover:bg-slate-50 hover:border-slate-300 shadow-sm transition-colors"
+                          onClick={() => {/* TODO: PDF export */}}
+                        >
+                          <FileDown className="w-3.5 h-3.5 text-slate-400" />
+                          Descargar PDF
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Filtrar / Ordenar */}
+                    <div className="ml-auto flex items-center gap-2">
+                      {/* Filtrar */}
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setFilterOpen(!filterOpen)}
+                          className={`h-9 text-xs transition-colors border shadow-sm gap-1.5 shrink-0 px-3 rounded-md flex items-center cursor-pointer ${
+                            hasActiveFilters
+                              ? "border-blue-400 text-blue-600 bg-blue-50"
+                              : "border-[rgba(228,230,235,0.6)] bg-white hover:bg-slate-50"
+                          }`}
+                        >
+                          <ListFilter className="w-3.5 h-3.5" />
+                          <span>Filtrar</span>
+                        </button>
+                        {filterOpen && (
+                          <>
+                            <div className="fixed inset-0 z-10" onClick={() => setFilterOpen(false)} />
+                            <div className="absolute top-full right-0 mt-1 z-20 bg-white border border-slate-200 rounded-lg shadow-lg w-60 p-3 space-y-3">
+                              {/* Proveedor */}
+                              <div>
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Proveedor</label>
+                                <select
+                                  value={filterProveedor}
+                                  onChange={(e) => setFilterProveedor(e.target.value)}
+                                  className="w-full mt-1 px-2 py-1.5 text-xs border border-slate-200 rounded-md focus:outline-none focus:border-slate-400 bg-white"
+                                >
+                                  <option value="">Todos</option>
+                                  {uniqueProveedores.map(p => <option key={p} value={p}>{p}</option>)}
+                                </select>
+                              </div>
+                              {/* Estado */}
+                              <div className="space-y-2">
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Estado</label>
+                                {(["borrador", "enviada", "aceptada", "rechazada"] as EstadoOrdenDeCompra[]).map(estado => (
+                                  <label key={estado} className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={filterEstados.includes(estado)}
+                                      onChange={() => toggleFilterEstado(estado)}
+                                      className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    />
+                                    <span className="text-xs text-slate-700">{estadoConfig[estado].label}</span>
+                                  </label>
+                                ))}
+                              </div>
+                              {hasActiveFilters && (
+                                <button
+                                  type="button"
+                                  onClick={() => { setFilterProveedor(""); setFilterEstados([]) }}
+                                  className="w-full text-xs text-slate-500 hover:text-slate-700 py-1 text-center cursor-pointer"
+                                >
+                                  Limpiar filtros
+                                </button>
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Ordenar */}
+                      <div className="flex items-center border border-[rgba(228,230,235,0.6)] shadow-sm rounded-md overflow-hidden bg-white h-9">
+                        <button
+                          type="button"
+                          onClick={() => setSortDir(d => d === "asc" ? "desc" : "asc")}
+                          title={sortDir === "asc" ? "Ascendente" : "Descendente"}
+                          className="px-2.5 h-full hover:bg-slate-50 transition-colors border-r border-[rgba(228,230,235,0.6)] cursor-pointer flex items-center"
+                        >
+                          <ArrowUpDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${sortDir === "desc" ? "rotate-180" : ""}`} />
+                        </button>
+                        <select
+                          value={sortField}
+                          onChange={(e) => setSortField(e.target.value as "fecha" | "precio")}
+                          className="appearance-none pl-2.5 pr-6 text-xs bg-transparent focus:outline-none cursor-pointer text-slate-700 h-full"
+                        >
+                          <option value="fecha">Fecha</option>
+                          <option value="precio">Importe</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Rows */}
+                  <div className="flex flex-col gap-2">
+                    {filteredOrdenes.length === 0 && (
+                      <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+                        <p className="text-sm">No hay órdenes de compra para mostrar</p>
+                      </div>
+                    )}
+                    {filteredOrdenes.map((orden) => {
+                      const estadoStyle = estadoConfig[orden.estado] ?? estadoConfig["borrador"]
+                      const EstadoIcon = estadoStyle.icon
+                      const isSelected = selectedOrdenes.has(orden.id)
+                      const isMulti = orden.items.length > 1
+                      const firstItem = orden.items[0]
+
+                      return (
+                        <div
+                          key={orden.id}
+                          onClick={() => router.push(`/compras/ordenes-de-compra/${orden.id}`)}
+                          className={`bg-white border rounded-md shadow-sm transition-colors cursor-pointer ${
+                            isSelected
+                              ? "border-blue-300 bg-blue-50/40"
+                              : "border-slate-200/60 hover:border-slate-300"
+                          }`}
+                        >
+                          {/* TOP ROW */}
+                          <div className="grid grid-cols-100 min-h-[44px] py-2 border-b border-slate-200/70">
+                            <div
+                              className="col-span-4 flex items-center justify-center border-r border-slate-200/70"
+                              onClick={(e) => { e.stopPropagation(); toggleSelectOrden(orden.id) }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => {}}
+                                className="w-4 h-4 rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                              />
+                            </div>
+                            {/* ID */}
+                            <div className="col-span-10 flex items-center justify-start px-3 border-r border-slate-200/70">
+                              <span className="text-sm font-semibold text-slate-900 shrink-0">{orden.id}</span>
+                            </div>
+                            {/* Fecha */}
+                            <div className="col-span-14 flex items-center justify-start px-3 border-r border-slate-200/70">
+                              <span className="text-sm text-slate-600 truncate">
+                                {formatOrdenDateTime(orden.fechaCreacion)}
+                              </span>
+                            </div>
+                            {/* Spacer */}
+                            <div className="col-span-54" />
+                            {/* Proveedor pill */}
+                            <div className="col-span-14 flex items-center justify-end pr-3 border-r border-slate-200/70">
+                              <div className="inline-flex items-center gap-1.5 pl-1.5 pr-3 py-1 rounded-full border border-slate-200 bg-slate-50 shadow-sm shrink-0">
+                                <div className="w-5 h-5 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
+                                  <span className="text-[9px] font-bold text-white uppercase">{orden.proveedorNombre.charAt(0)}</span>
+                                </div>
+                                <span className="text-xs text-slate-700 whitespace-nowrap">{orden.proveedorNombre}</span>
+                              </div>
+                            </div>
+                            <div
+                              className="col-span-4 flex items-center justify-center border-l border-slate-200/70 relative"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <button
+                                className="p-1.5 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                                onClick={() => setOpenMoreMenu(openMoreMenu === orden.id ? null : orden.id)}
+                                aria-label="Más opciones"
+                              >
+                                <MoreVertical className="w-4 h-4" />
+                              </button>
+                              {openMoreMenu === orden.id && (
+                                <div
+                                  className="absolute top-full right-2 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[210px]"
+                                  onMouseLeave={() => setOpenMoreMenu(null)}
+                                >
+                                  <button
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                                    onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); router.push(`/compras/ordenes-de-compra/${orden.id}`) }}
+                                  >
+                                    <Copy className="w-4 h-4 text-slate-400" />
+                                    Duplicar orden
+                                  </button>
+                                  {orden.estado === "borrador" && (
+                                    <button
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors text-left"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        setOpenMoreMenu(null)
+                                        deleteOrden(orden.id)
+                                        setSelectedOrdenes(prev => {
+                                          const next = new Set(prev); next.delete(orden.id); return next
+                                        })
+                                      }}
+                                    >
+                                      <Trash2 className="w-4 h-4 text-red-400" />
+                                      Eliminar orden
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* MIDDLE ROW */}
+                          <div className="flex items-center justify-between gap-3 py-1.5" style={{ paddingLeft: "calc(4% + 12px)", paddingRight: "calc(4% + 12px)" }}>
+                            <div className="flex items-center gap-3">
+                              <div className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full shrink-0 ${estadoStyle.bg}`}>
+                                <EstadoIcon className={`w-3.5 h-3.5 ${estadoStyle.text}`} />
+                                <span className={`text-sm font-medium ${estadoStyle.text}`}>{estadoStyle.label}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* BOTTOM ROW */}
+                          {(() => {
+                            const isExpanded = expandedOrdenes.has(orden.id) && isMulti
+                            const totalUnits = orden.items.reduce((sum, it) => sum + it.quantity, 0)
+                            const lastItemIdx = orden.items.length - 1
+
+                            const PrecioCell = ({ item, className = "" }: { item: typeof firstItem; className?: string }) => {
+                              if (!item) return null
+                              return (
+                                <div className={`flex flex-col justify-center gap-0 ${className}`}>
+                                  <div className="flex items-baseline gap-1">
+                                    <span className="text-xs text-slate-700 tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
+                                    <span className="text-[10px] text-slate-400">c/u</span>
+                                  </div>
+                                </div>
+                              )
+                            }
+
+                            const QtyCell = ({ item, className = "" }: { item: typeof firstItem; className?: string }) => {
+                              if (!item) return null
+                              return (
+                                <div className={`flex flex-col justify-center gap-0 ${className}`}>
+                                  <div className="flex items-baseline gap-1">
+                                    <span className="text-xs text-slate-700 tabular-nums">{item.quantity}</span>
+                                    <span className="text-[10px] text-slate-400">{item.quantity === 1 ? "unidad" : "unidades"}</span>
+                                  </div>
+                                </div>
+                              )
+                            }
+
+                            return (
+                              <div className="grid grid-cols-100 pt-1 pb-2" onClick={(e) => e.stopPropagation()}>
+                                <div className="col-span-4" />
+
+                                {/* ITEM cell */}
+                                <div className={`col-span-32 bg-slate-50 ${isExpanded ? "rounded-tl-md" : "rounded-l-md"} py-2.5 pl-3 pr-2 flex items-center gap-2`}>
+                                  {isMulti && (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); toggleExpandOrden(orden.id) }}
+                                      className="p-0.5 rounded hover:bg-slate-200 text-slate-500 transition-colors shrink-0"
+                                      aria-label={isExpanded ? "Colapsar productos" : "Expandir productos"}
+                                    >
+                                      {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                                    </button>
+                                  )}
+
+                                  {isMulti ? (
+                                    <>
+                                      <div className="flex items-center -space-x-2 shrink-0">
+                                        {orden.items.slice(0, 3).map((it, idx) => (
+                                          <div
+                                            key={`${orden.id}-thumb-${idx}`}
+                                            className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden shadow-sm"
+                                            style={{ zIndex: 10 - idx }}
+                                          >
+                                            <img src={getCategoryImage(it.categoria) || "/placeholder.svg"} alt={it.categoria || "Producto"} className="w-5 h-5 object-contain opacity-70" />
+                                          </div>
+                                        ))}
+                                      </div>
+                                      <span className="text-sm font-semibold text-slate-800 truncate">{orden.items.length} productos</span>
+                                    </>
+                                  ) : firstItem ? (
+                                    <div className="flex items-center gap-3 min-w-0">
+                                      <div className="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                                        <img src={getCategoryImage(firstItem.categoria) || "/placeholder.svg"} alt={firstItem.categoria || "Producto"} className="w-5 h-5 object-contain opacity-70" />
+                                      </div>
+                                      <div className="min-w-0 flex flex-col">
+                                        <div className="flex items-center gap-1.5 min-w-0">
+                                          <span className="text-sm font-medium text-slate-800 truncate">{firstItem.name}</span>
+                                          {(firstItem.tags ?? []).length > 0 && (
+                                            <div className="flex items-center gap-1 shrink-0">
+                                              {(firstItem.tags ?? []).map((tag, i) => (
+                                                <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-600 whitespace-nowrap">{tag}</span>
+                                              ))}
+                                            </div>
+                                          )}
+                                        </div>
+                                        {(firstItem.marca || firstItem.categoria) && (
+                                          <div className="flex items-center gap-1 mt-0.5 text-xs text-slate-500 truncate">
+                                            {firstItem.marca && <span>{firstItem.marca}</span>}
+                                            {firstItem.marca && firstItem.categoria && <span>·</span>}
+                                            {firstItem.categoria && <span>{firstItem.categoria}</span>}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ) : null}
+                                </div>
+
+                                {/* UNIDADES */}
+                                <div className="col-span-20 bg-slate-50 flex items-center px-3">
+                                  {!isMulti && firstItem ? (
+                                    <QtyCell item={firstItem} />
+                                  ) : (
+                                    <div className="flex items-baseline gap-1">
+                                      <span className="text-sm text-slate-700 tabular-nums">{totalUnits}</span>
+                                      <span className="text-xs text-slate-400">{totalUnits === 1 ? "unidad" : "unidades"}</span>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* PRECIO UNITARIO */}
+                                <div className="col-span-16 bg-slate-50 flex items-center px-3">
+                                  {!isMulti && firstItem && <PrecioCell item={firstItem} />}
+                                </div>
+
+                                {/* TOTAL */}
+                                <div className={`col-span-24 bg-slate-50 ${isExpanded ? "rounded-tr-md" : "rounded-r-md"} flex items-center px-3`}>
+                                  <span className="text-sm font-semibold text-slate-800">Total: ${orden.importeEstimado.toLocaleString("es-AR")}</span>
+                                </div>
+                                <div className="col-span-4" />
+
+                                {/* Expanded item rows */}
+                                {isExpanded && orden.items.map((item, idx) => {
+                                  const isLast = idx === lastItemIdx
+                                  return (
+                                    <Fragment key={`${orden.id}-exp-${idx}`}>
+                                      <div className="col-span-4" />
+                                      <div className={`col-span-32 bg-slate-50 border-t border-slate-200/60 ${isLast ? "rounded-bl-md" : ""}`}>
+                                        <div className="w-full px-3 py-2 flex items-start gap-3">
+                                          <div className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                                            <img src={getCategoryImage(item.categoria) || "/placeholder.svg"} alt={item.categoria || "Producto"} className="w-4 h-4 object-contain opacity-70" />
+                                          </div>
+                                          <div className="min-w-0 flex flex-col">
+                                            <div className="flex items-center gap-1.5 min-w-0">
+                                              <span className="text-sm font-medium text-slate-800 truncate">{item.name}</span>
+                                              {(item.tags ?? []).length > 0 && (
+                                                <div className="flex items-center gap-1 shrink-0">
+                                                  {(item.tags ?? []).map((tag, i) => (
+                                                    <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-600 whitespace-nowrap">{tag}</span>
+                                                  ))}
+                                                </div>
+                                              )}
+                                            </div>
+                                            {(item.marca || item.categoria) && (
+                                              <div className="flex items-center gap-1 mt-0.5 text-xs text-slate-500 truncate">
+                                                {item.marca && <span>{item.marca}</span>}
+                                                {item.marca && item.categoria && <span>·</span>}
+                                                {item.categoria && <span>{item.categoria}</span>}
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div className="col-span-20 bg-slate-50 px-3 py-2 border-t border-slate-200/60 flex items-center">
+                                        <QtyCell item={item} />
+                                      </div>
+                                      <div className="col-span-16 bg-slate-50 px-3 py-2 border-t border-slate-200/60 flex items-center">
+                                        <PrecioCell item={item} />
+                                      </div>
+                                      <div className={`col-span-24 bg-slate-50 border-t border-slate-200/60 ${isLast ? "rounded-br-md" : ""}`} />
+                                      <div className="col-span-4" />
+                                    </Fragment>
+                                  )
+                                })}
+                              </div>
+                            )
+                          })()}
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
-              )}
+              </div>
             </div>
           </main>
         </div>
       </div>
-      
+
       {/* Nueva Orden Modal */}
       {showNuevaOrdenModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100010]">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
-            {/* Header */}
-            <div className="px-6 py-4 border-b border-slate-200 rounded-t-xl">
+        <div className="fixed inset-0 z-[100010] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            <div className="px-6 pt-6 pb-4 border-b border-slate-100">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">Nueva Orden de Compra</h2>
-                  <p className="text-sm text-slate-500 mt-0.5">Orden: <span className="font-medium text-amber-600">{nextOrderId}</span></p>
+                  <h2 className="text-lg font-semibold text-slate-900">Nueva Orden de Compra</h2>
+                  <p className="text-sm text-slate-500 mt-0.5">ID: <span className="font-medium text-slate-700">ODC-{getNextOrderNumber()}</span></p>
                 </div>
                 <button
-                  onClick={() => {
-                    setShowNuevaOrdenModal(false)
-                    setNuevaOrdenProveedor("")
-                    setProveedorDropdownOpen(false)
-                  }}
+                  onClick={() => { setShowNuevaOrdenModal(false); setNuevaOrdenProveedor(""); setProveedorDropdownOpen(false) }}
                   className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
                 >
                   <X className="w-5 h-5 text-slate-500" />
                 </button>
               </div>
             </div>
-            
-            {/* Content */}
-            <div className="px-6 py-5 min-h-[280px]">
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Proveedor</label>
-                  <div className="relative" ref={proveedorInputRef}>
-                    <input
-                      type="text"
-                      value={nuevaOrdenProveedor}
-                      onChange={(e) => {
-                        setNuevaOrdenProveedor(e.target.value)
-                        setProveedorDropdownOpen(true)
-                      }}
-                      onFocus={() => setProveedorDropdownOpen(true)}
-                      placeholder="Buscar o escribir proveedor..."
-                      className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 text-sm"
-                    />
-                    <button
-                      onClick={() => setProveedorDropdownOpen(!proveedorDropdownOpen)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-100 rounded"
-                    >
-                      <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${proveedorDropdownOpen ? "rotate-180" : ""}`} />
-                    </button>
-                    
-                    {/* Dropdown */}
-                    {proveedorDropdownOpen && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto z-10">
-                        {filteredProveedores.length > 0 ? (
-                          filteredProveedores.map((proveedor) => (
-                            <button
-                              key={proveedor}
-                              onClick={() => {
-                                setNuevaOrdenProveedor(proveedor)
-                                setProveedorDropdownOpen(false)
-                              }}
-                              className={`w-full px-4 py-2 text-left text-sm hover:bg-amber-50 transition-colors ${
-                                nuevaOrdenProveedor === proveedor ? "bg-amber-50 text-amber-700 font-medium" : "text-slate-700"
-                              }`}
-                            >
-                              {proveedor}
-                            </button>
-                          ))
-                        ) : (
-                          <div className="px-4 py-3 text-sm text-slate-500">
-                            {nuevaOrdenProveedor ? (
-                              <span>Crear orden con: <span className="font-medium text-slate-700">&quot;{nuevaOrdenProveedor}&quot;</span></span>
-                            ) : (
-                              <span>No hay proveedores</span>
-                            )}
-                          </div>
-                        )}
+            <div className="px-6 py-5 min-h-[200px]">
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Proveedor</label>
+              <div className="relative" ref={proveedorInputRef}>
+                <input
+                  type="text"
+                  value={nuevaOrdenProveedor}
+                  onChange={(e) => { setNuevaOrdenProveedor(e.target.value); setProveedorDropdownOpen(true) }}
+                  onFocus={() => setProveedorDropdownOpen(true)}
+                  placeholder="Buscar o escribir proveedor..."
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400/30 focus:border-slate-400 text-sm"
+                />
+                <button
+                  onClick={() => setProveedorDropdownOpen(!proveedorDropdownOpen)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-100 rounded"
+                >
+                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${proveedorDropdownOpen ? "rotate-180" : ""}`} />
+                </button>
+                {proveedorDropdownOpen && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto z-10">
+                    {filteredProveedoresInput.length > 0 ? (
+                      filteredProveedoresInput.map((p) => (
+                        <button
+                          key={p}
+                          onClick={() => { setNuevaOrdenProveedor(p); setProveedorDropdownOpen(false) }}
+                          className={`w-full px-4 py-2 text-left text-sm hover:bg-slate-50 transition-colors ${nuevaOrdenProveedor === p ? "bg-slate-50 text-slate-900 font-medium" : "text-slate-700"}`}
+                        >
+                          {p}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-4 py-3 text-sm text-slate-500">
+                        {nuevaOrdenProveedor
+                          ? <span>Crear orden con: <span className="font-medium text-slate-700">&quot;{nuevaOrdenProveedor}&quot;</span></span>
+                          : <span>No hay proveedores</span>
+                        }
                       </div>
                     )}
                   </div>
-                  {nuevaOrdenProveedor && !uniqueProveedores.includes(nuevaOrdenProveedor) && (
-                    <p className="text-xs text-amber-600 mt-1.5">
-                      Se creará una orden con un nuevo proveedor
-                    </p>
-                  )}
-                </div>
+                )}
               </div>
             </div>
-            
-            {/* Footer */}
-            <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3 rounded-b-xl">
+            <div className="flex items-center justify-end gap-2 px-6 pb-6">
               <button
-                onClick={() => {
-                  setShowNuevaOrdenModal(false)
-                  setNuevaOrdenProveedor("")
-                  setProveedorDropdownOpen(false)
-                }}
-                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                onClick={() => { setShowNuevaOrdenModal(false); setNuevaOrdenProveedor(""); setProveedorDropdownOpen(false) }}
+                className="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleCreateOrden}
                 disabled={!nuevaOrdenProveedor.trim()}
-                className="px-5 py-2 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-5 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Crear Orden
               </button>
@@ -780,10 +856,172 @@ function OrdenesDeCompraContent() {
   )
 }
 
-export default function OrdenesDeCompraPage() {
+/* ─── Period Selector ─────────────────────────────────────────────────────── */
+
+function OrdenesComprasPeriodSelector({
+  open,
+  setOpen,
+  currentLabel,
+  currentKey,
+  onSelect,
+}: {
+  open: boolean
+  setOpen: (v: boolean) => void
+  currentLabel: string
+  currentKey: PeriodKey
+  onSelect: (k: PeriodKey) => void
+}) {
   return (
-    <Suspense fallback={null}>
-      <OrdenesDeCompraContent />
-    </Suspense>
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200 bg-white hover:border-slate-300 transition-colors text-sm font-medium text-slate-700 cursor-pointer"
+      >
+        <span>{currentLabel}</span>
+        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden z-20 animate-in fade-in-0 slide-in-from-top-1 duration-150">
+            {PERIOD_OPTIONS.map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => onSelect(opt.key)}
+                className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer ${
+                  currentKey === opt.key
+                    ? "bg-slate-900 text-white"
+                    : "text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+/* ─── Range Calendar Dialog ───────────────────────────────────────────────── */
+
+function startOfDayV(d: Date) {
+  const copy = new Date(d)
+  copy.setHours(0, 0, 0, 0)
+  return copy
+}
+
+function OrdenesComprasRangeCalendarDialog({
+  initialRange,
+  onApply,
+  onCancel,
+}: {
+  initialRange: { start: Date; end: Date } | null
+  onApply: (start: Date, end: Date) => void
+  onCancel: () => void
+}) {
+  const today = startOfDayV(new Date())
+  const [viewMonth, setViewMonth] = useState(() => {
+    const base = initialRange?.end ?? today
+    return new Date(base.getFullYear(), base.getMonth(), 1)
+  })
+  const [start, setStart] = useState<Date | null>(initialRange?.start ?? null)
+  const [end, setEnd] = useState<Date | null>(initialRange?.end ?? null)
+
+  const handleDayClick = (d: Date) => {
+    if (d > today) return
+    if (!start || (start && end)) {
+      setStart(d); setEnd(null)
+    } else if (start && !end) {
+      if (d < start) { setStart(d); setEnd(start) }
+      else setEnd(d)
+    }
+  }
+
+  const goPrev = () => setViewMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth() - 1, 1))
+  const goNext = () => {
+    const next = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 1)
+    if (next > today) return
+    setViewMonth(next)
+  }
+
+  const firstOfMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 1)
+  const lastOfMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 0)
+  const startWeekday = (firstOfMonth.getDay() + 6) % 7
+  const totalCells = Math.ceil((startWeekday + lastOfMonth.getDate()) / 7) * 7
+  const cells: (Date | null)[] = []
+  for (let i = 0; i < totalCells; i++) {
+    const dayNum = i - startWeekday + 1
+    cells.push(dayNum < 1 || dayNum > lastOfMonth.getDate() ? null : new Date(viewMonth.getFullYear(), viewMonth.getMonth(), dayNum))
+  }
+
+  const inRange = (d: Date) => !!(start && end && d >= start && d <= end)
+  const canApply = !!start && !!end
+
+  const MONTHS = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 p-6 w-80">
+        <div className="flex items-center justify-between mb-4">
+          <button type="button" onClick={goPrev} className="p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer">
+            <ChevronDown className="w-4 h-4 text-slate-500 rotate-90" />
+          </button>
+          <span className="text-sm font-semibold text-slate-800">{MONTHS[viewMonth.getMonth()]} {viewMonth.getFullYear()}</span>
+          <button type="button" onClick={goNext} className="p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer">
+            <ChevronDown className="w-4 h-4 text-slate-500 -rotate-90" />
+          </button>
+        </div>
+        <div className="grid grid-cols-7 gap-0.5 mb-1">
+          {["Lu","Ma","Mi","Ju","Vi","Sa","Do"].map((d) => (
+            <div key={d} className="text-center text-[10px] font-semibold text-slate-400 py-1">{d}</div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-0.5">
+          {cells.map((d, i) => {
+            if (!d) return <div key={i} />
+            const isStart = start && d.getTime() === start.getTime()
+            const isEnd = end && d.getTime() === end.getTime()
+            const isInRange = inRange(d)
+            const isFuture = d > today
+            return (
+              <button
+                key={i}
+                type="button"
+                disabled={isFuture}
+                onClick={() => handleDayClick(d)}
+                className={`text-xs h-8 rounded-lg transition-colors cursor-pointer ${
+                  isStart || isEnd
+                    ? "bg-slate-900 text-white"
+                    : isInRange
+                    ? "bg-slate-100 text-slate-700"
+                    : isFuture
+                    ? "text-slate-300 cursor-not-allowed"
+                    : "text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                {d.getDate()}
+              </button>
+            )
+          })}
+        </div>
+        <div className="mt-4 flex gap-2">
+          <button type="button" onClick={onCancel} className="flex-1 h-9 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 cursor-pointer transition-colors">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            disabled={!canApply}
+            onClick={() => canApply && onApply(start!, end!)}
+            className="flex-1 h-9 rounded-lg bg-slate-900 text-white text-sm font-medium hover:bg-slate-800 cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Aplicar
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }
