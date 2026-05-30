@@ -1105,9 +1105,11 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   )
                 })()}
 
-                {/* ── Entrega / Cobro — only shown when en_curso ── */}
-                {estadoUI === "en_curso" && (
-                  <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-2">
+                {/* ── Entrega + Cobro widgets — only shown when en_curso ── */}
+                {estadoUI === "en_curso" && <div className="grid grid-cols-2 gap-3">
+
+                  {/* Widget 1 — Entrega */}
+                  <div className={`bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-2 ${entregaPct === 100 ? "items-center justify-center" : ""}`}>
                     {entregaPct === 100 ? (
                       <div className="flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-slate-800" />
@@ -1115,32 +1117,55 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       </div>
                     ) : (
                       <>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Package className="w-4 h-4 text-slate-400" />
-                            <span className="text-base font-semibold text-slate-700">Entrega {entregaPct}%</span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setShowRegistrarEntrega(true)}
-                            className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors"
-                          >
-                            <Plus className="w-3 h-3" />
-                            Registrar
-                          </button>
+                        <div className="flex items-center gap-2">
+                          <Package className="w-4 h-4 text-slate-400" />
+                          <span className="text-base font-semibold text-slate-700">Entrega {entregaPct}%</span>
                         </div>
                         <span className="text-sm text-slate-400 tabular-nums">
                           {totalUnidades - entregadasUnidades} {totalUnidades - entregadasUnidades === 1 ? "unidad pendiente" : "unidades pendientes"} de entrega
                         </span>
+                        <button
+                          type="button"
+                          onClick={() => setShowRegistrarEntrega(true)}
+                          className="flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                        >
+                          <Plus className="w-3 h-3" />
+                          Registrar entrega
+                        </button>
                       </>
                     )}
                   </div>
-                )}
 
-              </div>{/* end col-span-2 left column */}
+                  {/* Widget 2 — Cobro */}
+                  <div className={`bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-2 ${pagoPct === 100 ? "items-center justify-center" : ""}`}>
+                    {pagoPct === 100 ? (
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-slate-800" />
+                        <span className="text-base font-semibold text-slate-900">Cobrada</span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-2">
+                          <Wallet className="w-4 h-4 text-slate-400" />
+                          <span className="text-base font-semibold text-slate-700">Cobro {pagoPct}%</span>
+                        </div>
+                        <span className="text-sm text-slate-400 tabular-nums">
+                          ${Math.round(montoRestante).toLocaleString("es-AR")} pendiente de cobro
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setShowRegistrarCobro(true)}
+                          className="flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                        >
+                          <Plus className="w-3 h-3" />
+                          Registrar cobro
+                        </button>
+                      </>
+                    )}
+                  </div>
 
-              {/* ── Entrega + Items card — full width col-span-3 ── */}
-              <div className="col-span-3">
+                </div>}
+
               <div className="bg-white border border-slate-200/60 rounded-lg shadow-sm overflow-hidden">
 
                 {/* ── Title strip — toggle buttons ── */}
@@ -1601,7 +1626,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
               </div>{/* end p-3 padding wrapper */}
               </div>{/* end entrega+items card */}
 
-              {/* ── Notas card (full width, inside col-span-3) ── */}
+              {/* ── Notas card ── */}
               <NotasCard
                 value={venta.observaciones ?? ""}
                 readOnly={false}
@@ -1609,7 +1634,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                 onSave={(v) => updateVenta(venta.id, { observaciones: v })}
               />
 
-              </div>{/* end col-span-3 */}
+              </div>{/* end col-span-2 left column */}
 
               {/* Right col-span-1: two stacked cards */}
               {ventaItems.length > 0 && (
@@ -1800,51 +1825,10 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   </div>
                 </div>{/* end resumen card */}
 
-                {/* ── Detalle del Cobro card (merged with cobro widget) ── */}
+                {/* ── Detalle del Cobro card ── */}
                 <div className="bg-white rounded-lg shadow-sm overflow-hidden">
                   <div className="px-5 py-5 flex flex-col gap-0">
-
-                    {/* Top: cobro status */}
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-2">
-                        {pagoPct === 100 ? (
-                          <>
-                            <CheckCircle2 className="w-4 h-4 text-slate-800" />
-                            <span className="text-base font-semibold text-slate-900">Cobrada</span>
-                          </>
-                        ) : estadoUI === "cancelada" ? (
-                          <>
-                            <XCircle className="w-4 h-4 text-red-400" />
-                            <span className="text-base font-semibold text-red-600">No Concretado</span>
-                          </>
-                        ) : (
-                          <>
-                            <Wallet className="w-4 h-4 text-slate-400" />
-                            <span className="text-base font-semibold text-slate-700">Cobro {pagoPct}%</span>
-                          </>
-                        )}
-                      </div>
-                      {estadoUI === "en_curso" && pagoPct < 100 && (
-                        <button
-                          type="button"
-                          onClick={() => setShowRegistrarCobro(true)}
-                          className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors"
-                        >
-                          <Plus className="w-3 h-3" />
-                          Registrar cobro
-                        </button>
-                      )}
-                    </div>
-                    {estadoUI === "en_curso" && pagoPct < 100 && (
-                      <p className="text-sm text-slate-400 tabular-nums mb-4">
-                        ${Math.round(montoRestante).toLocaleString("es-AR")} pendiente de cobro
-                      </p>
-                    )}
-
-                    {/* Divider + entries title */}
-                    <div className="border-t border-slate-100 pt-3 mt-2 mb-2">
-                      <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Historial de cobros</p>
-                    </div>
+                    <p className="text-sm font-semibold text-slate-800 mb-3">Detalle del Cobro</p>
 
                     {ventaCobros.length > 0 ? (
                       ventaCobros.map((cobro) => {
