@@ -365,6 +365,7 @@ export function useVentas() {
           items: entry.items.map((i) => ({ sku: i.sku, quantity: -i.quantity })),
           anulacion: true,
           anulacionTotal: totalUnits,
+          originalEntregaId: entryId,
         }
         return recomputeVenta({ ...v, entregaItems, entregaEntries: [...(v.entregaEntries ?? []), anulacionEntry] })
       })

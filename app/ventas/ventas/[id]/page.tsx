@@ -1054,56 +1054,56 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       </div>
 
                       {/* Row 3: Estado widget (left) + action widget (right) — all estados */}
-                      {!isEditMode && (
-                        <div className="grid grid-cols-2 gap-3 mt-4">
-                          {/* Estado widget */}
+                      <div className="grid grid-cols-2 gap-3 mt-4">
+                        {/* Estado widget */}
+                        {estadoUI === "finalizada" && (
+                          <div className="bg-emerald-50 border border-emerald-200/60 rounded-lg shadow-sm px-5 py-4 flex items-center gap-3">
+                            <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                            <span className="text-lg font-bold text-emerald-700">Finalizada</span>
+                          </div>
+                        )}
+                        {estadoUI === "en_curso" && (
+                          <div className="bg-amber-50 border border-amber-200/60 rounded-lg shadow-sm px-5 py-4 flex items-center gap-3">
+                            <Clock className="w-5 h-5 text-amber-500 shrink-0" />
+                            <span className="text-lg font-bold text-amber-700">En Curso</span>
+                          </div>
+                        )}
+                        {estadoUI === "cancelada" && (
+                          <div className="bg-red-50 border border-red-200/60 rounded-lg shadow-sm px-5 py-4 flex items-center gap-3">
+                            <XCircle className="w-5 h-5 text-red-400 shrink-0" />
+                            <span className="text-lg font-bold text-red-600">Cancelada</span>
+                          </div>
+                        )}
+
+                        {/* Action widget */}
+                        <div className="bg-slate-50 border border-slate-200/60 rounded-lg shadow-sm px-4 py-4 flex items-center justify-center">
                           {estadoUI === "finalizada" && (
-                            <div className="bg-emerald-50 border border-emerald-200/60 rounded-lg shadow-sm px-5 py-4 flex items-center gap-3">
-                              <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
-                              <span className="text-lg font-bold text-emerald-700">Finalizada</span>
-                            </div>
+                            <button
+                              type="button"
+                              onClick={() => !isEditMode && (setShowDevolucion(true), setDevolucionStep(1))}
+                              disabled={isEditMode}
+                              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors group ${isEditMode ? "opacity-40 cursor-not-allowed" : "hover:bg-white cursor-pointer"}`}
+                            >
+                              <RotateCcw className="w-4 h-4 text-slate-500 group-hover:text-slate-700 shrink-0" />
+                              <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-800">Gestionar devoluciones</span>
+                            </button>
                           )}
                           {estadoUI === "en_curso" && (
-                            <div className="bg-amber-50 border border-amber-200/60 rounded-lg shadow-sm px-5 py-4 flex items-center gap-3">
-                              <Clock className="w-5 h-5 text-amber-500 shrink-0" />
-                              <span className="text-lg font-bold text-amber-700">En Curso</span>
-                            </div>
+                            <button
+                              type="button"
+                              onClick={() => !isEditMode && setShowFinalizarVenta(true)}
+                              disabled={isEditMode}
+                              className={`flex items-center gap-2.5 px-4 py-2 rounded-lg transition-colors group ${isEditMode ? "opacity-40 cursor-not-allowed" : "hover:bg-slate-100 cursor-pointer"}`}
+                            >
+                              <CheckCircle2 className="w-5 h-5 text-slate-700 group-hover:text-slate-900 shrink-0" />
+                              <span className="text-sm font-semibold text-slate-700 group-hover:text-slate-900">Marcar como finalizada</span>
+                            </button>
                           )}
                           {estadoUI === "cancelada" && (
-                            <div className="bg-red-50 border border-red-200/60 rounded-lg shadow-sm px-5 py-4 flex items-center gap-3">
-                              <XCircle className="w-5 h-5 text-red-400 shrink-0" />
-                              <span className="text-lg font-bold text-red-600">Cancelada</span>
-                            </div>
+                            <span className="text-sm text-slate-400">Esta venta fue cancelada</span>
                           )}
-
-                          {/* Action widget */}
-                          <div className="bg-slate-50 border border-slate-200/60 rounded-lg shadow-sm px-4 py-4 flex items-center justify-center">
-                            {estadoUI === "finalizada" && (
-                              <button
-                                type="button"
-                                onClick={() => { setShowDevolucion(true); setDevolucionStep(1) }}
-                                className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-white transition-colors cursor-pointer group"
-                              >
-                                <RotateCcw className="w-4 h-4 text-slate-500 group-hover:text-slate-700 shrink-0" />
-                                <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-800">Gestionar devoluciones</span>
-                              </button>
-                            )}
-                            {estadoUI === "en_curso" && (
-                              <button
-                                type="button"
-                                onClick={() => setShowFinalizarVenta(true)}
-                                className="flex items-center gap-2.5 px-4 py-2 rounded-lg hover:bg-emerald-50 transition-colors cursor-pointer group"
-                              >
-                                <CheckCircle2 className="w-5 h-5 text-emerald-500 group-hover:text-emerald-600 shrink-0" />
-                                <span className="text-sm font-semibold text-emerald-600 group-hover:text-emerald-700">Marcar como finalizada</span>
-                              </button>
-                            )}
-                            {estadoUI === "cancelada" && (
-                              <span className="text-sm text-slate-400">Esta venta fue cancelada</span>
-                            )}
-                          </div>
                         </div>
-                      )}
+                      </div>
 
                     </div>
                   )
@@ -1263,42 +1263,51 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     {ventaEntregaEntries.length === 0 ? (
                       <p className="text-xs text-slate-400 py-1">Sin entregas registradas</p>
                     ) : (
-                      [...ventaEntregaEntries].reverse().map((entry) => {
-                        const isAnulacion = !!entry.anulacion
-                        const totalEntryUnits = isAnulacion
-                          ? (entry.anulacionTotal ?? Math.abs(entry.items.reduce((s, i) => s + i.quantity, 0)))
-                          : entry.items.reduce((s, i) => s + i.quantity, 0)
-                        const dateLabel = new Date(entry.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })
-                        return (
-                          <div key={entry.id} className="flex items-center group border-b border-slate-100 last:border-0">
-                            <button
-                              type="button"
-                              onClick={() => !isAnulacion && setViewingEntregaEntry(entry)}
-                              className={`flex-1 flex items-center gap-2 py-1.5 -ml-4 pl-4 pr-2 transition-colors text-left ${!isAnulacion ? "hover:bg-slate-50/60" : "cursor-default"}`}
-                            >
-                              <span className="text-xs text-slate-400 tabular-nums">{dateLabel}</span>
-                              <span className="text-xs text-slate-300">·</span>
-                              {isAnulacion ? (
-                                <span className="text-xs text-red-400 tabular-nums">
-                                  {totalEntryUnits} {totalEntryUnits === 1 ? "unidad" : "unidades"} reingresadas
-                                </span>
-                              ) : (
-                                <span className="text-xs text-slate-400 tabular-nums">{totalEntryUnits} {totalEntryUnits === 1 ? "unidad" : "unidades"} entregadas</span>
-                              )}
-                            </button>
-                            {!isAnulacion && estadoUI === "en_curso" && (
+                      (() => {
+                        // IDs of delivery entries that have been anulado
+                        const anulatedEntryIds = new Set(
+                          ventaEntregaEntries
+                            .filter(e => !!e.anulacion && e.originalEntregaId)
+                            .map(e => e.originalEntregaId as string)
+                        )
+                        return ventaEntregaEntries.map((entry) => {
+                          const isAnulacion = !!entry.anulacion
+                          const alreadyAnulado = !isAnulacion && anulatedEntryIds.has(entry.id)
+                          const totalEntryUnits = isAnulacion
+                            ? (entry.anulacionTotal ?? Math.abs(entry.items.reduce((s, i) => s + i.quantity, 0)))
+                            : entry.items.reduce((s, i) => s + i.quantity, 0)
+                          const dateLabel = new Date(entry.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })
+                          return (
+                            <div key={entry.id} className="flex items-center group border-b border-slate-100 last:border-0">
                               <button
                                 type="button"
-                                onClick={() => setUndoEntregaTarget(entry)}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 pr-0"
-                                title="Anular entrega"
+                                onClick={() => !isAnulacion && setViewingEntregaEntry(entry)}
+                                className={`flex-1 flex items-center gap-2 py-1.5 -ml-4 pl-4 pr-2 transition-colors text-left ${!isAnulacion ? "hover:bg-slate-50/60" : "cursor-default"}`}
                               >
-                                <Undo2 className="w-3.5 h-3.5" />
+                                <span className="text-xs text-slate-400 tabular-nums">{dateLabel}</span>
+                                <span className="text-xs text-slate-300">·</span>
+                                {isAnulacion ? (
+                                  <span className="text-xs text-red-400 tabular-nums">
+                                    {totalEntryUnits} {totalEntryUnits === 1 ? "unidad" : "unidades"} reingresadas
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-slate-400 tabular-nums">{totalEntryUnits} {totalEntryUnits === 1 ? "unidad" : "unidades"} entregadas</span>
+                                )}
                               </button>
-                            )}
-                          </div>
-                        )
-                      })
+                              {!isAnulacion && !alreadyAnulado && estadoUI === "en_curso" && (
+                                <button
+                                  type="button"
+                                  onClick={() => setUndoEntregaTarget(entry)}
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 pr-0"
+                                  title="Anular entrega"
+                                >
+                                  <Undo2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          )
+                        })
+                      })()
                     )}
                   </div>
                 )}
@@ -1892,6 +1901,15 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     ) : (
                       <div className="flex items-center justify-center py-4">
                         <span className="text-xs text-slate-400">Sin cobros registrados</span>
+                      </div>
+                    )}
+                    {/* Saldo a favor — shown when cobrado exceeds total */}
+                    {montoCobrado > (venta.total ?? 0) + 0.01 && (
+                      <div className="flex items-center justify-between pt-3 mt-1 border-t border-slate-100">
+                        <span className="text-xs text-slate-500">Saldo a favor cliente</span>
+                        <span className="text-sm font-semibold text-emerald-600 tabular-nums">
+                          ${Math.round(montoCobrado - (venta.total ?? 0)).toLocaleString("es-AR")}
+                        </span>
                       </div>
                     )}
                   </div>

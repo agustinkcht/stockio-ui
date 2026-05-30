@@ -212,8 +212,9 @@ export interface VentaEntregaEntry {
   fecha: string   // "YYYY-MM-DD"
   hora: string    // "HH:mm"
   items: { sku: string; quantity: number }[]
-  anulacion?: boolean       // true when this entry is an undo-reversal
-  anulacionTotal?: number   // absolute unit count that was reversed
+  anulacion?: boolean          // true when this entry is an undo-reversal
+  anulacionTotal?: number      // absolute unit count that was reversed
+  originalEntregaId?: string   // id of the delivery entry this anulacion reverses
 }
 
 // Tracks how many units of a given item have been returned (running total)
