@@ -1666,7 +1666,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             </div>
                           )
                         })}
-                        <div className="-mx-5 w-[calc(100%+2.5rem)] border-b border-slate-100" />
+                        <hr className="-mx-5 w-[calc(100%+2.5rem)] border-t border-slate-100 border-0" />
                       </div>
                     )}
 
@@ -1787,7 +1787,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     ))}
                     {/* Border below adjustments only if any exist */}
                     {!isEditMode && (savedGlobalDiscount?.value > 0 || (savedEnvio != null && savedEnvio > 0) || savedCustomCharges.length > 0) && (
-                      <div className="-mx-5 w-[calc(100%+2.5rem)] border-b border-slate-100" />
+                      <hr className="-mx-5 w-[calc(100%+2.5rem)] border-t border-slate-100 border-0" />
                     )}
 
                     {/* Total */}
@@ -1910,7 +1910,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     )}
                   </div>
                 </div>
-                </div>
+              </div>
               )}
 
               </div>{/* end grid grid-cols-3 */}
