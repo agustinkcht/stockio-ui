@@ -35,6 +35,7 @@ import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 import { PROVEEDORES } from "@/lib/data/proveedores"
 import { INITIAL_ITEMS } from "@/lib/data/initial-items"
 import { useCompras } from "@/hooks/use-compras"
+import { useItems } from "@/hooks/use-items"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import type { ItemVariant, VentaItem, VentaCustomCharge, PaymentMethod } from "@/lib/types"
@@ -98,6 +99,7 @@ export default function NuevaCompraPage() {
   const router = useRouter()
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave } = useSidebar()
   const { addCompra } = useCompras()
+  const { increaseStock, updatePricing } = useItems()
   const stepsContainerRef = useRef<HTMLDivElement>(null)
 
   const [currentStep, setCurrentStep] = useState(1)
@@ -495,6 +497,14 @@ export default function NuevaCompraPage() {
             }))
           : []
 
+      // Determine estado: finalizada if recepción is fully covered and pago is fully covered
+      const totalQty = items.reduce((s, it) => s + it.quantity, 0)
+      const recepcionadoQty = recepcionItems.reduce((s, ri) => s + ri.quantityRecepcionada, 0)
+      const totalPagado = pagos.reduce((s, p) => s + p.monto, 0)
+      const isRecepcionCompleta = recepcionadoQty >= totalQty
+      const isPagoCompleto = totalPagado >= compraTotal
+      const estado = (isRecepcionCompleta && isPagoCompleto) ? "finalizada" : "en_curso"
+
       const created = addCompra({
         fecha,
         hora,
@@ -510,12 +520,26 @@ export default function NuevaCompraPage() {
         recepcionItems,
         recepcionEntries,
         pagos,
-        estado: "en_curso",
+        estado,
         comprador: "Admin",
         origen: "manual",
         devolucionItems: [],
         devolucionEntries: [],
       })
+
+      // Increase stock for every recepcionada unit
+      for (const ri of recepcionItems) {
+        if (ri.quantityRecepcionada > 0) {
+          increaseStock(ri.sku, ri.quantityRecepcionada)
+        }
+      }
+
+      // Update costo in lista de precios for selected SKUs
+      for (const diff of costoDiffs) {
+        if (selectedCostoSkus.has(diff.sku)) {
+          updatePricing(diff.sku, { costo: diff.newCosto })
+        }
+      }
 
       setCreatedCompraId(created.id)
     } catch (err) {
@@ -1815,7 +1839,7 @@ export default function NuevaCompraPage() {
               <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
                 <div>
                   <h3 className="text-base font-semibold text-slate-900">Registrar recepción</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Indicá las unidades a marcar como recibidas</p>
+                  <p className="text-xs text-slate-500 mt-0.5">Indicá las unidades a marcar como recepcionadas</p>
                 </div>
                 <button onClick={() => setShowRecepcionInicialModal(false)} className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
                   <X className="w-5 h-5" />
@@ -1834,7 +1858,7 @@ export default function NuevaCompraPage() {
                     <span>Producto</span>
                   </div>
                   <div className="flex items-center justify-center">Cantidad</div>
-                  <div className="flex items-center justify-center">Recibir</div>
+                  <div className="flex items-center justify-center">Recepcionar</div>
                 </div>
               </div>
               <div className="flex-1 overflow-y-auto bg-white">

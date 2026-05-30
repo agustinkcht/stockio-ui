@@ -641,17 +641,21 @@ export default function ComprasPage() {
                                 const totalPagado = (compra.pagos ?? []).reduce((s, p) => s + p.monto, 0)
                                 const recepcionPendiente = receivedQty < totalQty
                                 const pagoPendiente = totalPagado < compra.total
-                                const labels: string[] = []
-                                if (recepcionPendiente) labels.push("Recepción pendiente")
-                                if (pagoPendiente) labels.push("Pago pendiente")
-                                if (labels.length === 0) return null
+                                if (!recepcionPendiente && !pagoPendiente) return null
                                 return (
-                                  <div className="flex items-center gap-1.5">
-                                    {labels.map((lbl, i) => (
-                                      <span key={i} className="text-[11px] text-slate-400 font-light">
-                                        {i > 0 && <span className="mr-1.5">·</span>}{lbl}
+                                  <div className="flex items-center gap-2 text-[11px] font-light text-slate-400">
+                                    {recepcionPendiente && (
+                                      <span className="flex items-center gap-1">
+                                        <span>•</span>
+                                        Recepción pendiente
                                       </span>
-                                    ))}
+                                    )}
+                                    {pagoPendiente && (
+                                      <span className="flex items-center gap-1">
+                                        <span>•</span>
+                                        Pago pendiente
+                                      </span>
+                                    )}
                                   </div>
                                 )
                               })()}
