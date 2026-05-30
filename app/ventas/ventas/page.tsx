@@ -567,7 +567,7 @@ export default function VentasPage() {
                       }`}
                     >
                       {/* TOP ROW */}
-                      <div className="grid grid-cols-100 min-h-[44px] pt-2 border-b border-slate-200/70">
+                      <div className="grid grid-cols-100 min-h-[44px] py-2 border-b border-slate-200/70">
                         <div
                           className="col-span-4 flex items-center justify-center border-r border-slate-200/70"
                           onClick={(e) => { e.stopPropagation(); toggleSelectVenta(venta.id) }}
@@ -693,14 +693,14 @@ export default function VentasPage() {
                           )}
                         </div>
 
-                        {/* Descargar PDF — moved to middle row */}
+                        {/* Descargar PDF — middle row, matching estado badge height */}
                         <button
                           type="button"
                           onClick={(e) => { e.stopPropagation(); downloadVentasPDF([venta], miNegocio) }}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer shrink-0 shadow-sm"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer shrink-0"
                         >
                           <FileDown className="w-3.5 h-3.5 text-slate-500" />
-                          <span className="text-xs font-medium text-slate-600">Descargar PDF</span>
+                          <span className="text-sm font-medium text-slate-600">Descargar PDF</span>
                         </button>
                       </div>
 
