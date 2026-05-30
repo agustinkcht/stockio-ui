@@ -1587,7 +1587,7 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
                 <h3 className="text-base font-semibold text-slate-900">Aceptar y llevar a ventas</h3>
               </div>
               <p className="text-sm text-slate-500 mt-2 ml-12">
-                El presupuesto <span className="font-semibold text-slate-800">{presupuesto.id}</span> se marcará como <span className="font-semibold text-emerald-700">aceptado</span> y se creará una nueva venta con origen <span className="font-medium text-slate-700">&quot;Creada desde presupuesto&quot;</span>.
+                El presupuesto <span className="font-semibold text-slate-800">{presupuesto.id}</span> se marcará como <span className="font-semibold text-emerald-700">aceptado</span> y se creará una nueva venta asociada al mismo.
               </p>
             </div>
             <div className="px-5 py-4 flex items-center justify-end gap-2">

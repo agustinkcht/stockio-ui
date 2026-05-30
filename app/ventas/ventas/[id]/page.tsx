@@ -2818,7 +2818,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       </p>
                       <p className={`text-xs mt-0.5 ${hasPendingCobro ? "text-amber-700" : "text-emerald-700"}`}>
                         {hasPendingCobro
-                          ? `Se registrar�� un cobro de $${Math.round(montoRestante).toLocaleString("es-AR")} para cubrir el saldo restante`
+                          ? `Se registrará un cobro de $${Math.round(montoRestante).toLocaleString("es-AR")} para cubrir el saldo restante`
                           : "El total de la venta ya fue cobrado"}
                       </p>
                     </div>
