@@ -50,10 +50,16 @@ const estadoConfig: Record<EstadoOrdenDeCompra, { bg: string; text: string; icon
 const monthsAbbr = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
 
 function formatOrdenDateTime(dateStr: string): string {
-  const date = new Date(dateStr + "T12:00:00")
+  // fechaCreacion may be a full ISO string or just "YYYY-MM-DD"
+  const date = new Date(dateStr.length > 10 ? dateStr : dateStr + "T12:00:00")
   const day = date.getDate()
   const month = monthsAbbr[date.getMonth()]
-  return `${day}\u00A0\u00A0${month}`
+  const hora = dateStr.length > 10
+    ? date.toTimeString().slice(0, 5)
+    : null
+  return hora
+    ? `${day}\u00A0\u00A0${month}\u00A0\u00A0${hora}`
+    : `${day}\u00A0\u00A0${month}`
 }
 
 export default function OrdenesDeCompraPage() {
@@ -191,7 +197,7 @@ export default function OrdenesDeCompraPage() {
   const handleCreateOrden = () => {
     if (!nuevaOrdenProveedor.trim()) return
     const newOrden = addOrden({
-      fechaCreacion: new Date().toISOString().slice(0, 10),
+      fechaCreacion: new Date().toISOString(),
       proveedorId: "",
       proveedorNombre: nuevaOrdenProveedor.trim(),
       estado: "borrador" as EstadoOrdenDeCompra,
@@ -576,6 +582,13 @@ export default function OrdenesDeCompraPage() {
                                 >
                                   <button
                                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                                    onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); downloadOrdenCompraPDF([orden], miNegocio) }}
+                                  >
+                                    <FileDown className="w-4 h-4 text-slate-400" />
+                                    Descargar PDF
+                                  </button>
+                                  <button
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
                                     onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); router.push(`/compras/ordenes-de-compra/${orden.id}`) }}
                                   >
                                     <Copy className="w-4 h-4 text-slate-400" />
@@ -610,15 +623,15 @@ export default function OrdenesDeCompraPage() {
                                 <span className={`text-sm font-medium ${estadoStyle.text}`}>{estadoStyle.label}</span>
                               </div>
                             </div>
-                            {/* Descargar PDF — middle row, matching estado badge height */}
-                            <button
-                              type="button"
-                              onClick={(e) => { e.stopPropagation(); downloadOrdenCompraPDF([orden], miNegocio) }}
-                              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer shrink-0"
-                            >
-                              <FileDown className="w-3.5 h-3.5 text-slate-500" />
-                              <span className="text-sm font-medium text-slate-600">Descargar PDF</span>
-                            </button>
+                            {orden.estado === "aceptada" && orden.compraId && (
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); router.push(`/compras/${orden.compraId}`) }}
+                                className="text-sm text-slate-500 underline underline-offset-2 hover:text-slate-700 transition-colors cursor-pointer"
+                              >
+                                Ver venta asociada
+                              </button>
+                            )}
                           </div>
 
                           {/* BOTTOM ROW */}

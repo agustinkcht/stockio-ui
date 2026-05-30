@@ -307,10 +307,8 @@ export default function NuevaOrdenDeCompraPage() {
     if (!proveedor) return
     setIsCreating(true)
     try {
-      const fecha = getTodayDateStr()
-
       const created = addOrden({
-        fechaCreacion: fecha,
+        fechaCreacion: new Date().toISOString(),
         proveedorId: proveedor.id,
         proveedorNombre,
         estado: "borrador",

@@ -574,6 +574,13 @@ export default function PresupuestosPage() {
                                   )}
                                   <button
                                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                                    onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); downloadPresupuestosPDF([presupuesto], miNegocio) }}
+                                  >
+                                    <FileDown className="w-4 h-4 text-slate-400" />
+                                    Descargar PDF
+                                  </button>
+                                  <button
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
                                     onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); router.push(`/ventas/presupuestos/nuevo?duplicar=${presupuesto.id}`) }}
                                   >
                                     <Copy className="w-4 h-4 text-slate-400" />
@@ -601,23 +608,11 @@ export default function PresupuestosPage() {
                           </div>
 
                           {/* MIDDLE ROW */}
-                          <div className="flex items-center justify-between gap-3 py-1.5" style={{ paddingLeft: "calc(4% + 12px)", paddingRight: "calc(4% + 12px)" }}>
-                            <div className="flex items-center gap-3">
-                              <div className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full shrink-0 ${estadoStyle.bg}`}>
-                                <EstadoIcon className={`w-3.5 h-3.5 ${estadoStyle.text}`} />
-                                <span className={`text-sm font-medium ${estadoStyle.text}`}>{estadoStyle.label}</span>
-                              </div>
+                          <div className="flex items-center gap-3 py-1.5" style={{ paddingLeft: "calc(4% + 12px)", paddingRight: "calc(4% + 12px)" }}>
+                            <div className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full shrink-0 ${estadoStyle.bg}`}>
+                              <EstadoIcon className={`w-3.5 h-3.5 ${estadoStyle.text}`} />
+                              <span className={`text-sm font-medium ${estadoStyle.text}`}>{estadoStyle.label}</span>
                             </div>
-
-                            {/* Descargar PDF — middle row, matching estado badge height */}
-                            <button
-                              type="button"
-                              onClick={(e) => { e.stopPropagation(); downloadPresupuestosPDF([presupuesto], miNegocio) }}
-                              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer shrink-0"
-                            >
-                              <FileDown className="w-3.5 h-3.5 text-slate-500" />
-                              <span className="text-sm font-medium text-slate-600">Descargar PDF</span>
-                            </button>
                           </div>
 
                           {/* BOTTOM ROW */}

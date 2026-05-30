@@ -544,14 +544,6 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
                           </button>
                         </div>
                       )}
-                      <button
-                        type="button"
-                        onClick={() => orden && downloadOrdenCompraPDF([orden], miNegocio)}
-                        className="h-8 text-xs transition-colors bg-white border border-slate-200 hover:bg-slate-50 cursor-pointer gap-1.5 px-3 rounded-md flex items-center text-slate-700 font-medium shadow-sm"
-                      >
-                        <FileDown className="w-3.5 h-3.5 text-slate-500" />
-                        Descargar PDF
-                      </button>
                       <div className="relative" ref={moreMenuRef}>
                         <button
                           onClick={() => setShowMoreOptionsMenu(!showMoreOptionsMenu)}
@@ -561,6 +553,13 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
                         </button>
                         {showMoreOptionsMenu && (
                           <div className="absolute top-full right-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[200px]">
+                            <button
+                              onClick={() => { setShowMoreOptionsMenu(false); orden && downloadOrdenCompraPDF([orden], miNegocio) }}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                            >
+                              <FileDown className="w-4 h-4 text-slate-400" />
+                              Descargar PDF
+                            </button>
                             {isEditable && (
                               <button
                                 onClick={() => { setShowMoreOptionsMenu(false); setShowCancelarModal(true) }}

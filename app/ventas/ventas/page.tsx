@@ -646,6 +646,13 @@ export default function VentasPage() {
                               )}
                               <button
                                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                                onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); downloadVentasPDF([venta], miNegocio) }}
+                              >
+                                <FileDown className="w-4 h-4 text-slate-400" />
+                                Descargar PDF
+                              </button>
+                              <button
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
                                 onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); router.push(`/ventas/ventas/nueva?duplicar=${venta.id}`) }}
                               >
                                 <Copy className="w-4 h-4 text-slate-400" />
@@ -693,15 +700,7 @@ export default function VentasPage() {
                           )}
                         </div>
 
-                        {/* Descargar PDF — middle row, matching estado badge height */}
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); downloadVentasPDF([venta], miNegocio) }}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer shrink-0"
-                        >
-                          <FileDown className="w-3.5 h-3.5 text-slate-500" />
-                          <span className="text-sm font-medium text-slate-600">Descargar PDF</span>
-                        </button>
+
                       </div>
 
                       {/* BOTTOM ROW */}
