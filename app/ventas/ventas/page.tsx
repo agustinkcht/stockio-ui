@@ -53,11 +53,18 @@ const estadoConfig: Record<string, { bg: string; text: string; icon: typeof Cloc
 
 const monthsAbbr = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
 
+const CURRENT_YEAR = new Date().getFullYear()
+
 function formatVentaDateTime(dateStr: string, hora: string): string {
   const date = new Date(dateStr + "T12:00:00")
+  if (isNaN(date.getTime())) return dateStr
   const day = date.getDate()
   const month = monthsAbbr[date.getMonth()]
-  return `${day}\u00A0\u00A0${month}\u00A0\u00A0${hora}`
+  const year = date.getFullYear()
+  const horaStr = `${hora}\u00A0hs`
+  return year < CURRENT_YEAR
+    ? `${day}\u00A0${month}\u00A0${year}\u00A0\u00A0${horaStr}`
+    : `${day}\u00A0${month}\u00A0\u00A0${horaStr}`
 }
 
 function getClienteNombre(venta: Venta): string {

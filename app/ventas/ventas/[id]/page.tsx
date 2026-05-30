@@ -919,9 +919,12 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
                 {/* ── Venta Info card ── */}
                 {(() => {
-                  const fechaObj = new Date(venta.fecha)
-                  const mesCorto = fechaObj.toLocaleDateString("es-AR", { month: "short" }).replace(".", "")
-                  const dia = fechaObj.toLocaleDateString("es-AR", { day: "2-digit" })
+                  const _MONTHS = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"]
+                  const fechaObj = new Date(venta.fecha + "T12:00:00")
+                  const dia = fechaObj.getDate()
+                  const mesCorto = _MONTHS[fechaObj.getMonth()]
+                  const yearVenta = fechaObj.getFullYear()
+                  const _currentYear = new Date().getFullYear()
                   const inicial = clienteNombre.charAt(0).toUpperCase()
                   return (
                     <div className="pt-8 px-0 pb-3 flex flex-col">
@@ -935,7 +938,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                           </div>
                           <span className="h-5 w-px bg-slate-300 shrink-0 mx-5 inline-block" />
                           <span className="text-sm font-medium text-slate-600 tabular-nums shrink-0">
-                            {dia} {mesCorto} {fechaObj.getFullYear()} · {venta.hora}
+                            {yearVenta < _currentYear ? `${dia} ${mesCorto} ${yearVenta}` : `${dia} ${mesCorto}`} · {venta.hora} hs
                           </span>
                           <span className="h-5 w-px bg-slate-300 shrink-0 mx-5 inline-block" />
                           <div className="flex items-center gap-2 shrink-0">

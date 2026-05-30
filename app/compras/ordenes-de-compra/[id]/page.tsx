@@ -422,9 +422,18 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
     { label: orden.id },
   ]
 
+  const MONTHS_ABBR = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
   const fechaObj = new Date(orden.fechaCreacion)
-  const mesCorto = fechaObj.toLocaleDateString("es-AR", { month: "short" }).replace(".", "")
-  const dia = fechaObj.toLocaleDateString("es-AR", { day: "2-digit" })
+  const _isValidDate = !isNaN(fechaObj.getTime())
+  const dia = _isValidDate ? fechaObj.getUTCDate() : "?"
+  const mesCorto = _isValidDate ? MONTHS_ABBR[fechaObj.getUTCMonth()] : "?"
+  const yearOrden = _isValidDate ? fechaObj.getUTCFullYear() : new Date().getFullYear()
+  const horaOrden = _isValidDate
+    ? `${String(fechaObj.getUTCHours()).padStart(2, "0")}:${String(fechaObj.getUTCMinutes()).padStart(2, "0")} hs`
+    : ""
+  const fechaLabel = yearOrden < new Date().getFullYear()
+    ? `${dia} ${mesCorto} ${yearOrden} · ${horaOrden}`
+    : `${dia} ${mesCorto} · ${horaOrden}`
 
   const estadoColors: Record<EstadoOrdenDeCompra, { bg: string; border: string; text: string; icon: React.ReactNode }> = {
     borrador: { bg: "bg-slate-100", border: "border-slate-300/60", text: "text-slate-600", icon: <Clock className="w-5 h-5 text-slate-400 shrink-0" /> },
@@ -496,7 +505,7 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
                       </div>
                       <div className="h-5 w-px bg-slate-300 shrink-0 mx-5" />
                       <span className="text-sm font-medium text-slate-600 tabular-nums shrink-0">
-                        {dia} {mesCorto} {fechaObj.getFullYear()}
+                        {fechaLabel}
                       </span>
                     </div>
                   </div>

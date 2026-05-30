@@ -672,9 +672,12 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
     { label: presupuesto.id },
   ]
 
-  const fechaObj = new Date(presupuesto.fecha)
-  const mesCorto = fechaObj.toLocaleDateString("es-AR", { month: "short" }).replace(".", "")
-  const dia = fechaObj.toLocaleDateString("es-AR", { day: "2-digit" })
+  const _MONTHS_P = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"]
+  const fechaObj = new Date(presupuesto.fecha + "T12:00:00")
+  const dia = fechaObj.getDate()
+  const mesCorto = _MONTHS_P[fechaObj.getMonth()]
+  const yearPres = fechaObj.getFullYear()
+  const _currentYearP = new Date().getFullYear()
 
   return (
     <div className="min-h-screen bg-[rgb(243,242,238)]">
@@ -731,7 +734,7 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
                       </div>
                       <div className="h-5 w-px bg-slate-300 shrink-0 mx-5" />
                       <span className="text-sm font-medium text-slate-600 tabular-nums shrink-0">
-                        {dia} {mesCorto} {fechaObj.getFullYear()} · {presupuesto.hora}
+                        {yearPres < _currentYearP ? `${dia} ${mesCorto} ${yearPres}` : `${dia} ${mesCorto}`} · {presupuesto.hora} hs
                       </span>
                     </div>
                   </div>

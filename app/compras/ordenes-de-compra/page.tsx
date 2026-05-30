@@ -49,17 +49,20 @@ const estadoConfig: Record<EstadoOrdenDeCompra, { bg: string; text: string; icon
 
 const monthsAbbr = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
 
+const CURRENT_YEAR = new Date().getFullYear()
+
 function formatOrdenDateTime(dateStr: string): string {
-  // fechaCreacion may be a full ISO string or just "YYYY-MM-DD"
-  const date = new Date(dateStr.length > 10 ? dateStr : dateStr + "T12:00:00")
-  const day = date.getDate()
-  const month = monthsAbbr[date.getMonth()]
-  const hora = dateStr.length > 10
-    ? date.toTimeString().slice(0, 5)
-    : null
-  return hora
-    ? `${day}\u00A0\u00A0${month}\u00A0\u00A0${hora}`
-    : `${day}\u00A0\u00A0${month}`
+  const date = new Date(dateStr)
+  if (isNaN(date.getTime())) return dateStr
+  const day = date.getUTCDate()
+  const month = monthsAbbr[date.getUTCMonth()]
+  const year = date.getUTCFullYear()
+  const hh = String(date.getUTCHours()).padStart(2, "0")
+  const mm = String(date.getUTCMinutes()).padStart(2, "0")
+  const horaStr = `${hh}:${mm}\u00A0hs`
+  return year < CURRENT_YEAR
+    ? `${day}\u00A0${month}\u00A0${year}\u00A0\u00A0${horaStr}`
+    : `${day}\u00A0${month}\u00A0\u00A0${horaStr}`
 }
 
 export default function OrdenesDeCompraPage() {

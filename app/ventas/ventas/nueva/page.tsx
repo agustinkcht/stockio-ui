@@ -646,7 +646,7 @@ export default function NuevaVentaPage() {
               <div className="col-span-4 bg-transparent p-6 flex flex-col">
                 <div className="mb-8 flex items-start justify-between">
                   <div>
-                    <h2 className="text-sm font-semibold text-gray-900 mb-1">Creando Nueva Venta</h2>
+                    <h2 className="text-sm font-semibold text-gray-900 mb-1">Nueva Venta</h2>
                     <p className="text-xs text-gray-500 truncate max-w-[140px]">{clienteNombre}</p>
                   </div>
                   <button
