@@ -1,7 +1,7 @@
 import type { Compra } from "@/lib/types"
 
 export const COMPRAS: Compra[] = [
-  // ── Proemio #1 — multi-product, completada ────────────────────────────────
+  // ── Proemio #1 — multi-product, finalizada ────────────────────────────────
   {
     id: "COMP-001",
     fecha: "2026-05-27",
@@ -44,13 +44,40 @@ export const COMPRAS: Compra[] = [
     descuento: 0,
     descuentoTipo: "percent",
     total: 2332800,
-    metodoPago: "transferencia",
-    estado: "completada",
+    estado: "finalizada",
     comprador: "Admin",
     origen: "manual",
+    recepcionItems: [
+      { sku: "VNO-PROEMIO-GRAND-RES-MALB-2021", quantityRecepcionada: 48 },
+      { sku: "VNO-PROEMIO-GRAND-RES-CAB-2021", quantityRecepcionada: 36 },
+      { sku: "VNO-PROEMIO-RES-CHARDON-2022", quantityRecepcionada: 24 },
+    ],
+    recepcionEntries: [
+      {
+        id: "COMP-001-REC-1",
+        fecha: "2026-05-27",
+        hora: "10:30",
+        items: [
+          { sku: "VNO-PROEMIO-GRAND-RES-MALB-2021", quantity: 48 },
+          { sku: "VNO-PROEMIO-GRAND-RES-CAB-2021", quantity: 36 },
+          { sku: "VNO-PROEMIO-RES-CHARDON-2022", quantity: 24 },
+        ],
+      },
+    ],
+    pagos: [
+      {
+        id: "COMP-001-PAG-1",
+        fecha: "2026-05-27",
+        hora: "10:15",
+        medioPago: "transferencia",
+        monto: 2332800,
+      },
+    ],
+    devolucionItems: [],
+    devolucionEntries: [],
   },
 
-  // ── Proemio #2 — multi-product, pendiente, creada desde orden ─────────────
+  // ── Proemio #2 — multi-product, en_curso, creada desde orden ─────────────
   {
     id: "COMP-002",
     fecha: "2026-05-20",
@@ -83,11 +110,15 @@ export const COMPRAS: Compra[] = [
     descuento: 0,
     descuentoTipo: "percent",
     total: 2035200,
-    metodoPago: "transferencia",
-    estado: "pendiente",
+    estado: "en_curso",
     comprador: "Admin",
     origen: "orden",
     ordenId: "ODC-2026-0041",
+    recepcionItems: [],
+    recepcionEntries: [],
+    pagos: [],
+    devolucionItems: [],
+    devolucionEntries: [],
   },
 
   // ── Proemio #3 — single product, cancelada ────────────────────────────────
@@ -113,14 +144,18 @@ export const COMPRAS: Compra[] = [
     descuento: 0,
     descuentoTipo: "percent",
     total: 672000,
-    metodoPago: "transferencia",
     estado: "cancelada",
     comprador: "Admin",
     origen: "manual",
     observaciones: "Problema de calidad detectado en muestra previa al pedido.",
+    recepcionItems: [],
+    recepcionEntries: [],
+    pagos: [],
+    devolucionItems: [],
+    devolucionEntries: [],
   },
 
-  // ── Restinga — multi-product, completada ─────────────────────────────────
+  // ── Restinga — multi-product, finalizada ─────────────────────────────────
   {
     id: "COMP-004",
     fecha: "2026-05-15",
@@ -163,14 +198,41 @@ export const COMPRAS: Compra[] = [
     descuento: 0,
     descuentoTipo: "percent",
     total: 1350000,
-    metodoPago: "transferencia",
-    estado: "completada",
+    estado: "finalizada",
     comprador: "Admin",
     origen: "orden",
     ordenId: "ODC-2026-0038",
+    recepcionItems: [
+      { sku: "CER-RESTINGA-AMBER", quantityRecepcionada: 120 },
+      { sku: "CER-RESTINGA-IPA", quantityRecepcionada: 96 },
+      { sku: "CER-RESTINGA-STOUT", quantityRecepcionada: 72 },
+    ],
+    recepcionEntries: [
+      {
+        id: "COMP-004-REC-1",
+        fecha: "2026-05-15",
+        hora: "12:00",
+        items: [
+          { sku: "CER-RESTINGA-AMBER", quantity: 120 },
+          { sku: "CER-RESTINGA-IPA", quantity: 96 },
+          { sku: "CER-RESTINGA-STOUT", quantity: 72 },
+        ],
+      },
+    ],
+    pagos: [
+      {
+        id: "COMP-004-PAG-1",
+        fecha: "2026-05-15",
+        hora: "11:45",
+        medioPago: "transferencia",
+        monto: 1350000,
+      },
+    ],
+    devolucionItems: [],
+    devolucionEntries: [],
   },
 
-  // ── Johnnie Walker — single product, completada ───────────────────────────
+  // ── Johnnie Walker — single product, finalizada ───────────────────────────
   {
     id: "COMP-005",
     fecha: "2026-05-08",
@@ -193,13 +255,34 @@ export const COMPRAS: Compra[] = [
     descuento: 0,
     descuentoTipo: "percent",
     total: 1497600,
-    metodoPago: "efectivo",
-    estado: "completada",
+    estado: "finalizada",
     comprador: "Admin",
     origen: "manual",
+    recepcionItems: [
+      { sku: "WHI-JWALKER-BLK-750", quantityRecepcionada: 24 },
+    ],
+    recepcionEntries: [
+      {
+        id: "COMP-005-REC-1",
+        fecha: "2026-05-08",
+        hora: "16:30",
+        items: [{ sku: "WHI-JWALKER-BLK-750", quantity: 24 }],
+      },
+    ],
+    pagos: [
+      {
+        id: "COMP-005-PAG-1",
+        fecha: "2026-05-08",
+        hora: "16:20",
+        medioPago: "efectivo",
+        monto: 1497600,
+      },
+    ],
+    devolucionItems: [],
+    devolucionEntries: [],
   },
 
-  // ── Absolut — single product, pendiente ──────────────────────────────────
+  // ── Absolut — single product, en_curso ──────────────────────────────────
   {
     id: "COMP-006",
     fecha: "2026-05-05",
@@ -222,9 +305,13 @@ export const COMPRAS: Compra[] = [
     descuento: 0,
     descuentoTipo: "percent",
     total: 1392000,
-    metodoPago: "transferencia",
-    estado: "pendiente",
+    estado: "en_curso",
     comprador: "Admin",
     origen: "manual",
+    recepcionItems: [],
+    recepcionEntries: [],
+    pagos: [],
+    devolucionItems: [],
+    devolucionEntries: [],
   },
 ]

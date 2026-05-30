@@ -34,11 +34,11 @@ import {
   type PeriodKey,
 } from "@/lib/contexts/period-context"
 
-type StatusTab = "todas" | "completada" | "pendiente" | "cancelada"
+type StatusTab = "todas" | "finalizada" | "en_curso" | "cancelada"
 
 const estadoConfig: Record<string, { bg: string; text: string; icon: typeof Clock; label: string }> = {
-  completada: { bg: "bg-emerald-50", text: "text-emerald-600", icon: CheckCircle2, label: "Completada" },
-  pendiente:  { bg: "bg-amber-50",   text: "text-amber-600",   icon: Clock,        label: "Pendiente"  },
+  finalizada: { bg: "bg-emerald-50", text: "text-emerald-600", icon: CheckCircle2, label: "Finalizada" },
+  en_curso:   { bg: "bg-amber-50",   text: "text-amber-600",   icon: Clock,        label: "En Curso"   },
   cancelada:  { bg: "bg-red-50",     text: "text-red-500",     icon: XCircle,      label: "Cancelada"  },
 }
 
@@ -108,13 +108,13 @@ export default function ComprasPage() {
     const filtered = compras.filter(c => {
       const matchesTab =
         activeTab === "todas" ? true :
-        activeTab === "completada" ? c.estado === "completada" :
-        activeTab === "pendiente" ? c.estado === "pendiente" :
+        activeTab === "finalizada" ? c.estado === "finalizada" :
+        activeTab === "en_curso" ? c.estado === "en_curso" :
         c.estado === "cancelada"
       const q = searchQuery.toLowerCase()
       const matchesSearch = !q || c.id.toLowerCase().includes(q) || c.proveedorNombre.toLowerCase().includes(q)
       const matchesProveedor = !filterProveedor || c.proveedorNombre === filterProveedor
-      const matchesPendientePago = !filterPendientePago || c.estado === "pendiente"
+      const matchesPendientePago = !filterPendientePago || c.estado === "en_curso"
       return matchesTab && matchesSearch && matchesProveedor && matchesPendientePago
     })
     filtered.sort((a, b) => {
@@ -251,8 +251,8 @@ export default function ComprasPage() {
 
                   {/* 4 Widgets */}
                   {(() => {
-                    const countCompletadas = compras.filter(c => c.estado === "completada").length
-                    const countPendientes = compras.filter(c => c.estado === "pendiente").length
+                    const countCompletadas = compras.filter(c => c.estado === "finalizada").length
+                    const countPendientes = compras.filter(c => c.estado === "en_curso").length
                     const countCanceladas = compras.filter(c => c.estado === "cancelada").length
 
                     const widgetCls = (active: boolean, disabled: boolean, activeColor: string, hoverColor: string) => {
@@ -281,8 +281,8 @@ export default function ComprasPage() {
                         {/* Widget 2 — Completadas */}
                         <button
                           type="button"
-                          onClick={() => countCompletadas > 0 && setActiveTab("completada")}
-                          className={widgetCls(activeTab === "completada", countCompletadas === 0, "bg-emerald-50 border-emerald-200", "hover:border-emerald-200 hover:shadow-md")}
+                          onClick={() => countCompletadas > 0 && setActiveTab("finalizada")}
+                          className={widgetCls(activeTab === "finalizada", countCompletadas === 0, "bg-emerald-50 border-emerald-200", "hover:border-emerald-200 hover:shadow-md")}
                         >
                           <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center mb-3 shadow-sm border border-slate-100">
                             <CheckCircle2 className="w-4 h-4 text-emerald-500" />
@@ -296,8 +296,8 @@ export default function ComprasPage() {
                         {/* Widget 3 — Pendientes */}
                         <button
                           type="button"
-                          onClick={() => countPendientes > 0 && setActiveTab("pendiente")}
-                          className={widgetCls(activeTab === "pendiente", countPendientes === 0, "bg-amber-50 border-amber-200", "hover:border-amber-200 hover:shadow-md")}
+                          onClick={() => countPendientes > 0 && setActiveTab("en_curso")}
+                          className={widgetCls(activeTab === "en_curso", countPendientes === 0, "bg-amber-50 border-amber-200", "hover:border-amber-200 hover:shadow-md")}
                         >
                           <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center mb-3 shadow-sm border border-slate-100">
                             <Clock className="w-4 h-4 text-amber-400" />
@@ -404,7 +404,7 @@ export default function ComprasPage() {
                                 </select>
                               </div>
                               {/* Pendiente de pago */}
-                              {(activeTab === "todas" || activeTab === "pendiente") && (
+                              {(activeTab === "todas" || activeTab === "en_curso") && (
                                 <div className="space-y-2">
                                   <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Estado</label>
                                   <label className="flex items-center gap-2 cursor-pointer">
@@ -463,7 +463,7 @@ export default function ComprasPage() {
                       </div>
                     )}
                     {filteredCompras.map((compra) => {
-                      const estadoStyle = estadoConfig[compra.estado] ?? estadoConfig["pendiente"]
+                      const estadoStyle = estadoConfig[compra.estado] ?? estadoConfig["en_curso"]
                       const EstadoIcon = estadoStyle.icon
                       const isSelected = selectedCompras.has(compra.id)
                       const isMulti = compra.items.length > 1
@@ -517,7 +517,8 @@ export default function ComprasPage() {
                       return (
                         <div
                           key={compra.id}
-                          className={`bg-white border rounded-md shadow-sm transition-colors cursor-default ${
+                          onClick={() => router.push(`/compras/compras/${compra.id}`)}
+                          className={`bg-white border rounded-md shadow-sm transition-colors cursor-pointer ${
                             isSelected
                               ? "border-blue-300 bg-blue-50/40"
                               : "border-slate-200/60 hover:border-slate-300"
@@ -604,7 +605,7 @@ export default function ComprasPage() {
                                     <Copy className="w-4 h-4 text-slate-400" />
                                     Duplicar compra
                                   </button>
-                                  {(compra.estado === "completada" || compra.estado === "pendiente") && (
+                                  {(compra.estado === "finalizada" || compra.estado === "en_curso") && (
                                     <button
                                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors text-left"
                                       onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null) }}
@@ -625,10 +626,10 @@ export default function ComprasPage() {
                                 <EstadoIcon className={`w-3.5 h-3.5 ${estadoStyle.text}`} />
                                 <span className={`text-sm font-medium ${estadoStyle.text}`}>{estadoStyle.label}</span>
                               </div>
-                              {compra.estado === "pendiente" && (
+                              {compra.estado === "en_curso" && (
                                 <div className="flex items-center gap-1 text-[11px] font-light text-slate-400">
                                   <span>•</span>
-                                  <span>Pago pendiente</span>
+                                  <span>En curso</span>
                                 </div>
                               )}
                             </div>

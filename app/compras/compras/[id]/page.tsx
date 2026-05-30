@@ -583,7 +583,7 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
             discount: 0,
             discountType: "percent",
             total: unitPrice,
-            categoria: (variant as ItemVariant).categoria || (item as Item).categoria,
+            categoria: (variant as ItemVariant & { categoria?: string }).categoria || (item as Item).categoria,
           })
         }
       } else {
@@ -1591,7 +1591,7 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
                               <span className="text-sm text-slate-700 tabular-nums">+${c.value.toLocaleString("es-AR")}</span>
                             </div>
                           ))}
-                          {!isEditMode && (savedGlobalDiscount?.value > 0 || (savedEnvio != null && savedEnvio > 0) || savedCustomCharges.length > 0) && (
+                          {!isEditMode && ((savedGlobalDiscount != null && savedGlobalDiscount.value > 0) || (savedEnvio != null && savedEnvio > 0) || savedCustomCharges.length > 0) && (
                             <hr className="-mx-5 w-[calc(100%+2.5rem)] border-t border-slate-100 border-0" />
                           )}
 

@@ -292,6 +292,50 @@ export interface CompraItem {
   categoria?: string
 }
 
+// Running received-units total per SKU
+export interface CompraRecepcionItem {
+  sku: string
+  quantityRecepcionada: number
+}
+
+// A single reception log entry
+export interface CompraRecepcionEntry {
+  id: string
+  fecha: string
+  hora: string
+  items: { sku: string; quantity: number }[]
+  anulacion?: boolean
+  anulacionTotal?: number
+  originalRecepcionId?: string
+}
+
+// Running returned-units total per SKU
+export interface CompraDevolucionItem {
+  sku: string
+  quantityDevuelta: number
+}
+
+// A single return log entry
+export interface CompraDevolucionEntry {
+  id: string
+  fecha: string
+  hora: string
+  items: { sku: string; quantity: number }[]
+  montoDevuelto: number
+  medioPago: string
+}
+
+// A single payment entry against the compra
+export interface CompraPago {
+  id: string
+  fecha: string
+  hora: string
+  medioPago: PaymentMethod
+  monto: number
+}
+
+export type CompraEstado = "en_curso" | "finalizada" | "cancelada"
+
 export interface Compra {
   id: string
   fecha: string
@@ -302,13 +346,19 @@ export interface Compra {
   subtotal: number
   descuento: number
   descuentoTipo: "percent" | "fixed"
+  envio?: number
+  customCharges?: VentaCustomCharge[]
   total: number
-  metodoPago: PaymentMethod
-  estado: "completada" | "pendiente" | "cancelada"
+  recepcionItems: CompraRecepcionItem[]
+  recepcionEntries: CompraRecepcionEntry[]
+  pagos: CompraPago[]
+  estado: CompraEstado
   comprador: string
   observaciones?: string
   origen?: "manual" | "orden"
   ordenId?: string
+  devolucionItems?: CompraDevolucionItem[]
+  devolucionEntries?: CompraDevolucionEntry[]
 }
 
 // ===== CAJA (Cash Register) =====
