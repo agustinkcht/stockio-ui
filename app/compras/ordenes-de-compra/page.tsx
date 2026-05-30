@@ -28,6 +28,8 @@ import {
 import type { OrdenDeCompra, EstadoOrdenDeCompra } from "@/lib/types"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import { useOrdenesDeCompra } from "@/hooks/use-ordenes-de-compra"
+import { useSettings } from "@/lib/contexts/settings-context"
+import { downloadOrdenCompraPDF } from "@/lib/utils/generate-orden-compra-pdf"
 import {
   PERIOD_OPTIONS,
   usePeriod,
@@ -59,6 +61,7 @@ export default function OrdenesDeCompraPage() {
   const router = useRouter()
   const allCheckboxRef = useRef<HTMLInputElement>(null)
   const { ordenes, deleteOrden, addOrden, getNextOrderNumber } = useOrdenesDeCompra()
+  const { miNegocio } = useSettings()
 
   const { periodKey, customRange, setPeriodKey, setCustomRange } = usePeriod()
   const [periodOpen, setPeriodOpen] = useState(false)
@@ -403,7 +406,10 @@ export default function OrdenesDeCompraPage() {
                         <button
                           type="button"
                           className="h-8 flex items-center gap-1.5 px-3 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-md hover:bg-slate-50 hover:border-slate-300 shadow-sm transition-colors"
-                          onClick={() => {/* TODO: PDF export */}}
+                          onClick={() => {
+                            const selected = ordenes.filter(o => selectedOrdenes.has(o.id))
+                            downloadOrdenCompraPDF(selected, miNegocio)
+                          }}
                         >
                           <FileDown className="w-3.5 h-3.5 text-slate-400" />
                           Descargar PDF
@@ -604,6 +610,15 @@ export default function OrdenesDeCompraPage() {
                                 <span className={`text-sm font-medium ${estadoStyle.text}`}>{estadoStyle.label}</span>
                               </div>
                             </div>
+                            {/* Descargar PDF — middle row, matching estado badge height */}
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); downloadOrdenCompraPDF([orden], miNegocio) }}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer shrink-0"
+                            >
+                              <FileDown className="w-3.5 h-3.5 text-slate-500" />
+                              <span className="text-sm font-medium text-slate-600">Descargar PDF</span>
+                            </button>
                           </div>
 
                           {/* BOTTOM ROW */}

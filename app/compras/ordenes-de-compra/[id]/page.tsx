@@ -36,6 +36,7 @@ import { VentaItemDetailModal } from "@/components/ventas/venta-item-detail-moda
 import { INITIAL_ITEMS } from "@/lib/data/initial-items"
 import { useOrdenesDeCompra } from "@/hooks/use-ordenes-de-compra"
 import { useSettings } from "@/lib/contexts/settings-context"
+import { downloadOrdenCompraPDF } from "@/lib/utils/generate-orden-compra-pdf"
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -543,6 +544,14 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
                           </button>
                         </div>
                       )}
+                      <button
+                        type="button"
+                        onClick={() => orden && downloadOrdenCompraPDF([orden], miNegocio)}
+                        className="h-8 text-xs transition-colors bg-white border border-slate-200 hover:bg-slate-50 cursor-pointer gap-1.5 px-3 rounded-md flex items-center text-slate-700 font-medium shadow-sm"
+                      >
+                        <FileDown className="w-3.5 h-3.5 text-slate-500" />
+                        Descargar PDF
+                      </button>
                       <div className="relative" ref={moreMenuRef}>
                         <button
                           onClick={() => setShowMoreOptionsMenu(!showMoreOptionsMenu)}
