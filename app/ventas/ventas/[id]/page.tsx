@@ -1352,7 +1352,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     <p className="text-xs text-slate-400">Esta venta no tiene items asociados</p>
                   </div>
                 ) : (
-                  ventaItems.map((item, idx) => {
+                  (isEditMode ? editItems : ventaItems).map((item, idx) => {
                     const display = getVentaItemDisplay(item)
                     const baseGross = item.unitPrice * item.quantity
                     const discountAmount =
@@ -1367,7 +1367,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
                     return (
                       <div
-                        key={`${venta.id}-item-${idx}`}
+                        key={isEditMode ? `edit-${item.sku}-${idx}` : `${venta.id}-item-${idx}`}
                         onClick={() => !isEditMode && viewMode === "productos" && setViewingItem(item)}
                         className={`border-b border-slate-100 last:border-b-0 transition-colors ${!isEditMode && viewMode === "productos" ? "hover:bg-slate-50/50 cursor-pointer" : ""}`}
                       >
