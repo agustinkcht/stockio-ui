@@ -11,7 +11,7 @@ export function useCompras() {
   const { currentAccount } = useAccount()
 
   const getStorageKey = useCallback(() => {
-    return `stockio_compras_${currentAccount || "default"}`
+    return `stockio_compras_${currentAccount || "default"}_v2`
   }, [currentAccount])
 
   // Load compras from localStorage on mount
@@ -26,11 +26,8 @@ export function useCompras() {
       const storedCompras = localStorage.getItem(storageKey)
 
       if (storedCompras) {
-        const parsedCompras = JSON.parse(storedCompras)
-        console.log(`[v0] useCompras - Loaded ${parsedCompras.length} compras from localStorage`)
-        setCompras(parsedCompras)
+        setCompras(JSON.parse(storedCompras))
       } else {
-        console.log(`[v0] useCompras - Loading ${COMPRAS.length} initial compras`)
         localStorage.setItem(storageKey, JSON.stringify(COMPRAS))
         setCompras(COMPRAS)
       }
@@ -48,7 +45,7 @@ export function useCompras() {
 
       const storageKey = getStorageKey()
       localStorage.setItem(storageKey, JSON.stringify(newCompras))
-      console.log(`[v0] useCompras - Saved ${newCompras.length} compras to localStorage`)
+
     },
     [currentAccount, getStorageKey],
   )
@@ -73,7 +70,6 @@ export function useCompras() {
       setCompras(updatedCompras)
       saveCompras(updatedCompras)
 
-      console.log(`[v0] useCompras - Added new compra: ${newId}`)
       return newCompra
     },
     [compras, saveCompras],
