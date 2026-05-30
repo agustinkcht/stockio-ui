@@ -240,7 +240,23 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const [editItems, setEditItems] = useState<VentaItem[]>([])
   const [editAjustes, setEditAjustes] = useState<{ [idx: number]: { value: number; type: "percent" | "cash" | "unit" } }>({})
 
+  // Per-item discount modal (pencil)
+  const [discountModalIdx, setDiscountModalIdx] = useState<number | null>(null)
+  const [modalAjuste, setModalAjuste] = useState<{ value: number; type: "percent" | "cash" | "unit" }>({ value: 0, type: "percent" })
+  const [modalPrice, setModalPrice] = useState<string>("")
+  const [showModalDescuento, setShowModalDescuento] = useState(false)
+
+  // Conflict modals
+  const [entregaConflicts, setEntregaConflicts] = useState<{sku: string; name: string; delivered: number; newQty: number; excess: number}[]>([])
+  const [showEntregaConflictModal, setShowEntregaConflictModal] = useState(false)
+  const [pendingEntregaDecision, setPendingEntregaDecision] = useState<"reingresar" | "no_hacer_nada" | null>(null)
+  const [showCobroConflictModal, setShowCobroConflictModal] = useState(false)
+  const [cobroConflictAmount, setCobroConflictAmount] = useState(0)
+
   const enterEditMode = () => {
+    setViewMode("productos")
+    setDiscountModalIdx(null)
+    setShowModalDescuento(false)
     setEditItems(ventaItems.map(i => ({ ...i })))
     setEditAjustes(
       Object.fromEntries(ventaItems.map((item, idx) => [
@@ -269,41 +285,147 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
     setIsEditMode(true)
   }
 
-  const cancelEditMode = () => { setIsEditMode(false); setEditItems([]); setEditAjustes({}) }
+  const cancelEditMode = () => {
+    setIsEditMode(false)
+    setEditItems([])
+    setEditAjustes({})
+    setDiscountModalIdx(null)
+    setShowModalDescuento(false)
+  }
 
-  const saveEditMode = () => {
+  // Attempt save: checks delivery conflicts first, then cobro conflicts, then does save
+  const attemptSave = () => {
     if (!venta) return
-    const saved: VentaItem[] = editItems.map((item, idx) => {
-      const aj = editAjustes[idx] ?? { value: 0, type: "percent" }
-      return {
-        ...item,
-        discount: aj.value,
-        discountType: aj.type === "cash" ? "fixed" : aj.type,
-        total: (() => {
-          if (aj.value === 0) return item.quantity * item.unitPrice
-          if (aj.type === "unit") return Math.max(0, item.quantity - Math.min(aj.value, item.quantity)) * item.unitPrice
-          const adj = aj.type === "percent" ? item.unitPrice * (1 - aj.value / 100) : Math.max(0, item.unitPrice - aj.value)
-          return item.quantity * adj
-        })(),
+
+    const conflicts: {sku: string; name: string; delivered: number; newQty: number; excess: number}[] = []
+    for (const editItem of editItems) {
+      const delivered = itemEntregaMap.get(editItem.sku) ?? 0
+      if (delivered > 0 && editItem.quantity < delivered) {
+        const display = getVentaItemDisplay(editItem)
+        conflicts.push({ sku: editItem.sku, name: display.name, delivered, newQty: editItem.quantity, excess: delivered - editItem.quantity })
       }
-    })
-    const newDescuento = showGlobalDiscount && globalDiscount.value > 0 ? globalDiscount.value : 0
-    const newDescuentoTipo: "percent" | "fixed" = globalDiscount.type === "cash" ? "fixed" : "percent"
-    const newEnvio = showEnvio && envioAmount > 0 ? envioAmount : 0
-    const newCustomCharges = customCharges.filter(c => c.value > 0)
-    updateVenta(venta.id, {
-      items: saved,
-      descuento: newDescuento,
-      descuentoTipo: newDescuentoTipo,
-      envio: newEnvio,
-      customCharges: newCustomCharges,
-    })
-    // Commit resumen adjustments to view mode
-    if (newDescuento > 0) setSavedGlobalDiscount({ ...globalDiscount })
-    else setSavedGlobalDiscount(null)
-    setSavedEnvio(newEnvio > 0 ? newEnvio : null)
-    setSavedCustomCharges(newCustomCharges)
-    cancelEditMode()
+    }
+    // Removed items that had deliveries
+    for (const origItem of ventaItems) {
+      const stillPresent = editItems.find(ei => ei.sku === origItem.sku)
+      if (!stillPresent) {
+        const delivered = itemEntregaMap.get(origItem.sku) ?? 0
+        if (delivered > 0) {
+          const display = getVentaItemDisplay(origItem)
+          conflicts.push({ sku: origItem.sku, name: display.name, delivered, newQty: 0, excess: delivered })
+        }
+      }
+    }
+
+    if (conflicts.length > 0) {
+      setEntregaConflicts(conflicts)
+      setShowEntregaConflictModal(true)
+      return
+    }
+    checkCobroConflict(null)
+  }
+
+  const checkCobroConflict = (entregaDecision: "reingresar" | "no_hacer_nada" | null) => {
+    if (!venta) return
+    const newTotal = activeEditTotal
+    if (montoCobrado > newTotal + 0.01) {
+      setCobroConflictAmount(Math.round(montoCobrado - newTotal))
+      setPendingEntregaDecision(entregaDecision)
+      setShowCobroConflictModal(true)
+      return
+    }
+    doSave(entregaDecision, null)
+  }
+
+  const doSave = async (entregaDecision: "reingresar" | "no_hacer_nada" | null, cobroDecision: "devolver" | "dejar_a_favor" | null) => {
+    if (!venta) return
+    setIsSaving(true)
+    try {
+      const saved: VentaItem[] = editItems.map((item, idx) => {
+        const aj = editAjustes[idx] ?? { value: 0, type: "percent" }
+        return {
+          ...item,
+          discount: aj.value,
+          discountType: aj.type === "cash" ? "fixed" : aj.type,
+          total: (() => {
+            if (aj.value === 0) return item.quantity * item.unitPrice
+            if (aj.type === "unit") return Math.max(0, item.quantity - Math.min(aj.value, item.quantity)) * item.unitPrice
+            const adj = aj.type === "percent" ? item.unitPrice * (1 - aj.value / 100) : Math.max(0, item.unitPrice - aj.value)
+            return item.quantity * adj
+          })(),
+        }
+      })
+      const newDescuento = showGlobalDiscount && globalDiscount.value > 0 ? globalDiscount.value : 0
+      const newDescuentoTipo: "percent" | "fixed" = globalDiscount.type === "cash" ? "fixed" : "percent"
+      const newEnvio = showEnvio && envioAmount > 0 ? envioAmount : 0
+      const newCustomCharges = customCharges.filter(c => c.value > 0)
+      const newSubtotal = editSubtotal
+      const newTotal = activeEditTotal
+
+      // Build entrega updates if reingresar
+      let entregaExtras: { entregaItems?: any[]; entregaEntries?: any[] } = {}
+      if (entregaDecision === "reingresar" && entregaConflicts.length > 0) {
+        const newEntregaItems = venta.entregaItems
+          .map(ei => {
+            const conflict = entregaConflicts.find(c => c.sku === ei.sku)
+            if (conflict) {
+              if (conflict.newQty === 0) return null
+              return { ...ei, quantityEntregada: conflict.newQty }
+            }
+            return ei
+          })
+          .filter(Boolean) as typeof venta.entregaItems
+        entregaExtras = {
+          entregaItems: newEntregaItems,
+          entregaEntries: [
+            ...venta.entregaEntries,
+            {
+              id: `anulacion-edit-${Date.now()}`,
+              fecha: new Date().toISOString().slice(0, 10),
+              hora: new Date().toTimeString().slice(0, 5),
+              items: entregaConflicts.map(c => ({ sku: c.sku, quantity: c.excess })),
+              anulacion: true,
+              anulacionTotal: entregaConflicts.reduce((s, c) => s + c.excess, 0),
+            },
+          ],
+        }
+      }
+
+      updateVenta(venta.id, {
+        items: saved,
+        subtotal: newSubtotal,
+        total: newTotal,
+        descuento: newDescuento,
+        descuentoTipo: newDescuentoTipo,
+        envio: newEnvio,
+        customCharges: newCustomCharges,
+        ...entregaExtras,
+      })
+
+      // Handle cobro conflict resolution
+      if (cobroDecision === "devolver" && cobroConflictAmount > 0) {
+        addCobro(venta.id, {
+          fecha: new Date().toISOString().slice(0, 10),
+          hora: new Date().toTimeString().slice(0, 5),
+          medioPago: "anulacion",
+          monto: -cobroConflictAmount,
+        })
+      }
+
+      if (newDescuento > 0) setSavedGlobalDiscount({ ...globalDiscount })
+      else setSavedGlobalDiscount(null)
+      setSavedEnvio(newEnvio > 0 ? newEnvio : null)
+      setSavedCustomCharges(newCustomCharges)
+
+      cancelEditMode()
+      setEntregaConflicts([])
+      setPendingEntregaDecision(null)
+      setShowSaveSuccess(true)
+      await new Promise(r => setTimeout(r, 1500))
+      setShowSaveSuccess(false)
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   // Resumen adjustments (local, en_curso only)
@@ -413,6 +535,32 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   }, [isEditMode, showGlobalDiscount, globalDiscount, showEnvio, envioAmount, customCharges])
 
   const hasAnyEditChanges = hasItemChanges || hasResumenChanges
+
+  // Real-time subtotal from editItems + editAjustes (for live resumen while editing)
+  const editSubtotal = useMemo(() => {
+    return editItems.reduce((sum, item, idx) => {
+      const aj = editAjustes[idx] ?? { value: 0, type: "percent" as const }
+      if (aj.value > 0) {
+        if (aj.type === "unit") {
+          const paid = Math.max(0, item.quantity - Math.min(aj.value, item.quantity))
+          return sum + paid * item.unitPrice
+        }
+        if (aj.type === "percent") return sum + item.quantity * item.unitPrice * (1 - aj.value / 100)
+        if (aj.type === "cash") return sum + item.quantity * Math.max(0, item.unitPrice - aj.value)
+      }
+      return sum + item.quantity * item.unitPrice
+    }, 0)
+  }, [editItems, editAjustes])
+
+  const activeEditSubtotal = isEditMode ? editSubtotal : (venta?.subtotal ?? 0)
+
+  const activeEditGlobalDiscountAmount = showGlobalDiscount
+    ? globalDiscount.type === "percent"
+      ? activeEditSubtotal * (globalDiscount.value / 100)
+      : globalDiscount.value
+    : 0
+
+  const activeEditTotal = activeEditSubtotal - activeEditGlobalDiscountAmount + (showEnvio ? envioAmount : 0) + customCharges.reduce((s, c) => s + c.value, 0)
 
   // Modal computed values
   const allModalItems = INITIAL_ITEMS
@@ -551,22 +699,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const isFacturada = !!venta.facturaEmitida
   const estadoUI = venta.estado
   const setEstadoUI = (next: typeof venta.estado) => setEstado(venta.id, next)
-
-  const handleGuardar = async () => {
-    setIsSaving(true)
-    try {
-      saveEditMode()
-      setShowSaveSuccess(true)
-      await new Promise(r => setTimeout(r, 1500))
-      setShowSaveSuccess(false)
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
-  const handleDeshacer = () => {
-    cancelEditMode()
-  }
 
   const handleDownloadPDF = () => downloadVentasPDF([venta], miNegocio)
   const fechaCreacion = new Date(venta.fecha).toLocaleDateString("es-AR", {
@@ -753,23 +885,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     <span className="text-sm text-green-700 font-medium">Cambios guardados</span>
                   </div>
                 )}
-                {isEditMode && hasAnyEditChanges && !showSaveSuccess && (
-                  <>
-                    <button
-                      onClick={handleDeshacer}
-                      className="px-4 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 rounded transition-all cursor-pointer text-red-700 text-sm font-medium"
-                    >
-                      Deshacer
-                    </button>
-                    <button
-                      onClick={handleGuardar}
-                      disabled={isSaving}
-                      className="px-4 py-1.5 bg-green-50 hover:bg-green-100 border border-green-200 rounded transition-all cursor-pointer text-green-700 text-sm font-medium disabled:opacity-50"
-                    >
-                      {isSaving ? "Guardando..." : "Guardar"}
-                    </button>
-                  </>
-                )}
               </div>
             </div>
           </div>
@@ -843,8 +958,46 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                           {isEditMode && <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" />}
                         </button>
 
-                        {/* PDF + more options */}
+                        {/* PDF + edit controls + more options */}
                         <div className="flex items-center gap-2 shrink-0">
+                          {/* Editar / Cancelar+Guardar — en_curso only */}
+                          {estadoUI === "en_curso" && !isEditMode && (
+                            <button
+                              type="button"
+                              onClick={enterEditMode}
+                              className="h-8 text-xs transition-colors bg-white border border-slate-200 hover:bg-slate-50 cursor-pointer gap-1.5 px-3 rounded-md flex items-center text-slate-600 font-medium shadow-sm"
+                            >
+                              <Pencil className="w-3.5 h-3.5 text-slate-500" />
+                              Editar
+                            </button>
+                          )}
+                          {estadoUI === "en_curso" && isEditMode && (
+                            <div className="flex items-center gap-2">
+                              {hasAnyEditChanges && (
+                                <span className="flex items-center gap-1.5 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-1">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                                  Cambios sin guardar
+                                </span>
+                              )}
+                              <div className="flex items-center rounded-md overflow-hidden border border-slate-200 shadow-sm">
+                                <button
+                                  type="button"
+                                  onClick={cancelEditMode}
+                                  className="h-8 text-xs transition-colors bg-white hover:bg-slate-50 cursor-pointer px-3 flex items-center text-slate-600 font-medium border-r border-slate-200"
+                                >
+                                  Cancelar
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={attemptSave}
+                                  disabled={isSaving}
+                                  className="h-8 text-xs transition-colors bg-slate-900 hover:bg-slate-800 cursor-pointer px-3 flex items-center text-white font-medium disabled:opacity-50"
+                                >
+                                  {isSaving ? "Guardando..." : "Guardar cambios"}
+                                </button>
+                              </div>
+                            </div>
+                          )}
                           <button
                             type="button"
                             onClick={handleDownloadPDF}
@@ -1167,11 +1320,10 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
                 {/* ── Edit mode column headers ── */}
                 {isEditMode && viewMode === "productos" && (
-                  <div className="grid grid-cols-[2fr_0.8fr_1fr_1.2fr_1.2fr_auto] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider border-b border-slate-100 bg-slate-50/80">
+                  <div className="grid grid-cols-[2fr_0.8fr_1fr_auto] h-9 text-xs font-medium text-slate-500 uppercase tracking-wider border-b border-slate-100 bg-slate-50/80">
                     <div className="flex items-center px-4">Item</div>
                     <div className="flex items-center justify-center">Cantidad</div>
-                    <div className="flex items-center justify-center">Precio Unit.</div>
-                    <div className="flex items-center justify-center">Promoción</div>
+                    <div className="flex items-center justify-center">Precio</div>
                     <div className="w-10" />
                   </div>
                 )}
@@ -1276,33 +1428,25 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             )
                           })()
                         ) : isEditMode ? (
-                          /* ── Edit mode row (presupuesto-style) ── */
+                          /* ── Edit mode row — presupuesto style ── */
                           (() => {
                             const editItem = editItems[idx] ?? item
                             const aj = editAjustes[idx] ?? { value: 0, type: "percent" as const }
-                            let adjUnit = editItem.unitPrice
-                            let finalTotal = 0
-                            if (aj.value > 0) {
-                              if (aj.type === "unit") {
-                                finalTotal = Math.max(0, editItem.quantity - Math.min(aj.value, editItem.quantity)) * editItem.unitPrice
-                              } else {
-                                adjUnit = aj.type === "percent"
-                                  ? editItem.unitPrice * (1 - aj.value / 100)
-                                  : Math.max(0, editItem.unitPrice - aj.value)
-                                finalTotal = editItem.quantity * adjUnit
-                              }
-                            } else {
-                              finalTotal = editItem.quantity * editItem.unitPrice
+                            const hasDiscount = aj.value > 0
+                            let adjUnitPrice = editItem.unitPrice
+                            if (hasDiscount) {
+                              if (aj.type === "percent") adjUnitPrice = editItem.unitPrice * (1 - aj.value / 100)
+                              else if (aj.type === "cash") adjUnitPrice = Math.max(0, editItem.unitPrice - aj.value)
                             }
                             return (
-                              <div className="grid grid-cols-[2fr_0.8fr_1fr_1.2fr_1.2fr_auto] min-h-[72px]">
-                                {/* Item Info */}
+                              <div className="grid grid-cols-[2fr_0.8fr_1fr_auto] min-h-[72px]">
+                                {/* ITEM */}
                                 <div className="flex items-center gap-3 px-4 py-3">
                                   <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                                     <Image src={getCategoryImage(display.categoria || "") || "/placeholder.svg"} alt={item.name} width={32} height={32} className="object-cover" />
                                   </div>
                                   <div className="min-w-0">
-                                    <div className="flex flex-wrap items-center gap-1.5">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
                                       <p className="text-sm font-medium text-gray-900 break-words leading-tight">{display.name}</p>
                                       {display.tags.length > 0 && display.tags.map((tag, i) => (
                                         <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-600 whitespace-nowrap">{tag}</span>
@@ -1310,14 +1454,14 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                                     </div>
                                     {(display.marca || display.categoria) && (
                                       <div className="flex items-center gap-1 mt-0.5">
-                                        {display.marca && <span className="text-xs text-slate-400">{display.marca}</span>}
+                                        {display.marca && <span className="text-xs text-slate-400 leading-tight">{display.marca}</span>}
                                         {display.marca && display.categoria && <span className="text-xs text-slate-300">·</span>}
-                                        {display.categoria && <span className="text-xs text-slate-400">{display.categoria}</span>}
+                                        {display.categoria && <span className="text-xs text-slate-400 leading-tight">{display.categoria}</span>}
                                       </div>
                                     )}
                                   </div>
                                 </div>
-                                {/* Cantidad */}
+                                {/* CANTIDAD */}
                                 <div className="flex items-center justify-center">
                                   <div className="flex items-center border border-slate-200 rounded-full px-1 py-0.5 bg-white">
                                     <button onClick={() => setEditItems(prev => prev.map((it, i) => i === idx ? { ...it, quantity: Math.max(1, it.quantity - 1) } : it))} className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-400 transition-colors">
@@ -1334,55 +1478,53 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                                     </button>
                                   </div>
                                 </div>
-                                {/* Precio Unit. */}
-                                <div className="flex items-center justify-center gap-1">
-                                  <span className="text-slate-400 text-sm">$</span>
-                                  <input
-                                    type="number"
-                                    value={editItem.unitPrice || ""}
-                                    onChange={(e) => setEditItems(prev => prev.map((it, i) => i === idx ? { ...it, unitPrice: parseFloat(e.target.value) || 0 } : it))}
-                                    className="w-20 text-center text-sm py-1.5 border border-slate-200 rounded focus:outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                  />
-                                </div>
-                                {/* Promocion */}
-                                <div className="flex items-center justify-center gap-1.5">
-                                  <input
-                                    type="number"
-                                    placeholder="0"
-                                    min="0"
-                                    value={aj.value || ""}
-                                    onChange={(e) => {
-                                      let val = parseFloat(e.target.value) || 0
-                                      if (aj.type === "unit") val = Math.min(val, editItem.quantity)
-                                      setEditAjustes(prev => ({ ...prev, [idx]: { ...aj, value: val } }))
-                                    }}
-                                    className="w-12 text-center text-xs py-1 border border-slate-200 rounded focus:outline-none focus:border-slate-400 placeholder:text-slate-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                  />
-                                  <div className="flex border border-slate-200 rounded overflow-hidden">
-                                    {(["percent", "cash", "unit"] as const).map((t) => (
-                                      <button key={t} onClick={() => setEditAjustes(prev => ({ ...prev, [idx]: { ...aj, type: t } }))} className={`px-1.5 py-1 text-xs cursor-pointer ${aj.type === t ? "bg-slate-900 text-white" : "text-slate-400 hover:bg-slate-50"}`}>
-                                        {t === "percent" ? "%" : t === "cash" ? "$" : <Package className="w-3 h-3" />}
-                                      </button>
-                                    ))}
+                                {/* PRECIO with pencil → opens descuento modal */}
+                                <div className="flex flex-col items-center justify-center gap-0.5 py-2 px-1">
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="flex flex-col items-end">
+                                      {hasDiscount && (aj.type === "percent" || aj.type === "cash") && (
+                                        <div className="flex items-center gap-1">
+                                          <span className="text-[11px] text-slate-400 line-through tabular-nums">${Math.round(editItem.unitPrice).toLocaleString("es-AR")}</span>
+                                          <span className="text-[10px] text-red-500 font-medium">{aj.type === "percent" ? `-${aj.value}%` : `-$${aj.value.toLocaleString("es-AR")}`}</span>
+                                        </div>
+                                      )}
+                                      <span className="text-sm font-medium text-slate-900 tabular-nums">
+                                        ${Math.round(hasDiscount && (aj.type === "percent" || aj.type === "cash") ? adjUnitPrice : editItem.unitPrice).toLocaleString("es-AR")}
+                                      </span>
+                                      {hasDiscount && aj.type === "unit" && (
+                                        <span className="text-[10px] text-emerald-600 font-medium">{Math.min(aj.value, editItem.quantity)} bonificadas</span>
+                                      )}
+                                    </div>
+                                    <button
+                                      onClick={() => {
+                                        setDiscountModalIdx(idx)
+                                        setModalAjuste(hasDiscount ? { ...aj } : { value: 0, type: "percent" })
+                                        setModalPrice(String(editItem.unitPrice))
+                                        setShowModalDescuento(hasDiscount)
+                                      }}
+                                      className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                                    >
+                                      <Pencil className="w-3 h-3" />
+                                    </button>
                                   </div>
                                 </div>
-                                {/* Subtotal */}
-                                <div className="flex flex-col items-end justify-center pr-4">
-                                  {aj.value > 0 ? (
-                                    <>
-                                      <span className="text-[10px] text-slate-400 line-through tabular-nums">{editItem.quantity} × ${Math.round(editItem.unitPrice).toLocaleString("es-AR")}</span>
-                                      <span className="text-sm font-bold text-slate-900 tabular-nums">${Math.round(finalTotal).toLocaleString("es-AR")}</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <span className="text-[10px] text-slate-500 tabular-nums">{editItem.quantity} × ${Math.round(editItem.unitPrice).toLocaleString("es-AR")}</span>
-                                      <span className="text-sm font-bold text-slate-900 tabular-nums">${Math.round(finalTotal).toLocaleString("es-AR")}</span>
-                                    </>
-                                  )}
-                                </div>
-                                {/* Delete */}
+                                {/* REMOVE */}
                                 <div className="flex items-center justify-center w-10">
-                                  <button onClick={() => { setEditItems(prev => prev.filter((_, i) => i !== idx)); setEditAjustes(prev => { const next = { ...prev }; delete next[idx]; return next }) }} className="p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors">
+                                  <button
+                                    onClick={() => {
+                                      setEditItems(prev => prev.filter((_, i) => i !== idx))
+                                      setEditAjustes(prev => {
+                                        const next: typeof prev = {}
+                                        Object.entries(prev).forEach(([k, v]) => {
+                                          const ki = parseInt(k)
+                                          if (ki < idx) next[ki] = v
+                                          else if (ki > idx) next[ki - 1] = v
+                                        })
+                                        return next
+                                      })
+                                    }}
+                                    className="p-1 rounded hover:bg-red-50 text-slate-300 hover:text-red-500 transition-colors"
+                                  >
                                     <X className="w-4 h-4" />
                                   </button>
                                 </div>
