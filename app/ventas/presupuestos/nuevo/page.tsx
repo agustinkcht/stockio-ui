@@ -499,15 +499,7 @@ export default function NuevoPresupuestoPage() {
               <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2">
                 <UserPanel />
               </div>
-              <div className="flex items-center gap-2 min-w-[280px] justify-end">
-                <button
-                  onClick={() => router.push("/ventas/presupuestos")}
-                  className="w-8 h-8 flex items-center justify-center rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
-                  aria-label="Cancelar y volver"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
+              <div className="flex items-center gap-2 min-w-[280px] justify-end" />
             </div>
           </div>
 
@@ -522,9 +514,18 @@ export default function NuevoPresupuestoPage() {
             >
               {/* Left: Stepper */}
               <div className="col-span-4 bg-transparent p-6 flex flex-col">
-                <div className="mb-8">
-                  <h2 className="text-sm font-semibold text-gray-900 mb-1">Creando Nuevo Presupuesto</h2>
-                  <p className="text-xs text-gray-500 truncate max-w-[180px]">{clienteNombre}</p>
+                <div className="mb-8 flex items-start justify-between">
+                  <div>
+                    <h2 className="text-sm font-semibold text-gray-900 mb-1">Creando Nuevo Presupuesto</h2>
+                    <p className="text-xs text-gray-500 truncate max-w-[140px]">{clienteNombre}</p>
+                  </div>
+                  <button
+                    onClick={() => router.push("/ventas/presupuestos")}
+                    className="w-7 h-7 flex items-center justify-center rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-200/70 transition-colors cursor-pointer shrink-0 -mr-1 -mt-0.5"
+                    aria-label="Cancelar y volver"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 </div>
 
                 <div className="flex flex-col">

@@ -6,6 +6,7 @@ import { ORDENES_DE_COMPRA } from "@/lib/data/initial-ordenes-de-compra"
 import { useAccount } from "@/lib/contexts/account-context"
 
 const STORAGE_KEY_PREFIX = "stockio_ordenes_de_compra"
+const DATA_VERSION = "v2" // bump to reseed localStorage with new dataset
 
 export function useOrdenesDeCompra() {
   const [ordenes, setOrdenes] = useState<OrdenDeCompra[]>(ORDENES_DE_COMPRA)
@@ -13,7 +14,7 @@ export function useOrdenesDeCompra() {
   const { currentAccount } = useAccount()
 
   const getStorageKey = useCallback(() => {
-    return `${STORAGE_KEY_PREFIX}_${currentAccount || "default"}`
+    return `${STORAGE_KEY_PREFIX}_${currentAccount || "default"}_${DATA_VERSION}`
   }, [currentAccount])
 
   // Load ordenes from localStorage on mount
