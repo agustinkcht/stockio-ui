@@ -5,7 +5,7 @@ export const ORDENES_DE_COMPRA: OrdenDeCompra[] = [
   {
     id: "ODC-1",
     numero: 1,
-    fechaCreacion: "2026-04-07",
+    fechaCreacion: "2026-04-07T10:23:00.000Z",
     fechaModificacion: "2026-04-08",
     proveedorId: "PROV-012",
     proveedorNombre: "Bodegas Salentein",
@@ -51,7 +51,7 @@ export const ORDENES_DE_COMPRA: OrdenDeCompra[] = [
   {
     id: "ODC-2",
     numero: 2,
-    fechaCreacion: "2026-04-10",
+    fechaCreacion: "2026-04-10T09:15:00.000Z",
     proveedorId: "PROV-007",
     proveedorNombre: "Catena Zapata",
     estado: "aceptada",
@@ -128,7 +128,7 @@ export const ORDENES_DE_COMPRA: OrdenDeCompra[] = [
   {
     id: "ODC-3",
     numero: 3,
-    fechaCreacion: "2026-04-15",
+    fechaCreacion: "2026-04-15T14:42:00.000Z",
     proveedorId: "PROV-020",
     proveedorNombre: "Bodega Domiciano",
     estado: "aceptada",
@@ -173,7 +173,7 @@ export const ORDENES_DE_COMPRA: OrdenDeCompra[] = [
   {
     id: "ODC-4",
     numero: 4,
-    fechaCreacion: "2026-04-18",
+    fechaCreacion: "2026-04-18T11:08:00.000Z",
     fechaModificacion: "2026-04-20",
     proveedorId: "PROV-005",
     proveedorNombre: "Proemio Wines",
@@ -259,7 +259,7 @@ export const ORDENES_DE_COMPRA: OrdenDeCompra[] = [
   {
     id: "ODC-5",
     numero: 5,
-    fechaCreacion: "2026-04-22",
+    fechaCreacion: "2026-04-22T16:55:00.000Z",
     proveedorId: "PROV-015",
     proveedorNombre: "Chañarmuyo Bodega",
     estado: "aceptada",

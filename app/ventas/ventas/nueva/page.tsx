@@ -629,7 +629,15 @@ export default function NuevaVentaPage() {
               <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2">
                 <UserPanel />
               </div>
-              <div className="flex items-center gap-2 min-w-[280px] justify-end" />
+              <div className="flex items-center gap-2 min-w-[280px] justify-end">
+                <button
+                  onClick={() => router.push("/ventas/ventas")}
+                  className="w-8 h-8 flex items-center justify-center rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                  aria-label="Cancelar y volver"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -696,14 +704,7 @@ export default function NuevaVentaPage() {
                   })}
                 </div>
 
-                <div className="mt-auto">
-                  <button
-                    onClick={() => router.push("/ventas/ventas")}
-                    className="px-4 py-2 text-xs font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
-                  >
-                    Cancelar
-                  </button>
-                </div>
+
               </div>
 
               {/* Right: Step Content */}

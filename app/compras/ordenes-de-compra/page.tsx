@@ -553,8 +553,20 @@ export default function OrdenesDeCompraPage() {
                                 {formatOrdenDateTime(orden.fechaCreacion)}
                               </span>
                             </div>
+                            {/* Origen / Ver venta asociada */}
+                            <div className="col-span-42 flex items-center justify-start px-3">
+                              {orden.estado === "aceptada" && orden.compraId && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); router.push(`/compras/${orden.compraId}`) }}
+                                  className="text-sm text-slate-500 underline underline-offset-2 hover:text-slate-700 transition-colors cursor-pointer"
+                                >
+                                  Ver venta asociada
+                                </button>
+                              )}
+                            </div>
                             {/* Spacer */}
-                            <div className="col-span-54" />
+                            <div className="col-span-12" />
                             {/* Proveedor pill */}
                             <div className="col-span-14 flex items-center justify-end pr-3 border-r border-slate-200/70">
                               <div className="inline-flex items-center gap-1.5 pl-1.5 pr-3 py-1 rounded-full border border-slate-200 bg-slate-50 shadow-sm shrink-0">
@@ -616,22 +628,11 @@ export default function OrdenesDeCompraPage() {
                           </div>
 
                           {/* MIDDLE ROW */}
-                          <div className="flex items-center justify-between gap-3 py-1.5" style={{ paddingLeft: "calc(4% + 12px)", paddingRight: "calc(4% + 12px)" }}>
-                            <div className="flex items-center gap-3">
-                              <div className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full shrink-0 ${estadoStyle.bg}`}>
-                                <EstadoIcon className={`w-3.5 h-3.5 ${estadoStyle.text}`} />
-                                <span className={`text-sm font-medium ${estadoStyle.text}`}>{estadoStyle.label}</span>
-                              </div>
+                          <div className="flex items-center gap-3 py-1.5" style={{ paddingLeft: "calc(4% + 12px)", paddingRight: "calc(4% + 12px)" }}>
+                            <div className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full shrink-0 ${estadoStyle.bg}`}>
+                              <EstadoIcon className={`w-3.5 h-3.5 ${estadoStyle.text}`} />
+                              <span className={`text-sm font-medium ${estadoStyle.text}`}>{estadoStyle.label}</span>
                             </div>
-                            {orden.estado === "aceptada" && orden.compraId && (
-                              <button
-                                type="button"
-                                onClick={(e) => { e.stopPropagation(); router.push(`/compras/${orden.compraId}`) }}
-                                className="text-sm text-slate-500 underline underline-offset-2 hover:text-slate-700 transition-colors cursor-pointer"
-                              >
-                                Ver venta asociada
-                              </button>
-                            )}
                           </div>
 
                           {/* BOTTOM ROW */}
