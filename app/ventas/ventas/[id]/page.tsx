@@ -3099,94 +3099,158 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
       )}
 
       {/* ── Price / Discount per-item modal ── */}
-      {discountModalIdx !== null && (
-        <div className="fixed inset-0 z-[300] flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setDiscountModalIdx(null)} />
-          <div className="relative bg-white rounded-xl shadow-2xl w-[380px] overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-              <h2 className="text-sm font-semibold text-slate-900">Editar precio y descuento</h2>
-              <button onClick={() => setDiscountModalIdx(null)} className="text-slate-400 hover:text-slate-600 transition-colors">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="px-5 py-5 flex flex-col gap-4">
-              {/* Precio unitario */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] text-slate-400 uppercase tracking-wider">Precio unitario</label>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-slate-500">$</span>
-                  <input
-                    type="number"
-                    value={modalPrice}
-                    onChange={(e) => setModalPrice(e.target.value)}
-                    className="flex-1 px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-md outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+      {discountModalIdx !== null && (() => {
+        const item = editItems[discountModalIdx]
+        if (!item) return null
+        const display = getVentaItemDisplay(item)
+        const parsedPrice = parseFloat(modalPrice) || item.unitPrice
+        let finalPrice = parsedPrice
+        if (modalAjuste.value > 0) {
+          if (modalAjuste.type === "percent") finalPrice = parsedPrice * (1 - modalAjuste.value / 100)
+          else if (modalAjuste.type === "cash") finalPrice = Math.max(0, parsedPrice - modalAjuste.value)
+        }
+        return (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+              <div className="flex items-center gap-3 px-6 pt-6 pb-4 border-b border-slate-100">
+                <div className="w-10 h-10 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0 relative">
+                  <Image
+                    src={getCategoryImage(display.categoria || "") || "/placeholder.svg"}
+                    alt={display.name}
+                    width={40}
+                    height={40}
+                    className="object-cover w-full h-full"
                   />
                 </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <p className="text-sm font-semibold text-slate-900">{display.name}</p>
+                    {display.tags.map((tag, i) => (
+                      <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">{tag}</span>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    {display.marca && <span className="text-xs text-slate-400">{display.marca}</span>}
+                    {display.marca && display.categoria && <span className="text-xs text-slate-300">·</span>}
+                    {display.categoria && <span className="text-xs text-slate-400">{display.categoria}</span>}
+                  </div>
+                </div>
               </div>
-              {/* Toggle descuento */}
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowModalDescuento(!showModalDescuento)}
-                  className={`text-xs px-3 py-1 rounded-full border transition-colors ${showModalDescuento ? "bg-slate-900 text-white border-slate-900" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}
-                >
-                  {showModalDescuento ? "Quitar descuento" : "Agregar descuento"}
-                </button>
-              </div>
-              {showModalDescuento && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] text-slate-400 uppercase tracking-wider">Descuento</label>
-                  <div className="flex items-center gap-2">
+
+              <div className="px-6 py-5 space-y-4">
+                <div>
+                  <label className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Precio</label>
+                  <div className="flex items-center border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 focus-within:border-slate-400 transition-colors">
+                    <span className="text-slate-400 text-sm mr-1.5">$</span>
                     <input
                       type="number"
-                      value={modalAjuste.value || ""}
-                      placeholder="0"
-                      onChange={(e) => setModalAjuste(prev => ({ ...prev, value: parseFloat(e.target.value) || 0 }))}
-                      className="flex-1 px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-md outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      value={modalPrice}
+                      onChange={(e) => setModalPrice(e.target.value)}
+                      className="flex-1 text-sm bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
-                    <div className="flex border border-slate-200 rounded-md overflow-hidden">
-                      {(["percent", "cash", "unit"] as const).map(t => (
-                        <button
-                          key={t}
-                          onClick={() => setModalAjuste(prev => ({ ...prev, type: t }))}
-                          className={`px-3 py-2 text-xs cursor-pointer transition-colors ${modalAjuste.type === t ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"}`}
-                        >
-                          {t === "percent" ? "%" : t === "cash" ? "$" : "Bon."}
-                        </button>
-                      ))}
-                    </div>
                   </div>
-                  <p className="text-[10px] text-slate-400">{modalAjuste.type === "unit" ? "Unidades bonificadas (no se cobran)" : modalAjuste.type === "percent" ? "% de descuento sobre el precio unitario" : "Descuento fijo en $ por unidad"}</p>
                 </div>
-              )}
-            </div>
-            <div className="px-5 pb-5 flex gap-3">
-              <button
-                onClick={() => setDiscountModalIdx(null)}
-                className="flex-1 py-2.5 text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors font-medium"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => {
-                  const idx = discountModalIdx!
-                  const newPrice = parseFloat(modalPrice) || editItems[idx]?.unitPrice || 0
-                  setEditItems(prev => prev.map((it, i) => i === idx ? { ...it, unitPrice: newPrice } : it))
-                  if (showModalDescuento && modalAjuste.value > 0) {
-                    setEditAjustes(prev => ({ ...prev, [idx]: { ...modalAjuste } }))
-                  } else {
-                    setEditAjustes(prev => ({ ...prev, [idx]: { value: 0, type: "percent" } }))
-                  }
-                  setDiscountModalIdx(null)
-                }}
-                className="flex-1 py-2.5 text-sm text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors font-medium"
-              >
-                Aplicar
-              </button>
+
+                {!showModalDescuento && (
+                  <button
+                    onClick={() => setShowModalDescuento(true)}
+                    className="text-sm text-blue-500 hover:text-blue-600 transition-colors"
+                  >
+                    + agregar descuento
+                  </button>
+                )}
+
+                {showModalDescuento && (
+                  <>
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Descuento</label>
+                        <button
+                          onClick={() => {
+                            setShowModalDescuento(false)
+                            setModalAjuste({ value: 0, type: "percent" })
+                          }}
+                          className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
+                          title="Quitar descuento"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 focus-within:border-slate-400 transition-colors flex-1">
+                          <input
+                            type="number"
+                            placeholder="0"
+                            min="0"
+                            autoFocus
+                            value={modalAjuste.value || ""}
+                            onChange={(e) => {
+                              let val = parseFloat(e.target.value) || 0
+                              if (modalAjuste.type === "unit") val = Math.min(val, item.quantity)
+                              setModalAjuste(prev => ({ ...prev, value: val }))
+                            }}
+                            className="w-full text-sm bg-transparent focus:outline-none placeholder:text-slate-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          />
+                        </div>
+                        <div className="flex border border-slate-200 rounded-lg overflow-hidden">
+                          {(["percent", "cash", "unit"] as const).map((t) => (
+                            <button
+                              key={t}
+                              onClick={() => setModalAjuste(prev => ({ ...prev, type: t }))}
+                              className={`px-3 py-2 text-xs font-medium cursor-pointer transition-colors ${modalAjuste.type === t ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"}`}
+                            >
+                              {t === "percent" ? "% porcentaje" : t === "cash" ? "$ dinero" : "unidades"}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {modalAjuste.value > 0 && (
+                      <div className="flex items-center justify-between py-3 px-4 bg-slate-50 rounded-xl">
+                        <span className="text-sm font-medium text-slate-600">Precio final</span>
+                        <div className="text-right">
+                          <span className="text-base font-bold text-slate-900 tabular-nums">
+                            ${Math.round(finalPrice).toLocaleString("es-AR")}
+                          </span>
+                          {modalAjuste.type === "unit" && (
+                            <p className="text-[11px] text-emerald-600">{modalAjuste.value} unidades bonificadas</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+
+              <div className="flex items-center justify-end gap-2 px-6 pb-6">
+                <button
+                  onClick={() => { setDiscountModalIdx(null); setShowModalDescuento(false) }}
+                  className="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    const idx = discountModalIdx!
+                    const newPrice = parseFloat(modalPrice)
+                    if (!isNaN(newPrice) && newPrice >= 0) {
+                      setEditItems(prev => prev.map((it, i) => i === idx ? { ...it, unitPrice: newPrice } : it))
+                    }
+                    const ajuste = showModalDescuento ? { ...modalAjuste } : { value: 0, type: "percent" as const }
+                    setEditAjustes(prev => ({ ...prev, [idx]: ajuste }))
+                    setDiscountModalIdx(null)
+                    setShowModalDescuento(false)
+                  }}
+                  className="px-5 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
+                >
+                  Aceptar
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {/* ── Entrega Conflict Modal ── */}
       {showEntregaConflictModal && (
