@@ -28,6 +28,7 @@ import {
   ShoppingCart,
   Filter,
   ArrowUpDown,
+  FileDown,
 } from "lucide-react"
 import Image from "next/image"
 import type {
@@ -47,6 +48,8 @@ import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import { PROVEEDORES } from "@/lib/data/proveedores"
 import { INITIAL_ITEMS } from "@/lib/data/initial-items"
 import { useCompras } from "@/hooks/use-compras"
+import { useSettings } from "@/lib/contexts/settings-context"
+import { downloadComprasPDF } from "@/lib/utils/generate-compra-pdf"
 
 const metodoPagoLabels: Record<PaymentMethod, string> = {
   efectivo: "Efectivo",
@@ -195,6 +198,8 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
   } = useCompras()
 
   const compra = useMemo(() => compras.find((c) => c.id === id) || null, [compras, id])
+  const { miNegocio } = useSettings()
+  const handleDownloadPDF = () => compra && downloadComprasPDF([compra], miNegocio)
 
   const [showMoreOptionsMenu, setShowMoreOptionsMenu] = useState(false)
   const [showProveedorSelectorModal, setShowProveedorSelectorModal] = useState(false)
@@ -844,6 +849,14 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
                                   </div>
                                 </div>
                               )}
+                              <button
+                                type="button"
+                                onClick={handleDownloadPDF}
+                                className="h-8 text-xs transition-colors bg-white border border-slate-200 hover:bg-slate-50 cursor-pointer gap-1.5 px-3 rounded-md flex items-center text-slate-700 font-medium shadow-sm"
+                              >
+                                <FileDown className="w-3.5 h-3.5 text-slate-500" />
+                                Descargar PDF
+                              </button>
                               <div className="relative" ref={moreMenuRef}>
                                 <button
                                   onClick={() => setShowMoreOptionsMenu(!showMoreOptionsMenu)}
@@ -853,6 +866,13 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
                                 </button>
                                 {showMoreOptionsMenu && (
                                   <div className="absolute top-full right-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[180px]">
+                                    <button
+                                      onClick={() => { setShowMoreOptionsMenu(false); handleDownloadPDF() }}
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                                    >
+                                      <FileDown className="w-4 h-4 text-slate-400" />
+                                      Descargar PDF
+                                    </button>
                                     <button
                                       onClick={() => { setShowMoreOptionsMenu(false); router.push(`/compras/compras/nueva?duplicar=${compra.id}`) }}
                                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
@@ -2232,60 +2252,84 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowRegistrarPago(false)} />
           <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-slate-900">Registrar pago</h3>
-              <button onClick={() => setShowRegistrarPago(false)} className="p-1 rounded hover:bg-slate-100 text-slate-400 transition-colors">
-                <X className="w-4 h-4" />
+              <h2 className="text-sm font-semibold text-slate-900">Registrar pago</h2>
+              <button onClick={() => setShowRegistrarPago(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                <XCircle className="w-4 h-4" />
               </button>
             </div>
-            <div className="px-5 py-4 flex flex-col gap-4">
-              <div>
-                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Fecha</label>
+            {/* Body */}
+            <div className="px-5 py-5 flex flex-col gap-4">
+              {/* Fecha */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider">Fecha</label>
                 <input
                   type="date"
                   value={pagoFecha}
                   onChange={(e) => setPagoFecha(e.target.value)}
-                  className="mt-1 w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-slate-400"
+                  className="px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-md outline-none focus:border-slate-400 transition-colors"
                 />
               </div>
-              <div>
-                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Medio de pago</label>
-                <div className="mt-1 grid grid-cols-3 gap-2">
+              {/* Monto */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider">Monto</label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">$</span>
+                    <input
+                      type="number"
+                      value={pagoMonto}
+                      onChange={(e) => setPagoMonto(e.target.value)}
+                      placeholder="0"
+                      className="w-full pl-7 pr-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-md outline-none focus:border-slate-400 transition-colors"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPagoMonto(String(Math.round(montoRestante)))}
+                    className="px-3 py-2 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-md transition-colors border border-slate-200 shrink-0"
+                  >
+                    Total
+                  </button>
+                </div>
+                <p className="text-[11px] text-slate-400 tabular-nums">Restante: ${Math.round(montoRestante).toLocaleString("es-AR")}</p>
+              </div>
+              {/* Medio de pago */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider">Medio de pago</label>
+                <div className="flex gap-2">
                   {(["efectivo", "posnet", "transferencia"] as const).map((m) => (
                     <button
                       key={m}
                       type="button"
                       onClick={() => setPagoMedio(m)}
-                      className={`py-2 text-xs font-medium rounded-lg border transition-colors ${pagoMedio === m ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"}`}
+                      className={`flex-1 py-2 text-xs font-medium rounded-md border transition-colors capitalize ${
+                        pagoMedio === m
+                          ? "bg-slate-900 text-white border-slate-900"
+                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                      }`}
                     >
-                      {metodoPagoLabels[m]}
+                      {m.charAt(0).toUpperCase() + m.slice(1)}
                     </button>
                   ))}
                 </div>
               </div>
-              <div>
-                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Monto</label>
-                <div className="mt-1 flex items-center border border-slate-200 rounded-lg overflow-hidden focus-within:border-slate-400 transition-colors">
-                  <span className="px-3 py-2 text-sm text-slate-400 bg-slate-50 border-r border-slate-200">$</span>
-                  <input
-                    type="number"
-                    value={pagoMonto}
-                    onChange={(e) => setPagoMonto(e.target.value)}
-                    placeholder={String(Math.round(montoRestante))}
-                    className="flex-1 px-3 py-2 text-sm text-slate-800 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  />
-                </div>
-              </div>
             </div>
-            <div className="px-5 pb-5 flex gap-2 justify-end">
-              <button onClick={() => setShowRegistrarPago(false)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+            {/* Footer */}
+            <div className="px-5 pb-5 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowRegistrarPago(false)}
+                className="flex-1 py-2.5 text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors font-medium"
+              >
                 Cancelar
               </button>
               <button
+                type="button"
                 onClick={handleConfirmPago}
                 disabled={!pagoMonto || Number(pagoMonto) <= 0}
-                className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-40"
+                className="flex-1 py-2.5 text-sm text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors font-medium disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                Confirmar
+                Registrar
               </button>
             </div>
           </div>
@@ -2521,6 +2565,10 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
           const received = itemRecepcionMap.get(item.sku) ?? 0
           return received < item.quantity
         })
+        const pendingUnits = pendingItems.reduce((sum, item) => {
+          const received = itemRecepcionMap.get(item.sku) ?? 0
+          return sum + Math.max(0, item.quantity - received)
+        }, 0)
         const hasPendingRecepcion = pendingItems.length > 0
         const hasPendingPago = montoRestante > 0
 
@@ -2564,8 +2612,8 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
                       </p>
                       <p className={`text-xs mt-0.5 ${hasPendingRecepcion ? "text-amber-700" : "text-emerald-700"}`}>
                         {hasPendingRecepcion
-                          ? `${pendingItems.length} producto${pendingItems.length !== 1 ? "s" : ""} sin recepcionar serán marcados como recepcionados`
-                          : "Todos los productos ya fueron recepcionados"}
+                          ? `${pendingUnits} unidad${pendingUnits !== 1 ? "es" : ""} sin recepcionar serán marcadas como recepcionadas`
+                          : "Todas las unidades ya fueron recepcionadas"}
                       </p>
                     </div>
                   </div>

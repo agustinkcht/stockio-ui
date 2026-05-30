@@ -2753,6 +2753,10 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
           const delivered = itemEntregaMap.get(item.sku) ?? 0
           return delivered < item.quantity
         })
+        const pendingUnits = pendingItems.reduce((sum, item) => {
+          const delivered = itemEntregaMap.get(item.sku) ?? 0
+          return sum + Math.max(0, item.quantity - delivered)
+        }, 0)
         const hasPendingEntrega = pendingItems.length > 0
         const hasPendingCobro = montoRestante > 0
 
@@ -2802,8 +2806,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       </p>
                       <p className={`text-xs mt-0.5 ${hasPendingEntrega ? "text-amber-700" : "text-emerald-700"}`}>
                         {hasPendingEntrega
-                          ? `${pendingItems.length} producto${pendingItems.length !== 1 ? "s" : ""} sin entregar serán marcados como entregados`
-                          : "Todos los productos ya fueron entregados"}
+                          ? `${pendingUnits} unidad${pendingUnits !== 1 ? "es" : ""} sin entregar serán marcadas como entregadas`
+                          : "Todas las unidades ya fueron entregadas"}
                       </p>
                     </div>
                   </div>

@@ -27,6 +27,8 @@ import {
 import type { Compra, CompraItem } from "@/lib/types"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import { useCompras } from "@/hooks/use-compras"
+import { useSettings } from "@/lib/contexts/settings-context"
+import { downloadComprasPDF } from "@/lib/utils/generate-compra-pdf"
 import {
   PERIOD_OPTIONS,
   usePeriod,
@@ -62,6 +64,12 @@ export default function ComprasPage() {
   const router = useRouter()
   const allCheckboxRef = useRef<HTMLInputElement>(null)
   const { compras } = useCompras()
+  const { miNegocio } = useSettings()
+  const handleBulkDownloadPDF = () => {
+    const selected = compras.filter(c => selectedCompras.has(c.id))
+    if (selected.length > 0) downloadComprasPDF(selected, miNegocio)
+  }
+  const handleRowDownloadPDF = (compra: Compra) => downloadComprasPDF([compra], miNegocio)
 
   const { periodKey, customRange, setPeriodKey, setCustomRange } = usePeriod()
   const [periodOpen, setPeriodOpen] = useState(false)
@@ -362,6 +370,7 @@ export default function ComprasPage() {
                         <div className="w-px h-5 bg-slate-200" />
                         <button
                           type="button"
+                          onClick={handleBulkDownloadPDF}
                           className="h-8 flex items-center gap-1.5 px-3 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-md hover:bg-slate-50 hover:border-slate-300 shadow-sm transition-colors"
                         >
                           <FileDown className="w-3.5 h-3.5 text-slate-400" />
@@ -593,7 +602,7 @@ export default function ComprasPage() {
                                 >
                                   <button
                                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
-                                    onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null) }}
+                                    onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); handleRowDownloadPDF(compra) }}
                                   >
                                     <FileDown className="w-4 h-4 text-slate-400" />
                                     Descargar PDF
