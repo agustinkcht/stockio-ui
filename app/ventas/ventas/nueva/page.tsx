@@ -1991,26 +1991,6 @@ export default function NuevaVentaPage() {
                   className="px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-md outline-none focus:border-slate-400 transition-colors"
                 />
               </div>
-              {/* Medio de pago */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] text-slate-400 uppercase tracking-wider">Medio de pago</label>
-                <div className="flex gap-2">
-                  {(["efectivo", "posnet", "transferencia"] as PaymentMethod[]).map((m) => (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => setCobroModalMedio(m)}
-                      className={`flex-1 py-2 text-xs font-medium rounded-md border transition-colors ${
-                        cobroModalMedio === m
-                          ? "bg-slate-900 text-white border-slate-900"
-                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-                      }`}
-                    >
-                      {medioPagoLabels[m]}
-                    </button>
-                  ))}
-                </div>
-              </div>
               {/* Monto */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-[10px] text-slate-400 uppercase tracking-wider">Monto</label>
@@ -2034,6 +2014,26 @@ export default function NuevaVentaPage() {
                   </button>
                 </div>
                 <p className="text-[11px] text-slate-400 tabular-nums">Total de la venta: ${Math.round(grandTotal).toLocaleString("es-AR")}</p>
+              </div>
+              {/* Medio de pago */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider">Medio de pago</label>
+                <div className="flex gap-2">
+                  {(["efectivo", "posnet", "transferencia"] as PaymentMethod[]).map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setCobroModalMedio(m)}
+                      className={`flex-1 py-2 text-xs font-medium rounded-md border transition-colors ${
+                        cobroModalMedio === m
+                          ? "bg-slate-900 text-white border-slate-900"
+                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                      }`}
+                    >
+                      {medioPagoLabels[m]}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
             {/* Footer */}
