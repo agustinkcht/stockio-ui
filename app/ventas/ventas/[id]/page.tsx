@@ -409,7 +409,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
         addCobro(venta.id, {
           fecha: new Date().toISOString().slice(0, 10),
           hora: new Date().toTimeString().slice(0, 5),
-          medioPago: "anulacion",
+          medioPago: "devolucion" as PaymentMethod,
           monto: -cobroConflictAmount,
         })
       }
@@ -1868,7 +1868,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                               {isAnulacion ? (
                                 <span className="text-xs text-red-400">Anulación de cobro</span>
                               ) : isNegative ? (
-                                <span className="text-xs text-red-400">Devolución</span>
+                                <span className="text-xs text-red-400">Devolución de dinero</span>
                               ) : (
                                 <span className="flex items-center gap-1 group/mp cursor-default">
                                   <span className="text-xs text-slate-500">{metodoPagoLabels[cobro.medioPago as PaymentMethod] ?? cobro.medioPago}</span>
