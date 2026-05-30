@@ -13,7 +13,15 @@ import { COMPRAS } from "@/lib/data/compras"
 import { useAccount } from "@/lib/contexts/account-context"
 
 // Bump when type or seed changes to force re-seeding
-const COMPRAS_SEED_VERSION = "v3"
+const COMPRAS_SEED_VERSION = "v4"
+
+// Map legacy estado values to current ones
+function normalizeEstado(estado: unknown): CompraEstado {
+  if (estado === "finalizada" || estado === "en_curso" || estado === "cancelada") return estado
+  if (estado === "completada") return "finalizada"
+  if (estado === "pendiente") return "en_curso"
+  return "en_curso"
+}
 
 function migrateCompra(raw: Partial<Compra> & Record<string, unknown>): Compra {
   return {
@@ -30,7 +38,7 @@ function migrateCompra(raw: Partial<Compra> & Record<string, unknown>): Compra {
     descuentoTipo: raw.descuentoTipo ?? "percent",
     envio: raw.envio ?? 0,
     customCharges: Array.isArray(raw.customCharges) ? raw.customCharges : [],
-    estado: (raw.estado as CompraEstado) ?? "en_curso",
+    estado: normalizeEstado(raw.estado),
   } as Compra
 }
 

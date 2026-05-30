@@ -114,9 +114,26 @@ export const COMPRAS: Compra[] = [
     comprador: "Admin",
     origen: "orden",
     ordenId: "ODC-2026-0041",
-    recepcionItems: [],
-    recepcionEntries: [],
-    pagos: [],
+    recepcionItems: [
+      { sku: "VNO-PROEMIO-GRAND-RES-MALB-2021", quantityRecepcionada: 30 },
+    ],
+    recepcionEntries: [
+      {
+        id: "COMP-002-REC-1",
+        fecha: "2026-05-21",
+        hora: "09:30",
+        items: [{ sku: "VNO-PROEMIO-GRAND-RES-MALB-2021", quantity: 30 }],
+      },
+    ],
+    pagos: [
+      {
+        id: "COMP-002-PAG-1",
+        fecha: "2026-05-20",
+        hora: "14:30",
+        medioPago: "transferencia",
+        monto: 1000000,
+      },
+    ],
     devolucionItems: [],
     devolucionEntries: [],
   },
@@ -308,8 +325,17 @@ export const COMPRAS: Compra[] = [
     estado: "en_curso",
     comprador: "Admin",
     origen: "manual",
-    recepcionItems: [],
-    recepcionEntries: [],
+    recepcionItems: [
+      { sku: "VOD-ABSOLUT-ORG-750", quantityRecepcionada: 24 },
+    ],
+    recepcionEntries: [
+      {
+        id: "COMP-006-REC-1",
+        fecha: "2026-05-06",
+        hora: "11:00",
+        items: [{ sku: "VOD-ABSOLUT-ORG-750", quantity: 24 }],
+      },
+    ],
     pagos: [],
     devolucionItems: [],
     devolucionEntries: [],

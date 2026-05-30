@@ -278,7 +278,7 @@ export default function ComprasPage() {
                           </div>
                         </button>
 
-                        {/* Widget 2 — Completadas */}
+                        {/* Widget 2 — Finalizadas */}
                         <button
                           type="button"
                           onClick={() => countCompletadas > 0 && setActiveTab("finalizada")}
@@ -289,11 +289,11 @@ export default function ComprasPage() {
                           </div>
                           <div className="flex items-baseline gap-1.5 min-w-0 flex-wrap">
                             <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{countCompletadas}</p>
-                            <p className="text-sm font-medium text-emerald-500 truncate">compras completadas</p>
+                            <p className="text-sm font-medium text-emerald-500 truncate">compras finalizadas</p>
                           </div>
                         </button>
 
-                        {/* Widget 3 — Pendientes */}
+                        {/* Widget 3 — En Curso */}
                         <button
                           type="button"
                           onClick={() => countPendientes > 0 && setActiveTab("en_curso")}
@@ -304,7 +304,7 @@ export default function ComprasPage() {
                           </div>
                           <div className="flex items-baseline gap-1.5 min-w-0 flex-wrap">
                             <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{countPendientes}</p>
-                            <p className="text-sm font-medium text-amber-500 truncate">compras pendientes</p>
+                            <p className="text-sm font-medium text-amber-500 truncate">compras en curso</p>
                           </div>
                         </button>
 
