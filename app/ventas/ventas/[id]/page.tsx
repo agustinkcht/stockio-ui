@@ -1911,7 +1911,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   </div>
                 </div>
                 </div>
-                </div>
               )}
 
               </div>{/* end grid grid-cols-3 */}
