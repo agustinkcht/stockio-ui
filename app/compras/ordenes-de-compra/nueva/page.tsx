@@ -139,7 +139,7 @@ export default function NuevaOrdenDeCompraPage() {
 
   // ── Modal derived ─────────────────────────────────────────
   const allModalItems = useMemo(
-    () => INITIAL_ITEMS.filter(item => proveedorNombre && proveedorNombre !== "Sin proveedor" ? item.proveedor === proveedorNombre : true),
+    () => INITIAL_ITEMS.filter(item => item.proveedor === proveedorNombre),
     [proveedorNombre]
   )
 
@@ -1370,7 +1370,11 @@ export default function NuevaOrdenDeCompraPage() {
             <div className="flex-1 overflow-y-auto bg-white">
               {filteredModalItems.length === 0 ? (
                 <div className="py-12 text-center">
-                  <p className="text-sm text-slate-500">No se encontraron productos{modalSearch ? ` para "${modalSearch}"` : ""}</p>
+                  <p className="text-sm text-slate-500">
+                    {allModalItems.length === 0
+                      ? `No hay productos registrados para ${proveedorNombre}`
+                      : `No se encontraron productos${modalSearch ? ` para "${modalSearch}"` : ""}`}
+                  </p>
                 </div>
               ) : (
                 filteredModalItems.map((item, idx) => {
