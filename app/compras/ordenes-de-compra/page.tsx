@@ -274,7 +274,7 @@ export default function OrdenesDeCompraPage() {
                         </div>
                         <button
                           type="button"
-                          onClick={() => setShowNuevaOrdenModal(true)}
+                          onClick={() => router.push("/compras/ordenes-de-compra/nueva")}
                           className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer mt-1"
                         >
                           <Plus className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
