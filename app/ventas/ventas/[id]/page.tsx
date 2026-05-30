@@ -33,7 +33,7 @@ import {
   ShoppingCart,
 } from "lucide-react"
 import Image from "next/image"
-import type { Venta, VentaItem, PaymentMethod, Item, ItemVariant, VentaEntregaItem, VentaEntregaEntry, VentaDevolucionItem } from "@/lib/types"
+import type { Venta, VentaItem, PaymentMethod, Item, ItemVariant, VentaEntregaItem, VentaEntregaEntry, VentaDevolucionItem, VentaDevolucionEntry } from "@/lib/types"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import { VentaItemDetailModal } from "@/components/ventas/venta-item-detail-modal"
@@ -230,6 +230,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const [finalizarMedioPago, setFinalizarMedioPago] = useState<PaymentMethod | "no_especificado">("no_especificado")
   const [entregaSelectedItems, setEntregaSelectedItems] = useState<{ [sku: string]: boolean }>({})
   const [viewingEntregaEntry, setViewingEntregaEntry] = useState<VentaEntregaEntry | null>(null)
+  const [viewingReingresoEntry, setViewingReingresoEntry] = useState<VentaEntregaEntry | null>(null)
+  const [viewingDevolucionEntry, setViewingDevolucionEntry] = useState<VentaDevolucionEntry | null>(null)
   const [undoCobroTarget, setUndoCobroTarget] = useState<{ id: string; monto: number } | null>(null)
   const [undoEntregaTarget, setUndoEntregaTarget] = useState<VentaEntregaEntry | null>(null)
   const [editarMedioPagoTarget, setEditarMedioPagoTarget] = useState<{ id: string; current: PaymentMethod } | null>(null)
@@ -989,12 +991,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                           )}
                           {estadoUI === "en_curso" && isEditMode && (
                             <div className="flex items-center gap-2">
-                              {hasAnyEditChanges && (
-                                <span className="flex items-center gap-1.5 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-1">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
-                                  Cambios sin guardar
-                                </span>
-                              )}
                               <div className="flex items-center rounded-md overflow-hidden border border-slate-200 shadow-sm">
                                 <button
                                   type="button"
@@ -1281,8 +1277,11 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             <div key={entry.id} className="flex items-center group border-b border-slate-100 last:border-0">
                               <button
                                 type="button"
-                                onClick={() => !isAnulacion && setViewingEntregaEntry(entry)}
-                                className={`flex-1 flex items-center gap-2 py-1.5 -ml-4 pl-4 pr-2 transition-colors text-left ${!isAnulacion ? "hover:bg-slate-50/60" : "cursor-default"}`}
+                                onClick={() => {
+                                  if (isAnulacion) setViewingReingresoEntry(entry)
+                                  else setViewingEntregaEntry(entry)
+                                }}
+                                className="flex-1 flex items-center gap-2 py-1.5 -ml-4 pl-4 pr-2 transition-colors text-left hover:bg-slate-50/60"
                               >
                                 <span className="text-xs text-slate-400 tabular-nums">{dateLabel}</span>
                                 <span className="text-xs text-slate-300">·</span>
@@ -1318,18 +1317,22 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     {ventaDevolucionEntries.length === 0 ? (
                       <p className="text-xs text-slate-400 py-1">Sin devoluciones registradas</p>
                     ) : (
-                      [...ventaDevolucionEntries].filter(e => e.items.length > 0).reverse().map((entry) => {
+                      [...ventaDevolucionEntries].filter(e => e.items.length > 0).map((entry) => {
                         const totalEntryUnits = entry.items.reduce((s, i) => s + i.quantity, 0)
                         const dateLabel = new Date(entry.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })
                         return (
                           <div key={entry.id} className="flex items-center border-b border-slate-100 last:border-0">
-                            <div className="flex-1 flex items-center gap-2 py-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setViewingDevolucionEntry(entry)}
+                              className="flex-1 flex items-center gap-2 py-1.5 -ml-4 pl-4 pr-2 transition-colors text-left hover:bg-slate-50/60"
+                            >
                               <span className="text-xs text-slate-400 tabular-nums">{dateLabel}</span>
                               <span className="text-xs text-slate-300">·</span>
                               <span className="text-xs text-red-400 tabular-nums">
                                 {totalEntryUnits} {totalEntryUnits === 1 ? "unidad" : "unidades"} devueltas
                               </span>
-                            </div>
+                            </button>
                           </div>
                         )
                       })
@@ -2184,7 +2187,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
               <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
                 <div>
                   <h3 className="text-base font-semibold text-slate-900">Detalle de entrega</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">{dateLabel} · {entry.hora}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{dateLabel}</p>
                 </div>
                 <button onClick={() => setViewingEntregaEntry(null)} className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
                   <X className="w-5 h-5" />
@@ -2218,6 +2221,116 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
               <div className="border-t border-slate-200 bg-slate-50 px-5 py-3 flex items-center justify-between">
                 <span className="text-xs text-slate-500">{totalUnits} {totalUnits === 1 ? "unidad entregada" : "unidades entregadas"}</span>
                 <button onClick={() => setViewingEntregaEntry(null)} className="px-4 py-1.5 text-sm text-slate-600 hover:text-slate-900 transition-colors">
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* ── Reingreso Entry Detail Modal ── */}
+      {viewingReingresoEntry && (() => {
+        const entry = viewingReingresoEntry
+        const dateLabel = new Date(entry.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "long", year: "numeric" })
+        const totalUnits = entry.items.reduce((s, i) => s + Math.abs(i.quantity), 0)
+        return (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setViewingReingresoEntry(null)} />
+            <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 flex flex-col overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-semibold text-slate-900">Detalle de reingreso</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">{dateLabel}</p>
+                </div>
+                <button onClick={() => setViewingReingresoEntry(null)} className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="flex flex-col divide-y divide-slate-100 overflow-y-auto max-h-80">
+                {entry.items.map((ei, idx) => {
+                  const qty = Math.abs(ei.quantity)
+                  const ventaItem = ventaItems.find(it => it.sku === ei.sku)
+                  const display = ventaItem ? getVentaItemDisplay(ventaItem) : null
+                  const name = display?.name ?? ei.sku
+                  return (
+                    <div key={idx} className="flex items-center justify-between px-5 py-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        {display && (
+                          <div className="w-8 h-8 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+                            <Image src={getCategoryImage(display.categoria || "") || "/placeholder.svg"} alt={name} width={32} height={32} className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                        <span className="text-sm text-slate-800 truncate">{name}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0 ml-3">
+                        <span className="text-sm font-semibold text-slate-900 tabular-nums">{qty}</span>
+                        <span className="text-xs text-slate-400">{qty === 1 ? "unidad" : "unidades"}</span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+              <div className="border-t border-slate-200 bg-slate-50 px-5 py-3 flex items-center justify-between">
+                <span className="text-xs text-slate-500">{totalUnits} {totalUnits === 1 ? "unidad reingresada" : "unidades reingresadas"}</span>
+                <button onClick={() => setViewingReingresoEntry(null)} className="px-4 py-1.5 text-sm text-slate-600 hover:text-slate-900 transition-colors">
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* ── Devolucion Entry Detail Modal ── */}
+      {viewingDevolucionEntry && (() => {
+        const entry = viewingDevolucionEntry
+        const dateLabel = new Date(entry.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "long", year: "numeric" })
+        const totalUnits = entry.items.reduce((s, i) => s + i.quantity, 0)
+        return (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setViewingDevolucionEntry(null)} />
+            <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 flex flex-col overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-semibold text-slate-900">Detalle de devolución</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">{dateLabel}</p>
+                </div>
+                <button onClick={() => setViewingDevolucionEntry(null)} className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="flex flex-col divide-y divide-slate-100 overflow-y-auto max-h-72">
+                {entry.items.map((ei, idx) => {
+                  const ventaItem = ventaItems.find(it => it.sku === ei.sku)
+                  const display = ventaItem ? getVentaItemDisplay(ventaItem) : null
+                  const name = display?.name ?? ei.sku
+                  return (
+                    <div key={idx} className="flex items-center justify-between px-5 py-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        {display && (
+                          <div className="w-8 h-8 rounded bg-slate-100 overflow-hidden flex-shrink-0">
+                            <Image src={getCategoryImage(display.categoria || "") || "/placeholder.svg"} alt={name} width={32} height={32} className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                        <span className="text-sm text-slate-800 truncate">{name}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0 ml-3">
+                        <span className="text-sm font-semibold text-slate-900 tabular-nums">{ei.quantity}</span>
+                        <span className="text-xs text-slate-400">{ei.quantity === 1 ? "unidad" : "unidades"}</span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+              <div className="border-t border-slate-200 bg-slate-50 px-5 py-3 flex items-center justify-between">
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-xs text-slate-500">{totalUnits} {totalUnits === 1 ? "unidad devuelta" : "unidades devueltas"}</span>
+                  {entry.montoDevuelto > 0 && (
+                    <span className="text-xs text-slate-400">Monto devuelto: <span className="font-medium text-slate-700">${entry.montoDevuelto.toLocaleString("es-AR")}</span></span>
+                  )}
+                </div>
+                <button onClick={() => setViewingDevolucionEntry(null)} className="px-4 py-1.5 text-sm text-slate-600 hover:text-slate-900 transition-colors">
                   Cerrar
                 </button>
               </div>
@@ -3102,9 +3215,14 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
         <div className="fixed inset-0 z-[300] flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40" />
           <div className="relative bg-white rounded-xl shadow-2xl w-[480px] overflow-hidden">
-            <div className="px-6 py-5 border-b border-slate-100">
-              <h2 className="text-sm font-semibold text-slate-900">Productos con entrega ya registrada</h2>
-              <p className="text-xs text-slate-500 mt-1">La nueva cantidad es menor a las unidades ya entregadas. ¿Qué hacemos con la diferencia?</p>
+            <div className="px-6 py-5 border-b border-slate-100 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-sm font-semibold text-slate-900">Productos con entrega ya registrada</h2>
+                <p className="text-xs text-slate-500 mt-1">La nueva cantidad es menor a las unidades ya entregadas. ¿Qué hacemos con la diferencia?</p>
+              </div>
+              <button onClick={() => setShowEntregaConflictModal(false)} className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors shrink-0">
+                <X className="w-4 h-4" />
+              </button>
             </div>
             <div className="px-6 py-4 flex flex-col gap-2">
               {entregaConflicts.map((c) => (
@@ -3145,11 +3263,16 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
         <div className="fixed inset-0 z-[300] flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40" />
           <div className="relative bg-white rounded-xl shadow-2xl w-[440px] overflow-hidden">
-            <div className="px-6 py-5 border-b border-slate-100">
-              <h2 className="text-sm font-semibold text-slate-900">Cobro mayor al nuevo total</h2>
-              <p className="text-xs text-slate-500 mt-1">
-                El monto ya cobrado (${Math.round(montoCobrado).toLocaleString("es-AR")}) supera el nuevo total (${Math.round(activeEditTotal).toLocaleString("es-AR")}). Hay un excedente de <strong>${cobroConflictAmount.toLocaleString("es-AR")}</strong>.
-              </p>
+            <div className="px-6 py-5 border-b border-slate-100 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-sm font-semibold text-slate-900">Cobro mayor al nuevo total</h2>
+                <p className="text-xs text-slate-500 mt-1">
+                  El monto ya cobrado (${Math.round(montoCobrado).toLocaleString("es-AR")}) supera el nuevo total (${Math.round(activeEditTotal).toLocaleString("es-AR")}). Hay un excedente de <strong>${cobroConflictAmount.toLocaleString("es-AR")}</strong>.
+                </p>
+              </div>
+              <button onClick={() => setShowCobroConflictModal(false)} className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors shrink-0">
+                <X className="w-4 h-4" />
+              </button>
             </div>
             <div className="px-6 py-5 flex flex-col gap-3">
               <button
