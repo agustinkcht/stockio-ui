@@ -932,11 +932,11 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                             <span className="text-xl font-bold text-slate-900 leading-none uppercase tracking-wide">Venta</span>
                             <span className="text-base font-medium text-slate-400 leading-none tabular-nums">{venta.id}</span>
                           </div>
-                          <div className="h-5 w-px bg-slate-300 shrink-0 mx-5" />
+                          <span className="h-5 w-px bg-slate-300 shrink-0 mx-5 inline-block" />
                           <span className="text-sm font-medium text-slate-600 tabular-nums shrink-0">
                             {dia} {mesCorto} {fechaObj.getFullYear()} · {venta.hora}
                           </span>
-                          <div className="h-5 w-px bg-slate-300 shrink-0 mx-5" />
+                          <span className="h-5 w-px bg-slate-300 shrink-0 mx-5 inline-block" />
                           <div className="flex items-center gap-2 shrink-0">
                             <span className="text-sm font-medium text-slate-500">
                               {venta.origen === "pdv" ? "Punto de venta" : venta.origen === "presupuesto" ? "Creada desde presupuesto" : "Creada manualmente"}
@@ -1910,6 +1910,8 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     )}
                   </div>
                 </div>
+                </div>
+                </div>{/* end col-span-1 */}
               )}
 
               </div>{/* end grid grid-cols-3 */}
