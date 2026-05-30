@@ -138,19 +138,22 @@ export default function NuevaOrdenDeCompraPage() {
   }, [proveedorSearch])
 
   // ── Modal derived ─────────────────────────────────────────
-  const allModalItems = INITIAL_ITEMS
+  const allModalItems = useMemo(
+    () => INITIAL_ITEMS.filter(item => proveedorNombre && proveedorNombre !== "Sin proveedor" ? item.proveedor === proveedorNombre : true),
+    [proveedorNombre]
+  )
 
   const uniqueModalCategorias = useMemo(() => {
     const cats = new Set<string>()
     allModalItems.forEach(item => { if (item.categoria) cats.add(item.categoria) })
     return Array.from(cats).sort()
-  }, [])
+  }, [allModalItems])
 
   const uniqueModalMarcas = useMemo(() => {
     const marcas = new Set<string>()
     allModalItems.forEach(item => { if (item.marca) marcas.add(item.marca) })
     return Array.from(marcas).sort()
-  }, [])
+  }, [allModalItems])
 
   const filteredModalItems = useMemo(() => {
     let items = [...allModalItems]
