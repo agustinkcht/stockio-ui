@@ -451,11 +451,6 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
     : 0
   const savedAdjTotal = savedGlobalDiscountAmount * -1 + (savedEnvio ?? 0) + savedCustomCharges.reduce((s, c) => s + c.value, 0)
 
-  const globalDiscountAmount = showGlobalDiscount
-    ? globalDiscount.type === "percent"
-      ? activeEditSubtotal * (globalDiscount.value / 100)
-      : globalDiscount.value
-    : 0
   const [entregaQuantities, setEntregaQuantities] = useState<{ [sku: string]: string }>({})
   const [selectedModalItems, setSelectedModalItems] = useState<{ [id: string]: boolean }>({})
   const [modalSearch, setModalSearch] = useState("")
@@ -555,6 +550,12 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   }, [editItems, editAjustes])
 
   const activeEditSubtotal = isEditMode ? editSubtotal : (venta?.subtotal ?? 0)
+
+  const globalDiscountAmount = showGlobalDiscount
+    ? globalDiscount.type === "percent"
+      ? activeEditSubtotal * (globalDiscount.value / 100)
+      : globalDiscount.value
+    : 0
 
   const activeEditGlobalDiscountAmount = showGlobalDiscount
     ? globalDiscount.type === "percent"
@@ -945,7 +946,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                               <button
                                 type="button"
                                 onClick={() => router.push(`/ventas/presupuestos/${(venta as any).presupuestoId}`)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-medium text-slate-600 transition-colors"
+                                className="text-sm font-medium text-slate-500 underline underline-offset-2 hover:text-slate-700 transition-colors"
                               >
                                 Ver presupuesto
                               </button>

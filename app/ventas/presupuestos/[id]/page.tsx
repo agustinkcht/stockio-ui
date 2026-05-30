@@ -771,12 +771,7 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
                       )}
                       {estado === "borrador" && isEditMode && (
                         <div className="flex items-center gap-2">
-                          {hasAnyEditChanges && (
-                            <span className="flex items-center gap-1.5 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
-                              Cambios sin guardar
-                            </span>
-                          )}
+
                           <div className="flex items-center rounded-md overflow-hidden border border-slate-200 shadow-sm">
                             <button
                               type="button"

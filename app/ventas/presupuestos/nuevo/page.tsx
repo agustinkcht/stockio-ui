@@ -569,7 +569,7 @@ export default function NuevoPresupuestoPage() {
                 <div className="mt-auto">
                   <button
                     onClick={() => router.push("/ventas/presupuestos")}
-                    className="text-xs text-gray-500 hover:text-gray-700 transition-colors cursor-pointer"
+                    className="px-4 py-2 text-xs font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
                   >
                     Cancelar
                   </button>

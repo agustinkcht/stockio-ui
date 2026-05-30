@@ -598,7 +598,7 @@ export default function VentasPage() {
                             <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); router.push(`/ventas/presupuestos/${(venta as any).presupuestoId}`) }}
-                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-medium text-slate-600 transition-colors shrink-0"
+                              className="text-xs font-medium text-slate-500 underline underline-offset-2 hover:text-slate-700 transition-colors shrink-0"
                             >
                               Ver presupuesto
                             </button>
