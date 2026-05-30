@@ -537,8 +537,8 @@ export default function ComprasPage() {
                               <span className="text-sm text-slate-600 shrink-0 capitalize">
                                 {compra.metodoPago === "transferencia" ? "Transferencia bancaria" :
                                  compra.metodoPago === "efectivo" ? "Efectivo" :
-                                 compra.metodoPago === "cheque" ? "Cheque" :
-                                 compra.metodoPago === "posnet" ? "Posnet" : compra.metodoPago}
+                                 compra.metodoPago === "posnet" ? "Posnet" :
+                                 compra.metodoPago === "anulacion" ? "Anulación" : "—"}
                               </span>
                             </div>
                             {/* Spacer */}
