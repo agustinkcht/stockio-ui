@@ -836,59 +836,59 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
                   </div>
 
                   {/* Row 3: Estado widget (left) + action widget (right) */}
-                  {!isEditMode && (
-                    <div className="grid grid-cols-2 gap-3 mt-4">
-                      {/* Estado widget */}
-                      {estado === "aceptado" && (
-                        <div className="bg-emerald-50 border border-emerald-200/60 rounded-lg shadow-sm px-5 py-4 flex items-center gap-3">
-                          <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
-                          <span className="text-lg font-bold text-emerald-700">Aceptado</span>
-                        </div>
-                      )}
+                  <div className="grid grid-cols-2 gap-3 mt-4">
+                    {/* Estado widget */}
+                    {estado === "aceptado" && (
+                      <div className="bg-emerald-50 border border-emerald-200/60 rounded-lg shadow-sm px-5 py-4 flex items-center gap-3">
+                        <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                        <span className="text-lg font-bold text-emerald-700">Aceptado</span>
+                      </div>
+                    )}
+                    {estado === "borrador" && (
+                      <div className="bg-slate-100 border border-slate-300/60 rounded-lg shadow-sm px-5 py-4 flex items-center gap-3">
+                        <Clock className="w-5 h-5 text-slate-400 shrink-0" />
+                        <span className="text-lg font-bold text-slate-600">Borrador</span>
+                      </div>
+                    )}
+                    {estado === "rechazado" && (
+                      <div className="bg-red-50 border border-red-200/60 rounded-lg shadow-sm px-5 py-4 flex items-center gap-3">
+                        <XCircle className="w-5 h-5 text-red-400 shrink-0" />
+                        <span className="text-lg font-bold text-red-600">Rechazado</span>
+                      </div>
+                    )}
+
+                    {/* Action widget */}
+                    <div className="bg-slate-50 border border-slate-200/60 rounded-lg shadow-sm px-4 py-4 flex items-center justify-center">
                       {estado === "borrador" && (
-                        <div className="bg-slate-100 border border-slate-300/60 rounded-lg shadow-sm px-5 py-4 flex items-center gap-3">
-                          <Clock className="w-5 h-5 text-slate-400 shrink-0" />
-                          <span className="text-lg font-bold text-slate-600">Borrador</span>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => !isEditMode && setShowAceptarModal(true)}
+                          disabled={isEditMode}
+                          className={`flex items-center gap-2.5 px-4 py-2 rounded-lg transition-colors group ${isEditMode ? "opacity-40 cursor-not-allowed" : "hover:bg-emerald-50 cursor-pointer"}`}
+                        >
+                          <CheckCircle2 className="w-5 h-5 text-emerald-500 group-hover:text-emerald-600 shrink-0" />
+                          <span className="text-sm font-semibold text-emerald-600 group-hover:text-emerald-700">Aceptar y llevar a ventas</span>
+                        </button>
+                      )}
+                      {estado === "aceptado" && ventaAsociada && (
+                        <button
+                          type="button"
+                          onClick={() => !isEditMode && router.push(`/ventas/ventas/${ventaAsociada.id}`)}
+                          disabled={isEditMode}
+                          className={`flex items-center gap-2.5 px-4 py-2 rounded-lg transition-colors group ${isEditMode ? "opacity-40 cursor-not-allowed" : "hover:bg-slate-100 cursor-pointer"}`}
+                        >
+                          <ExternalLink className="w-4 h-4 text-slate-500 group-hover:text-slate-700 shrink-0" />
+                          <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-800">Ver venta asociada</span>
+                        </button>
+                      )}
+                      {estado === "aceptado" && !ventaAsociada && (
+                        <span className="text-sm text-slate-400">Presupuesto aceptado</span>
                       )}
                       {estado === "rechazado" && (
-                        <div className="bg-red-50 border border-red-200/60 rounded-lg shadow-sm px-5 py-4 flex items-center gap-3">
-                          <XCircle className="w-5 h-5 text-red-400 shrink-0" />
-                          <span className="text-lg font-bold text-red-600">Rechazado</span>
-                        </div>
+                        <span className="text-sm text-slate-400">Este presupuesto fue rechazado</span>
                       )}
-
-                      {/* Action widget */}
-                      <div className="bg-slate-50 border border-slate-200/60 rounded-lg shadow-sm px-4 py-4 flex items-center justify-center">
-                        {estado === "borrador" && (
-                          <button
-                            type="button"
-                            onClick={() => setShowAceptarModal(true)}
-                            className="flex items-center gap-2.5 px-4 py-2 rounded-lg hover:bg-emerald-50 transition-colors cursor-pointer group"
-                          >
-                            <CheckCircle2 className="w-5 h-5 text-emerald-500 group-hover:text-emerald-600 shrink-0" />
-                            <span className="text-sm font-semibold text-emerald-600 group-hover:text-emerald-700">Aceptar y llevar a ventas</span>
-                          </button>
-                        )}
-                        {estado === "aceptado" && ventaAsociada && (
-                          <button
-                            type="button"
-                            onClick={() => router.push(`/ventas/ventas/${ventaAsociada.id}`)}
-                            className="flex items-center gap-2.5 px-4 py-2 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer group"
-                          >
-                            <ExternalLink className="w-4 h-4 text-slate-500 group-hover:text-slate-700 shrink-0" />
-                            <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-800">Ver venta asociada</span>
-                          </button>
-                        )}
-                        {estado === "aceptado" && !ventaAsociada && (
-                          <span className="text-sm text-slate-400">Presupuesto aceptado</span>
-                        )}
-                        {estado === "rechazado" && (
-                          <span className="text-sm text-slate-400">Este presupuesto fue rechazado</span>
-                        )}
-                      </div>
                     </div>
-                  )}
+                  </div>
 
                 </div>
 
@@ -1144,7 +1144,7 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
                 {/* ── Notas card ── */}
                 <NotasCard
                   value={presupuesto.observaciones ?? ""}
-                  readOnly={estado !== "borrador"}
+                  readOnly={false}
                   placeholder="Agregar una nota sobre este presupuesto..."
                   onSave={(v) => updatePresupuesto(presupuesto.id, { observaciones: v })}
                 />

@@ -606,15 +606,17 @@ export default function VentasPage() {
                         </div>
                         {/* Spacer */}
                         <div className="col-span-12" />
-                        {/* Descargar PDF */}
+                        {/* Cliente pill in top row */}
                         <div className="col-span-14 flex items-center justify-end pr-3 border-r border-slate-200/70">
                           <button
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); downloadVentasPDF([venta], miNegocio) }}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer"
+                            onClick={(e) => { e.stopPropagation(); if (venta.cliente.tipo === "cuenta") setViewingClienteId(venta.cliente.id) }}
+                            className="inline-flex items-center gap-1.5 pl-1.5 pr-3 py-1 rounded-full border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer shrink-0 shadow-sm"
                           >
-                            <FileDown className="w-3.5 h-3.5 text-slate-500" />
-                            <span className="text-xs font-medium text-slate-600">Descargar PDF</span>
+                            <div className="w-5 h-5 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
+                              <span className="text-[9px] font-bold text-white uppercase">{getClienteNombre(venta).charAt(0)}</span>
+                            </div>
+                            <span className="text-xs text-slate-700 whitespace-nowrap">{getClienteNombre(venta)}</span>
                           </button>
                         </div>
                         <div
@@ -691,22 +693,14 @@ export default function VentasPage() {
                           )}
                         </div>
 
-                        {/* Cliente pill — constrained width, right-aligned */}
+                        {/* Descargar PDF — moved to middle row */}
                         <button
                           type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            if (venta.cliente.tipo === "cuenta") setViewingClienteId(venta.cliente.id)
-                          }}
-                          className="inline-flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer shrink-0 shadow-sm max-w-xs"
+                          onClick={(e) => { e.stopPropagation(); downloadVentasPDF([venta], miNegocio) }}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer shrink-0 shadow-sm"
                         >
-                          <div className="w-6 h-6 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
-                            <span className="text-[10px] font-bold text-white uppercase">{getClienteNombre(venta).charAt(0)}</span>
-                          </div>
-                          <div className="flex flex-col leading-none text-left">
-                            <span className="text-[9px] text-slate-400 uppercase tracking-wider mb-0.5">Cliente</span>
-                            <span className="text-sm text-slate-800 whitespace-nowrap">{getClienteNombre(venta)}</span>
-                          </div>
+                          <FileDown className="w-3.5 h-3.5 text-slate-500" />
+                          <span className="text-xs font-medium text-slate-600">Descargar PDF</span>
                         </button>
                       </div>
 
