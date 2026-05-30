@@ -635,12 +635,26 @@ export default function ComprasPage() {
                                 <EstadoIcon className={`w-3.5 h-3.5 ${estadoStyle.text}`} />
                                 <span className={`text-sm font-medium ${estadoStyle.text}`}>{estadoStyle.label}</span>
                               </div>
-                              {compra.estado === "en_curso" && (
-                                <div className="flex items-center gap-1 text-[11px] font-light text-slate-400">
-                                  <span>•</span>
-                                  <span>En curso</span>
-                                </div>
-                              )}
+                              {compra.estado === "en_curso" && (() => {
+                                const totalQty = compra.items.reduce((s, it) => s + it.quantity, 0)
+                                const receivedQty = (compra.recepcionItems ?? []).reduce((s, ri) => s + ri.quantityRecepcionada, 0)
+                                const totalPagado = (compra.pagos ?? []).reduce((s, p) => s + p.monto, 0)
+                                const recepcionPendiente = receivedQty < totalQty
+                                const pagoPendiente = totalPagado < compra.total
+                                const labels: string[] = []
+                                if (recepcionPendiente) labels.push("Recepción pendiente")
+                                if (pagoPendiente) labels.push("Pago pendiente")
+                                if (labels.length === 0) return null
+                                return (
+                                  <div className="flex items-center gap-1.5">
+                                    {labels.map((lbl, i) => (
+                                      <span key={i} className="text-[11px] text-slate-400 font-light">
+                                        {i > 0 && <span className="mr-1.5">·</span>}{lbl}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )
+                              })()}
                             </div>
                           </div>
 

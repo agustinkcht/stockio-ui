@@ -152,9 +152,25 @@ export default function NuevaCompraPage() {
   const [pagoModalMedio, setPagoModalMedio] = useState<PaymentMethod>("efectivo")
   const [pagoModalFecha, setPagoModalFecha] = useState(getTodayDateStr())
 
-  // Step 4: Costo diff
+  // Step 4: Costo diff — per-item selection (Set of SKUs to update)
   const [costoDiffs, setCostoDiffs] = useState<Array<{ sku: string; name: string; tags: string[]; savedCosto: number; newCosto: number }>>([])
-  const [actualizarCostos, setActualizarCostos] = useState(false)
+  const [selectedCostoSkus, setSelectedCostoSkus] = useState<Set<string>>(new Set())
+
+  // Derived: all selected = select-all checkbox state
+  const allCostosSelected = costoDiffs.length > 0 && costoDiffs.every(d => selectedCostoSkus.has(d.sku))
+  const someCostosSelected = costoDiffs.some(d => selectedCostoSkus.has(d.sku))
+
+  const toggleAllCostos = (checked: boolean) => {
+    setSelectedCostoSkus(checked ? new Set(costoDiffs.map(d => d.sku)) : new Set())
+  }
+  const toggleOneCosto = (sku: string, checked: boolean) => {
+    setSelectedCostoSkus(prev => {
+      const next = new Set(prev)
+      if (checked) next.add(sku)
+      else next.delete(sku)
+      return next
+    })
+  }
 
   // Creation state
   const [isCreating, setIsCreating] = useState(false)
@@ -390,7 +406,7 @@ export default function NuevaCompraPage() {
       }
     }
     setCostoDiffs(diffs)
-    setActualizarCostos(false)
+    setSelectedCostoSkus(new Set())
   }
 
   const goToConfirmacion = () => {
@@ -1481,36 +1497,58 @@ export default function NuevaCompraPage() {
                       {/* Costo diff section */}
                       {costoDiffs.length > 0 && (
                         <div className="border border-amber-200 rounded-xl overflow-hidden">
+                          {/* Header alert */}
                           <div className="flex items-start gap-3 px-4 py-3 bg-amber-50">
                             <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-amber-800">
-                                {costoDiffs.length} {costoDiffs.length === 1 ? "producto tiene" : "productos tienen"} un costo distinto al guardado.
-                              </p>
-                            </div>
+                            <p className="text-sm font-medium text-amber-800">
+                              {costoDiffs.length} {costoDiffs.length === 1 ? "producto tiene" : "productos tienen"} un costo distinto al guardado.
+                            </p>
                           </div>
 
-                          <div className="px-4 py-3 bg-white border-t border-amber-100">
-                            <label className="flex items-center gap-2 cursor-pointer select-none mb-3">
-                              <input
-                                type="checkbox"
-                                checked={actualizarCostos}
-                                onChange={(e) => setActualizarCostos(e.target.checked)}
-                                className="w-4 h-4 rounded border-slate-300 accent-slate-900 cursor-pointer"
-                              />
-                              <span className="text-sm font-medium text-slate-700">Actualizar costos en lista de precios</span>
-                            </label>
-
-                            {/* Diffs table */}
-                            <div className="border border-slate-200 rounded-lg overflow-hidden">
-                              <div className="grid grid-cols-[1fr_auto_auto] h-8 text-[10px] font-semibold text-slate-500 uppercase tracking-wider bg-slate-50 border-b border-slate-200">
-                                <div className="flex items-center px-4">Item</div>
-                                <div className="flex items-center justify-end px-4 whitespace-nowrap">Costo guardado</div>
-                                <div className="flex items-center justify-end px-4 whitespace-nowrap">Nuevo costo</div>
+                          {/* Table with per-row checkboxes */}
+                          <div className="bg-white border-t border-amber-100">
+                            {/* Table header — select-all + column labels */}
+                            <div className="grid grid-cols-[36px_1fr_auto_auto] h-9 text-[10px] font-semibold text-slate-500 uppercase tracking-wider bg-slate-50 border-b border-slate-200">
+                              <div className="flex items-center justify-center">
+                                <input
+                                  type="checkbox"
+                                  checked={allCostosSelected}
+                                  ref={(el) => { if (el) el.indeterminate = someCostosSelected && !allCostosSelected }}
+                                  onChange={(e) => toggleAllCostos(e.target.checked)}
+                                  className="w-[14px] h-[14px] rounded border-slate-300 accent-slate-900 cursor-pointer"
+                                  title="Actualizar costos en lista de precios"
+                                />
                               </div>
-                              {costoDiffs.map((diff) => (
-                                <div key={diff.sku} className="grid grid-cols-[1fr_auto_auto] border-b border-slate-100 last:border-b-0 py-2.5">
-                                  <div className="flex items-center gap-1.5 px-4 min-w-0">
+                              <div className="flex items-center px-3 gap-1.5">
+                                <span>Actualizar costos en lista de precios</span>
+                                {someCostosSelected && (
+                                  <span className="normal-case text-[10px] font-normal text-slate-400">
+                                    ({selectedCostoSkus.size} seleccionado{selectedCostoSkus.size !== 1 ? "s" : ""})
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center justify-end px-4 whitespace-nowrap">Costo guardado</div>
+                              <div className="flex items-center justify-end px-4 whitespace-nowrap">Nuevo costo</div>
+                            </div>
+
+                            {/* Rows */}
+                            {costoDiffs.map((diff) => {
+                              const isChecked = selectedCostoSkus.has(diff.sku)
+                              return (
+                                <div
+                                  key={diff.sku}
+                                  className={`grid grid-cols-[36px_1fr_auto_auto] border-b border-slate-100 last:border-b-0 py-2.5 cursor-pointer transition-colors ${isChecked ? "bg-slate-50/70" : "hover:bg-slate-50/40"}`}
+                                  onClick={() => toggleOneCosto(diff.sku, !isChecked)}
+                                >
+                                  <div className="flex items-center justify-center">
+                                    <input
+                                      type="checkbox"
+                                      checked={isChecked}
+                                      onChange={(e) => { e.stopPropagation(); toggleOneCosto(diff.sku, e.target.checked) }}
+                                      className="w-[14px] h-[14px] rounded border-slate-300 accent-slate-900 cursor-pointer"
+                                    />
+                                  </div>
+                                  <div className="flex items-center gap-1.5 px-3 min-w-0">
                                     <p className="text-sm font-medium text-slate-700 truncate">{diff.name}</p>
                                     {diff.tags.map((tag, ti) => (
                                       <span key={ti} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 whitespace-nowrap">{tag}</span>
@@ -1525,8 +1563,8 @@ export default function NuevaCompraPage() {
                                     </span>
                                   </div>
                                 </div>
-                              ))}
-                            </div>
+                              )
+                            })}
                           </div>
                         </div>
                       )}
