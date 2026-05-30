@@ -11,7 +11,7 @@ export function useCompras() {
   const { currentAccount } = useAccount()
 
   const getStorageKey = useCallback(() => {
-    return `stockio_compras_${currentAccount || "default"}_v2`
+    return `stockio_compras_${currentAccount || "default"}_v3`
   }, [currentAccount])
 
   // Load compras from localStorage on mount

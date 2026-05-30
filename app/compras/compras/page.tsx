@@ -162,13 +162,6 @@ export default function ComprasPage() {
 
   const breadcrumbs = [{ label: "Compras" }, { label: "Compras", href: "/compras/compras" }]
 
-  const tabs: { id: StatusTab; label: string; count?: number }[] = [
-    { id: "todas",      label: "Todas",        count: compras.length },
-    { id: "completada", label: "Completadas",  count: compras.filter(c => c.estado === "completada").length },
-    { id: "pendiente",  label: "Pendientes",   count: compras.filter(c => c.estado === "pendiente").length },
-    { id: "cancelada",  label: "Canceladas",   count: compras.filter(c => c.estado === "cancelada").length },
-  ]
-
   return (
     <div className="min-h-screen bg-[rgb(243,242,238)]">
       <div className="px-[6px] py-[6px] flex gap-[6px] h-screen" onClick={handleCloseDropdowns}>
@@ -462,29 +455,6 @@ export default function ComprasPage() {
                     </div>
                   </div>
 
-                  {/* Tabs */}
-                  <div className="flex items-center gap-1 mb-3">
-                    {tabs.map(tab => (
-                      <button
-                        key={tab.id}
-                        type="button"
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
-                          activeTab === tab.id
-                            ? "bg-slate-900 text-white"
-                            : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
-                        }`}
-                      >
-                        {tab.label}
-                        {tab.count !== undefined && (
-                          <span className={`text-[10px] tabular-nums ${activeTab === tab.id ? "text-white/70" : "text-slate-400"}`}>
-                            {tab.count}
-                          </span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-
                   {/* Rows */}
                   <div className="flex flex-col gap-2">
                     {filteredCompras.length === 0 && (
@@ -498,12 +468,56 @@ export default function ComprasPage() {
                       const isSelected = selectedCompras.has(compra.id)
                       const isMulti = compra.items.length > 1
                       const firstItem: CompraItem | undefined = compra.items[0]
+                      const lastItemIdx = compra.items.length - 1
+                      const totalUnits = compra.items.reduce((sum, it) => sum + it.quantity, 0)
+
+                      // Price cell helper (same logic as ventas, no "unit" discount type for compras)
+                      const PrecioCell = ({ item, className = "" }: { item: CompraItem; className?: string }) => {
+                        const hasDiscount = item.discount > 0
+                        const adjustedUnit = hasDiscount && item.discountType === "percent"
+                          ? item.unitPrice * (1 - item.discount / 100)
+                          : hasDiscount && item.discountType === "fixed"
+                          ? Math.max(0, item.unitPrice - item.discount)
+                          : item.unitPrice
+                        return (
+                          <div className={`flex flex-col justify-center gap-0 ${className}`}>
+                            {hasDiscount ? (
+                              <>
+                                <div className="flex items-center gap-1">
+                                  <span className="text-[10px] text-slate-400 line-through tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
+                                  <span className="text-[10px] font-semibold text-red-500">
+                                    {item.discountType === "percent" ? `-${item.discount}%` : `-$${item.discount.toLocaleString("es-AR")}`}
+                                  </span>
+                                </div>
+                                <div className="flex items-baseline gap-1">
+                                  <span className="text-xs font-medium text-slate-800 tabular-nums">${Math.round(adjustedUnit).toLocaleString("es-AR")}</span>
+                                  <span className="text-[10px] text-slate-400">c/u</span>
+                                </div>
+                              </>
+                            ) : (
+                              <div className="flex items-baseline gap-1">
+                                <span className="text-xs text-slate-700 tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
+                                <span className="text-[10px] text-slate-400">c/u</span>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      }
+
+                      // Qty cell helper
+                      const QtyCell = ({ item, className = "" }: { item: CompraItem; className?: string }) => (
+                        <div className={`flex flex-col justify-center gap-0 ${className}`}>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-xs text-slate-700 tabular-nums">{item.quantity}</span>
+                            <span className="text-[10px] text-slate-400">{item.quantity === 1 ? "unidad" : "unidades"}</span>
+                          </div>
+                        </div>
+                      )
 
                       return (
                         <div
                           key={compra.id}
-                          onClick={() => router.push(`/compras/compras/${compra.id}`)}
-                          className={`bg-white border rounded-md shadow-sm transition-colors cursor-pointer ${
+                          className={`bg-white border rounded-md shadow-sm transition-colors cursor-default ${
                             isSelected
                               ? "border-blue-300 bg-blue-50/40"
                               : "border-slate-200/60 hover:border-slate-300"
@@ -511,8 +525,9 @@ export default function ComprasPage() {
                         >
                           {/* TOP ROW */}
                           <div className="grid grid-cols-100 min-h-[44px] py-2 border-b border-slate-200/70">
+                            {/* Checkbox */}
                             <div
-                              className="col-span-4 flex items-center justify-center border-r border-slate-200/70"
+                              className="col-span-4 flex items-center justify-center border-r border-slate-200/70 cursor-pointer"
                               onClick={(e) => { e.stopPropagation(); toggleSelectCompra(compra.id) }}
                             >
                               <input
@@ -532,14 +547,20 @@ export default function ComprasPage() {
                                 {formatCompraDateTime(compra.fecha, compra.hora)}
                               </span>
                             </div>
-                            {/* Origen / método de pago */}
+                            {/* Origen */}
                             <div className="col-span-42 flex items-center justify-start px-3 gap-2">
-                              <span className="text-sm text-slate-600 shrink-0 capitalize">
-                                {compra.metodoPago === "transferencia" ? "Transferencia bancaria" :
-                                 compra.metodoPago === "efectivo" ? "Efectivo" :
-                                 compra.metodoPago === "posnet" ? "Posnet" :
-                                 compra.metodoPago === "anulacion" ? "Anulación" : "—"}
+                              <span className="text-sm text-slate-600 shrink-0">
+                                {compra.origen === "orden" ? "Creada desde orden" : "Creada manualmente"}
                               </span>
+                              {compra.origen === "orden" && compra.ordenId && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); router.push(`/compras/ordenes-de-compra/${compra.ordenId}`) }}
+                                  className="text-xs font-medium text-slate-500 underline underline-offset-2 hover:text-slate-700 transition-colors shrink-0"
+                                >
+                                  Ver orden
+                                </button>
+                              )}
                             </div>
                             {/* Spacer */}
                             <div className="col-span-12" />
@@ -578,29 +599,44 @@ export default function ComprasPage() {
                                   </button>
                                   <button
                                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
-                                    onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); router.push(`/compras/compras/${compra.id}`) }}
+                                    onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); router.push(`/compras/compras/nueva?duplicar=${compra.id}`) }}
                                   >
                                     <Copy className="w-4 h-4 text-slate-400" />
                                     Duplicar compra
                                   </button>
+                                  {(compra.estado === "completada" || compra.estado === "pendiente") && (
+                                    <button
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors text-left"
+                                      onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null) }}
+                                    >
+                                      <XCircle className="w-4 h-4 text-red-400" />
+                                      Cancelar compra
+                                    </button>
+                                  )}
                                 </div>
                               )}
                             </div>
                           </div>
 
-                          {/* MIDDLE ROW — estado badge */}
-                          <div className="flex items-center gap-3 py-1.5" style={{ paddingLeft: "calc(4% + 12px)", paddingRight: "calc(4% + 12px)" }}>
-                            <div className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full shrink-0 ${estadoStyle.bg}`}>
-                              <EstadoIcon className={`w-3.5 h-3.5 ${estadoStyle.text}`} />
-                              <span className={`text-sm font-medium ${estadoStyle.text}`}>{estadoStyle.label}</span>
+                          {/* MIDDLE ROW */}
+                          <div className="flex items-center justify-between gap-3 py-1.5" style={{ paddingLeft: "calc(4% + 12px)", paddingRight: "calc(4% + 12px)" }}>
+                            <div className="flex items-center gap-3">
+                              <div className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full shrink-0 ${estadoStyle.bg}`}>
+                                <EstadoIcon className={`w-3.5 h-3.5 ${estadoStyle.text}`} />
+                                <span className={`text-sm font-medium ${estadoStyle.text}`}>{estadoStyle.label}</span>
+                              </div>
+                              {compra.estado === "pendiente" && (
+                                <div className="flex items-center gap-1 text-[11px] font-light text-slate-400">
+                                  <span>•</span>
+                                  <span>Pago pendiente</span>
+                                </div>
+                              )}
                             </div>
                           </div>
 
-                          {/* BOTTOM ROW — items */}
+                          {/* BOTTOM ROW */}
                           {(() => {
                             const isExpanded = expandedCompras.has(compra.id) && isMulti
-                            const totalUnits = compra.items.reduce((sum, it) => sum + it.quantity, 0)
-
                             return (
                               <div className="grid grid-cols-100 pt-1 pb-2" onClick={(e) => e.stopPropagation()}>
                                 <div className="col-span-4" />
@@ -610,116 +646,90 @@ export default function ComprasPage() {
                                   {isMulti && (
                                     <button
                                       onClick={(e) => { e.stopPropagation(); toggleExpandCompra(compra.id) }}
-                                      className="p-0.5 rounded hover:bg-slate-200 transition-colors shrink-0"
+                                      className="p-0.5 rounded hover:bg-slate-200 text-slate-500 transition-colors shrink-0"
+                                      aria-label={isExpanded ? "Colapsar productos" : "Expandir productos"}
                                     >
-                                      <ChevronRight className={`w-3.5 h-3.5 text-slate-500 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
+                                      {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                                     </button>
                                   )}
-                                  {firstItem && (
-                                    <img
-                                      src={getCategoryImage(firstItem.categoria ?? "") ?? "/placeholder.svg"}
-                                      alt=""
-                                      className="w-8 h-8 rounded object-cover shrink-0"
-                                    />
-                                  )}
-                                  <div className="min-w-0 flex-1">
-                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                      <span className="text-sm font-medium text-slate-800 truncate">{firstItem?.name ?? "—"}</span>
-                                    </div>
-                                    {firstItem?.categoria && (
-                                      <div className="flex items-center gap-1 mt-0.5 text-xs text-slate-500 truncate">
-                                        <span>{firstItem.categoria}</span>
+
+                                  {isMulti ? (
+                                    <>
+                                      <div className="flex items-center -space-x-2 shrink-0">
+                                        {compra.items.slice(0, 3).map((it, idx) => (
+                                          <div
+                                            key={`${compra.id}-thumb-${idx}`}
+                                            className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden shadow-sm"
+                                            style={{ zIndex: 10 - idx }}
+                                          >
+                                            <img src={getCategoryImage(it.categoria ?? "") || "/placeholder.svg"} alt={it.categoria || "Producto"} className="w-5 h-5 object-contain opacity-70" />
+                                          </div>
+                                        ))}
                                       </div>
-                                    )}
-                                  </div>
+                                      <span className="text-sm font-semibold text-slate-800 truncate">{compra.items.length} productos</span>
+                                    </>
+                                  ) : firstItem ? (
+                                    <div className="flex items-center gap-3 min-w-0 text-left">
+                                      <div className="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                                        <img src={getCategoryImage(firstItem.categoria ?? "") || "/placeholder.svg"} alt={firstItem.categoria || "Producto"} className="w-5 h-5 object-contain opacity-70" />
+                                      </div>
+                                      <div className="min-w-0 flex flex-col">
+                                        <span className="text-sm font-medium text-slate-800 truncate">{firstItem.name}</span>
+                                        {firstItem.categoria && (
+                                          <span className="text-xs text-slate-500 truncate">{firstItem.categoria}</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ) : null}
                                 </div>
 
                                 {/* Unidades */}
-                                <div className="col-span-20 bg-slate-50 px-3 py-2.5 flex items-center">
-                                  <div className="flex flex-col justify-center gap-0">
+                                <div className="col-span-20 bg-slate-50 flex items-center px-3">
+                                  {!isMulti && firstItem ? (
+                                    <QtyCell item={firstItem} />
+                                  ) : (
                                     <div className="flex items-baseline gap-1">
-                                      <span className="text-xs text-slate-700 tabular-nums">{firstItem?.quantity ?? 0}</span>
-                                      <span className="text-[10px] text-slate-400">{(firstItem?.quantity ?? 0) === 1 ? "unidad" : "unidades"}</span>
-                                    </div>
-                                    {isMulti && !isExpanded && (
-                                      <span className="text-[10px] text-slate-400 leading-tight">{totalUnits} total</span>
-                                    )}
-                                  </div>
-                                </div>
-
-                                {/* Precio unitario */}
-                                <div className="col-span-16 bg-slate-50 px-3 py-2.5 flex items-center">
-                                  {firstItem && (
-                                    <div className="flex flex-col justify-center gap-0">
-                                      {firstItem.discount > 0 ? (
-                                        <>
-                                          <div className="flex items-center gap-1">
-                                            <span className="text-[10px] text-slate-400 line-through tabular-nums">${firstItem.unitPrice.toLocaleString("es-AR")}</span>
-                                            <span className="text-[10px] font-semibold text-red-500">
-                                              {firstItem.discountType === "percent" ? `-${firstItem.discount}%` : `-$${firstItem.discount.toLocaleString("es-AR")}`}
-                                            </span>
-                                          </div>
-                                          <div className="flex items-baseline gap-1">
-                                            <span className="text-xs font-medium text-slate-800 tabular-nums">
-                                              ${Math.round(firstItem.unitPrice * (1 - (firstItem.discountType === "percent" ? firstItem.discount / 100 : 0))).toLocaleString("es-AR")}
-                                            </span>
-                                            <span className="text-[10px] text-slate-400">c/u</span>
-                                          </div>
-                                        </>
-                                      ) : (
-                                        <div className="flex items-baseline gap-1">
-                                          <span className="text-xs text-slate-700 tabular-nums">${firstItem.unitPrice.toLocaleString("es-AR")}</span>
-                                          <span className="text-[10px] text-slate-400">c/u</span>
-                                        </div>
-                                      )}
+                                      <span className="text-sm text-slate-700 tabular-nums">{totalUnits}</span>
+                                      <span className="text-xs text-slate-400">{totalUnits === 1 ? "unidad" : "unidades"}</span>
                                     </div>
                                   )}
                                 </div>
 
-                                {/* Total */}
-                                <div className="col-span-24 bg-slate-50 rounded-r-md px-3 py-2.5 flex items-center justify-end">
-                                  <div className="flex flex-col items-end gap-0">
-                                    <div className="flex items-baseline gap-1">
-                                      <span className="text-[10px] text-slate-400">{isMulti && !isExpanded ? "Total:" : "Total:"}</span>
-                                      <span className="text-sm font-semibold text-slate-900 tabular-nums">
-                                        ${compra.total.toLocaleString("es-AR")}
-                                      </span>
-                                    </div>
-                                  </div>
+                                {/* Precio unitario */}
+                                <div className="col-span-16 bg-slate-50 flex items-center px-3">
+                                  {!isMulti && firstItem && <PrecioCell item={firstItem} />}
                                 </div>
 
+                                {/* Total */}
+                                <div className={`col-span-24 bg-slate-50 ${isExpanded ? "rounded-tr-md" : "rounded-r-md"} flex items-center px-3`}>
+                                  <span className="text-sm font-semibold text-slate-800">Total: ${compra.total.toLocaleString("es-AR")}</span>
+                                </div>
                                 <div className="col-span-4" />
 
-                                {/* Expanded rows */}
-                                {isExpanded && compra.items.slice(1).map((item, idx) => {
-                                  const isLast = idx === compra.items.length - 2
+                                {/* Expanded item rows */}
+                                {isExpanded && compra.items.map((item, idx) => {
+                                  const isLast = idx === lastItemIdx
                                   return (
-                                    <Fragment key={item.sku + idx}>
+                                    <Fragment key={`${compra.id}-exp-${idx}`}>
                                       <div className="col-span-4" />
-                                      <div className={`col-span-32 bg-slate-50 border-t border-slate-200/60 ${isLast ? "rounded-bl-md" : ""} py-2.5 pl-8 pr-2 flex items-center gap-2`}>
-                                        <img
-                                          src={getCategoryImage(item.categoria ?? "") ?? "/placeholder.svg"}
-                                          alt=""
-                                          className="w-8 h-8 rounded object-cover shrink-0"
-                                        />
-                                        <div className="min-w-0 flex-1">
-                                          <span className="text-sm font-medium text-slate-800 truncate block">{item.name}</span>
-                                          {item.categoria && (
-                                            <span className="text-xs text-slate-500">{item.categoria}</span>
-                                          )}
+                                      <div className={`col-span-32 bg-slate-50 border-t border-slate-200/60 ${isLast ? "rounded-bl-md" : ""}`}>
+                                        <div className="w-full px-3 py-2 flex items-start gap-3 text-left">
+                                          <div className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                                            <img src={getCategoryImage(item.categoria ?? "") || "/placeholder.svg"} alt={item.categoria || "Producto"} className="w-4 h-4 object-contain opacity-70" />
+                                          </div>
+                                          <div className="min-w-0 flex flex-col">
+                                            <span className="text-sm font-medium text-slate-800 truncate">{item.name}</span>
+                                            {item.categoria && (
+                                              <span className="text-xs text-slate-500 truncate">{item.categoria}</span>
+                                            )}
+                                          </div>
                                         </div>
                                       </div>
                                       <div className="col-span-20 bg-slate-50 px-3 py-2 border-t border-slate-200/60 flex items-center">
-                                        <div className="flex items-baseline gap-1">
-                                          <span className="text-xs text-slate-700 tabular-nums">{item.quantity}</span>
-                                          <span className="text-[10px] text-slate-400">{item.quantity === 1 ? "unidad" : "unidades"}</span>
-                                        </div>
+                                        <QtyCell item={item} />
                                       </div>
                                       <div className="col-span-16 bg-slate-50 px-3 py-2 border-t border-slate-200/60 flex items-center">
-                                        <div className="flex items-baseline gap-1">
-                                          <span className="text-xs text-slate-700 tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
-                                          <span className="text-[10px] text-slate-400">c/u</span>
-                                        </div>
+                                        <PrecioCell item={item} />
                                       </div>
                                       <div className={`col-span-24 bg-slate-50 border-t border-slate-200/60 ${isLast ? "rounded-br-md" : ""}`} />
                                       <div className="col-span-4" />

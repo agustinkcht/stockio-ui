@@ -307,6 +307,8 @@ export interface Compra {
   estado: "completada" | "pendiente" | "cancelada"
   comprador: string
   observaciones?: string
+  origen?: "manual" | "orden"
+  ordenId?: string
 }
 
 // ===== CAJA (Cash Register) =====
