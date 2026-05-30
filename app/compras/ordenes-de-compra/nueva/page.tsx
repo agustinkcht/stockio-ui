@@ -173,7 +173,7 @@ export default function NuevaOrdenDeCompraPage() {
       return a.name.localeCompare(b.name) * dir
     })
     return items
-  }, [modalSearch, modalFilters, modalSort, modalSortDirection])
+  }, [allModalItems, modalSearch, modalFilters, modalSort, modalSortDirection])
 
   const getModalItemId = (item: any): string => item.id || item.sku || item.name || ""
 
