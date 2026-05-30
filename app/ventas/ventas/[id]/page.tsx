@@ -451,7 +451,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
 
   const globalDiscountAmount = showGlobalDiscount
     ? globalDiscount.type === "percent"
-      ? (venta?.subtotal ?? 0) * (globalDiscount.value / 100)
+      ? activeEditSubtotal * (globalDiscount.value / 100)
       : globalDiscount.value
     : 0
   const [entregaQuantities, setEntregaQuantities] = useState<{ [sku: string]: string }>({})
@@ -794,7 +794,23 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
     }
 
     if (newVentaItems.length > 0) {
-      addItemsToVenta(venta.id, newVentaItems)
+      if (isEditMode) {
+        // In edit mode, append to editItems — save will persist everything at once
+        setEditItems(prev => {
+          const merged = [...prev]
+          for (const ni of newVentaItems) {
+            const existing = merged.findIndex(e => e.sku === ni.sku)
+            if (existing >= 0) {
+              merged[existing] = { ...merged[existing], quantity: merged[existing].quantity + 1 }
+            } else {
+              merged.push(ni)
+            }
+          }
+          return merged
+        })
+      } else {
+        addItemsToVenta(venta.id, newVentaItems)
+      }
     }
     closeAgregarProductos()
   }
@@ -1624,7 +1640,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
               {/* ── Notas card ── */}
               <NotasCard
                 value={venta.observaciones ?? ""}
-                readOnly={estadoUI !== "en_curso"}
+                readOnly={false}
                 placeholder="Agregar una nota sobre esta venta..."
                 onSave={(v) => updateVenta(venta.id, { observaciones: v })}
               />
@@ -1650,24 +1666,28 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                       className="flex items-center py-3 border-b border-slate-100 text-left hover:bg-slate-50/50 transition-colors -mx-5 px-5 w-[calc(100%+2.5rem)]"
                     >
                       <span className="text-sm text-slate-500 flex-1">Productos</span>
-                      <span className="text-sm text-slate-700 tabular-nums mr-1.5">${Math.round(venta.subtotal).toLocaleString("es-AR")}</span>
+                      <span className="text-sm text-slate-700 tabular-nums mr-1.5">${Math.round(activeEditSubtotal).toLocaleString("es-AR")}</span>
                       <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${showSubtotalBreakdown ? "rotate-180" : ""}`} />
                     </button>
                     {showSubtotalBreakdown && (
                       <div>
-                        {ventaItems.map((item, idx) => {
+                        {(isEditMode ? editItems : ventaItems).map((item, idx) => {
                           const display = getVentaItemDisplay(item)
-                          const paidQty = item.discountType === "unit"
-                            ? Math.max(0, item.quantity - Math.min(item.discount, item.quantity))
-                            : item.quantity
-                          const adjustedUnit = item.discountType === "percent"
-                            ? item.unitPrice * (1 - item.discount / 100)
-                            : item.discountType === "unit"
-                            ? item.unitPrice
-                            : item.unitPrice - (item.discount / Math.max(item.quantity, 1))
-                          const lineTotal = item.discountType === "unit"
-                            ? Math.round(adjustedUnit * paidQty)
-                            : Math.round(adjustedUnit * item.quantity)
+                          let lineTotal: number
+                          if (isEditMode) {
+                            const aj = editAjustes[idx] ?? { value: 0, type: "percent" as const }
+                            if (aj.value > 0) {
+                              if (aj.type === "unit") lineTotal = Math.max(0, item.quantity - Math.min(aj.value, item.quantity)) * item.unitPrice
+                              else if (aj.type === "percent") lineTotal = item.quantity * item.unitPrice * (1 - aj.value / 100)
+                              else lineTotal = item.quantity * Math.max(0, item.unitPrice - aj.value)
+                            } else {
+                              lineTotal = item.quantity * item.unitPrice
+                            }
+                          } else {
+                            const paidQty = item.discountType === "unit" ? Math.max(0, item.quantity - Math.min(item.discount, item.quantity)) : item.quantity
+                            const adjUnit = item.discountType === "percent" ? item.unitPrice * (1 - item.discount / 100) : item.discountType === "unit" ? item.unitPrice : item.unitPrice - (item.discount / Math.max(item.quantity, 1))
+                            lineTotal = item.discountType === "unit" ? Math.round(adjUnit * paidQty) : Math.round(adjUnit * item.quantity)
+                          }
                           return (
                             <div key={idx} className="flex justify-between items-start gap-3 py-2.5 -mx-5 px-5">
                               <div className="min-w-0 flex-1">
@@ -1678,17 +1698,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                                   ))}
                                 </div>
                               </div>
-                              <div className="text-right shrink-0">
-                                {item.discountType === "unit" && item.discount > 0 ? (
-                                  <>
-                                    <p className="text-[10px] text-emerald-600">{Math.min(item.discount, item.quantity)} bonificadas</p>
-                                    <p className="text-[11px] text-slate-400 tabular-nums">{paidQty} × ${Math.round(adjustedUnit).toLocaleString("es-AR")}</p>
-                                  </>
-                                ) : (
-                                  <p className="text-[11px] text-slate-400 tabular-nums">{item.quantity} × ${Math.round(adjustedUnit).toLocaleString("es-AR")}</p>
-                                )}
-                                <p className="text-xs font-medium text-slate-700 tabular-nums">${lineTotal.toLocaleString("es-AR")}</p>
-                              </div>
+                              <p className="text-xs font-medium text-slate-700 tabular-nums shrink-0">${Math.round(lineTotal).toLocaleString("es-AR")}</p>
                             </div>
                           )
                         })}
@@ -1820,11 +1830,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                     <div className="flex justify-between items-center py-3 mt-1">
                       <span className="text-base font-bold text-slate-900">Total</span>
                       <span className="text-base font-bold text-slate-900 tabular-nums">
-                        ${Math.round(
-                          isEditMode
-                            ? venta.subtotal - globalDiscountAmount + envioAmount + customCharges.reduce((s, c) => s + c.value, 0)
-                            : venta.total
-                        ).toLocaleString("es-AR")}
+                        ${Math.round(isEditMode ? activeEditTotal : venta.total).toLocaleString("es-AR")}
                       </span>
                     </div>
                   </div>
@@ -2977,6 +2983,174 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                 className="px-5 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Agregar seleccionados
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Price / Discount per-item modal ── */}
+      {discountModalIdx !== null && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setDiscountModalIdx(null)} />
+          <div className="relative bg-white rounded-xl shadow-2xl w-[380px] overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <h2 className="text-sm font-semibold text-slate-900">Editar precio y descuento</h2>
+              <button onClick={() => setDiscountModalIdx(null)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="px-5 py-5 flex flex-col gap-4">
+              {/* Precio unitario */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] text-slate-400 uppercase tracking-wider">Precio unitario</label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-slate-500">$</span>
+                  <input
+                    type="number"
+                    value={modalPrice}
+                    onChange={(e) => setModalPrice(e.target.value)}
+                    className="flex-1 px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-md outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                </div>
+              </div>
+              {/* Toggle descuento */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowModalDescuento(!showModalDescuento)}
+                  className={`text-xs px-3 py-1 rounded-full border transition-colors ${showModalDescuento ? "bg-slate-900 text-white border-slate-900" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}
+                >
+                  {showModalDescuento ? "Quitar descuento" : "Agregar descuento"}
+                </button>
+              </div>
+              {showModalDescuento && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] text-slate-400 uppercase tracking-wider">Descuento</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      value={modalAjuste.value || ""}
+                      placeholder="0"
+                      onChange={(e) => setModalAjuste(prev => ({ ...prev, value: parseFloat(e.target.value) || 0 }))}
+                      className="flex-1 px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-md outline-none focus:border-slate-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                    <div className="flex border border-slate-200 rounded-md overflow-hidden">
+                      {(["percent", "cash", "unit"] as const).map(t => (
+                        <button
+                          key={t}
+                          onClick={() => setModalAjuste(prev => ({ ...prev, type: t }))}
+                          className={`px-3 py-2 text-xs cursor-pointer transition-colors ${modalAjuste.type === t ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"}`}
+                        >
+                          {t === "percent" ? "%" : t === "cash" ? "$" : "Bon."}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-slate-400">{modalAjuste.type === "unit" ? "Unidades bonificadas (no se cobran)" : modalAjuste.type === "percent" ? "% de descuento sobre el precio unitario" : "Descuento fijo en $ por unidad"}</p>
+                </div>
+              )}
+            </div>
+            <div className="px-5 pb-5 flex gap-3">
+              <button
+                onClick={() => setDiscountModalIdx(null)}
+                className="flex-1 py-2.5 text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors font-medium"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  const idx = discountModalIdx!
+                  const newPrice = parseFloat(modalPrice) || editItems[idx]?.unitPrice || 0
+                  setEditItems(prev => prev.map((it, i) => i === idx ? { ...it, unitPrice: newPrice } : it))
+                  if (showModalDescuento && modalAjuste.value > 0) {
+                    setEditAjustes(prev => ({ ...prev, [idx]: { ...modalAjuste } }))
+                  } else {
+                    setEditAjustes(prev => ({ ...prev, [idx]: { value: 0, type: "percent" } }))
+                  }
+                  setDiscountModalIdx(null)
+                }}
+                className="flex-1 py-2.5 text-sm text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors font-medium"
+              >
+                Aplicar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Entrega Conflict Modal ── */}
+      {showEntregaConflictModal && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="relative bg-white rounded-xl shadow-2xl w-[480px] overflow-hidden">
+            <div className="px-6 py-5 border-b border-slate-100">
+              <h2 className="text-sm font-semibold text-slate-900">Productos con entrega ya registrada</h2>
+              <p className="text-xs text-slate-500 mt-1">La nueva cantidad es menor a las unidades ya entregadas. ¿Qué hacemos con la diferencia?</p>
+            </div>
+            <div className="px-6 py-4 flex flex-col gap-2">
+              {entregaConflicts.map((c) => (
+                <div key={c.sku} className="flex items-center justify-between py-2 border-b border-slate-50">
+                  <div>
+                    <p className="text-sm font-medium text-slate-800">{c.name}</p>
+                    <p className="text-xs text-slate-400">Entregadas: {c.delivered} · Nueva cantidad: {c.newQty} · Exceso: {c.excess}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="px-6 py-5 flex flex-col gap-3">
+              <button
+                onClick={() => {
+                  setShowEntregaConflictModal(false)
+                  checkCobroConflict("reingresar")
+                }}
+                className="w-full py-2.5 text-sm bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors font-medium"
+              >
+                Reingresar al stock ({entregaConflicts.reduce((s, c) => s + c.excess, 0)} unidades)
+              </button>
+              <button
+                onClick={() => {
+                  setShowEntregaConflictModal(false)
+                  checkCobroConflict("no_hacer_nada")
+                }}
+                className="w-full py-2.5 text-sm bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium"
+              >
+                No hacer nada (dejar entrega como está)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Cobro Conflict Modal ── */}
+      {showCobroConflictModal && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="relative bg-white rounded-xl shadow-2xl w-[440px] overflow-hidden">
+            <div className="px-6 py-5 border-b border-slate-100">
+              <h2 className="text-sm font-semibold text-slate-900">Cobro mayor al nuevo total</h2>
+              <p className="text-xs text-slate-500 mt-1">
+                El monto ya cobrado (${Math.round(montoCobrado).toLocaleString("es-AR")}) supera el nuevo total (${Math.round(activeEditTotal).toLocaleString("es-AR")}). Hay un excedente de <strong>${cobroConflictAmount.toLocaleString("es-AR")}</strong>.
+              </p>
+            </div>
+            <div className="px-6 py-5 flex flex-col gap-3">
+              <button
+                onClick={() => {
+                  setShowCobroConflictModal(false)
+                  doSave(pendingEntregaDecision, "devolver")
+                }}
+                className="w-full py-2.5 text-sm bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors font-medium"
+              >
+                Devolver excedente (${cobroConflictAmount.toLocaleString("es-AR")})
+              </button>
+              <button
+                onClick={() => {
+                  setShowCobroConflictModal(false)
+                  doSave(pendingEntregaDecision, "dejar_a_favor")
+                }}
+                className="w-full py-2.5 text-sm bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors font-medium"
+              >
+                Dejar como saldo a favor del cliente
               </button>
             </div>
           </div>
