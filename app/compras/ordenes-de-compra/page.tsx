@@ -26,9 +26,12 @@ import {
 
   Receipt,
 } from "lucide-react"
-import type { OrdenDeCompra, EstadoOrdenDeCompra } from "@/lib/types"
+import type { OrdenDeCompra, EstadoOrdenDeCompra, VentaItem } from "@/lib/types"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import { useOrdenesDeCompra } from "@/hooks/use-ordenes-de-compra"
+import { ProveedorModal } from "@/components/compras/proveedor-modal"
+import { VentaItemDetailModal } from "@/components/ventas/venta-item-detail-modal"
+import { PROVEEDORES } from "@/lib/data/proveedores"
 import { useCompras } from "@/hooks/use-compras"
 import { buildCompraFromOrden } from "@/lib/utils/orden-to-compra"
 import { useSettings } from "@/lib/contexts/settings-context"
@@ -103,6 +106,8 @@ export default function OrdenesDeCompraPage() {
   const hasActiveFilters = !!filterProveedor || filterEstados.length > 0
 
   const [expandedOrdenes, setExpandedOrdenes] = useState<Set<string>>(new Set())
+  const [viewingItem, setViewingItem] = useState<VentaItem | null>(null)
+  const [viewingProveedorId, setViewingProveedorId] = useState<string | null>(null)
 
   // Aceptar y llevar a compras modal (from list)
   const [aceptarTarget, setAceptarTarget] = useState<OrdenDeCompra | null>(null)
@@ -573,13 +578,25 @@ export default function OrdenesDeCompraPage() {
                             {/* Spacer */}
                             <div className="col-span-12" />
                             {/* Proveedor pill */}
-                            <div className="col-span-14 flex items-center justify-end pr-3 border-r border-slate-200/70">
-                              <div className="inline-flex items-center gap-1.5 pl-1.5 pr-3 py-1 rounded-full border border-slate-200 bg-slate-50 shadow-sm shrink-0">
-                                <div className="w-5 h-5 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
-                                  <span className="text-[9px] font-bold text-white uppercase">{orden.proveedorNombre.charAt(0)}</span>
-                                </div>
-                                <span className="text-xs text-slate-700 whitespace-nowrap">{orden.proveedorNombre}</span>
-                              </div>
+                            <div className="col-span-14 flex items-center justify-end pr-3 border-r border-slate-200/70" onClick={(e) => e.stopPropagation()}>
+                              {(() => {
+                                const prov = PROVEEDORES.find(p => {
+                                  const name = p.tipo === "empresa" ? p.razonSocial ?? "" : `${p.nombre} ${p.apellido}`.trim()
+                                  return name === orden.proveedorNombre
+                                })
+                                return (
+                                  <button
+                                    type="button"
+                                    onClick={() => prov && setViewingProveedorId(prov.id)}
+                                    className="inline-flex items-center gap-1.5 pl-1.5 pr-3 py-1 rounded-full border border-slate-200 bg-slate-50 shadow-sm shrink-0 hover:border-slate-300 hover:bg-slate-100 transition-colors cursor-pointer"
+                                  >
+                                    <div className="w-5 h-5 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
+                                      <span className="text-[9px] font-bold text-white uppercase">{orden.proveedorNombre.charAt(0)}</span>
+                                    </div>
+                                    <span className="text-xs text-slate-700 whitespace-nowrap">{orden.proveedorNombre}</span>
+                                  </button>
+                                )
+                              })()}
                             </div>
                             <div
                               className="col-span-4 flex items-center justify-center border-l border-slate-200/70 relative"
@@ -704,7 +721,10 @@ export default function OrdenesDeCompraPage() {
                                       <span className="text-sm font-semibold text-slate-800 truncate">{orden.items.length} productos</span>
                                     </>
                                   ) : firstItem ? (
-                                    <div className="flex items-center gap-3 min-w-0">
+                                    <div
+                                      className="flex items-center gap-3 min-w-0 rounded hover:bg-slate-100/70 transition-colors -m-0.5 p-0.5 cursor-pointer"
+                                      onClick={(e) => { e.stopPropagation(); setViewingItem(firstItem as unknown as VentaItem) }}
+                                    >
                                       <div className="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
                                         <img src={getCategoryImage(firstItem.categoria) || "/placeholder.svg"} alt={firstItem.categoria || "Producto"} className="w-5 h-5 object-contain opacity-70" />
                                       </div>
@@ -761,7 +781,10 @@ export default function OrdenesDeCompraPage() {
                                     <Fragment key={`${orden.id}-exp-${idx}`}>
                                       <div className="col-span-4" />
                                       <div className={`col-span-32 bg-slate-50 border-t border-slate-200/60 ${isLast ? "rounded-bl-md" : ""}`}>
-                                        <div className="w-full px-3 py-2 flex items-start gap-3">
+                                        <div
+                                          className="w-full px-3 py-2 flex items-start gap-3 rounded hover:bg-slate-100/70 transition-colors cursor-pointer"
+                                          onClick={(e) => { e.stopPropagation(); setViewingItem(item as unknown as VentaItem) }}
+                                        >
                                           <div className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
                                             <img src={getCategoryImage(item.categoria) || "/placeholder.svg"} alt={item.categoria || "Producto"} className="w-4 h-4 object-contain opacity-70" />
                                           </div>
@@ -958,6 +981,13 @@ export default function OrdenesDeCompraPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {viewingItem && (
+        <VentaItemDetailModal ventaItem={viewingItem} onClose={() => setViewingItem(null)} />
+      )}
+      {viewingProveedorId && (
+        <ProveedorModal proveedorId={viewingProveedorId} onClose={() => setViewingProveedorId(null)} />
       )}
     </div>
   )

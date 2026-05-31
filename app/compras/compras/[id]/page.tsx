@@ -51,6 +51,8 @@ import { useCompras } from "@/hooks/use-compras"
 import { useItems } from "@/hooks/use-items"
 import { useSettings } from "@/lib/contexts/settings-context"
 import { downloadComprasPDF } from "@/lib/utils/generate-compra-pdf"
+import { ProveedorModal } from "@/components/compras/proveedor-modal"
+import { VentaItemDetailModal } from "@/components/ventas/venta-item-detail-modal"
 
 const metodoPagoLabels: Record<PaymentMethod, string> = {
   efectivo: "Efectivo",
@@ -205,6 +207,8 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
 
   const [showMoreOptionsMenu, setShowMoreOptionsMenu] = useState(false)
   const [showProveedorSelectorModal, setShowProveedorSelectorModal] = useState(false)
+  const [showProveedorInfoModal, setShowProveedorInfoModal] = useState(false)
+  const [viewingItem, setViewingItem] = useState<CompraItem | null>(null)
   const [showCancelarCompraModal, setShowCancelarCompraModal] = useState(false)
   const [cancelarDevolverUnidades, setCancelarDevolverUnidades] = useState(true)
   const [cancelarDevolverPagos, setCancelarDevolverPagos] = useState(true)
@@ -805,8 +809,11 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
                             {/* Proveedor pill */}
                             <button
                               type="button"
-                              onClick={() => { if (isEditMode) setShowProveedorSelectorModal(true) }}
-                              className={`inline-flex items-center gap-3 pl-3 pr-5 py-2.5 rounded-2xl border bg-slate-50 shadow-sm transition-colors text-left ${isEditMode ? "hover:bg-slate-100 cursor-pointer border-slate-200" : "cursor-default border-slate-200/60"}`}
+                              onClick={() => {
+                                if (isEditMode) setShowProveedorSelectorModal(true)
+                                else setShowProveedorInfoModal(true)
+                              }}
+                              className={`inline-flex items-center gap-3 pl-3 pr-5 py-2.5 rounded-2xl border bg-slate-50 shadow-sm transition-colors text-left ${isEditMode ? "hover:bg-slate-100 cursor-pointer border-slate-200" : "hover:bg-slate-100 cursor-pointer border-slate-200/60"}`}
                             >
                               <div className="w-9 h-9 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
                                 <span className="text-sm font-bold text-white leading-none">{proveedorNombre.charAt(0).toUpperCase()}</span>
@@ -1355,7 +1362,10 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
                                       )
                                     })()
                                   ) : (
-                                    <div className="grid grid-cols-[50%_25%_25%] min-h-[56px]">
+                                    <div
+                                      className="grid grid-cols-[50%_25%_25%] min-h-[56px] hover:bg-slate-50/60 transition-colors cursor-pointer"
+                                      onClick={() => setViewingItem(item)}
+                                    >
                                       <div className="flex items-center gap-3 px-4 py-2 overflow-hidden">
                                         <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                                           <Image src={getCategoryImage(display.categoria || "") || "/placeholder.svg"} alt={item.name} width={32} height={32} className="object-cover" />
@@ -2920,6 +2930,16 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
         </div>
       )}
 
+      {viewingItem && (
+        <VentaItemDetailModal ventaItem={viewingItem as unknown as import("@/lib/types").VentaItem} onClose={() => setViewingItem(null)} />
+      )}
+      {showProveedorInfoModal && compra && (() => {
+        const prov = PROVEEDORES.find(p => {
+          const name = p.tipo === "empresa" ? p.razonSocial ?? "" : `${p.nombre} ${p.apellido}`.trim()
+          return name === compra.proveedorNombre
+        })
+        return prov ? <ProveedorModal proveedorId={prov.id} onClose={() => setShowProveedorInfoModal(false)} /> : null
+      })()}
     </div>
   )
 }

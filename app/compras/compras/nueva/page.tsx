@@ -786,6 +786,8 @@ export default function NuevaCompraPage() {
                           onClick={() => {
                             setProveedorId(null)
                             setProveedorSearch("")
+                            setSelectedItems([])
+                            setEditAjustes({})
                             setMaxUnlockedStep(1)
                           }}
                           className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors shrink-0 ml-1"
@@ -823,6 +825,10 @@ export default function NuevaCompraPage() {
                                 <button
                                   key={p.id}
                                   onClick={() => {
+                                    if (proveedorId && proveedorId !== p.id) {
+                                      setSelectedItems([])
+                                      setEditAjustes({})
+                                    }
                                     setProveedorId(p.id)
                                     setMaxUnlockedStep(s => Math.max(s, 2))
                                     setCurrentStep(2)

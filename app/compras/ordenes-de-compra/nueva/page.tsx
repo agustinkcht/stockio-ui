@@ -195,7 +195,7 @@ export default function NuevaOrdenDeCompraPage() {
     if (modalFilters.marca) items = items.filter(i => i.marca === modalFilters.marca)
     const dir = modalSortDirection === "asc" ? 1 : -1
     items.sort((a, b) => {
-      if (modalSort === "precio") return ((a.precio?.precioFinal || 0) - (b.precio?.precioFinal || 0)) * dir
+      if (modalSort === "precio") return ((a.precio?.costo || 0) - (b.precio?.costo || 0)) * dir
       if (modalSort === "stock") return (parseInt(a.stock?.disponible || "0") - parseInt(b.stock?.disponible || "0")) * dir
       return a.name.localeCompare(b.name) * dir
     })
@@ -276,7 +276,7 @@ export default function NuevaOrdenDeCompraPage() {
           const id = (variant as ItemVariant).id || `${item.skuPrefix}-${(variant as ItemVariant).skuSuffix}`
           if (!selectedModalItems[id]) continue
           const sku = `${item.skuPrefix}-${(variant as ItemVariant).skuSuffix}`
-          const unitPrice = (variant as ItemVariant).precio?.precioFinal || 0
+          const unitPrice = (variant as ItemVariant).precio?.costo || 0
           if (selectedItems.findIndex(it => it.sku === sku) >= 0) continue
           newItems.push({
             sku,
@@ -294,7 +294,7 @@ export default function NuevaOrdenDeCompraPage() {
         if (!selectedModalItems[id]) continue
         const sku = item.sku || id
         if (selectedItems.findIndex(it => it.sku === sku) >= 0) continue
-        const unitPrice = item.precio?.precioFinal || 0
+        const unitPrice = item.precio?.costo || 0
         newItems.push({
           sku,
           name: item.name,
@@ -560,6 +560,8 @@ export default function NuevaOrdenDeCompraPage() {
                           onClick={() => {
                             setProveedorId(null)
                             setProveedorSearch("")
+                            setSelectedItems([])
+                            setEditAjustes({})
                             setMaxUnlockedStep(1)
                           }}
                           className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors shrink-0 ml-1"
@@ -597,6 +599,10 @@ export default function NuevaOrdenDeCompraPage() {
                                 <button
                                   key={p.id}
                                   onClick={() => {
+                                    if (proveedorId && proveedorId !== p.id) {
+                                      setSelectedItems([])
+                                      setEditAjustes({})
+                                    }
                                     setProveedorId(p.id)
                                     setMaxUnlockedStep(s => Math.max(s, 2))
                                     setCurrentStep(2)
@@ -1443,7 +1449,7 @@ export default function NuevaOrdenDeCompraPage() {
                           })()}
                         </div>
                         <div className="flex items-center justify-end pr-6">
-                          {!isParent && <span className="text-sm font-medium text-slate-800">${(item.precio?.precioFinal || 0).toLocaleString("es-AR")}</span>}
+                          {!isParent && <span className="text-sm font-medium text-slate-800">${(item.precio?.costo || 0).toLocaleString("es-AR")}</span>}
                         </div>
                       </div>
 
@@ -1484,7 +1490,7 @@ export default function NuevaOrdenDeCompraPage() {
                               })()}
                             </div>
                             <div className="flex items-center justify-end pr-6">
-                              <span className="text-sm font-medium text-slate-800">${(variant.precio?.precioFinal || 0).toLocaleString("es-AR")}</span>
+                              <span className="text-sm font-medium text-slate-800">${(variant.precio?.costo || 0).toLocaleString("es-AR")}</span>
                             </div>
                           </div>
                         )

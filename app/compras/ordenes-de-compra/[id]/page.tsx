@@ -35,7 +35,9 @@ import type { OrdenDeCompra, OrdenDeCompraItem, Item, ItemVariant, EstadoOrdenDe
 import { getCategoryImage } from "@/lib/utils/category-images"
 import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import { VentaItemDetailModal } from "@/components/ventas/venta-item-detail-modal"
+import { ProveedorModal } from "@/components/compras/proveedor-modal"
 import { INITIAL_ITEMS } from "@/lib/data/initial-items"
+import { PROVEEDORES } from "@/lib/data/proveedores"
 import { useOrdenesDeCompra } from "@/hooks/use-ordenes-de-compra"
 import { useCompras } from "@/hooks/use-compras"
 import { useItems } from "@/hooks/use-items"
@@ -66,6 +68,7 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
   // Costo diffs for the aceptar modal
   const [costoDiffs, setCostoDiffs] = useState<Array<{ sku: string; name: string; tags: string[]; savedCosto: number; newCosto: number }>>([])
   const [selectedCostoSkus, setSelectedCostoSkus] = useState<Set<string>>(new Set())
+  const [showProveedorInfoModal, setShowProveedorInfoModal] = useState(false)
   const [showUnsavedModal, setShowUnsavedModal] = useState(false)
   const [pendingNavHref, setPendingNavHref] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
@@ -559,7 +562,11 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
 
                   {/* Row 2: Proveedor pill (read-only) + controls */}
                   <div className="flex items-center justify-between gap-3 mt-8">
-                    <div className="inline-flex items-center gap-3 pl-3 pr-5 py-2.5 rounded-2xl border bg-slate-50 shadow-sm border-slate-200/60">
+                    <button
+                      type="button"
+                      onClick={() => setShowProveedorInfoModal(true)}
+                      className="inline-flex items-center gap-3 pl-3 pr-5 py-2.5 rounded-2xl border bg-slate-50 shadow-sm border-slate-200/60 hover:bg-slate-100 transition-colors cursor-pointer"
+                    >
                       <div className="w-9 h-9 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
                         <span className="text-sm font-bold text-white leading-none">{proveedorNombre.charAt(0).toUpperCase()}</span>
                       </div>
@@ -567,7 +574,7 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
                         <span className="text-[10px] text-slate-400 uppercase tracking-wider leading-none mb-1">Proveedor</span>
                         <span className="text-sm font-bold text-slate-900 truncate max-w-[220px]">{proveedorNombre}</span>
                       </div>
-                    </div>
+                    </button>
 
                     {/* Edit controls + more options */}
                     <div className="flex items-center gap-2 shrink-0">
