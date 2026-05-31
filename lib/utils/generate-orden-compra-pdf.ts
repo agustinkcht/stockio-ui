@@ -162,7 +162,7 @@ export async function renderOrdenCompraPage(doc: jsPDF, orden: OrdenDeCompra, mi
     if (hasBonif) {
       doc.setFontSize(7)
       doc.setTextColor(22, 163, 74)
-      doc.text(`+${Math.min(item.discount!, item.quantity)} bonif.`, colQty + 6, y + 8.5, { align: "center" })
+      doc.text(`(${Math.min(item.discount!, item.quantity)} bonif.)`, colQty + 6, y + 8.5, { align: "center" })
     }
 
     if (isUnit && hasDiscount) {

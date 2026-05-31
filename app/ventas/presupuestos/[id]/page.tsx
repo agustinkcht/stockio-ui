@@ -889,7 +889,7 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
                           className={`flex items-center gap-2.5 px-4 py-2 rounded-lg transition-colors group ${isEditMode ? "opacity-40 cursor-not-allowed" : "hover:bg-slate-100 cursor-pointer"}`}
                         >
                           <ExternalLink className="w-4 h-4 text-slate-500 group-hover:text-slate-700 shrink-0" />
-                          <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-800">Ver venta asociada</span>
+                          <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-800">Ver venta relacionada</span>
                         </button>
                       )}
                       {estado === "aceptado" && !ventaAsociada && (

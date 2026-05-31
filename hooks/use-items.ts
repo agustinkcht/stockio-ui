@@ -806,6 +806,7 @@ export function useItems() {
   const adjustStock = (itemSku: string, delta: number, parentSku?: string) => {
     const storageKey = getStorageKey()
     const storedItems = localStorage.getItem(storageKey)
+    console.log("[v0] adjustStock called - sku:", itemSku, "delta:", delta, "storageKey:", storageKey, "hasItems:", !!storedItems)
     if (!storedItems) return
 
     const currentItems: Item[] = JSON.parse(storedItems)
@@ -846,8 +847,11 @@ export function useItems() {
     })
 
     if (updated) {
+      console.log("[v0] adjustStock - UPDATED stock for sku:", itemSku, "delta:", delta)
       localStorage.setItem(storageKey, JSON.stringify(updatedItems))
       setItems(updatedItems)
+    } else {
+      console.log("[v0] adjustStock - NO MATCH found for sku:", itemSku, "- items checked:", currentItems.length)
     }
   }
 

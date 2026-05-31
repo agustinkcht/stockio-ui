@@ -549,7 +549,10 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
       addRecepcion(compra.id, recepciones)
       // Update stock for received units
       for (const r of recepciones) {
-        if (r.quantityRecepcionada > 0) increaseStock(r.sku, r.quantityRecepcionada)
+        if (r.quantityRecepcionada > 0) {
+          console.log("[v0] handleConfirmRecepcion - increaseStock:", r.sku, r.quantityRecepcionada)
+          increaseStock(r.sku, r.quantityRecepcionada)
+        }
       }
     }
     setShowRegistrarRecepcion(false)

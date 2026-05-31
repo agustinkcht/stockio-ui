@@ -18,12 +18,11 @@ import {
   Clock,
   Search,
   Plus,
-
+  AlertTriangle,
   BarChart3,
   X,
   Copy,
   Trash2,
-
   Receipt,
 } from "lucide-react"
 import type { OrdenDeCompra, EstadoOrdenDeCompra, VentaItem } from "@/lib/types"
@@ -33,9 +32,11 @@ import { ProveedorModal } from "@/components/compras/proveedor-modal"
 import { VentaItemDetailModal } from "@/components/ventas/venta-item-detail-modal"
 import { PROVEEDORES } from "@/lib/data/proveedores"
 import { useCompras } from "@/hooks/use-compras"
+import { useItems } from "@/hooks/use-items"
 import { buildCompraFromOrden } from "@/lib/utils/orden-to-compra"
 import { useSettings } from "@/lib/contexts/settings-context"
 import { downloadOrdenCompraPDF } from "@/lib/utils/generate-orden-compra-pdf"
+import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import {
   PERIOD_OPTIONS,
   usePeriod,
@@ -74,6 +75,7 @@ export default function OrdenesDeCompraPage() {
   const allCheckboxRef = useRef<HTMLInputElement>(null)
   const { ordenes, deleteOrden, addOrden, updateOrden, getNextOrderNumber } = useOrdenesDeCompra()
   const { addCompra } = useCompras()
+  const { items } = useItems()
   const { miNegocio } = useSettings()
 
   const { periodKey, customRange, setPeriodKey, setCustomRange } = usePeriod()
@@ -111,12 +113,71 @@ export default function OrdenesDeCompraPage() {
 
   // Aceptar y llevar a compras modal (from list)
   const [aceptarTarget, setAceptarTarget] = useState<OrdenDeCompra | null>(null)
+  const [costoDiffs, setCostoDiffs] = useState<{ sku: string; name: string; tags: string[]; savedCosto: number; newCosto: number }[]>([])
+  const [selectedCostoSkus, setSelectedCostoSkus] = useState<Set<string>>(new Set())
 
   // Eliminar orden confirm modal
   const [eliminarTarget, setEliminarTarget] = useState<OrdenDeCompra | null>(null)
 
+  const computeCostoDiffs = (orden: OrdenDeCompra) => {
+    const diffs: { sku: string; name: string; tags: string[]; savedCosto: number; newCosto: number }[] = []
+    for (const item of orden.items) {
+      const newCosto = item.unitPrice
+      // find matching item in catalog
+      let savedCosto: number | null = null
+      for (const catalogItem of items) {
+        if (catalogItem.hasVariants && catalogItem.variants) {
+          for (const v of catalogItem.variants) {
+            const variantSku = `${catalogItem.skuPrefix}-${v.skuSuffix}`
+            if (variantSku === item.sku || v.sku === item.sku) {
+              savedCosto = v.precio?.costo ?? catalogItem.precio?.costo ?? null
+              break
+            }
+          }
+        } else if (catalogItem.sku === item.sku) {
+          savedCosto = catalogItem.precio?.costo ?? null
+        }
+        if (savedCosto !== null) break
+      }
+      if (savedCosto !== null && savedCosto !== newCosto) {
+        const display = getVentaItemDisplay(item)
+        diffs.push({ sku: item.sku, name: display.name, tags: display.tags, savedCosto, newCosto })
+      }
+    }
+    return diffs
+  }
+
+  const openAceptarModal = (orden: OrdenDeCompra) => {
+    const diffs = computeCostoDiffs(orden)
+    setCostoDiffs(diffs)
+    setSelectedCostoSkus(new Set(diffs.map(d => d.sku)))
+    setAceptarTarget(orden)
+  }
+
+  const allCostosSelected = costoDiffs.length > 0 && costoDiffs.every(d => selectedCostoSkus.has(d.sku))
+  const someCostosSelected = costoDiffs.some(d => selectedCostoSkus.has(d.sku))
+
+  const toggleAllCostos = (checked: boolean) => {
+    setSelectedCostoSkus(checked ? new Set(costoDiffs.map(d => d.sku)) : new Set())
+  }
+  const toggleOneCosto = (sku: string, checked: boolean) => {
+    setSelectedCostoSkus(prev => {
+      const next = new Set(prev)
+      if (checked) next.add(sku); else next.delete(sku)
+      return next
+    })
+  }
+
+  const { updatePricing } = useItems()
+
   const handleAceptarOrden = () => {
     if (!aceptarTarget) return
+    // Update pricing for selected skus
+    for (const diff of costoDiffs) {
+      if (selectedCostoSkus.has(diff.sku)) {
+        updatePricing(diff.sku, { costo: diff.newCosto })
+      }
+    }
     const now = new Date()
     const fecha = now.toISOString().slice(0, 10)
     const hora = now.toTimeString().slice(0, 5)
@@ -568,10 +629,10 @@ export default function OrdenesDeCompraPage() {
                               {orden.estado === "aceptada" && orden.compraId && (
                                 <button
                                   type="button"
-                                  onClick={(e) => { e.stopPropagation(); router.push(`/compras/${orden.compraId}`) }}
+                                  onClick={(e) => { e.stopPropagation(); router.push(`/compras/compras/${orden.compraId}`) }}
                                   className="text-sm text-slate-500 underline underline-offset-2 hover:text-slate-700 transition-colors cursor-pointer"
                                 >
-                                  Ver venta asociada
+                                  Ver compra relacionada
                                 </button>
                               )}
                             </div>
@@ -617,7 +678,7 @@ export default function OrdenesDeCompraPage() {
                                   {orden.estado === "borrador" && (
                                     <button
                                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-emerald-700 hover:bg-emerald-50 transition-colors text-left"
-                                      onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); setAceptarTarget(orden) }}
+                                      onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); openAceptarModal(orden) }}
                                     >
                                       <Receipt className="w-4 h-4 text-emerald-500" />
                                       Aceptar y llevar a compras
@@ -838,7 +899,7 @@ export default function OrdenesDeCompraPage() {
       {aceptarTarget && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setAceptarTarget(null)} />
-          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
             <div className="px-5 py-5 border-b border-slate-100">
               <div className="flex items-center gap-3 mb-1">
                 <div className="w-9 h-9 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
@@ -847,9 +908,81 @@ export default function OrdenesDeCompraPage() {
                 <h3 className="text-base font-semibold text-slate-900">Aceptar y llevar a compras</h3>
               </div>
               <p className="text-sm text-slate-500 mt-2 ml-12">
-                La orden <span className="font-semibold text-slate-800">{aceptarTarget.id}</span> se marcará como <span className="font-semibold text-emerald-700">aceptada</span> y se creará una nueva compra asociada a la misma.
+                La orden <span className="font-semibold text-slate-800">{aceptarTarget.id}</span> se marcará como <span className="font-semibold text-emerald-700">aceptada</span> y se creará una nueva compra asociada.
               </p>
             </div>
+
+            {/* Costo diffs section */}
+            {costoDiffs.length > 0 && (
+              <div className="px-5 pt-4">
+                <div className="border border-amber-200 rounded-xl overflow-hidden">
+                  <div className="flex items-start gap-3 px-4 py-3 bg-amber-50">
+                    <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+                    <p className="text-sm font-medium text-amber-800">
+                      {costoDiffs.length} {costoDiffs.length === 1 ? "producto tiene" : "productos tienen"} un costo distinto al guardado.
+                    </p>
+                  </div>
+                  <div className="bg-white border-t border-amber-100">
+                    <div className="grid grid-cols-[36px_1fr_auto_auto] h-9 text-[10px] font-semibold text-slate-500 uppercase tracking-wider bg-slate-50 border-b border-slate-200">
+                      <div className="flex items-center justify-center">
+                        <input
+                          type="checkbox"
+                          checked={allCostosSelected}
+                          ref={(el) => { if (el) el.indeterminate = someCostosSelected && !allCostosSelected }}
+                          onChange={(e) => toggleAllCostos(e.target.checked)}
+                          className="w-[14px] h-[14px] rounded border-slate-300 accent-slate-900 cursor-pointer"
+                          title="Actualizar costos"
+                        />
+                      </div>
+                      <div className="flex items-center px-3 gap-1.5">
+                        <span>Actualizar costos</span>
+                        {someCostosSelected && (
+                          <span className="normal-case text-[10px] font-normal text-slate-400">
+                            ({selectedCostoSkus.size} seleccionado{selectedCostoSkus.size !== 1 ? "s" : ""})
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-end px-4 whitespace-nowrap">Costo guardado</div>
+                      <div className="flex items-center justify-end px-4 whitespace-nowrap">Nuevo costo</div>
+                    </div>
+                    {costoDiffs.map((diff) => {
+                      const isChecked = selectedCostoSkus.has(diff.sku)
+                      return (
+                        <div
+                          key={diff.sku}
+                          className={`grid grid-cols-[36px_1fr_auto_auto] border-b border-slate-100 last:border-b-0 py-2.5 cursor-pointer transition-colors ${isChecked ? "bg-slate-50/70" : "hover:bg-slate-50/40"}`}
+                          onClick={() => toggleOneCosto(diff.sku, !isChecked)}
+                        >
+                          <div className="flex items-center justify-center">
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={(e) => { e.stopPropagation(); toggleOneCosto(diff.sku, e.target.checked) }}
+                              className="w-[14px] h-[14px] rounded border-slate-300 accent-slate-900 cursor-pointer"
+                            />
+                          </div>
+                          <div className="flex items-center gap-1.5 px-3 min-w-0">
+                            <p className="text-sm font-medium text-slate-700 truncate">{diff.name}</p>
+                            {diff.tags.map((tag, ti) => (
+                              <span key={ti} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 whitespace-nowrap">{tag}</span>
+                            ))}
+                          </div>
+                          <div className="flex items-center justify-end px-4">
+                            <span className="text-sm text-slate-400 tabular-nums">${diff.savedCosto.toLocaleString("es-AR")}</span>
+                          </div>
+                          <div className="flex items-center justify-end px-4">
+                            <span className={`text-sm font-semibold tabular-nums ${diff.newCosto > diff.savedCosto ? "text-amber-600" : "text-emerald-600"}`}>
+                              ${diff.newCosto.toLocaleString("es-AR")}
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="px-5 py-4 flex items-center justify-end gap-2">
               <button
                 onClick={() => setAceptarTarget(null)}
@@ -859,9 +992,9 @@ export default function OrdenesDeCompraPage() {
               </button>
               <button
                 onClick={handleAceptarOrden}
-                className="px-4 py-2 text-sm font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-700 transition-colors"
               >
-                Aceptar y crear compra
+                Aceptar y llevar a compras
               </button>
             </div>
           </div>

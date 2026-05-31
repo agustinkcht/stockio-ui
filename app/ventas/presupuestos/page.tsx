@@ -24,6 +24,7 @@ import {
   Copy,
   Receipt,
   Trash2,
+  ExternalLink,
 } from "lucide-react"
 import type { Presupuesto, VentaItem, EstadoPresupuesto } from "@/lib/types"
 import { getCategoryImage } from "@/lib/utils/category-images"
@@ -549,8 +550,19 @@ export default function PresupuestosPage() {
                                 {formatPresupuestoDateTime(presupuesto.fecha, presupuesto.hora)}
                               </span>
                             </div>
-                            {/* Spacer */}
-                            <div className="col-span-54" />
+                            {/* Ver venta relacionada */}
+                            <div className="col-span-54 flex items-center px-3">
+                              {presupuesto.estado === "aceptado" && presupuesto.ventaId && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); router.push(`/ventas/ventas/${presupuesto.ventaId}`) }}
+                                  className="flex items-center gap-1.5 text-sm text-slate-500 underline underline-offset-2 hover:text-slate-700 transition-colors cursor-pointer"
+                                >
+                                  <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                                  Ver venta relacionada
+                                </button>
+                              )}
+                            </div>
                             {/* Cliente pill in top row */}
                             <div className="col-span-14 flex items-center justify-end pr-3 border-r border-slate-200/70">
                               <button
