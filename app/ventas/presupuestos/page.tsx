@@ -74,7 +74,7 @@ export default function PresupuestosPage() {
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
   const router = useRouter()
   const allCheckboxRef = useRef<HTMLInputElement>(null)
-  const { presupuestos, deletePresupuesto, updatePresupuesto } = usePresupuestos()
+  const { presupuestos, deletePresupuesto, updatePresupuesto, updateEstado } = usePresupuestos()
   const { addVenta } = useVentaStockSync()
   const { miNegocio } = useSettings()
 
@@ -187,6 +187,8 @@ export default function PresupuestosPage() {
 
   // Aceptar target — shows confirm modal before creating venta
   const [aceptarTarget, setAceptarTarget] = useState<Presupuesto | null>(null)
+  const [eliminarTarget, setEliminarTarget] = useState<Presupuesto | null>(null)
+  const [rechazarTarget, setRechazarTarget] = useState<Presupuesto | null>(null)
 
   const handleAceptar = (p: Presupuesto) => {
     setAceptarTarget(p)
@@ -580,11 +582,20 @@ export default function PresupuestosPage() {
                                 >
                                   {presupuesto.estado === "borrador" && (
                                     <button
-                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-emerald-700 hover:bg-emerald-50 transition-colors text-left"
                                       onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); handleAceptar(presupuesto) }}
                                     >
-                                      <Receipt className="w-4 h-4 text-slate-400" />
+                                      <Receipt className="w-4 h-4 text-emerald-500" />
                                       Aceptar y llevar a ventas
+                                    </button>
+                                  )}
+                                  {presupuesto.estado === "borrador" && (
+                                    <button
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                                      onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); setRechazarTarget(presupuesto) }}
+                                    >
+                                      <XCircle className="w-4 h-4 text-slate-400" />
+                                      Marcar como rechazado
                                     </button>
                                   )}
                                   <button
@@ -604,14 +615,7 @@ export default function PresupuestosPage() {
                                   {presupuesto.estado === "borrador" && (
                                     <button
                                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors text-left"
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        setOpenMoreMenu(null)
-                                        deletePresupuesto(presupuesto.id)
-                                        setSelectedPresupuestos(prev => {
-                                          const next = new Set(prev); next.delete(presupuesto.id); return next
-                                        })
-                                      }}
+                                      onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); setEliminarTarget(presupuesto) }}
                                     >
                                       <Trash2 className="w-4 h-4 text-red-400" />
                                       Eliminar presupuesto
@@ -884,6 +888,76 @@ export default function PresupuestosPage() {
                 className="px-4 py-2 text-sm font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
               >
                 Aceptar y crear venta
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Marcar como rechazado Modal */}
+      {rechazarTarget && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setRechazarTarget(null)} />
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            <div className="px-5 py-5 border-b border-slate-100 flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center shrink-0">
+                  <XCircle className="w-4 h-4 text-red-500" />
+                </div>
+                <h3 className="text-base font-semibold text-slate-900">Marcar como rechazado</h3>
+              </div>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                {"El presupuesto "}
+                <span className="font-semibold text-slate-900">{rechazarTarget.id}</span>
+                {" se marcará como rechazado."}
+              </p>
+            </div>
+            <div className="px-5 py-4 flex gap-2 justify-end">
+              <button onClick={() => setRechazarTarget(null)} className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
+                Cancelar
+              </button>
+              <button
+                onClick={() => { updateEstado(rechazarTarget.id, "rechazado"); setRechazarTarget(null) }}
+                className="px-4 py-2 text-sm font-medium bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              >
+                Marcar como rechazado
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Eliminar Presupuesto Modal */}
+      {eliminarTarget && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setEliminarTarget(null)} />
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            <div className="px-5 py-5 border-b border-slate-100 flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center shrink-0">
+                  <Trash2 className="w-4 h-4 text-red-500" />
+                </div>
+                <h3 className="text-base font-semibold text-slate-900">Eliminar presupuesto</h3>
+              </div>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                {"¿Seguro que querés eliminar el presupuesto "}
+                <span className="font-semibold text-slate-900">{eliminarTarget.id}</span>
+                {"? Esta acción es irreversible."}
+              </p>
+            </div>
+            <div className="px-5 py-4 flex gap-2 justify-end">
+              <button onClick={() => setEliminarTarget(null)} className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  deletePresupuesto(eliminarTarget.id)
+                  setSelectedPresupuestos(prev => { const next = new Set(prev); next.delete(eliminarTarget.id); return next })
+                  setEliminarTarget(null)
+                }}
+                className="px-4 py-2 text-sm font-medium bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              >
+                Eliminar presupuesto
               </button>
             </div>
           </div>

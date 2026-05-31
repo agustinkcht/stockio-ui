@@ -176,14 +176,14 @@ export const ORDENES_DE_COMPRA: OrdenDeCompra[] = [
     importeEstimado: 1080000,
   },
 
-  // 6 — rechazada — Diageo
+  // 6 — borrador — Diageo
   {
     id: "ODC-6",
     numero: 6,
     fechaCreacion: "2026-04-15T15:33:00.000Z",
     proveedorId: "PROV-020",
     proveedorNombre: "Diageo",
-    estado: "rechazada",
+    estado: "borrador",
     items: [
       {
         sku: "DEST-JOHNWALKER-BLK",
@@ -207,14 +207,14 @@ export const ORDENES_DE_COMPRA: OrdenDeCompra[] = [
     importeEstimado: 3156000,
   },
 
-  // 7 — rechazada — Pernod Ricard
+  // 7 — borrador — Pernod Ricard
   {
     id: "ODC-7",
     numero: 7,
     fechaCreacion: "2026-04-22T13:10:00.000Z",
     proveedorId: "PROV-023",
     proveedorNombre: "Pernod Ricard",
-    estado: "rechazada",
+    estado: "borrador",
     items: [
       {
         sku: "DEST-CHIVAS-12",

@@ -27,6 +27,7 @@ import {
   ShoppingCart,
   ExternalLink,
   Truck,
+  Trash2,
 } from "lucide-react"
 import Image from "next/image"
 import type { OrdenDeCompra, OrdenDeCompraItem, Item, ItemVariant, EstadoOrdenDeCompra } from "@/lib/types"
@@ -57,6 +58,7 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
   const [viewingItem, setViewingItem] = useState<OrdenDeCompraItem | null>(null)
   const [showAceptarModal, setShowAceptarModal] = useState(false)
   const [showCancelarModal, setShowCancelarModal] = useState(false)
+  const [showEliminarModal, setShowEliminarModal] = useState(false)
   const [showUnsavedModal, setShowUnsavedModal] = useState(false)
   const [pendingNavHref, setPendingNavHref] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
@@ -243,7 +245,7 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
 
   // ── Derived values ────────────────────────────────────────────────────────
   const estado = orden.estado
-  const isEditable = estado === "borrador" || estado === "enviada"
+  const isEditable = estado === "borrador"
 
   // ── Edit mode handlers ────────────────────────────────────────────────────
   const enterEditMode = () => {
@@ -444,17 +446,11 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
 
   const estadoColors: Record<EstadoOrdenDeCompra, { bg: string; border: string; text: string; icon: React.ReactNode }> = {
     borrador: { bg: "bg-slate-100", border: "border-slate-300/60", text: "text-slate-600", icon: <Clock className="w-5 h-5 text-slate-400 shrink-0" /> },
-    enviada: { bg: "bg-blue-50", border: "border-blue-200/60", text: "text-blue-700", icon: <Truck className="w-5 h-5 text-blue-400 shrink-0" /> },
     aceptada: { bg: "bg-emerald-50", border: "border-emerald-200/60", text: "text-emerald-700", icon: <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" /> },
-    rechazada: { bg: "bg-red-50", border: "border-red-200/60", text: "text-red-600", icon: <XCircle className="w-5 h-5 text-red-400 shrink-0" /> },
-    cancelada: { bg: "bg-slate-50", border: "border-slate-200/60", text: "text-slate-500", icon: <XCircle className="w-5 h-5 text-slate-400 shrink-0" /> },
   }
   const estadoDisplay: Record<EstadoOrdenDeCompra, string> = {
     borrador: "Borrador",
-    enviada: "Enviada",
     aceptada: "Aceptada",
-    rechazada: "Rechazada",
-    cancelada: "Cancelada",
   }
 
   return (
@@ -560,6 +556,14 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
                           </button>
                         </div>
                       )}
+                      <button
+                        type="button"
+                        onClick={() => orden && downloadOrdenCompraPDF([orden], miNegocio)}
+                        className="h-8 text-xs transition-colors bg-white border border-slate-200 hover:bg-slate-50 cursor-pointer gap-1.5 px-3 rounded-md flex items-center text-slate-700 font-medium shadow-sm"
+                      >
+                        <FileDown className="w-3.5 h-3.5 text-slate-500" />
+                        Descargar PDF
+                      </button>
                       <div className="relative" ref={moreMenuRef}>
                         <button
                           onClick={() => setShowMoreOptionsMenu(!showMoreOptionsMenu)}
@@ -570,19 +574,19 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
                         {showMoreOptionsMenu && (
                           <div className="absolute top-full right-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[200px]">
                             <button
-                              onClick={() => { setShowMoreOptionsMenu(false); orden && downloadOrdenCompraPDF([orden], miNegocio) }}
+                              onClick={() => { setShowMoreOptionsMenu(false); router.push(`/compras/ordenes-de-compra/nueva?duplicar=${orden.id}`) }}
                               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
                             >
-                              <FileDown className="w-4 h-4 text-slate-400" />
-                              Descargar PDF
+                              <Copy className="w-4 h-4 text-slate-400" />
+                              Duplicar orden
                             </button>
-                            {isEditable && (
+                            {estado === "borrador" && (
                               <button
-                                onClick={() => { setShowMoreOptionsMenu(false); setShowCancelarModal(true) }}
+                                onClick={() => { setShowMoreOptionsMenu(false); setShowEliminarModal(true) }}
                                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors text-left"
                               >
-                                <XCircle className="w-4 h-4 text-red-400" />
-                                Cancelar orden
+                                <Trash2 className="w-4 h-4 text-red-400" />
+                                Eliminar orden
                               </button>
                             )}
                           </div>
@@ -625,12 +629,7 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
                       {estado === "aceptada" && !orden.compraId && (
                         <span className="text-sm text-slate-400">Orden aceptada</span>
                       )}
-                      {estado === "rechazada" && (
-                        <span className="text-sm text-slate-400">Esta orden fue rechazada</span>
-                      )}
-                      {estado === "cancelada" && (
-                        <span className="text-sm text-slate-400">Esta orden fue cancelada</span>
-                      )}
+
                     </div>
                   </div>
 
@@ -1187,6 +1186,39 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
                 className="px-4 py-2 text-sm font-medium bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
               >
                 Cancelar orden
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Eliminar Orden Modal ── */}
+      {showEliminarModal && orden && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowEliminarModal(false)} />
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            <div className="px-5 py-5 border-b border-slate-100 flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center shrink-0">
+                  <Trash2 className="w-4 h-4 text-red-500" />
+                </div>
+                <h3 className="text-base font-semibold text-slate-900">Eliminar orden de compra</h3>
+              </div>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                {"¿Seguro que querés eliminar la orden "}
+                <span className="font-semibold text-slate-900">{orden.id}</span>
+                {"? Esta acción es irreversible."}
+              </p>
+            </div>
+            <div className="px-5 py-4 flex gap-2 justify-end">
+              <button onClick={() => setShowEliminarModal(false)} className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
+                Cancelar
+              </button>
+              <button
+                onClick={() => { deleteOrden(orden.id); router.push("/compras/ordenes-de-compra") }}
+                className="px-4 py-2 text-sm font-medium bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              >
+                Eliminar orden
               </button>
             </div>
           </div>

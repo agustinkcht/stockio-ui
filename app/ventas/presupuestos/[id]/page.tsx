@@ -27,6 +27,7 @@ import {
   ShoppingCart,
   ExternalLink,
   FileText,
+  Trash2,
 } from "lucide-react"
 import Image from "next/image"
 import type { Presupuesto, VentaItem, Item, ItemVariant, VentaCliente } from "@/lib/types"
@@ -197,6 +198,7 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
   const [showClienteInfoModal, setShowClienteInfoModal] = useState(false)
   const [showClienteSelectorModal, setShowClienteSelectorModal] = useState(false)
   const [showRechazarModal, setShowRechazarModal] = useState(false)
+  const [showEliminarModal, setShowEliminarModal] = useState(false)
   const [showAceptarModal, setShowAceptarModal] = useState(false)
   const [showUnsavedModal, setShowUnsavedModal] = useState(false)
   const [pendingNavHref, setPendingNavHref] = useState<string | null>(null)
@@ -820,11 +822,11 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
                             </button>
                             {estado === "borrador" && (
                               <button
-                                onClick={() => { setShowMoreOptionsMenu(false); setShowRechazarModal(true) }}
+                                onClick={() => { setShowMoreOptionsMenu(false); setShowEliminarModal(true) }}
                                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors text-left"
                               >
-                                <XCircle className="w-4 h-4 text-red-400" />
-                                Rechazar presupuesto
+                                <Trash2 className="w-4 h-4 text-red-400" />
+                                Eliminar presupuesto
                               </button>
                             )}
                           </div>
@@ -1621,12 +1623,12 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
                 <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center shrink-0">
                   <XCircle className="w-4 h-4 text-red-500" />
                 </div>
-                <h3 className="text-base font-semibold text-slate-900">Rechazar presupuesto</h3>
+                <h3 className="text-base font-semibold text-slate-900">Marcar como rechazado</h3>
               </div>
               <p className="text-sm text-slate-600 leading-relaxed">
                 {"El presupuesto "}
                 <span className="font-semibold text-slate-900">{presupuesto.id}</span>
-                {" se marcará como rechazado. Esta acción es reversible desde la edición del presupuesto."}
+                {" se marcará como rechazado."}
               </p>
             </div>
             <div className="px-5 pb-5 flex gap-2 justify-end">
@@ -1637,7 +1639,40 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
                 onClick={handleRechazar}
                 className="px-4 py-2 text-sm font-medium bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
               >
-                Rechazar
+                Marcar como rechazado
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Eliminar Presupuesto Modal ── */}
+      {showEliminarModal && presupuesto && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowEliminarModal(false)} />
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            <div className="px-5 py-5 border-b border-slate-100 flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center shrink-0">
+                  <Trash2 className="w-4 h-4 text-red-500" />
+                </div>
+                <h3 className="text-base font-semibold text-slate-900">Eliminar presupuesto</h3>
+              </div>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                {"¿Seguro que querés eliminar el presupuesto "}
+                <span className="font-semibold text-slate-900">{presupuesto.id}</span>
+                {"? Esta acción es irreversible."}
+              </p>
+            </div>
+            <div className="px-5 py-4 flex gap-2 justify-end">
+              <button onClick={() => setShowEliminarModal(false)} className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
+                Cancelar
+              </button>
+              <button
+                onClick={() => { deletePresupuesto(presupuesto.id); router.push("/ventas/presupuestos") }}
+                className="px-4 py-2 text-sm font-medium bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              >
+                Eliminar presupuesto
               </button>
             </div>
           </div>

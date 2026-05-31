@@ -18,12 +18,12 @@ import {
   Clock,
   Search,
   Plus,
-  XCircle,
+
   BarChart3,
   X,
   Copy,
   Trash2,
-  Send,
+
   Receipt,
 } from "lucide-react"
 import type { OrdenDeCompra, EstadoOrdenDeCompra } from "@/lib/types"
@@ -40,14 +40,11 @@ import {
   type PeriodKey,
 } from "@/lib/contexts/period-context"
 
-type StatusTab = "todas" | "borrador" | "enviada" | "aceptada" | "rechazada"
+type StatusTab = "todas" | "borrador" | "aceptada"
 
 const estadoConfig: Record<EstadoOrdenDeCompra, { bg: string; text: string; icon: typeof Clock; label: string }> = {
   borrador:  { bg: "bg-slate-100",   text: "text-slate-600",   icon: Clock,        label: "Borrador"  },
-  enviada:   { bg: "bg-blue-50",     text: "text-blue-600",    icon: Send,         label: "Enviada"   },
   aceptada:  { bg: "bg-emerald-50",  text: "text-emerald-600", icon: CheckCircle2, label: "Aceptada"  },
-  rechazada: { bg: "bg-red-50",      text: "text-red-500",     icon: XCircle,      label: "Rechazada" },
-  cancelada: { bg: "bg-slate-100",   text: "text-slate-500",   icon: XCircle,      label: "Cancelada" },
 }
 
 const monthsAbbr = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
@@ -110,6 +107,9 @@ export default function OrdenesDeCompraPage() {
   // Aceptar y llevar a compras modal (from list)
   const [aceptarTarget, setAceptarTarget] = useState<OrdenDeCompra | null>(null)
 
+  // Eliminar orden confirm modal
+  const [eliminarTarget, setEliminarTarget] = useState<OrdenDeCompra | null>(null)
+
   const handleAceptarOrden = () => {
     if (!aceptarTarget) return
     const now = new Date()
@@ -148,9 +148,7 @@ export default function OrdenesDeCompraPage() {
       const matchesTab =
         activeTab === "todas" ? true :
         activeTab === "borrador" ? o.estado === "borrador" :
-        activeTab === "enviada" ? o.estado === "enviada" :
-        activeTab === "aceptada" ? o.estado === "aceptada" :
-        o.estado === "rechazada"
+        o.estado === "aceptada"
       const q = searchQuery.toLowerCase()
       const matchesSearch = !q || o.id.toLowerCase().includes(q) || o.proveedorNombre.toLowerCase().includes(q)
       const matchesProveedor = !filterProveedor || o.proveedorNombre === filterProveedor
@@ -323,7 +321,6 @@ export default function OrdenesDeCompraPage() {
                   {(() => {
                     const countAceptadas = ordenes.filter(o => o.estado === "aceptada").length
                     const countBorrador = ordenes.filter(o => o.estado === "borrador").length
-                    const countRechazadas = ordenes.filter(o => o.estado === "rechazada").length
 
                     const widgetCls = (active: boolean, disabled: boolean, activeColor: string, hoverColor: string) => {
                       if (disabled) return "border rounded-xl px-5 py-4 shadow-sm text-left border-slate-100 bg-slate-50 opacity-40 cursor-not-allowed"
@@ -332,7 +329,7 @@ export default function OrdenesDeCompraPage() {
                     }
 
                     return (
-                      <div className="grid grid-cols-4 gap-3 mb-5">
+                      <div className="grid grid-cols-3 gap-3 mb-5">
                         {/* Totales */}
                         <button
                           type="button"
@@ -378,20 +375,7 @@ export default function OrdenesDeCompraPage() {
                           </div>
                         </button>
 
-                        {/* Rechazadas */}
-                        <button
-                          type="button"
-                          onClick={() => countRechazadas > 0 && setActiveTab("rechazada")}
-                          className={widgetCls(activeTab === "rechazada", countRechazadas === 0, "bg-red-50 border-red-200", "hover:border-red-200 hover:shadow-md")}
-                        >
-                          <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center mb-3 shadow-sm border border-slate-100">
-                            <XCircle className="w-4 h-4 text-red-400" />
-                          </div>
-                          <div className="flex items-baseline gap-1.5 min-w-0 flex-wrap">
-                            <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{countRechazadas}</p>
-                            <p className="text-sm font-medium text-red-400 truncate">órdenes rechazadas</p>
-                          </div>
-                        </button>
+
                       </div>
                     )
                   })()}
@@ -479,7 +463,7 @@ export default function OrdenesDeCompraPage() {
                               {/* Estado */}
                               <div className="space-y-2">
                                 <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Estado</label>
-                                {(["borrador", "enviada", "aceptada", "rechazada"] as EstadoOrdenDeCompra[]).map(estado => (
+                                {(["borrador", "aceptada"] as EstadoOrdenDeCompra[]).map(estado => (
                                   <label key={estado} className="flex items-center gap-2 cursor-pointer">
                                     <input
                                       type="checkbox"
@@ -631,7 +615,7 @@ export default function OrdenesDeCompraPage() {
                                   </button>
                                   <button
                                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
-                                    onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); router.push(`/compras/ordenes-de-compra/${orden.id}`) }}
+                                    onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); router.push(`/compras/ordenes-de-compra/nueva?duplicar=${orden.id}`) }}
                                   >
                                     <Copy className="w-4 h-4 text-slate-400" />
                                     Duplicar orden
@@ -639,14 +623,7 @@ export default function OrdenesDeCompraPage() {
                                   {orden.estado === "borrador" && (
                                     <button
                                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors text-left"
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        setOpenMoreMenu(null)
-                                        deleteOrden(orden.id)
-                                        setSelectedOrdenes(prev => {
-                                          const next = new Set(prev); next.delete(orden.id); return next
-                                        })
-                                      }}
+                                      onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); setEliminarTarget(orden) }}
                                     >
                                       <Trash2 className="w-4 h-4 text-red-400" />
                                       Eliminar orden
@@ -862,6 +839,43 @@ export default function OrdenesDeCompraPage() {
                 className="px-4 py-2 text-sm font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
               >
                 Aceptar y crear compra
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Eliminar Orden Modal */}
+      {eliminarTarget && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setEliminarTarget(null)} />
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            <div className="px-5 py-5 border-b border-slate-100 flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center shrink-0">
+                  <Trash2 className="w-4 h-4 text-red-500" />
+                </div>
+                <h3 className="text-base font-semibold text-slate-900">Eliminar orden de compra</h3>
+              </div>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                {"¿Seguro que querés eliminar la orden "}
+                <span className="font-semibold text-slate-900">{eliminarTarget.id}</span>
+                {"? Esta acción es irreversible."}
+              </p>
+            </div>
+            <div className="px-5 py-4 flex gap-2 justify-end">
+              <button onClick={() => setEliminarTarget(null)} className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  deleteOrden(eliminarTarget.id)
+                  setSelectedOrdenes(prev => { const next = new Set(prev); next.delete(eliminarTarget.id); return next })
+                  setEliminarTarget(null)
+                }}
+                className="px-4 py-2 text-sm font-medium bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              >
+                Eliminar orden
               </button>
             </div>
           </div>

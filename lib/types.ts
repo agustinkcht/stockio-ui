@@ -518,7 +518,7 @@ export interface OrdenCompra {
 
 // ===== ORDENES DE COMPRA (ODC) =====
 
-export type EstadoOrdenDeCompra = "borrador" | "enviada" | "aceptada" | "rechazada" | "cancelada"
+export type EstadoOrdenDeCompra = "borrador" | "aceptada"
 
 export interface OrdenDeCompraItem {
   sku: string
