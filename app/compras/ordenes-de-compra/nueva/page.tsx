@@ -334,35 +334,44 @@ export default function NuevaOrdenDeCompraPage() {
     if (!proveedor) return
     setIsCreating(true)
     try {
+      const ordenItems = selectedItems.map((it, idx) => {
+        const aj = editAjustes[idx] ?? { value: 0, type: "percent" as const }
+        let lineTotal = 0
+        if (aj.value > 0) {
+          if (aj.type === "unit") {
+            lineTotal = Math.max(0, it.quantity - Math.min(aj.value, it.quantity)) * it.unitPrice
+          } else {
+            const adjUnit = aj.type === "percent"
+              ? it.unitPrice * (1 - aj.value / 100)
+              : Math.max(0, it.unitPrice - aj.value)
+            lineTotal = it.quantity * adjUnit
+          }
+        } else {
+          lineTotal = it.unitPrice * it.quantity
+        }
+        return {
+          sku: it.sku,
+          name: it.name,
+          quantity: it.quantity,
+          unitPrice: it.unitPrice,
+          discount: aj.value,
+          discountType: (aj.type === "percent" ? "percent" : aj.type === "cash" ? "fixed" : "unit") as "percent" | "fixed" | "unit",
+          total: Math.round(lineTotal),
+          categoria: it.categoria,
+        }
+      })
+      const ordenSubtotal = ordenItems.reduce((s, it) => s + it.total, 0)
       const created = addOrden({
         fechaCreacion: new Date().toISOString(),
         proveedorId: proveedor.id,
         proveedorNombre,
         estado: "borrador",
-        items: selectedItems.map((it, idx) => {
-          const aj = editAjustes[idx] ?? { value: 0, type: "percent" as const }
-          let lineTotal = 0
-          if (aj.value > 0) {
-            if (aj.type === "unit") {
-              lineTotal = Math.max(0, it.quantity - Math.min(aj.value, it.quantity)) * it.unitPrice
-            } else {
-              const adjUnit = aj.type === "percent"
-                ? it.unitPrice * (1 - aj.value / 100)
-                : Math.max(0, it.unitPrice - aj.value)
-              lineTotal = it.quantity * adjUnit
-            }
-          } else {
-            lineTotal = it.unitPrice * it.quantity
-          }
-          return {
-            sku: it.sku,
-            name: it.name,
-            quantity: it.quantity,
-            unitPrice: it.unitPrice,
-            total: Math.round(lineTotal),
-            categoria: it.categoria,
-          }
-        }),
+        items: ordenItems,
+        subtotal: ordenSubtotal,
+        descuento: showGlobalDiscount ? globalDiscount.value : 0,
+        descuentoTipo: globalDiscount.type === "cash" ? "fixed" : "percent",
+        envio: showEnvio && envioAmount > 0 ? envioAmount : 0,
+        customCharges: customCharges.filter(c => c.value > 0),
         importeEstimado: Math.round(grandTotal),
       })
       setCreatedOrdenId(created.id)

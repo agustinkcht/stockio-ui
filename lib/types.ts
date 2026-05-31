@@ -525,6 +525,8 @@ export interface OrdenDeCompraItem {
   name: string
   quantity: number
   unitPrice: number
+  discount?: number
+  discountType?: "percent" | "fixed" | "unit"
   total: number
   categoria?: string
   marca?: string
@@ -542,6 +544,16 @@ export interface OrdenDeCompra {
   proveedorNombre: string
   estado: EstadoOrdenDeCompra
   items: OrdenDeCompraItem[]
+  /** Sum of item line totals before global adjustments */
+  subtotal?: number
+  /** Global discount value */
+  descuento?: number
+  descuentoTipo?: "percent" | "fixed"
+  /** Shipping cost */
+  envio?: number
+  /** Other custom charges */
+  customCharges?: VentaCustomCharge[]
+  /** Grand total after all adjustments */
   importeEstimado: number
   compraId?: string
 }

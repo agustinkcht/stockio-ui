@@ -261,7 +261,13 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
   const enterEditMode = () => {
     setEditItems(ordenItems.map(i => ({ ...i })))
     setEditAjustes(
-      Object.fromEntries(ordenItems.map((_, idx) => [idx, { value: 0, type: "percent" as const }]))
+      Object.fromEntries(ordenItems.map((it, idx) => {
+        if ((it.discount ?? 0) > 0) {
+          const type = it.discountType === "fixed" ? "cash" : it.discountType === "unit" ? "unit" : "percent"
+          return [idx, { value: it.discount!, type }]
+        }
+        return [idx, { value: 0, type: "percent" as const }]
+      }))
     )
     setIsEditMode(true)
   }
@@ -278,10 +284,22 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
         else if (aj.type === "percent") total = item.quantity * item.unitPrice * (1 - aj.value / 100)
         else total = item.quantity * Math.max(0, item.unitPrice - aj.value)
       }
-      return { ...item, total }
+      return {
+        ...item,
+        discount: aj.value,
+        discountType: (aj.type === "percent" ? "percent" : aj.type === "unit" ? "unit" : "fixed") as "percent" | "fixed" | "unit",
+        total,
+      }
     })
-    const newImporte = saved.reduce((s, it) => s + it.total, 0)
-    updateOrden(orden.id, { items: saved, importeEstimado: newImporte })
+    const newSubtotal = saved.reduce((s, it) => s + it.total, 0)
+    // Carry global adjustments from stored orden
+    const desc = orden.descuento ?? 0
+    const descTipo = orden.descuentoTipo ?? "percent"
+    const envio = orden.envio ?? 0
+    const charges = (orden.customCharges ?? []).reduce((s, c) => s + c.value, 0)
+    const globalDiscAmt = desc > 0 ? (descTipo === "percent" ? newSubtotal * (desc / 100) : desc) : 0
+    const newImporte = Math.round(newSubtotal - globalDiscAmt + envio + charges)
+    updateOrden(orden.id, { items: saved, subtotal: newSubtotal, importeEstimado: newImporte })
     cancelEditMode()
   }
 
@@ -661,10 +679,10 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
                           type="button"
                           onClick={() => { if (!isEditMode) { computeCostoDiffs(); setShowAceptarModal(true) } }}
                           disabled={isEditMode}
-                          className={`flex items-center gap-2.5 px-4 py-2 rounded-lg transition-colors ${isEditMode ? "opacity-40 cursor-not-allowed bg-slate-900 text-white" : "bg-slate-900 text-white hover:bg-slate-700 cursor-pointer"}`}
+                          className={`flex items-center gap-2.5 px-4 py-2 rounded-lg transition-colors ${isEditMode ? "opacity-40 cursor-not-allowed bg-slate-50 text-slate-900" : "bg-slate-50 hover:bg-slate-100 text-slate-900 cursor-pointer border border-slate-200"}`}
                         >
-                          <ShoppingCart className="w-4 h-4 shrink-0" />
-                          <span className="text-sm font-semibold">Aceptar y llevar a compras</span>
+                          <CheckCircle2 className="w-4 h-4 shrink-0 text-green-500" />
+                          <span className="text-sm font-semibold text-slate-900">Aceptar y llevar a compras</span>
                         </button>
                       )}
                       {estado === "aceptada" && orden.compraId && (
@@ -956,7 +974,7 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
 
                     {/* Total */}
                     <div className="flex justify-between items-center py-3 mt-1">
-                      <span className="text-base font-bold text-slate-900">Importe estimado</span>
+                      <span className="text-base font-bold text-slate-900">Total estimado</span>
                       <span className="text-base font-bold text-slate-900 tabular-nums">
                         ${Math.round(activeSubtotal).toLocaleString("es-AR")}
                       </span>

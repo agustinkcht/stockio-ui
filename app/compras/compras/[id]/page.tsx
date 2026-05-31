@@ -202,7 +202,7 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
 
   const compra = useMemo(() => compras.find((c) => c.id === id) || null, [compras, id])
   const { miNegocio } = useSettings()
-  const { decreaseStock } = useItems()
+  const { decreaseStock, increaseStock, updatePricing } = useItems()
   const handleDownloadPDF = () => compra && downloadComprasPDF([compra], miNegocio)
 
   const [showMoreOptionsMenu, setShowMoreOptionsMenu] = useState(false)
@@ -472,18 +472,19 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
     try {
       const saved: CompraItem[] = editItems.map((item, idx) => {
         const aj = editAjustes[idx] ?? { value: 0, type: "percent" }
-        return {
-          ...item,
-          discount: aj.value,
-          discountType: aj.type === "cash" ? "fixed" : "percent",
-          total: (() => {
-            if (aj.value === 0) return item.quantity * item.unitPrice
-            const adj = aj.type === "percent"
-              ? item.unitPrice * (1 - aj.value / 100)
-              : Math.max(0, item.unitPrice - aj.value)
-            return item.quantity * adj
-          })(),
-        }
+        const discountType: "percent" | "fixed" = aj.type === "percent" ? "percent" : "fixed"
+        const total = (() => {
+          if (aj.value === 0) return item.quantity * item.unitPrice
+          if (aj.type === "unit") {
+            const paidQty = Math.max(0, item.quantity - Math.min(aj.value, item.quantity))
+            return paidQty * item.unitPrice
+          }
+          const adj = aj.type === "percent"
+            ? item.unitPrice * (1 - aj.value / 100)
+            : Math.max(0, item.unitPrice - aj.value)
+          return item.quantity * adj
+        })()
+        return { ...item, discount: aj.value, discountType, total }
       })
       const newDescuento = showGlobalDiscount && globalDiscount.value > 0 ? globalDiscount.value : 0
       const newDescuentoTipo: "percent" | "fixed" = globalDiscount.type === "cash" ? "fixed" : "percent"
@@ -546,6 +547,10 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
     }
     if (recepciones.length > 0) {
       addRecepcion(compra.id, recepciones)
+      // Update stock for received units
+      for (const r of recepciones) {
+        if (r.quantityRecepcionada > 0) increaseStock(r.sku, r.quantityRecepcionada)
+      }
     }
     setShowRegistrarRecepcion(false)
     setRecepcionSelectedItems({})
@@ -555,6 +560,12 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
   const handleConfirmFinalizar = () => {
     if (!compra) return
     const now = new Date()
+    // Increase stock for all units not yet recepcionadas (finalizar receives everything)
+    for (const item of compra.items) {
+      const already = compra.recepcionItems.find(r => r.sku === item.sku)?.quantityRecepcionada ?? 0
+      const remaining = item.quantity - already
+      if (remaining > 0) increaseStock(item.sku, remaining)
+    }
     finalizarCompra(
       compra.id,
       finalizarMedioPago,

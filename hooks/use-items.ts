@@ -811,30 +811,35 @@ export function useItems() {
     const currentItems: Item[] = JSON.parse(storedItems)
     let updated = false
 
+    const applyDelta = (v: any) => {
+      const currentTotal = Number.parseInt(v.stock?.total || "0", 10)
+      const currentReservado = Number.parseInt(v.stock?.reservado || "0", 10)
+      const newTotal = Math.max(0, currentTotal + delta)
+      const newDisponible = Math.max(0, newTotal - currentReservado)
+      updated = true
+      return { ...v, stock: { total: newTotal.toString(), reservado: currentReservado.toString(), disponible: newDisponible.toString() } }
+    }
+
     const updatedItems = currentItems.map((item) => {
       if (parentSku) {
+        // Explicit parentSku: match parent then variant
         if (item.sku === parentSku && item.variants) {
-          const updatedVariants = item.variants.map((v: any) => {
-            if (v.sku === itemSku) {
-              const currentTotal = Number.parseInt(v.stock?.total || "0", 10)
-              const currentReservado = Number.parseInt(v.stock?.reservado || "0", 10)
-              const newTotal = Math.max(0, currentTotal + delta)
-              const newDisponible = Math.max(0, newTotal - currentReservado)
-              updated = true
-              return { ...v, stock: { total: newTotal.toString(), reservado: currentReservado.toString(), disponible: newDisponible.toString() } }
-            }
-            return v
-          })
+          const updatedVariants = item.variants.map((v: any) => v.sku === itemSku ? applyDelta(v) : v)
           return { ...item, variants: updatedVariants }
         }
       } else {
-        if (item.sku === itemSku) {
-          const currentTotal = Number.parseInt(item.stock?.total || "0", 10)
-          const currentReservado = Number.parseInt(item.stock?.reservado || "0", 10)
-          const newTotal = Math.max(0, currentTotal + delta)
-          const newDisponible = Math.max(0, newTotal - currentReservado)
-          updated = true
-          return { ...item, stock: { total: newTotal.toString(), reservado: currentReservado.toString(), disponible: newDisponible.toString() } }
+        // No parentSku: try standalone match
+        if (item.sku === itemSku) return applyDelta(item)
+        // Also try compound SKU inside variants (prefix-suffix pattern)
+        if (item.hasVariants && item.variants && item.skuPrefix) {
+          const prefix = item.skuPrefix
+          let variantUpdated = false
+          const updatedVariants = item.variants.map((v: any) => {
+            const variantSku = `${prefix}-${v.skuSuffix}`
+            if (variantSku === itemSku) { variantUpdated = true; return applyDelta(v) }
+            return v
+          })
+          if (variantUpdated) return { ...item, variants: updatedVariants }
         }
       }
       return item
@@ -907,7 +912,7 @@ export function useItems() {
     let updated = false
     const updatedItems = currentItems.map((item) => {
       if (parentSku) {
-        // It's a variant
+        // Explicit parentSku given — match parent then find variant
         if (item.sku === parentSku && item.variants) {
           const updatedVariants = item.variants.map((v: any) => {
             if (v.sku === itemSku) {
@@ -921,12 +926,27 @@ export function useItems() {
           return { ...item, variants: updatedVariants }
         }
       } else {
-        // It's a standalone item
+        // No parentSku — try standalone match first
         if (item.sku === itemSku) {
           const currentPrecio = item.precio || { costo: 0, margen: 0, iva: 21, precioFinal: 0 }
           const newPrecio = applyCosting(currentPrecio, pricingData)
           updated = true
           return { ...item, precio: newPrecio }
+        }
+        // Also try matching compound SKU inside variants (prefix-suffix pattern)
+        if (item.hasVariants && item.variants && item.skuPrefix) {
+          const prefix = item.skuPrefix
+          const updatedVariants = item.variants.map((v: any) => {
+            const variantSku = `${prefix}-${v.skuSuffix}`
+            if (variantSku === itemSku) {
+              const currentPrecio = v.precio || { costo: 0, margen: 0, iva: 21, precioFinal: 0 }
+              const newPrecio = applyCosting(currentPrecio, pricingData)
+              updated = true
+              return { ...v, precio: newPrecio }
+            }
+            return v
+          })
+          if (updated) return { ...item, variants: updatedVariants }
         }
       }
       return item

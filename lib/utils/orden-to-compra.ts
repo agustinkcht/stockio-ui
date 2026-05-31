@@ -14,13 +14,26 @@ export function buildCompraFromOrden(
     name: it.name,
     quantity: it.quantity,
     unitPrice: it.unitPrice,
-    discount: 0,
-    discountType: "percent" as const,
+    // Carry over per-item discount from orden; map "unit" → "fixed" for compra compat
+    discount: it.discount ?? 0,
+    discountType: (it.discountType === "unit" ? "fixed" : (it.discountType ?? "percent")) as "percent" | "fixed",
     total: it.total,
     categoria: it.categoria,
   }))
 
   const subtotal = items.reduce((s, it) => s + it.total, 0)
+
+  // Carry over global adjustments from orden
+  const descuento = orden.descuento ?? 0
+  const descuentoTipo: "percent" | "fixed" = (orden.descuentoTipo as "percent" | "fixed") ?? "percent"
+  const envio = orden.envio ?? 0
+  const customCharges = orden.customCharges ?? []
+
+  // Recompute grand total from orden fields
+  const globalDiscountAmount = descuento > 0
+    ? descuentoTipo === "percent" ? subtotal * (descuento / 100) : descuento
+    : 0
+  const total = Math.round(subtotal - globalDiscountAmount + envio + customCharges.reduce((s, c) => s + c.value, 0))
 
   return {
     fecha,
@@ -29,11 +42,11 @@ export function buildCompraFromOrden(
     proveedorNombre: orden.proveedorNombre,
     items,
     subtotal,
-    descuento: 0,
-    descuentoTipo: "percent",
-    envio: 0,
-    customCharges: [],
-    total: subtotal,
+    descuento,
+    descuentoTipo,
+    envio,
+    customCharges,
+    total,
     recepcionItems: [],
     recepcionEntries: [],
     pagos: [],

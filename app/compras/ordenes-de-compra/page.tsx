@@ -770,7 +770,7 @@ export default function OrdenesDeCompraPage() {
 
                                 {/* TOTAL */}
                                 <div className={`col-span-24 bg-slate-50 ${isExpanded ? "rounded-tr-md" : "rounded-r-md"} flex items-center px-3`}>
-                                  <span className="text-sm font-semibold text-slate-800">Total: ${orden.importeEstimado.toLocaleString("es-AR")}</span>
+                                  <span className="text-sm font-semibold text-slate-800">Total est.: ${orden.importeEstimado.toLocaleString("es-AR")}</span>
                                 </div>
                                 <div className="col-span-4" />
 
