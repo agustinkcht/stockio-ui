@@ -893,20 +893,22 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
                                   )}
                                 </div>
                               </div>
-                              <div className="flex items-center justify-center gap-1.5">
-                                <span className="text-sm text-slate-700 tabular-nums">{item.quantity}</span>
-                                <span className="text-xs text-slate-400">{item.quantity === 1 ? "unidad" : "unidades"}</span>
+                              <div className="flex flex-col items-center justify-center gap-0.5">
+                                <div className="flex items-center justify-center gap-1.5">
+                                  <span className="text-sm text-slate-700 tabular-nums">{item.quantity}</span>
+                                  <span className="text-xs text-slate-400">{item.quantity === 1 ? "unidad" : "unidades"}</span>
+                                </div>
+                                {item.discount && item.discount > 0 && item.discountType === "unit" && (
+                                  <span className="text-[10px] font-semibold text-green-600 whitespace-nowrap">
+                                    ({Math.min(item.discount, item.quantity)} bonif.)
+                                  </span>
+                                )}
                               </div>
                               <div className="flex flex-col items-center justify-center gap-0.5 py-2">
                                 {item.discount && item.discount > 0 && item.discountType === "unit" ? (
-                                  <div className="flex flex-col items-center gap-0.5">
-                                    <div className="flex items-baseline gap-1">
-                                      <span className="text-sm text-slate-700 tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
-                                      <span className="text-xs text-slate-400">c/u</span>
-                                    </div>
-                                    <span className="text-[10px] font-semibold text-green-600 whitespace-nowrap">
-                                      +{item.discount} {item.discount === 1 ? "unidad" : "unidades"} bonificada{item.discount === 1 ? "" : "s"}
-                                    </span>
+                                  <div className="flex items-baseline gap-1">
+                                    <span className="text-sm text-slate-700 tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
+                                    <span className="text-xs text-slate-400">c/u</span>
                                   </div>
                                 ) : item.discount && item.discount > 0 && (item.discountType === "percent" || item.discountType === "fixed") ? (
                                   <>
