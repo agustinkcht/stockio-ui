@@ -46,7 +46,7 @@ import type {
 import { getCategoryImage } from "@/lib/utils/category-images"
 import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import { PROVEEDORES } from "@/lib/data/proveedores"
-import { INITIAL_ITEMS } from "@/lib/data/initial-items"
+
 import { useCompras } from "@/hooks/use-compras"
 import { useItems } from "@/hooks/use-items"
 import { useSettings } from "@/lib/contexts/settings-context"
@@ -202,7 +202,7 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
 
   const compra = useMemo(() => compras.find((c) => c.id === id) || null, [compras, id])
   const { miNegocio } = useSettings()
-  const { decreaseStock, increaseStock, updatePricing } = useItems()
+  const { items: catalogItems, decreaseStock, increaseStock, updatePricing } = useItems()
   const handleDownloadPDF = () => compra && downloadComprasPDF([compra], miNegocio)
 
   const [showMoreOptionsMenu, setShowMoreOptionsMenu] = useState(false)
@@ -339,20 +339,20 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
     : 0
   const activeEditTotal = activeEditSubtotal - globalDiscountAmount + (showEnvio ? envioAmount : 0) + customCharges.reduce((s, c) => s + c.value, 0)
 
-  // Modal items
-  const allModalItems = INITIAL_ITEMS
+  // Modal items — always use live catalog so stock/prices are up-to-date
+  const allModalItems = catalogItems
 
   const uniqueModalCategorias = useMemo(() => {
     const cats = new Set<string>()
     allModalItems.forEach((item) => { if (item.categoria) cats.add(item.categoria) })
     return Array.from(cats).sort()
-  }, [])
+  }, [allModalItems])
 
   const uniqueModalMarcas = useMemo(() => {
     const marcas = new Set<string>()
     allModalItems.forEach((item) => { if (item.marca) marcas.add(item.marca) })
     return Array.from(marcas).sort()
-  }, [])
+  }, [allModalItems])
 
   const filteredModalItems = useMemo(() => {
     let items = [...allModalItems]
@@ -371,7 +371,7 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
       return a.name.localeCompare(b.name) * dir
     })
     return items
-  }, [modalSearch, modalFilters, modalSort, modalSortDirection])
+  }, [allModalItems, modalSearch, modalFilters, modalSort, modalSortDirection])
 
   const getModalItemId = (item: any): string => item.id || item.sku || item.name || ""
 

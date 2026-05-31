@@ -33,7 +33,7 @@ import { useSidebar } from "@/hooks/use-sidebar"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 
 import { PROVEEDORES } from "@/lib/data/proveedores"
-import { INITIAL_ITEMS } from "@/lib/data/initial-items"
+
 import { useCompras } from "@/hooks/use-compras"
 import { useItems } from "@/hooks/use-items"
 import { useSettings } from "@/lib/contexts/settings-context"
@@ -81,9 +81,9 @@ function getNowTimeStr() {
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-// Look up the saved costo for an item SKU from INITIAL_ITEMS
-function getSavedCosto(sku: string): number | null {
-  for (const item of INITIAL_ITEMS) {
+// Look up the saved costo for an item SKU from the live catalog
+function getSavedCosto(sku: string, catalog: any[]): number | null {
+  for (const item of catalog) {
     if (item.hasVariants && item.variants) {
       for (const v of item.variants) {
         const vSku = `${item.skuPrefix}-${(v as ItemVariant).skuSuffix}`
@@ -101,7 +101,7 @@ export default function NuevaCompraPage() {
   const searchParams = useSearchParams()
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave } = useSidebar()
   const { addCompra, compras } = useCompras()
-  const { increaseStock, updatePricing } = useItems()
+  const { items: catalogItems, increaseStock, updatePricing } = useItems()
   const { precios: preciosSettings } = useSettings()
   const stepsContainerRef = useRef<HTMLDivElement>(null)
 
@@ -278,8 +278,8 @@ export default function NuevaCompraPage() {
 
   // ── Modal derived ─────────────────────────────────────────
   const allModalItems = useMemo(
-    () => INITIAL_ITEMS.filter(item => item.proveedor === proveedorNombre),
-    [proveedorNombre]
+    () => catalogItems.filter((item: any) => item.proveedor === proveedorNombre),
+    [catalogItems, proveedorNombre]
   )
 
   const uniqueModalCategorias = useMemo(() => {
@@ -447,7 +447,7 @@ export default function NuevaCompraPage() {
   const computeCostoDiffs = () => {
     const diffs: typeof costoDiffs = []
     for (const item of selectedItems) {
-      const saved = getSavedCosto(item.sku)
+      const saved = getSavedCosto(item.sku, catalogItems)
       if (saved !== null && saved !== item.unitPrice) {
         const display = getVentaItemDisplay(item)
         diffs.push({

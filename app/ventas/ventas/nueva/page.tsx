@@ -36,6 +36,7 @@ import { CLIENTES } from "@/lib/data/clientes"
 import { INITIAL_ITEMS } from "@/lib/data/initial-items"
 import { useVentaStockSync } from "@/hooks/use-venta-stock-sync"
 import { useVentas } from "@/hooks/use-ventas"
+import { useItems } from "@/hooks/use-items"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import type {
@@ -95,6 +96,7 @@ export default function NuevaVentaPage() {
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave } = useSidebar()
   const { addVenta } = useVentaStockSync()
   const { ventas } = useVentas()
+  const { items: catalogItems } = useItems()
   const stepsContainerRef = useRef<HTMLDivElement>(null)
 
   const [currentStep, setCurrentStep] = useState(1)
@@ -280,19 +282,19 @@ export default function NuevaVentaPage() {
   }, [clienteSearch])
 
   // ── Modal derived (exact copy from venta detail) ─────────
-  const allModalItems = INITIAL_ITEMS
+  const allModalItems = catalogItems
 
   const uniqueModalCategorias = useMemo(() => {
     const cats = new Set<string>()
-    allModalItems.forEach(item => { if (item.categoria) cats.add(item.categoria) })
+    allModalItems.forEach((item: any) => { if (item.categoria) cats.add(item.categoria) })
     return Array.from(cats).sort()
-  }, [])
+  }, [allModalItems])
 
   const uniqueModalMarcas = useMemo(() => {
     const marcas = new Set<string>()
-    allModalItems.forEach(item => { if (item.marca) marcas.add(item.marca) })
+    allModalItems.forEach((item: any) => { if (item.marca) marcas.add(item.marca) })
     return Array.from(marcas).sort()
-  }, [])
+  }, [allModalItems])
 
   const filteredModalItems = useMemo(() => {
     let items = [...allModalItems]
@@ -312,7 +314,7 @@ export default function NuevaVentaPage() {
       return a.name.localeCompare(b.name) * dir
     })
     return items
-  }, [modalSearch, modalFilters, modalSort, modalSortDirection])
+  }, [allModalItems, modalSearch, modalFilters, modalSort, modalSortDirection])
 
   const getModalItemId = (item: any): string => item.id || item.sku || item.name || ""
 

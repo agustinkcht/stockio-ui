@@ -36,9 +36,10 @@ import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import { VentaItemDetailModal } from "@/components/ventas/venta-item-detail-modal"
 import { ClienteModal } from "@/components/ventas/cliente-modal"
 import { CLIENTES } from "@/lib/data/clientes"
-import { INITIAL_ITEMS } from "@/lib/data/initial-items"
+
 import { usePresupuestos } from "@/hooks/use-presupuestos"
 import { useVentas } from "@/hooks/use-ventas"
+import { useItems } from "@/hooks/use-items"
 import { useSettings } from "@/lib/contexts/settings-context"
 import { downloadPresupuestosPDF } from "@/lib/utils/generate-presupuesto-pdf"
 
@@ -188,6 +189,7 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
 
   const { presupuestos, isLoading, updatePresupuesto, updateEstado, deletePresupuesto } = usePresupuestos()
   const { ventas, addVenta } = useVentas()
+  const { items: catalogItems } = useItems()
   const { miNegocio } = useSettings()
 
   const presupuesto = useMemo(() => presupuestos.find((p) => p.id === id) || null, [presupuestos, id])
@@ -300,19 +302,19 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
 
 
   // ── Modal computed values ─────────────────────────────────────────────────
-  const allModalItems = INITIAL_ITEMS
+  const allModalItems = catalogItems
 
   const uniqueModalCategorias = useMemo(() => {
     const cats = new Set<string>()
-    allModalItems.forEach(item => { if (item.categoria) cats.add(item.categoria) })
+    allModalItems.forEach((item: any) => { if (item.categoria) cats.add(item.categoria) })
     return Array.from(cats).sort()
-  }, [])
+  }, [allModalItems])
 
   const uniqueModalMarcas = useMemo(() => {
     const marcas = new Set<string>()
-    allModalItems.forEach(item => { if (item.marca) marcas.add(item.marca) })
+    allModalItems.forEach((item: any) => { if (item.marca) marcas.add(item.marca) })
     return Array.from(marcas).sort()
-  }, [])
+  }, [allModalItems])
 
   const filteredModalItems = useMemo(() => {
     let items = [...allModalItems]
@@ -332,7 +334,7 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
       return a.name.localeCompare(b.name) * dir
     })
     return items
-  }, [modalSearch, modalFilters, modalSort, modalSortDirection])
+  }, [allModalItems, modalSearch, modalFilters, modalSort, modalSortDirection])
 
   const getModalItemId = (item: any): string => item.id || item.sku || item.name || ""
 

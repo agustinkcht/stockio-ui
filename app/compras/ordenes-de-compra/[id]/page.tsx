@@ -36,7 +36,7 @@ import { getCategoryImage } from "@/lib/utils/category-images"
 import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import { VentaItemDetailModal } from "@/components/ventas/venta-item-detail-modal"
 import { ProveedorModal } from "@/components/compras/proveedor-modal"
-import { INITIAL_ITEMS } from "@/lib/data/initial-items"
+
 import { PROVEEDORES } from "@/lib/data/proveedores"
 import { useOrdenesDeCompra } from "@/hooks/use-ordenes-de-compra"
 import { useCompras } from "@/hooks/use-compras"
@@ -53,7 +53,7 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
 
   const { ordenes, isLoading, updateOrden, updateEstado, deleteOrden } = useOrdenesDeCompra()
   const { addCompra } = useCompras()
-  const { updatePricing } = useItems()
+  const { items: catalogItems, updatePricing } = useItems()
   const { miNegocio, precios: preciosSettings } = useSettings()
 
   const orden = useMemo(() => ordenes.find((o) => o.id === id) || null, [ordenes, id])
@@ -148,8 +148,8 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
 
   // ── Modal computed values ─────────────────────────────────────────────────
   const allModalItems = useMemo(
-    () => INITIAL_ITEMS.filter(item => proveedorNombre ? item.proveedor === proveedorNombre : true),
-    [proveedorNombre]
+    () => catalogItems.filter((item: any) => proveedorNombre ? item.proveedor === proveedorNombre : true),
+    [catalogItems, proveedorNombre]
   )
 
   const uniqueModalCategorias = useMemo(() => {
@@ -329,7 +329,7 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
 
   // ── Costo diff helpers ────────────────────────────────────────────────────
   const getSavedCostoOrden = (sku: string): number | null => {
-    for (const item of INITIAL_ITEMS) {
+    for (const item of catalogItems) {
       if (item.hasVariants && item.variants) {
         for (const v of item.variants) {
           const vSku = `${item.skuPrefix}-${(v as any).skuSuffix}`
@@ -898,19 +898,19 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
                                   <span className="text-sm text-slate-700 tabular-nums">{item.quantity}</span>
                                   <span className="text-xs text-slate-400">{item.quantity === 1 ? "unidad" : "unidades"}</span>
                                 </div>
-                                {item.discount && item.discount > 0 && item.discountType === "unit" && (
+                                {(item.discount ?? 0) > 0 && item.discountType === "unit" && (
                                   <span className="text-[10px] font-semibold text-green-600 whitespace-nowrap">
-                                    ({Math.min(item.discount, item.quantity)} bonif.)
+                                    ({Math.min(item.discount!, item.quantity)} bonif.)
                                   </span>
                                 )}
                               </div>
                               <div className="flex flex-col items-center justify-center gap-0.5 py-2">
-                                {item.discount && item.discount > 0 && item.discountType === "unit" ? (
+                                {(item.discount ?? 0) > 0 && item.discountType === "unit" ? (
                                   <div className="flex items-baseline gap-1">
                                     <span className="text-sm text-slate-700 tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
                                     <span className="text-xs text-slate-400">c/u</span>
                                   </div>
-                                ) : item.discount && item.discount > 0 && (item.discountType === "percent" || item.discountType === "fixed") ? (
+                                ) : (item.discount ?? 0) > 0 && (item.discountType === "percent" || item.discountType === "fixed") ? (
                                   <>
                                     <div className="flex items-center gap-1">
                                       <span className="text-xs text-slate-400 line-through tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>

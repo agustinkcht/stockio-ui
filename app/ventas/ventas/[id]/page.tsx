@@ -42,6 +42,7 @@ import { TicketModal } from "@/components/ventas/ticket-modal"
 import { CLIENTES } from "@/lib/data/clientes"
 import { INITIAL_ITEMS } from "@/lib/data/initial-items"
 import { useVentaStockSync } from "@/hooks/use-venta-stock-sync"
+import { useItems } from "@/hooks/use-items"
 import { useSettings } from "@/lib/contexts/settings-context"
 import { downloadVentasPDF } from "@/lib/utils/generate-venta-pdf"
 
@@ -198,6 +199,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
 
   const { ventas, isLoading: isLoadingVentas, addItemsToVenta, updateVenta, addCobro, addEntregas, addDevolucion, setEstado, finalizarVenta, undoCobro, undoEntregaEntry, updateCobroMedioPago, cancelarVenta } = useVentaStockSync()
+  const { items: catalogItems } = useItems()
   const { miNegocio } = useSettings()
   const venta = useMemo(() => ventas.find((v) => v.id === id) || null, [ventas, id])
 
@@ -566,19 +568,19 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
   const activeEditTotal = activeEditSubtotal - activeEditGlobalDiscountAmount + (showEnvio ? envioAmount : 0) + customCharges.reduce((s, c) => s + c.value, 0)
 
   // Modal computed values
-  const allModalItems = INITIAL_ITEMS
+  const allModalItems = catalogItems
 
   const uniqueModalCategorias = useMemo(() => {
     const cats = new Set<string>()
-    allModalItems.forEach(item => { if (item.categoria) cats.add(item.categoria) })
+    allModalItems.forEach((item: any) => { if (item.categoria) cats.add(item.categoria) })
     return Array.from(cats).sort()
-  }, [])
+  }, [allModalItems])
 
   const uniqueModalMarcas = useMemo(() => {
     const marcas = new Set<string>()
-    allModalItems.forEach(item => { if (item.marca) marcas.add(item.marca) })
+    allModalItems.forEach((item: any) => { if (item.marca) marcas.add(item.marca) })
     return Array.from(marcas).sort()
-  }, [])
+  }, [allModalItems])
 
   const filteredModalItems = useMemo(() => {
     let items = [...allModalItems]
@@ -597,7 +599,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
       return a.name.localeCompare(b.name) * dir
     })
     return items
-  }, [modalSearch, modalFilters, modalSort, modalSortDirection])
+  }, [allModalItems, modalSearch, modalFilters, modalSort, modalSortDirection])
 
   const getModalItemId = (item: any): string => item.id || item.sku || item.name || ""
 

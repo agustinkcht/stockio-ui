@@ -46,7 +46,11 @@ function recomputeCompra(c: Compra): Compra {
   const subtotal = c.items.reduce((sum, it) => {
     const baseGross = it.unitPrice * it.quantity
     const discount =
-      it.discountType === "percent" ? baseGross * (it.discount / 100) : it.discount * it.quantity
+      it.discountType === "percent"
+        ? baseGross * (it.discount / 100)
+        : it.discountType === "unit"
+          ? it.unitPrice * Math.min(it.discount, it.quantity)
+          : it.discount * it.quantity
     return sum + (baseGross - discount)
   }, 0)
 
