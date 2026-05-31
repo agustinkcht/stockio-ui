@@ -2340,10 +2340,11 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
 
       {/* ── Registrar Devolucion Modal ── */}
       {showDevolucion && (() => {
-        const deliverableItems = compraItems.filter((item) => {
-          const received = itemRecepcionMap.get(item.sku) ?? 0
-          return received > 0
-        })
+        // disponible = recepcionadas - ya devueltas
+        const getDisponible = (sku: string) =>
+          Math.max(0, (itemRecepcionMap.get(sku) ?? 0) - (itemDevolucionMap.get(sku) ?? 0))
+
+        const deliverableItems = compraItems.filter((item) => getDisponible(item.sku) > 0)
         const devSkus = deliverableItems.map((i) => i.sku)
         const allSel = devSkus.length > 0 && devSkus.every((sku) => devolucionSelectedItems[sku])
         const someSel = devSkus.some((sku) => devolucionSelectedItems[sku])
@@ -2367,8 +2368,7 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
           for (const item of deliverableItems) {
             nextSel[item.sku] = selecting
             if (selecting) {
-              const received = itemRecepcionMap.get(item.sku) ?? 0
-              nextQty[item.sku] = String(received)
+              nextQty[item.sku] = String(getDisponible(item.sku))
             } else {
               delete nextQty[item.sku]
             }
@@ -2381,11 +2381,7 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
           const willBeSelected = !devolucionSelectedItems[sku]
           setDevolucionSelectedItems((prev) => ({ ...prev, [sku]: willBeSelected }))
           if (willBeSelected) {
-            const item = deliverableItems.find((i) => i.sku === sku)
-            if (item) {
-              const received = itemRecepcionMap.get(sku) ?? 0
-              setDevolucionQuantities((prev) => ({ ...prev, [sku]: String(received) }))
-            }
+            setDevolucionQuantities((prev) => ({ ...prev, [sku]: String(getDisponible(sku)) }))
           } else {
             setDevolucionQuantities((prev) => { const next = { ...prev }; delete next[sku]; return next })
           }
@@ -2441,7 +2437,7 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
                         </button>
                         <span>Producto</span>
                       </div>
-                      <div className="flex items-center justify-center">Recepcionadas</div>
+                      <div className="flex items-center justify-center">Disponible devolución</div>
                       <div className="flex items-center justify-center">Devolver</div>
                     </div>
                   </div>
@@ -2453,7 +2449,7 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
                       </div>
                     ) : (
                       deliverableItems.map((item, idx) => {
-                        const received = itemRecepcionMap.get(item.sku) ?? 0
+                        const disponible = getDisponible(item.sku)
                         const display = getVentaItemDisplay(item as any)
                         const isSelected = !!devolucionSelectedItems[item.sku]
                         const qtyValue = devolucionQuantities[item.sku] ?? ""
@@ -2479,22 +2475,22 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
                               </div>
                             </div>
                             <div className="flex items-center justify-center">
-                              <span className="text-sm text-slate-600 tabular-nums">{received}</span>
+                              <span className="text-sm text-slate-600 tabular-nums">{disponible}</span>
                             </div>
                             <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
                               {isSelected && (
                                 <input
                                   type="number"
                                   min={0}
-                                  max={received}
+                                  max={disponible}
                                   value={qtyValue}
-                                  placeholder={String(received)}
+                                  placeholder={String(disponible)}
                                   onChange={(e) => {
                                     const raw = e.target.value
                                     if (raw === "") { setDevolucionQuantities((prev) => ({ ...prev, [item.sku]: "" })); return }
                                     const num = parseInt(raw, 10)
                                     if (isNaN(num) || num < 0) { setDevolucionQuantities((prev) => ({ ...prev, [item.sku]: "0" })); return }
-                                    if (num > received) { setDevolucionQuantities((prev) => ({ ...prev, [item.sku]: String(received) })); return }
+                                    if (num > disponible) { setDevolucionQuantities((prev) => ({ ...prev, [item.sku]: String(disponible) })); return }
                                     setDevolucionQuantities((prev) => ({ ...prev, [item.sku]: String(num) }))
                                   }}
                                   className="w-14 text-center text-sm tabular-nums bg-slate-50 border border-slate-200 rounded-md px-2 py-1.5 focus:outline-none focus:border-slate-400 transition-colors"
