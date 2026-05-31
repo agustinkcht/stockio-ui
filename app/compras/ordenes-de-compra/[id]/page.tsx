@@ -1176,6 +1176,14 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
         <VentaItemDetailModal ventaItem={viewingItem as any} onClose={() => setViewingItem(null)} />
       )}
 
+      {showProveedorInfoModal && (() => {
+        const prov = PROVEEDORES.find(p => {
+          const name = p.tipo === "empresa" ? p.razonSocial ?? "" : `${p.nombre} ${p.apellido}`.trim()
+          return name === proveedorNombre
+        })
+        return prov ? <ProveedorModal proveedorId={prov.id} onClose={() => setShowProveedorInfoModal(false)} /> : null
+      })()}
+
       {/* ── Aceptar y llevar a compras Modal ── */}
       {showAceptarModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center">
