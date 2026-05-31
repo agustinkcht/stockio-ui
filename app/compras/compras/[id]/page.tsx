@@ -48,6 +48,7 @@ import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import { PROVEEDORES } from "@/lib/data/proveedores"
 import { INITIAL_ITEMS } from "@/lib/data/initial-items"
 import { useCompras } from "@/hooks/use-compras"
+import { useItems } from "@/hooks/use-items"
 import { useSettings } from "@/lib/contexts/settings-context"
 import { downloadComprasPDF } from "@/lib/utils/generate-compra-pdf"
 
@@ -199,6 +200,7 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
 
   const compra = useMemo(() => compras.find((c) => c.id === id) || null, [compras, id])
   const { miNegocio } = useSettings()
+  const { decreaseStock } = useItems()
   const handleDownloadPDF = () => compra && downloadComprasPDF([compra], miNegocio)
 
   const [showMoreOptionsMenu, setShowMoreOptionsMenu] = useState(false)
@@ -1106,7 +1108,7 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
                                       <span className="text-xs text-slate-300">·</span>
                                       {isAnulacion ? (
                                         <span className="text-xs text-red-400 tabular-nums">
-                                          {totalEntryUnits} {totalEntryUnits === 1 ? "unidad" : "unidades"} devueltas al stock
+                                          {totalEntryUnits} {totalEntryUnits === 1 ? "unidad" : "unidades"} con recepción anulada
                                         </span>
                                       ) : (
                                         <span className="text-xs text-slate-400 tabular-nums">{totalEntryUnits} {totalEntryUnits === 1 ? "unidad" : "unidades"} recepcionadas</span>
@@ -1149,7 +1151,7 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
                                     <span className="text-xs text-slate-400 tabular-nums">{dateLabel}</span>
                                     <span className="text-xs text-slate-300">·</span>
                                     <span className="text-xs text-red-400 tabular-nums">
-                                      {totalEntryUnits} {totalEntryUnits === 1 ? "unidad" : "unidades"} devueltas
+                                      {totalEntryUnits} {totalEntryUnits === 1 ? "unidad devuelta" : "unidades devueltas"} al proveedor
                                     </span>
                                   </button>
                                 </div>
@@ -1646,7 +1648,7 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
                                     {isAnulacion ? (
                                       <span className="text-xs text-red-400">Anulación de pago</span>
                                     ) : isNegative ? (
-                                      <span className="text-xs text-red-400">Devolución de dinero</span>
+                                      <span className="text-xs text-emerald-500 font-medium">Reintegro de dinero</span>
                                     ) : (
                                       <span className="flex items-center gap-1 group/mp cursor-default">
                                         <span className="text-xs text-slate-500">{metodoPagoLabels[pago.medioPago as PaymentMethod] ?? pago.medioPago}</span>
@@ -1663,8 +1665,8 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
                                       </span>
                                     )}
                                   </div>
-                                  <span className={`text-sm font-semibold tabular-nums ${isAnulacion || isNegative ? "text-red-500" : "text-slate-900"}`}>
-                                    {isNegative || isAnulacion ? `−$${Math.abs(pago.monto).toLocaleString("es-AR")}` : `$${pago.monto.toLocaleString("es-AR")}`}
+                                  <span className={`text-sm font-semibold tabular-nums ${isAnulacion ? "text-red-500" : isNegative ? "text-emerald-600" : "text-slate-900"}`}>
+                                    {isAnulacion ? `−$${Math.abs(pago.monto).toLocaleString("es-AR")}` : isNegative ? `+$${Math.abs(pago.monto).toLocaleString("es-AR")}` : `$${pago.monto.toLocaleString("es-AR")}`}
                                   </span>
                                   {!isAnulacion && !isNegative && estadoUI === "en_curso" && (
                                     <button
@@ -2403,6 +2405,10 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
             .map((e) => ({ sku: e.item.sku, quantityDevuelta: e.qty }))
           if (devoluciones.length === 0) return
           addDevolucion(compra.id, devoluciones, Math.round(totalDevAmount))
+          // Devolucion subtracts units from stock
+          for (const d of devoluciones) {
+            decreaseStock(d.sku, d.quantityDevuelta)
+          }
           setViewMode("devolucion")
           closeModal()
         }
@@ -2523,8 +2529,8 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
                     </div>
                     <p className="text-base text-slate-700 text-center leading-relaxed">
                       <span className="font-semibold text-slate-900">{totalDevUnits} {totalDevUnits === 1 ? "unidad" : "unidades"}</span>
-                      {" "}se registrar{totalDevUnits === 1 ? "á" : "án"} como devuelta{totalDevUnits !== 1 ? "s" : ""} al proveedor, y se generará una nota de crédito por{" "}
-                      <span className="font-semibold text-red-600">${Math.round(totalDevAmount).toLocaleString("es-AR")}</span>
+                      {" "}se registrar{totalDevUnits === 1 ? "á" : "án"} como devuelta{totalDevUnits !== 1 ? "s" : ""} al proveedor, y se generará un reintegro por{" "}
+                      <span className="font-semibold text-emerald-600">${Math.round(totalDevAmount).toLocaleString("es-AR")}</span>
                     </p>
                     <ul className="w-full max-w-xs flex flex-col gap-1.5 mt-2">
                       {selectedEntries.filter((e) => e.qty > 0).map((e) => {

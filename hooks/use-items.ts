@@ -803,76 +803,54 @@ export function useItems() {
     }
   }
 
-  const increaseStock = (itemSku: string, quantityToAdd: number, parentSku?: string) => {
-    console.log("[v0] useItems - increaseStock called:", { itemSku, quantityToAdd, parentSku })
-
+  const adjustStock = (itemSku: string, delta: number, parentSku?: string) => {
     const storageKey = getStorageKey()
     const storedItems = localStorage.getItem(storageKey)
     if (!storedItems) return
 
     const currentItems: Item[] = JSON.parse(storedItems)
-
     let updated = false
+
     const updatedItems = currentItems.map((item) => {
       if (parentSku) {
-        // It's a variant
         if (item.sku === parentSku && item.variants) {
           const updatedVariants = item.variants.map((v: any) => {
             if (v.sku === itemSku) {
               const currentTotal = Number.parseInt(v.stock?.total || "0", 10)
               const currentReservado = Number.parseInt(v.stock?.reservado || "0", 10)
-              const newTotal = currentTotal + quantityToAdd
-              const newDisponible = newTotal - currentReservado
-              console.log(
-                `[v0] useItems - increaseStock variant ${itemSku}: total ${currentTotal} -> ${newTotal}, disponible -> ${newDisponible}`,
-              )
+              const newTotal = Math.max(0, currentTotal + delta)
+              const newDisponible = Math.max(0, newTotal - currentReservado)
               updated = true
-              return {
-                ...v,
-                stock: {
-                  total: newTotal.toString(),
-                  reservado: currentReservado.toString(),
-                  disponible: newDisponible.toString(),
-                },
-              }
+              return { ...v, stock: { total: newTotal.toString(), reservado: currentReservado.toString(), disponible: newDisponible.toString() } }
             }
             return v
           })
           return { ...item, variants: updatedVariants }
         }
       } else {
-        // It's a standalone item
         if (item.sku === itemSku) {
           const currentTotal = Number.parseInt(item.stock?.total || "0", 10)
           const currentReservado = Number.parseInt(item.stock?.reservado || "0", 10)
-          const newTotal = currentTotal + quantityToAdd
-          const newDisponible = newTotal - currentReservado
-          console.log(
-            `[v0] useItems - increaseStock item ${itemSku}: total ${currentTotal} -> ${newTotal}, disponible -> ${newDisponible}`,
-          )
+          const newTotal = Math.max(0, currentTotal + delta)
+          const newDisponible = Math.max(0, newTotal - currentReservado)
           updated = true
-          return {
-            ...item,
-            stock: {
-              total: newTotal.toString(),
-              reservado: currentReservado.toString(),
-              disponible: newDisponible.toString(),
-            },
-          }
+          return { ...item, stock: { total: newTotal.toString(), reservado: currentReservado.toString(), disponible: newDisponible.toString() } }
         }
       }
       return item
     })
 
     if (updated) {
-      // Immediately persist to localStorage
       localStorage.setItem(storageKey, JSON.stringify(updatedItems))
-      console.log("[v0] useItems - increaseStock persisted to localStorage")
-
-      // Update React state to reflect the change
       setItems(updatedItems)
     }
   }
+
+  const increaseStock = (itemSku: string, quantityToAdd: number, parentSku?: string) =>
+    adjustStock(itemSku, quantityToAdd, parentSku)
+
+  const decreaseStock = (itemSku: string, quantityToRemove: number, parentSku?: string) =>
+    adjustStock(itemSku, -quantityToRemove, parentSku)
 
   const updatePricing = (
     itemSku: string,
@@ -1267,6 +1245,7 @@ export function useItems() {
     editedItem,
     reduceStock, // Export the new function
     increaseStock,
+    decreaseStock,
     updatePricing,
   }
 }
