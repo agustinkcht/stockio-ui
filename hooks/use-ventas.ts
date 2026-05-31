@@ -6,7 +6,7 @@ import { VENTAS } from "@/lib/data/ventas"
 import { useAccount } from "@/lib/contexts/account-context"
 
 // Bump this when the Venta type or seed data changes to force re-seeding
-const VENTAS_SEED_VERSION = "v8"
+const VENTAS_SEED_VERSION = "v9"
 
 // Ensures a venta object loaded from localStorage has all required fields,
 // even if it was saved before a type extension.
@@ -44,21 +44,21 @@ function recomputeVenta(v: Venta): Venta {
 
   const ventaDescuento =
     v.descuentoTipo === "percent" ? subtotal * (v.descuento / 100) : v.descuento
-  const montoDevuelto = (v.devolucionEntries ?? []).reduce((s, e) => s + e.montoDevuelto, 0)
   const envio = v.envio ?? 0
   const customChargesTotal = (v.customCharges ?? []).reduce((s, c) => s + c.value, 0)
-  const total = Math.max(0, subtotal - ventaDescuento + envio + customChargesTotal - montoDevuelto)
+  // total = original order total — devolucion/cancellation do NOT reduce it
+  const total = Math.max(0, subtotal - ventaDescuento + envio + customChargesTotal)
 
-  const cobrado = v.cobros.reduce((s, c) => s + c.monto, 0)
-  const fullyPaid = cobrado + 0.001 >= total && total > 0
-  const fullyDelivered = v.items.every((it) => {
+  // cobrado: only positive entries count toward "fully paid" check
+  const cobrado = v.cobros.filter((c) => c.monto > 0).reduce((s, c) => s + c.monto, 0)
+  const fullyPaid = total > 0 && cobrado + 0.001 >= total
+  const fullyDelivered = v.items.length > 0 && v.items.every((it) => {
     const e = v.entregaItems.find((ei) => ei.sku === it.sku)
     return (e?.quantityEntregada ?? 0) >= it.quantity
   })
-  // A devolucion must never downgrade a finalizada venta
+  // cancelada preserved; otherwise allow en_curso → finalizada freely
   const estado: VentaEstado =
     v.estado === "cancelada" ? "cancelada"
-    : v.estado === "finalizada" ? "finalizada"
     : (fullyPaid && fullyDelivered ? "finalizada" : "en_curso")
 
   return { ...v, subtotal, total, estado }

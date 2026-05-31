@@ -13,7 +13,7 @@ import { COMPRAS } from "@/lib/data/compras"
 import { useAccount } from "@/lib/contexts/account-context"
 
 // Bump when type or seed changes to force re-seeding
-const COMPRAS_SEED_VERSION = "v5"
+const COMPRAS_SEED_VERSION = "v6"
 
 // Map legacy estado values to current ones
 function normalizeEstado(estado: unknown): CompraEstado {
@@ -52,21 +52,22 @@ function recomputeCompra(c: Compra): Compra {
 
   const compraDescuento =
     c.descuentoTipo === "percent" ? subtotal * (c.descuento / 100) : c.descuento
-  const montoDevuelto = (c.devolucionEntries ?? []).reduce((s, e) => s + e.montoDevuelto, 0)
   const envio = c.envio ?? 0
   const customChargesTotal = (c.customCharges ?? []).reduce((s, ch) => s + ch.value, 0)
-  const total = Math.max(0, subtotal - compraDescuento + envio + customChargesTotal - montoDevuelto)
+  // total = original order total — devolucion/cancellation do NOT reduce it
+  const total = Math.max(0, subtotal - compraDescuento + envio + customChargesTotal)
 
-  const pagado = c.pagos.reduce((s, p) => s + p.monto, 0)
-  const fullyPaid = pagado + 0.001 >= total && total > 0
-  const fullyReceived = c.items.every((it) => {
+  // fullyPaid: sum of positive pagos covers original total (exclude negative reintegro entries)
+  const pagado = c.pagos.filter((p) => p.monto > 0).reduce((s, p) => s + p.monto, 0)
+  const fullyPaid = total > 0 && pagado + 0.001 >= total
+  const fullyReceived = c.items.length > 0 && c.items.every((it) => {
     const r = c.recepcionItems.find((ri) => ri.sku === it.sku)
     return (r?.quantityRecepcionada ?? 0) >= it.quantity
   })
 
+  // cancelada is always preserved; for others, upgrade en_curso → finalizada when eligible
   const estado: CompraEstado =
     c.estado === "cancelada" ? "cancelada"
-    : c.estado === "finalizada" ? "finalizada"
     : (fullyPaid && fullyReceived ? "finalizada" : "en_curso")
 
   return { ...c, subtotal, total, estado }
@@ -95,13 +96,14 @@ export function useCompras() {
 
       if (storedCompras && storedVersion === COMPRAS_SEED_VERSION) {
         const parsed = (JSON.parse(storedCompras) as unknown[]).map((c) =>
-          migrateCompra(c as Partial<Compra> & Record<string, unknown>)
+          recomputeCompra(migrateCompra(c as Partial<Compra> & Record<string, unknown>))
         )
         setCompras(parsed)
       } else {
-        localStorage.setItem(storageKey, JSON.stringify(COMPRAS))
+        const seeded = COMPRAS.map(recomputeCompra)
+        localStorage.setItem(storageKey, JSON.stringify(seeded))
         localStorage.setItem(versionKey, COMPRAS_SEED_VERSION)
-        setCompras(COMPRAS)
+        setCompras(seeded)
       }
     } catch (error) {
       console.error("[v0] Error loading compras:", error)
