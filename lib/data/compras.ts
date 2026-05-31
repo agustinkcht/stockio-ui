@@ -113,7 +113,7 @@ export const COMPRAS: Compra[] = [
     estado: "en_curso",
     comprador: "Admin",
     origen: "orden",
-    ordenId: "ODC-2026-0041",
+    ordenId: "ODC-1",
     recepcionItems: [
       { sku: "VNO-PROGRES-MALB-2019", quantityRecepcionada: 30 },
     ],
@@ -218,7 +218,7 @@ export const COMPRAS: Compra[] = [
     estado: "finalizada",
     comprador: "Admin",
     origen: "orden",
-    ordenId: "ODC-2026-0038",
+    ordenId: "ODC-3",
     recepcionItems: [
       { sku: "GIN-RESTINGA-ORIG", quantityRecepcionada: 60 },
       { sku: "GIN-RESTINGA-OTON", quantityRecepcionada: 48 },

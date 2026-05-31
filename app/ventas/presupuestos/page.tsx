@@ -185,13 +185,21 @@ export default function PresupuestosPage() {
     setFilterEstados(prev => prev.includes(estado) ? prev.filter(e => e !== estado) : [...prev, estado])
   }
 
-  // Accept a presupuesto → create a venta, link it, route to the new venta
+  // Aceptar target — shows confirm modal before creating venta
+  const [aceptarTarget, setAceptarTarget] = useState<Presupuesto | null>(null)
+
   const handleAceptar = (p: Presupuesto) => {
+    setAceptarTarget(p)
+  }
+
+  const handleConfirmAceptar = () => {
+    if (!aceptarTarget) return
     const now = new Date()
     const fecha = now.toISOString().slice(0, 10)
     const hora = now.toTimeString().slice(0, 5)
-    const venta = addVenta(buildVentaFromPresupuesto(p, fecha, hora))
-    updatePresupuesto(p.id, { estado: "aceptado", ventaId: venta.id })
+    const venta = addVenta(buildVentaFromPresupuesto(aceptarTarget, fecha, hora))
+    updatePresupuesto(aceptarTarget.id, { estado: "aceptado", ventaId: venta.id })
+    setAceptarTarget(null)
     router.push(`/ventas/ventas/${venta.id}`)
   }
 
@@ -576,7 +584,7 @@ export default function PresupuestosPage() {
                                       onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); handleAceptar(presupuesto) }}
                                     >
                                       <Receipt className="w-4 h-4 text-slate-400" />
-                                      Aceptar y llevar a compras
+                                      Aceptar y llevar a ventas
                                     </button>
                                   )}
                                   <button
@@ -847,6 +855,40 @@ export default function PresupuestosPage() {
           </main>
         </div>
       </div>
+
+      {/* Aceptar y llevar a ventas Modal */}
+      {aceptarTarget && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setAceptarTarget(null)} />
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            <div className="px-5 py-5 border-b border-slate-100">
+              <div className="flex items-center gap-3 mb-1">
+                <div className="w-9 h-9 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                </div>
+                <h3 className="text-base font-semibold text-slate-900">Aceptar y llevar a ventas</h3>
+              </div>
+              <p className="text-sm text-slate-500 mt-2 ml-12">
+                El presupuesto <span className="font-semibold text-slate-800">{aceptarTarget.id}</span> se marcará como <span className="font-semibold text-emerald-700">aceptado</span> y se creará una nueva venta asociada al mismo.
+              </p>
+            </div>
+            <div className="px-5 py-4 flex items-center justify-end gap-2">
+              <button
+                onClick={() => setAceptarTarget(null)}
+                className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmAceptar}
+                className="px-4 py-2 text-sm font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+              >
+                Aceptar y crear venta
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {viewingItem && (
         <VentaItemDetailModal ventaItem={viewingItem} onClose={() => setViewingItem(null)} />

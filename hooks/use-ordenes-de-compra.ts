@@ -6,7 +6,7 @@ import { ORDENES_DE_COMPRA } from "@/lib/data/initial-ordenes-de-compra"
 import { useAccount } from "@/lib/contexts/account-context"
 
 const STORAGE_KEY_PREFIX = "stockio_ordenes_de_compra"
-const DATA_VERSION = "v2" // bump to reseed localStorage with new dataset
+const DATA_VERSION = "v3" // bump to reseed localStorage with new dataset
 
 export function useOrdenesDeCompra() {
   const [ordenes, setOrdenes] = useState<OrdenDeCompra[]>(ORDENES_DE_COMPRA)
@@ -30,15 +30,12 @@ export function useOrdenesDeCompra() {
 
       if (storedOrdenes) {
         const parsedOrdenes = JSON.parse(storedOrdenes)
-        console.log(`[useOrdenesDeCompra] Loaded ${parsedOrdenes.length} ordenes from localStorage`)
         setOrdenes(parsedOrdenes)
       } else {
-        console.log(`[useOrdenesDeCompra] Loading ${ORDENES_DE_COMPRA.length} initial ordenes`)
         localStorage.setItem(storageKey, JSON.stringify(ORDENES_DE_COMPRA))
         setOrdenes(ORDENES_DE_COMPRA)
       }
     } catch (error) {
-      console.error("[useOrdenesDeCompra] Error loading ordenes:", error)
       setOrdenes(ORDENES_DE_COMPRA)
     }
     setIsLoading(false)
@@ -51,7 +48,6 @@ export function useOrdenesDeCompra() {
 
       const storageKey = getStorageKey()
       localStorage.setItem(storageKey, JSON.stringify(newOrdenes))
-      console.log(`[useOrdenesDeCompra] Saved ${newOrdenes.length} ordenes to localStorage`)
     },
     [currentAccount, getStorageKey],
   )
@@ -75,8 +71,6 @@ export function useOrdenesDeCompra() {
       const updatedOrdenes = [newOrden, ...ordenes]
       setOrdenes(updatedOrdenes)
       saveOrdenes(updatedOrdenes)
-
-      console.log(`[useOrdenesDeCompra] Added new orden: ODC-${nextNumber}`)
       return newOrden
     },
     [ordenes, saveOrdenes, getNextOrderNumber],
@@ -90,7 +84,6 @@ export function useOrdenesDeCompra() {
       )
       setOrdenes(updatedOrdenes)
       saveOrdenes(updatedOrdenes)
-      console.log(`[useOrdenesDeCompra] Updated orden: ${id}`)
     },
     [ordenes, saveOrdenes],
   )
@@ -109,7 +102,6 @@ export function useOrdenesDeCompra() {
       const updatedOrdenes = ordenes.filter((o) => o.id !== id)
       setOrdenes(updatedOrdenes)
       saveOrdenes(updatedOrdenes)
-      console.log(`[useOrdenesDeCompra] Deleted orden: ${id}`)
     },
     [ordenes, saveOrdenes],
   )

@@ -13,7 +13,7 @@ import { COMPRAS } from "@/lib/data/compras"
 import { useAccount } from "@/lib/contexts/account-context"
 
 // Bump when type or seed changes to force re-seeding
-const COMPRAS_SEED_VERSION = "v6"
+const COMPRAS_SEED_VERSION = "v7"
 
 // Map legacy estado values to current ones
 function normalizeEstado(estado: unknown): CompraEstado {

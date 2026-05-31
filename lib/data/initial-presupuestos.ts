@@ -119,6 +119,7 @@ export const INITIAL_PRESUPUESTOS: Presupuesto[] = [
   // ─────────────────────────────────────────────────────────────────────────
   {
     id: "PRE-003",
+    ventaId: "VTA-002",
     numero: 3,
     fecha: "2026-04-01",
     hora: "11:00",
@@ -223,7 +224,7 @@ export const INITIAL_PRESUPUESTOS: Presupuesto[] = [
     ventaId: "VTA-003",
   },
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // ──────────────────────────────��──────────────────────────────────────────
   // PRE-005 · BORRADOR · Distribuciones Cortés · whiskies
   // ─────────────────────────────────────────────────────────────────────────
   {
@@ -479,7 +480,7 @@ export const INITIAL_PRESUPUESTOS: Presupuesto[] = [
     observaciones: "Cliente evalúa la línea Domiciano para su local.",
   },
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // ───────────────────────���─────────────────────────────────────────────────
   // PRE-010 · ACEPTADO · Juan Pérez · whiskies + gin + vodka + licor
   // Generó VTA-004
   // ─────────────────────────────────────────────────────────────────────────

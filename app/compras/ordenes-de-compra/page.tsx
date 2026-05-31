@@ -24,10 +24,13 @@ import {
   Copy,
   Trash2,
   Send,
+  Receipt,
 } from "lucide-react"
 import type { OrdenDeCompra, EstadoOrdenDeCompra } from "@/lib/types"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import { useOrdenesDeCompra } from "@/hooks/use-ordenes-de-compra"
+import { useCompras } from "@/hooks/use-compras"
+import { buildCompraFromOrden } from "@/lib/utils/orden-to-compra"
 import { useSettings } from "@/lib/contexts/settings-context"
 import { downloadOrdenCompraPDF } from "@/lib/utils/generate-orden-compra-pdf"
 import {
@@ -69,7 +72,8 @@ export default function OrdenesDeCompraPage() {
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
   const router = useRouter()
   const allCheckboxRef = useRef<HTMLInputElement>(null)
-  const { ordenes, deleteOrden, addOrden, getNextOrderNumber } = useOrdenesDeCompra()
+  const { ordenes, deleteOrden, addOrden, updateOrden, getNextOrderNumber } = useOrdenesDeCompra()
+  const { addCompra } = useCompras()
   const { miNegocio } = useSettings()
 
   const { periodKey, customRange, setPeriodKey, setCustomRange } = usePeriod()
@@ -102,6 +106,20 @@ export default function OrdenesDeCompraPage() {
   const hasActiveFilters = !!filterProveedor || filterEstados.length > 0
 
   const [expandedOrdenes, setExpandedOrdenes] = useState<Set<string>>(new Set())
+
+  // Aceptar y llevar a compras modal (from list)
+  const [aceptarTarget, setAceptarTarget] = useState<OrdenDeCompra | null>(null)
+
+  const handleAceptarOrden = () => {
+    if (!aceptarTarget) return
+    const now = new Date()
+    const fecha = now.toISOString().slice(0, 10)
+    const hora = now.toTimeString().slice(0, 5)
+    const newCompra = addCompra(buildCompraFromOrden(aceptarTarget, fecha, hora))
+    updateOrden(aceptarTarget.id, { estado: "aceptada", compraId: newCompra.id })
+    setAceptarTarget(null)
+    router.push(`/compras/compras/${newCompra.id}`)
+  }
 
   // Nueva orden modal
   const [showNuevaOrdenModal, setShowNuevaOrdenModal] = useState(false)
@@ -595,6 +613,15 @@ export default function OrdenesDeCompraPage() {
                                   className="absolute top-full right-2 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[210px]"
                                   onMouseLeave={() => setOpenMoreMenu(null)}
                                 >
+                                  {orden.estado === "borrador" && (
+                                    <button
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-emerald-700 hover:bg-emerald-50 transition-colors text-left"
+                                      onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); setAceptarTarget(orden) }}
+                                    >
+                                      <Receipt className="w-4 h-4 text-emerald-500" />
+                                      Aceptar y llevar a compras
+                                    </button>
+                                  )}
                                   <button
                                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
                                     onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); downloadOrdenCompraPDF([orden], miNegocio) }}
@@ -806,6 +833,40 @@ export default function OrdenesDeCompraPage() {
           </main>
         </div>
       </div>
+
+      {/* Aceptar y llevar a compras Modal */}
+      {aceptarTarget && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setAceptarTarget(null)} />
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            <div className="px-5 py-5 border-b border-slate-100">
+              <div className="flex items-center gap-3 mb-1">
+                <div className="w-9 h-9 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                </div>
+                <h3 className="text-base font-semibold text-slate-900">Aceptar y llevar a compras</h3>
+              </div>
+              <p className="text-sm text-slate-500 mt-2 ml-12">
+                La orden <span className="font-semibold text-slate-800">{aceptarTarget.id}</span> se marcará como <span className="font-semibold text-emerald-700">aceptada</span> y se creará una nueva compra asociada a la misma.
+              </p>
+            </div>
+            <div className="px-5 py-4 flex items-center justify-end gap-2">
+              <button
+                onClick={() => setAceptarTarget(null)}
+                className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleAceptarOrden}
+                className="px-4 py-2 text-sm font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+              >
+                Aceptar y crear compra
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Nueva Orden Modal */}
       {showNuevaOrdenModal && (

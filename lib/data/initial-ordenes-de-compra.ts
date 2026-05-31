@@ -1,7 +1,7 @@
 import type { OrdenDeCompra } from "@/lib/types"
 
 export const ORDENES_DE_COMPRA: OrdenDeCompra[] = [
-  // 1 — aceptada — Proemio Wines
+  // 1 — aceptada — Proemio Wines → COMP-002
   {
     id: "ODC-1",
     numero: 1,
@@ -9,6 +9,7 @@ export const ORDENES_DE_COMPRA: OrdenDeCompra[] = [
     proveedorId: "PROV-005",
     proveedorNombre: "Proemio Wines",
     estado: "aceptada",
+    compraId: "COMP-002",
     items: [
       {
         sku: "VNO-PROGRES-MALB-2019",
@@ -72,7 +73,7 @@ export const ORDENES_DE_COMPRA: OrdenDeCompra[] = [
     importeEstimado: 3216000,
   },
 
-  // 3 — aceptada — Bodega Domiciano
+  // 3 — aceptada — Bodega Domiciano → COMP-004
   {
     id: "ODC-3",
     numero: 3,
@@ -80,6 +81,7 @@ export const ORDENES_DE_COMPRA: OrdenDeCompra[] = [
     proveedorId: "PROV-011",
     proveedorNombre: "Bodega Domiciano",
     estado: "aceptada",
+    compraId: "COMP-004",
     items: [
       {
         sku: "VNO-DOMGRES-BLND",

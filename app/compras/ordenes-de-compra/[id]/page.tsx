@@ -35,8 +35,10 @@ import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import { VentaItemDetailModal } from "@/components/ventas/venta-item-detail-modal"
 import { INITIAL_ITEMS } from "@/lib/data/initial-items"
 import { useOrdenesDeCompra } from "@/hooks/use-ordenes-de-compra"
+import { useCompras } from "@/hooks/use-compras"
 import { useSettings } from "@/lib/contexts/settings-context"
 import { downloadOrdenCompraPDF } from "@/lib/utils/generate-orden-compra-pdf"
+import { buildCompraFromOrden } from "@/lib/utils/orden-to-compra"
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -45,6 +47,7 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
 
   const { ordenes, isLoading, updateOrden, updateEstado, deleteOrden } = useOrdenesDeCompra()
+  const { addCompra } = useCompras()
   const { miNegocio } = useSettings()
 
   const orden = useMemo(() => ordenes.find((o) => o.id === id) || null, [ordenes, id])
@@ -285,9 +288,13 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
   // ── Aceptar y llevar a compras ────────────────────────────────────────────
   const handleAceptarYLlevarACompras = () => {
     if (!orden) return
-    updateOrden(orden.id, { estado: "aceptada" })
+    const now = new Date()
+    const fecha = now.toISOString().slice(0, 10)
+    const hora = now.toTimeString().slice(0, 5)
+    const newCompra = addCompra(buildCompraFromOrden(orden, fecha, hora))
+    updateOrden(orden.id, { estado: "aceptada", compraId: newCompra.id })
     setShowAceptarModal(false)
-    router.push("/compras/ordenes-de-compra")
+    router.push(`/compras/compras/${newCompra.id}`)
   }
 
   const handleCancelar = () => {
@@ -608,11 +615,11 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
                       {estado === "aceptada" && orden.compraId && (
                         <button
                           type="button"
-                          onClick={() => router.push(`/compras/${orden.compraId}`)}
+                          onClick={() => router.push(`/compras/compras/${orden.compraId}`)}
                           className="flex items-center gap-2.5 px-4 py-2 rounded-lg transition-colors group hover:bg-slate-100 cursor-pointer"
                         >
                           <ExternalLink className="w-4 h-4 text-slate-500 group-hover:text-slate-700 shrink-0" />
-                          <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-800">Ver compra asociada</span>
+                          <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-800">Ver compra relacionada</span>
                         </button>
                       )}
                       {estado === "aceptada" && !orden.compraId && (
@@ -1132,7 +1139,7 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
                 <h3 className="text-base font-semibold text-slate-900">Aceptar y llevar a compras</h3>
               </div>
               <p className="text-sm text-slate-500 mt-2 ml-12">
-                La orden <span className="font-semibold text-slate-800">{orden.id}</span> se marcará como <span className="font-semibold text-emerald-700">aceptada</span> y quedará disponible en compras.
+                La orden <span className="font-semibold text-slate-800">{orden.id}</span> se marcará como <span className="font-semibold text-emerald-700">aceptada</span> y se creará una nueva compra asociada a la misma.
               </p>
             </div>
             <div className="px-5 py-4 flex items-center justify-end gap-2">

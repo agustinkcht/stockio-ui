@@ -6,7 +6,7 @@ import { VENTAS } from "@/lib/data/ventas"
 import { useAccount } from "@/lib/contexts/account-context"
 
 // Bump this when the Venta type or seed data changes to force re-seeding
-const VENTAS_SEED_VERSION = "v9"
+const VENTAS_SEED_VERSION = "v10"
 
 // Ensures a venta object loaded from localStorage has all required fields,
 // even if it was saved before a type extension.

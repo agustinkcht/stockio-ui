@@ -165,6 +165,8 @@ export const VENTAS: Venta[] = [
       { id: "COB-002-02", fecha: "2026-04-06", hora: "10:00", medioPago: "posnet", monto: 491129 },
     ],
     estado: "finalizada",
+    origen: "presupuesto",
+    presupuestoId: "PRE-003",
   },
 
   // ─────────────────────────────────────────────────────────────────────────
