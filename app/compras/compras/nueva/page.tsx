@@ -36,6 +36,7 @@ import { PROVEEDORES } from "@/lib/data/proveedores"
 import { INITIAL_ITEMS } from "@/lib/data/initial-items"
 import { useCompras } from "@/hooks/use-compras"
 import { useItems } from "@/hooks/use-items"
+import { useSettings } from "@/lib/contexts/settings-context"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import type { ItemVariant, VentaItem, VentaCustomCharge, PaymentMethod } from "@/lib/types"
@@ -101,6 +102,7 @@ export default function NuevaCompraPage() {
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave } = useSidebar()
   const { addCompra, compras } = useCompras()
   const { increaseStock, updatePricing } = useItems()
+  const { precios: preciosSettings } = useSettings()
   const stepsContainerRef = useRef<HTMLDivElement>(null)
 
   const [currentStep, setCurrentStep] = useState(1)
@@ -587,7 +589,7 @@ export default function NuevaCompraPage() {
       // Update costo in lista de precios for selected SKUs
       for (const diff of costoDiffs) {
         if (selectedCostoSkus.has(diff.sku)) {
-          updatePricing(diff.sku, { costo: diff.newCosto })
+          updatePricing(diff.sku, { costo: diff.newCosto }, undefined, preciosSettings.costoBehavior)
         }
       }
 

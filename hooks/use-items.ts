@@ -856,12 +856,51 @@ export function useItems() {
     itemSku: string,
     pricingData: { costo?: number; margen?: number; iva?: number; precioFinal?: number },
     parentSku?: string,
+    costoBehavior?: "preserveMargen" | "preservePrecioFinal",
   ) => {
-    console.log("[v0] useItems - updatePricing called:", { itemSku, pricingData, parentSku })
-
     const storageKey = getStorageKey()
     const storedItems = localStorage.getItem(storageKey)
     if (!storedItems) return
+
+    // Helper: recalculate the derived field based on behavior
+    // When only costo changes: respects costoBehavior setting
+    // - preserveMargen (default): keep margen, update precioFinal
+    // - preservePrecioFinal: keep precioFinal, update margen
+    const applyCosting = (
+      current: { costo: number; margen: number; iva: number; precioFinal: number },
+      data: { costo?: number; margen?: number; iva?: number; precioFinal?: number },
+    ) => {
+      const newCosto = data.costo !== undefined ? data.costo : current.costo
+      const newIva = data.iva !== undefined ? data.iva : current.iva
+
+      // If precioFinal is explicitly provided, just use it directly
+      if (data.precioFinal !== undefined) {
+        const newPF = data.precioFinal
+        const newMargen = newCosto > 0 ? Math.round(((newPF / newCosto) - 1) * 1000) / 10 : current.margen
+        return { costo: newCosto, margen: newMargen, iva: newIva, precioFinal: newPF }
+      }
+
+      // If margen is explicitly provided, recalculate precioFinal from it
+      if (data.margen !== undefined) {
+        const newMargen = data.margen
+        const newPF = Math.round(newCosto * (1 + newMargen / 100))
+        return { costo: newCosto, margen: newMargen, iva: newIva, precioFinal: newPF }
+      }
+
+      // Only costo changed — honor behavior setting
+      const behavior = costoBehavior ?? "preserveMargen"
+      if (behavior === "preservePrecioFinal") {
+        // Keep precioFinal, recalculate margen
+        const keptPF = current.precioFinal
+        const newMargen = newCosto > 0 ? Math.round(((keptPF / newCosto) - 1) * 1000) / 10 : current.margen
+        return { costo: newCosto, margen: newMargen, iva: newIva, precioFinal: keptPF }
+      } else {
+        // preserveMargen: keep margen, recalculate precioFinal
+        const keptMargen = current.margen
+        const newPF = Math.round(newCosto * (1 + keptMargen / 100))
+        return { costo: newCosto, margen: keptMargen, iva: newIva, precioFinal: newPF }
+      }
+    }
 
     const currentItems: Item[] = JSON.parse(storedItems)
 
@@ -873,33 +912,9 @@ export function useItems() {
           const updatedVariants = item.variants.map((v: any) => {
             if (v.sku === itemSku) {
               const currentPrecio = v.precio || { costo: 0, margen: 0, iva: 21, precioFinal: 0 }
-              const newCosto = pricingData.costo !== undefined ? pricingData.costo : currentPrecio.costo
-              const newMargen = pricingData.margen !== undefined ? pricingData.margen : currentPrecio.margen
-              const newIva = pricingData.iva !== undefined ? pricingData.iva : currentPrecio.iva
-
-              // Calculate precioFinal if not provided
-              let newPrecioFinal = pricingData.precioFinal
-              if (newPrecioFinal === undefined) {
-                const costoConMargen = newCosto * (1 + newMargen / 100)
-                newPrecioFinal = Math.round(costoConMargen * (1 + newIva / 100))
-              }
-
-              console.log(`[v0] useItems - updatePricing variant ${itemSku}:`, {
-                costo: `${currentPrecio.costo} -> ${newCosto}`,
-                margen: `${currentPrecio.margen} -> ${newMargen}`,
-                iva: `${currentPrecio.iva} -> ${newIva}`,
-                precioFinal: `${currentPrecio.precioFinal} -> ${newPrecioFinal}`,
-              })
+              const newPrecio = applyCosting(currentPrecio, pricingData)
               updated = true
-              return {
-                ...v,
-                precio: {
-                  costo: newCosto,
-                  margen: Math.round(newMargen * 10) / 10,
-                  iva: newIva,
-                  precioFinal: Math.round(newPrecioFinal),
-                },
-              }
+              return { ...v, precio: newPrecio }
             }
             return v
           })
@@ -909,44 +924,16 @@ export function useItems() {
         // It's a standalone item
         if (item.sku === itemSku) {
           const currentPrecio = item.precio || { costo: 0, margen: 0, iva: 21, precioFinal: 0 }
-          const newCosto = pricingData.costo !== undefined ? pricingData.costo : currentPrecio.costo
-          const newMargen = pricingData.margen !== undefined ? pricingData.margen : currentPrecio.margen
-          const newIva = pricingData.iva !== undefined ? pricingData.iva : currentPrecio.iva
-
-          // Calculate precioFinal if not provided
-          let newPrecioFinal = pricingData.precioFinal
-          if (newPrecioFinal === undefined) {
-            const costoConMargen = newCosto * (1 + newMargen / 100)
-            newPrecioFinal = Math.round(costoConMargen * (1 + newIva / 100))
-          }
-
-          console.log(`[v0] useItems - updatePricing item ${itemSku}:`, {
-            costo: `${currentPrecio.costo} -> ${newCosto}`,
-            margen: `${currentPrecio.margen} -> ${newMargen}`,
-            iva: `${currentPrecio.iva} -> ${newIva}`,
-            precioFinal: `${currentPrecio.precioFinal} -> ${newPrecioFinal}`,
-          })
+          const newPrecio = applyCosting(currentPrecio, pricingData)
           updated = true
-          return {
-            ...item,
-            precio: {
-              costo: newCosto,
-              margen: Math.round(newMargen * 10) / 10,
-              iva: newIva,
-              precioFinal: Math.round(newPrecioFinal),
-            },
-          }
+          return { ...item, precio: newPrecio }
         }
       }
       return item
     })
 
     if (updated) {
-      // Immediately persist to localStorage
       localStorage.setItem(storageKey, JSON.stringify(updatedItems))
-      console.log("[v0] useItems - updatePricing persisted to localStorage")
-
-      // Update React state to reflect the change
       setItems(updatedItems)
     }
   }
