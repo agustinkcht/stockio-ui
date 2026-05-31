@@ -730,7 +730,7 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
     { label: compra.id },
   ]
 
-  // ── JSX ───────────────────────────────────────────────────────────────────
+  // ── JSX ─────────────────────────────────��─────────────────────────────────
 
   return (
     <div className="min-h-screen bg-[rgb(243,242,238)]">
@@ -1406,13 +1406,13 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
                                       <div className="flex flex-col items-center justify-center gap-0.5 py-2">
                                         {item.discount > 0 && item.discountType === "unit" ? (
                                           <div className="flex flex-col items-center gap-0.5">
-                                            <span className="text-[10px] font-semibold text-red-500 whitespace-nowrap">
-                                              {item.discount} {item.discount === 1 ? "unidad" : "unidades"} bonificada{item.discount === 1 ? "" : "s"}
-                                            </span>
                                             <div className="flex items-baseline gap-1">
                                               <span className="text-sm text-slate-700 tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
                                               <span className="text-xs text-slate-400">c/u</span>
                                             </div>
+                                            <span className="text-[10px] font-semibold text-green-600 whitespace-nowrap">
+                                              +{item.discount} {item.discount === 1 ? "unidad" : "unidades"} bonificada{item.discount === 1 ? "" : "s"}
+                                            </span>
                                           </div>
                                         ) : item.discount > 0 && (item.discountType === "percent" || item.discountType === "fixed") ? (
                                           <>

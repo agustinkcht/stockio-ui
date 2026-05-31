@@ -691,7 +691,7 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
                           type="button"
                           onClick={() => { if (!isEditMode) { computeCostoDiffs(); setShowAceptarModal(true) } }}
                           disabled={isEditMode}
-                          className={`flex items-center gap-2.5 px-4 py-2 rounded-lg transition-colors ${isEditMode ? "opacity-40 cursor-not-allowed bg-slate-50 text-slate-900" : "bg-slate-50 hover:bg-slate-100 text-slate-900 cursor-pointer border border-slate-200"}`}
+                          className={`flex items-center gap-2.5 px-4 py-2 rounded-lg transition-colors ${isEditMode ? "opacity-40 cursor-not-allowed bg-slate-50 text-slate-900" : "bg-slate-50 hover:bg-slate-100 text-slate-900 cursor-pointer"}`}
                         >
                           <CheckCircle2 className="w-4 h-4 shrink-0 text-green-500" />
                           <span className="text-sm font-semibold text-slate-900">Aceptar y llevar a compras</span>
@@ -900,13 +900,13 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
                               <div className="flex flex-col items-center justify-center gap-0.5 py-2">
                                 {item.discount && item.discount > 0 && item.discountType === "unit" ? (
                                   <div className="flex flex-col items-center gap-0.5">
-                                    <span className="text-[10px] font-semibold text-red-500 whitespace-nowrap">
-                                      {item.discount} {item.discount === 1 ? "unidad" : "unidades"} bonificada{item.discount === 1 ? "" : "s"}
-                                    </span>
                                     <div className="flex items-baseline gap-1">
                                       <span className="text-sm text-slate-700 tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
                                       <span className="text-xs text-slate-400">c/u</span>
                                     </div>
+                                    <span className="text-[10px] font-semibold text-green-600 whitespace-nowrap">
+                                      +{item.discount} {item.discount === 1 ? "unidad" : "unidades"} bonificada{item.discount === 1 ? "" : "s"}
+                                    </span>
                                   </div>
                                 ) : item.discount && item.discount > 0 && (item.discountType === "percent" || item.discountType === "fixed") ? (
                                   <>
@@ -1308,11 +1308,11 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
                           ref={(el) => { if (el) el.indeterminate = someCostosSelected && !allCostosSelected }}
                           onChange={(e) => toggleAllCostos(e.target.checked)}
                           className="w-[14px] h-[14px] rounded border-slate-300 accent-slate-900 cursor-pointer"
-                          title="Actualizar costos en lista de precios"
+                          title="Actualizar costos"
                         />
                       </div>
                       <div className="flex items-center px-3 gap-1.5">
-                        <span>Actualizar costos en lista de precios</span>
+                        <span>Actualizar costos</span>
                         {someCostosSelected && (
                           <span className="normal-case text-[10px] font-normal text-slate-400">
                             ({selectedCostoSkus.size} seleccionado{selectedCostoSkus.size !== 1 ? "s" : ""})

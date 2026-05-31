@@ -126,19 +126,24 @@ export async function renderCompraPage(doc: jsPDF, compra: Compra, miNegocio: Mi
   for (const item of compra.items) {
     const display = getVentaItemDisplay(item)
     const hasDiscount = item.discount > 0
+    const isUnit = item.discountType === "unit"
+    const paidQty = isUnit
+      ? Math.max(0, item.quantity - Math.min(item.discount, item.quantity))
+      : item.quantity
     const adjustedUnit = item.discountType === "percent"
       ? item.unitPrice * (1 - item.discount / 100)
       : item.discountType === "fixed"
       ? Math.max(0, item.unitPrice - item.discount)
       : item.unitPrice
-    const lineTotal = Math.round(item.total)
+    const lineTotal = isUnit ? Math.round(adjustedUnit * paidQty) : Math.round(item.total)
 
-    const hasSecondPriceLine = hasDiscount
-    const rowH = 8 + (hasSecondPriceLine ? 4 : 0)
+    const hasSecondPriceLine = hasDiscount && !isUnit
+    const hasBonif = isUnit && hasDiscount
+    const rowH = 8 + (hasSecondPriceLine ? 4 : 0) + (hasBonif ? 4 : 0)
 
     newPageIfNeeded(rowH + 3)
 
-    const nameY = y + (hasSecondPriceLine ? 3.5 : 5)
+    const nameY = y + (hasBonif ? 4 : hasSecondPriceLine ? 3.5 : 5)
     const nameStr = display.name.length > 50 ? display.name.slice(0, 47) + "..." : display.name
     doc.setFont("helvetica", "normal")
     doc.setFontSize(9)
@@ -154,12 +159,23 @@ export async function renderCompraPage(doc: jsPDF, compra: Compra, miNegocio: Mi
       doc.text(tagsStr, colItem + nameW + spaceW * 2, nameY)
     }
 
+    const qtyBaseY = hasBonif ? y + 3.5 : y + 5
     doc.setFont("helvetica", "normal")
     doc.setFontSize(9)
     doc.setTextColor(71, 85, 105)
-    doc.text(String(item.quantity), colQty + 6, y + 5, { align: "center" })
+    doc.text(String(item.quantity), colQty + 6, qtyBaseY, { align: "center" })
+    if (hasBonif) {
+      doc.setFontSize(7)
+      doc.setTextColor(22, 163, 74)
+      doc.text(`+${Math.min(item.discount, item.quantity)} bonif.`, colQty + 6, y + 8.5, { align: "center" })
+    }
 
-    if (hasDiscount) {
+    if (isUnit && hasDiscount) {
+      doc.setFont("helvetica", "normal")
+      doc.setFontSize(9)
+      doc.setTextColor(15, 23, 42)
+      doc.text(`$${item.unitPrice.toLocaleString("es-AR")} c/u`, colPrice, y + 5)
+    } else if (hasDiscount) {
       doc.setFont("helvetica", "normal")
       doc.setFontSize(7.5)
       doc.setTextColor(148, 163, 184)

@@ -1,5 +1,5 @@
 import jsPDF from "jspdf"
-import type { OrdenDeCompra } from "@/lib/types"
+import type { OrdenDeCompra, VentaCustomCharge } from "@/lib/types"
 
 type MiNegocio = {
   razonSocial?: string
@@ -121,38 +121,87 @@ export async function renderOrdenCompraPage(doc: jsPDF, orden: OrdenDeCompra, mi
 
   // ── Item rows ─────────────────────────────────────────────────────────────
   for (const item of orden.items) {
-    const rowH = 10
+    const hasDiscount = (item.discount ?? 0) > 0
+    const isUnit = item.discountType === "unit"
+    const paidQty = isUnit
+      ? Math.max(0, item.quantity - Math.min(item.discount!, item.quantity))
+      : item.quantity
+    const adjustedUnit = item.discountType === "percent"
+      ? item.unitPrice * (1 - item.discount! / 100)
+      : item.discountType === "fixed"
+      ? Math.max(0, item.unitPrice - item.discount!)
+      : item.unitPrice
+    const lineTotal = isUnit ? Math.round(adjustedUnit * paidQty) : Math.round(item.total)
+
+    const hasSecondPriceLine = hasDiscount && !isUnit
+    const hasBonif = isUnit && hasDiscount
+    const rowH = 8 + (hasSecondPriceLine ? 4 : 0) + (hasBonif ? 4 : 0)
+
     newPageIfNeeded(rowH + 3)
 
     const nameStr = item.name.length > 50 ? item.name.slice(0, 47) + "..." : item.name
+    const nameY = y + (hasBonif ? 4 : hasSecondPriceLine ? 3.5 : 5)
     doc.setFont("helvetica", "normal")
     doc.setFontSize(9)
     doc.setTextColor(15, 23, 42)
-    doc.text(nameStr, colItem, y + 5)
+    doc.text(nameStr, colItem, nameY)
 
-    // Tags (categoria / marca)
     const tags = [item.categoria, item.marca].filter(Boolean) as string[]
     if (tags.length > 0) {
       const nameW = doc.getTextWidth(nameStr)
       doc.setFontSize(7)
       doc.setTextColor(100, 116, 139)
-      doc.text(tags.join("  ·  "), colItem + nameW + doc.getTextWidth(" ") * 2, y + 5)
+      doc.text(tags.join("  ·  "), colItem + nameW + doc.getTextWidth(" ") * 2, nameY)
     }
 
+    const qtyBaseY = hasBonif ? y + 3.5 : y + 5
     doc.setFont("helvetica", "normal")
     doc.setFontSize(9)
     doc.setTextColor(71, 85, 105)
-    doc.text(String(item.quantity), colQty + 6, y + 5, { align: "center" })
+    doc.text(String(item.quantity), colQty + 6, qtyBaseY, { align: "center" })
+    if (hasBonif) {
+      doc.setFontSize(7)
+      doc.setTextColor(22, 163, 74)
+      doc.text(`+${Math.min(item.discount!, item.quantity)} bonif.`, colQty + 6, y + 8.5, { align: "center" })
+    }
 
-    doc.setFont("helvetica", "normal")
-    doc.setFontSize(9)
-    doc.setTextColor(15, 23, 42)
-    doc.text(`$${item.unitPrice.toLocaleString("es-AR")} c/u`, colPrice, y + 5)
+    if (isUnit && hasDiscount) {
+      doc.setFont("helvetica", "normal")
+      doc.setFontSize(9)
+      doc.setTextColor(15, 23, 42)
+      doc.text(`$${item.unitPrice.toLocaleString("es-AR")} c/u`, colPrice, y + 5)
+    } else if (hasDiscount) {
+      doc.setFont("helvetica", "normal")
+      doc.setFontSize(7.5)
+      doc.setTextColor(148, 163, 184)
+      const origStr = `$${item.unitPrice.toLocaleString("es-AR")}`
+      const origW = doc.getTextWidth(origStr)
+      doc.text(origStr, colPrice, y + 3.5)
+      doc.setDrawColor(148, 163, 184)
+      doc.setLineWidth(0.25)
+      doc.line(colPrice, y + 2.8, colPrice + origW, y + 2.8)
+      const badgeLabel = item.discountType === "percent"
+        ? `-${item.discount}%`
+        : `-$${item.discount!.toLocaleString("es-AR")}`
+      doc.setFontSize(7)
+      doc.setFont("helvetica", "bold")
+      doc.setTextColor(239, 68, 68)
+      doc.text(badgeLabel, colPrice + origW + 1.5, y + 3.5)
+      doc.setFont("helvetica", "normal")
+      doc.setFontSize(9)
+      doc.setTextColor(15, 23, 42)
+      doc.text(`$${Math.round(adjustedUnit).toLocaleString("es-AR")} c/u`, colPrice, y + 8.5)
+    } else {
+      doc.setFont("helvetica", "normal")
+      doc.setFontSize(9)
+      doc.setTextColor(15, 23, 42)
+      doc.text(`$${item.unitPrice.toLocaleString("es-AR")} c/u`, colPrice, y + 5)
+    }
 
     doc.setFont("helvetica", "bold")
     doc.setFontSize(9)
     doc.setTextColor(15, 23, 42)
-    doc.text(`$${Math.round(item.total).toLocaleString("es-AR")}`, colSub, y + 5, { align: "right" })
+    doc.text(`$${lineTotal.toLocaleString("es-AR")}`, colSub, y + 5, { align: "right" })
 
     y += rowH
     doc.setDrawColor(241, 245, 249)
@@ -161,7 +210,16 @@ export async function renderOrdenCompraPage(doc: jsPDF, orden: OrdenDeCompra, mi
     y += 2
   }
 
-  // ── Importe estimado ──────────────────────────────────────────────────────
+  // ── Adjustments + Total estimado ──────────────────────────────────────────
+  const ordenSubtotal = orden.subtotal ?? orden.importeEstimado
+  const ordenDescuento = orden.descuento ?? 0
+  const ordenDescuentoTipo = orden.descuentoTipo ?? "percent"
+  const ordenDescuentoAmount = ordenDescuentoTipo === "percent"
+    ? ordenSubtotal * (ordenDescuento / 100)
+    : ordenDescuento
+  const ordenEnvio = orden.envio ?? 0
+  const ordenCustomCharges = (orden.customCharges ?? []).filter(c => c.value > 0)
+
   y += 4
   newPageIfNeeded(30)
 
@@ -176,8 +234,39 @@ export async function renderOrdenCompraPage(doc: jsPDF, orden: OrdenDeCompra, mi
   doc.setTextColor(100, 116, 139)
   doc.text("Subtotal", adjLeft, y)
   doc.setTextColor(71, 85, 105)
-  doc.text(`$${Math.round(orden.importeEstimado).toLocaleString("es-AR")}`, mr, y, { align: "right" })
+  doc.text(`$${Math.round(ordenSubtotal).toLocaleString("es-AR")}`, mr, y, { align: "right" })
   y += 5.5
+
+  if (ordenDescuento > 0) {
+    const label = `Descuento${ordenDescuentoTipo === "percent" ? ` (${ordenDescuento}%)` : ""}`
+    doc.setFont("helvetica", "normal")
+    doc.setFontSize(9)
+    doc.setTextColor(100, 116, 139)
+    doc.text(label, adjLeft, y)
+    doc.setTextColor(239, 68, 68)
+    doc.text(`-$${Math.round(ordenDescuentoAmount).toLocaleString("es-AR")}`, mr, y, { align: "right" })
+    y += 5.5
+  }
+
+  if (ordenEnvio > 0) {
+    doc.setFont("helvetica", "normal")
+    doc.setFontSize(9)
+    doc.setTextColor(100, 116, 139)
+    doc.text("Envío", adjLeft, y)
+    doc.setTextColor(71, 85, 105)
+    doc.text(`+$${Math.round(ordenEnvio).toLocaleString("es-AR")}`, mr, y, { align: "right" })
+    y += 5.5
+  }
+
+  for (const c of ordenCustomCharges) {
+    doc.setFont("helvetica", "normal")
+    doc.setFontSize(9)
+    doc.setTextColor(100, 116, 139)
+    doc.text(c.label, adjLeft, y)
+    doc.setTextColor(71, 85, 105)
+    doc.text(`+$${Math.round(c.value).toLocaleString("es-AR")}`, mr, y, { align: "right" })
+    y += 5.5
+  }
 
   doc.setDrawColor(15, 23, 42)
   doc.setLineWidth(0.5)
@@ -187,7 +276,7 @@ export async function renderOrdenCompraPage(doc: jsPDF, orden: OrdenDeCompra, mi
   doc.setFont("helvetica", "bold")
   doc.setFontSize(12)
   doc.setTextColor(15, 23, 42)
-  doc.text("Importe estimado", adjLeft, y)
+  doc.text("Total estimado", adjLeft, y)
   doc.text(`$${Math.round(orden.importeEstimado).toLocaleString("es-AR")}`, mr, y, { align: "right" })
 
   // ── Footer ───────────────────────────────────────────────────────────────

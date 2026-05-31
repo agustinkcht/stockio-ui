@@ -865,7 +865,7 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
                             type="button"
                             onClick={() => !isEditMode && setShowAceptarModal(true)}
                             disabled={isEditMode}
-                            className={`flex items-center gap-2.5 px-4 py-2 rounded-lg border border-slate-200 transition-colors group ${isEditMode ? "opacity-40 cursor-not-allowed bg-slate-50" : "bg-slate-50 hover:bg-slate-100 cursor-pointer"}`}
+                            className={`flex items-center gap-2.5 px-4 py-2 rounded-lg transition-colors group ${isEditMode ? "opacity-40 cursor-not-allowed bg-slate-50" : "bg-slate-50 hover:bg-slate-100 cursor-pointer"}`}
                           >
                             <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
                             <span className="text-sm font-semibold text-slate-900">Aceptar y llevar a ventas</span>
