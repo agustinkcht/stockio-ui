@@ -507,7 +507,7 @@ export default function NuevaCompraPage() {
           quantity: it.quantity,
           unitPrice: it.unitPrice,
           discount: aj.value,
-          discountType: (aj.type === "percent" ? "percent" : "fixed") as "percent" | "fixed",
+          discountType: (aj.type === "percent" ? "percent" : aj.type === "unit" ? "unit" : "fixed") as "percent" | "fixed" | "unit",
           total: Math.round(lineTotal),
           categoria: it.categoria,
         }

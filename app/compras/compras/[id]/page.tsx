@@ -436,7 +436,7 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
       Object.fromEntries(compraItems.map((item, idx) => [
         idx,
         item.discount > 0
-          ? { value: item.discount, type: (item.discountType === "fixed" ? "cash" : "percent") as "percent" | "cash" }
+          ? { value: item.discount, type: (item.discountType === "fixed" ? "cash" : item.discountType === "unit" ? "unit" : "percent") as "percent" | "cash" | "unit" }
           : { value: 0, type: "percent" as const },
       ]))
     )
@@ -1199,7 +1199,9 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
                               const discountAmount =
                                 item.discountType === "percent"
                                   ? baseGross * (item.discount / 100)
-                                  : item.discount * item.quantity
+                                  : item.discountType === "unit"
+                                    ? 0 // unit bonificada: price per unit stays same, just fewer paid units
+                                    : item.discount * item.quantity
                               const adjustedUnitPrice = Math.max(0, item.unitPrice - (discountAmount / Math.max(item.quantity, 1)))
                               const received = itemRecepcionMap.get(item.sku) ?? 0
                               const itemPct = item.quantity === 0 ? 0 : Math.round((received / item.quantity) * 100)
@@ -1402,7 +1404,17 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
                                         <span className="text-xs text-slate-400">{item.quantity === 1 ? "unidad" : "unidades"}</span>
                                       </div>
                                       <div className="flex flex-col items-center justify-center gap-0.5 py-2">
-                                        {item.discount > 0 && (item.discountType === "percent" || item.discountType === "fixed") ? (
+                                        {item.discount > 0 && item.discountType === "unit" ? (
+                                          <div className="flex flex-col items-center gap-0.5">
+                                            <span className="text-[10px] font-semibold text-red-500 whitespace-nowrap">
+                                              {item.discount} {item.discount === 1 ? "unidad" : "unidades"} bonificada{item.discount === 1 ? "" : "s"}
+                                            </span>
+                                            <div className="flex items-baseline gap-1">
+                                              <span className="text-sm text-slate-700 tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
+                                              <span className="text-xs text-slate-400">c/u</span>
+                                            </div>
+                                          </div>
+                                        ) : item.discount > 0 && (item.discountType === "percent" || item.discountType === "fixed") ? (
                                           <>
                                             <div className="flex items-center gap-1">
                                               <span className="text-xs text-slate-400 line-through tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
@@ -1485,7 +1497,8 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
                                 if (isEditMode) {
                                   const aj = editAjustes[idx] ?? { value: 0, type: "percent" as const }
                                   if (aj.value > 0) {
-                                    if (aj.type === "percent") lineTotal = item.quantity * item.unitPrice * (1 - aj.value / 100)
+                                    if (aj.type === "unit") lineTotal = Math.max(0, item.quantity - Math.min(aj.value, item.quantity)) * item.unitPrice
+                                    else if (aj.type === "percent") lineTotal = item.quantity * item.unitPrice * (1 - aj.value / 100)
                                     else lineTotal = item.quantity * Math.max(0, item.unitPrice - aj.value)
                                   } else {
                                     lineTotal = item.quantity * item.unitPrice
@@ -1493,7 +1506,9 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
                                 } else {
                                   lineTotal = item.discountType === "percent"
                                     ? Math.round(item.quantity * item.unitPrice * (1 - item.discount / 100))
-                                    : Math.round(item.quantity * Math.max(0, item.unitPrice - item.discount))
+                                    : item.discountType === "unit"
+                                      ? Math.round(Math.max(0, item.quantity - Math.min(item.discount, item.quantity)) * item.unitPrice)
+                                      : Math.round(item.quantity * Math.max(0, item.unitPrice - item.discount))
                                 }
                                 return (
                                   <div key={idx} className="flex justify-between items-start gap-3 py-2.5 -mx-5 px-5">
@@ -1542,7 +1557,7 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
                                 <button onClick={() => { setShowEnvio(false); setEnvioAmount(0) }} className="p-0.5 rounded hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors">
                                   <X className="w-3 h-3" />
                                 </button>
-                                <span className="text-sm text-slate-500">Flete / envío</span>
+                                <span className="text-sm text-slate-500">Envío</span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <span className="text-sm text-slate-400">$</span>
@@ -1590,7 +1605,7 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
                               )}
                               {!showEnvio && (
                                 <button onClick={() => setShowEnvio(true)} className="text-xs px-2 py-0.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors">
-                                  Flete / Envío
+                                  Envío
                                 </button>
                               )}
                               {customCharges.length === 0 && (
@@ -1617,7 +1632,7 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
                           )}
                           {!isEditMode && savedEnvio != null && savedEnvio > 0 && (
                             <div className="flex justify-between items-center py-2.5">
-                              <span className="text-sm text-slate-500">Flete / Envío</span>
+                              <span className="text-sm text-slate-500">Envío</span>
                               <span className="text-sm text-slate-700 tabular-nums">+${savedEnvio.toLocaleString("es-AR")}</span>
                             </div>
                           )}

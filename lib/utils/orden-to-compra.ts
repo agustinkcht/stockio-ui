@@ -14,9 +14,9 @@ export function buildCompraFromOrden(
     name: it.name,
     quantity: it.quantity,
     unitPrice: it.unitPrice,
-    // Carry over per-item discount from orden; map "unit" → "fixed" for compra compat
+    // Carry over per-item discount from orden, preserving the discount type including unit
     discount: it.discount ?? 0,
-    discountType: (it.discountType === "unit" ? "fixed" : (it.discountType ?? "percent")) as "percent" | "fixed",
+    discountType: (it.discountType ?? "percent") as "percent" | "fixed" | "unit",
     total: it.total,
     categoria: it.categoria,
   }))

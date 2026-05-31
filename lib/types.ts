@@ -287,7 +287,7 @@ export interface CompraItem {
   quantity: number
   unitPrice: number
   discount: number
-  discountType: "percent" | "fixed"
+  discountType: "percent" | "fixed" | "unit"
   total: number
   categoria?: string
 }

@@ -132,7 +132,19 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
     }, 0)
   }, [editItems, editAjustes])
 
-  const activeSubtotal = isEditMode ? editSubtotal : (orden?.importeEstimado ?? 0)
+  // In view mode, "Productos" shows the item-level subtotal (before global adjustments)
+  const viewSubtotal = orden ? (orden.subtotal ?? orden.importeEstimado) : 0
+  const activeSubtotal = isEditMode ? editSubtotal : viewSubtotal
+
+  // Derived global adjustment values for view mode
+  const viewGlobalDiscount = orden?.descuento ?? 0
+  const viewGlobalDiscountTipo = orden?.descuentoTipo ?? "percent"
+  const viewGlobalDiscountAmount = viewGlobalDiscount > 0
+    ? viewGlobalDiscountTipo === "percent" ? viewSubtotal * (viewGlobalDiscount / 100) : viewGlobalDiscount
+    : 0
+  const viewEnvio = orden?.envio ?? 0
+  const viewCustomCharges = orden?.customCharges ?? []
+  const viewGrandTotal = orden?.importeEstimado ?? 0
 
   // ── Modal computed values ─────────────────────────────────────────────────
   const allModalItems = useMemo(
@@ -885,11 +897,41 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
                                 <span className="text-sm text-slate-700 tabular-nums">{item.quantity}</span>
                                 <span className="text-xs text-slate-400">{item.quantity === 1 ? "unidad" : "unidades"}</span>
                               </div>
-                              <div className="flex items-center justify-center">
-                                <div className="flex items-baseline gap-1">
-                                  <span className="text-sm text-slate-700 tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
-                                  <span className="text-xs text-slate-400">c/u</span>
-                                </div>
+                              <div className="flex flex-col items-center justify-center gap-0.5 py-2">
+                                {item.discount && item.discount > 0 && item.discountType === "unit" ? (
+                                  <div className="flex flex-col items-center gap-0.5">
+                                    <span className="text-[10px] font-semibold text-red-500 whitespace-nowrap">
+                                      {item.discount} {item.discount === 1 ? "unidad" : "unidades"} bonificada{item.discount === 1 ? "" : "s"}
+                                    </span>
+                                    <div className="flex items-baseline gap-1">
+                                      <span className="text-sm text-slate-700 tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
+                                      <span className="text-xs text-slate-400">c/u</span>
+                                    </div>
+                                  </div>
+                                ) : item.discount && item.discount > 0 && (item.discountType === "percent" || item.discountType === "fixed") ? (
+                                  <>
+                                    <div className="flex items-center gap-1">
+                                      <span className="text-xs text-slate-400 line-through tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
+                                      <span className="text-[10px] font-semibold text-red-500">
+                                        {item.discountType === "percent" ? `-${item.discount}%` : `-$${item.discount.toLocaleString("es-AR")}`}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-baseline gap-1">
+                                      <span className="text-sm font-medium text-slate-800 tabular-nums">
+                                        ${Math.round(item.discountType === "percent"
+                                          ? item.unitPrice * (1 - item.discount / 100)
+                                          : Math.max(0, item.unitPrice - item.discount)
+                                        ).toLocaleString("es-AR")}
+                                      </span>
+                                      <span className="text-xs text-slate-400">c/u</span>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <div className="flex items-baseline gap-1">
+                                    <span className="text-sm text-slate-700 tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
+                                    <span className="text-xs text-slate-400">c/u</span>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           )}
@@ -972,11 +1014,39 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
                       </div>
                     )}
 
+                    {/* View-mode global adjustments */}
+                    {!isEditMode && viewGlobalDiscount > 0 && (
+                      <div className="flex justify-between items-center py-2.5">
+                        <span className="text-sm text-slate-500">
+                          Descuento Global{" "}
+                          <span className="text-xs text-slate-400">
+                            ({viewGlobalDiscountTipo === "percent" ? `${viewGlobalDiscount}%` : `$${viewGlobalDiscount.toLocaleString("es-AR")}`})
+                          </span>
+                        </span>
+                        <span className="text-sm text-red-500 tabular-nums">−${Math.round(viewGlobalDiscountAmount).toLocaleString("es-AR")}</span>
+                      </div>
+                    )}
+                    {!isEditMode && viewEnvio > 0 && (
+                      <div className="flex justify-between items-center py-2.5">
+                        <span className="text-sm text-slate-500">Envío</span>
+                        <span className="text-sm text-slate-700 tabular-nums">+${viewEnvio.toLocaleString("es-AR")}</span>
+                      </div>
+                    )}
+                    {!isEditMode && viewCustomCharges.map((c) => (
+                      <div key={c.id} className="flex justify-between items-center py-2.5">
+                        <span className="text-sm text-slate-500">{c.label}</span>
+                        <span className="text-sm text-slate-700 tabular-nums">+${c.value.toLocaleString("es-AR")}</span>
+                      </div>
+                    ))}
+                    {!isEditMode && (viewGlobalDiscount > 0 || viewEnvio > 0 || viewCustomCharges.length > 0) && (
+                      <hr className="-mx-5 w-[calc(100%+2.5rem)] border-t border-slate-100 border-0" />
+                    )}
+
                     {/* Total */}
                     <div className="flex justify-between items-center py-3 mt-1">
                       <span className="text-base font-bold text-slate-900">Total estimado</span>
                       <span className="text-base font-bold text-slate-900 tabular-nums">
-                        ${Math.round(activeSubtotal).toLocaleString("es-AR")}
+                        ${Math.round(isEditMode ? activeSubtotal : viewGrandTotal).toLocaleString("es-AR")}
                       </span>
                     </div>
 
