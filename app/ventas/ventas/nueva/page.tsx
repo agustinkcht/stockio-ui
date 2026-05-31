@@ -33,7 +33,6 @@ import { useSidebar } from "@/hooks/use-sidebar"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 
 import { CLIENTES } from "@/lib/data/clientes"
-import { INITIAL_ITEMS } from "@/lib/data/initial-items"
 import { useVentaStockSync } from "@/hooks/use-venta-stock-sync"
 import { useVentas } from "@/hooks/use-ventas"
 import { useItems } from "@/hooks/use-items"

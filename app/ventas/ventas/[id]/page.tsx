@@ -40,7 +40,6 @@ import { VentaItemDetailModal } from "@/components/ventas/venta-item-detail-moda
 import { ClienteModal } from "@/components/ventas/cliente-modal"
 import { TicketModal } from "@/components/ventas/ticket-modal"
 import { CLIENTES } from "@/lib/data/clientes"
-import { INITIAL_ITEMS } from "@/lib/data/initial-items"
 import { useVentaStockSync } from "@/hooks/use-venta-stock-sync"
 import { useItems } from "@/hooks/use-items"
 import { useSettings } from "@/lib/contexts/settings-context"

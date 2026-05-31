@@ -29,7 +29,6 @@ import { useSidebar } from "@/hooks/use-sidebar"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 
 import { CLIENTES } from "@/lib/data/clientes"
-import { INITIAL_ITEMS } from "@/lib/data/initial-items"
 import { usePresupuestos } from "@/hooks/use-presupuestos"
 import { useItems } from "@/hooks/use-items"
 import { getCategoryImage } from "@/lib/utils/category-images"
