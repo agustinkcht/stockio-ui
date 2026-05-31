@@ -49,16 +49,6 @@ export function useItems() {
   const [lastUndoneEdit, setLastUndoneEdit] = useState<EditedItemState | null>(null)
   const [hasUnsavedEdits, setHasUnsavedEdits] = useState(false)
 
-  useEffect(() => {
-    console.log("[v0] useItems - hasUnsavedDeletes changed to:", hasUnsavedDeletes)
-    console.log("[v0] useItems - deletedItems count:", deletedItems.length)
-  }, [hasUnsavedDeletes, deletedItems])
-
-  useEffect(() => {
-    console.log("[v0] useItems - hasUnsavedEdits changed to:", hasUnsavedEdits)
-    console.log("[v0] useItems - editedItem:", editedItem?.itemSku)
-  }, [hasUnsavedEdits, editedItem])
-
   const USE_MOCK_DATA = true
 
   const getStorageKey = () => {
@@ -794,11 +784,7 @@ export function useItems() {
     })
 
     if (updated) {
-      // Immediately persist to localStorage
       localStorage.setItem(storageKey, JSON.stringify(updatedItems))
-      console.log("[v0] useItems - reduceStock persisted to localStorage")
-
-      // Update React state to reflect the change
       setItems(updatedItems)
     }
   }
@@ -806,7 +792,7 @@ export function useItems() {
   const adjustStock = (itemSku: string, delta: number, parentSku?: string) => {
     const storageKey = getStorageKey()
     const storedItems = localStorage.getItem(storageKey)
-    console.log("[v0] adjustStock called - sku:", itemSku, "delta:", delta, "storageKey:", storageKey, "hasItems:", !!storedItems)
+    console.log("[v0] adjustStock - sku:", itemSku, "delta:", delta, "key:", storageKey, "found:", !!storedItems)
     if (!storedItems) return
 
     const currentItems: Item[] = JSON.parse(storedItems)
