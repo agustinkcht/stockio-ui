@@ -28,8 +28,8 @@ import { useSidebar } from "@/hooks/use-sidebar"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 
 import { PROVEEDORES } from "@/lib/data/proveedores"
-import { INITIAL_ITEMS } from "@/lib/data/initial-items"
 import { useOrdenesDeCompra } from "@/hooks/use-ordenes-de-compra"
+import { useItems } from "@/hooks/use-items"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import type { ItemVariant, VentaItem, VentaCustomCharge } from "@/lib/types"
@@ -54,6 +54,7 @@ export default function NuevaOrdenDeCompraPage() {
   const searchParams = useSearchParams()
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave } = useSidebar()
   const { addOrden, ordenes } = useOrdenesDeCompra()
+  const { items: catalogItems } = useItems()
   const stepsContainerRef = useRef<HTMLDivElement>(null)
 
   const [currentStep, setCurrentStep] = useState(1)
@@ -166,8 +167,8 @@ export default function NuevaOrdenDeCompraPage() {
 
   // ── Modal derived ─────────────────────────────────────────
   const allModalItems = useMemo(
-    () => INITIAL_ITEMS.filter(item => item.proveedor === proveedorNombre),
-    [proveedorNombre]
+    () => catalogItems.filter((item: any) => item.proveedor === proveedorNombre),
+    [catalogItems, proveedorNombre]
   )
 
   const uniqueModalCategorias = useMemo(() => {
