@@ -595,7 +595,7 @@ export default function OrdenDeCompraDetailPage({ params }: { params: Promise<{ 
                     <button
                       type="button"
                       onClick={() => setShowProveedorInfoModal(true)}
-                      className="inline-flex items-center gap-3 pl-3 pr-5 py-2.5 rounded-2xl border bg-slate-50 shadow-sm border-slate-200/60 hover:bg-slate-100 transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-3 pl-3 pr-5 py-2.5 rounded-2xl border bg-slate-50 shadow-sm transition-colors text-left hover:bg-slate-100 cursor-pointer border-slate-200/60"
                     >
                       <div className="w-9 h-9 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
                         <span className="text-sm font-bold text-white leading-none">{proveedorNombre.charAt(0).toUpperCase()}</span>

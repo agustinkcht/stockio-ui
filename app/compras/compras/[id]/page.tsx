@@ -518,7 +518,7 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
     }
   }
 
-  // ── Handlers ────────────────────────────────���─────────────────────────────
+  // ── Handlers ─────────────────���──────────────���─────────────────────────────
 
   const handleConfirmPago = () => {
     if (!compra) return
@@ -1952,7 +1952,14 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
                 Cancelar
               </button>
               <button
-                onClick={() => { undoRecepcionEntry(compra.id, undoRecepcionTarget.id); setUndoRecepcionTarget(null) }}
+                onClick={() => {
+                  undoRecepcionEntry(compra.id, undoRecepcionTarget.id)
+                  // Remove those units from stock (mirrors increaseStock in handleConfirmRecepcion)
+                  for (const item of undoRecepcionTarget.items) {
+                    if (item.quantity > 0) decreaseStock(item.sku, item.quantity)
+                  }
+                  setUndoRecepcionTarget(null)
+                }}
                 className="px-4 py-2 text-sm font-medium bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
               >
                 Aceptar
