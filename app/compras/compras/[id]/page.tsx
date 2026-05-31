@@ -473,7 +473,7 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
     try {
       const saved: CompraItem[] = editItems.map((item, idx) => {
         const aj = editAjustes[idx] ?? { value: 0, type: "percent" }
-        const discountType: "percent" | "fixed" = aj.type === "percent" ? "percent" : "fixed"
+        const discountType: "percent" | "fixed" | "unit" = aj.type === "percent" ? "percent" : aj.type === "unit" ? "unit" : "fixed"
         const total = (() => {
           if (aj.value === 0) return item.quantity * item.unitPrice
           if (aj.type === "unit") {
@@ -518,7 +518,7 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
     }
   }
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
+  // ── Handlers ────────────────────────────────���─────────────────────────────
 
   const handleConfirmPago = () => {
     if (!compra) return
@@ -968,7 +968,7 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
                       )
                     })()}
 
-                    {/* ── Recepcion + Pago widgets — only shown when en_curso ── */}
+                    {/* ── Recepcion + Pago widgets ��� only shown when en_curso ── */}
                     {estadoUI === "en_curso" && (
                       <div className="grid grid-cols-2 gap-3">
 
