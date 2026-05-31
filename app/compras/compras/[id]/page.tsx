@@ -869,13 +869,6 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
                                 {showMoreOptionsMenu && (
                                   <div className="absolute top-full right-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[180px]">
                                     <button
-                                      onClick={() => { setShowMoreOptionsMenu(false); handleDownloadPDF() }}
-                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
-                                    >
-                                      <FileDown className="w-4 h-4 text-slate-400" />
-                                      Descargar PDF
-                                    </button>
-                                    <button
                                       onClick={() => { setShowMoreOptionsMenu(false); router.push(`/compras/compras/nueva?duplicar=${compra.id}`) }}
                                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
                                     >

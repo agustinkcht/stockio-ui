@@ -860,15 +860,26 @@ export default function PresupuestoDetailPage({ params }: { params: Promise<{ id
                     {/* Action widget */}
                     <div className="bg-slate-50 border border-slate-200/60 rounded-lg shadow-sm px-4 py-4 flex items-center justify-center">
                       {estado === "borrador" && (
-                        <button
-                          type="button"
-                          onClick={() => !isEditMode && setShowAceptarModal(true)}
-                          disabled={isEditMode}
-                          className={`flex items-center gap-2.5 px-4 py-2 rounded-lg transition-colors group ${isEditMode ? "opacity-40 cursor-not-allowed" : "hover:bg-emerald-50 cursor-pointer"}`}
-                        >
-                          <CheckCircle2 className="w-5 h-5 text-emerald-500 group-hover:text-emerald-600 shrink-0" />
-                          <span className="text-sm font-semibold text-emerald-600 group-hover:text-emerald-700">Aceptar y llevar a ventas</span>
-                        </button>
+                        <div className="flex flex-col gap-1 w-full items-center">
+                          <button
+                            type="button"
+                            onClick={() => !isEditMode && setShowAceptarModal(true)}
+                            disabled={isEditMode}
+                            className={`flex items-center gap-2.5 px-4 py-2 rounded-lg transition-colors group ${isEditMode ? "opacity-40 cursor-not-allowed" : "hover:bg-emerald-50 cursor-pointer"}`}
+                          >
+                            <CheckCircle2 className="w-5 h-5 text-emerald-500 group-hover:text-emerald-600 shrink-0" />
+                            <span className="text-sm font-semibold text-emerald-600 group-hover:text-emerald-700">Aceptar y llevar a ventas</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => !isEditMode && setShowRechazarModal(true)}
+                            disabled={isEditMode}
+                            className={`flex items-center gap-2.5 px-4 py-2 rounded-lg transition-colors group ${isEditMode ? "opacity-40 cursor-not-allowed" : "hover:bg-red-50 cursor-pointer"}`}
+                          >
+                            <XCircle className="w-4 h-4 text-red-400 group-hover:text-red-500 shrink-0" />
+                            <span className="text-sm font-medium text-slate-500 group-hover:text-red-500">Marcar como rechazado</span>
+                          </button>
+                        </div>
                       )}
                       {estado === "aceptado" && ventaAsociada && (
                         <button

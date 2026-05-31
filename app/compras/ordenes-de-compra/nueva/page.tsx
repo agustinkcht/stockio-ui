@@ -51,8 +51,9 @@ function getTodayDateStr() {
 
 export default function NuevaOrdenDeCompraPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave } = useSidebar()
-  const { addOrden } = useOrdenesDeCompra()
+  const { addOrden, ordenes } = useOrdenesDeCompra()
   const stepsContainerRef = useRef<HTMLDivElement>(null)
 
   const [currentStep, setCurrentStep] = useState(1)
@@ -90,6 +91,32 @@ export default function NuevaOrdenDeCompraPage() {
   // Creation state
   const [isCreating, setIsCreating] = useState(false)
   const [createdOrdenId, setCreatedOrdenId] = useState<string | null>(null)
+
+  // Duplicar orden: prefill from existing and jump to step 3
+  useEffect(() => {
+    const duplicarId = searchParams.get("duplicar")
+    if (!duplicarId || ordenes.length === 0) return
+    const source = ordenes.find((o) => o.id === duplicarId)
+    if (!source) return
+
+    setProveedorId(source.proveedorId)
+
+    const prefillItems: VentaItem[] = source.items.map((it) => ({
+      sku: it.sku,
+      name: it.name,
+      quantity: it.quantity,
+      unitPrice: it.unitPrice,
+      discount: 0,
+      discountType: "percent" as const,
+      total: it.total,
+      categoria: it.categoria,
+    }))
+    setSelectedItems(prefillItems)
+
+    setCurrentStep(3)
+    setMaxUnlockedStep(3)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ordenes.length])
 
   const breadcrumbs = [
     { label: "Compras" },

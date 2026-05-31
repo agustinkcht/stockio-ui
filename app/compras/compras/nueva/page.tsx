@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo, useRef, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import {
   CheckCircle2,
@@ -97,8 +97,9 @@ function getSavedCosto(sku: string): number | null {
 
 export default function NuevaCompraPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave } = useSidebar()
-  const { addCompra } = useCompras()
+  const { addCompra, compras } = useCompras()
   const { increaseStock, updatePricing } = useItems()
   const stepsContainerRef = useRef<HTMLDivElement>(null)
 
@@ -177,6 +178,55 @@ export default function NuevaCompraPage() {
   // Creation state
   const [isCreating, setIsCreating] = useState(false)
   const [createdCompraId, setCreatedCompraId] = useState<string | null>(null)
+
+  // Duplicar compra: prefill from existing and jump to step 3
+  useEffect(() => {
+    const duplicarId = searchParams.get("duplicar")
+    if (!duplicarId || compras.length === 0) return
+    const source = compras.find((c) => c.id === duplicarId)
+    if (!source) return
+
+    setProveedorId(source.proveedorId)
+
+    const prefillItems: VentaItem[] = source.items.map((it) => ({
+      sku: it.sku,
+      name: it.name,
+      quantity: it.quantity,
+      unitPrice: it.unitPrice,
+      discount: it.discount,
+      discountType: it.discountType as "percent" | "fixed",
+      total: it.total,
+      categoria: it.categoria,
+    }))
+    setSelectedItems(prefillItems)
+
+    const ajustes: Record<number, { value: number; type: "percent" | "cash" | "unit" }> = {}
+    source.items.forEach((it, idx) => {
+      if (it.discount && it.discount !== 0) {
+        ajustes[idx] = {
+          value: it.discount,
+          type: it.discountType === "fixed" ? "cash" : "percent",
+        }
+      }
+    })
+    setEditAjustes(ajustes)
+
+    if (source.descuento && source.descuento !== 0) {
+      setGlobalDiscount({ value: source.descuento, type: source.descuentoTipo === "fixed" ? "cash" : "percent" })
+      setShowGlobalDiscount(true)
+    }
+    if (source.envio && source.envio > 0) {
+      setEnvioAmount(source.envio)
+      setShowEnvio(true)
+    }
+    if (source.customCharges && source.customCharges.length > 0) {
+      setCustomCharges(source.customCharges)
+    }
+
+    setCurrentStep(3)
+    setMaxUnlockedStep(3)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [compras.length])
 
   const breadcrumbs = [
     { label: "Compras" },
@@ -2269,7 +2319,7 @@ export default function NuevaCompraPage() {
   )
 }
 
-// ── Sub-components ──────────────────────────────────────────
+// ── Sub-components ───────────────────���──────────────────────
 
 function StepNav({
   onBack,
