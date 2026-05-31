@@ -55,6 +55,31 @@ export function useItems() {
     return `stockio-items-${currentAccount}`
   }
 
+  // Helper: read items from localStorage and set state (used on mount and on sync events)
+  const loadFromStorage = async (storageKey: string) => {
+    const storedItems = localStorage.getItem(storageKey)
+    if (storedItems) {
+      const parsedItems = JSON.parse(storedItems)
+      const validItems = parsedItems.filter(isValidItem)
+      if (validItems.length !== parsedItems.length) {
+        localStorage.setItem(storageKey, JSON.stringify(validItems))
+      }
+      setItems(validItems)
+    } else {
+      const INITIAL_ITEMS =
+        currentAccount === "noire"
+          ? await import("@/lib/data/initial-items-noire")
+          : await import("@/lib/data/initial-items-invino")
+      const itemsWithCounts = INITIAL_ITEMS.INITIAL_ITEMS.map((item: Item) => ({
+        ...item,
+        variantCount: item.variants?.length || 0,
+        itemCount: item.items?.length || 0,
+      }))
+      localStorage.setItem(storageKey, JSON.stringify(itemsWithCounts))
+      setItems(itemsWithCounts)
+    }
+  }
+
   useEffect(() => {
     const fetchItems = async () => {
       if (!currentUser) {
@@ -64,44 +89,7 @@ export function useItems() {
 
       if (USE_MOCK_DATA) {
         try {
-          const storageKey = getStorageKey()
-          const storedItems = localStorage.getItem(storageKey)
-
-          if (storedItems) {
-            const parsedItems = JSON.parse(storedItems)
-            // Filter out invalid items
-            const validItems = parsedItems.filter(isValidItem)
-            console.log(
-              `[v0] useItems - Loaded ${validItems.length} valid items from localStorage (${parsedItems.length - validItems.length} invalid items filtered out) for account ${currentAccount}`,
-            )
-            // If we filtered out invalid items, save the clean list back
-            if (validItems.length !== parsedItems.length) {
-              localStorage.setItem(storageKey, JSON.stringify(validItems))
-              console.log(`[v0] useItems - Saved cleaned items list to localStorage`)
-            }
-            setItems(validItems)
-          } else {
-            const INITIAL_ITEMS =
-              currentAccount === "noire"
-                ? await import("@/lib/data/initial-items-noire")
-                : await import("@/lib/data/initial-items-invino")
-            console.log(
-              `[v0] useItems - Loading ${INITIAL_ITEMS.INITIAL_ITEMS.length} initial items for dataSet: ${currentAccount}`,
-            )
-
-            const itemsWithCounts = INITIAL_ITEMS.INITIAL_ITEMS.map((item: Item) => ({
-              ...item,
-              variantCount: item.variants?.length || 0,
-              itemCount: item.items?.length || 0,
-            }))
-
-            localStorage.setItem(storageKey, JSON.stringify(itemsWithCounts))
-            console.log(
-              `[v0] useItems - Saved ${itemsWithCounts.length} items to localStorage for account ${currentAccount}`,
-            )
-
-            setItems(itemsWithCounts)
-          }
+          await loadFromStorage(getStorageKey())
         } catch (error) {
           console.error("[v0] Error loading items:", error)
           setItems([])
@@ -127,6 +115,38 @@ export function useItems() {
 
     fetchItems()
   }, [currentUser, currentAccount])
+
+  // Listen for items-updated events dispatched by other useItems instances on the same page
+  // so that all instances (catalog, modals, detail pages) stay in sync.
+  useEffect(() => {
+    if (!currentUser || !USE_MOCK_DATA) return
+
+    const handleItemsUpdated = (e: Event) => {
+      const key = (e as CustomEvent).detail?.key
+      if (key && key !== getStorageKey()) return // different account, ignore
+      try {
+        const storageKey = getStorageKey()
+        const stored = localStorage.getItem(storageKey)
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          const valid = parsed.filter(isValidItem)
+          setItems(valid)
+        }
+      } catch {
+        // ignore parse errors
+      }
+    }
+
+    window.addEventListener("stockio:items-updated", handleItemsUpdated)
+    return () => window.removeEventListener("stockio:items-updated", handleItemsUpdated)
+  }, [currentUser, currentAccount])
+
+  // Save items to localStorage and notify all other useItems instances on this page
+  const saveItems = (updatedItems: Item[]) => {
+    const key = getStorageKey()
+    localStorage.setItem(key, JSON.stringify(updatedItems))
+    window.dispatchEvent(new CustomEvent("stockio:items-updated", { detail: { key } }))
+  }
 
   const updateStock = (itemId: string, field: "total" | "reservado", value: number) => {
     // First check if it's a top-level item (search by id first, then sku)
@@ -230,7 +250,7 @@ export function useItems() {
     try {
       if (USE_MOCK_DATA) {
         const updatedItems = [newItem, ...items]
-        localStorage.setItem(getStorageKey(), JSON.stringify(updatedItems))
+        saveItems(updatedItems)
         console.log("[v0] Saved new item to localStorage:", newItem.sku)
         setItems(updatedItems)
         handleClose()
@@ -317,7 +337,7 @@ export function useItems() {
     try {
       if (USE_MOCK_DATA) {
         const updatedItems = [newItem, ...items]
-        localStorage.setItem(getStorageKey(), JSON.stringify(updatedItems))
+        saveItems(updatedItems)
         console.log("[v0] Saved new item with variants to localStorage:", newItem.sku)
         setItems(updatedItems)
         handleClose()
@@ -409,7 +429,7 @@ export function useItems() {
       if (USE_MOCK_DATA) {
         // Filter out any invalid items before saving
         const validItems = items.filter(isValidItem)
-        localStorage.setItem(getStorageKey(), JSON.stringify(validItems))
+        saveItems(validItems)
         console.log("[v0] Updated localStorage after deletion, remaining valid items:", validItems.length)
         setDeletedItems([])
         setHasUnsavedDeletes(false)
@@ -634,7 +654,7 @@ export function useItems() {
 
     // Filter out any invalid items before saving
     const validItems = items.filter(isValidItem)
-    localStorage.setItem(getStorageKey(), JSON.stringify(validItems))
+    saveItems(validItems)
     console.log("[v0] useItems - saved edits to localStorage, valid items:", validItems.length)
 
     setEditedItem(null)
@@ -646,7 +666,7 @@ export function useItems() {
   const forceSaveItems = () => {
     // Filter out any invalid items before saving
     const validItems = items.filter(isValidItem)
-    localStorage.setItem(getStorageKey(), JSON.stringify(validItems))
+    saveItems(validItems)
     console.log("[v0] useItems - forceSaveItems to localStorage, valid items count:", validItems.length)
     setEditedItem(null)
     setLastUndoneEdit(null)
@@ -696,7 +716,7 @@ export function useItems() {
     
     // Update state and persist to localStorage immediately
     setItems(updatedItems)
-    localStorage.setItem(getStorageKey(), JSON.stringify(updatedItems))
+    saveItems(updatedItems)
     console.log("[v0] useItems - bulkSaveStock persisted to localStorage")
     
     // Clear edit state
@@ -784,7 +804,7 @@ export function useItems() {
     })
 
     if (updated) {
-      localStorage.setItem(storageKey, JSON.stringify(updatedItems))
+      saveItems(updatedItems)
       setItems(updatedItems)
     }
   }
@@ -834,7 +854,7 @@ export function useItems() {
 
     if (updated) {
       console.log("[v0] adjustStock - UPDATED stock for sku:", itemSku, "delta:", delta)
-      localStorage.setItem(storageKey, JSON.stringify(updatedItems))
+      saveItems(updatedItems)
       setItems(updatedItems)
     } else {
       console.log("[v0] adjustStock - NO MATCH found for sku:", itemSku, "- items checked:", currentItems.length)
@@ -943,7 +963,7 @@ export function useItems() {
     })
 
     if (updated) {
-      localStorage.setItem(storageKey, JSON.stringify(updatedItems))
+      saveItems(updatedItems)
       setItems(updatedItems)
     }
   }
@@ -1032,7 +1052,7 @@ export function useItems() {
     const updatedItems = [...newItems, ...items]
     
     // Persist to localStorage
-    localStorage.setItem(getStorageKey(), JSON.stringify(updatedItems))
+    saveItems(updatedItems)
     console.log(`[v0] bulkCreateItems - Created ${newItems.length} items and saved to localStorage`)
     
     // Update state
@@ -1162,7 +1182,7 @@ export function useItems() {
     const updatedItems = [...newItems, ...items]
     
     // Persist to localStorage
-    localStorage.setItem(getStorageKey(), JSON.stringify(updatedItems))
+    saveItems(updatedItems)
     console.log(`[v0] bulkCreateItemsConVariantes - Created ${newItems.length} agrupadores with variants and saved to localStorage`)
     
     // Update state
@@ -1204,7 +1224,7 @@ export function useItems() {
     })
     
     // Persist to localStorage
-    localStorage.setItem(getStorageKey(), JSON.stringify(updatedItems))
+    saveItems(updatedItems)
     setItems(updatedItems)
     console.log(`[v0] updateItemsActiveStatus - Updated ${itemIds.length} items to isActive=${isActive}`)
   }
