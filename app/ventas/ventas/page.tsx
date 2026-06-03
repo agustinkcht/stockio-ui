@@ -608,7 +608,9 @@ export default function VentasPage() {
                     </select>
                   </div>
 
-                </div>{/* /flex search bar */}
+                </div>{/* /ml-auto Filtrar+Ordenar */}
+              </div>{/* /flex items-center gap-2 search bar */}
+              </div>{/* /extra close */}
                 </div>{/* /max-w-6xl search */}
               </div>{/* /sticky search bar wrapper */}
 
