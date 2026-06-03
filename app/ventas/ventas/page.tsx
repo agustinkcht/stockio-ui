@@ -267,57 +267,63 @@ export default function VentasPage() {
           <main className="flex-1 flex flex-col overflow-hidden">
             {/* Single scroll container — sticky hero lives inside it so backdrop-blur works */}
             <div className="flex-1 overflow-y-auto bg-slate-50">
-              {/* Sticky header: title row + widgets + search/filter — all anchors on scroll */}
-              <div className="sticky top-0 z-30 bg-slate-50/90 backdrop-blur-md border-b border-slate-200/80">
-                <div className="max-w-6xl mx-auto px-8">
-
-                  {/* Title row */}
-                  <div className="py-4 flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <h1 className="text-3xl font-semibold text-slate-900 tracking-tight shrink-0">
-                        Ventas
-                      </h1>
-                      <VentasPeriodSelector
-                        open={periodOpen}
-                        setOpen={setPeriodOpen}
-                        currentLabel={periodLabel}
-                        currentKey={periodKey}
-                        onSelect={(k) => {
-                          if (k === "personalizado") {
-                            setPeriodOpen(false)
-                            setCalendarOpen(true)
-                            return
-                          }
-                          setPeriodKey(k)
-                          setCustomRange(null)
-                          setPeriodOpen(false)
-                        }}
-                      />
-                      <span className="text-sm text-slate-500 font-mono">{rangeLabel}</span>
-                      {calendarOpen && (
-                        <VentasRangeCalendarDialog
-                          initialRange={customRange}
-                          onCancel={() => setCalendarOpen(false)}
-                          onApply={(start, end) => {
-                            setCustomRange({ start, end })
-                            setPeriodKey("personalizado")
-                            setCalendarOpen(false)
-                          }}
-                        />
-                      )}
+              {/* Sticky hero */}
+              <div className="sticky top-0 z-30">
+                <div className="bg-slate-50/80 backdrop-blur-md">
+                  <div className="px-8 py-8">
+                    <div className="max-w-6xl mx-auto">
+                    <div className="flex items-start justify-between gap-6">
+                      <div className="min-w-0">
+                        <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
+                          Ventas
+                        </h1>
+                        <div className="mt-2 flex items-center gap-3 flex-wrap">
+                          <VentasPeriodSelector
+                            open={periodOpen}
+                            setOpen={setPeriodOpen}
+                            currentLabel={periodLabel}
+                            currentKey={periodKey}
+                            onSelect={(k) => {
+                              if (k === "personalizado") {
+                                setPeriodOpen(false)
+                                setCalendarOpen(true)
+                                return
+                              }
+                              setPeriodKey(k)
+                              setCustomRange(null)
+                              setPeriodOpen(false)
+                            }}
+                          />
+                          <span className="text-sm text-slate-500 font-mono">{rangeLabel}</span>
+                          {calendarOpen && (
+                            <VentasRangeCalendarDialog
+                              initialRange={customRange}
+                              onCancel={() => setCalendarOpen(false)}
+                              onApply={(start, end) => {
+                                setCustomRange({ start, end })
+                                setPeriodKey("personalizado")
+                                setCalendarOpen(false)
+                              }}
+                            />
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => router.push("/ventas/ventas/nueva")}
+                        className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer mt-1"
+                      >
+                        <Plus className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
+                        Nueva Venta
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => router.push("/ventas/ventas/nueva")}
-                      className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer"
-                    >
-                      <Plus className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
-                      Nueva Venta
-                    </button>
+                    </div>{/* /max-w-6xl hero */}
                   </div>
+                </div>
+              </div>
 
-                  {/* Widgets */}
-                  <div className="pb-4">
+              <div className="px-8 pb-8 mt-2">
+                <div className="max-w-6xl mx-auto">
 
               {/* Widgets — 3 visible at a time, carousel slides one at a time */}
               {(() => {
@@ -436,10 +442,9 @@ export default function VentasPage() {
                   </div>
                 )
               })()}
-                  </div>{/* /widgets pb-4 */}
 
-                  {/* Combined header bar: checkbox | divider | search — then Filtrar/Ordenar on the right */}
-                  <div className="pb-3 flex items-center gap-2">
+              {/* Combined header bar: checkbox | divider | search — then Filtrar/Ordenar on the right */}
+              <div className="mb-2 flex items-center gap-2">
                 {/* Header block — shrinks to fit checkbox + search, not full width */}
                 <div className="flex items-center h-9 border border-[rgba(228,230,235,0.6)] shadow-sm rounded-md min-w-0 overflow-hidden bg-white">
                   {/* Checkbox cell — same bg as Filtrar/Ordenar buttons */}
@@ -583,12 +588,8 @@ export default function VentasPage() {
 
                 </div>
               </div>
-                </div>{/* /max-w-6xl sticky */}
-              </div>{/* /sticky widgets+search wrapper */}
 
-              {/* Scrollable rows */}
-              <div className="px-8 pt-4 pb-8">
-                <div className="max-w-6xl mx-auto">
+              {/* Rows */}
               <div className="flex flex-col gap-2">
                 {filteredVentas.length === 0 && (
                   <div className="flex flex-col items-center justify-center py-16 text-slate-400">
@@ -979,9 +980,9 @@ export default function VentasPage() {
                   )
                 })}
               </div>
-                </div>{/* /max-w-6xl rows */}
-              </div>{/* /px-8 rows wrapper */}
-            </div>{/* /overflow-y-auto scroll container */}
+                </div>{/* /max-w-6xl content */}
+              </div>
+            </div>
           </main>
         </div>
       </div>
