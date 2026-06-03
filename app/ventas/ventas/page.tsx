@@ -348,8 +348,10 @@ export default function VentasPage() {
                     <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center mb-4 shadow-sm border border-slate-100">
                       <BarChart3 className="w-5 h-5 text-blue-500" />
                     </div>
-                    <p className="text-3xl font-bold text-slate-900 leading-none tabular-nums mb-1">{ventas.length}</p>
-                    <p className="text-sm font-medium text-blue-500">ventas totales</p>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{ventas.length}</span>
+                      <span className="text-base font-medium text-blue-500">ventas totales</span>
+                    </div>
                   </button>,
 
                   // Widget 1 — Finalizadas
@@ -362,8 +364,10 @@ export default function VentasPage() {
                     <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center mb-4 shadow-sm border border-slate-100">
                       <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                     </div>
-                    <p className="text-3xl font-bold text-slate-900 leading-none tabular-nums mb-1">{countFinalizadas}</p>
-                    <p className="text-sm font-medium text-emerald-500">ventas finalizadas</p>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{countFinalizadas}</span>
+                      <span className="text-base font-medium text-emerald-500">ventas finalizadas</span>
+                    </div>
                   </button>,
 
                   // Widget 2 — En Curso
@@ -376,8 +380,10 @@ export default function VentasPage() {
                     <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center mb-4 shadow-sm border border-slate-100">
                       <Clock className="w-5 h-5 text-orange-400" />
                     </div>
-                    <p className="text-3xl font-bold text-slate-900 leading-none tabular-nums mb-1">{countEnCurso}</p>
-                    <p className="text-sm font-medium text-orange-500">ventas en curso</p>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{countEnCurso}</span>
+                      <span className="text-base font-medium text-orange-500">ventas en curso</span>
+                    </div>
                   </button>,
 
                   // Widget 3 — Canceladas
@@ -390,8 +396,10 @@ export default function VentasPage() {
                     <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center mb-4 shadow-sm border border-slate-100">
                       <XCircle className="w-5 h-5 text-red-400" />
                     </div>
-                    <p className="text-3xl font-bold text-slate-900 leading-none tabular-nums mb-1">{countCanceladas}</p>
-                    <p className="text-sm font-medium text-red-400">ventas canceladas</p>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{countCanceladas}</span>
+                      <span className="text-base font-medium text-red-400">ventas canceladas</span>
+                    </div>
                   </button>,
                 ]
 
@@ -403,38 +411,34 @@ export default function VentasPage() {
 
                 return (
                   <div className="flex items-stretch gap-2 mb-5">
-                    {/* Left chevron */}
-                    <button
-                      type="button"
-                      onClick={() => setWidgetOffset(o => Math.max(0, o - 1))}
-                      aria-label="Widget anterior"
-                      className={`flex-shrink-0 w-8 flex items-center justify-center rounded-xl border transition-all ${
-                        canLeft
-                          ? "border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:border-slate-300 cursor-pointer shadow-sm"
-                          : "border-transparent text-transparent cursor-default pointer-events-none"
-                      }`}
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </button>
+                    {/* Left chevron — only rendered when there are widgets to the left */}
+                    {canLeft && (
+                      <button
+                        type="button"
+                        onClick={() => setWidgetOffset(o => Math.max(0, o - 1))}
+                        aria-label="Widget anterior"
+                        className="flex-shrink-0 w-8 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:border-slate-300 cursor-pointer shadow-sm transition-all"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                    )}
 
                     {/* 3 visible widgets */}
                     <div className="grid grid-cols-3 gap-3 flex-1">
                       {visible}
                     </div>
 
-                    {/* Right chevron */}
-                    <button
-                      type="button"
-                      onClick={() => setWidgetOffset(o => Math.min(maxOffset, o + 1))}
-                      aria-label="Widget siguiente"
-                      className={`flex-shrink-0 w-8 flex items-center justify-center rounded-xl border transition-all ${
-                        canRight
-                          ? "border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:border-slate-300 cursor-pointer shadow-sm"
-                          : "border-transparent text-transparent cursor-default pointer-events-none"
-                      }`}
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
+                    {/* Right chevron — only rendered when there are widgets to the right */}
+                    {canRight && (
+                      <button
+                        type="button"
+                        onClick={() => setWidgetOffset(o => Math.min(maxOffset, o + 1))}
+                        aria-label="Widget siguiente"
+                        className="flex-shrink-0 w-8 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:border-slate-300 cursor-pointer shadow-sm transition-all"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 )
               })()}
