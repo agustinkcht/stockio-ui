@@ -134,6 +134,18 @@ export default function VentasPage() {
   const [sortOpen, setSortOpen] = useState(false)
   const [widgetOffset, setWidgetOffset] = useState(0) // 0 = shows widgets 0-2, 1 = shows widgets 1-3
 
+  // Sticky search bar — measures the hero height so the search bar sticks just below it
+  const heroRef = useRef<HTMLDivElement>(null)
+  const [heroHeight, setHeroHeight] = useState(0)
+  useEffect(() => {
+    const el = heroRef.current
+    if (!el) return
+    const ro = new ResizeObserver(() => setHeroHeight(el.offsetHeight))
+    ro.observe(el)
+    setHeroHeight(el.offsetHeight)
+    return () => ro.disconnect()
+  }, [])
+
   // Filters
   const [filterOpen, setFilterOpen] = useState(false)
   const [filterCliente, setFilterCliente] = useState("")
@@ -268,7 +280,7 @@ export default function VentasPage() {
             {/* Single scroll container — sticky hero lives inside it so backdrop-blur works */}
             <div className="flex-1 overflow-y-auto bg-slate-50">
               {/* Sticky hero */}
-              <div className="sticky top-0 z-30">
+              <div ref={heroRef} className="sticky top-0 z-30">
                 <div className="bg-slate-50/80 backdrop-blur-md">
                   <div className="px-8 py-8">
                     <div className="max-w-6xl mx-auto">
@@ -322,7 +334,8 @@ export default function VentasPage() {
                 </div>
               </div>
 
-              <div className="px-8 pb-8 mt-2">
+              {/* Widgets — scrolls freely, goes behind the sticky hero on scroll */}
+              <div className="px-8 pt-4 pb-3">
                 <div className="max-w-6xl mx-auto">
 
               {/* Widgets — 3 visible at a time, carousel slides one at a time */}
@@ -443,8 +456,17 @@ export default function VentasPage() {
                 )
               })()}
 
+                </div>{/* /max-w-6xl widgets */}
+              </div>{/* /widgets wrapper */}
+
+              {/* Search/filter bar — sticks just below the hero when scrolled */}
+              <div
+                className="sticky z-20 bg-slate-50 px-8 py-2"
+                style={{ top: heroHeight + 4 }}
+              >
+                <div className="max-w-6xl mx-auto">
               {/* Combined header bar: checkbox | divider | search — then Filtrar/Ordenar on the right */}
-              <div className="mb-2 flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 {/* Header block — shrinks to fit checkbox + search, not full width */}
                 <div className="flex items-center h-9 border border-[rgba(228,230,235,0.6)] shadow-sm rounded-md min-w-0 overflow-hidden bg-white">
                   {/* Checkbox cell — same bg as Filtrar/Ordenar buttons */}
@@ -586,10 +608,13 @@ export default function VentasPage() {
                     </select>
                   </div>
 
-                </div>
-              </div>
+                </div>{/* /flex search bar */}
+                </div>{/* /max-w-6xl search */}
+              </div>{/* /sticky search bar wrapper */}
 
-              {/* Rows */}
+              {/* Rows — scroll behind the sticky search bar */}
+              <div className="px-8 pt-2 pb-8">
+                <div className="max-w-6xl mx-auto">
               <div className="flex flex-col gap-2">
                 {filteredVentas.length === 0 && (
                   <div className="flex flex-col items-center justify-center py-16 text-slate-400">
@@ -979,10 +1004,10 @@ export default function VentasPage() {
                     </div>
                   )
                 })}
-              </div>
-                </div>{/* /max-w-6xl content */}
-              </div>
-            </div>
+              </div>{/* /flex flex-col gap-2 rows */}
+                </div>{/* /max-w-6xl rows */}
+              </div>{/* /px-8 rows wrapper */}
+            </div>{/* /overflow-y-auto */}
           </main>
         </div>
       </div>
