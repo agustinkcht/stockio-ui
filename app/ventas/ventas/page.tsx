@@ -268,7 +268,7 @@ export default function VentasPage() {
 
           <main className="flex-1 flex flex-col overflow-hidden">
             {/* Hero — sits above the scroll container, always visible */}
-            <div className="bg-slate-50 border-b border-slate-200/60">
+            <div className="bg-slate-50">
                 <div className="bg-slate-50">
                   <div className="px-8 py-8">
                     <div className="max-w-6xl mx-auto">
@@ -450,8 +450,9 @@ export default function VentasPage() {
                 </div>{/* /max-w-6xl widgets */}
               </div>{/* /widgets wrapper */}
 
-              {/* Search/filter bar — sticky top-0 so it sticks to bottom of hero on scroll */}
-              <div className="sticky top-0 z-20 bg-slate-50/95 backdrop-blur-sm border-b border-slate-200/80 px-8 py-2">
+              {/* Search/filter bar + gradient fade — sticky block anchored at top-0 */}
+              <div className="sticky top-0 z-20">
+              <div className="bg-slate-50/95 backdrop-blur-sm border-t border-slate-200/80 px-8 py-2">
                 <div className="max-w-6xl mx-auto">
                   <div className="flex items-center gap-2">
                     {/* Checkbox + search input combined */}
@@ -575,7 +576,13 @@ export default function VentasPage() {
                     </div>
                   </div>
                 </div>
-              </div>{/* /sticky search bar */}
+              </div>{/* /inner bg search bar */}
+              {/* Gradient fade — short blur below search bar so rows don't collide with it */}
+              <div
+                className="pointer-events-none"
+                style={{ height: "22px", background: "linear-gradient(to bottom, rgb(248 250 252), transparent)" }}
+              />
+              </div>{/* /sticky top-0 wrapper */}
 
               {/* Rows */}
               <div className="px-8 pt-2 pb-8">
