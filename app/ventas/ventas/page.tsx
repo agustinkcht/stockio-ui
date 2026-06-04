@@ -114,12 +114,6 @@ export default function VentasPage() {
   const { periodKey, customRange, setPeriodKey, setCustomRange } = usePeriod()
   const [periodOpen, setPeriodOpen] = useState(false)
   const [calendarOpen, setCalendarOpen] = useState(false)
-  // ?periodo= — "ninguno" (default, omitted) or a PeriodKey value
-  const periodParam = searchParams.get("periodo")
-  const noPeriod = !periodParam || periodParam === "ninguno"
-  const setNoPeriod = useCallback((val: boolean) => {
-    if (val) updateParam("periodo", null)
-  }, [updateParam])
   const range = usePeriodRange()
 
   const periodLabel = useMemo(() => {
@@ -146,6 +140,13 @@ export default function VentasPage() {
     }
     router.replace(`${pathname}?${params.toString()}`, { scroll: false })
   }, [router, pathname, searchParams])
+
+  // Period — ?periodo= ("ninguno" / omitted = no filter; any PeriodKey = filtered)
+  const periodParam = searchParams.get("periodo")
+  const noPeriod = !periodParam || periodParam === "ninguno"
+  const setNoPeriod = useCallback((val: boolean) => {
+    if (val) updateParam("periodo", null)
+  }, [updateParam])
 
   // Search — ?q=
   const searchQuery = searchParams.get("q") ?? ""
@@ -194,6 +195,13 @@ export default function VentasPage() {
   // Finalizar modal
   const [finalizarModalVenta, setFinalizarModalVenta] = useState<Venta | null>(null)
   const [finalizarMedioPago, setFinalizarMedioPago] = useState<PaymentMethod | "no_especificado">("no_especificado")
+
+  // Sync ?periodo= param into the shared period context
+  useEffect(() => {
+    if (!noPeriod && periodParam && periodParam !== "personalizado" && periodParam !== periodKey) {
+      setPeriodKey(periodParam as PeriodKey)
+    }
+  }, [periodParam, noPeriod])
 
   // Widget counts
   const pendientesCobro = ventas.filter(isPendienteCobro)
@@ -540,7 +548,7 @@ export default function VentasPage() {
                       )}
 
                       {/* Active filter tags — widget tag (left) then filtrar tags (right) */}
-                      {(activeTab !== "todas" || filterCliente || filterPendienteCobro || filterPendienteEntrega) && (
+                      {(activeTab !== "todas" || filterCliente || filterPendienteCobro || filterPendienteEntrega || sortParam !== "fecha_desc") && (
                         <div className="flex items-center gap-1.5 flex-wrap">
                           {/* Widget tag */}
                           {activeTab !== "todas" && (
@@ -590,6 +598,20 @@ export default function VentasPage() {
                                 type="button"
                                 onClick={() => setFilterPendienteEntrega(false)}
                                 aria-label="Quitar filtro pendiente de entrega"
+                                className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+                              >
+                                <X className="w-2.5 h-2.5 text-slate-400" />
+                              </button>
+                            </span>
+                          )}
+                          {/* Sort tag — only when non-default */}
+                          {sortParam !== "fecha_desc" && (
+                            <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
+                              {sortField === "precio" ? "Precio" : "Fecha"} {sortDir === "asc" ? "↑" : "↓"}
+                              <button
+                                type="button"
+                                onClick={() => updateParam("sort", null)}
+                                aria-label="Quitar orden personalizado"
                                 className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
                               >
                                 <X className="w-2.5 h-2.5 text-slate-400" />
