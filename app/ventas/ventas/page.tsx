@@ -452,7 +452,7 @@ export default function VentasPage() {
 
               {/* Search/filter bar + gradient fade — sticky block anchored at top-0 */}
               <div className="sticky top-0 z-20">
-              <div className="bg-slate-50/95 backdrop-blur-sm border-t border-slate-200/80 px-8 py-2">
+              <div className="bg-slate-50/95 backdrop-blur-sm border-t border-b border-slate-200/80 px-8 py-2">
                 <div className="max-w-6xl mx-auto">
                   <div className="flex items-center gap-2">
                     {/* Checkbox + search input combined */}
@@ -580,7 +580,7 @@ export default function VentasPage() {
               {/* Gradient fade — short blur below search bar so rows don't collide with it */}
               <div
                 className="pointer-events-none"
-                style={{ height: "22px", background: "linear-gradient(to bottom, rgb(248 250 252), transparent)" }}
+                style={{ height: "44px", background: "linear-gradient(to bottom, rgb(248 250 252), transparent)" }}
               />
               </div>{/* /sticky top-0 wrapper */}
 
