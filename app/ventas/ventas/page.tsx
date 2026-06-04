@@ -421,7 +421,7 @@ export default function VentasPage() {
               <div className="sticky top-0 z-20">
 
                 {/* Row 1: Search + Filtrar/Ordenar + count */}
-                <div className="bg-slate-50/95 backdrop-blur-sm border-t border-b border-slate-200/80 px-8 py-2">
+                <div className="relative z-10 bg-slate-50/95 backdrop-blur-sm border-t border-b border-slate-200/80 px-8 py-2">
                   <div className="max-w-6xl mx-auto">
                     <div className="flex items-center gap-2">
                       {/* Search input with clear X */}
