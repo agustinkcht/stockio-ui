@@ -203,7 +203,6 @@ export default function VentasPage() {
   }, [updateParam, sortField, sortDir])
 
   const [sortOpen, setSortOpen] = useState(false)
-  const [widgetOffset, setWidgetOffset] = useState(0)
 
   const [filterOpen, setFilterOpen] = useState(false)
   const [expandedVentas, setExpandedVentas] = useState<Set<string>>(new Set())
@@ -427,7 +426,7 @@ export default function VentasPage() {
               <div className="px-8 pb-3">
                 <div className="max-w-6xl mx-auto">
 
-              {/* Widgets — 3 visible at a time, carousel slides one at a time */}
+              {/* Widgets — 3 fixed, no carousel. Clicking one sets/toggles the tab filter. */}
               {(() => {
                 const countFinalizadas = periodVentas.filter(v => v.estado === "finalizada").length
                 const countEnCurso = periodVentas.filter(v => v.estado === "en_curso").length
@@ -439,108 +438,61 @@ export default function VentasPage() {
                   return `border rounded-xl px-6 py-5 shadow-sm text-left transition-all cursor-pointer w-full bg-white border-slate-200/80 ${hoverColor}`
                 }
 
-                const allWidgets = [
-                  // Widget 0 — Totales
-                  <button
-                    key="totales"
-                    type="button"
-                    onClick={() => setActiveTab("todas")}
-                    className={widgetCls(activeTab === "todas", false, "bg-blue-50 border-blue-200", "hover:border-blue-200 hover:shadow-md")}
-                  >
-                    <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center mb-4 shadow-sm border border-slate-100">
-                      <BarChart3 className="w-5 h-5 text-blue-500" />
-                    </div>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{periodVentas.length}</span>
-                      <span className="text-base font-medium text-blue-500">ventas totales</span>
-                    </div>
-                  </button>,
-
-                  // Widget 1 — Finalizadas
-                  <button
-                    key="finalizadas"
-                    type="button"
-                    onClick={() => countFinalizadas > 0 && setActiveTab("finalizada")}
-                    className={widgetCls(activeTab === "finalizada", countFinalizadas === 0, "bg-emerald-50 border-emerald-200", "hover:border-emerald-200 hover:shadow-md")}
-                  >
-                    <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center mb-4 shadow-sm border border-slate-100">
-                      <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                    </div>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{countFinalizadas}</span>
-                      <span className="text-base font-medium text-emerald-500">ventas finalizadas</span>
-                    </div>
-                  </button>,
-
-                  // Widget 2 — En Curso
-                  <button
-                    key="en_curso"
-                    type="button"
-                    onClick={() => countEnCurso > 0 && setActiveTab("en_curso")}
-                    className={widgetCls(activeTab === "en_curso", countEnCurso === 0, "bg-orange-50 border-orange-200", "hover:border-orange-200 hover:shadow-md")}
-                  >
-                    <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center mb-4 shadow-sm border border-slate-100">
-                      <Clock className="w-5 h-5 text-orange-400" />
-                    </div>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{countEnCurso}</span>
-                      <span className="text-base font-medium text-orange-500">ventas en curso</span>
-                    </div>
-                  </button>,
-
-                  // Widget 3 — Canceladas
-                  <button
-                    key="canceladas"
-                    type="button"
-                    onClick={() => countCanceladas > 0 && setActiveTab("cancelada")}
-                    className={widgetCls(activeTab === "cancelada", countCanceladas === 0, "bg-red-50 border-red-200", "hover:border-red-200 hover:shadow-md")}
-                  >
-                    <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center mb-4 shadow-sm border border-slate-100">
-                      <XCircle className="w-5 h-5 text-red-400" />
-                    </div>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{countCanceladas}</span>
-                      <span className="text-base font-medium text-red-400">ventas canceladas</span>
-                    </div>
-                  </button>,
-                ]
-
-                const VISIBLE = 3
-                const maxOffset = allWidgets.length - VISIBLE // = 1
-                const canLeft = widgetOffset > 0
-                const canRight = widgetOffset < maxOffset
-                const visible = allWidgets.slice(widgetOffset, widgetOffset + VISIBLE)
+                // Toggle: clicking an active widget deselects it (goes back to "todas")
+                const toggle = (tab: StatusTab, count: number) => {
+                  if (count === 0) return
+                  setActiveTab(activeTab === tab ? "todas" : tab)
+                }
 
                 return (
-                  <div className="flex items-stretch gap-2 mb-5">
-                    {/* Left chevron — only rendered when there are widgets to the left */}
-                    {canLeft && (
-                      <button
-                        type="button"
-                        onClick={() => setWidgetOffset(o => Math.max(0, o - 1))}
-                        aria-label="Widget anterior"
-                        className="flex-shrink-0 w-8 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:border-slate-300 cursor-pointer shadow-sm transition-all"
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                      </button>
-                    )}
+                  <div className="grid grid-cols-3 gap-3 mb-5">
+                    {/* Finalizadas */}
+                    <button
+                      key="finalizadas"
+                      type="button"
+                      onClick={() => toggle("finalizada", countFinalizadas)}
+                      className={widgetCls(activeTab === "finalizada", countFinalizadas === 0, "bg-emerald-50 border-emerald-200", "hover:border-emerald-200 hover:shadow-md")}
+                    >
+                      <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center mb-4 shadow-sm border border-slate-100">
+                        <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                      </div>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{countFinalizadas}</span>
+                        <span className="text-base font-medium text-emerald-500">finalizadas</span>
+                      </div>
+                    </button>
 
-                    {/* 3 visible widgets */}
-                    <div className="grid grid-cols-3 gap-3 flex-1">
-                      {visible}
-                    </div>
+                    {/* En Curso */}
+                    <button
+                      key="en_curso"
+                      type="button"
+                      onClick={() => toggle("en_curso", countEnCurso)}
+                      className={widgetCls(activeTab === "en_curso", countEnCurso === 0, "bg-orange-50 border-orange-200", "hover:border-orange-200 hover:shadow-md")}
+                    >
+                      <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center mb-4 shadow-sm border border-slate-100">
+                        <Clock className="w-5 h-5 text-orange-400" />
+                      </div>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{countEnCurso}</span>
+                        <span className="text-base font-medium text-orange-500">en curso</span>
+                      </div>
+                    </button>
 
-                    {/* Right chevron — only rendered when there are widgets to the right */}
-                    {canRight && (
-                      <button
-                        type="button"
-                        onClick={() => setWidgetOffset(o => Math.min(maxOffset, o + 1))}
-                        aria-label="Widget siguiente"
-                        className="flex-shrink-0 w-8 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:border-slate-300 cursor-pointer shadow-sm transition-all"
-                      >
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                    )}
+                    {/* Canceladas */}
+                    <button
+                      key="canceladas"
+                      type="button"
+                      onClick={() => toggle("cancelada", countCanceladas)}
+                      className={widgetCls(activeTab === "cancelada", countCanceladas === 0, "bg-red-50 border-red-200", "hover:border-red-200 hover:shadow-md")}
+                    >
+                      <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center mb-4 shadow-sm border border-slate-100">
+                        <XCircle className="w-5 h-5 text-red-400" />
+                      </div>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{countCanceladas}</span>
+                        <span className="text-base font-medium text-red-400">canceladas</span>
+                      </div>
+                    </button>
                   </div>
                 )
               })()}
