@@ -464,14 +464,14 @@ export default function VentasPage() {
                 }
                 const subtitleFinCan = !noPeriod && periodParam
                   ? isActivePeriod
-                    ? `desde el ${fmtDay(range.start)} hasta hoy`
-                    : "en el período seleccionado"
+                    ? `Creadas desde el ${fmtDay(range.start)} hasta hoy`
+                    : "Creadas en el período seleccionado"
                   : null
 
                 const subtitleEnCurso = !noPeriod && periodParam
                   ? isActivePeriod
-                    ? "pendientes al día de hoy"
-                    : "pendientes al día de hoy, creadas en el período seleccionado"
+                    ? "Pendientes al día de hoy, sin importar su fecha de creación"
+                    : "Pendientes al día de hoy, creadas en el período seleccionado"
                   : null
 
                 return (
@@ -488,7 +488,7 @@ export default function VentasPage() {
                       </div>
                       <div className="flex items-baseline gap-2">
                         <span className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{countFinalizadas}</span>
-                        <span className="text-base font-medium text-emerald-500">finalizadas</span>
+                        <span className="text-base font-medium text-emerald-500">Finalizadas</span>
                       </div>
                       {subtitleFinCan && (
                         <p className="mt-2 text-xs text-slate-400 leading-snug">{subtitleFinCan}</p>
@@ -507,7 +507,7 @@ export default function VentasPage() {
                       </div>
                       <div className="flex items-baseline gap-2">
                         <span className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{countEnCurso}</span>
-                        <span className="text-base font-medium text-orange-500">abiertas</span>
+                        <span className="text-base font-medium text-orange-500">Abiertas</span>
                       </div>
                       {subtitleEnCurso && (
                         <p className="mt-2 text-xs text-slate-400 leading-snug">{subtitleEnCurso}</p>
@@ -526,7 +526,7 @@ export default function VentasPage() {
                       </div>
                       <div className="flex items-baseline gap-2">
                         <span className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{countCanceladas}</span>
-                        <span className="text-base font-medium text-red-400">canceladas</span>
+                        <span className="text-base font-medium text-red-400">Canceladas</span>
                       </div>
                       {subtitleFinCan && (
                         <p className="mt-2 text-xs text-slate-400 leading-snug">{subtitleFinCan}</p>
@@ -1465,15 +1465,17 @@ function VentasPeriodSelector({
           {!noPeriod && (
             <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none mb-0.5">Período</span>
           )}
-          <span className={noPeriod ? "text-sm font-medium" : "text-sm font-semibold text-slate-800"}>{currentLabel}</span>
+          <div className="flex items-center gap-1.5">
+            {/* Blinking live dot — left of value, aligned with label start */}
+            {isActivePeriod && (
+              <span className="relative flex h-2 w-2 flex-shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+            )}
+            <span className={noPeriod ? "text-sm font-medium" : "text-sm font-semibold text-slate-800"}>{currentLabel}</span>
+          </div>
         </div>
-        {/* Blinking live dot — only for active periods */}
-        {isActivePeriod && (
-          <span className="relative flex h-2 w-2 flex-shrink-0">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-          </span>
-        )}
         <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
