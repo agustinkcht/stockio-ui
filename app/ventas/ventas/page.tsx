@@ -172,9 +172,13 @@ export default function VentasPage() {
     return Array.from(new Set(names)).sort()
   }, [ventas])
 
-  // Filtered + sorted list
+  // Filtered + sorted list (period range applied here — widgets are unaffected)
   const filteredVentas = useMemo(() => {
+    const rangeStart = range.start.getTime()
+    const rangeEnd   = range.end.getTime()
     const filtered = ventas.filter(v => {
+      const ventaTime = new Date(v.fecha + "T12:00:00").getTime()
+      const matchesPeriod = ventaTime >= rangeStart && ventaTime <= rangeEnd
       const matchesTab =
         activeTab === "todas" ? true :
         activeTab === "en_curso" ? v.estado === "en_curso" :
@@ -185,7 +189,7 @@ export default function VentasPage() {
       const matchesCliente = !filterCliente || getClienteNombre(v) === filterCliente
       const matchesPendienteCobro = !filterPendienteCobro || isPendienteCobro(v)
       const matchesPendienteEntrega = !filterPendienteEntrega || isPendienteEntrega(v)
-      return matchesTab && matchesSearch && matchesCliente && matchesPendienteCobro && matchesPendienteEntrega
+      return matchesPeriod && matchesTab && matchesSearch && matchesCliente && matchesPendienteCobro && matchesPendienteEntrega
     })
     filtered.sort((a, b) => {
       let diff = 0
@@ -197,7 +201,7 @@ export default function VentasPage() {
       return sortDir === "asc" ? diff : -diff
     })
     return filtered
-  }, [ventas, activeTab, searchQuery, filterCliente, filterPendienteCobro, filterPendienteEntrega, sortField, sortDir])
+  }, [ventas, range, activeTab, searchQuery, filterCliente, filterPendienteCobro, filterPendienteEntrega, sortField, sortDir])
 
   const allSelected = selectedVentas.size === filteredVentas.length && filteredVentas.length > 0
   const someSelected = selectedVentas.size > 0 && selectedVentas.size < filteredVentas.length
@@ -283,40 +287,6 @@ export default function VentasPage() {
                     <Plus className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
                     Nueva Venta
                   </button>
-                </div>
-              </div>
-
-              {/* Period selector — scrolls with title, then sticks at top-0 */}
-              <div className="sticky top-0 z-30 bg-slate-50/95 backdrop-blur-sm px-8 py-2.5 border-b border-slate-200/60">
-                <div className="max-w-6xl mx-auto flex items-center gap-3">
-                  <VentasPeriodSelector
-                    open={periodOpen}
-                    setOpen={setPeriodOpen}
-                    currentLabel={periodLabel}
-                    currentKey={periodKey}
-                    onSelect={(k) => {
-                      if (k === "personalizado") {
-                        setPeriodOpen(false)
-                        setCalendarOpen(true)
-                        return
-                      }
-                      setPeriodKey(k)
-                      setCustomRange(null)
-                      setPeriodOpen(false)
-                    }}
-                  />
-                  <span className="text-sm text-slate-500 font-mono">{rangeLabel}</span>
-                  {calendarOpen && (
-                    <VentasRangeCalendarDialog
-                      initialRange={customRange}
-                      onCancel={() => setCalendarOpen(false)}
-                      onApply={(start, end) => {
-                        setCustomRange({ start, end })
-                        setPeriodKey("personalizado")
-                        setCalendarOpen(false)
-                      }}
-                    />
-                  )}
                 </div>
               </div>
 
@@ -445,8 +415,8 @@ export default function VentasPage() {
                 </div>{/* /max-w-6xl widgets */}
               </div>{/* /widgets wrapper */}
 
-              {/* Search/filter bar + bulk actions — sticky pair anchored below period row */}
-              <div className="sticky top-[48px] z-20">
+              {/* Search/filter bar + bulk actions — sticky pair at top-0 */}
+              <div className="sticky top-0 z-20">
 
                 {/* Row 1: Search + Filtrar/Ordenar + count */}
                 <div className="bg-slate-50/95 backdrop-blur-sm border-t border-b border-slate-200/80 px-8 py-2">
@@ -609,6 +579,35 @@ export default function VentasPage() {
                             <option value="precio">Precio</option>
                           </select>
                         </div>
+
+                        {/* Period selector */}
+                        <VentasPeriodSelector
+                          open={periodOpen}
+                          setOpen={setPeriodOpen}
+                          currentLabel={periodLabel}
+                          currentKey={periodKey}
+                          onSelect={(k) => {
+                            if (k === "personalizado") {
+                              setPeriodOpen(false)
+                              setCalendarOpen(true)
+                              return
+                            }
+                            setPeriodKey(k)
+                            setCustomRange(null)
+                            setPeriodOpen(false)
+                          }}
+                        />
+                        {calendarOpen && (
+                          <VentasRangeCalendarDialog
+                            initialRange={customRange}
+                            onCancel={() => setCalendarOpen(false)}
+                            onApply={(start, end) => {
+                              setCustomRange({ start, end })
+                              setPeriodKey("personalizado")
+                              setCalendarOpen(false)
+                            }}
+                          />
+                        )}
 
                         {/* Divider + results count */}
                         <div className="w-px h-5 bg-slate-200 shrink-0" />
