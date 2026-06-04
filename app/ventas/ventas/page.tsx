@@ -116,17 +116,6 @@ export default function VentasPage() {
   const [calendarOpen, setCalendarOpen] = useState(false)
   const range = usePeriodRange()
 
-  const periodLabel = useMemo(() => {
-    if (noPeriod) return "Período"
-    return PERIOD_OPTIONS.find((o) => o.key === periodKey)?.label ?? "Período"
-  }, [periodKey, noPeriod])
-
-  const rangeLabel = useMemo(() => {
-    const fmt = (d: Date) => d.toLocaleDateString("es-AR", { day: "numeric", month: "short" })
-    if (periodKey === "hoy") return fmt(range.start)
-    return `${fmt(range.start)} — ${fmt(range.end)}`
-  }, [range, periodKey])
-
   const [selectedVentas, setSelectedVentas] = useState<Set<string>>(new Set())
   const [openMoreMenu, setOpenMoreMenu] = useState<string | null>(null)
 
@@ -147,6 +136,17 @@ export default function VentasPage() {
   const setNoPeriod = useCallback((val: boolean) => {
     if (val) updateParam("periodo", null)
   }, [updateParam])
+
+  const periodLabel = useMemo(() => {
+    if (noPeriod) return "Período"
+    return PERIOD_OPTIONS.find((o) => o.key === periodKey)?.label ?? "Período"
+  }, [periodKey, noPeriod])
+
+  const rangeLabel = useMemo(() => {
+    const fmt = (d: Date) => d.toLocaleDateString("es-AR", { day: "numeric", month: "short" })
+    if (periodKey === "hoy") return fmt(range.start)
+    return `${fmt(range.start)} — ${fmt(range.end)}`
+  }, [range, periodKey])
 
   // Search — ?q=
   const searchQuery = searchParams.get("q") ?? ""
