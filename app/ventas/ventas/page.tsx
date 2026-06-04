@@ -134,17 +134,7 @@ export default function VentasPage() {
   const [sortOpen, setSortOpen] = useState(false)
   const [widgetOffset, setWidgetOffset] = useState(0) // 0 = shows widgets 0-2, 1 = shows widgets 1-3
 
-  // Sticky search bar — measures the hero height so the search bar sticks just below it
-  const heroRef = useRef<HTMLDivElement>(null)
-  const [heroHeight, setHeroHeight] = useState(0)
-  useEffect(() => {
-    const el = heroRef.current
-    if (!el) return
-    const ro = new ResizeObserver(() => setHeroHeight(el.offsetHeight))
-    ro.observe(el)
-    setHeroHeight(el.offsetHeight)
-    return () => ro.disconnect()
-  }, [])
+
 
   // Filters
   const [filterOpen, setFilterOpen] = useState(false)
@@ -277,11 +267,9 @@ export default function VentasPage() {
           </div>
 
           <main className="flex-1 flex flex-col overflow-hidden">
-            {/* Single scroll container — sticky hero lives inside it so backdrop-blur works */}
-            <div className="flex-1 overflow-y-auto bg-slate-50">
-              {/* Sticky hero */}
-              <div ref={heroRef} className="sticky top-0 z-30">
-                <div className="bg-slate-50/80 backdrop-blur-md">
+            {/* Hero — sits above the scroll container, always visible */}
+            <div className="bg-slate-50 border-b border-slate-200/60">
+                <div className="bg-slate-50">
                   <div className="px-8 py-8">
                     <div className="max-w-6xl mx-auto">
                     <div className="flex items-start justify-between gap-6">
@@ -332,9 +320,159 @@ export default function VentasPage() {
                     </div>{/* /max-w-6xl hero */}
                   </div>
                 </div>
-              </div>
+            </div>{/* /hero */}
 
-              {/* Widgets — scrolls freely, goes behind the sticky hero on scroll */}
+            {/* Search/filter bar — sits between hero and scroll container, always visible */}
+            <div className="bg-slate-50 border-b border-slate-200/80 px-8 py-2 z-20">
+              <div className="max-w-6xl mx-auto">
+                {/* Combined header bar: checkbox | divider | search — then Filtrar/Ordenar on the right */}
+                <div className="flex items-center gap-2">
+                  {/* Header block — shrinks to fit checkbox + search, not full width */}
+                  <div className="flex items-center h-9 border border-[rgba(228,230,235,0.6)] shadow-sm rounded-md min-w-0 overflow-hidden bg-white">
+                    {/* Checkbox cell */}
+                    <div className="flex items-center justify-center w-[52px] shrink-0 h-full bg-white">
+                      <input
+                        ref={allCheckboxRef}
+                        type="checkbox"
+                        checked={allSelected}
+                        onChange={toggleSelectAll}
+                        aria-label={allSelected ? "Deseleccionar todo" : "Seleccionar todo"}
+                        className="w-4 h-4 rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      />
+                    </div>
+                    {/* Divider */}
+                    <div className="w-px h-full bg-slate-200/80 shrink-0" />
+                    {/* Search input */}
+                    <div className="flex items-center gap-2 px-3 h-full w-64 bg-white">
+                      <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Buscar"
+                        className="flex-1 bg-transparent text-xs text-slate-700 placeholder:text-slate-400 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Selection count + bulk actions */}
+                  {selectedVentas.size > 0 && (
+                    <div className="flex items-center gap-2.5 h-9">
+                      <div className="w-px h-5 bg-slate-300" />
+                      <span className="text-xs text-slate-500 whitespace-nowrap">
+                        {selectedVentas.size} seleccionada{selectedVentas.size !== 1 ? "s" : ""}
+                      </span>
+                      <div className="w-px h-5 bg-slate-200" />
+                      <button
+                        type="button"
+                        className="h-8 flex items-center gap-1.5 px-3 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-md hover:bg-slate-50 hover:border-slate-300 shadow-sm transition-colors"
+                        onClick={() => {
+                          const selected = ventas.filter(v => selectedVentas.has(v.id))
+                          downloadVentasPDF(selected, miNegocio)
+                        }}
+                      >
+                        <FileDown className="w-3.5 h-3.5 text-slate-400" />
+                        Descargar PDF
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Filtrar / Ordenar — pushed to the far right */}
+                  <div className="ml-auto flex items-center gap-2">
+                    {/* Filtrar */}
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => { setFilterOpen(!filterOpen); setSortOpen(false) }}
+                        className={`h-9 text-xs transition-colors border shadow-sm gap-1.5 shrink-0 px-3 rounded-md flex items-center cursor-pointer ${
+                          hasActiveFilters
+                            ? "border-blue-400 text-blue-600 bg-blue-50"
+                            : "border-[rgba(228,230,235,0.6)] bg-white hover:bg-slate-50"
+                        }`}
+                      >
+                        <ListFilter className="w-3.5 h-3.5" />
+                        <span>Filtrar</span>
+                      </button>
+                      {filterOpen && (
+                        <>
+                          <div className="fixed inset-0 z-10" onClick={() => setFilterOpen(false)} />
+                          <div className="absolute top-full right-0 mt-1 z-20 bg-white border border-slate-200 rounded-lg shadow-lg w-60 p-3 space-y-3">
+                            {/* Cliente */}
+                            <div>
+                              <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Cliente</label>
+                              <select
+                                value={filterCliente}
+                                onChange={(e) => setFilterCliente(e.target.value)}
+                                className="w-full mt-1 px-2 py-1.5 text-xs border border-slate-200 rounded-md focus:outline-none focus:border-slate-400 bg-white"
+                              >
+                                <option value="">Todos</option>
+                                {uniqueClientes.map(c => <option key={c} value={c}>{c}</option>)}
+                              </select>
+                            </div>
+                            {(activeTab === "todas" || activeTab === "en_curso") && (
+                              <div className="space-y-2">
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Estado</label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={filterPendienteCobro}
+                                    onChange={(e) => setFilterPendienteCobro(e.target.checked)}
+                                    className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                  />
+                                  <span className="text-xs text-slate-700">Pendiente de cobro</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={filterPendienteEntrega}
+                                    onChange={(e) => setFilterPendienteEntrega(e.target.checked)}
+                                    className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                  />
+                                  <span className="text-xs text-slate-700">Pendiente de entrega</span>
+                                </label>
+                              </div>
+                            )}
+                            {hasActiveFilters && (
+                              <button
+                                type="button"
+                                onClick={() => { setFilterCliente(""); setFilterPendienteCobro(false); setFilterPendienteEntrega(false) }}
+                                className="w-full text-xs text-slate-500 hover:text-slate-700 py-1 text-center cursor-pointer"
+                              >
+                                Limpiar filtros
+                              </button>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Ordenar */}
+                    <div className="flex items-center border border-[rgba(228,230,235,0.6)] shadow-sm rounded-md overflow-hidden bg-white h-9">
+                      <button
+                        type="button"
+                        onClick={() => setSortDir(d => d === "asc" ? "desc" : "asc")}
+                        title={sortDir === "asc" ? "Ascendente" : "Descendente"}
+                        className="px-2.5 h-full hover:bg-slate-50 transition-colors border-r border-[rgba(228,230,235,0.6)] cursor-pointer flex items-center"
+                      >
+                        <ArrowUpDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${sortDir === "desc" ? "rotate-180" : ""}`} />
+                      </button>
+                      <select
+                        value={sortField}
+                        onChange={(e) => setSortField(e.target.value as "fecha" | "precio")}
+                        className="appearance-none pl-2.5 pr-6 text-xs bg-transparent focus:outline-none cursor-pointer text-slate-700 h-full"
+                      >
+                        <option value="fecha">Fecha</option>
+                        <option value="precio">Precio</option>
+                      </select>
+                    </div>
+                  </div>{/* /ml-auto */}
+                </div>{/* /flex search bar */}
+              </div>{/* /max-w-6xl */}
+            </div>{/* /search bar wrapper */}
+
+            {/* Scroll container — only widgets + rows scroll */}
+            <div className="flex-1 overflow-y-auto bg-slate-50">
+              {/* Widgets */}
               <div className="px-8 pt-4 pb-3">
                 <div className="max-w-6xl mx-auto">
 
@@ -459,162 +597,9 @@ export default function VentasPage() {
                 </div>{/* /max-w-6xl widgets */}
               </div>{/* /widgets wrapper */}
 
-              {/* Search/filter bar — sticks just below the hero when scrolled */}
-              <div
-                className="sticky z-20 bg-slate-50 px-8 py-2"
-                style={{ top: heroHeight + 4 }}
-              >
-                <div className="max-w-6xl mx-auto">
-              {/* Combined header bar: checkbox | divider | search — then Filtrar/Ordenar on the right */}
-              <div className="flex items-center gap-2">
-                {/* Header block — shrinks to fit checkbox + search, not full width */}
-                <div className="flex items-center h-9 border border-[rgba(228,230,235,0.6)] shadow-sm rounded-md min-w-0 overflow-hidden bg-white">
-                  {/* Checkbox cell — same bg as Filtrar/Ordenar buttons */}
-                  <div className="flex items-center justify-center w-[52px] shrink-0 h-full bg-white">
-                    <input
-                      ref={allCheckboxRef}
-                      type="checkbox"
-                      checked={allSelected}
-                      onChange={toggleSelectAll}
-                      aria-label={allSelected ? "Deseleccionar todo" : "Seleccionar todo"}
-                      className="w-4 h-4 rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                    />
-                  </div>
-                  {/* Divider */}
-                  <div className="w-px h-full bg-slate-200/80 shrink-0" />
-                  {/* Search input — white bg */}
-                  <div className="flex items-center gap-2 px-3 h-full w-64 bg-white">
-                    <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Buscar"
-                      className="flex-1 bg-transparent text-xs text-slate-700 placeholder:text-slate-400 outline-none"
-                    />
-                  </div>
-                </div>
 
-                {/* Selection count + bulk actions — visible only when items are selected */}
-                {selectedVentas.size > 0 && (
-                  <div className="flex items-center gap-2.5 h-9">
-                    <div className="w-px h-5 bg-slate-300" />
-                    <span className="text-xs text-slate-500 whitespace-nowrap">
-                      {selectedVentas.size} seleccionada{selectedVentas.size !== 1 ? "s" : ""}
-                    </span>
-                    <div className="w-px h-5 bg-slate-200" />
-                    <button
-                      type="button"
-                      className="h-8 flex items-center gap-1.5 px-3 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-md hover:bg-slate-50 hover:border-slate-300 shadow-sm transition-colors"
-                      onClick={() => {
-                        const selected = ventas.filter(v => selectedVentas.has(v.id))
-                        downloadVentasPDF(selected, miNegocio)
-                      }}
-                    >
-                      <FileDown className="w-3.5 h-3.5 text-slate-400" />
-                      Descargar PDF
-                    </button>
-                  </div>
-                )}
 
-                {/* Filtrar / Ordenar — pushed to the far right */}
-                <div className="ml-auto flex items-center gap-2">
-
-                  {/* Filtrar */}
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => { setFilterOpen(!filterOpen); setSortOpen(false) }}
-                      className={`h-9 text-xs transition-colors border shadow-sm gap-1.5 shrink-0 px-3 rounded-md flex items-center cursor-pointer ${
-                        hasActiveFilters
-                          ? "border-blue-400 text-blue-600 bg-blue-50"
-                          : "border-[rgba(228,230,235,0.6)] bg-white hover:bg-slate-50"
-                      }`}
-                    >
-                      <ListFilter className="w-3.5 h-3.5" />
-                      <span>Filtrar</span>
-                    </button>
-                    {filterOpen && (
-                      <>
-                        <div className="fixed inset-0 z-10" onClick={() => setFilterOpen(false)} />
-                        <div className="absolute top-full right-0 mt-1 z-20 bg-white border border-slate-200 rounded-lg shadow-lg w-60 p-3 space-y-3">
-                          {/* Cliente */}
-                          <div>
-                            <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Cliente</label>
-                            <select
-                              value={filterCliente}
-                              onChange={(e) => setFilterCliente(e.target.value)}
-                              className="w-full mt-1 px-2 py-1.5 text-xs border border-slate-200 rounded-md focus:outline-none focus:border-slate-400 bg-white"
-                            >
-                              <option value="">Todos</option>
-                              {uniqueClientes.map(c => <option key={c} value={c}>{c}</option>)}
-                            </select>
-                          </div>
-                          {/* Pendiente de cobro / entrega — only for todas / en_curso */}
-                          {(activeTab === "todas" || activeTab === "en_curso") && (
-                            <div className="space-y-2">
-                              <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Estado</label>
-                              <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={filterPendienteCobro}
-                                  onChange={(e) => setFilterPendienteCobro(e.target.checked)}
-                                  className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                />
-                                <span className="text-xs text-slate-700">Pendiente de cobro</span>
-                              </label>
-                              <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={filterPendienteEntrega}
-                                  onChange={(e) => setFilterPendienteEntrega(e.target.checked)}
-                                  className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                />
-                                <span className="text-xs text-slate-700">Pendiente de entrega</span>
-                              </label>
-                            </div>
-                          )}
-                          {hasActiveFilters && (
-                            <button
-                              type="button"
-                              onClick={() => { setFilterCliente(""); setFilterPendienteCobro(false); setFilterPendienteEntrega(false) }}
-                              className="w-full text-xs text-slate-500 hover:text-slate-700 py-1 text-center cursor-pointer"
-                            >
-                              Limpiar filtros
-                            </button>
-                          )}
-                        </div>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Ordenar — unified arrow toggle + field select */}
-                  <div className="flex items-center border border-[rgba(228,230,235,0.6)] shadow-sm rounded-md overflow-hidden bg-white h-9">
-                    <button
-                      type="button"
-                      onClick={() => setSortDir(d => d === "asc" ? "desc" : "asc")}
-                      title={sortDir === "asc" ? "Ascendente" : "Descendente"}
-                      className="px-2.5 h-full hover:bg-slate-50 transition-colors border-r border-[rgba(228,230,235,0.6)] cursor-pointer flex items-center"
-                    >
-                      <ArrowUpDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${sortDir === "desc" ? "rotate-180" : ""}`} />
-                    </button>
-                    <select
-                      value={sortField}
-                      onChange={(e) => setSortField(e.target.value as "fecha" | "precio")}
-                      className="appearance-none pl-2.5 pr-6 text-xs bg-transparent focus:outline-none cursor-pointer text-slate-700 h-full"
-                    >
-                      <option value="fecha">Fecha</option>
-                      <option value="precio">Precio</option>
-                    </select>
-                  </div>
-
-                </div>{/* /ml-auto Filtrar+Ordenar */}
-              </div>{/* /flex items-center gap-2 search bar */}
-              </div>{/* /extra close */}
-                </div>{/* /max-w-6xl search */}
-              </div>{/* /sticky search bar wrapper */}
-
-              {/* Rows — scroll behind the sticky search bar */}
+              {/* Rows */}
               <div className="px-8 pt-2 pb-8">
                 <div className="max-w-6xl mx-auto">
               <div className="flex flex-col gap-2">
@@ -1250,7 +1235,7 @@ export default function VentasPage() {
   )
 }
 
-/* ─── Period Selector ───────────────────────────────────────────────────────── */
+/* ─── Period Selector ───────────────────────────────────────────────────���───── */
 
 function VentasPeriodSelector({
   open,
