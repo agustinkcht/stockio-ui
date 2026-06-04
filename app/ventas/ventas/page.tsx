@@ -631,7 +631,7 @@ export default function VentasPage() {
 
                 {/* Row 2: Bulk actions — straight borders, flush below search bar */}
                 <div className="px-8">
-                  <div className="max-w-6xl mx-auto bg-white border border-gray-200 px-4 rounded-b-md">
+                  <div className="max-w-6xl mx-auto bg-white px-4">
                     <div className="flex items-center gap-2 h-9">
                       {/* All-selector checkbox */}
                       <div className="flex items-center justify-center w-[36px] shrink-0">
@@ -663,7 +663,7 @@ export default function VentasPage() {
                           <div className="w-px h-5 bg-slate-200 shrink-0" />
                           <button
                             type="button"
-                            className="h-8 flex items-center gap-1.5 px-3 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-md hover:bg-slate-50 hover:border-slate-300 shadow-sm transition-colors"
+                            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
                             onClick={() => {
                               const selected = ventas.filter(v => selectedVentas.has(v.id))
                               downloadVentasPDF(selected, miNegocio)
