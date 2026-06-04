@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect, useRef, useMemo, Fragment } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect, useRef, useMemo, Fragment, useCallback } from "react"
+import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { Sidebar } from "@/components/layout/sidebar"
 import { useSidebar } from "@/hooks/use-sidebar"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
@@ -105,6 +105,8 @@ function isPendienteEntrega(v: Venta): boolean {
 export default function VentasPage() {
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const allCheckboxRef = useRef<HTMLInputElement>(null)
   const { ventas, cancelarVenta, finalizarVenta } = useVentaStockSync()
   const { miNegocio } = useSettings()
@@ -128,7 +130,18 @@ export default function VentasPage() {
 
   const [selectedVentas, setSelectedVentas] = useState<Set<string>>(new Set())
   const [openMoreMenu, setOpenMoreMenu] = useState<string | null>(null)
-  const [searchQuery, setSearchQuery] = useState("")
+
+  // Search query lives in the URL as ?q=
+  const searchQuery = searchParams.get("q") ?? ""
+  const setSearchQuery = useCallback((val: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (val) {
+      params.set("q", val)
+    } else {
+      params.delete("q")
+    }
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+  }, [router, pathname, searchParams])
 
   // Sort
   const [sortField, setSortField] = useState<"fecha" | "precio">("fecha")
@@ -186,8 +199,28 @@ export default function VentasPage() {
         activeTab === "en_curso" ? v.estado === "en_curso" :
         activeTab === "finalizada" ? v.estado === "finalizada" :
         v.estado === "cancelada"
-      const q = searchQuery.toLowerCase()
-      const matchesSearch = !q || v.id.toLowerCase().includes(q) || getClienteNombre(v).toLowerCase().includes(q)
+      const q = searchQuery.toLowerCase().trim()
+      const origenLabel =
+        v.origen === "presupuesto" ? "creada desde presupuesto" :
+        v.origen === "pdv" ? "creada desde pdv punto de venta" :
+        "creada manualmente"
+      const estadoLabel = estadoConfig[v.estado]?.label.toLowerCase() ?? v.estado
+      const totalStr = v.total.toLocaleString("es-AR")
+      const unidades = v.items.reduce((s, i) => s + i.quantity, 0).toString()
+      const productNames = v.items.map(i => i.name.toLowerCase()).join(" ")
+      const productSkus = v.items.map(i => i.sku.toLowerCase()).join(" ")
+      const matchesSearch = !q || [
+        v.id.toLowerCase(),
+        getClienteNombre(v).toLowerCase(),
+        v.fecha,
+        v.hora,
+        origenLabel,
+        estadoLabel,
+        totalStr,
+        unidades,
+        productNames,
+        productSkus,
+      ].some(field => field.includes(q))
       const matchesCliente = !filterCliente || getClienteNombre(v) === filterCliente
       const matchesPendienteCobro = !filterPendienteCobro || isPendienteCobro(v)
       const matchesPendienteEntrega = !filterPendienteEntrega || isPendienteEntrega(v)
