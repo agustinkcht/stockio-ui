@@ -23,7 +23,8 @@ import {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type SortKey = "nombre_asc" | "nombre_desc" | "transacciones_desc" | "transacciones_asc"
+type SortField = "nombre" | "transacciones"
+type SortDir   = "asc" | "desc"
 
 type ActiveFilters = {
   tipo: ("particular" | "empresa") | null
@@ -46,8 +47,8 @@ function ClientesContent() {
   // ── Search / Filter / Sort ──────────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState("")
   const [filterOpen, setFilterOpen] = useState(false)
-  const [sortOpen, setSortOpen] = useState(false)
-  const [sortKey, setSortKey] = useState<SortKey>("nombre_asc")
+  const [sortField, setSortField]  = useState<SortField>("nombre")
+  const [sortDir,   setSortDir]    = useState<SortDir>("asc")
   const [activeFilters, setActiveFilters] = useState<ActiveFilters>({ tipo: null, condicionIva: null })
 
   // ── Selection ───────────────────────────────────────────────────────────────
@@ -89,14 +90,15 @@ function ClientesContent() {
     return [...result].sort((a, b) => {
       const nameA = a.tipo === "empresa" && a.razonSocial ? a.razonSocial : `${a.nombre} ${a.apellido}`
       const nameB = b.tipo === "empresa" && b.razonSocial ? b.razonSocial : `${b.nombre} ${b.apellido}`
-      switch (sortKey) {
-        case "nombre_asc":  return nameA.localeCompare(nameB)
-        case "nombre_desc": return nameB.localeCompare(nameA)
-        case "transacciones_desc": return b.transactionCount - a.transactionCount
-        case "transacciones_asc":  return a.transactionCount - b.transactionCount
+      if (sortField === "nombre") {
+        const cmp = nameA.localeCompare(nameB)
+        return sortDir === "asc" ? cmp : -cmp
+      } else {
+        const cmp = a.transactionCount - b.transactionCount
+        return sortDir === "asc" ? cmp : -cmp
       }
     })
-  }, [clientes, searchQuery, activeFilters, sortKey])
+  }, [clientes, searchQuery, activeFilters, sortField, sortDir])
 
   // ── Selection helpers ───────────────────────────────────────────────────────
   const selectedCount = clienteSelected.filter(Boolean).length
@@ -156,16 +158,11 @@ function ClientesContent() {
 
   // ── Filter tag helpers ───────────────────────────────────────────────────────
   const hasFilters = !!activeFilters.tipo || !!activeFilters.condicionIva
-  const sortLabel: Record<SortKey, string> = {
-    nombre_asc: "Nombre A–Z",
-    nombre_desc: "Nombre Z–A",
-    transacciones_desc: "Más transacciones",
-    transacciones_asc: "Menos transacciones",
-  }
-  const isDefaultSort = sortKey === "nombre_asc"
+  const isDefaultSort = sortField === "nombre" && sortDir === "asc"
+  const sortFieldLabel: Record<SortField, string> = { nombre: "Nombre", transacciones: "Transacciones" }
 
   return (
-    <div className="min-h-screen bg-[rgb(243,242,238)]">
+    <div className="min-h-screen bg-[rgb(243,242,238)] flex flex-col">
       <div className="px-[6px] py-[6px] flex gap-[6px] h-screen" onClick={handleCloseDropdowns}>
 
         {/* Sidebar */}
@@ -268,8 +265,8 @@ function ClientesContent() {
                         )}
                         {!isDefaultSort && (
                           <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
-                            {sortLabel[sortKey]}
-                            <button type="button" onClick={() => setSortKey("nombre_asc")} className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer">
+                            {sortFieldLabel[sortField]} {sortDir === "asc" ? "↑" : "↓"}
+                            <button type="button" onClick={() => { setSortField("nombre"); setSortDir("asc") }} className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer">
                               <X className="w-2.5 h-2.5 text-slate-400" />
                             </button>
                           </span>
@@ -337,46 +334,24 @@ function ClientesContent() {
                         )}
                       </div>
 
-                      {/* Ordenar */}
-                      <div className="relative">
+                      {/* Ordenar — split control: direction toggle + field select */}
+                      <div className="flex items-center border border-[rgba(228,230,235,0.6)] shadow-sm rounded-md overflow-hidden bg-white h-9">
                         <button
                           type="button"
-                          onClick={() => { setSortOpen((v) => !v); setFilterOpen(false) }}
-                          className={`h-9 text-xs border shadow-sm px-3 rounded-md flex items-center gap-1.5 cursor-pointer transition-colors ${
-                            !isDefaultSort
-                              ? "border-blue-400 text-blue-600 bg-blue-50"
-                              : "border-[rgba(228,230,235,0.6)] bg-white hover:bg-slate-50 text-slate-600"
-                          }`}
+                          onClick={() => setSortDir(d => d === "asc" ? "desc" : "asc")}
+                          title={sortDir === "asc" ? "Ascendente" : "Descendente"}
+                          className="px-2.5 h-full hover:bg-slate-50 transition-colors border-r border-[rgba(228,230,235,0.6)] cursor-pointer flex items-center"
                         >
-                          <ArrowUpDown className="w-3.5 h-3.5" />
-                          Ordenar
+                          <ArrowUpDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${sortDir === "desc" ? "rotate-180" : ""}`} />
                         </button>
-                        {sortOpen && (
-                          <>
-                            <div className="fixed inset-0 z-[90]" onClick={() => setSortOpen(false)} />
-                            <div className="absolute top-full right-0 mt-1 w-52 bg-white border border-slate-200 rounded-xl shadow-lg z-[100] overflow-hidden animate-in fade-in-0 slide-in-from-top-1 duration-150">
-                              <div className="px-4 pt-3 pb-1">
-                                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Nombre</p>
-                              </div>
-                              {(["nombre_asc", "nombre_desc"] as SortKey[]).map((k) => (
-                                <button key={k} type="button" onClick={() => { setSortKey(k); setSortOpen(false) }}
-                                  className={`w-full text-left px-4 py-2 text-sm cursor-pointer transition-colors ${sortKey === k ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-50"}`}>
-                                  {sortLabel[k]}
-                                </button>
-                              ))}
-                              <div className="mx-4 my-1 h-px bg-slate-100" />
-                              <div className="px-4 pt-1 pb-1">
-                                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Transacciones</p>
-                              </div>
-                              {(["transacciones_desc", "transacciones_asc"] as SortKey[]).map((k) => (
-                                <button key={k} type="button" onClick={() => { setSortKey(k); setSortOpen(false) }}
-                                  className={`w-full text-left px-4 py-2 text-sm cursor-pointer transition-colors ${sortKey === k ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-50"}`}>
-                                  {sortLabel[k]}
-                                </button>
-                              ))}
-                            </div>
-                          </>
-                        )}
+                        <select
+                          value={sortField}
+                          onChange={(e) => setSortField(e.target.value as SortField)}
+                          className="appearance-none pl-2.5 pr-6 text-xs bg-transparent focus:outline-none cursor-pointer text-slate-700 h-full"
+                        >
+                          <option value="nombre">Nombre</option>
+                          <option value="transacciones">Transacciones</option>
+                        </select>
                       </div>
 
                       {/* Count */}
@@ -433,7 +408,7 @@ function ClientesContent() {
               <div className="max-w-6xl mx-auto">
 
                 {/* Table header — no all-selector, no grid size */}
-                <div className="grid grid-cols-[40px_1fr_200px_160px_200px_44px] px-4 py-2 border border-slate-200/80 rounded-t-md bg-slate-50/60">
+                <div className="grid grid-cols-[minmax(40px,4%)_1fr_200px_160px_200px_44px] px-4 py-2 border border-slate-200/80 rounded-t-md bg-slate-50/60">
                   <div />
                   <div className="text-xs font-medium text-slate-400 uppercase tracking-wide">Cliente</div>
                   <div className="text-xs font-medium text-slate-400 uppercase tracking-wide">Email</div>

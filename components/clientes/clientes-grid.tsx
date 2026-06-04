@@ -55,7 +55,7 @@ export function ClientesGrid({
             onMouseLeave={() => {
               setHoveredIndex(null)
             }}
-            className={`grid grid-cols-[40px_1fr_200px_160px_200px_44px] items-center px-4 h-[72px] transition-colors ${
+            className={`grid grid-cols-[minmax(40px,4%)_1fr_200px_160px_200px_44px] items-center px-4 h-[72px] transition-colors ${
               isSelected
                 ? "bg-blue-50/40 border-blue-200"
                 : isHovered
