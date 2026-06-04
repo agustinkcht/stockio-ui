@@ -112,11 +112,13 @@ export default function VentasPage() {
   const { periodKey, customRange, setPeriodKey, setCustomRange } = usePeriod()
   const [periodOpen, setPeriodOpen] = useState(false)
   const [calendarOpen, setCalendarOpen] = useState(false)
+  const [noPeriod, setNoPeriod] = useState(true) // default: no period filter active
   const range = usePeriodRange()
 
   const periodLabel = useMemo(() => {
+    if (noPeriod) return "Período"
     return PERIOD_OPTIONS.find((o) => o.key === periodKey)?.label ?? "Período"
-  }, [periodKey])
+  }, [periodKey, noPeriod])
 
   const rangeLabel = useMemo(() => {
     const fmt = (d: Date) => d.toLocaleDateString("es-AR", { day: "numeric", month: "short" })
@@ -178,7 +180,7 @@ export default function VentasPage() {
     const rangeEnd   = range.end.getTime()
     const filtered = ventas.filter(v => {
       const ventaTime = new Date(v.fecha + "T12:00:00").getTime()
-      const matchesPeriod = ventaTime >= rangeStart && ventaTime <= rangeEnd
+      const matchesPeriod = noPeriod || (ventaTime >= rangeStart && ventaTime <= rangeEnd)
       const matchesTab =
         activeTab === "todas" ? true :
         activeTab === "en_curso" ? v.estado === "en_curso" :
@@ -201,7 +203,7 @@ export default function VentasPage() {
       return sortDir === "asc" ? diff : -diff
     })
     return filtered
-  }, [ventas, range, activeTab, searchQuery, filterCliente, filterPendienteCobro, filterPendienteEntrega, sortField, sortDir])
+  }, [ventas, range, noPeriod, activeTab, searchQuery, filterCliente, filterPendienteCobro, filterPendienteEntrega, sortField, sortDir])
 
   const allSelected = selectedVentas.size === filteredVentas.length && filteredVentas.length > 0
   const someSelected = selectedVentas.size > 0 && selectedVentas.size < filteredVentas.length
@@ -452,12 +454,20 @@ export default function VentasPage() {
                         setOpen={setPeriodOpen}
                         currentLabel={periodLabel}
                         currentKey={periodKey}
+                        noPeriod={noPeriod}
                         onSelect={(k) => {
+                          if (k === ("ninguno" as PeriodKey)) {
+                            setNoPeriod(true)
+                            setPeriodOpen(false)
+                            return
+                          }
                           if (k === "personalizado") {
+                            setNoPeriod(false)
                             setPeriodOpen(false)
                             setCalendarOpen(true)
                             return
                           }
+                          setNoPeriod(false)
                           setPeriodKey(k)
                           setCustomRange(null)
                           setPeriodOpen(false)
@@ -553,8 +563,8 @@ export default function VentasPage() {
                           </button>
                           {filterOpen && (
                             <>
-                              <div className="fixed inset-0 z-10" onClick={() => setFilterOpen(false)} />
-                              <div className="absolute top-full right-0 mt-1 z-20 bg-white border border-slate-200 rounded-lg shadow-lg w-60 p-3 space-y-3">
+                              <div className="fixed inset-0 z-[90]" onClick={() => setFilterOpen(false)} />
+                              <div className="absolute top-full right-0 mt-1 z-[100] bg-white border border-slate-200 rounded-lg shadow-lg w-60 p-3 space-y-3">
                                 <div>
                                   <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Cliente</label>
                                   <select
@@ -1313,12 +1323,14 @@ function VentasPeriodSelector({
   setOpen,
   currentLabel,
   currentKey,
+  noPeriod,
   onSelect,
 }: {
   open: boolean
   setOpen: (v: boolean) => void
   currentLabel: string
   currentKey: PeriodKey
+  noPeriod: boolean
   onSelect: (k: PeriodKey) => void
 }) {
   return (
@@ -1326,22 +1338,34 @@ function VentasPeriodSelector({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200 bg-white hover:border-slate-300 transition-colors text-sm font-medium text-slate-700 cursor-pointer"
+        className={`flex items-center gap-2 px-3 py-1.5 rounded-full border bg-white hover:border-slate-300 transition-colors text-sm font-medium cursor-pointer ${
+          noPeriod ? "border-slate-200 text-slate-400" : "border-slate-300 text-slate-700"
+        }`}
       >
         <span>{currentLabel}</span>
         <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
         <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden z-20 animate-in fade-in-0 slide-in-from-top-1 duration-150">
+          <div className="fixed inset-0 z-[90]" onClick={() => setOpen(false)} />
+          <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden z-[100] animate-in fade-in-0 slide-in-from-top-1 duration-150">
+            {/* Ninguno — resets to no period filter */}
+            <button
+              type="button"
+              onClick={() => onSelect("ninguno" as PeriodKey)}
+              className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer border-b border-slate-100 ${
+                noPeriod ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"
+              }`}
+            >
+              Ninguno
+            </button>
             {PERIOD_OPTIONS.map((opt) => (
               <button
                 key={opt.key}
                 type="button"
                 onClick={() => onSelect(opt.key)}
                 className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer ${
-                  currentKey === opt.key
+                  !noPeriod && currentKey === opt.key
                     ? "bg-slate-900 text-white"
                     : "text-slate-700 hover:bg-slate-50"
                 }`}
