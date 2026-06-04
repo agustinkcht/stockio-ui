@@ -10,6 +10,7 @@ export type PeriodKey =
   | "30d"
   | "mes_en_curso"
   | "ano_en_curso"
+  | "ultimo_ano"
   | "personalizado"
 
 export interface PeriodOption {
@@ -18,13 +19,20 @@ export interface PeriodOption {
 }
 
 export const PERIOD_OPTIONS: PeriodOption[] = [
-  { key: "hoy", label: "Hoy" },
-  { key: "7d", label: "Últimos 7 días" },
-  { key: "30d", label: "Últimos 30 días" },
-  { key: "mes_en_curso", label: "Mes en Curso" },
-  { key: "ano_en_curso", label: "Año en Curso" },
-  { key: "personalizado", label: "Personalizado" },
+  { key: "hoy",          label: "Día en Curso"    },
+  { key: "mes_en_curso", label: "Mes en Curso"    },
+  { key: "ano_en_curso", label: "Año en Curso"    },
+  { key: "7d",           label: "Últimos 7 días"  },
+  { key: "30d",          label: "Últimos 30 días" },
+  { key: "ultimo_ano",   label: "Último año"      },
+  { key: "personalizado", label: "Personalizado"  },
 ]
+
+/** Keys that represent a "live" (en-curso) window: includes all ongoing ventas regardless of creation date */
+export const ACTIVE_PERIOD_KEYS: PeriodKey[] = ["hoy", "mes_en_curso", "ano_en_curso"]
+
+/** Keys that are "periodical" (fixed window): en-curso ventas are filtered by creation date */
+export const PERIODICAL_PERIOD_KEYS: PeriodKey[] = ["7d", "30d", "ultimo_ano", "personalizado"]
 
 export interface CustomRange {
   start: Date
@@ -114,6 +122,15 @@ export function resolvePeriodRange(
     const ref = new Date(current.start)
     ref.setDate(ref.getDate() - 1)
     return getMesEnCursoPeriod(mesEnCursoStartDay, ref)
+  }
+
+  if (periodKey === "ultimo_ano") {
+    const end = new Date(today)
+    end.setHours(23, 59, 59, 999)
+    const start = new Date(today)
+    start.setFullYear(start.getFullYear() - 1)
+    start.setHours(0, 0, 0, 0)
+    return { start, end, startStr: ymd(start), endStr: ymd(end), label: "Último año" }
   }
 
   if (periodKey === "7d" || periodKey === "30d") {

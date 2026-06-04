@@ -39,6 +39,7 @@ import { useSettings } from "@/lib/contexts/settings-context"
 import { downloadVentasPDF } from "@/lib/utils/generate-venta-pdf"
 import {
   PERIOD_OPTIONS,
+  ACTIVE_PERIOD_KEYS,
   usePeriod,
   usePeriodRange,
   type PeriodKey,
@@ -226,8 +227,11 @@ export default function VentasPage() {
     }
   }, [periodParam, noPeriod])
 
-  // Period-scoped ventas for widgets (respects period but NOT tab/search/filters)
-  const periodVentas = useMemo(() => {
+  // Whether the current period is "active" (en-curso = live) or "periodical" (fixed window)
+  const isActivePeriod = !noPeriod && periodParam !== null && ACTIVE_PERIOD_KEYS.includes(periodKey)
+
+  // Period-scoped ventas filtered by creation date (for finalizadas & canceladas, and periodical en_curso)
+  const periodVentasByDate = useMemo(() => {
     if (noPeriod) return ventas
     const rangeStart = range.start.getTime()
     const rangeEnd = range.end.getTime()
@@ -236,6 +240,16 @@ export default function VentasPage() {
       return t >= rangeStart && t <= rangeEnd
     })
   }, [ventas, noPeriod, range])
+
+  // For the "en_curso" widget: active period = all en_curso regardless of date; periodical = date-filtered
+  const periodVentasEnCurso = useMemo(() => {
+    if (noPeriod) return ventas
+    if (isActivePeriod) return ventas // all en_curso are "live"
+    return periodVentasByDate
+  }, [ventas, noPeriod, isActivePeriod, periodVentasByDate])
+
+  // Unified alias for finalizadas/canceladas and totals
+  const periodVentas = periodVentasByDate
 
   // Widget counts
   const pendientesCobro = ventas.filter(isPendienteCobro)
@@ -386,9 +400,10 @@ export default function VentasPage() {
                         currentLabel={periodLabel}
                         currentKey={periodKey}
                         noPeriod={noPeriod}
+                        isActivePeriod={isActivePeriod}
                         onSelect={(k) => {
                           if (k === ("ninguno" as PeriodKey)) {
-                            updateParam("periodo", null)
+                            updateParam("periodo", "ninguno")
                             setPeriodOpen(false)
                             return
                           }
@@ -429,7 +444,7 @@ export default function VentasPage() {
               {/* Widgets — 3 fixed, no carousel. Clicking one sets/toggles the tab filter. */}
               {(() => {
                 const countFinalizadas = periodVentas.filter(v => v.estado === "finalizada").length
-                const countEnCurso = periodVentas.filter(v => v.estado === "en_curso").length
+                const countEnCurso = periodVentasEnCurso.filter(v => v.estado === "en_curso").length
                 const countCanceladas = periodVentas.filter(v => v.estado === "cancelada").length
 
                 const widgetCls = (active: boolean, disabled: boolean, activeColor: string, hoverColor: string) => {
@@ -443,6 +458,24 @@ export default function VentasPage() {
                   if (count === 0) return
                   setActiveTab(activeTab === tab ? "todas" : tab)
                 }
+
+                // Subtitle for finalizadas/canceladas
+                const fmtDay = (d: Date) => {
+                  const day = d.getDate()
+                  const month = d.toLocaleDateString("es-AR", { month: "long" })
+                  return `${day} de ${month}`
+                }
+                const subtitleFinCan = !noPeriod && periodParam
+                  ? isActivePeriod
+                    ? `desde el ${fmtDay(range.start)} hasta hoy`
+                    : "en el período seleccionado"
+                  : null
+
+                const subtitleEnCurso = !noPeriod && periodParam
+                  ? isActivePeriod
+                    ? "pendientes al día de hoy"
+                    : "pendientes al día de hoy, creadas en el período seleccionado"
+                  : null
 
                 return (
                   <div className="grid grid-cols-3 gap-3 mb-5">
@@ -460,6 +493,9 @@ export default function VentasPage() {
                         <span className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{countFinalizadas}</span>
                         <span className="text-base font-medium text-emerald-500">finalizadas</span>
                       </div>
+                      {subtitleFinCan && (
+                        <p className="mt-2 text-[11px] text-slate-400 leading-tight">{subtitleFinCan}</p>
+                      )}
                     </button>
 
                     {/* En Curso */}
@@ -476,6 +512,9 @@ export default function VentasPage() {
                         <span className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{countEnCurso}</span>
                         <span className="text-base font-medium text-orange-500">en curso</span>
                       </div>
+                      {subtitleEnCurso && (
+                        <p className="mt-2 text-[11px] text-slate-400 leading-tight">{subtitleEnCurso}</p>
+                      )}
                     </button>
 
                     {/* Canceladas */}
@@ -492,6 +531,9 @@ export default function VentasPage() {
                         <span className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{countCanceladas}</span>
                         <span className="text-base font-medium text-red-400">canceladas</span>
                       </div>
+                      {subtitleFinCan && (
+                        <p className="mt-2 text-[11px] text-slate-400 leading-tight">{subtitleFinCan}</p>
+                      )}
                     </button>
                   </div>
                 )
@@ -1410,6 +1452,7 @@ function VentasPeriodSelector({
   currentLabel,
   currentKey,
   noPeriod,
+  isActivePeriod,
   onSelect,
 }: {
   open: boolean
@@ -1417,8 +1460,14 @@ function VentasPeriodSelector({
   currentLabel: string
   currentKey: PeriodKey
   noPeriod: boolean
+  isActivePeriod: boolean
   onSelect: (k: PeriodKey) => void
 }) {
+  const activePeriodKeys: PeriodKey[] = ["hoy", "mes_en_curso", "ano_en_curso"]
+  const periodicalKeys: PeriodKey[] = ["7d", "30d", "ultimo_ano", "personalizado"]
+  const activeOptions = PERIOD_OPTIONS.filter(o => activePeriodKeys.includes(o.key))
+  const periodicalOptions = PERIOD_OPTIONS.filter(o => periodicalKeys.includes(o.key))
+
   return (
     <div className="relative">
       <button
@@ -1434,23 +1483,59 @@ function VentasPeriodSelector({
           )}
           <span className={noPeriod ? "text-sm font-medium" : "text-sm font-semibold text-slate-800"}>{currentLabel}</span>
         </div>
+        {/* Blinking live dot — only for active periods */}
+        {isActivePeriod && (
+          <span className="relative flex h-2 w-2 flex-shrink-0">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+          </span>
+        )}
         <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
         <>
           <div className="fixed inset-0 z-[90]" onClick={() => setOpen(false)} />
-          <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden z-[100] animate-in fade-in-0 slide-in-from-top-1 duration-150">
-            {/* Ninguno — resets to no period filter */}
+          <div className="absolute top-full left-0 mt-1 w-52 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden z-[100] animate-in fade-in-0 slide-in-from-top-1 duration-150">
+            {/* Ninguno */}
             <button
               type="button"
               onClick={() => onSelect("ninguno" as PeriodKey)}
-              className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer border-b border-slate-100 ${
+              className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer ${
                 noPeriod ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"
               }`}
             >
               Ninguno
             </button>
-            {PERIOD_OPTIONS.map((opt) => (
+            {/* Active group */}
+            <div className="px-4 pt-2 pb-0.5">
+              <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">En curso</span>
+            </div>
+            {activeOptions.map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => onSelect(opt.key)}
+                className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer flex items-center justify-between ${
+                  !noPeriod && currentKey === opt.key
+                    ? "bg-slate-900 text-white"
+                    : "text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                <span>{opt.label}</span>
+                {!noPeriod && currentKey === opt.key && (
+                  <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
+                  </span>
+                )}
+              </button>
+            ))}
+            {/* Periodical group */}
+            <div className="mx-4 my-1 h-px bg-slate-100" />
+            <div className="px-4 pt-1 pb-0.5">
+              <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Período fijo</span>
+            </div>
+            {periodicalOptions.map((opt) => (
               <button
                 key={opt.key}
                 type="button"
