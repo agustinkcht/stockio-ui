@@ -132,9 +132,11 @@ The sticky bar is a single `sticky top-0 z-20` wrapper containing two rows that 
 
 #### Row 1 — Search + Tags + Filtrar/Ordenar + Count
 
+The separator line between the search row and the bulk row must be scoped to the `max-w-6xl` container, NOT placed as a `border-b` on the full-width outer div. Use `border-b border-slate-100 pb-2` on the `max-w-6xl mx-auto` wrapper. This keeps the visual divider aligned with the content width, not the viewport.
+
 ```
 <div className="relative z-10 bg-slate-50/95 backdrop-blur-sm px-8 py-2">
-  <div className="max-w-6xl mx-auto">
+  <div className="max-w-6xl mx-auto border-b border-slate-100 pb-2">
     <div className="flex items-center gap-2">
 
       {/* Search input */}
@@ -298,7 +300,27 @@ Default:  border-[rgba(228,230,235,0.6)] bg-white hover:bg-slate-50 text-slate-6
 Active:   border-blue-400 text-blue-600 bg-blue-50
 ```
 
-Dropdown: `absolute top-full right-0 mt-1 z-[100] bg-white border border-slate-200 rounded-lg shadow-lg w-60 p-3`
+Dropdown (FilterButton): `absolute top-full right-0 mt-1 z-[100] bg-white border border-slate-200 rounded-lg shadow-lg w-60 p-3 space-y-3`
+Each filter group: `<label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">` + `<label><input type="checkbox" /> text</label>` rows.
+
+**SortButton (split control)**:
+
+```
+<div className="flex items-center border border-[rgba(228,230,235,0.6)] shadow-sm rounded-md overflow-hidden bg-white h-9">
+  {/* Direction toggle */}
+  <button onClick={toggleDir} className="px-2.5 h-full hover:bg-slate-50 border-r border-[rgba(228,230,235,0.6)] cursor-pointer flex items-center">
+    <ArrowUpDown className={`w-3.5 h-3.5 text-slate-500 ${dir === "desc" ? "rotate-180" : ""}`} />
+  </button>
+  {/* Field select — MUST be w-auto so it shrinks to the selected value's width */}
+  <select value={field} onChange={...}
+    className="appearance-none pl-2.5 pr-2.5 text-xs bg-transparent focus:outline-none cursor-pointer text-slate-700 h-full w-auto">
+    <option value="...">...</option>
+  </select>
+</div>
+```
+
+**Important**: the `<select>` must use `w-auto` (not a fixed width). A fixed width causes the control to be oversized when a shorter option is selected. Native `<select>` with `w-auto` collapses to the rendered text width of the active option.
+Ordenar does NOT produce a filter tag — it is a control, not a filter state.
 
 ---
 

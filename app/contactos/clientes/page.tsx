@@ -219,8 +219,8 @@ function ClientesContent() {
             <div className="sticky top-0 z-20">
 
               {/* Row 1 — Search + tags + filtrar/ordenar + count */}
-              <div className="relative z-10 bg-slate-50/95 backdrop-blur-sm px-8 py-2 border-b border-slate-100">
-                <div className="max-w-6xl mx-auto">
+              <div className="relative z-10 bg-slate-50/95 backdrop-blur-sm px-8 py-2">
+                <div className="max-w-6xl mx-auto border-b border-slate-100 pb-2">
                   <div className="flex items-center gap-2">
 
                     {/* Search */}
@@ -349,7 +349,7 @@ function ClientesContent() {
                         <select
                           value={sortField}
                           onChange={(e) => setSortField(e.target.value as SortField)}
-                          className="appearance-none pl-2.5 pr-6 text-xs bg-transparent focus:outline-none cursor-pointer text-slate-700 h-full"
+                          className="appearance-none pl-2.5 pr-2.5 text-xs bg-transparent focus:outline-none cursor-pointer text-slate-700 h-full w-auto"
                         >
                           <option value="nombre">Nombre</option>
                           <option value="transacciones">Transacciones</option>
