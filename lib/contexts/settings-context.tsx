@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import type { PeriodKey } from "@/lib/contexts/period-context"
 
 export type CostoBehavior = "preserveMargen" | "preservePrecioFinal"
 
@@ -41,6 +42,8 @@ export interface DashboardSettings {
   // The period ends the day before this on the next month.
   // E.g. start=1 → 1st to last day of month. start=5 → 5th to 4th of next month.
   mesEnCursoStartDay: number
+  // Default period shown on page load in views like Ventas.
+  periodoDefault: PeriodKey
 }
 
 interface SettingsContextType {
@@ -87,6 +90,7 @@ const defaultSettings: { miNegocio: MiNegocioSettings; precios: PreciosSettings;
   },
   dashboard: {
     mesEnCursoStartDay: 1, // Default: 1st of month to last day of month
+    periodoDefault: "mes_en_curso" as PeriodKey,
   },
 }
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, useMemo, type ReactNode } from "react"
+import { createContext, useContext, useState, useEffect, useRef, useMemo, type ReactNode } from "react"
 import { getMesEnCursoPeriod, type PeriodRange } from "@/lib/utils/dashboard-period"
 import { useSettings } from "@/lib/contexts/settings-context"
 
@@ -40,43 +40,18 @@ interface PeriodContextValue {
 
 const PeriodContext = createContext<PeriodContextValue | undefined>(undefined)
 
-const STORAGE_KEY = "stockio-period"
-
-interface StoredPeriod {
-  periodKey: PeriodKey
-  customRange: { start: string; end: string } | null
-}
-
 export function PeriodProvider({ children }: { children: ReactNode }) {
+  const { dashboard } = useSettings()
   const [periodKey, setPeriodKey] = useState<PeriodKey>("mes_en_curso")
   const [customRange, setCustomRange] = useState<CustomRange | null>(null)
-
+  // Once settings have been hydrated from localStorage, apply the stored default.
+  const initialized = useRef(false)
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      if (!stored) return
-      const parsed = JSON.parse(stored) as StoredPeriod
-      if (parsed.periodKey) setPeriodKey(parsed.periodKey)
-      if (parsed.customRange) {
-        setCustomRange({
-          start: new Date(parsed.customRange.start),
-          end: new Date(parsed.customRange.end),
-        })
-      }
-    } catch {
-      /* noop */
+    if (!initialized.current) {
+      initialized.current = true
+      setPeriodKey(dashboard.periodoDefault ?? "mes_en_curso")
     }
-  }, [])
-
-  useEffect(() => {
-    const toStore: StoredPeriod = {
-      periodKey,
-      customRange: customRange
-        ? { start: customRange.start.toISOString(), end: customRange.end.toISOString() }
-        : null,
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore))
-  }, [periodKey, customRange])
+  }, [dashboard.periodoDefault])
 
   return (
     <PeriodContext.Provider value={{ periodKey, customRange, setPeriodKey, setCustomRange }}>

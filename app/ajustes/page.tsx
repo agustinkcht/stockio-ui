@@ -9,6 +9,7 @@ import { UserPanel } from "@/components/layout/user-panel"
 import { useSidebar } from "@/hooks/use-sidebar"
 import { useSettings, type CostoBehavior, type CondicionIva } from "@/lib/contexts/settings-context"
 import { getMesEnCursoPeriod } from "@/lib/utils/dashboard-period"
+import { PERIOD_OPTIONS } from "@/lib/contexts/period-context"
 
 const condicionesIva: CondicionIva[] = ["Consumidor Final", "Responsable Inscripto", "Monotributista", "Exento"]
 
@@ -142,6 +143,36 @@ export default function AjustesPage() {
                         })()}
                       </p>
                     </div>
+                  </div>
+
+                  <div className="h-px bg-slate-100 my-1" />
+
+                  {/* Período por defecto */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                      Período por defecto
+                    </label>
+                    <p className="text-xs text-slate-400 mb-3">
+                      Período que se usa al abrir vistas como Ventas por primera vez o sin filtro activo.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {PERIOD_OPTIONS.filter(o => o.key !== "personalizado").map((option) => (
+                        <button
+                          key={option.key}
+                          type="button"
+                          onClick={() => updateDashboardSettings({ periodoDefault: option.key })}
+                          className={`px-3 py-1.5 text-sm rounded-lg border transition-colors cursor-pointer ${
+                            dashboard.periodoDefault === option.key
+                              ? "bg-slate-900 text-white border-slate-900"
+                              : "bg-white text-slate-700 border-slate-200 hover:border-slate-400"
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   </div>
                 </div>
               </section>

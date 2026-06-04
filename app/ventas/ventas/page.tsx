@@ -109,7 +109,7 @@ export default function VentasPage() {
   const searchParams = useSearchParams()
   const allCheckboxRef = useRef<HTMLInputElement>(null)
   const { ventas, cancelarVenta, finalizarVenta } = useVentaStockSync()
-  const { miNegocio } = useSettings()
+  const { miNegocio, dashboard } = useSettings()
 
   const { periodKey, customRange, setPeriodKey, setCustomRange } = usePeriod()
   const [periodOpen, setPeriodOpen] = useState(false)
@@ -130,23 +130,47 @@ export default function VentasPage() {
     router.replace(`${pathname}?${params.toString()}`, { scroll: false })
   }, [router, pathname, searchParams])
 
-  // Period — ?periodo= ("ninguno" / omitted = no filter; any PeriodKey = filtered)
+  // Period — ?periodo= ("ninguno" = explicit no filter; null = default being applied on mount)
   const periodParam = searchParams.get("periodo")
-  const noPeriod = !periodParam || periodParam === "ninguno"
-  const setNoPeriod = useCallback((val: boolean) => {
-    if (val) updateParam("periodo", null)
-  }, [updateParam])
+  // Treat null as noPeriod during the brief window before the default is applied via useEffect
+  const noPeriod = periodParam === "ninguno" || periodParam === null
+
+  // On first load with no ?periodo= param, apply the settings default
+  const defaultApplied = useRef(false)
+  useEffect(() => {
+    if (!defaultApplied.current && periodParam === null) {
+      defaultApplied.current = true
+      updateParam("periodo", dashboard.periodoDefault ?? "mes_en_curso")
+    } else if (periodParam !== null) {
+      defaultApplied.current = true
+    }
+  }, [periodParam, dashboard.periodoDefault, updateParam])
 
   const periodLabel = useMemo(() => {
-    if (noPeriod) return "Período"
+    if (noPeriod || !periodParam) return "Período"
     return PERIOD_OPTIONS.find((o) => o.key === periodKey)?.label ?? "Período"
-  }, [periodKey, noPeriod])
+  }, [periodKey, noPeriod, periodParam])
 
   const rangeLabel = useMemo(() => {
     const fmt = (d: Date) => d.toLocaleDateString("es-AR", { day: "numeric", month: "short" })
     if (periodKey === "hoy") return fmt(range.start)
     return `${fmt(range.start)} — ${fmt(range.end)}`
   }, [range, periodKey])
+
+  // Tag label for the período filter tag: "4 may - 4 jun" or "6 ago 2025 - 4 jun 2026"
+  const periodTagLabel = useMemo(() => {
+    if (noPeriod || !periodParam) return null
+    const cy = new Date().getFullYear()
+    const fmt = (d: Date, withYear: boolean) => {
+      const day = d.getDate()
+      const month = d.toLocaleDateString("es-AR", { month: "short" }).replace(".", "").toLowerCase()
+      return withYear ? `${day} ${month} ${d.getFullYear()}` : `${day} ${month}`
+    }
+    const bothCurrentYear = range.start.getFullYear() === cy && range.end.getFullYear() === cy
+    const withYear = !bothCurrentYear
+    if (periodKey === "hoy") return fmt(range.start, withYear)
+    return `${fmt(range.start, withYear)} - ${fmt(range.end, withYear)}`
+  }, [noPeriod, periodParam, periodKey, range])
 
   // Search — ?q=
   const searchQuery = searchParams.get("q") ?? ""
@@ -180,19 +204,6 @@ export default function VentasPage() {
 
   const [sortOpen, setSortOpen] = useState(false)
   const [widgetOffset, setWidgetOffset] = useState(0)
-  const [isSticky, setIsSticky] = useState(false)
-  const sentinelRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const sentinel = sentinelRef.current
-    if (!sentinel) return
-    const observer = new IntersectionObserver(
-      ([entry]) => setIsSticky(!entry.isIntersecting),
-      { threshold: 0 }
-    )
-    observer.observe(sentinel)
-    return () => observer.disconnect()
-  }, [])
 
   const [filterOpen, setFilterOpen] = useState(false)
   const [expandedVentas, setExpandedVentas] = useState<Set<string>>(new Set())
@@ -357,10 +368,10 @@ export default function VentasPage() {
                     <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
                       Ventas
                     </h1>
-                    {/* Period selector beside title — hidden once sticky bar kicks in */}
-                    <div className={isSticky ? "invisible pointer-events-none" : "visible"}>
+                    {/* Period selector — always beside the title */}
+                    <div>
                       <VentasPeriodSelector
-                        open={periodOpen && !isSticky}
+                        open={periodOpen}
                         setOpen={setPeriodOpen}
                         currentLabel={periodLabel}
                         currentKey={periodKey}
@@ -526,9 +537,6 @@ export default function VentasPage() {
                 </div>{/* /max-w-6xl widgets */}
               </div>{/* /widgets wrapper */}
 
-              {/* Sentinel — when this leaves viewport, sticky bar is "stuck" */}
-              <div ref={sentinelRef} className="h-0 w-full" aria-hidden="true" />
-
               {/* Search/filter bar + bulk actions — sticky pair at top-0 */}
               <div className="sticky top-0 z-20">
 
@@ -560,33 +568,6 @@ export default function VentasPage() {
                         </div>
                       </div>
 
-                      {/* Period selector — right of search input (only when sticky) */}
-                      <div className={isSticky ? "visible" : "invisible pointer-events-none"}>
-                      <VentasPeriodSelector
-                        open={periodOpen && isSticky}
-                        setOpen={setPeriodOpen}
-                        currentLabel={periodLabel}
-                        currentKey={periodKey}
-                        noPeriod={noPeriod}
-                        onSelect={(k) => {
-                          if (k === ("ninguno" as PeriodKey)) {
-                            updateParam("periodo", null)
-                            setPeriodOpen(false)
-                            return
-                          }
-                          if (k === "personalizado") {
-                            updateParam("periodo", "personalizado")
-                            setPeriodOpen(false)
-                            setCalendarOpen(true)
-                            return
-                          }
-                          updateParam("periodo", k)
-                          setPeriodKey(k)
-                          setCustomRange(null)
-                          setPeriodOpen(false)
-                        }}
-                      />
-                      </div>
                       {calendarOpen && (
                         <VentasRangeCalendarDialog
                           initialRange={customRange}
@@ -599,9 +580,23 @@ export default function VentasPage() {
                         />
                       )}
 
-                      {/* Active filter tags — widget tag (left) then filtrar tags (right) */}
-                      {(activeTab !== "todas" || filterCliente || filterPendienteCobro || filterPendienteEntrega || sortParam !== "fecha_desc") && (
+                      {/* Active filter tags — período (leftmost), then widget, then filtrar tags */}
+                      {(periodTagLabel || activeTab !== "todas" || filterCliente || filterPendienteCobro || filterPendienteEntrega || sortParam !== "fecha_desc") && (
                         <div className="flex items-center gap-1.5 flex-wrap">
+                          {/* Período tag — leftmost, hidden only for "ninguno" */}
+                          {periodTagLabel && (
+                            <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
+                              {periodTagLabel}
+                              <button
+                                type="button"
+                                onClick={() => updateParam("periodo", "ninguno")}
+                                aria-label="Quitar filtro de período"
+                                className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+                              >
+                                <X className="w-2.5 h-2.5 text-slate-400" />
+                              </button>
+                            </span>
+                          )}
                           {/* Widget tag */}
                           {activeTab !== "todas" && (
                             <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
