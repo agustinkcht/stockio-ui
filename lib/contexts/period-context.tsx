@@ -6,12 +6,10 @@ import { useSettings } from "@/lib/contexts/settings-context"
 
 export type PeriodKey =
   | "hoy"
-  | "mes_en_curso"
-  | "mes_anterior"
   | "7d"
   | "30d"
+  | "mes_en_curso"
   | "ano_en_curso"
-  | "historico"
   | "personalizado"
 
 export interface PeriodOption {
@@ -21,12 +19,10 @@ export interface PeriodOption {
 
 export const PERIOD_OPTIONS: PeriodOption[] = [
   { key: "hoy", label: "Hoy" },
-  { key: "mes_en_curso", label: "Mes en Curso" },
-  { key: "mes_anterior", label: "Mes Anterior" },
   { key: "7d", label: "Últimos 7 días" },
   { key: "30d", label: "Últimos 30 días" },
+  { key: "mes_en_curso", label: "Mes en Curso" },
   { key: "ano_en_curso", label: "Año en Curso" },
-  { key: "historico", label: "Histórico" },
   { key: "personalizado", label: "Personalizado" },
 ]
 
