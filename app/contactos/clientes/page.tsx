@@ -6,6 +6,8 @@ import { useSidebar } from "@/hooks/use-sidebar"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 import { UserPanel } from "@/components/layout/user-panel"
 import { useClientes } from "@/hooks/use-clientes"
+import { useVentas } from "@/hooks/use-ventas"
+import { useRouter } from "next/navigation"
 import type { Cliente } from "@/lib/data/clientes"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { NuevoClienteModal } from "@/components/modals/nuevo-cliente-modal"
@@ -43,6 +45,8 @@ const CONDICIONES_IVA = [
 function ClientesContent() {
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
   const { clientes, addCliente, updateCliente, deleteCliente } = useClientes()
+  const { ventas } = useVentas()
+  const router = useRouter()
 
   // ── Search / Filter / Sort ──────────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState("")
@@ -356,8 +360,11 @@ function ClientesContent() {
                         </select>
                       </div>
 
+                      {/* Divider */}
+                      <div className="w-px h-5 bg-slate-200 shrink-0" />
+
                       {/* Count */}
-                      <span className="text-xs text-slate-400 whitespace-nowrap tabular-nums pl-1">
+                      <span className="text-xs text-slate-400 whitespace-nowrap tabular-nums">
                         {filtered.length} {filtered.length === 1 ? "cliente" : "clientes"}
                       </span>
                     </div>
@@ -423,13 +430,12 @@ function ClientesContent() {
                 <div className="border border-slate-200/80 border-t-0 rounded-b-md overflow-hidden bg-white">
                   <ClientesGrid
                     clientes={filtered}
+                    ventas={ventas}
                     clienteSelected={clienteSelected}
                     onSelectCliente={handleSelectCliente}
                     onEditCliente={(c) => setClienteToEdit(c)}
-                    onDeleteCliente={(id) => {
-                      const c = clientes.find((x) => x.id === id)
-                      if (c) setClienteToDelete(c)
-                    }}
+                    onDeleteCliente={(id) => setClienteToDelete(filtered.find((c) => c.id === id) ?? null)}
+                    onTransaccionesClick={(nombre) => router.push(`/ventas/ventas?cliente=${encodeURIComponent(nombre)}&periodo=ninguno`)}
                   />
                 </div>
 

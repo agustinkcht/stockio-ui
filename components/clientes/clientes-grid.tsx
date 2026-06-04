@@ -1,26 +1,43 @@
 "use client"
 
 import type { Cliente } from "@/lib/data/clientes"
+import type { Venta } from "@/lib/types"
 import { Building2, User, Copy, MoreVertical } from "lucide-react"
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Checkbox } from "@/components/ui/checkbox"
 
 interface ClientesGridProps {
   clientes: Cliente[]
+  ventas: Venta[]
   clienteSelected: boolean[]
   onSelectCliente: (index: number) => void
   onEditCliente: (cliente: Cliente) => void
   onDeleteCliente: (id: string) => void
+  onTransaccionesClick: (nombre: string) => void
 }
 
 export function ClientesGrid({
   clientes,
+  ventas,
   clienteSelected,
   onSelectCliente,
   onEditCliente,
   onDeleteCliente,
+  onTransaccionesClick,
 }: ClientesGridProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
+
+  // Real transaction count per cliente: count ventas where cliente.tipo === "cuenta" and cliente.id matches
+  const transactionCountMap = useMemo(() => {
+    const map: Record<string, number> = {}
+    for (const venta of ventas) {
+      if (venta.estado === "cancelada") continue
+      if (venta.cliente.tipo === "cuenta") {
+        map[venta.cliente.id] = (map[venta.cliente.id] ?? 0) + 1
+      }
+    }
+    return map
+  }, [ventas])
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [openMenuIndex, setOpenMenuIndex] = useState<number | null>(null)
 
@@ -108,13 +125,26 @@ export function ClientesGrid({
             {/* Teléfono */}
             <div className="text-sm text-slate-500 truncate pr-2">{cliente.telefono || "—"}</div>
 
-            {/* Transacciones */}
-            <div className="text-sm text-slate-500 truncate pr-2">
-              {cliente.transactionCount === 0
-                ? "Sin transacciones"
-                : cliente.transactionCount === 1
-                ? "1 transacción"
-                : `${cliente.transactionCount} transacciones`}
+            {/* Transacciones — live from ventas, clickable */}
+            <div className="pr-2">
+              {(() => {
+                const count = transactionCountMap[cliente.id] ?? 0
+                const label = count === 0 ? "Sin transacciones" : count === 1 ? "1 transacción" : `${count} transacciones`
+                const clickable = count > 0
+                return (
+                  <button
+                    type="button"
+                    onClick={() => clickable && onTransaccionesClick(displayName)}
+                    className={`text-sm text-left transition-colors ${
+                      clickable
+                        ? "text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                        : "text-slate-400 cursor-default"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                )
+              })()}
             </div>
 
             {/* More options — vertical dots */}
