@@ -180,6 +180,19 @@ export default function VentasPage() {
 
   const [sortOpen, setSortOpen] = useState(false)
   const [widgetOffset, setWidgetOffset] = useState(0)
+  const [isSticky, setIsSticky] = useState(false)
+  const sentinelRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsSticky(!entry.isIntersecting),
+      { threshold: 0 }
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [])
 
   const [filterOpen, setFilterOpen] = useState(false)
   const [expandedVentas, setExpandedVentas] = useState<Set<string>>(new Set())
@@ -340,9 +353,43 @@ export default function VentasPage() {
               {/* Title row — scrolls away */}
               <div className="px-8 pt-12 pb-8">
                 <div className="max-w-6xl mx-auto flex items-start justify-between gap-6">
-                  <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
-                    Ventas
-                  </h1>
+                  <div className="flex items-center gap-3">
+                    <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
+                      Ventas
+                    </h1>
+                    {/* Period selector beside title — hidden once sticky bar kicks in */}
+                    <div className={isSticky ? "invisible pointer-events-none" : "visible"}>
+                      <VentasPeriodSelector
+                        open={periodOpen && !isSticky}
+                        setOpen={setPeriodOpen}
+                        currentLabel={periodLabel}
+                        currentKey={periodKey}
+                        noPeriod={noPeriod}
+                        onSelect={(k) => {
+                          if (k === ("ninguno" as PeriodKey)) {
+                            updateParam("periodo", null)
+                            setPeriodOpen(false)
+                            return
+                          }
+                          if (k === "personalizado") {
+                            updateParam("periodo", "personalizado")
+                            setPeriodOpen(false)
+                            setCalendarOpen(true)
+                            return
+                          }
+                          updateParam("periodo", k)
+                          setPeriodKey(k)
+                          setCustomRange(null)
+                          setPeriodOpen(false)
+                        }}
+                        rangeLabel={rangeLabel}
+                        calendarOpen={calendarOpen}
+                        setCalendarOpen={setCalendarOpen}
+                        customRange={customRange}
+                        setCustomRange={setCustomRange}
+                      />
+                    </div>
+                  </div>
                   <button
                     type="button"
                     onClick={() => router.push("/ventas/ventas/nueva")}
@@ -479,6 +526,9 @@ export default function VentasPage() {
                 </div>{/* /max-w-6xl widgets */}
               </div>{/* /widgets wrapper */}
 
+              {/* Sentinel — when this leaves viewport, sticky bar is "stuck" */}
+              <div ref={sentinelRef} className="h-0 w-full" aria-hidden="true" />
+
               {/* Search/filter bar + bulk actions — sticky pair at top-0 */}
               <div className="sticky top-0 z-20">
 
@@ -510,9 +560,10 @@ export default function VentasPage() {
                         </div>
                       </div>
 
-                      {/* Period selector — right of search input */}
+                      {/* Period selector — right of search input (only when sticky) */}
+                      <div className={isSticky ? "visible" : "invisible pointer-events-none"}>
                       <VentasPeriodSelector
-                        open={periodOpen}
+                        open={periodOpen && isSticky}
                         setOpen={setPeriodOpen}
                         currentLabel={periodLabel}
                         currentKey={periodKey}
@@ -535,6 +586,7 @@ export default function VentasPage() {
                           setPeriodOpen(false)
                         }}
                       />
+                      </div>
                       {calendarOpen && (
                         <VentasRangeCalendarDialog
                           initialRange={customRange}
