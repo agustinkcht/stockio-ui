@@ -387,51 +387,50 @@ export default function VentasPage() {
             <div className="flex-1 overflow-y-auto bg-slate-50">
               {/* Title row — scrolls away */}
               <div className="px-8 pt-12 pb-8">
-                <div className="max-w-6xl mx-auto">
-                  <div className="flex items-start justify-between gap-6 mb-3">
+                <div className="max-w-6xl mx-auto flex items-start justify-between gap-6">
+                  <div className="flex items-center gap-3">
                     <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
                       Ventas
                     </h1>
-                    <button
-                      type="button"
-                      onClick={() => router.push("/ventas/ventas/nueva")}
-                      className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer mt-1"
-                    >
-                      <Plus className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
-                      Nueva Venta
-                    </button>
+                    <VentasPeriodSelector
+                      open={periodOpen}
+                      setOpen={setPeriodOpen}
+                      currentLabel={periodLabel}
+                      currentKey={periodKey}
+                      noPeriod={noPeriod}
+                      isActivePeriod={isActivePeriod}
+                      onSelect={(k) => {
+                        if (k === ("ninguno" as PeriodKey)) {
+                          updateParam("periodo", "ninguno")
+                          setPeriodOpen(false)
+                          return
+                        }
+                        if (k === "personalizado") {
+                          updateParam("periodo", "personalizado")
+                          setPeriodOpen(false)
+                          setCalendarOpen(true)
+                          return
+                        }
+                        updateParam("periodo", k)
+                        setPeriodKey(k)
+                        setCustomRange(null)
+                        setPeriodOpen(false)
+                      }}
+                      rangeLabel={rangeLabel}
+                      calendarOpen={calendarOpen}
+                      setCalendarOpen={setCalendarOpen}
+                      customRange={customRange}
+                      setCustomRange={setCustomRange}
+                    />
                   </div>
-                  {/* Period selector — below the title */}
-                  <VentasPeriodSelector
-                    open={periodOpen}
-                    setOpen={setPeriodOpen}
-                    currentLabel={periodLabel}
-                    currentKey={periodKey}
-                    noPeriod={noPeriod}
-                    isActivePeriod={isActivePeriod}
-                    onSelect={(k) => {
-                      if (k === ("ninguno" as PeriodKey)) {
-                        updateParam("periodo", "ninguno")
-                        setPeriodOpen(false)
-                        return
-                      }
-                      if (k === "personalizado") {
-                        updateParam("periodo", "personalizado")
-                        setPeriodOpen(false)
-                        setCalendarOpen(true)
-                        return
-                      }
-                      updateParam("periodo", k)
-                      setPeriodKey(k)
-                      setCustomRange(null)
-                      setPeriodOpen(false)
-                    }}
-                    rangeLabel={rangeLabel}
-                    calendarOpen={calendarOpen}
-                    setCalendarOpen={setCalendarOpen}
-                    customRange={customRange}
-                    setCustomRange={setCustomRange}
-                  />
+                  <button
+                    type="button"
+                    onClick={() => router.push("/ventas/ventas/nueva")}
+                    className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer mt-1"
+                  >
+                    <Plus className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
+                    Nueva Venta
+                  </button>
                 </div>
               </div>
 
@@ -1483,9 +1482,9 @@ function VentasPeriodSelector({
         </div>
         {/* Blinking live dot — only for active periods */}
         {isActivePeriod && (
-          <span className="relative flex h-3 w-3 flex-shrink-0">
+          <span className="relative flex h-2 w-2 flex-shrink-0">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
           </span>
         )}
         <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
@@ -1521,9 +1520,9 @@ function VentasPeriodSelector({
               >
                 <span>{opt.label}</span>
                 {!noPeriod && currentKey === opt.key && (
-                  <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
+                  <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" />
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
                   </span>
                 )}
               </button>
