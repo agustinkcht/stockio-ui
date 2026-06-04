@@ -114,8 +114,69 @@ export const INITIAL_PRESUPUESTOS: Presupuesto[] = [
   },
 
   // ─────────────────────────────────────────────────────────────────────────
-  // PRE-003 · ACEPTADO · Restaurant La Esquina · vinos + espumantes + licores
-  // Generó VTA-002
+  // PRE-011 · ACEPTADO · Vinoteca El Sabor SRL · vinos Proemio + espumantes Salentein
+  // Generó VTA-012
+  // ─────────────────────────────────────────────────────────────────────────
+  {
+    id: "PRE-011",
+    numero: 11,
+    fecha: "2026-04-22",
+    hora: "09:00",
+    cliente: { tipo: "cuenta", id: "CLI-004", nombre: "Vinoteca El Sabor SRL" },
+    items: [
+      {
+        sku: "VNO-PROGRES-MALB-2019",
+        name: "Proemio Grand Reserve Malbec 2019",
+        quantity: 6,
+        unitPrice: 76230,
+        discount: 8,
+        discountType: "percent",
+        total: 420307,
+        categoria: "Vinos",
+      },
+      {
+        sku: "VNO-PROGRES-CABS-2019",
+        name: "Proemio Grand Reserve Cabernet Sauvignon 2019",
+        quantity: 6,
+        unitPrice: 83490,
+        discount: 8,
+        discountType: "percent",
+        total: 460583,
+        categoria: "Vinos",
+      },
+      {
+        sku: "ESP-SALENT-BRNA",
+        name: "Salentein Brut Nature",
+        quantity: 4,
+        unitPrice: 43560,
+        discount: 0,
+        discountType: "percent",
+        total: 174240,
+        categoria: "Espumantes",
+      },
+      {
+        sku: "ESP-SALENT-BRRO",
+        name: "Salentein Brut Rosé",
+        quantity: 4,
+        unitPrice: 41730,
+        discount: 0,
+        discountType: "percent",
+        total: 166920,
+        categoria: "Espumantes",
+      },
+    ],
+    subtotal: 1222050,
+    descuento: 0,
+    descuentoTipo: "percent",
+    envio: 9000,
+    total: 1231050,
+    estado: "aceptado",
+    ventaId: "VTA-012",
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // PRE-010 · ACEPTADO · Juan Pérez · whiskies + gin + vodka + licor
+  // Generó VTA-004
   // ─────────────────────────────────────────────────────────────────────────
   {
     id: "PRE-003",
@@ -224,7 +285,7 @@ export const INITIAL_PRESUPUESTOS: Presupuesto[] = [
     ventaId: "VTA-003",
   },
 
-  // ──────────────────────────────��──────────────────────────────────────────
+  // ─────────────────────��────────��──────────────────────────────────────────
   // PRE-005 · BORRADOR · Distribuciones Cortés · whiskies
   // ─────────────────────────────────────────────────────────────────────────
   {
@@ -480,7 +541,7 @@ export const INITIAL_PRESUPUESTOS: Presupuesto[] = [
     observaciones: "Cliente evalúa la línea Domiciano para su local.",
   },
 
-  // ───────────────────────���─────────────────────────────────────────────────
+  // ─────────────���─────────���─────────────────────────────────────────────────
   // PRE-010 · ACEPTADO · Juan Pérez · whiskies + gin + vodka + licor
   // Generó VTA-004
   // ─────────────────────────────────────────────────────────────────────────
