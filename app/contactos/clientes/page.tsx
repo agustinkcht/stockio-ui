@@ -158,8 +158,6 @@ function ClientesContent() {
 
   // ── Filter tag helpers ───────────────────────────────────────────────────────
   const hasFilters = !!activeFilters.tipo || !!activeFilters.condicionIva
-  const isDefaultSort = sortField === "nombre" && sortDir === "asc"
-  const sortFieldLabel: Record<SortField, string> = { nombre: "Nombre", transacciones: "Transacciones" }
 
   return (
     <div className="min-h-screen bg-[rgb(243,242,238)] flex flex-col">
@@ -198,7 +196,7 @@ function ClientesContent() {
           </div>
 
           {/* ── Scrollable region ──────────────────────────────────────────── */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto bg-slate-50">
 
             {/* Top row */}
             <div className="px-8 pt-12 pb-8">
@@ -245,7 +243,7 @@ function ClientesContent() {
                     </div>
 
                     {/* Active filter tags */}
-                    {(hasFilters || !isDefaultSort) && (
+                    {hasFilters && (
                       <div className="flex items-center gap-1.5 flex-wrap">
                         {activeFilters.tipo && (
                           <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
@@ -263,14 +261,6 @@ function ClientesContent() {
                             </button>
                           </span>
                         )}
-                        {!isDefaultSort && (
-                          <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
-                            {sortFieldLabel[sortField]} {sortDir === "asc" ? "↑" : "↓"}
-                            <button type="button" onClick={() => { setSortField("nombre"); setSortDir("asc") }} className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer">
-                              <X className="w-2.5 h-2.5 text-slate-400" />
-                            </button>
-                          </span>
-                        )}
                       </div>
                     )}
 
@@ -281,7 +271,7 @@ function ClientesContent() {
                       <div className="relative">
                         <button
                           type="button"
-                          onClick={() => { setFilterOpen((v) => !v); setSortOpen(false) }}
+                          onClick={() => setFilterOpen((v) => !v)}
                           className={`h-9 text-xs border shadow-sm px-3 rounded-md flex items-center gap-1.5 cursor-pointer transition-colors ${
                             hasFilters
                               ? "border-blue-400 text-blue-600 bg-blue-50"
@@ -294,41 +284,53 @@ function ClientesContent() {
                         {filterOpen && (
                           <>
                             <div className="fixed inset-0 z-[90]" onClick={() => setFilterOpen(false)} />
-                            <div className="absolute top-full right-0 mt-1 w-64 bg-white border border-slate-200 rounded-xl shadow-lg z-[100] p-4 animate-in fade-in-0 slide-in-from-top-1 duration-150">
-                              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Tipo de cliente</p>
-                              <div className="flex gap-2 mb-4">
-                                {(["particular", "empresa"] as const).map((t) => (
-                                  <button
-                                    key={t}
-                                    type="button"
-                                    onClick={() => setActiveFilters((f) => ({ ...f, tipo: f.tipo === t ? null : t }))}
-                                    className={`flex-1 py-1.5 text-xs rounded-md border transition-colors cursor-pointer capitalize ${
-                                      activeFilters.tipo === t
-                                        ? "bg-slate-900 text-white border-slate-900"
-                                        : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
-                                    }`}
-                                  >
-                                    {t === "particular" ? "Particular" : "Empresa"}
-                                  </button>
-                                ))}
+                            <div className="absolute top-full right-0 mt-1 w-60 bg-white border border-slate-200 rounded-lg shadow-lg z-[100] p-3 space-y-3 animate-in fade-in-0 slide-in-from-top-1 duration-150">
+                              {/* Tipo de cliente */}
+                              <div className="space-y-2">
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Tipo de cliente</label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeFilters.tipo === "particular"}
+                                    onChange={() => setActiveFilters((f) => ({ ...f, tipo: f.tipo === "particular" ? null : "particular" }))}
+                                    className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                  />
+                                  <span className="text-xs text-slate-700">Particular</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeFilters.tipo === "empresa"}
+                                    onChange={() => setActiveFilters((f) => ({ ...f, tipo: f.tipo === "empresa" ? null : "empresa" }))}
+                                    className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                  />
+                                  <span className="text-xs text-slate-700">Empresa</span>
+                                </label>
                               </div>
-                              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Condición frente al IVA</p>
-                              <div className="flex flex-col gap-1">
+                              {/* Condición frente al IVA */}
+                              <div className="space-y-2">
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Condición frente al IVA</label>
                                 {CONDICIONES_IVA.map((c) => (
-                                  <button
-                                    key={c}
-                                    type="button"
-                                    onClick={() => setActiveFilters((f) => ({ ...f, condicionIva: f.condicionIva === c ? null : c }))}
-                                    className={`text-left px-3 py-1.5 text-xs rounded-md border transition-colors cursor-pointer ${
-                                      activeFilters.condicionIva === c
-                                        ? "bg-slate-900 text-white border-slate-900"
-                                        : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
-                                    }`}
-                                  >
-                                    {c}
-                                  </button>
+                                  <label key={c} className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={activeFilters.condicionIva === c}
+                                      onChange={() => setActiveFilters((f) => ({ ...f, condicionIva: f.condicionIva === c ? null : c }))}
+                                      className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    />
+                                    <span className="text-xs text-slate-700">{c}</span>
+                                  </label>
                                 ))}
                               </div>
+                              {hasFilters && (
+                                <button
+                                  type="button"
+                                  onClick={() => setActiveFilters({ tipo: null, condicionIva: null })}
+                                  className="w-full text-xs text-slate-500 hover:text-slate-700 py-1 text-center cursor-pointer"
+                                >
+                                  Limpiar filtros
+                                </button>
+                              )}
                             </div>
                           </>
                         )}

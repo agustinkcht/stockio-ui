@@ -583,7 +583,7 @@ export default function VentasPage() {
                       )}
 
                       {/* Active filter tags — período (leftmost), then widget, then filtrar tags */}
-                      {(periodTagLabel || activeTab !== "todas" || filterCliente || filterPendienteCobro || filterPendienteEntrega || sortParam !== "fecha_desc") && (
+                      {(periodTagLabel || activeTab !== "todas" || filterCliente || filterPendienteCobro || filterPendienteEntrega) && (
                         <div className="flex items-center gap-1.5 flex-wrap">
                           {/* Período tag — leftmost, hidden only for "ninguno" */}
                           {periodTagLabel && (
@@ -653,20 +653,7 @@ export default function VentasPage() {
                               </button>
                             </span>
                           )}
-                          {/* Sort tag — only when non-default */}
-                          {sortParam !== "fecha_desc" && (
-                            <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
-                              {sortField === "precio" ? "Precio" : "Fecha"} {sortDir === "asc" ? "↑" : "↓"}
-                              <button
-                                type="button"
-                                onClick={() => updateParam("sort", null)}
-                                aria-label="Quitar orden personalizado"
-                                className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
-                              >
-                                <X className="w-2.5 h-2.5 text-slate-400" />
-                              </button>
-                            </span>
-                          )}
+
                         </div>
                       )}
 
