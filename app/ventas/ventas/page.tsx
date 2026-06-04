@@ -631,7 +631,7 @@ export default function VentasPage() {
 
                 {/* Row 2: Bulk actions — straight borders, flush below search bar */}
                 <div className="px-8">
-                  <div className="max-w-6xl mx-auto bg-white px-4 rounded-b-md">
+                  <div className="max-w-6xl mx-auto bg-white border border-gray-200 px-4 rounded-b-md">
                     <div className="flex items-center gap-2 h-9">
                       {/* All-selector checkbox */}
                       <div className="flex items-center justify-center w-[36px] shrink-0">
