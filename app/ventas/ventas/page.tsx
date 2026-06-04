@@ -446,6 +446,35 @@ export default function VentasPage() {
                         </div>
                       </div>
 
+                      {/* Period selector — right of search input */}
+                      <VentasPeriodSelector
+                        open={periodOpen}
+                        setOpen={setPeriodOpen}
+                        currentLabel={periodLabel}
+                        currentKey={periodKey}
+                        onSelect={(k) => {
+                          if (k === "personalizado") {
+                            setPeriodOpen(false)
+                            setCalendarOpen(true)
+                            return
+                          }
+                          setPeriodKey(k)
+                          setCustomRange(null)
+                          setPeriodOpen(false)
+                        }}
+                      />
+                      {calendarOpen && (
+                        <VentasRangeCalendarDialog
+                          initialRange={customRange}
+                          onCancel={() => setCalendarOpen(false)}
+                          onApply={(start, end) => {
+                            setCustomRange({ start, end })
+                            setPeriodKey("personalizado")
+                            setCalendarOpen(false)
+                          }}
+                        />
+                      )}
+
                       {/* Active filter tags — widget tag (left) then filtrar tags (right) */}
                       {(activeTab !== "todas" || filterCliente || filterPendienteCobro || filterPendienteEntrega) && (
                         <div className="flex items-center gap-1.5 flex-wrap">
@@ -579,35 +608,6 @@ export default function VentasPage() {
                             <option value="precio">Precio</option>
                           </select>
                         </div>
-
-                        {/* Period selector */}
-                        <VentasPeriodSelector
-                          open={periodOpen}
-                          setOpen={setPeriodOpen}
-                          currentLabel={periodLabel}
-                          currentKey={periodKey}
-                          onSelect={(k) => {
-                            if (k === "personalizado") {
-                              setPeriodOpen(false)
-                              setCalendarOpen(true)
-                              return
-                            }
-                            setPeriodKey(k)
-                            setCustomRange(null)
-                            setPeriodOpen(false)
-                          }}
-                        />
-                        {calendarOpen && (
-                          <VentasRangeCalendarDialog
-                            initialRange={customRange}
-                            onCancel={() => setCalendarOpen(false)}
-                            onApply={(start, end) => {
-                              setCustomRange({ start, end })
-                              setPeriodKey("personalizado")
-                              setCalendarOpen(false)
-                            }}
-                          />
-                        )}
 
                         {/* Divider + results count */}
                         <div className="w-px h-5 bg-slate-200 shrink-0" />
