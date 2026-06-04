@@ -450,14 +450,117 @@ export default function VentasPage() {
                 </div>{/* /max-w-6xl widgets */}
               </div>{/* /widgets wrapper */}
 
-              {/* Search/filter bar + gradient fade — sticky block anchored at top-0 */}
+              {/* Search/filter bar + bulk actions — sticky pair anchored at top-0 */}
               <div className="sticky top-0 z-20">
-              <div className="bg-slate-50/95 backdrop-blur-sm border-t border-b border-slate-200/80 px-8 py-2">
-                <div className="max-w-6xl mx-auto">
-                  <div className="flex items-center gap-2">
-                    {/* Checkbox + search input combined */}
-                    <div className="flex items-center h-9 border border-[rgba(228,230,235,0.6)] shadow-sm rounded-md min-w-0 overflow-hidden bg-white">
-                      <div className="flex items-center justify-center w-[52px] shrink-0 h-full bg-white">
+
+                {/* Row 1: Search + Filtrar/Ordenar + count */}
+                <div className="bg-slate-50/95 backdrop-blur-sm border-t border-b border-slate-200/80 px-8 py-2">
+                  <div className="max-w-6xl mx-auto">
+                    <div className="flex items-center gap-2">
+                      {/* Search input — fully rounded now */}
+                      <div className="flex items-center h-9 border border-[rgba(228,230,235,0.6)] shadow-sm rounded-md min-w-0 overflow-hidden bg-white">
+                        <div className="flex items-center gap-2 px-3 h-full w-64 bg-white">
+                          <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Buscar"
+                            className="flex-1 bg-transparent text-xs text-slate-700 placeholder:text-slate-400 outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Filtrar / Ordenar + results count — pushed to the right */}
+                      <div className="ml-auto flex items-center gap-2">
+                        {/* Filtrar */}
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => { setFilterOpen(!filterOpen); setSortOpen(false) }}
+                            className={`h-9 text-xs transition-colors border shadow-sm gap-1.5 shrink-0 px-3 rounded-md flex items-center cursor-pointer ${
+                              hasActiveFilters
+                                ? "border-blue-400 text-blue-600 bg-blue-50"
+                                : "border-[rgba(228,230,235,0.6)] bg-white hover:bg-slate-50"
+                            }`}
+                          >
+                            <ListFilter className="w-3.5 h-3.5" />
+                            <span>Filtrar</span>
+                          </button>
+                          {filterOpen && (
+                            <>
+                              <div className="fixed inset-0 z-10" onClick={() => setFilterOpen(false)} />
+                              <div className="absolute top-full right-0 mt-1 z-20 bg-white border border-slate-200 rounded-lg shadow-lg w-60 p-3 space-y-3">
+                                <div>
+                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Cliente</label>
+                                  <select
+                                    value={filterCliente}
+                                    onChange={(e) => setFilterCliente(e.target.value)}
+                                    className="w-full mt-1 px-2 py-1.5 text-xs border border-slate-200 rounded-md focus:outline-none focus:border-slate-400 bg-white"
+                                  >
+                                    <option value="">Todos</option>
+                                    {uniqueClientes.map(c => <option key={c} value={c}>{c}</option>)}
+                                  </select>
+                                </div>
+                                {(activeTab === "todas" || activeTab === "en_curso") && (
+                                  <div className="space-y-2">
+                                    <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Estado</label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                      <input type="checkbox" checked={filterPendienteCobro} onChange={(e) => setFilterPendienteCobro(e.target.checked)} className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                                      <span className="text-xs text-slate-700">Pendiente de cobro</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                      <input type="checkbox" checked={filterPendienteEntrega} onChange={(e) => setFilterPendienteEntrega(e.target.checked)} className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                                      <span className="text-xs text-slate-700">Pendiente de entrega</span>
+                                    </label>
+                                  </div>
+                                )}
+                                {hasActiveFilters && (
+                                  <button type="button" onClick={() => { setFilterCliente(""); setFilterPendienteCobro(false); setFilterPendienteEntrega(false) }} className="w-full text-xs text-slate-500 hover:text-slate-700 py-1 text-center cursor-pointer">
+                                    Limpiar filtros
+                                  </button>
+                                )}
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Ordenar */}
+                        <div className="flex items-center border border-[rgba(228,230,235,0.6)] shadow-sm rounded-md overflow-hidden bg-white h-9">
+                          <button
+                            type="button"
+                            onClick={() => setSortDir(d => d === "asc" ? "desc" : "asc")}
+                            title={sortDir === "asc" ? "Ascendente" : "Descendente"}
+                            className="px-2.5 h-full hover:bg-slate-50 transition-colors border-r border-[rgba(228,230,235,0.6)] cursor-pointer flex items-center"
+                          >
+                            <ArrowUpDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${sortDir === "desc" ? "rotate-180" : ""}`} />
+                          </button>
+                          <select
+                            value={sortField}
+                            onChange={(e) => setSortField(e.target.value as "fecha" | "precio")}
+                            className="appearance-none pl-2.5 pr-6 text-xs bg-transparent focus:outline-none cursor-pointer text-slate-700 h-full"
+                          >
+                            <option value="fecha">Fecha</option>
+                            <option value="precio">Precio</option>
+                          </select>
+                        </div>
+
+                        {/* Divider + results count */}
+                        <div className="w-px h-5 bg-slate-200 shrink-0" />
+                        <span className="text-xs text-slate-500 whitespace-nowrap tabular-nums">
+                          {filteredVentas.length} {filteredVentas.length === 1 ? "venta" : "ventas"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Row 2: Bulk actions */}
+                <div className="bg-slate-50/95 backdrop-blur-sm border-b border-slate-200/80 px-8 py-2">
+                  <div className="max-w-6xl mx-auto">
+                    <div className="flex items-center gap-2 h-9">
+                      {/* All-selector checkbox */}
+                      <div className="flex items-center justify-center w-[36px] shrink-0">
                         <input
                           ref={allCheckboxRef}
                           type="checkbox"
@@ -467,116 +570,40 @@ export default function VentasPage() {
                           className="w-4 h-4 rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                         />
                       </div>
-                      <div className="w-px h-full bg-slate-200/80 shrink-0" />
-                      <div className="flex items-center gap-2 px-3 h-full w-64 bg-white">
-                        <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <input
-                          type="text"
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          placeholder="Buscar"
-                          className="flex-1 bg-transparent text-xs text-slate-700 placeholder:text-slate-400 outline-none"
-                        />
-                      </div>
-                    </div>
 
-                    {/* Selection count + bulk actions */}
-                    {selectedVentas.size > 0 && (
-                      <div className="flex items-center gap-2.5 h-9">
-                        <div className="w-px h-5 bg-slate-300" />
-                        <span className="text-xs text-slate-500 whitespace-nowrap">
-                          {selectedVentas.size} seleccionada{selectedVentas.size !== 1 ? "s" : ""}
+                      {/* Divider */}
+                      <div className="w-px h-5 bg-slate-200 shrink-0" />
+
+                      {/* Status text */}
+                      {selectedVentas.size === 0 ? (
+                        <span className="text-xs text-slate-400 select-none">
+                          Seleccioná ventas para accionar masivamente
                         </span>
-                        <div className="w-px h-5 bg-slate-200" />
-                        <button
-                          type="button"
-                          className="h-8 flex items-center gap-1.5 px-3 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-md hover:bg-slate-50 hover:border-slate-300 shadow-sm transition-colors"
-                          onClick={() => {
-                            const selected = ventas.filter(v => selectedVentas.has(v.id))
-                            downloadVentasPDF(selected, miNegocio)
-                          }}
-                        >
-                          <FileDown className="w-3.5 h-3.5 text-slate-400" />
-                          Descargar PDF
-                        </button>
-                      </div>
-                    )}
+                      ) : (
+                        <>
+                          <span className="text-xs text-slate-600 whitespace-nowrap tabular-nums">
+                            {selectedVentas.size} seleccionada{selectedVentas.size !== 1 ? "s" : ""}
+                          </span>
 
-                    {/* Filtrar / Ordenar */}
-                    <div className="ml-auto flex items-center gap-2">
-                      <div className="relative">
-                        <button
-                          type="button"
-                          onClick={() => { setFilterOpen(!filterOpen); setSortOpen(false) }}
-                          className={`h-9 text-xs transition-colors border shadow-sm gap-1.5 shrink-0 px-3 rounded-md flex items-center cursor-pointer ${
-                            hasActiveFilters
-                              ? "border-blue-400 text-blue-600 bg-blue-50"
-                              : "border-[rgba(228,230,235,0.6)] bg-white hover:bg-slate-50"
-                          }`}
-                        >
-                          <ListFilter className="w-3.5 h-3.5" />
-                          <span>Filtrar</span>
-                        </button>
-                        {filterOpen && (
-                          <>
-                            <div className="fixed inset-0 z-10" onClick={() => setFilterOpen(false)} />
-                            <div className="absolute top-full right-0 mt-1 z-20 bg-white border border-slate-200 rounded-lg shadow-lg w-60 p-3 space-y-3">
-                              <div>
-                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Cliente</label>
-                                <select
-                                  value={filterCliente}
-                                  onChange={(e) => setFilterCliente(e.target.value)}
-                                  className="w-full mt-1 px-2 py-1.5 text-xs border border-slate-200 rounded-md focus:outline-none focus:border-slate-400 bg-white"
-                                >
-                                  <option value="">Todos</option>
-                                  {uniqueClientes.map(c => <option key={c} value={c}>{c}</option>)}
-                                </select>
-                              </div>
-                              {(activeTab === "todas" || activeTab === "en_curso") && (
-                                <div className="space-y-2">
-                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Estado</label>
-                                  <label className="flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" checked={filterPendienteCobro} onChange={(e) => setFilterPendienteCobro(e.target.checked)} className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                                    <span className="text-xs text-slate-700">Pendiente de cobro</span>
-                                  </label>
-                                  <label className="flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" checked={filterPendienteEntrega} onChange={(e) => setFilterPendienteEntrega(e.target.checked)} className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                                    <span className="text-xs text-slate-700">Pendiente de entrega</span>
-                                  </label>
-                                </div>
-                              )}
-                              {hasActiveFilters && (
-                                <button type="button" onClick={() => { setFilterCliente(""); setFilterPendienteCobro(false); setFilterPendienteEntrega(false) }} className="w-full text-xs text-slate-500 hover:text-slate-700 py-1 text-center cursor-pointer">
-                                  Limpiar filtros
-                                </button>
-                              )}
-                            </div>
-                          </>
-                        )}
-                      </div>
-
-                      <div className="flex items-center border border-[rgba(228,230,235,0.6)] shadow-sm rounded-md overflow-hidden bg-white h-9">
-                        <button
-                          type="button"
-                          onClick={() => setSortDir(d => d === "asc" ? "desc" : "asc")}
-                          title={sortDir === "asc" ? "Ascendente" : "Descendente"}
-                          className="px-2.5 h-full hover:bg-slate-50 transition-colors border-r border-[rgba(228,230,235,0.6)] cursor-pointer flex items-center"
-                        >
-                          <ArrowUpDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${sortDir === "desc" ? "rotate-180" : ""}`} />
-                        </button>
-                        <select
-                          value={sortField}
-                          onChange={(e) => setSortField(e.target.value as "fecha" | "precio")}
-                          className="appearance-none pl-2.5 pr-6 text-xs bg-transparent focus:outline-none cursor-pointer text-slate-700 h-full"
-                        >
-                          <option value="fecha">Fecha</option>
-                          <option value="precio">Precio</option>
-                        </select>
-                      </div>
+                          {/* Bulk action buttons */}
+                          <div className="w-px h-5 bg-slate-200 shrink-0" />
+                          <button
+                            type="button"
+                            className="h-8 flex items-center gap-1.5 px-3 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-md hover:bg-slate-50 hover:border-slate-300 shadow-sm transition-colors"
+                            onClick={() => {
+                              const selected = ventas.filter(v => selectedVentas.has(v.id))
+                              downloadVentasPDF(selected, miNegocio)
+                            }}
+                          >
+                            <FileDown className="w-3.5 h-3.5 text-slate-400" />
+                            Descargar PDF
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
-              </div>{/* /inner bg search bar */}
+
               </div>{/* /sticky top-0 wrapper */}
 
               {/* Rows */}
