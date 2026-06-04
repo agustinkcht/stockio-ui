@@ -577,11 +577,6 @@ export default function VentasPage() {
                   </div>
                 </div>
               </div>{/* /inner bg search bar */}
-              {/* Gradient fade — short blur below search bar so rows don't collide with it */}
-              <div
-                className="pointer-events-none"
-                style={{ height: "44px", background: "linear-gradient(to bottom, rgb(248 250 252), transparent)" }}
-              />
               </div>{/* /sticky top-0 wrapper */}
 
               {/* Rows */}
