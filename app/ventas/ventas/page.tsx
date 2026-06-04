@@ -227,6 +227,17 @@ export default function VentasPage() {
     }
   }, [periodParam, noPeriod])
 
+  // Period-scoped ventas for widgets (respects period but NOT tab/search/filters)
+  const periodVentas = useMemo(() => {
+    if (noPeriod) return ventas
+    const rangeStart = range.start.getTime()
+    const rangeEnd = range.end.getTime()
+    return ventas.filter(v => {
+      const t = new Date(v.fecha + "T12:00:00").getTime()
+      return t >= rangeStart && t <= rangeEnd
+    })
+  }, [ventas, noPeriod, range])
+
   // Widget counts
   const pendientesCobro = ventas.filter(isPendienteCobro)
   const pendientesEntrega = ventas.filter(isPendienteEntrega)
@@ -418,9 +429,9 @@ export default function VentasPage() {
 
               {/* Widgets — 3 visible at a time, carousel slides one at a time */}
               {(() => {
-                const countFinalizadas = ventas.filter(v => v.estado === "finalizada").length
-                const countEnCurso = ventas.filter(v => v.estado === "en_curso").length
-                const countCanceladas = canceladas.length
+                const countFinalizadas = periodVentas.filter(v => v.estado === "finalizada").length
+                const countEnCurso = periodVentas.filter(v => v.estado === "en_curso").length
+                const countCanceladas = periodVentas.filter(v => v.estado === "cancelada").length
 
                 const widgetCls = (active: boolean, disabled: boolean, activeColor: string, hoverColor: string) => {
                   if (disabled) return "border rounded-xl px-6 py-5 shadow-sm text-left border-slate-100 bg-slate-50 opacity-40 cursor-not-allowed w-full"
@@ -440,7 +451,7 @@ export default function VentasPage() {
                       <BarChart3 className="w-5 h-5 text-blue-500" />
                     </div>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{ventas.length}</span>
+                      <span className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{periodVentas.length}</span>
                       <span className="text-base font-medium text-blue-500">ventas totales</span>
                     </div>
                   </button>,
@@ -1461,11 +1472,16 @@ function VentasPeriodSelector({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={`flex items-center gap-2 px-3 py-1.5 rounded-full border bg-white hover:border-slate-300 transition-colors text-sm font-medium cursor-pointer ${
-          noPeriod ? "border-slate-200 text-slate-400" : "border-slate-300 text-slate-700"
+        className={`flex items-center gap-2 px-3 rounded-full border bg-white hover:border-slate-300 transition-colors cursor-pointer ${
+          noPeriod ? "border-slate-200 text-slate-400 py-1.5" : "border-slate-300 text-slate-700 py-1"
         }`}
       >
-        <span>{currentLabel}</span>
+        <div className="flex flex-col items-start">
+          {!noPeriod && (
+            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none mb-0.5">Período</span>
+          )}
+          <span className={noPeriod ? "text-sm font-medium" : "text-sm font-semibold text-slate-800"}>{currentLabel}</span>
+        </div>
         <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
