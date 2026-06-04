@@ -267,41 +267,7 @@ export default function VentasPage() {
           </div>
 
           <main className="flex-1 flex flex-col overflow-hidden">
-            {/* Period selector — sticky, sits between top-nav and scroll container */}
-            <div className="bg-slate-50 px-8 py-2.5 border-b border-slate-200/60">
-              <div className="max-w-6xl mx-auto flex items-center gap-3">
-                <VentasPeriodSelector
-                  open={periodOpen}
-                  setOpen={setPeriodOpen}
-                  currentLabel={periodLabel}
-                  currentKey={periodKey}
-                  onSelect={(k) => {
-                    if (k === "personalizado") {
-                      setPeriodOpen(false)
-                      setCalendarOpen(true)
-                      return
-                    }
-                    setPeriodKey(k)
-                    setCustomRange(null)
-                    setPeriodOpen(false)
-                  }}
-                />
-                <span className="text-sm text-slate-500 font-mono">{rangeLabel}</span>
-                {calendarOpen && (
-                  <VentasRangeCalendarDialog
-                    initialRange={customRange}
-                    onCancel={() => setCalendarOpen(false)}
-                    onApply={(start, end) => {
-                      setCustomRange({ start, end })
-                      setPeriodKey("personalizado")
-                      setCalendarOpen(false)
-                    }}
-                  />
-                )}
-              </div>
-            </div>
-
-            {/* Scroll container — title + widgets + search bar + rows all scroll together */}
+            {/* Scroll container — title + period + widgets + search bar + rows */}
             <div className="flex-1 overflow-y-auto bg-slate-50">
               {/* Title row — scrolls away */}
               <div className="px-8 pt-8 pb-4">
@@ -317,6 +283,40 @@ export default function VentasPage() {
                     <Plus className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
                     Nueva Venta
                   </button>
+                </div>
+              </div>
+
+              {/* Period selector — scrolls with title, then sticks at top-0 */}
+              <div className="sticky top-0 z-30 bg-slate-50/95 backdrop-blur-sm px-8 py-2.5 border-b border-slate-200/60">
+                <div className="max-w-6xl mx-auto flex items-center gap-3">
+                  <VentasPeriodSelector
+                    open={periodOpen}
+                    setOpen={setPeriodOpen}
+                    currentLabel={periodLabel}
+                    currentKey={periodKey}
+                    onSelect={(k) => {
+                      if (k === "personalizado") {
+                        setPeriodOpen(false)
+                        setCalendarOpen(true)
+                        return
+                      }
+                      setPeriodKey(k)
+                      setCustomRange(null)
+                      setPeriodOpen(false)
+                    }}
+                  />
+                  <span className="text-sm text-slate-500 font-mono">{rangeLabel}</span>
+                  {calendarOpen && (
+                    <VentasRangeCalendarDialog
+                      initialRange={customRange}
+                      onCancel={() => setCalendarOpen(false)}
+                      onApply={(start, end) => {
+                        setCustomRange({ start, end })
+                        setPeriodKey("personalizado")
+                        setCalendarOpen(false)
+                      }}
+                    />
+                  )}
                 </div>
               </div>
 
@@ -445,8 +445,8 @@ export default function VentasPage() {
                 </div>{/* /max-w-6xl widgets */}
               </div>{/* /widgets wrapper */}
 
-              {/* Search/filter bar + bulk actions — sticky pair anchored at top-0 */}
-              <div className="sticky top-0 z-20">
+              {/* Search/filter bar + bulk actions — sticky pair anchored below period row */}
+              <div className="sticky top-[48px] z-20">
 
                 {/* Row 1: Search + Filtrar/Ordenar + count */}
                 <div className="bg-slate-50/95 backdrop-blur-sm border-t border-b border-slate-200/80 px-8 py-2">
