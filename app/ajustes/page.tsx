@@ -172,8 +172,6 @@ export default function AjustesPage() {
                       ))}
                     </div>
                   </div>
-
-                  </div>
                 </div>
               </section>
 
