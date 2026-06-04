@@ -471,6 +471,66 @@ export default function VentasPage() {
                         </div>
                       </div>
 
+                      {/* Active filter tags — widget tag (left) then filtrar tags (right) */}
+                      {(activeTab !== "todas" || filterCliente || filterPendienteCobro || filterPendienteEntrega) && (
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {/* Widget tag */}
+                          {activeTab !== "todas" && (
+                            <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
+                              {tabs.find(t => t.id === activeTab)?.label}
+                              <button
+                                type="button"
+                                onClick={() => setActiveTab("todas")}
+                                aria-label="Quitar filtro de estado"
+                                className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+                              >
+                                <X className="w-2.5 h-2.5 text-slate-400" />
+                              </button>
+                            </span>
+                          )}
+                          {/* Filtrar tags */}
+                          {filterCliente && (
+                            <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
+                              {filterCliente}
+                              <button
+                                type="button"
+                                onClick={() => setFilterCliente("")}
+                                aria-label="Quitar filtro de cliente"
+                                className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+                              >
+                                <X className="w-2.5 h-2.5 text-slate-400" />
+                              </button>
+                            </span>
+                          )}
+                          {filterPendienteCobro && (
+                            <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
+                              Pend. cobro
+                              <button
+                                type="button"
+                                onClick={() => setFilterPendienteCobro(false)}
+                                aria-label="Quitar filtro pendiente de cobro"
+                                className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+                              >
+                                <X className="w-2.5 h-2.5 text-slate-400" />
+                              </button>
+                            </span>
+                          )}
+                          {filterPendienteEntrega && (
+                            <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
+                              Pend. entrega
+                              <button
+                                type="button"
+                                onClick={() => setFilterPendienteEntrega(false)}
+                                aria-label="Quitar filtro pendiente de entrega"
+                                className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+                              >
+                                <X className="w-2.5 h-2.5 text-slate-400" />
+                              </button>
+                            </span>
+                          )}
+                        </div>
+                      )}
+
                       {/* Filtrar / Ordenar + results count — pushed to the right */}
                       <div className="ml-auto flex items-center gap-2">
                         {/* Filtrar */}
