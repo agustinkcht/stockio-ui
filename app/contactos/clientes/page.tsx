@@ -223,7 +223,7 @@ function ClientesContent() {
             <div className="sticky top-0 z-20">
 
               {/* Row 1 — Search + tags + filtrar/ordenar + count */}
-              <div className="relative z-10 bg-slate-50/95 backdrop-blur-sm px-8 py-2">
+              <div className="relative z-10 bg-slate-50/95 backdrop-blur-sm px-8 pt-2 pb-0">
                 <div className="max-w-6xl mx-auto border-b border-slate-100 pb-2">
                   <div className="flex items-center gap-2">
 
