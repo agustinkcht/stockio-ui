@@ -48,7 +48,7 @@ import {
 type StatusTab = "todas" | "en_curso" | "finalizada" | "cancelada"
 
 const estadoConfig: Record<string, { bg: string; text: string; icon: typeof Clock; label: string }> = {
-  en_curso:   { bg: "bg-amber-50",   text: "text-amber-600",   icon: Clock,         label: "En Curso"   },
+  en_curso:   { bg: "bg-amber-50",   text: "text-amber-600",   icon: Clock,         label: "Abierta"    },
   finalizada: { bg: "bg-emerald-50", text: "text-emerald-600", icon: CheckCircle2,  label: "Finalizada" },
   cancelada:  { bg: "bg-red-50",     text: "text-red-500",     icon: XCircle,       label: "Cancelada"  },
 }
@@ -350,7 +350,7 @@ export default function VentasPage() {
 
   const tabs: { id: StatusTab; label: string; count?: number }[] = [
     { id: "todas",     label: "Todas",        count: ventas.length },
-    { id: "en_curso",  label: "En Curso",     count: ventas.filter(v => v.estado === "en_curso").length },
+    { id: "en_curso",  label: "Abiertas",     count: ventas.filter(v => v.estado === "en_curso").length },
     { id: "finalizada",label: "Finalizadas",  count: ventas.filter(v => v.estado === "finalizada").length },
     { id: "cancelada", label: "Canceladas",   count: ventas.filter(v => v.estado === "cancelada").length },
   ]
@@ -387,53 +387,51 @@ export default function VentasPage() {
             <div className="flex-1 overflow-y-auto bg-slate-50">
               {/* Title row — scrolls away */}
               <div className="px-8 pt-12 pb-8">
-                <div className="max-w-6xl mx-auto flex items-start justify-between gap-6">
-                  <div className="flex items-center gap-3">
+                <div className="max-w-6xl mx-auto">
+                  <div className="flex items-start justify-between gap-6 mb-3">
                     <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
                       Ventas
                     </h1>
-                    {/* Period selector — always beside the title */}
-                    <div>
-                      <VentasPeriodSelector
-                        open={periodOpen}
-                        setOpen={setPeriodOpen}
-                        currentLabel={periodLabel}
-                        currentKey={periodKey}
-                        noPeriod={noPeriod}
-                        isActivePeriod={isActivePeriod}
-                        onSelect={(k) => {
-                          if (k === ("ninguno" as PeriodKey)) {
-                            updateParam("periodo", "ninguno")
-                            setPeriodOpen(false)
-                            return
-                          }
-                          if (k === "personalizado") {
-                            updateParam("periodo", "personalizado")
-                            setPeriodOpen(false)
-                            setCalendarOpen(true)
-                            return
-                          }
-                          updateParam("periodo", k)
-                          setPeriodKey(k)
-                          setCustomRange(null)
-                          setPeriodOpen(false)
-                        }}
-                        rangeLabel={rangeLabel}
-                        calendarOpen={calendarOpen}
-                        setCalendarOpen={setCalendarOpen}
-                        customRange={customRange}
-                        setCustomRange={setCustomRange}
-                      />
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => router.push("/ventas/ventas/nueva")}
+                      className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer mt-1"
+                    >
+                      <Plus className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
+                      Nueva Venta
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => router.push("/ventas/ventas/nueva")}
-                    className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer mt-1"
-                  >
-                    <Plus className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
-                    Nueva Venta
-                  </button>
+                  {/* Period selector — below the title */}
+                  <VentasPeriodSelector
+                    open={periodOpen}
+                    setOpen={setPeriodOpen}
+                    currentLabel={periodLabel}
+                    currentKey={periodKey}
+                    noPeriod={noPeriod}
+                    isActivePeriod={isActivePeriod}
+                    onSelect={(k) => {
+                      if (k === ("ninguno" as PeriodKey)) {
+                        updateParam("periodo", "ninguno")
+                        setPeriodOpen(false)
+                        return
+                      }
+                      if (k === "personalizado") {
+                        updateParam("periodo", "personalizado")
+                        setPeriodOpen(false)
+                        setCalendarOpen(true)
+                        return
+                      }
+                      updateParam("periodo", k)
+                      setPeriodKey(k)
+                      setCustomRange(null)
+                      setPeriodOpen(false)
+                    }}
+                    rangeLabel={rangeLabel}
+                    calendarOpen={calendarOpen}
+                    setCalendarOpen={setCalendarOpen}
+                    customRange={customRange}
+                    setCustomRange={setCustomRange}
+                  />
                 </div>
               </div>
 
@@ -494,7 +492,7 @@ export default function VentasPage() {
                         <span className="text-base font-medium text-emerald-500">finalizadas</span>
                       </div>
                       {subtitleFinCan && (
-                        <p className="mt-2 text-[11px] text-slate-400 leading-tight">{subtitleFinCan}</p>
+                        <p className="mt-2 text-xs text-slate-400 leading-snug">{subtitleFinCan}</p>
                       )}
                     </button>
 
@@ -510,10 +508,10 @@ export default function VentasPage() {
                       </div>
                       <div className="flex items-baseline gap-2">
                         <span className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{countEnCurso}</span>
-                        <span className="text-base font-medium text-orange-500">en curso</span>
+                        <span className="text-base font-medium text-orange-500">abiertas</span>
                       </div>
                       {subtitleEnCurso && (
-                        <p className="mt-2 text-[11px] text-slate-400 leading-tight">{subtitleEnCurso}</p>
+                        <p className="mt-2 text-xs text-slate-400 leading-snug">{subtitleEnCurso}</p>
                       )}
                     </button>
 
@@ -532,7 +530,7 @@ export default function VentasPage() {
                         <span className="text-base font-medium text-red-400">canceladas</span>
                       </div>
                       {subtitleFinCan && (
-                        <p className="mt-2 text-[11px] text-slate-400 leading-tight">{subtitleFinCan}</p>
+                        <p className="mt-2 text-xs text-slate-400 leading-snug">{subtitleFinCan}</p>
                       )}
                     </button>
                   </div>
@@ -1485,9 +1483,9 @@ function VentasPeriodSelector({
         </div>
         {/* Blinking live dot — only for active periods */}
         {isActivePeriod && (
-          <span className="relative flex h-2 w-2 flex-shrink-0">
+          <span className="relative flex h-3 w-3 flex-shrink-0">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
           </span>
         )}
         <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
@@ -1523,9 +1521,9 @@ function VentasPeriodSelector({
               >
                 <span>{opt.label}</span>
                 {!noPeriod && currentKey === opt.key && (
-                  <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
+                  <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" />
                   </span>
                 )}
               </button>

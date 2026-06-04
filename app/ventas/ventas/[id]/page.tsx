@@ -1066,7 +1066,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                         {estadoUI === "en_curso" && (
                           <div className="bg-amber-50 border border-amber-200/60 rounded-lg shadow-sm px-5 py-4 flex items-center gap-3">
                             <Clock className="w-5 h-5 text-amber-500 shrink-0" />
-                            <span className="text-lg font-bold text-amber-700">En Curso</span>
+                            <span className="text-lg font-bold text-amber-700">Abierta</span>
                           </div>
                         )}
                         {estadoUI === "cancelada" && (
