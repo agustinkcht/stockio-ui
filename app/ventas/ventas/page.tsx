@@ -267,66 +267,61 @@ export default function VentasPage() {
           </div>
 
           <main className="flex-1 flex flex-col overflow-hidden">
-            {/* Hero — sits above the scroll container, always visible */}
-            <div className="bg-slate-50">
-                <div className="bg-slate-50">
-                  <div className="px-8 py-8">
-                    <div className="max-w-6xl mx-auto">
-                    <div className="flex items-start justify-between gap-6">
-                      <div className="min-w-0">
-                        <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
-                          Ventas
-                        </h1>
-                        <div className="mt-2 flex items-center gap-3 flex-wrap">
-                          <VentasPeriodSelector
-                            open={periodOpen}
-                            setOpen={setPeriodOpen}
-                            currentLabel={periodLabel}
-                            currentKey={periodKey}
-                            onSelect={(k) => {
-                              if (k === "personalizado") {
-                                setPeriodOpen(false)
-                                setCalendarOpen(true)
-                                return
-                              }
-                              setPeriodKey(k)
-                              setCustomRange(null)
-                              setPeriodOpen(false)
-                            }}
-                          />
-                          <span className="text-sm text-slate-500 font-mono">{rangeLabel}</span>
-                          {calendarOpen && (
-                            <VentasRangeCalendarDialog
-                              initialRange={customRange}
-                              onCancel={() => setCalendarOpen(false)}
-                              onApply={(start, end) => {
-                                setCustomRange({ start, end })
-                                setPeriodKey("personalizado")
-                                setCalendarOpen(false)
-                              }}
-                            />
-                          )}
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => router.push("/ventas/ventas/nueva")}
-                        className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer mt-1"
-                      >
-                        <Plus className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
-                        Nueva Venta
-                      </button>
-                    </div>
-                    </div>{/* /max-w-6xl hero */}
-                  </div>
-                </div>
-            </div>{/* /hero */}
+            {/* Period selector — sticky, sits between top-nav and scroll container */}
+            <div className="bg-slate-50 px-8 py-2.5 border-b border-slate-200/60">
+              <div className="max-w-6xl mx-auto flex items-center gap-3">
+                <VentasPeriodSelector
+                  open={periodOpen}
+                  setOpen={setPeriodOpen}
+                  currentLabel={periodLabel}
+                  currentKey={periodKey}
+                  onSelect={(k) => {
+                    if (k === "personalizado") {
+                      setPeriodOpen(false)
+                      setCalendarOpen(true)
+                      return
+                    }
+                    setPeriodKey(k)
+                    setCustomRange(null)
+                    setPeriodOpen(false)
+                  }}
+                />
+                <span className="text-sm text-slate-500 font-mono">{rangeLabel}</span>
+                {calendarOpen && (
+                  <VentasRangeCalendarDialog
+                    initialRange={customRange}
+                    onCancel={() => setCalendarOpen(false)}
+                    onApply={(start, end) => {
+                      setCustomRange({ start, end })
+                      setPeriodKey("personalizado")
+                      setCalendarOpen(false)
+                    }}
+                  />
+                )}
+              </div>
+            </div>
 
-            {/* Scroll container — widgets + search bar + rows all scroll together;
-                search bar is sticky top-0 so it sticks to the bottom of the hero */}
+            {/* Scroll container — title + widgets + search bar + rows all scroll together */}
             <div className="flex-1 overflow-y-auto bg-slate-50">
-              {/* Widgets — scrolls freely past the hero */}
-              <div className="px-8 pt-4 pb-3">
+              {/* Title row — scrolls away */}
+              <div className="px-8 pt-8 pb-4">
+                <div className="max-w-6xl mx-auto flex items-start justify-between gap-6">
+                  <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
+                    Ventas
+                  </h1>
+                  <button
+                    type="button"
+                    onClick={() => router.push("/ventas/ventas/nueva")}
+                    className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer mt-1"
+                  >
+                    <Plus className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
+                    Nueva Venta
+                  </button>
+                </div>
+              </div>
+
+              {/* Widgets — scrolls freely */}
+              <div className="px-8 pb-3">
                 <div className="max-w-6xl mx-auto">
 
               {/* Widgets — 3 visible at a time, carousel slides one at a time */}
@@ -457,7 +452,7 @@ export default function VentasPage() {
                 <div className="bg-slate-50/95 backdrop-blur-sm border-t border-b border-slate-200/80 px-8 py-2">
                   <div className="max-w-6xl mx-auto">
                     <div className="flex items-center gap-2">
-                      {/* Search input — fully rounded now */}
+                      {/* Search input with clear X */}
                       <div className="flex items-center h-9 border border-[rgba(228,230,235,0.6)] shadow-sm rounded-md min-w-0 overflow-hidden bg-white">
                         <div className="flex items-center gap-2 px-3 h-full w-64 bg-white">
                           <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -468,6 +463,16 @@ export default function VentasPage() {
                             placeholder="Buscar"
                             className="flex-1 bg-transparent text-xs text-slate-700 placeholder:text-slate-400 outline-none"
                           />
+                          {searchQuery && (
+                            <button
+                              type="button"
+                              onClick={() => setSearchQuery("")}
+                              aria-label="Borrar búsqueda"
+                              className="flex items-center justify-center w-4 h-4 rounded-full hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
+                            >
+                              <X className="w-3 h-3 text-slate-400" />
+                            </button>
+                          )}
                         </div>
                       </div>
 
