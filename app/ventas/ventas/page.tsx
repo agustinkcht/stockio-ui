@@ -114,7 +114,12 @@ export default function VentasPage() {
   const { periodKey, customRange, setPeriodKey, setCustomRange } = usePeriod()
   const [periodOpen, setPeriodOpen] = useState(false)
   const [calendarOpen, setCalendarOpen] = useState(false)
-  const [noPeriod, setNoPeriod] = useState(true) // default: no period filter active
+  // ?periodo= — "ninguno" (default, omitted) or a PeriodKey value
+  const periodParam = searchParams.get("periodo")
+  const noPeriod = !periodParam || periodParam === "ninguno"
+  const setNoPeriod = useCallback((val: boolean) => {
+    if (val) updateParam("periodo", null)
+  }, [updateParam])
   const range = usePeriodRange()
 
   const periodLabel = useMemo(() => {
@@ -131,39 +136,55 @@ export default function VentasPage() {
   const [selectedVentas, setSelectedVentas] = useState<Set<string>>(new Set())
   const [openMoreMenu, setOpenMoreMenu] = useState<string | null>(null)
 
-  // Search query lives in the URL as ?q=
-  const searchQuery = searchParams.get("q") ?? ""
-  const setSearchQuery = useCallback((val: string) => {
+  // Central URL param updater — merges one key/value into current params
+  const updateParam = useCallback((key: string, value: string | null) => {
     const params = new URLSearchParams(searchParams.toString())
-    if (val) {
-      params.set("q", val)
+    if (value === null || value === "") {
+      params.delete(key)
     } else {
-      params.delete("q")
+      params.set(key, value)
     }
     router.replace(`${pathname}?${params.toString()}`, { scroll: false })
   }, [router, pathname, searchParams])
 
-  // Sort
-  const [sortField, setSortField] = useState<"fecha" | "precio">("fecha")
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc")
-  const [sortOpen, setSortOpen] = useState(false)
-  const [widgetOffset, setWidgetOffset] = useState(0) // 0 = shows widgets 0-2, 1 = shows widgets 1-3
+  // Search — ?q=
+  const searchQuery = searchParams.get("q") ?? ""
+  const setSearchQuery = useCallback((val: string) => updateParam("q", val || null), [updateParam])
 
+  // Tab (widget filter) — ?tab= (default: "todas", omitted from URL)
+  const activeTab = (searchParams.get("tab") ?? "todas") as StatusTab
+  const setActiveTab = useCallback((val: StatusTab) => updateParam("tab", val === "todas" ? null : val), [updateParam])
 
-
-  // Filters
-  const [filterOpen, setFilterOpen] = useState(false)
-  const [filterCliente, setFilterCliente] = useState("")
-  const [filterPendienteCobro, setFilterPendienteCobro] = useState(false)
-  const [filterPendienteEntrega, setFilterPendienteEntrega] = useState(false)
+  // Filters — ?cliente=, ?cobro=1, ?entrega=1
+  const filterCliente = searchParams.get("cliente") ?? ""
+  const setFilterCliente = useCallback((val: string) => updateParam("cliente", val || null), [updateParam])
+  const filterPendienteCobro = searchParams.get("cobro") === "1"
+  const setFilterPendienteCobro = useCallback((val: boolean) => updateParam("cobro", val ? "1" : null), [updateParam])
+  const filterPendienteEntrega = searchParams.get("entrega") === "1"
+  const setFilterPendienteEntrega = useCallback((val: boolean) => updateParam("entrega", val ? "1" : null), [updateParam])
   const hasActiveFilters = !!filterCliente || filterPendienteCobro || filterPendienteEntrega
+
+  // Sort — ?sort=field_dir (default: "fecha_desc", omitted from URL)
+  const sortParam = searchParams.get("sort") ?? "fecha_desc"
+  const [sortField, sortDir] = sortParam.split("_") as ["fecha" | "precio", "asc" | "desc"]
+  const setSortField = useCallback((val: "fecha" | "precio") => {
+    const newParam = `${val}_${sortDir}`
+    updateParam("sort", newParam === "fecha_desc" ? null : newParam)
+  }, [updateParam, sortDir])
+  const setSortDir = useCallback((updater: ((prev: "asc" | "desc") => "asc" | "desc") | "asc" | "desc") => {
+    const newDir = typeof updater === "function" ? updater(sortDir) : updater
+    const newParam = `${sortField}_${newDir}`
+    updateParam("sort", newParam === "fecha_desc" ? null : newParam)
+  }, [updateParam, sortField, sortDir])
+
+  const [sortOpen, setSortOpen] = useState(false)
+  const [widgetOffset, setWidgetOffset] = useState(0)
+
+  const [filterOpen, setFilterOpen] = useState(false)
   const [expandedVentas, setExpandedVentas] = useState<Set<string>>(new Set())
   const [viewingItem, setViewingItem] = useState<VentaItem | null>(null)
   const [viewingClienteId, setViewingClienteId] = useState<string | null>(null)
   const [viewingTicketVenta, setViewingTicketVenta] = useState<Venta | null>(null)
-
-  // Tabs: default to "todas"
-  const [activeTab, setActiveTab] = useState<StatusTab>("todas")
 
   // Cancelar modal
   const [cancelarModalVenta, setCancelarModalVenta] = useState<Venta | null>(null)
@@ -236,7 +257,7 @@ export default function VentasPage() {
       return sortDir === "asc" ? diff : -diff
     })
     return filtered
-  }, [ventas, range, noPeriod, activeTab, searchQuery, filterCliente, filterPendienteCobro, filterPendienteEntrega, sortField, sortDir])
+  }, [ventas, range, noPeriod, activeTab, searchQuery, filterCliente, filterPendienteCobro, filterPendienteEntrega, sortField, sortDir, searchParams])
 
   const allSelected = selectedVentas.size === filteredVentas.length && filteredVentas.length > 0
   const someSelected = selectedVentas.size > 0 && selectedVentas.size < filteredVentas.length
@@ -490,17 +511,17 @@ export default function VentasPage() {
                         noPeriod={noPeriod}
                         onSelect={(k) => {
                           if (k === ("ninguno" as PeriodKey)) {
-                            setNoPeriod(true)
+                            updateParam("periodo", null)
                             setPeriodOpen(false)
                             return
                           }
                           if (k === "personalizado") {
-                            setNoPeriod(false)
+                            updateParam("periodo", "personalizado")
                             setPeriodOpen(false)
                             setCalendarOpen(true)
                             return
                           }
-                          setNoPeriod(false)
+                          updateParam("periodo", k)
                           setPeriodKey(k)
                           setCustomRange(null)
                           setPeriodOpen(false)
@@ -1413,7 +1434,7 @@ function VentasPeriodSelector({
   )
 }
 
-/* ─── Range Calendar Dialog ─────────────���───────────────────────────────────── */
+/* ─── Range Calendar Dialog ─────────────���──────────────���────────────────────── */
 
 function startOfDayV(d: Date) {
   const copy = new Date(d)
