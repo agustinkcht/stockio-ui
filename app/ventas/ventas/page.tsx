@@ -390,7 +390,7 @@ export default function VentasPage() {
               {/* Title row — scrolls away */}
               <div className="px-8 pt-12 pb-8">
                 <div className="max-w-6xl mx-auto flex items-start justify-between gap-6">
-                  <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-4">
                     <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
                       Ventas
                     </h1>
