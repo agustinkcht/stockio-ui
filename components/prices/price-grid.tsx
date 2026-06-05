@@ -644,10 +644,10 @@ export function PriceGrid({
 
       {showOrderModal && (
         <OrdenModalPrecios
+          isOpen={showOrderModal}
           onClose={() => setShowOrderModal(false)}
-          ref={orderRef}
-          sortPriorities={sortPriorities}
-          setSortPriorities={setSortPriorities}
+          onApply={(priorities) => { setSortPriorities(priorities); setShowOrderModal(false) }}
+          initialPriorities={sortPriorities}
         />
       )}
 

@@ -54,8 +54,6 @@ export default function ListaDePreciosPage() {
 
   const {
     items,
-    depositStock,
-    updateDepositStock,
     handleCreateNuevoItem,
     handleCreateNuevoItemConVariantes,
     updateItem,
@@ -224,15 +222,13 @@ export default function ListaDePreciosPage() {
     for (const item of items) {
       if (item.sku === skuOrId || item.id === skuOrId) {
         if (item.precio) return { costo: item.precio.costo || 0, margen: item.precio.margen || 0, iva: item.precio.iva || 21, precioFinal: item.precio.precioFinal || calculatePrecioFinal(item.precio.costo || 0, item.precio.margen || 0) }
-        const costo = item.costo || 0; const margen = item.margen || 0; const iva = item.iva || 21
-        return { costo, margen, iva, precioFinal: item.precioVenta || calculatePrecioFinal(costo, margen) }
+        return { costo: 0, margen: 0, iva: 21, precioFinal: 0 }
       }
       if (item.variants) {
         const variant = item.variants.find((v: any) => v.sku === skuOrId || v.id === skuOrId)
         if (variant) {
           if (variant.precio) return { costo: variant.precio.costo || 0, margen: variant.precio.margen || 0, iva: variant.precio.iva || 21, precioFinal: variant.precio.precioFinal || calculatePrecioFinal(variant.precio.costo || 0, variant.precio.margen || 0) }
-          const costo = variant.costo || 0; const margen = variant.margen || 0; const iva = variant.iva || 21
-          return { costo, margen, iva, precioFinal: variant.precioVenta || calculatePrecioFinal(costo, margen) }
+          return { costo: 0, margen: 0, iva: 21, precioFinal: 0 }
         }
       }
     }
@@ -621,7 +617,7 @@ export default function ListaDePreciosPage() {
               toggleVariantExpansion={toggleVariantExpansion}
               gridSizeDropdownOpen={gridSizeDropdownOpen}
               setGridSizeDropdownOpen={setGridSizeDropdownOpen}
-              setGridSize={setGridSize}
+              setGridSize={(s: string) => (setGridSize as (v: string) => void)(s)}
               onPriceFieldChange={handlePriceFieldChange}
               onBulkEdit={handleBulkEdit}
               externalSearchTerm={searchQuery}
@@ -667,8 +663,6 @@ export default function ListaDePreciosPage() {
         setItemTitulo={setItemTitulo}
         itemTemplate={itemTemplate}
         setItemTemplate={setItemTemplate}
-        itemUbicacion={itemUbicacion}
-        setItemUbicacion={setItemUbicacion}
         handleCreateNuevoItemConVariantes={handleCreateItemConVariantesWithSuccess}
         isCreatingItem={isCreatingItem}
       />
