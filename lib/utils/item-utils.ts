@@ -297,11 +297,33 @@ function compareItems(a: Item, b: Item, factor: SortFactor, direction: SortDirec
       comparison = (a.sku || "").localeCompare(b.sku || "")
       break
 
-    case "stock":
+    case "stock": {
       const stockA = Number.parseFloat(a.stock?.total || "0")
       const stockB = Number.parseFloat(b.stock?.total || "0")
       comparison = stockA - stockB
       break
+    }
+
+    case "costo": {
+      const costoA = a.precio?.costo ?? a.costo ?? 0
+      const costoB = b.precio?.costo ?? b.costo ?? 0
+      comparison = costoA - costoB
+      break
+    }
+
+    case "margen": {
+      const margenA = a.precio?.margen ?? a.margen ?? 0
+      const margenB = b.precio?.margen ?? b.margen ?? 0
+      comparison = margenA - margenB
+      break
+    }
+
+    case "precioFinal": {
+      const pfA = a.precio?.precioFinal ?? a.precioVenta ?? 0
+      const pfB = b.precio?.precioFinal ?? b.precioVenta ?? 0
+      comparison = pfA - pfB
+      break
+    }
   }
 
   return direction === "asc" ? comparison : -comparison

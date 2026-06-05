@@ -14,14 +14,13 @@ import { NuevoItemConVariantesModal } from "@/components/modals/nuevo-item-con-v
 import { TemplateModal } from "@/components/modals/template-modal"
 import { UserPanel } from "@/components/layout/user-panel"
 import { UnsavedChangesModal } from "@/components/modals/unsaved-changes-modal"
-import { OrdenModalPrecios } from "@/components/modals/orden-modal-precios"
-import { FiltrosModalPrecios } from "@/components/modals/filtros-modal-precios"
 import { useItems } from "@/hooks/use-items"
 import { useModals } from "@/hooks/use-modals"
 import { useNavigationGuard } from "@/hooks/use-navigation-guard"
 import { useSidebar } from "@/hooks/use-sidebar"
 import { useSettings } from "@/lib/contexts/settings-context"
-import { getUniqueCategorias, getUniqueMarcas, getUniqueProveedores } from "@/lib/utils/item-utils"
+import { getUniqueCategorias, getUniqueMarcas, getUniqueProveedores, searchItems, filterItems } from "@/lib/utils/item-utils"
+import { useMemo } from "react"
 import { Checkbox } from "@/components/ui/checkbox"
 
 // ─── Sort concepts available in this view ────────────────────────────────────
@@ -51,12 +50,10 @@ export default function ListaDePreciosPage() {
   // ── Search / Filter / Sort ──────────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState("")
   const [filterOpen, setFilterOpen] = useState(false)
-  const [sortOpen, setSortOpen] = useState(false)
   const [sortField, setSortField] = useState<QuickSortField>("precioFinal")
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc")
   const [activeFilters, setActiveFilters] = useState<FilterConfig>(DEFAULT_FILTERS)
   const [sortPriorities, setSortPriorities] = useState<SortFactorConfig[]>([{ factor: "precioFinal", direction: "asc" }])
-  const sortSelectRef = useRef<HTMLSelectElement>(null)
 
   // ── Selection (lifted from grid) ────────────────────────────────────────────
   const [selCount, setSelCount] = useState(0)
@@ -288,6 +285,12 @@ export default function ListaDePreciosPage() {
   const { showNavigationModal, handleSaveAndNavigate, handleDiscardAndNavigate, handleCancelNavigation } =
     useNavigationGuard({ hasUnsavedChanges: hasChanges, onSave: handleGuardar, onDiscard: handleDeshacer })
 
+  // ── Derived: filtered count for the count badge ────────────────────────────
+  const filteredCount = useMemo(() => {
+    const searched = searchItems(items, searchQuery)
+    return filterItems(searched, activeFilters).length
+  }, [items, searchQuery, activeFilters])
+
   // ── Derived filter state ────────────────────────────────────────────────────
   const hasFilters =
     activeFilters.categorias.length > 0 ||
@@ -450,7 +453,7 @@ export default function ListaDePreciosPage() {
                       <div className="relative">
                         <button
                           type="button"
-                          onClick={() => { setFilterOpen(true); setSortOpen(false) }}
+                          onClick={() => setFilterOpen((v) => !v)}
                           className={`h-9 text-xs border shadow-sm px-3 rounded-md flex items-center gap-1.5 cursor-pointer transition-colors ${
                             hasFilters
                               ? "border-blue-400 text-blue-600 bg-blue-50"
@@ -460,6 +463,98 @@ export default function ListaDePreciosPage() {
                           <ListFilter className="w-3.5 h-3.5" />
                           Filtrar
                         </button>
+                        {filterOpen && (
+                          <>
+                            <div className="fixed inset-0 z-[90]" onClick={() => setFilterOpen(false)} />
+                            <div className="absolute top-full right-0 mt-1 w-64 bg-white border border-slate-200 rounded-lg shadow-lg z-[100] p-3 space-y-3 animate-in fade-in-0 slide-in-from-top-1 duration-150">
+
+                              {/* Categoría */}
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Categoría</label>
+                                <div className="max-h-36 overflow-y-auto space-y-1">
+                                  {availableCategorias.length === 0 ? (
+                                    <p className="text-xs text-slate-400 italic">Sin categorías</p>
+                                  ) : availableCategorias.map((cat) => (
+                                    <label key={cat} className="flex items-center gap-2 cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        checked={activeFilters.categorias.includes(cat)}
+                                        onChange={() => setActiveFilters((f) => ({
+                                          ...f,
+                                          categorias: f.categorias.includes(cat)
+                                            ? f.categorias.filter((c) => c !== cat)
+                                            : [...f.categorias, cat],
+                                        }))}
+                                        className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                      />
+                                      <span className="text-xs text-slate-700">{cat}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Proveedor */}
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Proveedor</label>
+                                <div className="max-h-36 overflow-y-auto space-y-1">
+                                  {availableProveedores.length === 0 ? (
+                                    <p className="text-xs text-slate-400 italic">Sin proveedores</p>
+                                  ) : availableProveedores.map((prov) => (
+                                    <label key={prov} className="flex items-center gap-2 cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        checked={activeFilters.proveedores.includes(prov)}
+                                        onChange={() => setActiveFilters((f) => ({
+                                          ...f,
+                                          proveedores: f.proveedores.includes(prov)
+                                            ? f.proveedores.filter((p) => p !== prov)
+                                            : [...f.proveedores, prov],
+                                        }))}
+                                        className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                      />
+                                      <span className="text-xs text-slate-700">{prov}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Marca */}
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Marca</label>
+                                <div className="max-h-36 overflow-y-auto space-y-1">
+                                  {availableMarcas.length === 0 ? (
+                                    <p className="text-xs text-slate-400 italic">Sin marcas</p>
+                                  ) : availableMarcas.map((marca) => (
+                                    <label key={marca} className="flex items-center gap-2 cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        checked={activeFilters.marcas.includes(marca)}
+                                        onChange={() => setActiveFilters((f) => ({
+                                          ...f,
+                                          marcas: f.marcas.includes(marca)
+                                            ? f.marcas.filter((m) => m !== marca)
+                                            : [...f.marcas, marca],
+                                        }))}
+                                        className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                      />
+                                      <span className="text-xs text-slate-700">{marca}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {hasFilters && (
+                                <button
+                                  type="button"
+                                  onClick={() => setActiveFilters(DEFAULT_FILTERS)}
+                                  className="w-full text-xs text-slate-500 hover:text-slate-700 py-1 text-center cursor-pointer border-t border-slate-100 pt-2"
+                                >
+                                  Limpiar filtros
+                                </button>
+                              )}
+                            </div>
+                          </>
+                        )}
                       </div>
 
                       {/* Ordenar — split control: direction toggle + field select */}
@@ -473,7 +568,6 @@ export default function ListaDePreciosPage() {
                           <ArrowUpDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${sortDir === "desc" ? "scale-y-[-1]" : ""}`} />
                         </button>
                         <select
-                          ref={sortSelectRef}
                           value={sortField}
                           onChange={(e) => handleSortFieldChange(e.target.value as QuickSortField)}
                           className="appearance-none pl-2.5 pr-2.5 text-xs bg-transparent focus:outline-none cursor-pointer text-slate-700 h-full w-auto"
@@ -489,7 +583,7 @@ export default function ListaDePreciosPage() {
 
                       {/* Count */}
                       <span className="text-xs text-slate-400 whitespace-nowrap tabular-nums">
-                        {items.length} {items.length === 1 ? "artículo" : "artículos"}
+                        {filteredCount} {filteredCount === 1 ? "artículo" : "artículos"}
                       </span>
                     </div>
 
@@ -605,35 +699,7 @@ export default function ListaDePreciosPage() {
         onCancel={handleCancelNavigation}
       />
 
-      {/* Filtrar modal */}
-      {filterOpen && (
-        <FiltrosModalPrecios
-          onClose={() => setFilterOpen(false)}
-          activeFilters={activeFilters}
-          setActiveFilters={setActiveFilters}
-          availableCategorias={availableCategorias}
-          availableMarcas={availableMarcas}
-          availableProveedores={availableProveedores}
-          availableDepositos={[]}
-        />
-      )}
 
-      {/* Ordenar modal (advanced) — triggered when needed */}
-      <OrdenModalPrecios
-        isOpen={sortOpen}
-        onClose={() => setSortOpen(false)}
-        onApply={(priorities) => {
-          setSortPriorities(priorities)
-          if (priorities.length > 0) {
-            const first = priorities[0]
-            if (first.factor === "precioFinal" || first.factor === "costo" || first.factor === "margen") {
-              setSortField(first.factor as QuickSortField)
-              setSortDir(first.direction as "asc" | "desc")
-            }
-          }
-        }}
-        initialPriorities={sortPriorities}
-      />
     </div>
   )
 }
