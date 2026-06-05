@@ -6,7 +6,7 @@ import { getCategoryImage } from "@/lib/utils/category-images"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import React, { useRef, useState, useEffect, useMemo, useCallback } from "react"
+import { useRef, useState, useEffect, useMemo, useCallback } from "react"
 import { usePriceSelection } from "@/hooks/use-price-selection"
 import { searchItems, sortItems, filterItems, getUniqueCategorias, getUniqueMarcas, getUniqueProveedores } from "@/lib/utils/item-utils"
 import { OrdenModalPrecios } from "@/components/modals/orden-modal-precios"
@@ -33,16 +33,6 @@ interface PriceGridProps {
   setGridSize: (size: string) => void
   onPriceFieldChange?: (itemSku: string, field: string, value: any) => void
   onBulkEdit?: (type: BulkModalType, operation: string, value: number, unit: string, targetSkus: string[]) => void
-  // External search/filter/sort from page
-  externalSearchTerm?: string
-  externalActiveFilters?: FilterConfig
-  externalSortField?: string
-  externalSortDir?: "asc" | "desc"
-  // Bulk selection state from page
-  allCheckboxRef?: React.RefObject<HTMLInputElement>
-  itemSelected?: boolean[]
-  onSelectAll?: () => void
-  onSelectItem?: (index: number) => void
 }
 
 const IVA_OPTIONS = [
@@ -61,14 +51,6 @@ export function PriceGrid({
   setGridSize,
   onPriceFieldChange,
   onBulkEdit,
-  externalSearchTerm,
-  externalActiveFilters,
-  externalSortField,
-  externalSortDir,
-  allCheckboxRef,
-  itemSelected,
-  onSelectAll,
-  onSelectItem,
 }: PriceGridProps) {
   const {
     selectAllActive,
@@ -109,34 +91,11 @@ export function PriceGrid({
   const availableProveedores = useMemo(() => getUniqueProveedores(items), [items])
   const availableDepositos = useMemo(() => ["Torcuato", "Trujui"], [])
 
-  // Use external search/filter if provided, else fall back to internal state
-  const effectiveSearchTerm = externalSearchTerm !== undefined ? externalSearchTerm : searchTerm
-  const effectiveFilters = externalActiveFilters !== undefined ? externalActiveFilters : activeFilters
-
-  const searchedItems = useMemo(() => searchItems(items, effectiveSearchTerm), [items, effectiveSearchTerm])
-  const filteredItems = useMemo(() => filterItems(searchedItems, effectiveFilters), [searchedItems, effectiveFilters])
+  const searchedItems = useMemo(() => searchItems(items, searchTerm), [items, searchTerm])
+  const filteredItems = useMemo(() => filterItems(searchedItems, activeFilters), [searchedItems, activeFilters])
   const sortedAndFilteredItems = useMemo(
-    () => {
-      // If external sort field/dir is provided, apply a simple sort on top
-      if (externalSortField && externalSortDir) {
-        const sorted = [...filteredItems]
-        sorted.sort((a, b) => {
-          const getVal = (item: Item) => {
-            const p = item.precio
-            if (!p) return 0
-            if (externalSortField === "precioFinal") return p.precioFinal || 0
-            if (externalSortField === "costo") return p.costo || 0
-            if (externalSortField === "margen") return p.margen || 0
-            return 0
-          }
-          const diff = getVal(a) - getVal(b)
-          return externalSortDir === "asc" ? diff : -diff
-        })
-        return sorted
-      }
-      return sortItems(filteredItems, sortPriorities)
-    },
-    [filteredItems, sortPriorities, externalSortField, externalSortDir],
+    () => sortItems(filteredItems, sortPriorities),
+    [filteredItems, sortPriorities],
   )
 
   // Get all visible SKUs (from sorted and filtered items)
@@ -510,15 +469,116 @@ export function PriceGrid({
   }
 
   const hasActiveFilters =
-    effectiveFilters.tipos.length > 0 || effectiveFilters.categorias.length > 0 || effectiveFilters.marcas.length > 0 || effectiveFilters.proveedores.length > 0
+    activeFilters.tipos.length > 0 || activeFilters.categorias.length > 0 || activeFilters.marcas.length > 0 || activeFilters.proveedores.length > 0
 
   return (
     <div className="flex-1 flex flex-col bg-slate-50 overflow-hidden">
+      {/* Superior Bar - Full width like ODC detail, empty */}
+      <div className="bg-white border-b border-[rgba(202,213,227,0.61)]">
+        <div className="px-6 py-5 flex items-center gap-4">
+          {/* Empty placeholder - can add content here later */}
+        </div>
+      </div>
 
       {/* Scrollable container with sticky header */}
-      <div className="flex-1 overflow-y-auto px-8 pt-2 pb-8">
-        <div className="max-w-6xl mx-auto">
-        <div className="border border-slate-200/80 rounded-t-md overflow-hidden">
+      <div className="flex-1 overflow-y-auto px-6 py-6">
+        <div className="border border-[rgba(202,213,227,0.61)] rounded-lg overflow-hidden">
+          {/* Toolbar - integrated with grid */}
+          <div className="bg-white border-b border-[rgba(202,213,227,0.61)]">
+            <div className="px-4 py-3 flex items-center gap-4">
+              {/* Left spacer for centering */}
+              <div className="flex-1" />
+              
+              {/* Centered search bar */}
+              <div className="flex-1 max-w-md relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-black opacity-100 z-10" />
+                <input
+                  type="text"
+                  placeholder="Buscar artículos..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full h-8 pl-9 pr-9 border shadow-sm rounded-md text-xs placeholder:text-gray-600 text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 bg-white backdrop-blur-sm transition-all duration-300 border-[rgba(202,213,227,0.842391304347826)]"
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm("")}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors z-10 cursor-pointer"
+                    title="Limpiar búsqueda"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Right side buttons */}
+              <div className="flex-1 flex items-center justify-end gap-2">
+                <div className="relative" ref={orderRef}>
+                  <button
+                    onClick={() => setShowOrderModal(true)}
+                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors group cursor-pointer border border-gray-200/40 shadow-sm"
+                    title="Ordenar"
+                  >
+                    <ArrowUpDown className="w-4 h-4 text-gray-600 group-hover:text-gray-900" />
+                  </button>
+                </div>
+
+                <div className="relative" ref={filterRef}>
+                  <button
+                    onClick={() => setShowFilterModal(true)}
+                    className={`w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors group cursor-pointer border shadow-sm ${
+                      hasActiveFilters ? "border-blue-500 bg-blue-50" : "border-gray-200/40"
+                    }`}
+                    title="Filtros"
+                  >
+                    <ListFilterIcon
+                      className={`w-4 h-4 ${hasActiveFilters ? "text-blue-600" : "text-gray-600 group-hover:text-gray-900"}`}
+                    />
+                  </button>
+                </div>
+
+                <div className="relative">
+                  <button
+                    onClick={() => setGridSizeDropdownOpen(!gridSizeDropdownOpen)}
+                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors group cursor-pointer border border-gray-200/40 shadow-sm"
+                    title="Tamaño de grilla"
+                  >
+                    <Grid3x3 className="w-4 h-4 text-gray-600 group-hover:text-gray-900" />
+                  </button>
+                  {gridSizeDropdownOpen && (
+                    <div className="absolute right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-20 min-w-[100px]">
+                      <button
+                        onClick={() => {
+                          setGridSize("sm")
+                          setGridSizeDropdownOpen(false)
+                        }}
+                        className={`w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 transition-colors cursor-pointer ${gridSize === "sm" ? "font-medium text-blue-600" : "text-slate-700"}`}
+                      >
+                        Pequeño
+                      </button>
+                      <button
+                        onClick={() => {
+                          setGridSize("md")
+                          setGridSizeDropdownOpen(false)
+                        }}
+                        className={`w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 transition-colors cursor-pointer ${gridSize === "md" ? "font-medium text-blue-600" : "text-slate-700"}`}
+                      >
+                        Mediano
+                      </button>
+                      <button
+                        onClick={() => {
+                          setGridSize("lg")
+                          setGridSizeDropdownOpen(false)
+                        }}
+                        className={`w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 transition-colors cursor-pointer ${gridSize === "lg" ? "font-medium text-blue-600" : "text-slate-700"}`}
+                      >
+                        Grande
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
           {/* Tab Header - sticky */}
           <div className="bg-slate-100 sticky top-0 z-10">
             <div className="grid grid-cols-32 h-9">
@@ -624,30 +684,25 @@ export function PriceGrid({
 
           {/* Grid Content */}
           <div className="bg-white">
-          {sortedAndFilteredItems.length === 0 && (effectiveSearchTerm || hasActiveFilters) ? (
-            <div className="flex flex-col items-center justify-center py-24 gap-2">
-              <p className="text-xl font-medium text-slate-500">No se encontraron artículos</p>
-              <p className="text-sm text-slate-400">Probá ajustando los filtros o la búsqueda</p>
-            </div>
-          ) : sortedAndFilteredItems.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24 gap-2">
-              <p className="text-xl font-medium text-slate-500">No hay artículos para mostrar</p>
-              <p className="text-sm text-slate-400">Agregá productos a la lista de precios</p>
+          {sortedAndFilteredItems.length === 0 && (searchTerm || hasActiveFilters) ? (
+            <div className="flex flex-col items-center justify-center py-16 text-gray-500">
+              <Search className="w-12 h-12 mb-4 text-gray-300" />
+              <p className="text-lg font-medium">No se encontraron artículos</p>
+              <p className="text-sm mt-1">Intenta ajustar tu búsqueda o filtros</p>
             </div>
           ) : (
             <div>{sortedAndFilteredItems.map((item, index) => renderItemRow(item, index))}</div>
           )}
-          </div>
         </div>
         </div>
       </div>
 
       {showOrderModal && (
         <OrdenModalPrecios
-          isOpen={showOrderModal}
           onClose={() => setShowOrderModal(false)}
-          onApply={(priorities) => { setSortPriorities(priorities); setShowOrderModal(false) }}
-          initialPriorities={sortPriorities}
+          ref={orderRef}
+          sortPriorities={sortPriorities}
+          setSortPriorities={setSortPriorities}
         />
       )}
 
