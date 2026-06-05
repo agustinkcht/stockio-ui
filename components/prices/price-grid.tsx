@@ -250,7 +250,7 @@ export function PriceGrid({
     const isParent = !isChild && ((item.variants && item.variants.length > 0) || (item.items && item.items.length > 0))
     const children = item.variants || item.items || []
     const isExpanded = expandedItems[index]
-    const itemId = (item as any).id || item.sku || `item-${index}`
+    const itemId = item.sku || (item as any).id || `item-${index}`
     const isHovered = hoveredId === itemId
     const itemKey = itemId
     const itemPricing = getItemPricing(item)

@@ -21,7 +21,6 @@ import { useSidebar } from "@/hooks/use-sidebar"
 import { useSettings } from "@/lib/contexts/settings-context"
 import { getUniqueCategorias, getUniqueMarcas, getUniqueProveedores, searchItems, filterItems } from "@/lib/utils/item-utils"
 import { useMemo } from "react"
-import { Checkbox } from "@/components/ui/checkbox"
 
 // ─── Sort concepts available in this view ────────────────────────────────────
 type QuickSortField = "nombre" | "precioFinal" | "costo" | "margen"
@@ -561,21 +560,13 @@ export default function ListaDePreciosPage() {
                 <div className="max-w-6xl mx-auto bg-white border border-slate-200/80 border-t-0">
                   <div className="flex items-center gap-2 h-9">
                     <div className="flex items-center justify-center w-[4%] min-w-[40px] shrink-0">
-                      {selIndeterminate ? (
-                        <button
-                          type="button"
-                          onClick={gridHandleSelectAll}
-                          className="flex items-center justify-center w-3.5 h-3.5 border border-primary bg-primary rounded-[4px] cursor-pointer"
-                        >
-                          <Minus className="w-2.5 h-2.5 text-primary-foreground" />
-                        </button>
-                      ) : (
-                        <Checkbox
-                          checked={selAll}
-                          onCheckedChange={gridHandleSelectAll}
-                          className="w-3.5 h-3.5 cursor-pointer"
-                        />
-                      )}
+                      <input
+                        ref={allCheckboxRef}
+                        type="checkbox"
+                        checked={selAll}
+                        onChange={gridHandleSelectAll}
+                        className="w-3.5 h-3.5 rounded accent-slate-800 cursor-pointer"
+                      />
                     </div>
                     <div className="w-px h-5 bg-slate-200 shrink-0" />
                     {selCount === 0 ? (
