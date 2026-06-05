@@ -606,6 +606,7 @@ export const INITIAL_PRESUPUESTOS: Presupuesto[] = [
     id: "PRE-012",
     numero: "PRE-012",
     fecha: "2026-06-05",
+    hora: "10:15",
     validoHasta: "2026-06-20",
     cliente: { tipo: "cuenta", id: "CLI-004", nombre: "Vinoteca El Sabor SRL" },
     items: [
@@ -642,6 +643,7 @@ export const INITIAL_PRESUPUESTOS: Presupuesto[] = [
     id: "PRE-013",
     numero: "PRE-013",
     fecha: "2026-06-05",
+    hora: "11:40",
     validoHasta: "2026-06-20",
     cliente: { tipo: "consumidor_final" },
     items: [
@@ -678,6 +680,7 @@ export const INITIAL_PRESUPUESTOS: Presupuesto[] = [
     id: "PRE-014",
     numero: "PRE-014",
     fecha: "2026-06-05",
+    hora: "14:20",
     validoHasta: "2026-06-19",
     cliente: { tipo: "cuenta", id: "CLI-002", nombre: "Resto Bar La Esquina" },
     items: [

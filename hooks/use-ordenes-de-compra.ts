@@ -6,7 +6,7 @@ import { ORDENES_DE_COMPRA } from "@/lib/data/initial-ordenes-de-compra"
 import { useAccount } from "@/lib/contexts/account-context"
 
 const STORAGE_KEY_PREFIX = "stockio_ordenes_de_compra"
-const DATA_VERSION = "v4" // bump to reseed localStorage with new dataset
+const DATA_VERSION = "v5" // bump to reseed localStorage with new dataset
 
 export function useOrdenesDeCompra() {
   const [ordenes, setOrdenes] = useState<OrdenDeCompra[]>(ORDENES_DE_COMPRA)

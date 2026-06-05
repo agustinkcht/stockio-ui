@@ -49,7 +49,7 @@ export const ORDENES_DE_COMPRA: OrdenDeCompra[] = [
     fechaCreacion: "2026-03-11T11:30:00.000Z",
     proveedorId: "PROV-007",
     proveedorNombre: "Catena Zapata",
-    estado: "aceptada",
+    estado: "borrador",
     items: [
       {
         sku: "VNO-DVCAT-MALB",
@@ -121,7 +121,7 @@ export const ORDENES_DE_COMPRA: OrdenDeCompra[] = [
     fechaCreacion: "2026-04-02T08:20:00.000Z",
     proveedorId: "PROV-012",
     proveedorNombre: "Bodegas Salentein",
-    estado: "aceptada",
+    estado: "borrador",
     items: [
       {
         sku: "ESP-SALENT-EXBR",
@@ -161,7 +161,7 @@ export const ORDENES_DE_COMPRA: OrdenDeCompra[] = [
     fechaCreacion: "2026-04-10T16:55:00.000Z",
     proveedorId: "PROV-009",
     proveedorNombre: "Chañarmuyo Bodega",
-    estado: "aceptada",
+    estado: "borrador",
     items: [
       {
         sku: "VNO-CHM5HIL-BLND",
