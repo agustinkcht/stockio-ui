@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useRef, useState, useEffect, useMemo, useCallback } from "react"
 import { usePriceSelection } from "@/hooks/use-price-selection"
-import { searchItems, sortItems, filterItems } from "@/lib/utils/item-utils"
+import { searchItems, sortItems, filterItems, getUniqueCategorias, getUniqueMarcas, getUniqueProveedores } from "@/lib/utils/item-utils"
 import { BulkPriceModal } from "@/components/modals/bulk-price-modals"
 import { useSettings } from "@/lib/contexts/settings-context"
 
