@@ -243,8 +243,8 @@ export function PriceGrid({
     return { costo: 0, margen: 0, iva: 21, precioFinal: 0 }
   }
 
-  // cols: [44px checkbox | 1fr item | 270px costo | 100px margen | 100px iva | 270px precio venta]
-  const COLS = "grid-cols-[44px_1fr_270px_100px_100px_270px]"
+  // cols: [44px checkbox | 1fr item | 200px costo | 100px margen | 100px iva | 200px precio venta]
+  const COLS = "grid-cols-[44px_1fr_200px_100px_100px_200px]"
 
   const renderItemRow = (item: Item, index: number, isChild = false, isLastChild = false, parentProveedor?: string) => {
     const isParent = !isChild && ((item.variants && item.variants.length > 0) || (item.items && item.items.length > 0))
