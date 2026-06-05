@@ -450,7 +450,7 @@ export default function ListaDePreciosPage() {
             </div>
           </div>
 
-          <main className="flex-1 flex bg-slate-50 overflow-hidden">
+          <main className="flex-1 flex bg-white overflow-hidden">
             <PriceGrid
               items={items}
               gridSize={gridSize}
