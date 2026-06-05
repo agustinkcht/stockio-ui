@@ -48,7 +48,7 @@ import {
 type StatusTab = "todas" | "en_curso" | "finalizada" | "cancelada"
 
 const estadoConfig: Record<string, { bg: string; text: string; icon: typeof Clock; label: string }> = {
-  en_curso:   { bg: "bg-amber-50",   text: "text-amber-600",   icon: Clock,         label: "Abierta"    },
+  en_curso:   { bg: "bg-amber-50",   text: "text-amber-600",   icon: Clock,         label: "En Curso"   },
   finalizada: { bg: "bg-emerald-50", text: "text-emerald-600", icon: CheckCircle2,  label: "Finalizada" },
   cancelada:  { bg: "bg-red-50",     text: "text-red-500",     icon: XCircle,       label: "Cancelada"  },
 }
@@ -350,7 +350,7 @@ export default function VentasPage() {
 
   const tabs: { id: StatusTab; label: string; count?: number }[] = [
     { id: "todas",     label: "Todas",        count: ventas.length },
-    { id: "en_curso",  label: "Abiertas",     count: ventas.filter(v => v.estado === "en_curso").length },
+    { id: "en_curso",  label: "En Curso",     count: ventas.filter(v => v.estado === "en_curso").length },
     { id: "finalizada",label: "Finalizadas",  count: ventas.filter(v => v.estado === "finalizada").length },
     { id: "cancelada", label: "Canceladas",   count: ventas.filter(v => v.estado === "cancelada").length },
   ]
@@ -507,7 +507,7 @@ export default function VentasPage() {
                       </div>
                       <div className="flex items-baseline gap-2">
                         <span className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{countEnCurso}</span>
-                        <span className="text-base font-medium text-orange-500">Abiertas</span>
+                        <span className="text-base font-medium text-orange-500">En Curso</span>
                       </div>
                       {subtitleEnCurso && (
                         <p className="mt-2 text-xs text-slate-400 leading-snug">{subtitleEnCurso}</p>

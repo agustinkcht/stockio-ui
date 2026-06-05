@@ -328,7 +328,7 @@ Ordenar does NOT produce a filter tag — it is a control, not a filter state.
 
 See Zone 2 above. The three standard variants:
 - **Finalizadas**: emerald (`text-emerald-500`, `bg-emerald-50`, `border-emerald-200`)
-- **Abiertas** (en_curso): orange (`text-orange-500`, `bg-orange-50`, `border-orange-200`)
+- **En Curso** (en_curso): orange (`text-orange-500`, `bg-orange-50`, `border-orange-200`)
 - **Canceladas**: red (`text-red-400`, `bg-red-50`, `border-red-200`)
 
 ---

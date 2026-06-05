@@ -126,7 +126,7 @@ export const PROVEEDORES: Proveedor[] = [
     codigoPostal: "5509",
     condicionIva: "Responsable Inscripto",
     tipo: "empresa",
-    transactionCount: 1, // COMP-002
+    transactionCount: 2, // COMP-002, COMP-007
   },
   {
     id: "PROV-008",
@@ -206,7 +206,7 @@ export const PROVEEDORES: Proveedor[] = [
     codigoPostal: "5560",
     condicionIva: "Responsable Inscripto",
     tipo: "empresa",
-    transactionCount: 1, // COMP-001
+    transactionCount: 2, // COMP-001, COMP-008
   },
   {
     id: "PROV-013",
