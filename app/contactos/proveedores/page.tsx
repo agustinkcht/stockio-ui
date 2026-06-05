@@ -375,7 +375,7 @@ function ProveedoresContent() {
 
               {/* Row 2 — Bulk actions */}
               <div className="px-8">
-                <div className="max-w-6xl mx-auto bg-white border border-slate-200/80 border-t-0 rounded-b-md">
+                    <div className="max-w-6xl mx-auto bg-white border border-slate-200/80 border-t-0">
                   <div className="flex items-center gap-2 h-9">
                     <div className="flex items-center justify-center w-[4%] min-w-[40px] shrink-0">
                       <input
@@ -427,7 +427,7 @@ function ProveedoresContent() {
                 </div>
 
                 {/* Rows */}
-                <div className="border border-slate-200/80 border-t-0 rounded-b-md overflow-hidden bg-white">
+                  <div className="border border-slate-200/80 border-t-0 overflow-hidden bg-white">
                   <ProveedoresGrid
                     proveedores={filtered}
                     compras={compras}

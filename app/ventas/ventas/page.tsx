@@ -745,7 +745,7 @@ export default function VentasPage() {
 
                 {/* Row 2: Bulk actions — straight borders, flush below search bar */}
                 <div className="px-8">
-                  <div className="max-w-6xl mx-auto bg-white border border-slate-200/80 rounded-b-md">
+                  <div className="max-w-6xl mx-auto bg-white border border-slate-200/80">
                     <div className="flex items-center gap-2 h-9">
                       {/* All-selector checkbox — width matches col-span-4 of grid-cols-100 in item rows */}
                       <div className="flex items-center justify-center w-[4%] min-w-[40px] shrink-0">
@@ -1136,7 +1136,7 @@ export default function VentasPage() {
                                 <Fragment key={`${venta.id}-exp-${idx}`}>
                                   <div className="col-span-4" />
                                   {/* Item name */}
-                                  <div className={`col-span-32 bg-slate-50 border-t border-slate-200/60 ${isLast ? "rounded-bl-md" : ""}`}>
+                                  <div className={`col-span-32 bg-slate-50 border-t border-slate-200/60`}>
                                     <button
                                       type="button"
                                       onClick={(e) => { e.stopPropagation(); setViewingItem(item) }}
@@ -1175,7 +1175,7 @@ export default function VentasPage() {
                                     <PrecioCell item={item} />
                                   </div>
                                   {/* Subtotal — empty cell to preserve grid structure */}
-                                  <div className={`col-span-24 bg-slate-50 border-t border-slate-200/60 ${isLast ? "rounded-br-md" : ""}`} />
+                                  <div className={`col-span-24 bg-slate-50 border-t border-slate-200/60`} />
                                   <div className="col-span-4" />
                                 </Fragment>
                               )

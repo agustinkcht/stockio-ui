@@ -635,7 +635,7 @@ export default function PresupuestosPage() {
 
                 {/* Row 2: Bulk actions */}
                 <div className="px-8">
-                  <div className="max-w-6xl mx-auto bg-white border border-slate-200/80 rounded-b-md">
+                  <div className="max-w-6xl mx-auto bg-white border border-slate-200/80">
                     <div className="flex items-center gap-2 h-9">
                       <div className="flex items-center justify-center w-[4%] min-w-[40px] shrink-0">
                         <input
@@ -993,7 +993,7 @@ export default function PresupuestosPage() {
                                   return (
                                     <Fragment key={`${presupuesto.id}-exp-${idx}`}>
                                       <div className="col-span-4" />
-                                      <div className={`col-span-32 bg-slate-50 border-t border-slate-200/60 ${isLast ? "rounded-bl-md" : ""}`}>
+                                      <div className={`col-span-32 bg-slate-50 border-t border-slate-200/60`}>
                                         <button
                                           type="button"
                                           onClick={(e) => { e.stopPropagation(); setViewingItem(item) }}
@@ -1029,7 +1029,7 @@ export default function PresupuestosPage() {
                                       <div className="col-span-16 bg-slate-50 px-3 py-2 border-t border-slate-200/60 flex items-center">
                                         <PrecioCell item={item} />
                                       </div>
-                                      <div className={`col-span-24 bg-slate-50 border-t border-slate-200/60 ${isLast ? "rounded-br-md" : ""}`} />
+                                      <div className={`col-span-24 bg-slate-50 border-t border-slate-200/60`} />
                                       <div className="col-span-4" />
                                     </Fragment>
                                   )
