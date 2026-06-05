@@ -80,8 +80,7 @@ export function PriceGrid({
   useEffect(() => { onSelectionChangeRef.current = onSelectionChange }, [onSelectionChange])
   useEffect(() => {
     onSelectionChangeRef.current?.(selectedCount, hasSelectedItems, selectAllActive, selectAllIndeterminate, handleSelectAll)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCount, hasSelectedItems, selectAllActive, selectAllIndeterminate])
+  }, [selectedCount, hasSelectedItems, selectAllActive, selectAllIndeterminate, handleSelectAll])
   const [precioFinalMode, setPrecioFinalMode] = useState<"con_iva" | "sin_iva">("con_iva")
   const [showPrecioModeDropdown, setShowPrecioModeDropdown] = useState(false)
 
