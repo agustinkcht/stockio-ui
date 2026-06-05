@@ -434,7 +434,7 @@ export default function PresupuestosPage() {
                             <span className="text-base font-medium text-slate-500">En Borrador</span>
                           </div>
                           {subtitleCreadas && (
-                            <p className="mt-2 text-xs text-slate-400 leading-snug">{subtitleBorrador}</p>
+                            <p className="mt-2 text-xs text-slate-400 leading-snug">{subtitleCreadas}</p>
                           )}
                         </button>
 
