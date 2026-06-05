@@ -9,8 +9,6 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { useRef, useState, useEffect, useMemo, useCallback } from "react"
 import { usePriceSelection } from "@/hooks/use-price-selection"
 import { searchItems, sortItems, filterItems, getUniqueCategorias, getUniqueMarcas, getUniqueProveedores } from "@/lib/utils/item-utils"
-import { OrdenModalPrecios } from "@/components/modals/orden-modal-precios"
-import { FiltrosModalPrecios } from "@/components/modals/filtros-modal-precios"
 import { BulkPriceModal } from "@/components/modals/bulk-price-modals"
 import { useSettings } from "@/lib/contexts/settings-context"
 
@@ -33,6 +31,12 @@ interface PriceGridProps {
   setGridSize: (size: string) => void
   onPriceFieldChange?: (itemSku: string, field: string, value: any) => void
   onBulkEdit?: (type: BulkModalType, operation: string, value: number, unit: string, targetSkus: string[]) => void
+  // Lifted state from page
+  searchTerm: string
+  activeFilters: FilterConfig
+  sortPriorities: SortFactorConfig[]
+  // Selection callbacks to page
+  onSelectionChange?: (count: number, has: boolean, selectAll: boolean, selectAllIndeterminate: boolean, handleSelectAll: () => void) => void
 }
 
 const IVA_OPTIONS = [
@@ -51,6 +55,10 @@ export function PriceGrid({
   setGridSize,
   onPriceFieldChange,
   onBulkEdit,
+  searchTerm = "",
+  activeFilters = { tipos: [], categorias: [], marcas: [], proveedores: [], stock: [], depositos: [] },
+  sortPriorities = [{ factor: "categoria" as const, direction: "asc" as const }],
+  onSelectionChange,
 }: PriceGridProps) {
   const {
     selectAllActive,
@@ -64,27 +72,18 @@ export function PriceGrid({
     getSelectedSkus,
   } = usePriceSelection(items)
   const { precios: preciosSettings } = useSettings()
-  const orderRef = useRef<HTMLDivElement>(null)
-  const filterRef = useRef<HTMLDivElement>(null)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
-
-  const [showOrderModal, setShowOrderModal] = useState(false)
   const [bulkModalType, setBulkModalType] = useState<BulkModalType>(null)
-  const [showFilterModal, setShowFilterModal] = useState(false)
-  const [searchTerm, setSearchTerm] = useState("")
+
+  // Notify parent of selection state changes
+  const onSelectionChangeRef = useRef(onSelectionChange)
+  useEffect(() => { onSelectionChangeRef.current = onSelectionChange }, [onSelectionChange])
+  useEffect(() => {
+    onSelectionChangeRef.current?.(selectedCount, hasSelectedItems, selectAllActive, selectAllIndeterminate, handleSelectAll)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCount, hasSelectedItems, selectAllActive, selectAllIndeterminate])
   const [precioFinalMode, setPrecioFinalMode] = useState<"con_iva" | "sin_iva">("con_iva")
   const [showPrecioModeDropdown, setShowPrecioModeDropdown] = useState(false)
-
-  const [activeFilters, setActiveFilters] = useState<FilterConfig>({
-    tipos: [],
-    categorias: [],
-    marcas: [],
-    proveedores: [],
-    stock: [],
-    depositos: [],
-  })
-
-  const [sortPriorities, setSortPriorities] = useState<SortFactorConfig[]>([{ factor: "categoria", direction: "asc" }])
 
   const availableCategorias = useMemo(() => getUniqueCategorias(items), [items])
   const availableMarcas = useMemo(() => getUniqueMarcas(items), [items])
@@ -206,23 +205,13 @@ export function PriceGrid({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (orderRef.current && !orderRef.current.contains(event.target as Node)) {
-        setShowOrderModal(false)
-      }
-      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
-        setShowFilterModal(false)
-      }
-      // Close precio mode dropdown if clicking outside
       const target = event.target as HTMLElement
       if (!target.closest("[data-precio-dropdown]")) {
         setShowPrecioModeDropdown(false)
       }
     }
-
     document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
+    return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
   const getFullTitle = (item: Item | ItemVariant, isChild = false): string => {
@@ -479,24 +468,7 @@ export function PriceGrid({
           {/* Tab Header - sticky */}
           <div className="bg-slate-100 sticky top-0 z-10">
             <div className="grid grid-cols-32 h-9">
-            <div className="col-span-2 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]">
-              <div className="relative flex items-center justify-center">
-                {selectAllIndeterminate ? (
-                  <button
-                    onClick={handleSelectAll}
-                    className="flex items-center justify-center w-4 h-4 border border-primary bg-primary rounded-[4px] cursor-pointer"
-                  >
-                    <Minus className="w-3 h-3 text-primary-foreground" />
-                  </button>
-                ) : (
-                  <Checkbox
-                    checked={selectAllActive}
-                    onCheckedChange={handleSelectAll}
-                    className="cursor-pointer"
-                  />
-                )}
-              </div>
-            </div>
+            <div className="col-span-2 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]" />
             <div className="col-span-12 flex items-center px-4 border-r border-[rgba(202,213,227,0.61)]">
               <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Item</span>
             </div>
@@ -593,28 +565,6 @@ export function PriceGrid({
         </div>
         </div>
       </div>
-
-      {showOrderModal && (
-        <OrdenModalPrecios
-          onClose={() => setShowOrderModal(false)}
-          ref={orderRef}
-          sortPriorities={sortPriorities}
-          setSortPriorities={setSortPriorities}
-        />
-      )}
-
-      {showFilterModal && (
-        <FiltrosModalPrecios
-          onClose={() => setShowFilterModal(false)}
-          ref={filterRef}
-          activeFilters={activeFilters}
-          setActiveFilters={setActiveFilters}
-          availableCategorias={availableCategorias}
-          availableMarcas={availableMarcas}
-          availableProveedores={availableProveedores}
-          availableDepositos={availableDepositos}
-        />
-      )}
 
       {bulkModalType && (
         <BulkPriceModal
