@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect, useRef, useMemo, Fragment } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect, useRef, useMemo, Fragment, useCallback } from "react"
+import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { Sidebar } from "@/components/layout/sidebar"
 import { useSidebar } from "@/hooks/use-sidebar"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
@@ -19,11 +19,11 @@ import {
   Search,
   Plus,
   AlertTriangle,
-  BarChart3,
   X,
   Copy,
   Trash2,
   Receipt,
+  ExternalLink,
 } from "lucide-react"
 import type { OrdenDeCompra, EstadoOrdenDeCompra, VentaItem } from "@/lib/types"
 import { getCategoryImage } from "@/lib/utils/category-images"
@@ -39,6 +39,7 @@ import { downloadOrdenCompraPDF } from "@/lib/utils/generate-orden-compra-pdf"
 import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import {
   PERIOD_OPTIONS,
+  ACTIVE_PERIOD_KEYS,
   usePeriod,
   usePeriodRange,
   type PeriodKey,
@@ -72,20 +73,48 @@ function formatOrdenDateTime(dateStr: string): string {
 export default function OrdenesDeCompraPage() {
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const allCheckboxRef = useRef<HTMLInputElement>(null)
   const { ordenes, deleteOrden, addOrden, updateOrden, getNextOrderNumber } = useOrdenesDeCompra()
   const { addCompra } = useCompras()
   const { items } = useItems()
-  const { miNegocio } = useSettings()
+  const { miNegocio, dashboard } = useSettings()
 
   const { periodKey, customRange, setPeriodKey, setCustomRange } = usePeriod()
   const [periodOpen, setPeriodOpen] = useState(false)
   const [calendarOpen, setCalendarOpen] = useState(false)
   const range = usePeriodRange()
 
+  // Central URL param updater
+  const updateParam = useCallback((key: string, value: string | null) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (value === null || value === "") {
+      params.delete(key)
+    } else {
+      params.set(key, value)
+    }
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+  }, [router, pathname, searchParams])
+
+  // Period — ?periodo=
+  const periodParam = searchParams.get("periodo")
+  const noPeriod = periodParam === "ninguno" || periodParam === null
+
+  const defaultApplied = useRef(false)
+  useEffect(() => {
+    if (!defaultApplied.current && periodParam === null) {
+      defaultApplied.current = true
+      updateParam("periodo", dashboard.periodoDefault ?? "mes_en_curso")
+    } else if (periodParam !== null) {
+      defaultApplied.current = true
+    }
+  }, [periodParam, dashboard.periodoDefault, updateParam])
+
   const periodLabel = useMemo(() => {
+    if (noPeriod || !periodParam) return "Período"
     return PERIOD_OPTIONS.find((o) => o.key === periodKey)?.label ?? "Período"
-  }, [periodKey])
+  }, [periodKey, noPeriod, periodParam])
 
   const rangeLabel = useMemo(() => {
     const fmt = (d: Date) => d.toLocaleDateString("es-AR", { day: "numeric", month: "short" })
@@ -93,25 +122,66 @@ export default function OrdenesDeCompraPage() {
     return `${fmt(range.start)} — ${fmt(range.end)}`
   }, [range, periodKey])
 
+  const periodTagLabel = useMemo(() => {
+    if (noPeriod || !periodParam) return null
+    const cy = new Date().getFullYear()
+    const fmt = (d: Date, withYear: boolean) => {
+      const day = d.getDate()
+      const month = d.toLocaleDateString("es-AR", { month: "short" }).replace(".", "").toLowerCase()
+      return withYear ? `${day} ${month} ${d.getFullYear()}` : `${day} ${month}`
+    }
+    const bothCurrentYear = range.start.getFullYear() === cy && range.end.getFullYear() === cy
+    const withYear = !bothCurrentYear
+    if (periodKey === "hoy") return fmt(range.start, withYear)
+    return `${fmt(range.start, withYear)} - ${fmt(range.end, withYear)}`
+  }, [noPeriod, periodParam, periodKey, range])
+
+  // Sync ?periodo= param into shared period context
+  useEffect(() => {
+    if (!noPeriod && periodParam && periodParam !== "personalizado" && periodParam !== periodKey) {
+      setPeriodKey(periodParam as PeriodKey)
+    }
+  }, [periodParam, noPeriod])
+
+  const isActivePeriod = !noPeriod && periodParam !== null && ACTIVE_PERIOD_KEYS.includes(periodKey)
+
+  // Search — ?q=
+  const searchQuery = searchParams.get("q") ?? ""
+  const setSearchQuery = useCallback((val: string) => updateParam("q", val || null), [updateParam])
+
+  // Tab (widget filter) — ?tab=
+  const activeTab = (searchParams.get("tab") ?? "todas") as StatusTab
+  const setActiveTab = useCallback((val: StatusTab) => updateParam("tab", val === "todas" ? null : val), [updateParam])
+
+  // Filters — ?proveedor=
+  const filterProveedor = searchParams.get("proveedor") ?? ""
+  const setFilterProveedor = useCallback((val: string) => updateParam("proveedor", val || null), [updateParam])
+  const hasActiveFilters = !!filterProveedor
+
+  // Sort — ?sort=field_dir
+  const sortParam = searchParams.get("sort") ?? "fecha_desc"
+  const [sortField, sortDir] = sortParam.split("_") as ["fecha" | "importe", "asc" | "desc"]
+  const setSortField = useCallback((val: "fecha" | "importe") => {
+    const newParam = `${val}_${sortDir}`
+    updateParam("sort", newParam === "fecha_desc" ? null : newParam)
+  }, [updateParam, sortDir])
+  const setSortDir = useCallback((updater: ((prev: "asc" | "desc") => "asc" | "desc") | "asc" | "desc") => {
+    const newDir = typeof updater === "function" ? updater(sortDir) : updater
+    const newParam = `${sortField}_${newDir}`
+    updateParam("sort", newParam === "fecha_desc" ? null : newParam)
+  }, [updateParam, sortField, sortDir])
+
+  const [sortOpen, setSortOpen] = useState(false)
+  const [filterOpen, setFilterOpen] = useState(false)
+
   const [selectedOrdenes, setSelectedOrdenes] = useState<Set<string>>(new Set())
   const [openMoreMenu, setOpenMoreMenu] = useState<string | null>(null)
-  const [searchQuery, setSearchQuery] = useState("")
-
-  // Sort
-  const [sortField, setSortField] = useState<"fecha" | "precio">("fecha")
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc")
-
-  // Filters
-  const [filterOpen, setFilterOpen] = useState(false)
-  const [filterProveedor, setFilterProveedor] = useState("")
-  const [filterEstados, setFilterEstados] = useState<EstadoOrdenDeCompra[]>([])
-  const hasActiveFilters = !!filterProveedor || filterEstados.length > 0
 
   const [expandedOrdenes, setExpandedOrdenes] = useState<Set<string>>(new Set())
   const [viewingItem, setViewingItem] = useState<VentaItem | null>(null)
   const [viewingProveedorId, setViewingProveedorId] = useState<string | null>(null)
 
-  // Aceptar y llevar a compras modal (from list)
+  // Aceptar y llevar a compras modal
   const [aceptarTarget, setAceptarTarget] = useState<OrdenDeCompra | null>(null)
   const [costoDiffs, setCostoDiffs] = useState<{ sku: string; name: string; tags: string[]; savedCosto: number; newCosto: number }[]>([])
   const [selectedCostoSkus, setSelectedCostoSkus] = useState<Set<string>>(new Set())
@@ -119,11 +189,16 @@ export default function OrdenesDeCompraPage() {
   // Eliminar orden confirm modal
   const [eliminarTarget, setEliminarTarget] = useState<OrdenDeCompra | null>(null)
 
+  // Nueva orden modal
+  const [showNuevaOrdenModal, setShowNuevaOrdenModal] = useState(false)
+  const [nuevaOrdenProveedor, setNuevaOrdenProveedor] = useState("")
+  const proveedorInputRef = useRef<HTMLDivElement>(null)
+  const [proveedorDropdownOpen, setProveedorDropdownOpen] = useState(false)
+
   const computeCostoDiffs = (orden: OrdenDeCompra) => {
     const diffs: { sku: string; name: string; tags: string[]; savedCosto: number; newCosto: number }[] = []
     for (const item of orden.items) {
       const newCosto = item.unitPrice
-      // find matching item in catalog
       let savedCosto: number | null = null
       for (const catalogItem of items) {
         if (catalogItem.hasVariants && catalogItem.variants) {
@@ -172,7 +247,6 @@ export default function OrdenesDeCompraPage() {
 
   const handleAceptarOrden = () => {
     if (!aceptarTarget) return
-    // Update pricing for selected skus
     for (const diff of costoDiffs) {
       if (selectedCostoSkus.has(diff.sku)) {
         updatePricing(diff.sku, { costo: diff.newCosto })
@@ -187,15 +261,6 @@ export default function OrdenesDeCompraPage() {
     router.push(`/compras/compras/${newCompra.id}`)
   }
 
-  // Nueva orden modal
-  const [showNuevaOrdenModal, setShowNuevaOrdenModal] = useState(false)
-  const [nuevaOrdenProveedor, setNuevaOrdenProveedor] = useState("")
-  const proveedorInputRef = useRef<HTMLDivElement>(null)
-  const [proveedorDropdownOpen, setProveedorDropdownOpen] = useState(false)
-
-  // Tabs: default to "todas"
-  const [activeTab, setActiveTab] = useState<StatusTab>("todas")
-
   // Unique proveedores for filter dropdown
   const uniqueProveedores = useMemo(() => {
     const names = ordenes.map(o => o.proveedorNombre).filter(Boolean)
@@ -208,18 +273,42 @@ export default function OrdenesDeCompraPage() {
     return uniqueProveedores.filter(p => p.toLowerCase().includes(nuevaOrdenProveedor.toLowerCase()))
   }, [nuevaOrdenProveedor, uniqueProveedores])
 
+  // Helper: "1 de junio"
+  const fmtDay = (d: Date) => d.toLocaleDateString("es-AR", { day: "numeric", month: "long" })
+
+  // Widget subtitles
+  const subtitleCreadas = !noPeriod && periodParam
+    ? isActivePeriod
+      ? `Creadas desde el ${fmtDay(range.start)} hasta hoy`
+      : "Creadas en el período seleccionado"
+    : null
+
+  // Period-scoped ordenes filtered by creation date
+  const periodOrdenesByDate = useMemo(() => {
+    if (noPeriod) return ordenes
+    const rangeStart = range.start.getTime()
+    const rangeEnd = range.end.getTime()
+    return ordenes.filter(o => {
+      const t = new Date(o.fechaCreacion).getTime()
+      return t >= rangeStart && t <= rangeEnd
+    })
+  }, [ordenes, noPeriod, range])
+
   // Filtered + sorted list
   const filteredOrdenes = useMemo(() => {
+    const rangeStart = range.start.getTime()
+    const rangeEnd = range.end.getTime()
     const filtered = ordenes.filter(o => {
+      const oTime = new Date(o.fechaCreacion).getTime()
+      const matchesPeriod = noPeriod || (oTime >= rangeStart && oTime <= rangeEnd)
       const matchesTab =
         activeTab === "todas" ? true :
         activeTab === "borrador" ? o.estado === "borrador" :
         o.estado === "aceptada"
-      const q = searchQuery.toLowerCase()
+      const q = searchQuery.toLowerCase().trim()
       const matchesSearch = !q || o.id.toLowerCase().includes(q) || o.proveedorNombre.toLowerCase().includes(q)
       const matchesProveedor = !filterProveedor || o.proveedorNombre === filterProveedor
-      const matchesEstado = filterEstados.length === 0 || filterEstados.includes(o.estado)
-      return matchesTab && matchesSearch && matchesProveedor && matchesEstado
+      return matchesPeriod && matchesTab && matchesSearch && matchesProveedor
     })
     filtered.sort((a, b) => {
       let diff = 0
@@ -231,7 +320,7 @@ export default function OrdenesDeCompraPage() {
       return sortDir === "asc" ? diff : -diff
     })
     return filtered
-  }, [ordenes, activeTab, searchQuery, filterProveedor, filterEstados, sortField, sortDir])
+  }, [ordenes, range, noPeriod, activeTab, searchQuery, filterProveedor, sortField, sortDir, searchParams])
 
   const allSelected = selectedOrdenes.size === filteredOrdenes.length && filteredOrdenes.length > 0
   const someSelected = selectedOrdenes.size > 0 && selectedOrdenes.size < filteredOrdenes.length
@@ -275,10 +364,6 @@ export default function OrdenesDeCompraPage() {
     setExpandedOrdenes(next)
   }
 
-  const toggleFilterEstado = (estado: EstadoOrdenDeCompra) => {
-    setFilterEstados(prev => prev.includes(estado) ? prev.filter(e => e !== estado) : [...prev, estado])
-  }
-
   const handleCreateOrden = () => {
     if (!nuevaOrdenProveedor.trim()) return
     const newOrden = addOrden({
@@ -295,6 +380,12 @@ export default function OrdenesDeCompraPage() {
   }
 
   const breadcrumbs = [{ label: "Compras" }, { label: "Órdenes de Compra", href: "/compras/ordenes-de-compra" }]
+
+  const tabs: { id: StatusTab; label: string }[] = [
+    { id: "todas",    label: "Todas"       },
+    { id: "aceptada", label: "Aceptadas"   },
+    { id: "borrador", label: "En Borrador" },
+  ]
 
   return (
     <div className="min-h-screen bg-[rgb(243,242,238)]">
@@ -324,132 +415,292 @@ export default function OrdenesDeCompraPage() {
           </div>
 
           <main className="flex-1 flex flex-col overflow-hidden">
+            {/* Scroll container */}
             <div className="flex-1 overflow-y-auto bg-slate-50">
-              {/* Sticky hero */}
-              <div className="sticky top-0 z-30">
-                <div className="bg-slate-50/80 backdrop-blur-md">
-                  <div className="px-8 py-8">
-                    <div className="max-w-6xl mx-auto">
-                      <div className="flex items-start justify-between gap-6">
-                        <div className="min-w-0">
-                          <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
-                            Órdenes de Compra
-                          </h1>
-                          <div className="mt-2 flex items-center gap-3 flex-wrap">
-                            <OrdenesComprasPeriodSelector
-                              open={periodOpen}
-                              setOpen={setPeriodOpen}
-                              currentLabel={periodLabel}
-                              currentKey={periodKey}
-                              onSelect={(k) => {
-                                if (k === "personalizado") {
-                                  setPeriodOpen(false)
-                                  setCalendarOpen(true)
-                                  return
-                                }
-                                setPeriodKey(k)
-                                setCustomRange(null)
-                                setPeriodOpen(false)
-                              }}
-                            />
-                            <span className="text-sm text-slate-500 font-mono">{rangeLabel}</span>
-                            {calendarOpen && (
-                              <OrdenesComprasRangeCalendarDialog
-                                initialRange={customRange}
-                                onCancel={() => setCalendarOpen(false)}
-                                onApply={(start, end) => {
-                                  setCustomRange({ start, end })
-                                  setPeriodKey("personalizado")
-                                  setCalendarOpen(false)
-                                }}
-                              />
-                            )}
-                          </div>
-                        </div>
+
+              {/* Title row — scrolls away */}
+              <div className="px-8 pt-12 pb-8">
+                <div className="max-w-6xl mx-auto flex items-start justify-between gap-6">
+                  <div className="flex items-center gap-4">
+                    <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
+                      Órdenes de Compra
+                    </h1>
+                    <OrdenesComprasPeriodSelector
+                      open={periodOpen}
+                      setOpen={setPeriodOpen}
+                      currentLabel={periodLabel}
+                      currentKey={periodKey}
+                      noPeriod={noPeriod}
+                      isActivePeriod={isActivePeriod}
+                      onSelect={(k) => {
+                        if (k === ("ninguno" as PeriodKey)) {
+                          updateParam("periodo", "ninguno")
+                          setPeriodOpen(false)
+                          return
+                        }
+                        if (k === "personalizado") {
+                          updateParam("periodo", "personalizado")
+                          setPeriodOpen(false)
+                          setCalendarOpen(true)
+                          return
+                        }
+                        updateParam("periodo", k)
+                        setPeriodKey(k)
+                        setCustomRange(null)
+                        setPeriodOpen(false)
+                      }}
+                      rangeLabel={rangeLabel}
+                      calendarOpen={calendarOpen}
+                      setCalendarOpen={setCalendarOpen}
+                      customRange={customRange}
+                      setCustomRange={setCustomRange}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => router.push("/compras/ordenes-de-compra/nueva")}
+                    className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer mt-1"
+                  >
+                    <Plus className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
+                    Nueva Orden
+                  </button>
+                </div>
+              </div>
+
+              {/* Widgets */}
+              <div className="px-8 pb-3">
+                <div className="max-w-6xl mx-auto">
+                  {(() => {
+                    const countAceptadas = periodOrdenesByDate.filter(o => o.estado === "aceptada").length
+                    const countBorrador  = periodOrdenesByDate.filter(o => o.estado === "borrador").length
+
+                    const widgetCls = (active: boolean, disabled: boolean, activeColor: string, hoverColor: string) => {
+                      if (disabled) return "border rounded-xl px-6 py-5 shadow-sm text-left border-slate-100 bg-slate-50 opacity-40 cursor-not-allowed w-full"
+                      if (active) return `border rounded-xl px-6 py-5 shadow-sm text-left transition-all cursor-pointer w-full ${activeColor}`
+                      return `border rounded-xl px-6 py-5 shadow-sm text-left transition-all cursor-pointer w-full bg-white border-slate-200/80 ${hoverColor}`
+                    }
+
+                    const toggle = (tab: StatusTab, count: number) => {
+                      if (count === 0) return
+                      setActiveTab(activeTab === tab ? "todas" : tab)
+                    }
+
+                    return (
+                      <div className="grid grid-cols-2 gap-3 mb-5">
+                        {/* Aceptadas */}
                         <button
+                          key="aceptadas"
                           type="button"
-                          onClick={() => router.push("/compras/ordenes-de-compra/nueva")}
-                          className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer mt-1"
+                          onClick={() => toggle("aceptada", countAceptadas)}
+                          className={widgetCls(activeTab === "aceptada", countAceptadas === 0, "bg-emerald-50 border-emerald-200", "hover:border-emerald-200 hover:shadow-md")}
                         >
-                          <Plus className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
-                          Nueva Orden
+                          <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center mb-4 shadow-sm border border-slate-100">
+                            <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                          </div>
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{countAceptadas}</span>
+                            <span className="text-base font-medium text-emerald-500">Aceptadas</span>
+                          </div>
+                          {subtitleCreadas && (
+                            <p className="mt-2 text-xs text-slate-400 leading-snug">{subtitleCreadas}</p>
+                          )}
                         </button>
+
+                        {/* En Borrador */}
+                        <button
+                          key="borrador"
+                          type="button"
+                          onClick={() => toggle("borrador", countBorrador)}
+                          className={widgetCls(activeTab === "borrador", countBorrador === 0, "bg-slate-100 border-slate-300", "hover:border-slate-300 hover:shadow-md")}
+                        >
+                          <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center mb-4 shadow-sm border border-slate-100">
+                            <Clock className="w-5 h-5 text-slate-500" />
+                          </div>
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{countBorrador}</span>
+                            <span className="text-base font-medium text-slate-500">En Borrador</span>
+                          </div>
+                          {subtitleCreadas && (
+                            <p className="mt-2 text-xs text-slate-400 leading-snug">{subtitleCreadas}</p>
+                          )}
+                        </button>
+                      </div>
+                    )
+                  })()}
+                </div>
+              </div>
+
+              {/* Search/filter bar + bulk actions — sticky */}
+              <div className="sticky top-0 z-20">
+
+                {/* Row 1: Search + tags + Filtrar/Ordenar */}
+                <div className="relative z-10 bg-slate-50/95 backdrop-blur-sm px-8 py-2">
+                  <div className="max-w-6xl mx-auto">
+                    <div className="flex items-center gap-2">
+                      {/* Search input */}
+                      <div className="flex items-center h-9 border border-[rgba(228,230,235,0.6)] shadow-sm rounded-md min-w-0 overflow-hidden bg-white">
+                        <div className="flex items-center gap-2 px-3 h-full w-64 bg-white">
+                          <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Buscar"
+                            className="flex-1 bg-transparent text-xs text-slate-700 placeholder:text-slate-400 outline-none"
+                          />
+                          {searchQuery && (
+                            <button
+                              type="button"
+                              onClick={() => setSearchQuery("")}
+                              aria-label="Borrar búsqueda"
+                              className="flex items-center justify-center w-4 h-4 rounded-full hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
+                            >
+                              <X className="w-3 h-3 text-slate-400" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {calendarOpen && (
+                        <OrdenesComprasRangeCalendarDialog
+                          initialRange={customRange}
+                          onCancel={() => setCalendarOpen(false)}
+                          onApply={(start, end) => {
+                            setCustomRange({ start, end })
+                            setPeriodKey("personalizado")
+                            setCalendarOpen(false)
+                          }}
+                        />
+                      )}
+
+                      {/* Active filter tags */}
+                      {(periodTagLabel || activeTab !== "todas" || filterProveedor) && (
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {/* Período tag */}
+                          {periodTagLabel && (
+                            <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
+                              {periodTagLabel}
+                              <button
+                                type="button"
+                                onClick={() => updateParam("periodo", "ninguno")}
+                                aria-label="Quitar filtro de período"
+                                className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+                              >
+                                <X className="w-2.5 h-2.5 text-slate-400" />
+                              </button>
+                            </span>
+                          )}
+                          {/* Widget tab tag */}
+                          {activeTab !== "todas" && (
+                            <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
+                              {tabs.find(t => t.id === activeTab)?.label}
+                              <button
+                                type="button"
+                                onClick={() => setActiveTab("todas")}
+                                aria-label="Quitar filtro de estado"
+                                className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+                              >
+                                <X className="w-2.5 h-2.5 text-slate-400" />
+                              </button>
+                            </span>
+                          )}
+                          {/* Proveedor tag */}
+                          {filterProveedor && (
+                            <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
+                              {filterProveedor}
+                              <button
+                                type="button"
+                                onClick={() => setFilterProveedor("")}
+                                aria-label="Quitar filtro de proveedor"
+                                className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+                              >
+                                <X className="w-2.5 h-2.5 text-slate-400" />
+                              </button>
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Filtrar / Ordenar + results count — pushed right */}
+                      <div className="ml-auto flex items-center gap-2">
+                        {/* Filtrar */}
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => { setFilterOpen(!filterOpen); setSortOpen(false) }}
+                            className={`h-9 text-xs transition-colors border shadow-sm gap-1.5 shrink-0 px-3 rounded-md flex items-center cursor-pointer ${
+                              hasActiveFilters
+                                ? "border-blue-400 text-blue-600 bg-blue-50"
+                                : "border-[rgba(228,230,235,0.6)] bg-white hover:bg-slate-50"
+                            }`}
+                          >
+                            <ListFilter className="w-3.5 h-3.5" />
+                            <span>Filtrar</span>
+                          </button>
+                          {filterOpen && (
+                            <>
+                              <div className="fixed inset-0 z-[90]" onClick={() => setFilterOpen(false)} />
+                              <div className="absolute top-full right-0 mt-1 z-[100] bg-white border border-slate-200 rounded-lg shadow-lg w-60 p-3 space-y-3">
+                                <div>
+                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Proveedor</label>
+                                  <select
+                                    value={filterProveedor}
+                                    onChange={(e) => setFilterProveedor(e.target.value)}
+                                    className="w-full mt-1 px-2 py-1.5 text-xs border border-slate-200 rounded-md focus:outline-none focus:border-slate-400 bg-white"
+                                  >
+                                    <option value="">Todos</option>
+                                    {uniqueProveedores.map(p => <option key={p} value={p}>{p}</option>)}
+                                  </select>
+                                </div>
+                                {hasActiveFilters && (
+                                  <button
+                                    type="button"
+                                    onClick={() => { setFilterProveedor("") }}
+                                    className="w-full text-xs text-slate-500 hover:text-slate-700 py-1 text-center cursor-pointer"
+                                  >
+                                    Limpiar filtros
+                                  </button>
+                                )}
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Ordenar */}
+                        <div className="flex items-center border border-[rgba(228,230,235,0.6)] shadow-sm rounded-md overflow-hidden bg-white h-9">
+                          <button
+                            type="button"
+                            onClick={() => setSortDir(d => d === "asc" ? "desc" : "asc")}
+                            title={sortDir === "asc" ? "Ascendente" : "Descendente"}
+                            className="px-2.5 h-full hover:bg-slate-50 transition-colors border-r border-[rgba(228,230,235,0.6)] cursor-pointer flex items-center"
+                          >
+                            <ArrowUpDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${sortDir === "desc" ? "rotate-180" : ""}`} />
+                          </button>
+                          <select
+                            value={sortField}
+                            onChange={(e) => setSortField(e.target.value as "fecha" | "importe")}
+                            className="appearance-none pl-2.5 pr-2.5 text-xs bg-transparent focus:outline-none cursor-pointer text-slate-700 h-full w-auto"
+                          >
+                            <option value="fecha">Fecha</option>
+                            <option value="importe">Importe</option>
+                          </select>
+                        </div>
+
+                        {/* Divider + results count */}
+                        <div className="w-px h-5 bg-slate-200 shrink-0" />
+                        <span className="text-xs text-slate-500 whitespace-nowrap tabular-nums">
+                          {filteredOrdenes.length} {filteredOrdenes.length === 1 ? "orden" : "órdenes"}
+                        </span>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="px-8 pb-8 mt-2">
-                <div className="max-w-6xl mx-auto">
-
-                  {/* Widgets */}
-                  {(() => {
-                    const countAceptadas = ordenes.filter(o => o.estado === "aceptada").length
-                    const countBorrador = ordenes.filter(o => o.estado === "borrador").length
-
-                    const widgetCls = (active: boolean, disabled: boolean, activeColor: string, hoverColor: string) => {
-                      if (disabled) return "border rounded-xl px-5 py-4 shadow-sm text-left border-slate-100 bg-slate-50 opacity-40 cursor-not-allowed"
-                      if (active) return `border rounded-xl px-5 py-4 shadow-sm text-left transition-all cursor-pointer ${activeColor}`
-                      return `border rounded-xl px-5 py-4 shadow-sm text-left transition-all cursor-pointer bg-white border-slate-200/80 ${hoverColor}`
-                    }
-
-                    return (
-                      <div className="grid grid-cols-3 gap-3 mb-5">
-                        {/* Totales */}
-                        <button
-                          type="button"
-                          onClick={() => setActiveTab("todas")}
-                          className={widgetCls(activeTab === "todas", false, "bg-blue-50 border-blue-200", "hover:border-blue-200 hover:shadow-md")}
-                        >
-                          <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center mb-3 shadow-sm border border-slate-100">
-                            <BarChart3 className="w-4 h-4 text-blue-500" />
-                          </div>
-                          <div className="flex items-baseline gap-1.5 min-w-0 flex-wrap">
-                            <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{ordenes.length}</p>
-                            <p className="text-sm font-medium text-blue-500 truncate">órdenes totales</p>
-                          </div>
-                        </button>
-
-                        {/* Aceptadas */}
-                        <button
-                          type="button"
-                          onClick={() => countAceptadas > 0 && setActiveTab("aceptada")}
-                          className={widgetCls(activeTab === "aceptada", countAceptadas === 0, "bg-emerald-50 border-emerald-200", "hover:border-emerald-200 hover:shadow-md")}
-                        >
-                          <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center mb-3 shadow-sm border border-slate-100">
-                            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                          </div>
-                          <div className="flex items-baseline gap-1.5 min-w-0 flex-wrap">
-                            <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{countAceptadas}</p>
-                            <p className="text-sm font-medium text-emerald-500 truncate">órdenes aceptadas</p>
-                          </div>
-                        </button>
-
-                        {/* En borrador */}
-                        <button
-                          type="button"
-                          onClick={() => countBorrador > 0 && setActiveTab("borrador")}
-                          className={widgetCls(activeTab === "borrador", countBorrador === 0, "bg-slate-100 border-slate-300", "hover:border-slate-300 hover:shadow-md")}
-                        >
-                          <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center mb-3 shadow-sm border border-slate-100">
-                            <Clock className="w-4 h-4 text-slate-400" />
-                          </div>
-                          <div className="flex items-baseline gap-1.5 min-w-0 flex-wrap">
-                            <p className="text-2xl font-bold text-slate-900 leading-none tabular-nums">{countBorrador}</p>
-                            <p className="text-sm font-medium text-slate-500 truncate">órdenes en borrador</p>
-                          </div>
-                        </button>
-
-
-                      </div>
-                    )
-                  })()}
-
-                  {/* Combined header bar */}
-                  <div className="mb-2 flex items-center gap-2">
-                    <div className="flex items-center h-9 border border-[rgba(228,230,235,0.6)] shadow-sm rounded-md min-w-0 overflow-hidden bg-white">
-                      <div className="flex items-center justify-center w-[52px] shrink-0 h-full bg-white">
+                {/* Row 2: Bulk actions */}
+                <div className="px-8">
+                  <div className="max-w-6xl mx-auto bg-white border border-slate-200/80">
+                    <div className="flex items-center gap-2 h-9">
+                      <div className="flex items-center justify-center w-[4%] min-w-[40px] shrink-0">
                         <input
                           ref={allCheckboxRef}
                           type="checkbox"
@@ -459,125 +710,39 @@ export default function OrdenesDeCompraPage() {
                           className="w-4 h-4 rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                         />
                       </div>
-                      <div className="w-px h-full bg-slate-200/80 shrink-0" />
-                      <div className="flex items-center gap-2 px-3 h-full w-64 bg-white">
-                        <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <input
-                          type="text"
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          placeholder="Buscar"
-                          className="flex-1 bg-transparent text-xs text-slate-700 placeholder:text-slate-400 outline-none"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Selection count + bulk actions */}
-                    {selectedOrdenes.size > 0 && (
-                      <div className="flex items-center gap-2.5 h-9">
-                        <div className="w-px h-5 bg-slate-300" />
-                        <span className="text-xs text-slate-500 whitespace-nowrap">
-                          {selectedOrdenes.size} seleccionada{selectedOrdenes.size !== 1 ? "s" : ""}
+                      <div className="w-px h-5 bg-slate-200 shrink-0" />
+                      {selectedOrdenes.size === 0 ? (
+                        <span className="text-xs text-slate-400 select-none">
+                          Seleccioná órdenes para accionar masivamente
                         </span>
-                        <div className="w-px h-5 bg-slate-200" />
-                        <button
-                          type="button"
-                          className="h-8 flex items-center gap-1.5 px-3 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-md hover:bg-slate-50 hover:border-slate-300 shadow-sm transition-colors"
-                          onClick={() => {
-                            const selected = ordenes.filter(o => selectedOrdenes.has(o.id))
-                            downloadOrdenCompraPDF(selected, miNegocio)
-                          }}
-                        >
-                          <FileDown className="w-3.5 h-3.5 text-slate-400" />
-                          Descargar PDF
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Filtrar / Ordenar */}
-                    <div className="ml-auto flex items-center gap-2">
-                      {/* Filtrar */}
-                      <div className="relative">
-                        <button
-                          type="button"
-                          onClick={() => setFilterOpen(!filterOpen)}
-                          className={`h-9 text-xs transition-colors border shadow-sm gap-1.5 shrink-0 px-3 rounded-md flex items-center cursor-pointer ${
-                            hasActiveFilters
-                              ? "border-blue-400 text-blue-600 bg-blue-50"
-                              : "border-[rgba(228,230,235,0.6)] bg-white hover:bg-slate-50"
-                          }`}
-                        >
-                          <ListFilter className="w-3.5 h-3.5" />
-                          <span>Filtrar</span>
-                        </button>
-                        {filterOpen && (
-                          <>
-                            <div className="fixed inset-0 z-10" onClick={() => setFilterOpen(false)} />
-                            <div className="absolute top-full right-0 mt-1 z-20 bg-white border border-slate-200 rounded-lg shadow-lg w-60 p-3 space-y-3">
-                              {/* Proveedor */}
-                              <div>
-                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Proveedor</label>
-                                <select
-                                  value={filterProveedor}
-                                  onChange={(e) => setFilterProveedor(e.target.value)}
-                                  className="w-full mt-1 px-2 py-1.5 text-xs border border-slate-200 rounded-md focus:outline-none focus:border-slate-400 bg-white"
-                                >
-                                  <option value="">Todos</option>
-                                  {uniqueProveedores.map(p => <option key={p} value={p}>{p}</option>)}
-                                </select>
-                              </div>
-                              {/* Estado */}
-                              <div className="space-y-2">
-                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Estado</label>
-                                {(["borrador", "aceptada"] as EstadoOrdenDeCompra[]).map(estado => (
-                                  <label key={estado} className="flex items-center gap-2 cursor-pointer">
-                                    <input
-                                      type="checkbox"
-                                      checked={filterEstados.includes(estado)}
-                                      onChange={() => toggleFilterEstado(estado)}
-                                      className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                    />
-                                    <span className="text-xs text-slate-700">{estadoConfig[estado].label}</span>
-                                  </label>
-                                ))}
-                              </div>
-                              {hasActiveFilters && (
-                                <button
-                                  type="button"
-                                  onClick={() => { setFilterProveedor(""); setFilterEstados([]) }}
-                                  className="w-full text-xs text-slate-500 hover:text-slate-700 py-1 text-center cursor-pointer"
-                                >
-                                  Limpiar filtros
-                                </button>
-                              )}
-                            </div>
-                          </>
-                        )}
-                      </div>
-
-                      {/* Ordenar */}
-                      <div className="flex items-center border border-[rgba(228,230,235,0.6)] shadow-sm rounded-md overflow-hidden bg-white h-9">
-                        <button
-                          type="button"
-                          onClick={() => setSortDir(d => d === "asc" ? "desc" : "asc")}
-                          title={sortDir === "asc" ? "Ascendente" : "Descendente"}
-                          className="px-2.5 h-full hover:bg-slate-50 transition-colors border-r border-[rgba(228,230,235,0.6)] cursor-pointer flex items-center"
-                        >
-                          <ArrowUpDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${sortDir === "desc" ? "rotate-180" : ""}`} />
-                        </button>
-                        <select
-                          value={sortField}
-                          onChange={(e) => setSortField(e.target.value as "fecha" | "precio")}
-                          className="appearance-none pl-2.5 pr-6 text-xs bg-transparent focus:outline-none cursor-pointer text-slate-700 h-full"
-                        >
-                          <option value="fecha">Fecha</option>
-                          <option value="precio">Importe</option>
-                        </select>
-                      </div>
+                      ) : (
+                        <>
+                          <span className="text-xs text-slate-600 whitespace-nowrap tabular-nums">
+                            {selectedOrdenes.size} seleccionada{selectedOrdenes.size !== 1 ? "s" : ""}
+                          </span>
+                          <div className="w-px h-5 bg-slate-200 shrink-0" />
+                          <button
+                            type="button"
+                            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+                            onClick={() => {
+                              const selected = ordenes.filter(o => selectedOrdenes.has(o.id))
+                              downloadOrdenCompraPDF(selected, miNegocio)
+                            }}
+                          >
+                            <FileDown className="w-3.5 h-3.5 text-slate-400" />
+                            Descargar PDF
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
+                </div>
 
-                  {/* Rows */}
+              </div>{/* /sticky */}
+
+              {/* Rows */}
+              <div className="px-8 pt-2 pb-8">
+                <div className="max-w-6xl mx-auto">
                   <div className="flex flex-col gap-2">
                     {filteredOrdenes.length === 0 && (
                       <div className="flex flex-col items-center justify-center py-16 text-slate-400">
@@ -624,20 +789,19 @@ export default function OrdenesDeCompraPage() {
                                 {formatOrdenDateTime(orden.fechaCreacion)}
                               </span>
                             </div>
-                            {/* Origen / Ver venta asociada */}
-                            <div className="col-span-42 flex items-center justify-start px-3">
+                            {/* Ver compra relacionada */}
+                            <div className="col-span-54 flex items-center px-3">
                               {orden.estado === "aceptada" && orden.compraId && (
                                 <button
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); router.push(`/compras/compras/${orden.compraId}`) }}
-                                  className="text-sm text-slate-500 underline underline-offset-2 hover:text-slate-700 transition-colors cursor-pointer"
+                                  className="flex items-center gap-1.5 text-sm text-slate-500 underline underline-offset-2 hover:text-slate-700 transition-colors cursor-pointer"
                                 >
+                                  <ExternalLink className="w-3.5 h-3.5 shrink-0" />
                                   Ver compra relacionada
                                 </button>
                               )}
                             </div>
-                            {/* Spacer */}
-                            <div className="col-span-12" />
                             {/* Proveedor pill */}
                             <div className="col-span-14 flex items-center justify-end pr-3 border-r border-slate-200/70" onClick={(e) => e.stopPropagation()}>
                               {(() => {
@@ -841,7 +1005,7 @@ export default function OrdenesDeCompraPage() {
                                   return (
                                     <Fragment key={`${orden.id}-exp-${idx}`}>
                                       <div className="col-span-4" />
-                                      <div className={`col-span-32 bg-slate-50 border-t border-slate-200/60 ${isLast ? "rounded-bl-md" : ""}`}>
+                                      <div className={`col-span-32 bg-slate-50 border-t border-slate-200/60`}>
                                         <div
                                           className="w-full px-3 py-2 flex items-start gap-3 rounded hover:bg-slate-100/70 transition-colors cursor-pointer"
                                           onClick={(e) => { e.stopPropagation(); setViewingItem(item as unknown as VentaItem) }}
@@ -876,7 +1040,7 @@ export default function OrdenesDeCompraPage() {
                                       <div className="col-span-16 bg-slate-50 px-3 py-2 border-t border-slate-200/60 flex items-center">
                                         <PrecioCell item={item} />
                                       </div>
-                                      <div className={`col-span-24 bg-slate-50 border-t border-slate-200/60 ${isLast ? "rounded-br-md" : ""}`} />
+                                      <div className={`col-span-24 bg-slate-50 border-t border-slate-200/60`} />
                                       <div className="col-span-4" />
                                     </Fragment>
                                   )
@@ -912,7 +1076,6 @@ export default function OrdenesDeCompraPage() {
               </p>
             </div>
 
-            {/* Costo diffs section */}
             {costoDiffs.length > 0 && (
               <div className="px-5 pt-4">
                 <div className="border border-amber-200 rounded-xl overflow-hidden">
@@ -1038,84 +1201,6 @@ export default function OrdenesDeCompraPage() {
         </div>
       )}
 
-      {/* Nueva Orden Modal */}
-      {showNuevaOrdenModal && (
-        <div className="fixed inset-0 z-[100010] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
-            <div className="px-6 pt-6 pb-4 border-b border-slate-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg font-semibold text-slate-900">Nueva Orden de Compra</h2>
-                  <p className="text-sm text-slate-500 mt-0.5">ID: <span className="font-medium text-slate-700">ODC-{getNextOrderNumber()}</span></p>
-                </div>
-                <button
-                  onClick={() => { setShowNuevaOrdenModal(false); setNuevaOrdenProveedor(""); setProveedorDropdownOpen(false) }}
-                  className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
-                >
-                  <X className="w-5 h-5 text-slate-500" />
-                </button>
-              </div>
-            </div>
-            <div className="px-6 py-5 min-h-[200px]">
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Proveedor</label>
-              <div className="relative" ref={proveedorInputRef}>
-                <input
-                  type="text"
-                  value={nuevaOrdenProveedor}
-                  onChange={(e) => { setNuevaOrdenProveedor(e.target.value); setProveedorDropdownOpen(true) }}
-                  onFocus={() => setProveedorDropdownOpen(true)}
-                  placeholder="Buscar o escribir proveedor..."
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400/30 focus:border-slate-400 text-sm"
-                />
-                <button
-                  onClick={() => setProveedorDropdownOpen(!proveedorDropdownOpen)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-100 rounded"
-                >
-                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${proveedorDropdownOpen ? "rotate-180" : ""}`} />
-                </button>
-                {proveedorDropdownOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto z-10">
-                    {filteredProveedoresInput.length > 0 ? (
-                      filteredProveedoresInput.map((p) => (
-                        <button
-                          key={p}
-                          onClick={() => { setNuevaOrdenProveedor(p); setProveedorDropdownOpen(false) }}
-                          className={`w-full px-4 py-2 text-left text-sm hover:bg-slate-50 transition-colors ${nuevaOrdenProveedor === p ? "bg-slate-50 text-slate-900 font-medium" : "text-slate-700"}`}
-                        >
-                          {p}
-                        </button>
-                      ))
-                    ) : (
-                      <div className="px-4 py-3 text-sm text-slate-500">
-                        {nuevaOrdenProveedor
-                          ? <span>Crear orden con: <span className="font-medium text-slate-700">&quot;{nuevaOrdenProveedor}&quot;</span></span>
-                          : <span>No hay proveedores</span>
-                        }
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center justify-end gap-2 px-6 pb-6">
-              <button
-                onClick={() => { setShowNuevaOrdenModal(false); setNuevaOrdenProveedor(""); setProveedorDropdownOpen(false) }}
-                className="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleCreateOrden}
-                disabled={!nuevaOrdenProveedor.trim()}
-                className="px-5 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Crear Orden
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {viewingItem && (
         <VentaItemDetailModal ventaItem={viewingItem} onClose={() => setViewingItem(null)} />
       )}
@@ -1133,35 +1218,108 @@ function OrdenesComprasPeriodSelector({
   setOpen,
   currentLabel,
   currentKey,
+  noPeriod,
+  isActivePeriod,
   onSelect,
+  rangeLabel,
+  calendarOpen,
+  setCalendarOpen,
+  customRange,
+  setCustomRange,
 }: {
   open: boolean
   setOpen: (v: boolean) => void
   currentLabel: string
   currentKey: PeriodKey
+  noPeriod: boolean
+  isActivePeriod: boolean
   onSelect: (k: PeriodKey) => void
+  rangeLabel: string
+  calendarOpen: boolean
+  setCalendarOpen: (v: boolean) => void
+  customRange: { start: Date; end: Date } | null
+  setCustomRange: (r: { start: Date; end: Date } | null) => void
 }) {
+  const activePeriodKeys: PeriodKey[] = ["hoy", "mes_en_curso", "ano_en_curso"]
+  const periodicalKeys: PeriodKey[] = ["7d", "30d", "ultimo_ano", "personalizado"]
+  const activeOptions = PERIOD_OPTIONS.filter(o => activePeriodKeys.includes(o.key))
+  const periodicalOptions = PERIOD_OPTIONS.filter(o => periodicalKeys.includes(o.key))
+
   return (
     <div className="relative">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200 bg-white hover:border-slate-300 transition-colors text-sm font-medium text-slate-700 cursor-pointer"
+        className={`flex items-center gap-2 px-3 rounded-full border bg-white hover:border-slate-300 transition-colors cursor-pointer ${
+          noPeriod ? "border-slate-200 text-slate-400 py-1.5" : "border-slate-300 text-slate-700 py-1"
+        }`}
       >
-        <span>{currentLabel}</span>
+        <div className="flex flex-col items-start">
+          {!noPeriod && (
+            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none mb-0.5">Período</span>
+          )}
+          <div className="flex items-center gap-1.5">
+            {isActivePeriod && (
+              <span className="relative flex h-2 w-2 flex-shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+            )}
+            <span className={noPeriod ? "text-sm font-medium" : "text-sm font-semibold text-slate-800"}>{currentLabel}</span>
+          </div>
+        </div>
         <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
         <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden z-20 animate-in fade-in-0 slide-in-from-top-1 duration-150">
-            {PERIOD_OPTIONS.map((opt) => (
+          <div className="fixed inset-0 z-[90]" onClick={() => setOpen(false)} />
+          <div className="absolute top-full left-0 mt-1 w-52 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden z-[100] animate-in fade-in-0 slide-in-from-top-1 duration-150">
+            {/* Ninguno */}
+            <button
+              type="button"
+              onClick={() => onSelect("ninguno" as PeriodKey)}
+              className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer ${
+                noPeriod ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"
+              }`}
+            >
+              Ninguno
+            </button>
+            {/* Active group */}
+            <div className="px-4 pt-2 pb-0.5">
+              <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">En curso</span>
+            </div>
+            {activeOptions.map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => onSelect(opt.key)}
+                className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer flex items-center justify-between ${
+                  !noPeriod && currentKey === opt.key
+                    ? "bg-slate-900 text-white"
+                    : "text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                <span>{opt.label}</span>
+                {!noPeriod && currentKey === opt.key && (
+                  <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
+                  </span>
+                )}
+              </button>
+            ))}
+            {/* Periodical group */}
+            <div className="mx-4 my-1 h-px bg-slate-100" />
+            <div className="px-4 pt-1 pb-0.5">
+              <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Período fijo</span>
+            </div>
+            {periodicalOptions.map((opt) => (
               <button
                 key={opt.key}
                 type="button"
                 onClick={() => onSelect(opt.key)}
                 className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer ${
-                  currentKey === opt.key
+                  !noPeriod && currentKey === opt.key
                     ? "bg-slate-900 text-white"
                     : "text-slate-700 hover:bg-slate-50"
                 }`}
