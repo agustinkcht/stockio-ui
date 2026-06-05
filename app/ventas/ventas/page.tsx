@@ -799,8 +799,9 @@ export default function VentasPage() {
                 <div className="max-w-6xl mx-auto">
               <div className="flex flex-col gap-2">
                 {filteredVentas.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-16 text-slate-400">
-                    <p className="text-sm">No hay ventas para mostrar</p>
+                  <div className="flex flex-col items-center justify-center py-24 gap-2 text-slate-400">
+                    <p className="text-xl font-medium text-slate-500">No hay ventas para mostrar</p>
+                    <p className="text-sm text-slate-400">Probá ajustando los filtros o el período seleccionado</p>
                   </div>
                 )}
                 {filteredVentas.map((venta) => {
