@@ -218,7 +218,9 @@ export default function ComprasPage() {
     const rangeEnd   = range.end.getTime()
     const filtered = compras.filter(c => {
       const compraTime = new Date(c.fecha + "T12:00:00").getTime()
-      const matchesPeriod = noPeriod || (compraTime >= rangeStart && compraTime <= rangeEnd)
+      // en_curso items are always shown when on an active period ("sin importar su fecha de creación")
+      const isEnCurso = c.estado === "en_curso"
+      const matchesPeriod = noPeriod || (isActivePeriod && isEnCurso) || (compraTime >= rangeStart && compraTime <= rangeEnd)
       const matchesTab =
         activeTab === "todas"     ? true :
         activeTab === "finalizada" ? c.estado === "finalizada" :
@@ -241,7 +243,7 @@ export default function ComprasPage() {
       return sortDir === "asc" ? diff : -diff
     })
     return filtered
-  }, [compras, activeTab, searchQuery, filterProveedor, filterPendientePago, filterPendienteRecepcion, sortField, sortDir, noPeriod, range])
+  }, [compras, activeTab, searchQuery, filterProveedor, filterPendientePago, filterPendienteRecepcion, sortField, sortDir, noPeriod, isActivePeriod, range])
 
   const allSelected = selectedCompras.size === filteredCompras.length && filteredCompras.length > 0
   const someSelected = selectedCompras.size > 0 && selectedCompras.size < filteredCompras.length

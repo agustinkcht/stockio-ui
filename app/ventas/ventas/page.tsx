@@ -270,7 +270,9 @@ export default function VentasPage() {
     const rangeEnd   = range.end.getTime()
     const filtered = ventas.filter(v => {
       const ventaTime = new Date(v.fecha + "T12:00:00").getTime()
-      const matchesPeriod = noPeriod || (ventaTime >= rangeStart && ventaTime <= rangeEnd)
+      // en_curso items are always shown when on an active period ("sin importar su fecha de creación")
+      const isEnCurso = v.estado === "en_curso"
+      const matchesPeriod = noPeriod || (isActivePeriod && isEnCurso) || (ventaTime >= rangeStart && ventaTime <= rangeEnd)
       const matchesTab =
         activeTab === "todas" ? true :
         activeTab === "en_curso" ? v.estado === "en_curso" :
@@ -313,7 +315,7 @@ export default function VentasPage() {
       return sortDir === "asc" ? diff : -diff
     })
     return filtered
-  }, [ventas, range, noPeriod, activeTab, searchQuery, filterCliente, filterPendienteCobro, filterPendienteEntrega, sortField, sortDir, searchParams])
+  }, [ventas, range, noPeriod, isActivePeriod, activeTab, searchQuery, filterCliente, filterPendienteCobro, filterPendienteEntrega, sortField, sortDir, searchParams])
 
   const allSelected = selectedVentas.size === filteredVentas.length && filteredVentas.length > 0
   const someSelected = selectedVentas.size > 0 && selectedVentas.size < filteredVentas.length
@@ -1428,7 +1430,7 @@ export default function VentasPage() {
   )
 }
 
-/* ─── Period Selector ───────────────────────────────────────────────────���───── */
+/* ─── Period Selector ─────────────────────────────────────────���─────────���───── */
 
 function VentasPeriodSelector({
   open,
