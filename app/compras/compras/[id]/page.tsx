@@ -339,11 +339,8 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
     : 0
   const activeEditTotal = activeEditSubtotal - globalDiscountAmount + (showEnvio ? envioAmount : 0) + customCharges.reduce((s, c) => s + c.value, 0)
 
-  // Modal items — filtered to the compra's proveedor, same as ordenes de compra detail
-  const allModalItems = useMemo(
-    () => catalogItems.filter((item: any) => compra?.proveedorNombre ? item.proveedor === compra.proveedorNombre : true),
-    [catalogItems, compra?.proveedorNombre]
-  )
+  // Modal items — always use live catalog so stock/prices are up-to-date
+  const allModalItems = catalogItems
 
   const uniqueModalCategorias = useMemo(() => {
     const cats = new Set<string>()
@@ -521,7 +518,7 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
     }
   }
 
-  // ── Handlers ─────────────────�����──────────────���─────────────────────────────
+  // ── Handlers ─────────────────���──────────────���─────────────────────────────
 
   const handleConfirmPago = () => {
     if (!compra) return
