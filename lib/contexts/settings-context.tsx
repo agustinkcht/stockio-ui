@@ -90,7 +90,7 @@ const defaultSettings: { miNegocio: MiNegocioSettings; precios: PreciosSettings;
   },
   dashboard: {
     mesEnCursoStartDay: 1, // Default: 1st of month to last day of month
-    periodoDefault: "mes_en_curso" as PeriodKey,
+    periodoDefault: "ninguno" as PeriodKey,
   },
 }
 

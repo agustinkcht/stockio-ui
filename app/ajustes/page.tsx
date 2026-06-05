@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
-import { Settings, DollarSign, ShoppingCart, Package, FolderOpen, Building2, Camera, LayoutDashboard, ChevronDown, Check } from "lucide-react"
+import { useState, useEffect, useRef, useCallback } from "react"
+import { useRouter } from "next/navigation"
+import { Settings, DollarSign, ShoppingCart, Package, FolderOpen, Building2, Camera, LayoutDashboard, ChevronDown, Check, AlertTriangle } from "lucide-react"
 import Image from "next/image"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
@@ -13,6 +14,43 @@ import { getMesEnCursoPeriod } from "@/lib/utils/dashboard-period"
 import { PERIOD_OPTIONS, type PeriodKey } from "@/lib/contexts/period-context"
 
 const condicionesIva: CondicionIva[] = ["Consumidor Final", "Responsable Inscripto", "Monotributista", "Exento"]
+
+// ─── unsaved changes nav-guard modal ─────────────────────────────────────────
+function UnsavedChangesModal({ open, onStay, onLeave }: { open: boolean; onStay: () => void; onLeave: () => void }) {
+  if (!open) return null
+  return (
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" onClick={onStay} />
+      <div className="relative bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md mx-4 p-6">
+        <div className="flex items-start gap-4 mb-5">
+          <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center shrink-0">
+            <AlertTriangle className="w-5 h-5 text-amber-500" />
+          </div>
+          <div>
+            <h2 className="text-base font-semibold text-slate-900 mb-1">Guardá los cambios antes de continuar</h2>
+            <p className="text-sm text-slate-500">Tenés cambios sin guardar en ajustes. Si salís ahora se perderán.</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={onLeave}
+            className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+          >
+            Salir sin guardar
+          </button>
+          <button
+            type="button"
+            onClick={onStay}
+            className="px-4 py-2 text-sm font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors"
+          >
+            Volver a ajustes
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // ─── generic footer ──────────────────────────────────────────────────────────
 function SectionFooter({ dirty, onSave, onCancel }: { dirty: boolean; onSave: () => void; onCancel: () => void }) {
@@ -38,6 +76,7 @@ function SectionFooter({ dirty, onSave, onCancel }: { dirty: boolean; onSave: ()
 }
 
 export default function AjustesPage() {
+  const router = useRouter()
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
   const { miNegocio, precios, catalogo, stock, dashboard, updateMiNegocioSettings, updatePreciosSettings, updateCatalogoSettings, updateStockSettings, updateDashboardSettings } = useSettings()
 
@@ -90,10 +129,45 @@ export default function AjustesPage() {
   useEffect(() => { setStockDraft(stock) }, [stock])
   const stockDirty = JSON.stringify(stockDraft) !== JSON.stringify(stock)
 
-  const selectedPeriodLabel = PERIOD_OPTIONS.find(o => o.key === dashDraft.periodoDefault)?.label ?? "Mes en Curso"
+  const selectedPeriodLabel = PERIOD_OPTIONS.find(o => o.key === dashDraft.periodoDefault)?.label ?? "Ninguno"
+
+  // ── Navigation guard ───────────────────────────────────────────────────────
+  const anyDirty = dashDirty || negocioDirty || preciosDirty || catalogoDirty || stockDirty
+  const [navGuardOpen, setNavGuardOpen] = useState(false)
+  const pendingHrefRef = useRef<string | null>(null)
+
+  // Browser close / refresh
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (anyDirty) { e.preventDefault(); e.returnValue = "" }
+    }
+    window.addEventListener("beforeunload", handler)
+    return () => window.removeEventListener("beforeunload", handler)
+  }, [anyDirty])
+
+  // Intercept <Link> and router.push by overriding click on anchors
+  const handlePageClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!anyDirty) return
+    const anchor = (e.target as HTMLElement).closest("a[href]") as HTMLAnchorElement | null
+    if (!anchor) return
+    const href = anchor.getAttribute("href")
+    if (!href || href.startsWith("#") || href === "/ajustes") return
+    e.preventDefault()
+    e.stopPropagation()
+    pendingHrefRef.current = href
+    setNavGuardOpen(true)
+  }, [anyDirty])
 
   return (
-    <div className="min-h-screen bg-[rgb(243,242,238)]">
+    <div className="min-h-screen bg-[rgb(243,242,238)]" onClick={handlePageClick}>
+      <UnsavedChangesModal
+        open={navGuardOpen}
+        onStay={() => setNavGuardOpen(false)}
+        onLeave={() => {
+          setNavGuardOpen(false)
+          if (pendingHrefRef.current) router.push(pendingHrefRef.current)
+        }}
+      />
       <div className="px-[6px] py-[6px] flex gap-[6px] h-screen" onClick={handleCloseDropdowns}>
         <div onClick={(e) => e.stopPropagation()} className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
           <Sidebar
@@ -136,7 +210,7 @@ export default function AjustesPage() {
               <div className="space-y-6">
 
                 {/* ── Dashboard ─────────────────────────────────────────── */}
-                <section className="bg-white rounded-2xl border border-slate-200/60 overflow-hidden">
+                <section className="bg-white rounded-2xl border border-slate-200/60">
                   <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center">
                       <LayoutDashboard className="w-4 h-4 text-white" />
@@ -216,24 +290,32 @@ export default function AjustesPage() {
                         </button>
 
                         {periodDropdownOpen && (
-                          <div className="absolute left-0 top-full mt-1.5 w-56 bg-white rounded-xl border border-slate-200 shadow-lg z-50 py-1 overflow-hidden">
+                          <div className="absolute left-0 top-full mt-1.5 w-56 bg-white rounded-xl border border-slate-200 shadow-xl z-[9999] py-1">
+                            {/* Ninguno */}
+                            {[PERIOD_OPTIONS.find(o => o.key === "ninguno")!].map(option => (
+                              <button
+                                key={option.key}
+                                type="button"
+                                onClick={() => { setDashDraft(d => ({ ...d, periodoDefault: option.key })); setPeriodDropdownOpen(false) }}
+                                className={`w-full flex items-center justify-between px-4 py-2 text-sm transition-colors ${dashDraft.periodoDefault === option.key ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-50"}`}
+                              >
+                                {option.label}
+                                {dashDraft.periodoDefault === option.key && <Check className="w-3.5 h-3.5" />}
+                              </button>
+                            ))}
+
+                            <div className="h-px bg-slate-100 my-1" />
+
                             {/* En curso group */}
-                            <div className="px-3 pt-2 pb-1">
+                            <div className="px-3 pt-1 pb-1">
                               <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">En curso</span>
                             </div>
                             {PERIOD_OPTIONS.filter(o => ["hoy", "mes_en_curso", "ano_en_curso"].includes(o.key)).map(option => (
                               <button
                                 key={option.key}
                                 type="button"
-                                onClick={() => {
-                                  setDashDraft(d => ({ ...d, periodoDefault: option.key }))
-                                  setPeriodDropdownOpen(false)
-                                }}
-                                className={`w-full flex items-center justify-between px-4 py-2 text-sm transition-colors ${
-                                  dashDraft.periodoDefault === option.key
-                                    ? "bg-slate-900 text-white"
-                                    : "text-slate-700 hover:bg-slate-50"
-                                }`}
+                                onClick={() => { setDashDraft(d => ({ ...d, periodoDefault: option.key })); setPeriodDropdownOpen(false) }}
+                                className={`w-full flex items-center justify-between px-4 py-2 text-sm transition-colors ${dashDraft.periodoDefault === option.key ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-50"}`}
                               >
                                 {option.label}
                                 {dashDraft.periodoDefault === option.key && <Check className="w-3.5 h-3.5" />}
@@ -246,19 +328,12 @@ export default function AjustesPage() {
                             <div className="px-3 pt-1 pb-1">
                               <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Período fijo</span>
                             </div>
-                            {PERIOD_OPTIONS.filter(o => !["hoy", "mes_en_curso", "ano_en_curso"].includes(o.key)).map(option => (
+                            {PERIOD_OPTIONS.filter(o => ["7d", "30d", "ultimo_ano", "personalizado"].includes(o.key)).map(option => (
                               <button
                                 key={option.key}
                                 type="button"
-                                onClick={() => {
-                                  setDashDraft(d => ({ ...d, periodoDefault: option.key }))
-                                  setPeriodDropdownOpen(false)
-                                }}
-                                className={`w-full flex items-center justify-between px-4 py-2 text-sm transition-colors ${
-                                  dashDraft.periodoDefault === option.key
-                                    ? "bg-slate-900 text-white"
-                                    : "text-slate-700 hover:bg-slate-50"
-                                }`}
+                                onClick={() => { setDashDraft(d => ({ ...d, periodoDefault: option.key })); setPeriodDropdownOpen(false) }}
+                                className={`w-full flex items-center justify-between px-4 py-2 text-sm transition-colors ${dashDraft.periodoDefault === option.key ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-50"}`}
                               >
                                 {option.label}
                                 {dashDraft.periodoDefault === option.key && <Check className="w-3.5 h-3.5" />}

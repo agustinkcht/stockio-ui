@@ -5,6 +5,7 @@ import { getMesEnCursoPeriod, type PeriodRange } from "@/lib/utils/dashboard-per
 import { useSettings } from "@/lib/contexts/settings-context"
 
 export type PeriodKey =
+  | "ninguno"
   | "hoy"
   | "7d"
   | "30d"
@@ -19,6 +20,7 @@ export interface PeriodOption {
 }
 
 export const PERIOD_OPTIONS: PeriodOption[] = [
+  { key: "ninguno",      label: "Ninguno"         },
   { key: "hoy",          label: "Día en Curso"    },
   { key: "mes_en_curso", label: "Mes en Curso"    },
   { key: "ano_en_curso", label: "Año en Curso"    },
