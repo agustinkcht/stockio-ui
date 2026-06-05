@@ -350,14 +350,7 @@ export default function ListaDePreciosPage() {
               <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2">
                 <UserPanel />
               </div>
-              <div className="flex items-center gap-2 min-w-[200px] justify-end">
-                {showSaveSuccess && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md animate-in fade-in slide-in-from-right-2 duration-300">
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
-                    <span className="text-sm text-green-700 font-medium">Cambios Guardados</span>
-                  </div>
-                )}
-              </div>
+              <div className="min-w-[200px]" />
             </div>
           </div>
 
@@ -627,7 +620,7 @@ export default function ListaDePreciosPage() {
 
       </div>
 
-      {/* ── Modals ───────────────────────────────────────────────────────────── */}
+      {/* ── Modals ───────────────────────────��───────────────────────────────── */}
       <TemplateModal showTemplateModal={showTemplateModal} setShowTemplateModal={setShowTemplateModal} />
 
       <NuevoItemModal
@@ -669,6 +662,16 @@ export default function ListaDePreciosPage() {
         onDiscard={handleDiscardAndNavigate}
         onCancel={handleCancelNavigation}
       />
+
+      {/* Save success toast — slides in from top center */}
+      {showSaveSuccess && (
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[200000] pointer-events-none animate-in fade-in slide-in-from-top-3 duration-300">
+          <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white border border-green-200 shadow-lg rounded-xl">
+            <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+            <span className="text-sm font-medium text-slate-800">Cambios guardados</span>
+          </div>
+        </div>
+      )}
 
 
     </div>
