@@ -663,12 +663,40 @@ export default function ListaDePreciosPage() {
         onCancel={handleCancelNavigation}
       />
 
-      {/* Save success toast — slides in from top center */}
+      {/* Save success toast */}
       {showSaveSuccess && (
-        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[200000] pointer-events-none animate-in fade-in slide-in-from-top-3 duration-300">
-          <div className="flex items-center gap-2.5 px-4 py-2.5 bg-white border border-green-200 shadow-lg rounded-xl">
-            <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
-            <span className="text-sm font-medium text-slate-800">Cambios guardados</span>
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[200000] pointer-events-none animate-in fade-in slide-in-from-top-4 duration-300">
+          <div
+            className="relative flex items-stretch gap-0 rounded-2xl overflow-hidden"
+            style={{
+              background: "#0d0f12",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.07)",
+              minWidth: "280px",
+            }}
+          >
+            {/* Emerald left bar */}
+            <div className="w-[3px] shrink-0" style={{ background: "linear-gradient(to bottom, #34d399, #059669)" }} />
+
+            {/* Content */}
+            <div className="flex items-center gap-3.5 px-5 py-4">
+              {/* Icon container */}
+              <div
+                className="flex items-center justify-center w-9 h-9 rounded-xl shrink-0"
+                style={{ background: "rgba(52,211,153,0.12)", border: "1px solid rgba(52,211,153,0.2)" }}
+              >
+                <CheckCircle2 className="w-4.5 h-4.5" style={{ color: "#34d399" }} strokeWidth={2.25} />
+              </div>
+
+              {/* Text */}
+              <div>
+                <p className="text-[13px] font-semibold leading-tight" style={{ color: "#f1f5f9", letterSpacing: "-0.01em" }}>
+                  Cambios guardados
+                </p>
+                <p className="text-[11px] mt-0.5 leading-tight" style={{ color: "rgba(148,163,184,0.7)" }}>
+                  Lista de precios actualizada
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       )}
