@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useRef, useState, useEffect, useMemo, useCallback } from "react"
 import { usePriceSelection } from "@/hooks/use-price-selection"
-import { searchItems, sortItems, filterItems, getUniqueCategorias, getUniqueMarcas, getUniqueProveedores } from "@/lib/utils/item-utils"
+import { searchItems, sortItems, filterItems } from "@/lib/utils/item-utils"
 import { BulkPriceModal } from "@/components/modals/bulk-price-modals"
 import { useSettings } from "@/lib/contexts/settings-context"
 
@@ -243,34 +243,32 @@ export function PriceGrid({
     return { costo: 0, margen: 0, iva: 21, precioFinal: 0 }
   }
 
+  // cols: [44px checkbox | 1fr item | 160px costo | 110px margen | 90px iva | 180px precio final]
+  const COLS = "grid-cols-[44px_1fr_160px_110px_90px_180px]"
+
   const renderItemRow = (item: Item, index: number, isChild = false, isLastChild = false, parentProveedor?: string) => {
     const isParent = !isChild && ((item.variants && item.variants.length > 0) || (item.items && item.items.length > 0))
     const children = item.variants || item.items || []
     const isExpanded = expandedItems[index]
     const itemId = (item as any).id || item.sku || `item-${index}`
     const isHovered = hoveredId === itemId
-
     const itemKey = itemId
     const itemPricing = getItemPricing(item)
-
-    const heightClass = gridSize === "sm" ? "h-[44px]" : gridSize === "md" ? "h-[60px]" : "h-[76px]"
-
     const selectionState = getSelectionState(item, isChild)
-
     const hasCosto = itemPricing.costo > 0
 
     return (
       <div key={item.sku || index}>
         <div
-          className={`grid grid-cols-32 gap-0 ${heightClass} items-center transition-colors border-b border-[rgba(202,213,227,0.61)] ${
-            isHovered ? "bg-gray-50/50" : ""
-          } ${isChild ? "bg-slate-50/30" : ""}`}
+          className={`grid ${COLS} h-[60px] items-center transition-colors ${
+            isHovered ? "bg-slate-50/60" : isChild ? "bg-slate-50/40" : ""
+          }`}
           onMouseEnter={() => setHoveredId(itemId)}
           onMouseLeave={() => setHoveredId(null)}
         >
-          {/* Checkbox column */}
-          <div className={`col-span-2 flex items-center justify-center h-full border-r border-[rgba(202,213,227,0.3)] ${isChild ? "pl-4" : ""}`}>
-            <div className="relative flex items-center justify-center">
+          {/* Checkbox */}
+          <div className={`flex items-center justify-center h-full ${isChild ? "pl-4" : ""}`}>
+            <div className={`transition-opacity ${isHovered || selectionState.checked ? "opacity-100" : "opacity-0"}`}>
               {selectionState.indeterminate ? (
                 <button
                   onClick={() => handleItemSelection(item, isChild)}
@@ -288,19 +286,18 @@ export function PriceGrid({
             </div>
           </div>
 
-          {/* Item column */}
-          <div className="col-span-12 flex items-center gap-2 px-4 min-w-0 h-full border-r border-[rgba(202,213,227,0.3)]">
-            {/* Fixed width container for chevron/thumbnail alignment */}
+          {/* Item info */}
+          <div className="flex items-center gap-2.5 min-w-0 pr-4">
             <div className="w-8 h-8 flex items-center justify-center shrink-0">
               {isParent ? (
                 <button
                   onClick={() => toggleVariantExpansion(index)}
-                  className="text-slate-500 hover:text-slate-800 cursor-pointer"
+                  className="text-slate-400 hover:text-slate-700 cursor-pointer"
                 >
                   {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                 </button>
               ) : (
-                <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden">
+                <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden shrink-0">
                   <Image
                     src={getCategoryImage(item.categoria || "")}
                     alt={item.name}
@@ -311,42 +308,25 @@ export function PriceGrid({
                 </div>
               )}
             </div>
-            {/* Item info - starts at same position for all types */}
             <div className="flex-1 min-w-0">
-              {isParent ? (
-                <>
-                  <div className="text-sm font-semibold text-slate-900 truncate">{item.name}</div>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    {item.marca && <span className="text-[11px] text-slate-400">{item.marca}</span>}
-                    {item.marca && item.categoria && <span className="text-[11px] text-slate-300">·</span>}
-                    {item.categoria && <span className="text-[11px] text-slate-400">{item.categoria}</span>}
-                  </div>
-                </>
-              ) : isChild ? (
+              {isChild ? (
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="text-sm font-medium text-slate-800 truncate">{item.name}</span>
-                  {item.atributosPrincipales && item.atributosPrincipales.length > 0 && (
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      {item.atributosPrincipales.map((attr, idx) => (
-                        attr.value && (
-                          <span
-                            key={idx}
-                            className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 text-slate-600 rounded"
-                          >
-                            {attr.value}
-                          </span>
-                        )
-                      ))}
-                    </div>
+                  {item.atributosPrincipales?.map((attr, idx) =>
+                    attr.value ? (
+                      <span key={idx} className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 text-slate-600 rounded shrink-0">
+                        {attr.value}
+                      </span>
+                    ) : null
                   )}
                 </div>
               ) : (
                 <>
-                  <div className="text-sm font-semibold text-slate-900 truncate">{getFullTitle(item)}</div>
+                  <p className="text-sm font-medium text-slate-800 truncate">{getFullTitle(item)}</p>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    {item.marca && <span className="text-[11px] text-slate-400">{item.marca}</span>}
-                    {item.marca && item.categoria && <span className="text-[11px] text-slate-300">·</span>}
-                    {item.categoria && <span className="text-[11px] text-slate-400">{item.categoria}</span>}
+                    {item.marca && <span className="text-xs text-slate-400">{item.marca}</span>}
+                    {item.marca && item.categoria && <span className="text-xs text-slate-300">·</span>}
+                    {item.categoria && <span className="text-xs text-slate-400">{item.categoria}</span>}
                   </div>
                 </>
               )}
@@ -355,90 +335,74 @@ export function PriceGrid({
 
           {isParent ? (
             <>
-              <div className="col-span-6 h-full border-r border-[rgba(202,213,227,0.3)]" />
-              <div className="col-span-3 h-full border-r border-[rgba(202,213,227,0.3)]" />
-              <div className="col-span-3 h-full border-r border-[rgba(202,213,227,0.3)]" />
-              <div className="col-span-6 h-full" />
+              <div className="h-full" />
+              <div className="h-full" />
+              <div className="h-full" />
+              <div className="h-full" />
             </>
           ) : (
             <>
               {/* Costo */}
-              <div className="col-span-6 flex items-center justify-center px-3 h-full border-r border-[rgba(202,213,227,0.3)]">
-                <div className="flex items-center gap-1 w-full">
-                  <span className="text-[11px] text-slate-400">$</span>
-                  <input
-                    type="number"
-                    value={itemPricing.costo || ""}
-                    onChange={(e) =>
-                      updatePricingField(itemKey, "costo", Number.parseFloat(e.target.value) || 0, itemPricing)
-                    }
-                    className="w-full text-sm text-slate-700 bg-transparent border-0 focus:outline-none focus:bg-slate-50 rounded px-1 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    placeholder="0"
-                    step="1"
-                  />
-                </div>
+              <div className="flex items-center px-3 h-full border-l border-slate-100">
+                <span className="text-xs text-slate-400 mr-1">$</span>
+                <input
+                  type="number"
+                  value={itemPricing.costo || ""}
+                  onChange={(e) => updatePricingField(itemKey, "costo", Number.parseFloat(e.target.value) || 0, itemPricing)}
+                  className="w-full text-sm text-slate-700 bg-transparent border-0 focus:outline-none focus:bg-slate-50 rounded px-1 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  placeholder="0"
+                  step="1"
+                />
               </div>
 
-              {/* Margen - disabled if no costo */}
-              <div
-                className={`col-span-3 flex items-center justify-center px-2 h-full border-r border-[rgba(202,213,227,0.3)] ${itemPricing.margen < 0 ? "bg-red-50/50" : ""} ${!hasCosto ? "opacity-40" : ""}`}
-              >
-                <div className="flex items-center gap-0.5 w-full">
-                  <input
-                    type="number"
-                    value={itemPricing.margen || ""}
-                    onChange={(e) =>
-                      updatePricingField(itemKey, "margen", Number.parseFloat(e.target.value) || 0, itemPricing)
-                    }
-                    disabled={!hasCosto}
-                    className={`w-full text-sm bg-transparent border-0 focus:outline-none focus:bg-slate-50 rounded px-1 text-center tabular-nums ${itemPricing.margen < 0 ? "text-red-600" : "text-slate-700"} ${!hasCosto ? "cursor-not-allowed" : ""}`}
-                    placeholder="0"
-                    step="0.1"
-                  />
-                  <span className={`text-[11px] ${itemPricing.margen < 0 ? "text-red-400" : "text-slate-400"}`}>%</span>
-                </div>
+              {/* Margen */}
+              <div className={`flex items-center px-3 h-full border-l border-slate-100 ${itemPricing.margen < 0 ? "bg-red-50/40" : ""} ${!hasCosto ? "opacity-40" : ""}`}>
+                <input
+                  type="number"
+                  value={itemPricing.margen || ""}
+                  onChange={(e) => updatePricingField(itemKey, "margen", Number.parseFloat(e.target.value) || 0, itemPricing)}
+                  disabled={!hasCosto}
+                  className={`w-full text-sm bg-transparent border-0 focus:outline-none focus:bg-slate-50 rounded px-1 tabular-nums ${itemPricing.margen < 0 ? "text-red-600" : "text-slate-700"} ${!hasCosto ? "cursor-not-allowed" : ""} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
+                  placeholder="0"
+                  step="0.1"
+                />
+                <span className={`text-xs shrink-0 ${itemPricing.margen < 0 ? "text-red-400" : "text-slate-400"}`}>%</span>
               </div>
 
               {/* IVA */}
-              <div className="col-span-3 flex items-center justify-center px-2 h-full border-r border-[rgba(202,213,227,0.3)]">
+              <div className="flex items-center px-3 h-full border-l border-slate-100">
                 <select
                   value={itemPricing.iva}
                   onChange={(e) => updatePricingField(itemKey, "iva", Number.parseFloat(e.target.value), itemPricing)}
-                  className="w-full text-sm text-slate-600 bg-transparent border-0 focus:outline-none rounded px-0 text-center cursor-pointer"
+                  className="w-full text-sm text-slate-600 bg-transparent border-0 focus:outline-none cursor-pointer"
                 >
-                  {IVA_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
+                  {IVA_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
                 </select>
               </div>
 
               {/* Precio Final */}
-              <div className="col-span-6 flex items-center justify-center px-3 h-full bg-blue-50/30">
-                <div className="flex items-center gap-1 w-full">
-                  <span className="text-[11px] text-blue-500">$</span>
-                  {precioFinalMode === "con_iva" ? (
-                    <input
-                      type="number"
-                      value={itemPricing.precioFinal || ""}
-                      onChange={(e) =>
-                        updatePricingField(itemKey, "precioFinal", Number.parseFloat(e.target.value) || 0, itemPricing)
-                      }
-                      className="w-full text-sm font-medium text-blue-700 bg-transparent border-0 focus:outline-none focus:bg-blue-50 rounded px-1 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                      placeholder="0"
-                      step="1"
-                      min="0"
-                    />
-                  ) : (
-                    <div className="flex items-center gap-1">
-                      <span className="text-sm font-medium text-blue-700 tabular-nums">
-                        {itemPricing.precioFinal ? Math.round(itemPricing.precioFinal / 1.21).toLocaleString("es-AR") : "0"}
-                      </span>
-                      <span className="text-[10px] text-slate-400">+ iva</span>
-                    </div>
-                  )}
-                </div>
+              <div className="flex items-center px-3 h-full border-l border-slate-100 bg-blue-50/20">
+                <span className="text-xs text-blue-400 mr-1">$</span>
+                {precioFinalMode === "con_iva" ? (
+                  <input
+                    type="number"
+                    value={itemPricing.precioFinal || ""}
+                    onChange={(e) => updatePricingField(itemKey, "precioFinal", Number.parseFloat(e.target.value) || 0, itemPricing)}
+                    className="w-full text-sm font-medium text-blue-700 bg-transparent border-0 focus:outline-none focus:bg-blue-50/60 rounded px-1 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    placeholder="0"
+                    step="1"
+                    min="0"
+                  />
+                ) : (
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm font-medium text-blue-700 tabular-nums">
+                      {itemPricing.precioFinal ? Math.round(itemPricing.precioFinal / 1.21).toLocaleString("es-AR") : "0"}
+                    </span>
+                    <span className="text-[10px] text-slate-400">+ iva</span>
+                  </div>
+                )}
               </div>
             </>
           )}
@@ -461,109 +425,58 @@ export function PriceGrid({
     activeFilters.tipos.length > 0 || activeFilters.categorias.length > 0 || activeFilters.marcas.length > 0 || activeFilters.proveedores.length > 0
 
   return (
-    <div className="flex-1 flex flex-col bg-white overflow-hidden">
-      {/* Scrollable container with sticky header */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="border border-[rgba(202,213,227,0.61)] rounded-lg overflow-hidden mx-6 my-5">
-          {/* Tab Header - sticky */}
-          <div className="bg-slate-100 sticky top-0 z-10">
-            <div className="grid grid-cols-32 h-9">
-            <div className="col-span-2 flex items-center justify-center border-r border-[rgba(202,213,227,0.61)]" />
-            <div className="col-span-12 flex items-center px-4 border-r border-[rgba(202,213,227,0.61)]">
-              <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Item</span>
-            </div>
-            <div className="col-span-6 flex items-center justify-between px-3 border-r border-[rgba(202,213,227,0.61)]">
-              <span className="flex-1 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">Costo</span>
-              <button
-                onClick={() => setBulkModalType("costo")}
-                className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors group cursor-pointer"
-                title="Modificar costo en lote"
-              >
-                <MoreVertical className="w-3 h-3 text-slate-400 group-hover:text-slate-600" />
-              </button>
-            </div>
-            <div className="col-span-3 flex items-center justify-between px-3 border-r border-[rgba(202,213,227,0.61)]">
-              <span className="flex-1 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">Margen</span>
-              <button
-                onClick={() => setBulkModalType("margen")}
-                className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors group cursor-pointer"
-                title="Modificar margen en lote"
-              >
-                <MoreVertical className="w-3 h-3 text-slate-400 group-hover:text-slate-600" />
-              </button>
-            </div>
-            <div className="col-span-3 flex items-center justify-between px-3 border-r border-[rgba(202,213,227,0.61)]">
-              <span className="flex-1 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">IVA</span>
-              <button
-                onClick={() => setBulkModalType("iva")}
-                className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors group cursor-pointer"
-                title="Modificar IVA en lote"
-              >
-                <MoreVertical className="w-3 h-3 text-slate-400 group-hover:text-slate-600" />
-              </button>
-            </div>
-            <div className="col-span-6 flex items-center justify-center px-3 gap-2 relative" data-precio-dropdown>
-              <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">
-                Precio Final {precioFinalMode === "sin_iva" && "(sin IVA)"}
-              </span>
-              <div className="relative">
-                <button
-                  onClick={() => setShowPrecioModeDropdown(!showPrecioModeDropdown)}
-                  className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors group cursor-pointer"
-                  title="Opciones de precio final"
-                >
-                  <MoreVertical className="w-3 h-3 text-slate-400 group-hover:text-slate-600" />
-                </button>
-                {showPrecioModeDropdown && (
-                  <div className="absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-20 min-w-[120px]">
-                    <button
-                      onClick={() => {
-                        setPrecioFinalMode("con_iva")
-                        setShowPrecioModeDropdown(false)
-                      }}
-                      className={`w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 transition-colors cursor-pointer ${precioFinalMode === "con_iva" ? "font-medium text-blue-600" : "text-slate-700"}`}
-                    >
-                      Con IVA
-                    </button>
-                    <button
-                      onClick={() => {
-                        setPrecioFinalMode("sin_iva")
-                        setShowPrecioModeDropdown(false)
-                      }}
-                      className={`w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 transition-colors cursor-pointer ${precioFinalMode === "sin_iva" ? "font-medium text-blue-600" : "text-slate-700"}`}
-                    >
-                      Sin IVA
-                    </button>
-                    <div className="border-t border-slate-100 my-1" />
-                    <button
-                      onClick={() => {
-                        setBulkModalType("precioFinal")
-                        setShowPrecioModeDropdown(false)
-                      }}
-                      className="w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 transition-colors cursor-pointer text-slate-700"
-                    >
-                      Editar en lote
-                    </button>
-                  </div>
-                )}
+    <>
+      {/* Table header */}
+      <div className={`grid ${COLS} px-0 py-2.5 border border-slate-200/80 rounded-t-md bg-slate-50/60`}>
+        <div />
+        <div className="text-xs font-medium text-slate-400 uppercase tracking-wide">Artículo</div>
+        <div className="flex items-center justify-between pl-3 border-l border-slate-200/60">
+          <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">Costo</span>
+          <button onClick={() => setBulkModalType("costo")} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer mr-1" title="Editar en lote">
+            <MoreVertical className="w-3 h-3 text-slate-300 hover:text-slate-500" />
+          </button>
+        </div>
+        <div className="flex items-center justify-between pl-3 border-l border-slate-200/60">
+          <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">Margen</span>
+          <button onClick={() => setBulkModalType("margen")} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer mr-1" title="Editar en lote">
+            <MoreVertical className="w-3 h-3 text-slate-300 hover:text-slate-500" />
+          </button>
+        </div>
+        <div className="flex items-center justify-between pl-3 border-l border-slate-200/60">
+          <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">IVA</span>
+          <button onClick={() => setBulkModalType("iva")} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer mr-1" title="Editar en lote">
+            <MoreVertical className="w-3 h-3 text-slate-300 hover:text-slate-500" />
+          </button>
+        </div>
+        <div className="flex items-center justify-between pl-3 border-l border-slate-200/60" data-precio-dropdown>
+          <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">
+            Precio Final{precioFinalMode === "sin_iva" ? " (sin IVA)" : ""}
+          </span>
+          <div className="relative mr-1">
+            <button onClick={() => setShowPrecioModeDropdown(!showPrecioModeDropdown)} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer" title="Opciones">
+              <MoreVertical className="w-3 h-3 text-slate-300 hover:text-slate-500" />
+            </button>
+            {showPrecioModeDropdown && (
+              <div className="absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-20 min-w-[130px]">
+                <button onClick={() => { setPrecioFinalMode("con_iva"); setShowPrecioModeDropdown(false) }} className={`w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 cursor-pointer ${precioFinalMode === "con_iva" ? "font-medium text-blue-600" : "text-slate-700"}`}>Con IVA</button>
+                <button onClick={() => { setPrecioFinalMode("sin_iva"); setShowPrecioModeDropdown(false) }} className={`w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 cursor-pointer ${precioFinalMode === "sin_iva" ? "font-medium text-blue-600" : "text-slate-700"}`}>Sin IVA</button>
+                <div className="border-t border-slate-100 my-1" />
+                <button onClick={() => { setBulkModalType("precioFinal"); setShowPrecioModeDropdown(false) }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 cursor-pointer text-slate-700">Editar en lote</button>
               </div>
-            </div>
-            </div>
+            )}
           </div>
+        </div>
+      </div>
 
-          {/* Grid Content */}
-          <div className="bg-white">
-          {sortedAndFilteredItems.length === 0 && (searchTerm || hasActiveFilters) ? (
-            <div className="flex flex-col items-center justify-center py-16 text-gray-500">
-              <Search className="w-12 h-12 mb-4 text-gray-300" />
-              <p className="text-lg font-medium">No se encontraron artículos</p>
-              <p className="text-sm mt-1">Intenta ajustar tu búsqueda o filtros</p>
-            </div>
-          ) : (
-            <div>{sortedAndFilteredItems.map((item, index) => renderItemRow(item, index))}</div>
-          )}
-        </div>
-        </div>
+      {/* Rows */}
+      <div className="border border-slate-200/80 border-t-0 overflow-hidden bg-white divide-y divide-slate-100">
+        {sortedAndFilteredItems.length === 0 ? (
+          <div className="py-16 text-center text-sm text-slate-400">
+            {searchTerm || hasActiveFilters ? "No se encontraron artículos." : "Sin artículos para mostrar."}
+          </div>
+        ) : (
+          sortedAndFilteredItems.map((item, index) => renderItemRow(item, index))
+        )}
       </div>
 
       {bulkModalType && (
@@ -576,6 +489,6 @@ export function PriceGrid({
           type={bulkModalType}
         />
       )}
-    </div>
+    </>
   )
 }

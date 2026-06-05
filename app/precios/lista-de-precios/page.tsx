@@ -610,7 +610,7 @@ export default function ListaDePreciosPage() {
                   sortPriorities={sortPriorities}
                   onSelectionChange={handleSelectionChange}
                 />
-              </div>
+                </div>
             </div>
 
           </div>
