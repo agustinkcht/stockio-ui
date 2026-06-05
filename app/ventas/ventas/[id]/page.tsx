@@ -1114,7 +1114,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                 {estadoUI === "en_curso" && <div className="grid grid-cols-2 gap-3">
 
                   {/* Widget 1 — Entrega */}
-                  <div className={`bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-2 ${entregaPct === 100 ? "items-center justify-center" : ""}`}>
+                  <div className={`bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-2 transition-opacity ${entregaPct === 100 ? "items-center justify-center" : ""} ${isEditMode ? "opacity-40 pointer-events-none" : ""}`}>
                     {entregaPct === 100 ? (
                       <div className="flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-slate-800" />
@@ -1142,7 +1142,7 @@ export default function VentaDetailPage({ params }: { params: Promise<{ id: stri
                   </div>
 
                   {/* Widget 2 — Cobro */}
-                  <div className={`bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-2 ${pagoPct === 100 ? "items-center justify-center" : ""}`}>
+                  <div className={`bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-2 transition-opacity ${pagoPct === 100 ? "items-center justify-center" : ""} ${isEditMode ? "opacity-40 pointer-events-none" : ""}`}>
                     {pagoPct === 100 ? (
                       <div className="flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-slate-800" />

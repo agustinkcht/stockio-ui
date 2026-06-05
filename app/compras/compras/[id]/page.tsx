@@ -824,14 +824,11 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
 
                           {/* Row 2: Proveedor pill + more options */}
                           <div className="flex items-center justify-between gap-3 mt-8">
-                            {/* Proveedor pill */}
+                            {/* Proveedor pill — always shows info, never editable */}
                             <button
                               type="button"
-                              onClick={() => {
-                                if (isEditMode) setShowProveedorSelectorModal(true)
-                                else setShowProveedorInfoModal(true)
-                              }}
-                              className={`inline-flex items-center gap-3 pl-3 pr-5 py-2.5 rounded-2xl border bg-slate-50 shadow-sm transition-colors text-left ${isEditMode ? "hover:bg-slate-100 cursor-pointer border-slate-200" : "hover:bg-slate-100 cursor-pointer border-slate-200/60"}`}
+                              onClick={() => setShowProveedorInfoModal(true)}
+                              className="inline-flex items-center gap-3 pl-3 pr-5 py-2.5 rounded-2xl border bg-slate-50 shadow-sm transition-colors text-left hover:bg-slate-100 cursor-pointer border-slate-200/60"
                             >
                               <div className="w-9 h-9 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
                                 <span className="text-sm font-bold text-white leading-none">{proveedorNombre.charAt(0).toUpperCase()}</span>
@@ -840,7 +837,6 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
                                 <span className="text-[10px] text-slate-400 uppercase tracking-wider leading-none mb-1">Proveedor</span>
                                 <span className="text-sm font-bold text-slate-900 truncate max-w-[220px]">{proveedorNombre}</span>
                               </div>
-                              {isEditMode && <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" />}
                             </button>
 
                             {/* Edit controls + more options */}
@@ -976,7 +972,7 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
                       <div className="grid grid-cols-2 gap-3">
 
                         {/* Widget 1 — Recepción */}
-                        <div className={`bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-2 ${recepcionPct === 100 ? "items-center justify-center" : ""}`}>
+                        <div className={`bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-2 transition-opacity ${recepcionPct === 100 ? "items-center justify-center" : ""} ${isEditMode ? "opacity-40 pointer-events-none" : ""}`}>
                           {recepcionPct === 100 ? (
                             <div className="flex items-center gap-2">
                               <CheckCircle2 className="w-4 h-4 text-slate-800" />
@@ -1004,7 +1000,7 @@ export default function CompraDetailPage({ params }: { params: Promise<{ id: str
                         </div>
 
                         {/* Widget 2 — Pago */}
-                        <div className={`bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-2 ${pagoPct === 100 ? "items-center justify-center" : ""}`}>
+                        <div className={`bg-white border border-slate-200/60 rounded-lg shadow-sm px-4 py-3 flex flex-col gap-2 transition-opacity ${pagoPct === 100 ? "items-center justify-center" : ""} ${isEditMode ? "opacity-40 pointer-events-none" : ""}`}>
                           {pagoPct === 100 ? (
                             <div className="flex items-center gap-2">
                               <CheckCircle2 className="w-4 h-4 text-slate-800" />
