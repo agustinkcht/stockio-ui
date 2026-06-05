@@ -5,7 +5,7 @@ import { ChevronDown, ChevronRight, Minus, MoreVertical } from "lucide-react"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import Image from "next/image"
 import { Checkbox } from "@/components/ui/checkbox"
-import { useState, useEffect, useMemo, useCallback, type Dispatch, type SetStateAction } from "react"
+import { useState, useEffect, useMemo, useCallback, useRef, type Dispatch, type SetStateAction } from "react"
 import { usePriceSelection } from "@/hooks/use-price-selection"
 import { searchItems, sortItems, filterItems } from "@/lib/utils/item-utils"
 import { OrdenModalPrecios } from "@/components/modals/orden-modal-precios"
@@ -133,12 +133,17 @@ export function PriceGrid({
 
   const bulkEditTargetCount = useMemo(() => getTargetSkusForBulkEdit().length, [getTargetSkusForBulkEdit])
 
-  // Notify parent of selection changes
+  // Stable ref for the callback to avoid re-triggering the effect when parent re-renders
+  const onSelectionChangeRef = useRef(onSelectionChange)
+  useEffect(() => { onSelectionChangeRef.current = onSelectionChange }, [onSelectionChange])
+
+  // Notify parent of selection changes (only when selectedCount/hasSelectedItems actually change)
   useEffect(() => {
-    if (onSelectionChange) {
-      onSelectionChange(selectedCount, hasSelectedItems, getSelectedSkus())
+    if (onSelectionChangeRef.current) {
+      onSelectionChangeRef.current(selectedCount, hasSelectedItems, getSelectedSkus())
     }
-  }, [selectedCount, hasSelectedItems, getSelectedSkus, onSelectionChange])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCount, hasSelectedItems])
 
   const getBulkModalTitle = (type: BulkModalType): string => {
     switch (type) {

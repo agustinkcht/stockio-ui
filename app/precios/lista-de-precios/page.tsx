@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useRef, useEffect } from "react"
+import { useState, useMemo, useRef, useEffect, useCallback } from "react"
 import { CheckCircle2, Search, X, ListFilter, ArrowUpDown, Trash2, Grid3x3 } from "lucide-react"
 
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
@@ -307,6 +307,12 @@ export default function ListaDePreciosPage() {
   const { showNavigationModal, handleSaveAndNavigate, handleDiscardAndNavigate, handleCancelNavigation } =
     useNavigationGuard({ hasUnsavedChanges: hasChanges, onSave: handleGuardar, onDiscard: handleDeshacer })
 
+  const handleSelectionChange = useCallback((count: number, has: boolean, skus: string[]) => {
+    setSelectedCount(count)
+    setHasSelectedItems(has)
+    setSelectedSkus(skus)
+  }, [])
+
   return (
     <div className="min-h-screen bg-[rgb(243,242,238)]">
       <div className="px-[6px] py-[6px] flex gap-[6px] h-screen" onClick={handleCloseDropdowns}>
@@ -563,11 +569,7 @@ export default function ListaDePreciosPage() {
                   availableCategorias={availableCategorias}
                   availableMarcas={availableMarcas}
                   availableProveedores={availableProveedores}
-                  onSelectionChange={(count, has, skus) => {
-                    setSelectedCount(count)
-                    setHasSelectedItems(has)
-                    setSelectedSkus(skus)
-                  }}
+                  onSelectionChange={handleSelectionChange}
                 />
               </div>
             </div>
