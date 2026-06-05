@@ -37,6 +37,7 @@ interface PriceGridProps {
   sortPriorities: SortFactorConfig[]
   // Selection callbacks to page
   onSelectionChange?: (count: number, has: boolean, selectAll: boolean, selectAllIndeterminate: boolean, handleSelectAll: () => void) => void
+  isEditMode?: boolean
 }
 
 const IVA_OPTIONS = [
@@ -57,8 +58,9 @@ export function PriceGrid({
   onBulkEdit,
   searchTerm = "",
   activeFilters = { tipos: [], categorias: [], marcas: [], proveedores: [], stock: [], depositos: [] },
-  sortPriorities = [{ factor: "categoria" as const, direction: "asc" as const }],
+  sortPriorities = [{ factor: "nombre" as const, direction: "asc" as const }],
   onSelectionChange,
+  isEditMode = false,
 }: PriceGridProps) {
   const {
     selectAllActive,
@@ -344,63 +346,81 @@ export function PriceGrid({
               {/* Costo */}
               <div className="flex items-center px-3 h-full border-l border-slate-100">
                 <span className="text-xs text-slate-400 mr-1">$</span>
-                <input
-                  type="number"
-                  value={itemPricing.costo || ""}
-                  onChange={(e) => updatePricingField(itemKey, "costo", Number.parseFloat(e.target.value) || 0, itemPricing)}
-                  className="w-full text-sm text-slate-700 bg-transparent border-0 focus:outline-none focus:bg-slate-50 rounded px-1 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  placeholder="0"
-                  step="1"
-                />
+                {isEditMode ? (
+                  <input
+                    type="number"
+                    value={itemPricing.costo || ""}
+                    onChange={(e) => updatePricingField(itemKey, "costo", Number.parseFloat(e.target.value) || 0, itemPricing)}
+                    className="w-full text-sm text-slate-700 bg-transparent border-0 focus:outline-none focus:bg-slate-50 rounded px-1 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    placeholder="0"
+                    step="1"
+                  />
+                ) : (
+                  <span className="text-sm text-slate-700 tabular-nums px-1">{itemPricing.costo ? itemPricing.costo.toLocaleString("es-AR") : "—"}</span>
+                )}
               </div>
 
               {/* Margen */}
               <div className={`flex items-center px-3 h-full border-l border-slate-100 ${itemPricing.margen < 0 ? "bg-red-50/40" : ""} ${!hasCosto ? "opacity-40" : ""}`}>
-                <input
-                  type="number"
-                  value={itemPricing.margen || ""}
-                  onChange={(e) => updatePricingField(itemKey, "margen", Number.parseFloat(e.target.value) || 0, itemPricing)}
-                  disabled={!hasCosto}
-                  className={`w-full text-sm bg-transparent border-0 focus:outline-none focus:bg-slate-50 rounded px-1 tabular-nums ${itemPricing.margen < 0 ? "text-red-600" : "text-slate-700"} ${!hasCosto ? "cursor-not-allowed" : ""} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
-                  placeholder="0"
-                  step="0.1"
-                />
+                {isEditMode ? (
+                  <input
+                    type="number"
+                    value={itemPricing.margen || ""}
+                    onChange={(e) => updatePricingField(itemKey, "margen", Number.parseFloat(e.target.value) || 0, itemPricing)}
+                    disabled={!hasCosto}
+                    className={`w-full text-sm bg-transparent border-0 focus:outline-none focus:bg-slate-50 rounded px-1 tabular-nums ${itemPricing.margen < 0 ? "text-red-600" : "text-slate-700"} ${!hasCosto ? "cursor-not-allowed" : ""} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
+                    placeholder="0"
+                    step="0.1"
+                  />
+                ) : (
+                  <span className={`text-sm tabular-nums px-1 ${itemPricing.margen < 0 ? "text-red-600" : "text-slate-700"}`}>{itemPricing.margen != null ? itemPricing.margen : "—"}</span>
+                )}
                 <span className={`text-xs shrink-0 ${itemPricing.margen < 0 ? "text-red-400" : "text-slate-400"}`}>%</span>
               </div>
 
               {/* IVA */}
               <div className="flex items-center px-3 h-full border-l border-slate-100">
-                <select
-                  value={itemPricing.iva}
-                  onChange={(e) => updatePricingField(itemKey, "iva", Number.parseFloat(e.target.value), itemPricing)}
-                  className="w-full text-sm text-slate-600 bg-transparent border-0 focus:outline-none cursor-pointer"
-                >
-                  {IVA_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
+                {isEditMode ? (
+                  <select
+                    value={itemPricing.iva}
+                    onChange={(e) => updatePricingField(itemKey, "iva", Number.parseFloat(e.target.value), itemPricing)}
+                    className="w-full text-sm text-slate-600 bg-transparent border-0 focus:outline-none cursor-pointer"
+                  >
+                    {IVA_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <span className="text-sm text-slate-600 tabular-nums px-1">{itemPricing.iva != null ? `${itemPricing.iva}%` : "—"}</span>
+                )}
               </div>
 
-              {/* Precio Final */}
+              {/* Precio de Venta */}
               <div className="flex items-center px-3 h-full border-l border-slate-100 bg-blue-50/20">
                 <span className="text-xs text-blue-400 mr-1">$</span>
-                {precioFinalMode === "con_iva" ? (
-                  <input
-                    type="number"
-                    value={itemPricing.precioFinal || ""}
-                    onChange={(e) => updatePricingField(itemKey, "precioFinal", Number.parseFloat(e.target.value) || 0, itemPricing)}
-                    className="w-full text-sm font-medium text-blue-700 bg-transparent border-0 focus:outline-none focus:bg-blue-50/60 rounded px-1 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    placeholder="0"
-                    step="1"
-                    min="0"
-                  />
+                {isEditMode ? (
+                  precioFinalMode === "con_iva" ? (
+                    <input
+                      type="number"
+                      value={itemPricing.precioFinal || ""}
+                      onChange={(e) => updatePricingField(itemKey, "precioFinal", Number.parseFloat(e.target.value) || 0, itemPricing)}
+                      className="w-full text-sm font-medium text-blue-700 bg-transparent border-0 focus:outline-none focus:bg-blue-50/60 rounded px-1 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      placeholder="0"
+                      step="1"
+                      min="0"
+                    />
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm font-medium text-blue-700 tabular-nums">
+                        {itemPricing.precioFinal ? Math.round(itemPricing.precioFinal / 1.21).toLocaleString("es-AR") : "0"}
+                      </span>
+                      <span className="text-[10px] text-slate-400">+ iva</span>
+                    </div>
+                  )
                 ) : (
-                  <div className="flex items-center gap-1">
-                    <span className="text-sm font-medium text-blue-700 tabular-nums">
-                      {itemPricing.precioFinal ? Math.round(itemPricing.precioFinal / 1.21).toLocaleString("es-AR") : "0"}
-                    </span>
-                    <span className="text-[10px] text-slate-400">+ iva</span>
-                  </div>
+                  <span className="text-sm font-medium text-blue-700 tabular-nums px-1">
+                    {itemPricing.precioFinal ? itemPricing.precioFinal.toLocaleString("es-AR") : "—"}
+                  </span>
                 )}
               </div>
             </>
@@ -431,39 +451,47 @@ export function PriceGrid({
         <div className="text-xs font-medium text-slate-400 uppercase tracking-wide">Item</div>
         <div className="flex items-center justify-between pl-3 border-l border-slate-200/60">
           <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">Costo</span>
-          <button onClick={() => setBulkModalType("costo")} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer mr-1" title="Editar en lote">
-            <MoreVertical className="w-3 h-3 text-slate-300 hover:text-slate-500" />
-          </button>
+          {isEditMode && (
+            <button onClick={() => setBulkModalType("costo")} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer mr-1" title="Editar en lote">
+              <MoreVertical className="w-3 h-3 text-slate-300 hover:text-slate-500" />
+            </button>
+          )}
         </div>
         <div className="flex items-center justify-between pl-3 border-l border-slate-200/60">
           <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">Margen</span>
-          <button onClick={() => setBulkModalType("margen")} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer mr-1" title="Editar en lote">
-            <MoreVertical className="w-3 h-3 text-slate-300 hover:text-slate-500" />
-          </button>
+          {isEditMode && (
+            <button onClick={() => setBulkModalType("margen")} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer mr-1" title="Editar en lote">
+              <MoreVertical className="w-3 h-3 text-slate-300 hover:text-slate-500" />
+            </button>
+          )}
         </div>
         <div className="flex items-center justify-between pl-3 border-l border-slate-200/60">
           <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">IVA</span>
-          <button onClick={() => setBulkModalType("iva")} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer mr-1" title="Editar en lote">
-            <MoreVertical className="w-3 h-3 text-slate-300 hover:text-slate-500" />
-          </button>
+          {isEditMode && (
+            <button onClick={() => setBulkModalType("iva")} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer mr-1" title="Editar en lote">
+              <MoreVertical className="w-3 h-3 text-slate-300 hover:text-slate-500" />
+            </button>
+          )}
         </div>
         <div className="flex items-center justify-between pl-3 border-l border-slate-200/60" data-precio-dropdown>
           <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">
             Precio de Venta{precioFinalMode === "sin_iva" ? " (sin IVA)" : ""}
           </span>
-          <div className="relative mr-1">
-            <button onClick={() => setShowPrecioModeDropdown(!showPrecioModeDropdown)} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer" title="Opciones">
-              <MoreVertical className="w-3 h-3 text-slate-300 hover:text-slate-500" />
-            </button>
-            {showPrecioModeDropdown && (
-              <div className="absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-20 min-w-[130px]">
-                <button onClick={() => { setPrecioFinalMode("con_iva"); setShowPrecioModeDropdown(false) }} className={`w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 cursor-pointer ${precioFinalMode === "con_iva" ? "font-medium text-blue-600" : "text-slate-700"}`}>Con IVA</button>
-                <button onClick={() => { setPrecioFinalMode("sin_iva"); setShowPrecioModeDropdown(false) }} className={`w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 cursor-pointer ${precioFinalMode === "sin_iva" ? "font-medium text-blue-600" : "text-slate-700"}`}>Sin IVA</button>
-                <div className="border-t border-slate-100 my-1" />
-                <button onClick={() => { setBulkModalType("precioFinal"); setShowPrecioModeDropdown(false) }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 cursor-pointer text-slate-700">Editar en lote</button>
-              </div>
-            )}
-          </div>
+          {isEditMode && (
+            <div className="relative mr-1">
+              <button onClick={() => setShowPrecioModeDropdown(!showPrecioModeDropdown)} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer" title="Opciones">
+                <MoreVertical className="w-3 h-3 text-slate-300 hover:text-slate-500" />
+              </button>
+              {showPrecioModeDropdown && (
+                <div className="absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-20 min-w-[130px]">
+                  <button onClick={() => { setPrecioFinalMode("con_iva"); setShowPrecioModeDropdown(false) }} className={`w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 cursor-pointer ${precioFinalMode === "con_iva" ? "font-medium text-blue-600" : "text-slate-700"}`}>Con IVA</button>
+                  <button onClick={() => { setPrecioFinalMode("sin_iva"); setShowPrecioModeDropdown(false) }} className={`w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 cursor-pointer ${precioFinalMode === "sin_iva" ? "font-medium text-blue-600" : "text-slate-700"}`}>Sin IVA</button>
+                  <div className="border-t border-slate-100 my-1" />
+                  <button onClick={() => { setBulkModalType("precioFinal"); setShowPrecioModeDropdown(false) }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 cursor-pointer text-slate-700">Editar en lote</button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

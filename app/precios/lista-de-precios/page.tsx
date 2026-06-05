@@ -1,6 +1,6 @@
 "use client"
 import { useState, useCallback, useRef, useEffect } from "react"
-import { CheckCircle2, Search, X, ListFilter, ArrowUpDown, Minus } from "lucide-react"
+import { CheckCircle2, Search, X, ListFilter, ArrowUpDown, Minus, PencilLine } from "lucide-react"
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -42,6 +42,7 @@ const DEFAULT_FILTERS: FilterConfig = {
 
 export default function ListaDePreciosPage() {
   const { precios: preciosSettings } = useSettings()
+  const [isEditMode, setIsEditMode] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [itemCreated, setItemCreated] = useState(false)
   const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>({})
@@ -283,7 +284,7 @@ export default function ListaDePreciosPage() {
   }
 
   const { showNavigationModal, handleSaveAndNavigate, handleDiscardAndNavigate, handleCancelNavigation } =
-    useNavigationGuard({ hasUnsavedChanges: hasChanges, onSave: handleGuardar, onDiscard: handleDeshacer })
+    useNavigationGuard({ hasUnsavedChanges: isEditMode && hasChanges, onSave: handleGuardar, onDiscard: handleDeshacer })
 
   // ── Derived: filtered count for the count badge ────────────────────────────
   const filteredCount = useMemo(() => {
@@ -356,23 +357,6 @@ export default function ListaDePreciosPage() {
                     <span className="text-sm text-green-700 font-medium">Cambios Guardados</span>
                   </div>
                 )}
-                {hasChanges && !showSaveSuccess && (
-                  <>
-                    <button
-                      onClick={handleDeshacer}
-                      className="px-4 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 rounded transition-all cursor-pointer text-red-700 text-sm font-medium"
-                    >
-                      Deshacer
-                    </button>
-                    <button
-                      onClick={handleGuardar}
-                      disabled={isSaving}
-                      className="px-4 py-1.5 bg-green-50 hover:bg-green-100 border border-green-200 rounded transition-all cursor-pointer text-green-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Guardar
-                    </button>
-                  </>
-                )}
               </div>
             </div>
           </div>
@@ -382,10 +366,40 @@ export default function ListaDePreciosPage() {
 
             {/* Top row */}
             <div className="px-8 pt-12 pb-8">
-              <div className="max-w-6xl mx-auto">
+              <div className="max-w-6xl mx-auto flex items-start justify-between gap-6">
                 <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
                   Lista de Precios
                 </h1>
+                <div className="flex items-center gap-2 mt-1 shrink-0">
+                  {!isEditMode ? (
+                    <button
+                      type="button"
+                      onClick={() => setIsEditMode(true)}
+                      className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer"
+                    >
+                      <PencilLine className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
+                      Editar Lista
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => { handleDeshacer(); setIsEditMode(false) }}
+                        className="h-9 px-4 text-sm font-medium rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 transition-colors cursor-pointer"
+                      >
+                        Deshacer
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => { await handleGuardar(); setIsEditMode(false) }}
+                        disabled={isSaving}
+                        className="h-9 px-4 text-sm font-medium rounded-lg border border-green-200 bg-green-50 hover:bg-green-100 text-green-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isSaving ? "Guardando..." : "Guardar Cambios"}
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -600,6 +614,7 @@ export default function ListaDePreciosPage() {
                   activeFilters={activeFilters}
                   sortPriorities={sortPriorities}
                   onSelectionChange={handleSelectionChange}
+                  isEditMode={isEditMode}
                 />
                 </div>
             </div>
