@@ -282,23 +282,28 @@ export const VENTAS: Venta[] = [
     descuentoTipo: "percent",
     total: 341760,
     entregaItems: [
-      { sku: "WHKY-JW750-BLACK", quantityEntregada: 2 },
-      { sku: "GIN-BOMSAPH", quantityEntregada: 0 },
-      { sku: "VDKA-ABSO-ORIG", quantityEntregada: 0 },
-      { sku: "LICR-SHEROR", quantityEntregada: 0 },
+      { sku: "WHKY-JW750-BLACK", quantityEntregada: 4 },
+      { sku: "GIN-BOMSAPH", quantityEntregada: 2 },
+      { sku: "VDKA-ABSO-ORIG", quantityEntregada: 2 },
+      { sku: "LICR-SHEROR", quantityEntregada: 1 },
     ],
     entregaEntries: [
       {
         id: "VTA-004-ENT-1",
         fecha: "2026-04-10",
         hora: "17:10",
-        items: [{ sku: "WHKY-JW750-BLACK", quantity: 2 }],
+        items: [
+          { sku: "WHKY-JW750-BLACK", quantity: 4 },
+          { sku: "GIN-BOMSAPH", quantity: 2 },
+          { sku: "VDKA-ABSO-ORIG", quantity: 2 },
+          { sku: "LICR-SHEROR", quantity: 1 },
+        ],
       },
     ],
     cobros: [
       { id: "COB-004-01", fecha: "2026-04-10", hora: "17:08", medioPago: "posnet", monto: 341760 },
     ],
-    estado: "en_curso",
+    estado: "finalizada",
   },
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -390,10 +395,25 @@ export const VENTAS: Venta[] = [
     descuento: 0,
     descuentoTipo: "percent",
     total: 419760,
-    entregaItems: [],
-    entregaEntries: [],
-    cobros: [],
-    estado: "en_curso",
+    entregaItems: [
+      { sku: "WHKY-JDOLD7", quantityEntregada: 6 },
+      { sku: "WHKY-JMSOR", quantityEntregada: 6 },
+    ],
+    entregaEntries: [
+      {
+        id: "VTA-006-ENT-1",
+        fecha: "2026-04-14",
+        hora: "14:10",
+        items: [
+          { sku: "WHKY-JDOLD7", quantity: 6 },
+          { sku: "WHKY-JMSOR", quantity: 6 },
+        ],
+      },
+    ],
+    cobros: [
+      { id: "COB-006-01", fecha: "2026-04-14", hora: "14:05", medioPago: "transferencia", monto: 419760 },
+    ],
+    estado: "finalizada",
   },
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -540,8 +560,8 @@ export const VENTAS: Venta[] = [
     entregaItems: [
       { sku: "TEQ-PATSLVR", quantityEntregada: 2 },
       { sku: "VDKA-CRCOR", quantityEntregada: 2 },
-      { sku: "LICR-FIRB750", quantityEntregada: 0 },
-      { sku: "GIN-MYRBOT", quantityEntregada: 0 },
+      { sku: "LICR-FIRB750", quantityEntregada: 3 },
+      { sku: "GIN-MYRBOT", quantityEntregada: 2 },
     ],
     entregaEntries: [
       {
@@ -551,13 +571,16 @@ export const VENTAS: Venta[] = [
         items: [
           { sku: "TEQ-PATSLVR", quantity: 2 },
           { sku: "VDKA-CRCOR", quantity: 2 },
+          { sku: "LICR-FIRB750", quantity: 3 },
+          { sku: "GIN-MYRBOT", quantity: 2 },
         ],
       },
     ],
     cobros: [
       { id: "COB-009-01", fecha: "2026-04-15", hora: "18:32", medioPago: "efectivo", monto: 150000 },
+      { id: "COB-009-02", fecha: "2026-04-16", hora: "10:00", medioPago: "transferencia", monto: 139000 },
     ],
-    estado: "en_curso",
+    estado: "finalizada",
   },
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -739,7 +762,7 @@ export const VENTAS: Venta[] = [
   // ─────────────────────────────────────────────────────────────────────────
   {
     id: "VTA-012",
-    fecha: "2026-04-25",
+    fecha: "2026-06-05",
     hora: "10:30",
     cliente: { tipo: "cuenta", id: "CLI-004", nombre: "Vinoteca El Sabor SRL" },
     items: [
@@ -789,12 +812,30 @@ export const VENTAS: Venta[] = [
     descuentoTipo: "percent",
     envio: 9000,
     total: 1231050,
-    entregaItems: [],
-    entregaEntries: [],
-    cobros: [
-      { id: "COB-012-01", fecha: "2026-04-25", hora: "10:35", medioPago: "transferencia", monto: 615525 },
+    entregaItems: [
+      { sku: "VNO-PROGRES-MALB-2019", quantityEntregada: 6 },
+      { sku: "VNO-PROGRES-CABS-2019", quantityEntregada: 6 },
+      { sku: "ESP-SALENT-BRNA", quantityEntregada: 4 },
+      { sku: "ESP-SALENT-BRRO", quantityEntregada: 4 },
     ],
-    estado: "en_curso",
+    entregaEntries: [
+      {
+        id: "VTA-012-ENT-1",
+        fecha: "2026-06-05",
+        hora: "10:40",
+        items: [
+          { sku: "VNO-PROGRES-MALB-2019", quantity: 6 },
+          { sku: "VNO-PROGRES-CABS-2019", quantity: 6 },
+          { sku: "ESP-SALENT-BRNA", quantity: 4 },
+          { sku: "ESP-SALENT-BRRO", quantity: 4 },
+        ],
+      },
+    ],
+    cobros: [
+      { id: "COB-012-01", fecha: "2026-06-05", hora: "10:35", medioPago: "transferencia", monto: 615525 },
+      { id: "COB-012-02", fecha: "2026-06-05", hora: "10:36", medioPago: "transferencia", monto: 615525 },
+    ],
+    estado: "finalizada",
     origen: "presupuesto",
     presupuestoId: "PRE-011",
   },
@@ -861,7 +902,7 @@ export const VENTAS: Venta[] = [
   // ─────────────────────────────────────────────────────────────────────────
   {
     id: "VTA-014",
-    fecha: "2026-04-29",
+    fecha: "2026-06-08",
     hora: "09:00",
     cliente: { tipo: "cuenta", id: "CLI-003", nombre: "Distribuidora Norte S.A." },
     items: [
@@ -902,20 +943,26 @@ export const VENTAS: Venta[] = [
     envio: 15000,
     total: 1710573,
     entregaItems: [
-      { sku: "VNO-PROGRES-MALB-2019", quantityEntregada: 6 },
-      { sku: "VNO-PROGRES-CABS-2019", quantityEntregada: 0 },
-      { sku: "VNO-PROGRES-SYGA-2019", quantityEntregada: 0 },
+      { sku: "VNO-PROGRES-MALB-2019", quantityEntregada: 12 },
+      { sku: "VNO-PROGRES-CABS-2019", quantityEntregada: 6 },
+      { sku: "VNO-PROGRES-SYGA-2019", quantityEntregada: 6 },
     ],
     entregaEntries: [
       {
         id: "VTA-014-ENT-1",
-        fecha: "2026-04-30",
-        hora: "10:00",
-        items: [{ sku: "VNO-PROGRES-MALB-2019", quantity: 6 }],
+        fecha: "2026-06-08",
+        hora: "09:30",
+        items: [
+          { sku: "VNO-PROGRES-MALB-2019", quantity: 12 },
+          { sku: "VNO-PROGRES-CABS-2019", quantity: 6 },
+          { sku: "VNO-PROGRES-SYGA-2019", quantity: 6 },
+        ],
       },
     ],
-    cobros: [],
-    estado: "en_curso",
+    cobros: [
+      { id: "COB-014-01", fecha: "2026-06-08", hora: "09:05", medioPago: "transferencia", monto: 1710573 },
+    ],
+    estado: "finalizada",
     origen: "presupuesto",
     presupuestoId: "PRE-001",
   },
@@ -1150,21 +1197,25 @@ export const VENTAS: Venta[] = [
     total: 320370,
     entregaItems: [
       { sku: "VNO-DOMGRES-BLND", quantityEntregada: 4 },
-      { sku: "VNO-DOMESTE-BLND", quantityEntregada: 0 },
-      { sku: "ESP-DOMES-BRNA", quantityEntregada: 0 },
+      { sku: "VNO-DOMESTE-BLND", quantityEntregada: 4 },
+      { sku: "ESP-DOMES-BRNA", quantityEntregada: 3 },
     ],
     entregaEntries: [
       {
         id: "VTA-018-ENT-1",
         fecha: "2026-05-07",
         hora: "15:10",
-        items: [{ sku: "VNO-DOMGRES-BLND", quantity: 4 }],
+        items: [
+          { sku: "VNO-DOMGRES-BLND", quantity: 4 },
+          { sku: "VNO-DOMESTE-BLND", quantity: 4 },
+          { sku: "ESP-DOMES-BRNA", quantity: 3 },
+        ],
       },
     ],
     cobros: [
       { id: "COB-018-01", fecha: "2026-05-07", hora: "15:05", medioPago: "transferencia", monto: 320370 },
     ],
-    estado: "en_curso",
+    estado: "finalizada",
     origen: "presupuesto",
     presupuestoId: "PRE-009",
   },
@@ -1243,7 +1294,7 @@ export const VENTAS: Venta[] = [
   // ─────────────────────────────────────────────────────────────────────────
   {
     id: "VTA-020",
-    fecha: "2026-05-12",
+    fecha: "2026-06-16",
     hora: "09:30",
     cliente: { tipo: "cuenta", id: "CLI-011", nombre: "Distribuciones Cortés" },
     items: [
@@ -1292,10 +1343,29 @@ export const VENTAS: Venta[] = [
     descuento: 0,
     descuentoTipo: "percent",
     total: 764760,
-    entregaItems: [],
-    entregaEntries: [],
-    cobros: [],
-    estado: "en_curso",
+    entregaItems: [
+      { sku: "WHKY-JMSOR", quantityEntregada: 6 },
+      { sku: "WHKY-JMSBB", quantityEntregada: 4 },
+      { sku: "WHKY-JW750-DBLK", quantityEntregada: 3 },
+      { sku: "WHKY-JDOLD7", quantityEntregada: 6 },
+    ],
+    entregaEntries: [
+      {
+        id: "VTA-020-ENT-1",
+        fecha: "2026-06-16",
+        hora: "09:40",
+        items: [
+          { sku: "WHKY-JMSOR", quantity: 6 },
+          { sku: "WHKY-JMSBB", quantity: 4 },
+          { sku: "WHKY-JW750-DBLK", quantity: 3 },
+          { sku: "WHKY-JDOLD7", quantity: 6 },
+        ],
+      },
+    ],
+    cobros: [
+      { id: "COB-020-01", fecha: "2026-06-16", hora: "09:35", medioPago: "transferencia", monto: 764760 },
+    ],
+    estado: "finalizada",
     origen: "presupuesto",
     presupuestoId: "PRE-005",
   },
@@ -1496,7 +1566,7 @@ export const VENTAS: Venta[] = [
   // ─────────────────────────────────────────────────────────────────────────
   {
     id: "VTA-024",
-    fecha: "2026-05-19",
+    fecha: "2026-06-20",
     hora: "10:45",
     cliente: { tipo: "cuenta", id: "CLI-007", nombre: "Dani Fiambre" },
     items: [
@@ -1535,12 +1605,27 @@ export const VENTAS: Venta[] = [
     descuento: 0,
     descuentoTipo: "percent",
     total: 239340,
-    entregaItems: [],
-    entregaEntries: [],
-    cobros: [
-      { id: "COB-024-01", fecha: "2026-05-19", hora: "10:48", medioPago: "posnet", monto: 239340 },
+    entregaItems: [
+      { sku: "GIN-ACCGOR", quantityEntregada: 4 },
+      { sku: "GIN-MYRBOT", quantityEntregada: 4 },
+      { sku: "GIN-RESTINGA-ORIG", quantityEntregada: 4 },
     ],
-    estado: "en_curso",
+    entregaEntries: [
+      {
+        id: "VTA-024-ENT-1",
+        fecha: "2026-06-20",
+        hora: "10:50",
+        items: [
+          { sku: "GIN-ACCGOR", quantity: 4 },
+          { sku: "GIN-MYRBOT", quantity: 4 },
+          { sku: "GIN-RESTINGA-ORIG", quantity: 4 },
+        ],
+      },
+    ],
+    cobros: [
+      { id: "COB-024-01", fecha: "2026-06-20", hora: "10:48", medioPago: "posnet", monto: 239340 },
+    ],
+    estado: "finalizada",
   },
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -1607,7 +1692,7 @@ export const VENTAS: Venta[] = [
   // ─────────────────────────────────────────────────────────────────────────
   {
     id: "VTA-026",
-    fecha: "2026-05-23",
+    fecha: "2026-06-23",
     hora: "18:00",
     cliente: { tipo: "cuenta", id: "CLI-002", nombre: "María González" },
     items: [
@@ -1636,10 +1721,25 @@ export const VENTAS: Venta[] = [
     descuento: 0,
     descuentoTipo: "percent",
     total: 114225,
-    entregaItems: [],
-    entregaEntries: [],
-    cobros: [],
-    estado: "en_curso",
+    entregaItems: [
+      { sku: "VDKA-ABSO-PEAR", quantityEntregada: 3 },
+      { sku: "LICR-DOMIMST", quantityEntregada: 2 },
+    ],
+    entregaEntries: [
+      {
+        id: "VTA-026-ENT-1",
+        fecha: "2026-06-23",
+        hora: "18:10",
+        items: [
+          { sku: "VDKA-ABSO-PEAR", quantity: 3 },
+          { sku: "LICR-DOMIMST", quantity: 2 },
+        ],
+      },
+    ],
+    cobros: [
+      { id: "COB-026-01", fecha: "2026-06-23", hora: "18:05", medioPago: "efectivo", monto: 114225 },
+    ],
+    estado: "finalizada",
   },
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -1718,7 +1818,7 @@ export const VENTAS: Venta[] = [
   // ─────────────────────────────────────────────────────────────────────────
   {
     id: "VTA-028",
-    fecha: "2026-05-29",
+    fecha: "2026-06-26",
     hora: "10:00",
     cliente: { tipo: "cuenta", id: "CLI-006", nombre: "Restaurant La Esquina" },
     items: [
@@ -1765,7 +1865,7 @@ export const VENTAS: Venta[] = [
     entregaEntries: [
       {
         id: "VTA-028-ENT-1",
-        fecha: "2026-05-29",
+        fecha: "2026-06-26",
         hora: "10:10",
         items: [
           { sku: "VNO-DOMESTE-CHRD", quantity: 6 },
@@ -1775,9 +1875,10 @@ export const VENTAS: Venta[] = [
       },
     ],
     cobros: [
-      { id: "COB-028-01", fecha: "2026-05-29", hora: "10:05", medioPago: "efectivo", monto: 198195 },
+      { id: "COB-028-01", fecha: "2026-06-26", hora: "10:05", medioPago: "efectivo", monto: 198195 },
+      { id: "COB-028-02", fecha: "2026-06-26", hora: "10:06", medioPago: "transferencia", monto: 198195 },
     ],
-    estado: "en_curso",
+    estado: "finalizada",
   },
 
   // ─────────────────────────────────────────────────────────────────────────
