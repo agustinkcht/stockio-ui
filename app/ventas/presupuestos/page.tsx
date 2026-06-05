@@ -195,13 +195,8 @@ export default function PresupuestosPage() {
   // Widget subtitles
   const subtitleCreadas = !noPeriod && periodParam
     ? isActivePeriod
-      ? `Creadas desde el ${fmtDay(range.start)} hasta hoy`
-      : "Creadas en el período seleccionado"
-    : null
-  const subtitleBorrador = !noPeriod && periodParam
-    ? isActivePeriod
-      ? "Pendientes al día de hoy, sin importar su fecha de creación"
-      : "Pendientes al día de hoy, creadas en el período seleccionado"
+      ? `Creados desde el ${fmtDay(range.start)} hasta hoy`
+      : "Creados en el período seleccionado"
     : null
 
   // Period-scoped presupuestos filtered by creation date
@@ -438,7 +433,7 @@ export default function PresupuestosPage() {
                             <span className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{countBorrador}</span>
                             <span className="text-base font-medium text-slate-500">En Borrador</span>
                           </div>
-                          {subtitleBorrador && (
+                          {subtitleCreadas && (
                             <p className="mt-2 text-xs text-slate-400 leading-snug">{subtitleBorrador}</p>
                           )}
                         </button>
