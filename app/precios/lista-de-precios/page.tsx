@@ -60,7 +60,7 @@ export default function ListaDePreciosPage() {
   const [selHas, setSelHas] = useState(false)
   const [selAll, setSelAll] = useState(false)
   const [selIndeterminate, setSelIndeterminate] = useState(false)
-  const [gridHandleSelectAll, setGridHandleSelectAll] = useState<() => void>(() => () => {})
+  const gridHandleSelectAllRef = useRef<() => void>(() => {})
   const allCheckboxRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -75,7 +75,7 @@ export default function ListaDePreciosPage() {
       setSelHas(has)
       setSelAll(all)
       setSelIndeterminate(indeterminate)
-      setGridHandleSelectAll(() => doSelectAll)
+      gridHandleSelectAllRef.current = doSelectAll
     },
     [],
   )
@@ -564,7 +564,7 @@ export default function ListaDePreciosPage() {
                         ref={allCheckboxRef}
                         type="checkbox"
                         checked={selAll}
-                        onChange={gridHandleSelectAll}
+                        onChange={() => gridHandleSelectAllRef.current()}
                         className="w-3.5 h-3.5 rounded accent-slate-800 cursor-pointer"
                       />
                     </div>

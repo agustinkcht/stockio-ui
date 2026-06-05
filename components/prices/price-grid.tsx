@@ -243,8 +243,8 @@ export function PriceGrid({
     return { costo: 0, margen: 0, iva: 21, precioFinal: 0 }
   }
 
-  // cols: [44px checkbox | 1fr item | 160px costo | 110px margen | 90px iva | 180px precio final]
-  const COLS = "grid-cols-[44px_1fr_160px_110px_90px_180px]"
+  // cols: [44px checkbox | 1fr item | 270px costo | 100px margen | 100px iva | 270px precio venta]
+  const COLS = "grid-cols-[44px_1fr_270px_100px_100px_270px]"
 
   const renderItemRow = (item: Item, index: number, isChild = false, isLastChild = false, parentProveedor?: string) => {
     const isParent = !isChild && ((item.variants && item.variants.length > 0) || (item.items && item.items.length > 0))
@@ -261,7 +261,7 @@ export function PriceGrid({
       <div key={item.sku || index}>
         <div
           className={`grid ${COLS} h-[60px] items-center transition-colors ${
-            isHovered ? "bg-slate-50/60" : isChild ? "bg-slate-50/40" : ""
+            isHovered ? "bg-blue-50/50" : isChild ? "bg-slate-50/40" : ""
           }`}
           onMouseEnter={() => setHoveredId(itemId)}
           onMouseLeave={() => setHoveredId(null)}
@@ -429,7 +429,7 @@ export function PriceGrid({
       {/* Table header */}
       <div className={`grid ${COLS} px-0 py-2.5 border border-slate-200/80 rounded-t-md bg-slate-50/60`}>
         <div />
-        <div className="text-xs font-medium text-slate-400 uppercase tracking-wide">Artículo</div>
+        <div className="text-xs font-medium text-slate-400 uppercase tracking-wide">Item</div>
         <div className="flex items-center justify-between pl-3 border-l border-slate-200/60">
           <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">Costo</span>
           <button onClick={() => setBulkModalType("costo")} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer mr-1" title="Editar en lote">
@@ -450,7 +450,7 @@ export function PriceGrid({
         </div>
         <div className="flex items-center justify-between pl-3 border-l border-slate-200/60" data-precio-dropdown>
           <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">
-            Precio Final{precioFinalMode === "sin_iva" ? " (sin IVA)" : ""}
+            Precio de Venta{precioFinalMode === "sin_iva" ? " (sin IVA)" : ""}
           </span>
           <div className="relative mr-1">
             <button onClick={() => setShowPrecioModeDropdown(!showPrecioModeDropdown)} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer" title="Opciones">
