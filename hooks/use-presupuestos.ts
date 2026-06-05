@@ -7,7 +7,7 @@ import { INITIAL_PRESUPUESTOS as SEED_PRESUPUESTOS } from "@/lib/data/initial-pr
 
 const STORAGE_KEY_PREFIX = "stockio_presupuestos"
 // Bump when the Presupuesto type changes or seed data changes to force a clean reset.
-const PRESUPUESTOS_SEED_VERSION = "v4"
+const PRESUPUESTOS_SEED_VERSION = "v5"
 
 const INITIAL_PRESUPUESTOS: Presupuesto[] = SEED_PRESUPUESTOS
 

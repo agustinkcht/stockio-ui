@@ -189,6 +189,21 @@ export default function PresupuestosPage() {
     return Array.from(new Set(names)).sort()
   }, [presupuestos])
 
+  // Helper: "1 de junio"
+  const fmtDay = (d: Date) => d.toLocaleDateString("es-AR", { day: "numeric", month: "long" })
+
+  // Widget subtitles
+  const subtitleCreadas = !noPeriod && periodParam
+    ? isActivePeriod
+      ? `Creadas desde el ${fmtDay(range.start)} hasta hoy`
+      : "Creadas en el período seleccionado"
+    : null
+  const subtitleBorrador = !noPeriod && periodParam
+    ? isActivePeriod
+      ? "Pendientes al día de hoy, sin importar su fecha de creación"
+      : "Pendientes al día de hoy, creadas en el período seleccionado"
+    : null
+
   // Period-scoped presupuestos filtered by creation date
   const periodPresupuestosByDate = useMemo(() => {
     if (noPeriod) return presupuestos
@@ -404,6 +419,9 @@ export default function PresupuestosPage() {
                             <span className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{countAceptados}</span>
                             <span className="text-base font-medium text-emerald-500">Aceptados</span>
                           </div>
+                          {subtitleCreadas && (
+                            <p className="mt-2 text-xs text-slate-400 leading-snug">{subtitleCreadas}</p>
+                          )}
                         </button>
 
                         {/* En Borrador */}
@@ -411,15 +429,18 @@ export default function PresupuestosPage() {
                           key="borrador"
                           type="button"
                           onClick={() => toggle("borrador", countBorrador)}
-                          className={widgetCls(activeTab === "borrador", countBorrador === 0, "bg-orange-50 border-orange-200", "hover:border-orange-200 hover:shadow-md")}
+                          className={widgetCls(activeTab === "borrador", countBorrador === 0, "bg-slate-100 border-slate-300", "hover:border-slate-300 hover:shadow-md")}
                         >
                           <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center mb-4 shadow-sm border border-slate-100">
-                            <Clock className="w-5 h-5 text-orange-400" />
+                            <Clock className="w-5 h-5 text-slate-500" />
                           </div>
                           <div className="flex items-baseline gap-2">
                             <span className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{countBorrador}</span>
-                            <span className="text-base font-medium text-orange-500">En Borrador</span>
+                            <span className="text-base font-medium text-slate-500">En Borrador</span>
                           </div>
+                          {subtitleBorrador && (
+                            <p className="mt-2 text-xs text-slate-400 leading-snug">{subtitleBorrador}</p>
+                          )}
                         </button>
 
                         {/* Rechazados */}
@@ -436,6 +457,9 @@ export default function PresupuestosPage() {
                             <span className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{countRechazados}</span>
                             <span className="text-base font-medium text-red-400">Rechazados</span>
                           </div>
+                          {subtitleCreadas && (
+                            <p className="mt-2 text-xs text-slate-400 leading-snug">{subtitleCreadas}</p>
+                          )}
                         </button>
                       </div>
                     )
