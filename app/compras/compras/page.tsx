@@ -160,7 +160,9 @@ export default function ComprasPage() {
   const setFilterProveedor = useCallback((val: string) => updateParam("proveedor", val || null), [updateParam])
   const filterPendientePago = searchParams.get("pago") === "1"
   const setFilterPendientePago = useCallback((val: boolean) => updateParam("pago", val ? "1" : null), [updateParam])
-  const hasActiveFilters = !!filterProveedor || filterPendientePago
+  const filterPendienteRecepcion = searchParams.get("recepcion") === "1"
+  const setFilterPendienteRecepcion = useCallback((val: boolean) => updateParam("recepcion", val ? "1" : null), [updateParam])
+  const hasActiveFilters = !!filterProveedor || filterPendientePago || filterPendienteRecepcion
 
   // Sort
   const sortParam = searchParams.get("sort") ?? "fecha_desc"
@@ -226,7 +228,8 @@ export default function ComprasPage() {
       const matchesSearch = !q || c.id.toLowerCase().includes(q) || c.proveedorNombre.toLowerCase().includes(q)
       const matchesProveedor = !filterProveedor || c.proveedorNombre === filterProveedor
       const matchesPendientePago = !filterPendientePago || c.estado === "en_curso"
-      return matchesPeriod && matchesTab && matchesSearch && matchesProveedor && matchesPendientePago
+      const matchesPendienteRecepcion = !filterPendienteRecepcion || (c.pendienteEntrega === true)
+      return matchesPeriod && matchesTab && matchesSearch && matchesProveedor && matchesPendientePago && matchesPendienteRecepcion
     })
     filtered.sort((a, b) => {
       let diff = 0
@@ -238,7 +241,7 @@ export default function ComprasPage() {
       return sortDir === "asc" ? diff : -diff
     })
     return filtered
-  }, [compras, activeTab, searchQuery, filterProveedor, filterPendientePago, sortField, sortDir, noPeriod, range])
+  }, [compras, activeTab, searchQuery, filterProveedor, filterPendientePago, filterPendienteRecepcion, sortField, sortDir, noPeriod, range])
 
   const allSelected = selectedCompras.size === filteredCompras.length && filteredCompras.length > 0
   const someSelected = selectedCompras.size > 0 && selectedCompras.size < filteredCompras.length
@@ -493,7 +496,7 @@ export default function ComprasPage() {
                       )}
 
                       {/* Active filter tags */}
-                      {(periodTagLabel || activeTab !== "todas" || filterProveedor || filterPendientePago) && (
+                      {(periodTagLabel || activeTab !== "todas" || filterProveedor || filterPendientePago || filterPendienteRecepcion) && (
                         <div className="flex items-center gap-1.5 flex-wrap">
                           {periodTagLabel && (
                             <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
@@ -534,19 +537,22 @@ export default function ComprasPage() {
                               </button>
                             </span>
                           )}
-                          {filterPendientePago && (
-                            <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
-                              Pend. pago
-                              <button
-                                type="button"
-                                onClick={() => setFilterPendientePago(false)}
-                                aria-label="Quitar filtro pendiente de pago"
-                                className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
-                              >
-                                <X className="w-2.5 h-2.5 text-slate-400" />
-                              </button>
-                            </span>
-                          )}
+                        {filterPendientePago && (
+                          <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
+                            Pago pendiente
+                            <button type="button" onClick={() => setFilterPendientePago(false)} className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer">
+                              <X className="w-2.5 h-2.5 text-slate-400" />
+                            </button>
+                          </span>
+                        )}
+                        {filterPendienteRecepcion && (
+                          <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
+                            Recepción pendiente
+                            <button type="button" onClick={() => setFilterPendienteRecepcion(false)} className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer">
+                              <X className="w-2.5 h-2.5 text-slate-400" />
+                            </button>
+                          </span>
+                        )}
                         </div>
                       )}
 
@@ -593,12 +599,21 @@ export default function ComprasPage() {
                                       />
                                       <span className="text-xs text-slate-700">Pendiente de pago</span>
                                     </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        checked={filterPendienteRecepcion}
+                                        onChange={(e) => setFilterPendienteRecepcion(e.target.checked)}
+                                        className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                      />
+                                      <span className="text-xs text-slate-700">Pendiente de recepción</span>
+                                    </label>
                                   </div>
                                 )}
                                 {hasActiveFilters && (
                                   <button
                                     type="button"
-                                    onClick={() => { setFilterProveedor(""); setFilterPendientePago(false) }}
+                                    onClick={() => { setFilterProveedor(""); setFilterPendientePago(false); setFilterPendienteRecepcion(false) }}
                                     className="w-full text-xs text-slate-500 hover:text-slate-700 py-1 text-center cursor-pointer"
                                   >
                                     Limpiar filtros
@@ -1041,12 +1056,19 @@ function ComprasPeriodSelector({
   customRange: { start: Date; end: Date } | null
   setCustomRange: (r: { start: Date; end: Date } | null) => void
 }) {
+  const activePeriodKeys: PeriodKey[] = ["hoy", "mes_en_curso", "ano_en_curso"]
+  const periodicalKeys: PeriodKey[] = ["7d", "30d", "ultimo_ano", "personalizado"]
+  const activeOptions = PERIOD_OPTIONS.filter(o => activePeriodKeys.includes(o.key))
+  const periodicalOptions = PERIOD_OPTIONS.filter(o => periodicalKeys.includes(o.key))
+
   return (
     <div className="relative">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 h-8 px-3 rounded-full border border-slate-200 bg-white hover:border-slate-300 transition-colors cursor-pointer shadow-sm"
+        className={`flex items-center gap-2 px-3 rounded-full border bg-white hover:border-slate-300 transition-colors cursor-pointer ${
+          noPeriod ? "border-slate-200 text-slate-400 py-1.5" : "border-slate-300 text-slate-700 py-1"
+        }`}
       >
         <div className="flex flex-col items-start">
           {!noPeriod && (
@@ -1066,15 +1088,54 @@ function ComprasPeriodSelector({
       </button>
       {open && (
         <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden z-20 animate-in fade-in-0 slide-in-from-top-1 duration-150">
-            {PERIOD_OPTIONS.map((opt) => (
+          <div className="fixed inset-0 z-[90]" onClick={() => setOpen(false)} />
+          <div className="absolute top-full left-0 mt-1 w-52 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden z-[100] animate-in fade-in-0 slide-in-from-top-1 duration-150">
+            {/* Ninguno */}
+            <button
+              type="button"
+              onClick={() => onSelect("ninguno" as PeriodKey)}
+              className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer ${
+                noPeriod ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"
+              }`}
+            >
+              Ninguno
+            </button>
+            {/* En curso group */}
+            <div className="px-4 pt-2 pb-0.5">
+              <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">En curso</span>
+            </div>
+            {activeOptions.map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => onSelect(opt.key)}
+                className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer flex items-center justify-between ${
+                  !noPeriod && currentKey === opt.key
+                    ? "bg-slate-900 text-white"
+                    : "text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                <span>{opt.label}</span>
+                {!noPeriod && currentKey === opt.key && (
+                  <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
+                  </span>
+                )}
+              </button>
+            ))}
+            {/* Período fijo group */}
+            <div className="mx-4 my-1 h-px bg-slate-100" />
+            <div className="px-4 pt-1 pb-0.5">
+              <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Período fijo</span>
+            </div>
+            {periodicalOptions.map((opt) => (
               <button
                 key={opt.key}
                 type="button"
                 onClick={() => onSelect(opt.key)}
                 className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer ${
-                  currentKey === opt.key
+                  !noPeriod && currentKey === opt.key
                     ? "bg-slate-900 text-white"
                     : "text-slate-700 hover:bg-slate-50"
                 }`}

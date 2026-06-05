@@ -192,8 +192,8 @@ export default function VentasPage() {
 
   // Sort — ?sort=field_dir (default: "fecha_desc", omitted from URL)
   const sortParam = searchParams.get("sort") ?? "fecha_desc"
-  const [sortField, sortDir] = sortParam.split("_") as ["fecha" | "precio", "asc" | "desc"]
-  const setSortField = useCallback((val: "fecha" | "precio") => {
+  const [sortField, sortDir] = sortParam.split("_") as ["fecha" | "total", "asc" | "desc"]
+  const setSortField = useCallback((val: "fecha" | "total") => {
     const newParam = `${val}_${sortDir}`
     updateParam("sort", newParam === "fecha_desc" ? null : newParam)
   }, [updateParam, sortDir])
@@ -723,11 +723,11 @@ export default function VentasPage() {
                           </button>
                           <select
                             value={sortField}
-                            onChange={(e) => setSortField(e.target.value as "fecha" | "precio")}
-                            className="appearance-none pl-2.5 pr-6 text-xs bg-transparent focus:outline-none cursor-pointer text-slate-700 h-full"
-                          >
-                            <option value="fecha">Fecha</option>
-                            <option value="precio">Precio</option>
+                          onChange={(e) => setSortField(e.target.value as "fecha" | "total")}
+                          className="appearance-none pl-2.5 pr-2.5 text-xs bg-transparent focus:outline-none cursor-pointer text-slate-700 h-full w-auto"
+                        >
+                          <option value="fecha">Fecha</option>
+                          <option value="total">Total</option>
                           </select>
                         </div>
 
