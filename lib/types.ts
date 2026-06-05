@@ -411,7 +411,7 @@ export interface CajaSesion {
   movimientos: CajaMovimiento[]
 }
 
-export type SortFactor = "titulo" | "categoria" | "marca" | "fecha" | "stock" | "costo" | "margen" | "precioFinal"
+export type SortFactor = "titulo" | "nombre" | "categoria" | "marca" | "fecha" | "stock" | "costo" | "margen" | "precioFinal"
 
 export type SortDirection = "asc" | "desc"
 

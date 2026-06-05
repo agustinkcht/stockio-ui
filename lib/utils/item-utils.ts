@@ -280,6 +280,7 @@ function compareItems(a: Item, b: Item, factor: SortFactor, direction: SortDirec
 
   switch (factor) {
     case "titulo":
+    case "nombre":
       comparison = (a.name || "").localeCompare(b.name || "")
       break
 

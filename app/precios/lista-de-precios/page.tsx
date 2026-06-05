@@ -24,8 +24,9 @@ import { useMemo } from "react"
 import { Checkbox } from "@/components/ui/checkbox"
 
 // ─── Sort concepts available in this view ────────────────────────────────────
-type QuickSortField = "precioFinal" | "costo" | "margen"
+type QuickSortField = "nombre" | "precioFinal" | "costo" | "margen"
 const QUICK_SORT_LABELS: Record<QuickSortField, string> = {
+  nombre: "Nombre",
   precioFinal: "Precio Final",
   costo: "Costo",
   margen: "Margen",
@@ -50,10 +51,10 @@ export default function ListaDePreciosPage() {
   // ── Search / Filter / Sort ──────────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState("")
   const [filterOpen, setFilterOpen] = useState(false)
-  const [sortField, setSortField] = useState<QuickSortField>("precioFinal")
+  const [sortField, setSortField] = useState<QuickSortField>("nombre")
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc")
   const [activeFilters, setActiveFilters] = useState<FilterConfig>(DEFAULT_FILTERS)
-  const [sortPriorities, setSortPriorities] = useState<SortFactorConfig[]>([{ factor: "precioFinal", direction: "asc" }])
+  const [sortPriorities, setSortPriorities] = useState<SortFactorConfig[]>([{ factor: "nombre", direction: "asc" }])
 
   // ── Selection (lifted from grid) ────────────────────────────────────────────
   const [selCount, setSelCount] = useState(0)
@@ -466,81 +467,45 @@ export default function ListaDePreciosPage() {
                         {filterOpen && (
                           <>
                             <div className="fixed inset-0 z-[90]" onClick={() => setFilterOpen(false)} />
-                            <div className="absolute top-full right-0 mt-1 w-64 bg-white border border-slate-200 rounded-lg shadow-lg z-[100] p-3 space-y-3 animate-in fade-in-0 slide-in-from-top-1 duration-150">
+                            <div className="absolute top-full right-0 mt-1 w-60 bg-white border border-slate-200 rounded-lg shadow-lg z-[100] p-3 space-y-3">
 
                               {/* Categoría */}
-                              <div className="space-y-1.5">
+                              <div>
                                 <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Categoría</label>
-                                <div className="max-h-36 overflow-y-auto space-y-1">
-                                  {availableCategorias.length === 0 ? (
-                                    <p className="text-xs text-slate-400 italic">Sin categorías</p>
-                                  ) : availableCategorias.map((cat) => (
-                                    <label key={cat} className="flex items-center gap-2 cursor-pointer">
-                                      <input
-                                        type="checkbox"
-                                        checked={activeFilters.categorias.includes(cat)}
-                                        onChange={() => setActiveFilters((f) => ({
-                                          ...f,
-                                          categorias: f.categorias.includes(cat)
-                                            ? f.categorias.filter((c) => c !== cat)
-                                            : [...f.categorias, cat],
-                                        }))}
-                                        className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                      />
-                                      <span className="text-xs text-slate-700">{cat}</span>
-                                    </label>
-                                  ))}
-                                </div>
+                                <select
+                                  value={activeFilters.categorias[0] ?? ""}
+                                  onChange={(e) => setActiveFilters((f) => ({ ...f, categorias: e.target.value ? [e.target.value] : [] }))}
+                                  className="w-full mt-1 px-2 py-1.5 text-xs border border-slate-200 rounded-md focus:outline-none focus:border-slate-400 bg-white cursor-pointer"
+                                >
+                                  <option value="">Todas</option>
+                                  {availableCategorias.map((c) => <option key={c} value={c}>{c}</option>)}
+                                </select>
                               </div>
 
                               {/* Proveedor */}
-                              <div className="space-y-1.5">
+                              <div>
                                 <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Proveedor</label>
-                                <div className="max-h-36 overflow-y-auto space-y-1">
-                                  {availableProveedores.length === 0 ? (
-                                    <p className="text-xs text-slate-400 italic">Sin proveedores</p>
-                                  ) : availableProveedores.map((prov) => (
-                                    <label key={prov} className="flex items-center gap-2 cursor-pointer">
-                                      <input
-                                        type="checkbox"
-                                        checked={activeFilters.proveedores.includes(prov)}
-                                        onChange={() => setActiveFilters((f) => ({
-                                          ...f,
-                                          proveedores: f.proveedores.includes(prov)
-                                            ? f.proveedores.filter((p) => p !== prov)
-                                            : [...f.proveedores, prov],
-                                        }))}
-                                        className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                      />
-                                      <span className="text-xs text-slate-700">{prov}</span>
-                                    </label>
-                                  ))}
-                                </div>
+                                <select
+                                  value={activeFilters.proveedores[0] ?? ""}
+                                  onChange={(e) => setActiveFilters((f) => ({ ...f, proveedores: e.target.value ? [e.target.value] : [] }))}
+                                  className="w-full mt-1 px-2 py-1.5 text-xs border border-slate-200 rounded-md focus:outline-none focus:border-slate-400 bg-white cursor-pointer"
+                                >
+                                  <option value="">Todos</option>
+                                  {availableProveedores.map((p) => <option key={p} value={p}>{p}</option>)}
+                                </select>
                               </div>
 
                               {/* Marca */}
-                              <div className="space-y-1.5">
+                              <div>
                                 <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Marca</label>
-                                <div className="max-h-36 overflow-y-auto space-y-1">
-                                  {availableMarcas.length === 0 ? (
-                                    <p className="text-xs text-slate-400 italic">Sin marcas</p>
-                                  ) : availableMarcas.map((marca) => (
-                                    <label key={marca} className="flex items-center gap-2 cursor-pointer">
-                                      <input
-                                        type="checkbox"
-                                        checked={activeFilters.marcas.includes(marca)}
-                                        onChange={() => setActiveFilters((f) => ({
-                                          ...f,
-                                          marcas: f.marcas.includes(marca)
-                                            ? f.marcas.filter((m) => m !== marca)
-                                            : [...f.marcas, marca],
-                                        }))}
-                                        className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                      />
-                                      <span className="text-xs text-slate-700">{marca}</span>
-                                    </label>
-                                  ))}
-                                </div>
+                                <select
+                                  value={activeFilters.marcas[0] ?? ""}
+                                  onChange={(e) => setActiveFilters((f) => ({ ...f, marcas: e.target.value ? [e.target.value] : [] }))}
+                                  className="w-full mt-1 px-2 py-1.5 text-xs border border-slate-200 rounded-md focus:outline-none focus:border-slate-400 bg-white cursor-pointer"
+                                >
+                                  <option value="">Todas</option>
+                                  {availableMarcas.map((m) => <option key={m} value={m}>{m}</option>)}
+                                </select>
                               </div>
 
                               {hasFilters && (
