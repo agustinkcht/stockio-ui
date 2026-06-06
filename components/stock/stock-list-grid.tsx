@@ -10,8 +10,8 @@ import { useRef, useState, useEffect, useMemo } from "react"
 import { usePriceSelection } from "@/hooks/use-price-selection"
 import { searchItems, sortItems, filterItems } from "@/lib/utils/item-utils"
 
-// grid-cols-12: 6 item | 2 total | 2 reservado | 2 disponible
-const COLS = "grid-cols-[minmax(0,6fr)_minmax(0,2fr)_minmax(0,2fr)_minmax(0,2fr)]"
+// grid-cols-12: 4 item | 3 proveedor | 2 en stock | 1 reservado | 2 disponible
+const COLS = "grid-cols-[minmax(0,4fr)_minmax(0,3fr)_minmax(0,2fr)_minmax(0,1fr)_minmax(0,2fr)]"
 
 interface StockListGridProps {
   items: Item[]
@@ -190,9 +190,17 @@ export function StockListGrid({
             </div>
           </div>
 
+          {/* Proveedor col */}
+          <div className="flex items-center px-4 h-full border-r border-slate-100 overflow-hidden min-w-0">
+            <span className="text-sm text-slate-500 truncate">
+              {(item as any).proveedor || "—"}
+            </span>
+          </div>
+
           {/* Parent rows: empty cells, no borders, no dashes */}
           {isParent ? (
             <>
+              <div className="h-full" />
               <div className="h-full" />
               <div className="h-full" />
               <div className="h-full" />
