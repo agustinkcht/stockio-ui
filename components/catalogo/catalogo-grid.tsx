@@ -84,20 +84,20 @@ export function CatalogoGrid({
       <div className="mt-3">
         <div className="px-8">
           <div className="max-w-6xl mx-auto">
-            <div className="flex items-center bg-slate-50 border border-slate-200/80 rounded-t-md">
+            <div className="flex items-center bg-slate-50 border border-slate-200/80 rounded-md">
               {/* Tab header columns */}
               <div className="flex-1 grid grid-cols-44 h-9">
                 <div className="col-span-16 flex items-center px-4 border-r border-slate-200/60">
-                  <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Item</span>
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Item</span>
                 </div>
                 <div className="col-span-8 flex items-center justify-center border-r border-slate-200/60">
-                  <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Estado</span>
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Estado</span>
                 </div>
                 <div className="col-span-10 flex items-center justify-center border-r border-slate-200/60">
-                  <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Precio Venta</span>
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Precio Venta</span>
                 </div>
                 <div className="col-span-10 flex items-center justify-center">
-                  <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Stock</span>
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Stock</span>
                 </div>
               </div>
             </div>
@@ -106,7 +106,7 @@ export function CatalogoGrid({
       </div>
 
       {/* Items Grid */}
-      <div className="px-8 pb-8">
+      <div className="px-8 pb-8 mt-2">
         <div className="max-w-6xl mx-auto">
           {sortedAndFilteredItems.length === 0 && (searchQuery || filterConfig.categorias.length > 0 || filterConfig.marcas.length > 0) ? (
             <div className="flex flex-col items-center justify-center py-16 text-slate-400">

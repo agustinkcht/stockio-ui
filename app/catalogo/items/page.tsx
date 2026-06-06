@@ -573,7 +573,7 @@ export default function CatalogoPage() {
                           checked={selectAllActive}
                           onChange={handleSelectAll}
                           aria-label={selectAllActive ? "Deseleccionar todo" : "Seleccionar todo"}
-                          className="w-3.5 h-3.5 rounded accent-slate-800 cursor-pointer"
+                          className="w-4 h-4 rounded-[3px] accent-slate-800 cursor-pointer"
                         />
                       </div>
 

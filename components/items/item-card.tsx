@@ -891,21 +891,21 @@ export function ItemCard({
             {isIndeterminate ? (
               <button
                 onClick={(e) => { e.stopPropagation(); onSelectClick() }}
-                className={`h-3.5 w-3.5 flex items-center justify-center rounded-[3px] bg-slate-800 border border-slate-800 cursor-pointer ${showTransition ? "transition-opacity" : ""}`}
+                className={`h-4 w-4 flex items-center justify-center rounded-[3px] bg-slate-800 border border-slate-800 cursor-pointer ${showTransition ? "transition-opacity" : ""}`}
               >
                 <Minus className="w-2.5 h-2.5 text-white" />
               </button>
             ) : isSelected ? (
               <button
                 onClick={(e) => { e.stopPropagation(); onSelectClick() }}
-                className={`h-3.5 w-3.5 flex items-center justify-center rounded-[3px] bg-slate-800 border border-slate-800 cursor-pointer hover:opacity-90 ${showTransition ? "transition-opacity" : ""}`}
+                className={`h-4 w-4 flex items-center justify-center rounded-[3px] bg-slate-800 border border-slate-800 cursor-pointer hover:opacity-90 ${showTransition ? "transition-opacity" : ""}`}
               >
                 <Check className="w-2.5 h-2.5 text-white" />
               </button>
             ) : (
               <button
                 onClick={(e) => { e.stopPropagation(); onSelectClick() }}
-                className={`h-3.5 w-3.5 cursor-pointer flex items-center justify-center rounded-[3px] border border-slate-400 bg-white ${
+                className={`h-4 w-4 cursor-pointer flex items-center justify-center rounded-[3px] border border-slate-400 bg-white ${
                   !isHovered ? "opacity-0" : "opacity-100"
                 } ${showTransition ? "transition-opacity" : ""}`}
               />
