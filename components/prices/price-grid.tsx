@@ -442,7 +442,8 @@ export function PriceGrid({
 
   return (
     <>
-      {/* Table header */}
+      {/* Table header — sticky, sits just below the bulk actions bar */}
+      <div className="sticky top-[96px] z-10 pb-2">
       <div className={`grid ${COLS} h-9 border border-slate-200/80 rounded-md bg-slate-50`}>
         <div className="col-span-6 flex items-center justify-center px-4 border-r border-slate-200/60">
           <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Item</span>
@@ -492,9 +493,10 @@ export function PriceGrid({
           )}
         </div>
       </div>
+      </div>{/* /sticky header wrapper */}
 
       {/* Rows */}
-      <div className="mt-2 border border-slate-200/80 rounded-md overflow-hidden bg-white divide-y divide-slate-100">
+      <div className="border border-slate-200/80 rounded-md overflow-hidden bg-white divide-y divide-slate-100">
         {sortedAndFilteredItems.length === 0 ? (
           <div className="py-16 text-center text-sm text-slate-400">
             {searchTerm || hasActiveFilters ? "No se encontraron artículos." : "Sin artículos para mostrar."}
