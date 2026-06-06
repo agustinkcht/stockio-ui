@@ -380,45 +380,27 @@ export default function StockPage() {
                 </div>
               </div>
 
-              {/* Row 2 — Bulk actions + Tab header */}
-              <div className="px-8 bg-slate-50/95 backdrop-blur-sm pb-2">
-                <div className="max-w-6xl mx-auto">
-                  {/* Bulk actions */}
-                  <div className="bg-white border border-slate-200/80 border-t-0">
-                    <div className="flex items-center gap-2 h-9">
-                      <div className="flex items-center justify-center w-[4%] min-w-[40px] shrink-0">
-                        <input
-                          ref={allCheckboxRef}
-                          type="checkbox"
-                          checked={selAll}
-                          onChange={() => gridHandleSelectAllRef.current()}
-                          className="w-3.5 h-3.5 rounded accent-slate-800 cursor-pointer"
-                        />
-                      </div>
-                      <div className="w-px h-5 bg-slate-200 shrink-0" />
-                      {selCount === 0 ? (
-                        <span className="text-xs text-slate-400">Seleccioná items para accionar masivamente</span>
-                      ) : (
-                        <span className="text-xs text-slate-600">
-                          {selCount} seleccionado{selCount !== 1 ? "s" : ""}
-                        </span>
-                      )}
+              {/* Row 2 — Bulk actions */}
+              <div className="px-8">
+                <div className="max-w-6xl mx-auto bg-white border border-slate-200/80 border-t-0">
+                  <div className="flex items-center gap-2 h-9">
+                    <div className="flex items-center justify-center w-[4%] min-w-[40px] shrink-0">
+                      <input
+                        ref={allCheckboxRef}
+                        type="checkbox"
+                        checked={selAll}
+                        onChange={() => gridHandleSelectAllRef.current()}
+                        className="w-3.5 h-3.5 rounded accent-slate-800 cursor-pointer"
+                      />
                     </div>
-                  </div>
-                  {/* Tab header */}
-                  <div className="grid grid-cols-[minmax(0,6fr)_minmax(0,2fr)_minmax(0,2fr)_minmax(0,2fr)] h-9 border border-slate-200/80 border-t-0 bg-slate-50">
-                    <div className="flex items-center justify-center px-4 border-r border-slate-200/60">
-                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Item</span>
-                    </div>
-                    <div className="flex items-center justify-center border-r border-slate-200/60">
-                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total</span>
-                    </div>
-                    <div className="flex items-center justify-center border-r border-slate-200/60">
-                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Reservado</span>
-                    </div>
-                    <div className="flex items-center justify-center">
-                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Disponible</span>
-                    </div>
+                    <div className="w-px h-5 bg-slate-200 shrink-0" />
+                    {selCount === 0 ? (
+                      <span className="text-xs text-slate-400">Seleccioná items para accionar masivamente</span>
+                    ) : (
+                      <span className="text-xs text-slate-600">
+                        {selCount} seleccionado{selCount !== 1 ? "s" : ""}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -427,7 +409,7 @@ export default function StockPage() {
             {/* /sticky bar */}
 
             {/* Stock grid */}
-            <div className="px-8 pb-8">
+            <div className="px-8 pt-2 pb-8">
               <div className="max-w-6xl mx-auto">
                 <StockListGrid
                   items={items}
