@@ -172,12 +172,15 @@ export function StockListGrid({
                 {item.name || "—"}
               </span>
               {isChild ? (
-                (() => {
-                  const tag = (item as any).tag || (item as any).variante || (item as any).variant || (item as any).presentacion
-                  return tag ? (
-                    <span className="text-[11px] text-slate-400 truncate">{tag}</span>
-                  ) : null
-                })()
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {(item as any).atributosPrincipales?.map((attr: any, idx: number) =>
+                    attr.value ? (
+                      <span key={idx} className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 text-slate-600 rounded shrink-0">
+                        {attr.value}
+                      </span>
+                    ) : null
+                  )}
+                </div>
               ) : (
                 <span className="text-[11px] text-slate-400 truncate">
                   {[(item as any).marca, (item as any).categoria].filter(Boolean).join(" · ")}
