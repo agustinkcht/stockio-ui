@@ -343,7 +343,7 @@ export function ItemCard({
               <>
                 {/* Item cell - col-span-16, chevron on left */}
                 <div
-                  className={`col-span-16 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors border-r border-slate-100`}
+                  className={`col-span-16 flex items-center gap-3 h-full pl-10 pr-4 cursor-pointer transition-colors border-r border-slate-100`}
                   onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
                 >
                   {/* Chevron instead of thumbnail - match thumbnail size w-12 h-12 */}
@@ -575,7 +575,7 @@ export function ItemCard({
               // Stock View Mode: Item (8), Categoria (4), Total (4), Reservado (4), Disponible (2)
               <>
                 <div
-                  className="col-span-8 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors border-r border-slate-100"
+                  className="col-span-8 flex items-center gap-3 h-full pl-10 pr-4 cursor-pointer transition-colors border-r border-slate-100"
                   onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
                 >
                   <button
@@ -601,7 +601,7 @@ export function ItemCard({
               <>
                 {/* Item cell - no border-r for parent */}
                 <div
-                  className="col-span-16 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors"
+                  className="col-span-16 flex items-center gap-3 h-full pl-10 pr-4 cursor-pointer transition-colors"
                   onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
                 >
                   {/* Chevron */}
@@ -639,7 +639,7 @@ export function ItemCard({
             // STOCK VIEW MODE: Standalone/child items - Item (8), Categoria (4), Total (4), Reservado (4), Disponible (2)
             <>
               <div
-                className={`col-span-8 flex items-center gap-2 h-full border-r border-slate-100 ${isChild ? "pl-6 pr-2" : "px-3"} cursor-pointer transition-colors`}
+                className={`col-span-8 flex items-center gap-2 h-full border-r border-slate-100 ${isChild ? "pl-10 pr-2" : "pl-10 pr-3"} cursor-pointer transition-colors`}
                 onClick={(e) => { e.stopPropagation(); onItemClick(item) }}
               >
   <div className={`${isChild ? "w-7 h-7" : "w-9 h-9"} flex-shrink-0 rounded-md bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden`}>
@@ -697,7 +697,7 @@ export function ItemCard({
             // NORMAL MODE: Standalone/child items
             <>
               <div
-                className={`col-span-16 flex items-center gap-3 h-full px-4 cursor-pointer transition-colors ${
+                className={`col-span-16 flex items-center gap-3 h-full pl-10 pr-4 cursor-pointer transition-colors ${
                   item.hasVariants || item.isAgrupador ? "" : "border-r border-slate-100"
                 }`}
                 onClick={(e) => {
