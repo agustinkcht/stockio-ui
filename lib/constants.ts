@@ -1,4 +1,4 @@
-import { Store, Box, Tag, HelpCircle, Settings, Receipt, Users, Wallet, Package, LayoutList, LayoutDashboard } from "lucide-react"
+import { Store, Box, Tag, Settings, Receipt, Users, Wallet, Package, LayoutList, LayoutDashboard } from "lucide-react"
 import type { SidebarItem, Template } from "./types"
 
 export const TEMPLATES: Template[] = [
@@ -217,7 +217,6 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
 ]
 
 export const BOTTOM_SIDEBAR_ITEMS: SidebarItem[] = [
-  { icon: HelpCircle, label: "Soporte" },
   { icon: Settings, label: "Ajustes" },
 ]
 
