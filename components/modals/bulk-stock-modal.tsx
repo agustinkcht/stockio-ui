@@ -38,13 +38,11 @@ export function BulkStockModal({ isOpen, onClose, onApply, itemCount, type }: Bu
 
   const operationOptions = [
     { value: "aumentar", label: "Aumentar" },
-    { value: "disminuir", label: "Disminuir" },
-    { value: "sobreescribir", label: "Sobreescribir" },
+    { value: "reducir", label: "Reducir" },
+    { value: "fijar_en", label: "Fijar en" },
   ]
 
-  const title = type === "total" 
-    ? `Modificar Stock Total de ${itemCount} items`
-    : `Modificar Stock Reservado de ${itemCount} items`
+  const title = `Editar Stock de ${itemCount} item${itemCount !== 1 ? "s" : ""}`
 
   if (!isOpen) return null
 
@@ -109,6 +107,11 @@ export function BulkStockModal({ isOpen, onClose, onApply, itemCount, type }: Bu
                   placeholder="0"
                   required
                 />
+              </div>
+
+              {/* Unit label */}
+              <div className="flex items-end pb-3">
+                <span className="text-sm text-muted-foreground">unidades</span>
               </div>
             </div>
           </div>

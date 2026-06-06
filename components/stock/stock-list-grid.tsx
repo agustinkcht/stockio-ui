@@ -2,6 +2,7 @@
 
 import type { Item, ItemVariant, SortFactorConfig, FilterConfig } from "@/lib/types"
 import { ChevronDown, ChevronRight, Minus, Plus } from "lucide-react"
+import { BulkStockModal } from "@/components/modals/bulk-stock-modal"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import Image from "next/image"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -18,11 +19,13 @@ interface StockListGridProps {
   expandedItems: Record<number, boolean>
   toggleVariantExpansion: (index: number) => void
   onStockFieldChange?: (itemSku: string, field: "total" | "reservado", value: number) => void
+  onBulkStockEdit?: (operation: string, value: number, targetSkus: string[]) => void
   searchTerm: string
   activeFilters: FilterConfig
   sortPriorities: SortFactorConfig[]
   onSelectionChange?: (count: number, has: boolean, selectAll: boolean, selectAllIndeterminate: boolean, handleSelectAll: () => void) => void
   isEditMode?: boolean
+  bulkModalOpenRef?: React.MutableRefObject<() => void>
 }
 
 function getItemStock(item: Item | ItemVariant) {
@@ -40,11 +43,13 @@ export function StockListGrid({
   expandedItems,
   toggleVariantExpansion,
   onStockFieldChange,
+  onBulkStockEdit,
   searchTerm = "",
   activeFilters = { tipos: [], categorias: [], marcas: [], proveedores: [], stock: [], depositos: [] },
   sortPriorities = [{ factor: "nombre" as const, direction: "asc" as const }],
   onSelectionChange,
   isEditMode = false,
+  bulkModalOpenRef,
 }: StockListGridProps) {
   const {
     selectAllActive,
@@ -54,9 +59,42 @@ export function StockListGrid({
     getSelectionState,
     selectedCount,
     hasSelectedItems,
+    getSelectedSkus,
   } = usePriceSelection(items)
 
   const [hoveredId, setHoveredId] = useState<string | null>(null)
+  const [bulkModalOpen, setBulkModalOpen] = useState(false)
+
+  // Expose bulk modal trigger to parent via ref (same pattern as price-grid)
+  useEffect(() => {
+    if (bulkModalOpenRef) bulkModalOpenRef.current = () => setBulkModalOpen(true)
+  })
+
+  // Get target SKUs for bulk edit
+  const getTargetSkus = (): string[] => {
+    if (hasSelectedItems) return getSelectedSkus()
+    const skus: string[] = []
+    for (const item of sortedAndFilteredItems ?? []) {
+      const isParent = (item.variants && item.variants.length > 0) || (item.items && item.items.length > 0)
+      if (isParent) {
+        const children = item.variants || item.items || []
+        for (const child of children) {
+          const sku = (child as any).sku || (child as any).id
+          if (sku) skus.push(sku)
+        }
+      } else {
+        const sku = item.sku || (item as any).id
+        if (sku) skus.push(sku)
+      }
+    }
+    return skus
+  }
+
+  const handleBulkApply = (operation: string, value: number) => {
+    const targetSkus = getTargetSkus()
+    onBulkStockEdit?.(operation, value, targetSkus)
+    setBulkModalOpen(false)
+  }
 
   // Notify parent of selection state changes — same pattern as price-grid
   const onSelectionChangeRef = useRef(onSelectionChange)
@@ -214,8 +252,13 @@ export function StockListGrid({
     )
   }
 
+  const bulkEditTargetCount = hasSelectedItems ? getSelectedSkus().length : sortedAndFilteredItems.reduce((acc, item) => {
+    const isParent = (item.variants && item.variants.length > 0) || (item.items && item.items.length > 0)
+    return acc + (isParent ? (item.variants || item.items || []).length : 1)
+  }, 0)
+
   return (
-    <div>
+    <>
       {/* Rows */}
       <div className="border border-slate-200/80 rounded-md overflow-hidden bg-white">
         {sortedAndFilteredItems.length === 0 ? (
@@ -226,6 +269,14 @@ export function StockListGrid({
           sortedAndFilteredItems.map((item, index) => renderItemRow(item, index, false))
         )}
       </div>
-    </div>
+
+      <BulkStockModal
+        isOpen={bulkModalOpen}
+        onClose={() => setBulkModalOpen(false)}
+        onApply={handleBulkApply}
+        itemCount={bulkEditTargetCount}
+        type="total"
+      />
+    </>
   )
 }

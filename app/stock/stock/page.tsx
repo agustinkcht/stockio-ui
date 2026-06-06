@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback, useRef, useEffect, useMemo } from "react"
-import { CheckCircle2, Search, X, ListFilter, ArrowUpDown, PencilLine } from "lucide-react"
+import { CheckCircle2, Search, X, ListFilter, ArrowUpDown, PencilLine, MoreVertical } from "lucide-react"
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -54,6 +54,7 @@ export default function StockPage() {
   const [selAll, setSelAll] = useState(false)
   const [selIndeterminate, setSelIndeterminate] = useState(false)
   const gridHandleSelectAllRef = useRef<() => void>(() => {})
+  const gridBulkStockModalOpenRef = useRef<() => void>(() => {})
   const allCheckboxRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -130,6 +131,35 @@ export default function StockPage() {
     const stockField = field === "total" ? "stockTotal" : "stockReservado"
     if (isVariant && parentSku) editVariantField(parentSku, itemSku, stockField, value)
     else editField(itemSku, stockField, value)
+  }
+
+  const handleBulkStockEdit = (operation: string, value: number, targetSkus: string[]) => {
+    for (const sku of targetSkus) {
+      let currentTotal = 0
+      let isVariant = false
+      let parentSku: string | undefined
+      for (const item of items) {
+        if (item.sku === sku || (item as any).id === sku) {
+          currentTotal = (item as any).stockTotal ?? 0
+          break
+        }
+        if (item.variants) {
+          const variant = item.variants.find((v: any) => v.sku === sku || (v as any).id === sku)
+          if (variant) {
+            currentTotal = (variant as any).stockTotal ?? 0
+            isVariant = true
+            parentSku = item.sku
+            break
+          }
+        }
+      }
+      let newTotal: number
+      if (operation === "aumentar") newTotal = currentTotal + value
+      else if (operation === "reducir") newTotal = Math.max(0, currentTotal - value)
+      else newTotal = value // fijar_en
+      if (isVariant && parentSku) editVariantField(parentSku, sku, "stockTotal", newTotal)
+      else editField(sku, "stockTotal", newTotal)
+    }
   }
 
   const toggleVariantExpansion = (index: number) => {
@@ -410,8 +440,16 @@ export default function StockPage() {
                     <div className="flex items-center justify-center px-4 border-r border-slate-200/60">
                       <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Item</span>
                     </div>
-                    <div className="flex items-center justify-center border-r border-slate-200/60">
+                    <div className="flex items-center justify-between pl-3 pr-1 border-r border-slate-200/60">
                       <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total</span>
+                      {isEditMode && (
+                        <button
+                          onClick={() => gridBulkStockModalOpenRef.current()}
+                          className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer"
+                        >
+                          <MoreVertical className="w-3 h-3 text-slate-500 hover:text-slate-700" />
+                        </button>
+                      )}
                     </div>
                     <div className="flex items-center justify-center border-r border-slate-200/60">
                       <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Reservado</span>
@@ -435,11 +473,13 @@ export default function StockPage() {
                   expandedItems={expandedItems}
                   toggleVariantExpansion={toggleVariantExpansion}
                   onStockFieldChange={handleStockFieldChange}
+                  onBulkStockEdit={handleBulkStockEdit}
                   searchTerm={searchQuery}
                   activeFilters={activeFilters}
                   sortPriorities={sortPriorities}
                   onSelectionChange={handleSelectionChange}
                   isEditMode={isEditMode}
+                  bulkModalOpenRef={gridBulkStockModalOpenRef}
                 />
               </div>
             </div>
