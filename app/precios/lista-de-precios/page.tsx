@@ -567,7 +567,7 @@ export default function ListaDePreciosPage() {
               <div className="px-8 bg-slate-50/95 backdrop-blur-sm pb-2">
                 <div className="max-w-6xl mx-auto">
                   {/* Bulk actions */}
-                  <div className="bg-white border border-slate-200/80 rounded-md">
+                  <div className="bg-white border border-slate-200/80 border-t-0">
                     <div className="flex items-center gap-2 h-9">
                       <div className="flex items-center justify-center w-[4%] min-w-[40px] shrink-0">
                         <input
@@ -590,7 +590,7 @@ export default function ListaDePreciosPage() {
                   </div>
 
                   {/* Tab header */}
-                  <div className="grid grid-cols-12 h-9 border border-slate-200/80 mt-2 rounded-md">
+                  <div className="grid grid-cols-12 h-9 border border-slate-200/80 mt-2">
                     <div className="col-span-6 flex items-center justify-center px-4 border-r border-slate-200/60">
                       <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Item</span>
                     </div>
