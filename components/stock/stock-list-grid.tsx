@@ -167,12 +167,10 @@ export function StockListGrid({
               </div>
             )}
 
-            <div className="flex flex-col min-w-0 flex-1">
-              <span className={`text-sm font-medium truncate ${isChild ? "text-slate-600" : "text-slate-800"}`}>
-                {item.name || "—"}
-              </span>
+            <div className="flex-1 min-w-0">
               {isChild ? (
-                <div className="flex items-center gap-1.5 flex-wrap">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-sm font-medium text-slate-800 truncate">{item.name || "—"}</span>
                   {(item as any).atributosPrincipales?.map((attr: any, idx: number) =>
                     attr.value ? (
                       <span key={idx} className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 text-slate-600 rounded shrink-0">
@@ -182,9 +180,12 @@ export function StockListGrid({
                   )}
                 </div>
               ) : (
-                <span className="text-[11px] text-slate-400 truncate">
-                  {[(item as any).marca, (item as any).categoria].filter(Boolean).join(" · ")}
-                </span>
+                <>
+                  <p className="text-sm font-medium text-slate-800 truncate">{item.name || "—"}</p>
+                  <span className="text-[11px] text-slate-400 truncate">
+                    {[(item as any).marca, (item as any).categoria].filter(Boolean).join(" · ")}
+                  </span>
+                </>
               )}
             </div>
           </div>
