@@ -132,7 +132,14 @@ export function StockListGrid({
               <span className={`text-sm font-medium truncate ${isChild ? "text-slate-600" : "text-slate-800"}`}>
                 {item.name || "—"}
               </span>
-              {!isChild && (
+              {isChild ? (
+                (() => {
+                  const tag = (item as any).tag || (item as any).variante || (item as any).variant || (item as any).presentacion
+                  return tag ? (
+                    <span className="text-[11px] text-slate-400 truncate">{tag}</span>
+                  ) : null
+                })()
+              ) : (
                 <span className="text-[11px] text-slate-400 truncate">
                   {[(item as any).marca, (item as any).categoria].filter(Boolean).join(" · ")}
                 </span>
@@ -155,7 +162,7 @@ export function StockListGrid({
                   <div className="flex items-center gap-1 w-full">
                     <button
                       type="button"
-                      onClick={(e) => { e.stopPropagation(); onStockFieldChange?.(itemId, "total", Math.max(0, total - 1)) }}
+                      onClick={(e) => { e.stopPropagation(); onStockFieldChange?.(itemId, "total", Math.max(0, Number(total) - 1)) }}
                       className={`shrink-0 w-5 h-5 flex items-center justify-center rounded text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-all ${isHovered ? "opacity-100" : "opacity-0"}`}
                     >
                       <Minus className="w-3 h-3" />
@@ -170,7 +177,7 @@ export function StockListGrid({
                     />
                     <button
                       type="button"
-                      onClick={(e) => { e.stopPropagation(); onStockFieldChange?.(itemId, "total", total + 1) }}
+                      onClick={(e) => { e.stopPropagation(); onStockFieldChange?.(itemId, "total", Number(total) + 1) }}
                       className={`shrink-0 w-5 h-5 flex items-center justify-center rounded text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-all ${isHovered ? "opacity-100" : "opacity-0"}`}
                     >
                       <Plus className="w-3 h-3" />
