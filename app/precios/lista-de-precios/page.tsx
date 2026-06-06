@@ -378,15 +378,15 @@ export default function ListaDePreciosPage() {
                       <button
                         type="button"
                         onClick={() => { handleDeshacer(); setIsEditMode(false) }}
-                        className="h-9 px-4 text-sm font-medium rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 transition-colors cursor-pointer"
+                        className="h-9 px-4 text-sm font-medium rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors cursor-pointer"
                       >
-                        Deshacer
+                        Cancelar
                       </button>
                       <button
                         type="button"
                         onClick={async () => { await handleGuardar(); setIsEditMode(false) }}
                         disabled={isSaving}
-                        className="h-9 px-4 text-sm font-medium rounded-lg border border-green-200 bg-green-50 hover:bg-green-100 text-green-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="h-9 px-4 text-sm font-medium rounded-lg bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {isSaving ? "Guardando..." : "Guardar Cambios"}
                       </button>

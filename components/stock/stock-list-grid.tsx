@@ -183,7 +183,7 @@ export function StockListGrid({
 
               {/* Stock Disponible (computed, read-only) */}
               <div className="flex items-center justify-center px-4 h-full bg-blue-50/20">
-                <span className={`text-sm font-medium tabular-nums ${disponible < 0 ? "text-red-600" : "text-blue-700"}`}>
+                <span className={`text-sm font-medium tabular-nums ${disponible < 0 ? "text-red-600" : disponible > 0 ? "text-emerald-600" : "text-slate-400"}`}>
                   {disponible}
                 </span>
               </div>
