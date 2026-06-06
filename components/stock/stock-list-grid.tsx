@@ -205,7 +205,7 @@ export function StockListGrid({
   return (
     <div>
       {/* Rows */}
-      <div className="border border-slate-200/80 border-t-0 rounded-b-md overflow-hidden bg-white">
+      <div className="border border-slate-200/80 rounded-md overflow-hidden bg-white">
         {sortedAndFilteredItems.length === 0 ? (
           <div className="flex items-center justify-center h-32 text-sm text-slate-400">
             No se encontraron items
