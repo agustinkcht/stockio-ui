@@ -50,7 +50,7 @@ export function BulkStockModal({ isOpen, onClose, onApply, itemCount, type }: Bu
     <div className="fixed inset-0 z-[100010] flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={handleClose} />
 
-      <div className="relative w-full max-w-md mx-4 bg-white rounded-xl shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200">
+      <div className="relative w-full max-w-md mx-4 bg-white rounded-xl shadow-2xl animate-in fade-in-0 zoom-in-95 duration-200">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <h2 className="text-lg font-semibold">{title}</h2>
@@ -60,7 +60,7 @@ export function BulkStockModal({ isOpen, onClose, onApply, itemCount, type }: Bu
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="px-6 py-6 min-h-[140px]">
+          <div className="px-6 pt-6 pb-48">
             <div className="flex items-end gap-3">
               {/* Operation Selector */}
               <div className="relative flex-1">
@@ -70,7 +70,7 @@ export function BulkStockModal({ isOpen, onClose, onApply, itemCount, type }: Bu
                   onClick={() => setOperationDropdownOpen(!operationDropdownOpen)}
                   className="w-full flex items-center justify-between px-4 py-3 border border-border rounded-lg text-sm bg-white hover:border-muted-foreground/50 transition-colors cursor-pointer"
                 >
-                  <span className="font-medium capitalize">{operation}</span>
+                  <span className="font-medium">{operationOptions.find(o => o.value === operation)?.label ?? operation}</span>
                   <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${operationDropdownOpen ? "rotate-180" : ""}`} />
                 </button>
                 {operationDropdownOpen && (

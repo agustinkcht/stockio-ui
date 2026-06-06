@@ -133,6 +133,12 @@ export default function StockPage() {
     else editField(itemSku, stockField, value)
   }
 
+  const getItemCurrentTotal = (it: any): number => {
+    const stockField = it.stock
+    const stockObj = stockField && typeof stockField === "object" ? stockField : null
+    return it.stockTotal ?? stockObj?.total ?? (typeof stockField === "number" ? stockField : 0)
+  }
+
   const handleBulkStockEdit = (operation: string, value: number, targetSkus: string[]) => {
     for (const sku of targetSkus) {
       let currentTotal = 0
@@ -140,13 +146,13 @@ export default function StockPage() {
       let parentSku: string | undefined
       for (const item of items) {
         if (item.sku === sku || (item as any).id === sku) {
-          currentTotal = (item as any).stockTotal ?? 0
+          currentTotal = getItemCurrentTotal(item)
           break
         }
         if (item.variants) {
           const variant = item.variants.find((v: any) => v.sku === sku || (v as any).id === sku)
           if (variant) {
-            currentTotal = (variant as any).stockTotal ?? 0
+            currentTotal = getItemCurrentTotal(variant)
             isVariant = true
             parentSku = item.sku
             break
