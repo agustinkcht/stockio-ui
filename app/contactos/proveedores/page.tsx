@@ -377,7 +377,7 @@ function ProveedoresContent() {
               <div className="px-8 bg-slate-50/95 backdrop-blur-sm pb-2">
                 <div className="max-w-6xl mx-auto">
                   {/* Bulk actions */}
-                  <div className="bg-white border border-slate-200/80 border-t-0">
+                  <div className="bg-white border border-slate-200/80 rounded-md">
                     <div className="flex items-center gap-2 h-9">
                       <div className="flex items-center justify-center w-[4%] min-w-[40px] shrink-0">
                         <input
@@ -410,7 +410,7 @@ function ProveedoresContent() {
                     </div>
                   </div>
                   {/* Tab header */}
-                  <div className="grid grid-cols-12 h-9 border border-slate-200/80 mt-2 bg-slate-50">
+                  <div className="grid grid-cols-12 h-9 border border-slate-200/80 mt-2 bg-slate-50 rounded-md">
                     <div className="col-span-5 flex items-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider pl-4">Proveedor</div>
                     <div className="col-span-3 flex items-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-l border-slate-200/60 pl-3">Email</div>
                     <div className="col-span-2 flex items-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-l border-slate-200/60 pl-3">Teléfono</div>
@@ -422,7 +422,7 @@ function ProveedoresContent() {
             </div>
             {/* /sticky bar */}
 
-            {/* ── Item grid ─────────────────────���─────────────────────────── */}
+            {/* ── Item grid ─────────────────────�����─────────────────────────── */}
             <div className="px-8 pb-8">
               <div className="max-w-6xl mx-auto">
 
