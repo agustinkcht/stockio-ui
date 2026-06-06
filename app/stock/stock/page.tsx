@@ -1,57 +1,87 @@
 "use client"
-import { useState, useEffect } from "react"
-import { Package, Search, X, Check, CheckCircle2 } from "lucide-react"
-import { useAccount } from "@/lib/contexts/account-context"
 
-import { Sidebar } from "@/components/layout/sidebar"
-import { Breadcrumb } from "@/components/layout/breadcrumb"
-import { StockGrid } from "@/components/stock/stock-grid"
-import { UserPanel } from "@/components/layout/user-panel"
-import { useItems } from "@/hooks/use-items"
-import { useItemSelection } from "@/hooks/use-item-selection"
-import { useSidebar } from "@/hooks/use-sidebar"
-import { useChangeTracker } from "@/hooks/use-change-tracker"
-import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
-import type { Item } from "@/lib/types"
+import { useState, useCallback, useRef, useEffect, useMemo } from "react"
+import { CheckCircle2, Search, X, ListFilter, ArrowUpDown, PencilLine } from "lucide-react"
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
+import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
+import { Breadcrumb } from "@/components/layout/breadcrumb"
+import type { FilterConfig, SortFactorConfig } from "@/lib/types"
+import { Sidebar } from "@/components/layout/sidebar"
+import { StockListGrid } from "@/components/stock/stock-list-grid"
+import { UserPanel } from "@/components/layout/user-panel"
+import { UnsavedChangesModal } from "@/components/modals/unsaved-changes-modal"
+import { useItems } from "@/hooks/use-items"
+import { useNavigationGuard } from "@/hooks/use-navigation-guard"
+import { useSidebar } from "@/hooks/use-sidebar"
+import { getUniqueCategorias, getUniqueMarcas, searchItems, filterItems } from "@/lib/utils/item-utils"
+
+// ─── Sort options ─────────────────────────────────────────────────────────────
+type QuickSortField = "nombre" | "stockTotal" | "stockDisponible"
+const QUICK_SORT_LABELS: Record<QuickSortField, string> = {
+  nombre: "Nombre",
+  stockTotal: "Stock Total",
+  stockDisponible: "Disponible",
+}
+
+const DEFAULT_FILTERS: FilterConfig = {
+  tipos: [],
+  categorias: [],
+  marcas: [],
+  proveedores: [],
+  stock: [],
+  depositos: [],
+}
+
 export default function StockPage() {
+  const [isEditMode, setIsEditMode] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
-  const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>({})
   const [showSaveSuccess, setShowSaveSuccess] = useState(false)
-  const [itemToDelete, setItemToDelete] = useState<Item | null>(null)
-  const [showBatchDeleteModal, setShowBatchDeleteModal] = useState(false)
-  const { currentAccount } = useAccount()
-  
-  // Audit mode state
-  const [hasAuditChanges, setHasAuditChanges] = useState(false)
-  const [auditPendingCount, setAuditPendingCount] = useState(0)
+  const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>({})
+
+  // ── Search / Filter / Sort ─────────────────────────────────────────────────
+  const [searchQuery, setSearchQuery] = useState("")
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [sortField, setSortField] = useState<QuickSortField>("nombre")
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc")
+  const [activeFilters, setActiveFilters] = useState<FilterConfig>(DEFAULT_FILTERS)
+  const [sortPriorities, setSortPriorities] = useState<SortFactorConfig[]>([{ factor: "nombre", direction: "asc" }])
+
+  // ── Selection (lifted from grid) ───────────────────────────────────────────
+  const [selCount, setSelCount] = useState(0)
+  const [selHas, setSelHas] = useState(false)
+  const [selAll, setSelAll] = useState(false)
+  const [selIndeterminate, setSelIndeterminate] = useState(false)
+  const gridHandleSelectAllRef = useRef<() => void>(() => {})
+  const allCheckboxRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (allCheckboxRef.current) {
+      allCheckboxRef.current.indeterminate = selIndeterminate
+    }
+  }, [selIndeterminate])
+
+  const handleSelectionChange = useCallback(
+    (count: number, has: boolean, all: boolean, indeterminate: boolean, doSelectAll: () => void) => {
+      setSelCount(count)
+      setSelHas(has)
+      setSelAll(all)
+      setSelIndeterminate(indeterminate)
+      gridHandleSelectAllRef.current = doSelectAll
+    },
+    [],
+  )
 
   const {
     items,
-    depositStock,
-    updateDepositStock,
-    updateItem,
-    deleteItem,
-    undoDelete,
-    saveDelete: saveDeletedItems,
-    hasUnsavedDeletes,
-    deletedItems,
-    updateStock,
-    bulkSaveStock,
+    editField,
+    editVariantField,
+    undoEdit,
+    saveEdit,
+    cancelEdit,
+    hasUnsavedEdits,
   } = useItems()
-
-  const {
-    selectAllActive,
-    selectAllIndeterminate,
-    hasSelectedItems,
-    handleSelectAll,
-    handleItemSelection,
-    getSelectionState,
-    getSelectedSkus,
-    clearSelection,
-  } = useItemSelection(items)
 
   const {
     hoveredDropdown,
@@ -64,225 +94,87 @@ export default function StockPage() {
     handleCloseDropdowns,
   } = useSidebar()
 
-  const changeTracker = useChangeTracker()
-
-  useEffect(() => {
-    setGridSize("md")
-  }, [setGridSize])
-
-  // Audit mode handlers
-  const handleAuditChangesUpdate = (hasChanges: boolean, pendingCount: number) => {
-    setHasAuditChanges(hasChanges)
-    setAuditPendingCount(pendingCount)
-  }
-
-  const handleAuditSave = async (changes: Record<string, { total: number; reservado: number }>) => {
-    setIsSaving(true)
-    try {
-      await sleep(600)
-      
-      // Use bulkSaveStock - it handles both standalone and variant items atomically
-      // and persists directly to localStorage
-      bulkSaveStock(changes)
-      
-      // Clear audit changes in the grid
-      ;(window as any).__auditClearHandler?.()
-      
-      setShowSaveSuccess(true)
-      setTimeout(() => setShowSaveSuccess(false), 3000)
-    } catch (error) {
-      console.error("[v0] Error saving audit changes:", error)
-    } finally {
-      setIsSaving(false)
-      setHasAuditChanges(false)
-      setAuditPendingCount(0)
-    }
-  }
-
-  const handleAuditDiscard = () => {
-    // Audit changes are discarded internally in ItemsGrid
-    setHasAuditChanges(false)
-    setAuditPendingCount(0)
-  }
-
-  const handleAuditGuardar = () => {
-    // Trigger save from window handler
-    ;(window as any).__auditSaveHandler?.()
-  }
-
-  const handleAuditDeshacer = () => {
-    // Trigger discard from window handler
-    ;(window as any).__auditDiscardHandler?.()
-  }
-
   const breadcrumbs = [{ label: "Stock" }, { label: "Stock", href: "/stock/stock" }]
 
-  const handleUndo = () => {
-    const change = changeTracker.undo()
-    if (change?.type === "delete") {
-      undoDelete()
-    }
-  }
-
-  const handleRedo = () => {
-    const change = changeTracker.redo()
-    if (change?.type === "delete") {
-      deleteItem(change.data)
-    }
-  }
+  const hasChanges = hasUnsavedEdits
 
   const handleDeshacer = () => {
-    changeTracker.undoAll()
-    if (hasUnsavedDeletes) {
-      undoDelete()
-    }
+    cancelEdit()
+    setIsEditMode(false)
   }
 
   const handleGuardar = async () => {
     setIsSaving(true)
     setShowSaveSuccess(false)
-
     try {
       await sleep(800)
-
-      if (hasUnsavedDeletes) {
-        await saveDeletedItems()
-      }
-
-      changeTracker.commitAll()
-      
+      saveEdit()
       setShowSaveSuccess(true)
-      setTimeout(() => {
-        setShowSaveSuccess(false)
-      }, 3000)
+      setTimeout(() => setShowSaveSuccess(false), 3000)
     } catch (error) {
-      console.error("[v0] Error saving changes:", error)
+      console.error("[v0] Error saving stock changes:", error)
     } finally {
       setIsSaving(false)
     }
   }
 
-  const handleDeleteWithTracking = (item: Item) => {
-    setItemToDelete(item)
-  }
-
-  const handleConfirmDelete = async () => {
-    if (!itemToDelete) return
-
-    const originalIndex = items.findIndex((i) => i.sku === itemToDelete.sku)
-    changeTracker.trackChange("delete", itemToDelete, { originalIndex })
-    deleteItem(itemToDelete)
-
-    await sleep(500)
-
-    // Manually save to localStorage to ensure persistence
-    const skuToDelete = itemToDelete.sku
-    const remainingItems = items.filter((item) => item.sku !== skuToDelete)
-    
-    if (typeof window !== "undefined") {
-      const storageKey = `stockio-items-${currentAccount}`
-      localStorage.setItem(storageKey, JSON.stringify(remainingItems))
-      console.log("[v0] Saved remaining items to localStorage after individual delete:", remainingItems.length)
-    }
-
-    await saveDeletedItems()
-
-    setItemToDelete(null)
-    setShowSaveSuccess(true)
-    setTimeout(() => {
-      setShowSaveSuccess(false)
-    }, 3000)
-  }
-
-  const handleCancelDelete = () => {
-    setItemToDelete(null)
-  }
-
-  const handleBatchDeleteClick = () => {
-    setShowBatchDeleteModal(true)
-  }
-
-  const handleConfirmBatchDelete = async () => {
-    const skusToDelete = getSelectedSkus()
-
-    console.log("[v0] Batch delete starting, selected SKUs:", skusToDelete.length)
-    console.log("[v0] SKUs to delete:", skusToDelete)
-
-    // Find items to delete (including children within parents)
-    const itemsToDelete: Item[] = []
-    for (const sku of skusToDelete) {
-      // Check standalone items
-      const standaloneItem = items.find((item) => item.sku === sku)
-      if (standaloneItem) {
-        itemsToDelete.push(standaloneItem)
-        continue
-      }
-      // Check children within parents
-      for (const item of items) {
-        if (item.variants) {
-          const variant = item.variants.find((v: any) => v.sku === sku)
-          if (variant) {
-            itemsToDelete.push(variant)
-          }
-        }
-        if (item.items) {
-          const groupItem = item.items.find((i: any) => i.sku === sku)
-          if (groupItem) {
-            itemsToDelete.push(groupItem)
-          }
-        }
+  const handleStockFieldChange = (itemSku: string, field: "total" | "reservado", value: number) => {
+    let isVariant = false
+    let parentSku: string | undefined
+    for (const item of items) {
+      if (item.variants) {
+        const variant = item.variants.find((v: any) => v.sku === itemSku)
+        if (variant) { isVariant = true; parentSku = item.sku; break }
       }
     }
-
-    // Delete items from state
-    for (const item of itemsToDelete) {
-      deleteItem(item)
-    }
-
-    // Wait for state updates
-    await sleep(800)
-
-    // Manually filter and save to localStorage to ensure persistence
-    const remainingItems = items.filter((item) => !skusToDelete.includes(item.sku))
-    console.log("[v0] After filtering, remaining items:", remainingItems.length)
-    
-    if (typeof window !== "undefined") {
-      const storageKey = `stockio-items-${currentAccount}`
-      localStorage.setItem(storageKey, JSON.stringify(remainingItems))
-      console.log("[v0] Saved remaining items to localStorage:", remainingItems.length)
-    }
-
-    // Now save deleted items state (to clear the deletedItems array)
-    await saveDeletedItems()
-
-    // Reset selections completely
-    clearSelection()
-
-    setShowBatchDeleteModal(false)
-    setShowSaveSuccess(true)
-    setTimeout(() => {
-      setShowSaveSuccess(false)
-    }, 3000)
-  }
-
-  const handleCancelBatchDelete = () => {
-    setShowBatchDeleteModal(false)
-  }
-
-  const handleItemClick = (_item: Item) => {
-    // Item detail is disabled in stock view
+    const stockField = field === "total" ? "stockTotal" : "stockReservado"
+    if (isVariant && parentSku) editVariantField(parentSku, itemSku, stockField, value)
+    else editField(itemSku, stockField, value)
   }
 
   const toggleVariantExpansion = (index: number) => {
-    setExpandedItems((prev) => ({
-      ...prev,
-      [index]: !prev[index],
-    }))
+    setExpandedItems((prev) => ({ ...prev, [index]: !prev[index] }))
+  }
+
+  const { showNavigationModal, handleSaveAndNavigate, handleDiscardAndNavigate, handleCancelNavigation } =
+    useNavigationGuard({ hasUnsavedChanges: isEditMode && hasChanges, onSave: handleGuardar, onDiscard: handleDeshacer })
+
+  // ── Derived ────────────────────────────────────────────────────────────────
+  const filteredCount = useMemo(() => {
+    const searched = searchItems(items, searchQuery)
+    return filterItems(searched, activeFilters).length
+  }, [items, searchQuery, activeFilters])
+
+  const hasFilters =
+    activeFilters.categorias.length > 0 ||
+    activeFilters.marcas.length > 0 ||
+    activeFilters.proveedores.length > 0
+
+  const availableCategorias = useMemo(() => getUniqueCategorias(items), [items])
+  const availableMarcas = useMemo(() => getUniqueMarcas(items), [items])
+
+  const handleSortFieldChange = (field: QuickSortField) => {
+    setSortField(field)
+    setSortPriorities([{ factor: field as any, direction: sortDir }])
+  }
+  const handleSortDirToggle = () => {
+    const next = sortDir === "asc" ? "desc" : "asc"
+    setSortDir(next)
+    setSortPriorities([{ factor: sortField as any, direction: next }])
+  }
+
+  const removeFilterTag = (type: "categoria" | "marca", value: string) => {
+    setActiveFilters((prev) => {
+      if (type === "categoria") return { ...prev, categorias: prev.categorias.filter((c) => c !== value) }
+      return { ...prev, marcas: prev.marcas.filter((m) => m !== value) }
+    })
   }
 
   return (
     <div className="min-h-screen bg-[rgb(243,242,238)]">
       <div className="px-[6px] py-[6px] flex gap-[6px] h-screen" onClick={handleCloseDropdowns}>
+
+        {/* Sidebar */}
         <div onClick={(e) => e.stopPropagation()} className="relative h-[calc(100vh-12px)] sticky top-[6px] z-[100003]">
           <Sidebar
             sidebarItems={SIDEBAR_ITEMS}
@@ -293,138 +185,288 @@ export default function StockPage() {
           />
         </div>
 
+        {/* Panel */}
         <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
-          <div className="relative border-b border-border h-[44px] bg-white z-[100004]">
-            <div className="px-4 flex items-center justify-between h-full">
-              {/* Left: Breadcrumbs */}
-              <div className="flex items-center">
-                <Breadcrumb items={breadcrumbs} />
-              </div>
 
-              <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center gap-3 mt-0">
+          {/* Utility bar */}
+          <div className="relative border-b border-border h-[44px] bg-white z-[100004] shrink-0">
+            <div className="px-4 flex items-center justify-between h-full">
+              <Breadcrumb items={breadcrumbs} />
+              <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2">
                 <UserPanel />
               </div>
-
-              {/* Right: D-G Buttons + Success Message */}
-              <div className="flex items-center gap-2 min-w-[280px] justify-end">
-                {isSaving && (
-                  <div className="w-full max-w-[200px] h-1.5 bg-secondary/50 rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-primary via-primary/80 to-primary animate-loading-bar bg-[length:200%_100%]" />
-                  </div>
-                )}
-                
-                {showSaveSuccess && !isSaving && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md animate-in fade-in slide-in-from-right-2 duration-300">
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
-                    <span className="text-sm text-green-700 font-medium">Cambios Guardados</span>
-                  </div>
-                )}
-
-                {hasAuditChanges && !showSaveSuccess && !isSaving && (
-                  <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2 duration-200">
-                    <button
-                      onClick={handleAuditDeshacer}
-                      className="px-4 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 rounded transition-all cursor-pointer text-red-700 text-sm font-medium"
-                      title="Deshacer cambios"
-                    >
-                      Deshacer
-                    </button>
-
-                    <button
-                      onClick={handleAuditGuardar}
-                      className="px-4 py-1.5 bg-green-50 hover:bg-green-100 border border-green-200 rounded transition-all cursor-pointer text-green-700 text-sm font-medium"
-                      title="Guardar cambios"
-                    >
-                      Guardar
-                    </button>
-                  </div>
-                )}
-              </div>
+              <div className="min-w-[200px]" />
             </div>
           </div>
 
-          <main className="flex-1 flex bg-[rgba(250,251,253,1)] overflow-hidden">
-            <div className="flex-1 flex flex-col overflow-auto">
-              <div className="px-8 pb-8 pt-4">
-                <div className="rounded-xl border border-[rgba(228,230,235,0.5)] bg-transparent shadow-none border-none">
-                  <StockGrid
-                    items={items}
-                    gridSize={gridSize}
-                    depositStock={depositStock}
-                    updateDepositStock={updateDepositStock}
-                    expandedItems={expandedItems}
-                    onDeleteItem={handleDeleteWithTracking}
-                    handleItemClick={handleItemClick}
-                    toggleVariantExpansion={toggleVariantExpansion}
-                    selectAllActive={selectAllActive}
-                    selectAllIndeterminate={selectAllIndeterminate}
-                    handleSelectAll={handleSelectAll}
-                    handleItemSelection={handleItemSelection}
-                    getSelectionState={getSelectionState}
-                    gridSizeDropdownOpen={gridSizeDropdownOpen}
-                    setGridSizeDropdownOpen={setGridSizeDropdownOpen}
-                    setGridSize={setGridSize}
-                    isExpanded={false}
-                    hasSelectedItems={hasSelectedItems}
-                    onBatchDelete={handleBatchDeleteClick}
-                    onUpdateStock={updateStock}
-                    onAuditChangesUpdate={handleAuditChangesUpdate}
-                    onAuditSave={handleAuditSave}
-                    onAuditDiscard={handleAuditDiscard}
-                    getSelectedSkus={getSelectedSkus}
-                  />
+          {/* Scrollable region */}
+          <div className="flex-1 overflow-y-auto bg-slate-50">
+
+            {/* Top row — title + Editar Stock / Deshacer + Guardar */}
+            <div className="px-8 pt-12 pb-8">
+              <div className="max-w-6xl mx-auto flex items-start justify-between gap-6">
+                <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
+                  Stock
+                </h1>
+                <div className="flex items-center gap-2 mt-1 shrink-0">
+                  {!isEditMode ? (
+                    <button
+                      type="button"
+                      onClick={() => setIsEditMode(true)}
+                      className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer"
+                    >
+                      <PencilLine className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
+                      Editar Stock
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={handleDeshacer}
+                        className="h-9 px-4 text-sm font-medium rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 transition-colors cursor-pointer"
+                      >
+                        Deshacer
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => { await handleGuardar(); setIsEditMode(false) }}
+                        disabled={isSaving}
+                        className="h-9 px-4 text-sm font-medium rounded-lg border border-green-200 bg-green-50 hover:bg-green-100 text-green-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isSaving ? "Guardando..." : "Guardar Cambios"}
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
-          </main>
+
+            {/* Sticky bar */}
+            <div className="sticky top-0 z-20">
+
+              {/* Row 1 — Search + filter tags + Filtrar/Ordenar + count */}
+              <div className="relative z-10 bg-slate-50/95 backdrop-blur-sm px-8 pt-2 pb-0">
+                <div className="max-w-6xl mx-auto border-b border-slate-100 pb-2">
+                  <div className="flex items-center gap-2">
+
+                    {/* Search */}
+                    <div className="flex items-center h-9 border border-[rgba(228,230,235,0.6)] shadow-sm rounded-md min-w-0 overflow-hidden bg-white">
+                      <div className="flex items-center gap-2 px-3 h-full w-64 bg-white">
+                        <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <input
+                          type="text"
+                          placeholder="Buscar items"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="flex-1 bg-transparent text-xs text-slate-700 placeholder:text-slate-400 outline-none"
+                        />
+                        {searchQuery && (
+                          <button type="button" onClick={() => setSearchQuery("")} className="shrink-0 cursor-pointer text-slate-400 hover:text-slate-600">
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Active filter tags */}
+                    {hasFilters && (
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {activeFilters.categorias.map((cat) => (
+                          <span key={cat} className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
+                            {cat}
+                            <button type="button" onClick={() => removeFilterTag("categoria", cat)} className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer">
+                              <X className="w-2.5 h-2.5 text-slate-400" />
+                            </button>
+                          </span>
+                        ))}
+                        {activeFilters.marcas.map((marca) => (
+                          <span key={marca} className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
+                            {marca}
+                            <button type="button" onClick={() => removeFilterTag("marca", marca)} className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer">
+                              <X className="w-2.5 h-2.5 text-slate-400" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Right: Filtrar + Ordenar + count */}
+                    <div className="ml-auto flex items-center gap-2">
+
+                      {/* Filtrar */}
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setFilterOpen((v) => !v)}
+                          className={`h-9 text-xs border shadow-sm px-3 rounded-md flex items-center gap-1.5 cursor-pointer transition-colors ${
+                            hasFilters
+                              ? "border-blue-400 text-blue-600 bg-blue-50"
+                              : "border-[rgba(228,230,235,0.6)] bg-white hover:bg-slate-50 text-slate-600"
+                          }`}
+                        >
+                          <ListFilter className="w-3.5 h-3.5" />
+                          Filtrar
+                        </button>
+                        {filterOpen && (
+                          <>
+                            <div className="fixed inset-0 z-[90]" onClick={() => setFilterOpen(false)} />
+                            <div className="absolute top-full right-0 mt-1 w-56 bg-white border border-slate-200 rounded-lg shadow-lg z-[100] p-3 space-y-3">
+                              {/* Categoría */}
+                              <div>
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Categoría</label>
+                                <select
+                                  value={activeFilters.categorias[0] ?? ""}
+                                  onChange={(e) => setActiveFilters((f) => ({ ...f, categorias: e.target.value ? [e.target.value] : [] }))}
+                                  className="w-full mt-1 px-2 py-1.5 text-xs border border-slate-200 rounded-md focus:outline-none focus:border-slate-400 bg-white cursor-pointer"
+                                >
+                                  <option value="">Todas</option>
+                                  {availableCategorias.map((c) => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                              </div>
+                              {/* Marca */}
+                              <div>
+                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Marca</label>
+                                <select
+                                  value={activeFilters.marcas[0] ?? ""}
+                                  onChange={(e) => setActiveFilters((f) => ({ ...f, marcas: e.target.value ? [e.target.value] : [] }))}
+                                  className="w-full mt-1 px-2 py-1.5 text-xs border border-slate-200 rounded-md focus:outline-none focus:border-slate-400 bg-white cursor-pointer"
+                                >
+                                  <option value="">Todas</option>
+                                  {availableMarcas.map((m) => <option key={m} value={m}>{m}</option>)}
+                                </select>
+                              </div>
+                              {hasFilters && (
+                                <button
+                                  type="button"
+                                  onClick={() => setActiveFilters(DEFAULT_FILTERS)}
+                                  className="w-full text-xs text-slate-500 hover:text-slate-700 py-1 text-center cursor-pointer border-t border-slate-100 pt-2"
+                                >
+                                  Limpiar filtros
+                                </button>
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Ordenar */}
+                      <div className="flex items-center border border-[rgba(228,230,235,0.6)] shadow-sm rounded-md overflow-hidden bg-white h-9">
+                        <button
+                          type="button"
+                          onClick={handleSortDirToggle}
+                          title={sortDir === "asc" ? "Ascendente" : "Descendente"}
+                          className="px-2.5 h-full hover:bg-slate-50 transition-colors border-r border-[rgba(228,230,235,0.6)] cursor-pointer flex items-center"
+                        >
+                          <ArrowUpDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${sortDir === "desc" ? "scale-y-[-1]" : ""}`} />
+                        </button>
+                        <select
+                          value={sortField}
+                          onChange={(e) => handleSortFieldChange(e.target.value as QuickSortField)}
+                          className="appearance-none pl-2.5 pr-2.5 text-xs bg-transparent focus:outline-none cursor-pointer text-slate-700 h-full w-auto"
+                        >
+                          {(Object.entries(QUICK_SORT_LABELS) as [QuickSortField, string][]).map(([val, label]) => (
+                            <option key={val} value={val}>{label}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Divider + count */}
+                      <div className="w-px h-5 bg-slate-200 shrink-0" />
+                      <span className="text-xs text-slate-400 whitespace-nowrap tabular-nums">
+                        {filteredCount} {filteredCount === 1 ? "item" : "items"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Row 2 — Bulk actions */}
+              <div className="px-8">
+                <div className="max-w-6xl mx-auto bg-white border border-slate-200/80 border-t-0">
+                  <div className="flex items-center gap-2 h-9">
+                    <div className="flex items-center justify-center w-[4%] min-w-[40px] shrink-0">
+                      <input
+                        ref={allCheckboxRef}
+                        type="checkbox"
+                        checked={selAll}
+                        onChange={() => gridHandleSelectAllRef.current()}
+                        className="w-3.5 h-3.5 rounded accent-slate-800 cursor-pointer"
+                      />
+                    </div>
+                    <div className="w-px h-5 bg-slate-200 shrink-0" />
+                    {selCount === 0 ? (
+                      <span className="text-xs text-slate-400">Seleccioná items para accionar masivamente</span>
+                    ) : (
+                      <span className="text-xs text-slate-600">
+                        {selCount} seleccionado{selCount !== 1 ? "s" : ""}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+            </div>
+            {/* /sticky bar */}
+
+            {/* Stock grid */}
+            <div className="px-8 pt-2 pb-8">
+              <div className="max-w-6xl mx-auto">
+                <StockListGrid
+                  items={items}
+                  gridSize={gridSize}
+                  expandedItems={expandedItems}
+                  toggleVariantExpansion={toggleVariantExpansion}
+                  onStockFieldChange={handleStockFieldChange}
+                  searchTerm={searchQuery}
+                  activeFilters={activeFilters}
+                  sortPriorities={sortPriorities}
+                  onSelectionChange={handleSelectionChange}
+                  isEditMode={isEditMode}
+                />
+              </div>
+            </div>
+
+          </div>
+          {/* /scrollable region */}
+
         </div>
+        {/* /panel */}
       </div>
 
-      {/* Delete Confirmation Modal */}
-      {itemToDelete && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100010]" onClick={handleCancelDelete}>
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              ¿Seguro deseas eliminar el item?
-            </h3>
-            <div className="flex items-center gap-3 justify-end mt-6">
-              <button
-                onClick={handleCancelDelete}
-                className="px-4 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-md transition-colors cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleConfirmDelete}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors cursor-pointer"
-              >
-                Aceptar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <UnsavedChangesModal
+        isOpen={showNavigationModal}
+        onSave={handleSaveAndNavigate}
+        onDiscard={handleDiscardAndNavigate}
+        onCancel={handleCancelNavigation}
+      />
 
-      {/* Batch Delete Confirmation Modal */}
-      {showBatchDeleteModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100010]" onClick={handleCancelBatchDelete}>
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              ¿Seguro deseas eliminar los items seleccionados?
-            </h3>
-            <div className="flex items-center gap-3 justify-end mt-6">
-              <button
-                onClick={handleCancelBatchDelete}
-                className="px-4 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-md transition-colors cursor-pointer"
+      {/* Save success toast */}
+      {showSaveSuccess && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[200000] pointer-events-none animate-in fade-in slide-in-from-top-4 duration-300">
+          <div
+            className="relative flex items-stretch gap-0 rounded-2xl overflow-hidden"
+            style={{
+              background: "#0d0f12",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.07)",
+              minWidth: "280px",
+            }}
+          >
+            <div className="w-[3px] shrink-0" style={{ background: "linear-gradient(to bottom, #34d399, #059669)" }} />
+            <div className="flex items-center gap-3.5 px-5 py-4">
+              <div
+                className="flex items-center justify-center w-9 h-9 rounded-xl shrink-0"
+                style={{ background: "rgba(52,211,153,0.12)", border: "1px solid rgba(52,211,153,0.2)" }}
               >
-                Cancelar
-              </button>
-              <button
-                onClick={handleConfirmBatchDelete}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors cursor-pointer"
-              >
-                Aceptar
-              </button>
+                <CheckCircle2 className="w-4 h-4" style={{ color: "#34d399" }} strokeWidth={2.25} />
+              </div>
+              <div>
+                <p className="text-[13px] font-semibold leading-tight" style={{ color: "#f1f5f9", letterSpacing: "-0.01em" }}>
+                  Cambios guardados
+                </p>
+                <p className="text-[11px] mt-0.5 leading-tight" style={{ color: "rgba(148,163,184,0.7)" }}>
+                  Stock actualizado
+                </p>
+              </div>
             </div>
           </div>
         </div>
