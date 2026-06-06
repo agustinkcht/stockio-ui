@@ -417,12 +417,12 @@ function ClientesContent() {
               <div className="max-w-6xl mx-auto">
 
                 {/* Table header — no all-selector, no grid size */}
-                <div className="grid grid-cols-[minmax(40px,4%)_1fr_200px_160px_200px_44px] h-9 bg-slate-900 rounded-md mb-2">
+                <div className="grid grid-cols-[minmax(40px,4%)_1fr_200px_160px_200px_44px] px-4 py-2 border border-slate-200/80 rounded-t-md bg-slate-50/60">
                   <div />
-                  <div className="flex items-center text-[11px] font-semibold text-slate-400 uppercase tracking-wider border-l border-slate-700/50 pl-3">Cliente</div>
-                  <div className="flex items-center text-[11px] font-semibold text-slate-400 uppercase tracking-wider border-l border-slate-700/50 pl-3">Email</div>
-                  <div className="flex items-center text-[11px] font-semibold text-slate-400 uppercase tracking-wider border-l border-slate-700/50 pl-3">Teléfono</div>
-                  <div className="flex items-center text-[11px] font-semibold text-slate-400 uppercase tracking-wider border-l border-slate-700/50 pl-3">Historial</div>
+                  <div className="text-xs font-medium text-slate-400 uppercase tracking-wide">Cliente</div>
+                  <div className="text-xs font-medium text-slate-400 uppercase tracking-wide">Email</div>
+                  <div className="text-xs font-medium text-slate-400 uppercase tracking-wide">Teléfono</div>
+                  <div className="text-xs font-medium text-slate-400 uppercase tracking-wide">Historial</div>
                   <div />
                 </div>
 
