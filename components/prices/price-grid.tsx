@@ -244,8 +244,8 @@ export function PriceGrid({
     return { costo: 0, margen: 0, iva: 21, precioFinal: 0 }
   }
 
-  // cols: [44px checkbox | 1fr item | 200px costo | 100px margen | 100px iva | 200px precio venta]
-  const COLS = "grid-cols-[44px_1fr_200px_100px_100px_200px]"
+  // cols: grid-cols-12 — 6 item | 2 costo | 1 margen | 1 iva | 2 precio venta
+  const COLS = "grid-cols-12"
 
   const renderItemRow = (item: Item, index: number, isChild = false, isLastChild = false, parentProveedor?: string) => {
     const isParent = !isChild && ((item.variants && item.variants.length > 0) || (item.items && item.items.length > 0))
@@ -267,9 +267,10 @@ export function PriceGrid({
           onMouseEnter={() => setHoveredId(itemId)}
           onMouseLeave={() => setHoveredId(null)}
         >
-          {/* Checkbox */}
-          <div className={`flex items-center justify-center h-full ${isChild ? "pl-4" : ""}`}>
-            <div className={`transition-opacity ${isHovered || selectionState.checked ? "opacity-100" : "opacity-0"}`}>
+          {/* Item info — col-span-6 */}
+          <div className="col-span-6 flex items-center gap-2.5 min-w-0 px-4 h-full relative">
+            {/* Checkbox overlay */}
+            <div className={`absolute left-3 top-1/2 -translate-y-1/2 transition-opacity ${isHovered || selectionState.checked ? "opacity-100" : "opacity-0"}`}>
               {selectionState.indeterminate ? (
                 <button
                   onClick={() => handleItemSelection(item, isChild)}
@@ -285,10 +286,6 @@ export function PriceGrid({
                 />
               )}
             </div>
-          </div>
-
-          {/* Item info */}
-          <div className="flex items-center gap-2.5 min-w-0 pr-4">
             <div className="w-8 h-8 flex items-center justify-center shrink-0">
               {isParent ? (
                 <button
@@ -336,15 +333,15 @@ export function PriceGrid({
 
           {isParent ? (
             <>
-              <div className="h-full" />
-              <div className="h-full" />
-              <div className="h-full" />
-              <div className="h-full" />
+              <div className="col-span-2 h-full" />
+              <div className="col-span-1 h-full" />
+              <div className="col-span-1 h-full" />
+              <div className="col-span-2 h-full" />
             </>
           ) : (
             <>
-              {/* Costo */}
-              <div className="flex items-center px-3 h-full border-l border-slate-100">
+              {/* Costo — col-span-2 */}
+              <div className="col-span-2 flex items-center px-3 h-full border-l border-slate-100">
                 <span className="text-xs text-slate-400 mr-1">$</span>
                 {isEditMode ? (
                   <input
@@ -360,8 +357,8 @@ export function PriceGrid({
                 )}
               </div>
 
-              {/* Margen */}
-              <div className={`flex items-center px-3 h-full border-l border-slate-100 ${itemPricing.margen < 0 ? "bg-red-50/40" : ""} ${!hasCosto ? "opacity-40" : ""}`}>
+              {/* Margen — col-span-1 */}
+              <div className={`col-span-1 flex items-center px-3 h-full border-l border-slate-100 ${itemPricing.margen < 0 ? "bg-red-50/40" : ""} ${!hasCosto ? "opacity-40" : ""}`}>
                 {isEditMode ? (
                   <input
                     type="number"
@@ -378,8 +375,8 @@ export function PriceGrid({
                 <span className={`text-xs shrink-0 ${itemPricing.margen < 0 ? "text-red-400" : "text-slate-400"}`}>%</span>
               </div>
 
-              {/* IVA */}
-              <div className="flex items-center px-3 h-full border-l border-slate-100">
+              {/* IVA — col-span-1 */}
+              <div className="col-span-1 flex items-center px-3 h-full border-l border-slate-100">
                 {isEditMode ? (
                   <select
                     value={itemPricing.iva}
@@ -395,8 +392,8 @@ export function PriceGrid({
                 )}
               </div>
 
-              {/* Precio de Venta */}
-              <div className="flex items-center px-3 h-full border-l border-slate-100 bg-blue-50/20">
+              {/* Precio de Venta — col-span-2 */}
+              <div className="col-span-2 flex items-center px-3 h-full border-l border-slate-100 bg-blue-50/20">
                 <span className="text-xs text-blue-400 mr-1">$</span>
                 {isEditMode ? (
                   precioFinalMode === "con_iva" ? (
@@ -447,9 +444,8 @@ export function PriceGrid({
     <>
       {/* Table header */}
       <div className={`grid ${COLS} px-0 py-2.5 border border-slate-200/80 rounded-t-md bg-slate-50/60`}>
-        <div />
-        <div className="text-xs font-medium text-slate-400 uppercase tracking-wide">Item</div>
-        <div className="flex items-center justify-between pl-3 border-l border-slate-200/60">
+        <div className="col-span-6 text-xs font-medium text-slate-400 uppercase tracking-wide pl-4">Item</div>
+        <div className="col-span-2 flex items-center justify-between pl-3 border-l border-slate-200/60">
           <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">Costo</span>
           {isEditMode && (
             <button onClick={() => setBulkModalType("costo")} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer mr-1" title="Editar en lote">
@@ -457,7 +453,7 @@ export function PriceGrid({
             </button>
           )}
         </div>
-        <div className="flex items-center justify-between pl-3 border-l border-slate-200/60">
+        <div className="col-span-1 flex items-center justify-between pl-3 border-l border-slate-200/60">
           <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">Margen</span>
           {isEditMode && (
             <button onClick={() => setBulkModalType("margen")} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer mr-1" title="Editar en lote">
@@ -465,7 +461,7 @@ export function PriceGrid({
             </button>
           )}
         </div>
-        <div className="flex items-center justify-between pl-3 border-l border-slate-200/60">
+        <div className="col-span-1 flex items-center justify-between pl-3 border-l border-slate-200/60">
           <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">IVA</span>
           {isEditMode && (
             <button onClick={() => setBulkModalType("iva")} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer mr-1" title="Editar en lote">
@@ -473,7 +469,7 @@ export function PriceGrid({
             </button>
           )}
         </div>
-        <div className="flex items-center justify-between pl-3 border-l border-slate-200/60" data-precio-dropdown>
+        <div className="col-span-2 flex items-center justify-between pl-3 border-l border-slate-200/60" data-precio-dropdown>
           <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">
             Precio de Venta{precioFinalMode === "sin_iva" ? " (sin IVA)" : ""}
           </span>
