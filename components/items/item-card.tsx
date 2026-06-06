@@ -310,56 +310,12 @@ export function ItemCard({
   return (
     <div className={marginClass}>
       <div
-        className="flex items-center gap-2 bg-transparent mb-0 mt-0"
+        className="relative bg-transparent mb-0 mt-0"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
         <div
-          className="p-2 -m-2 cursor-pointer py-4 pl-2"
-          onMouseEnter={handleButtonMouseEnter}
-          onMouseLeave={handleButtonMouseLeave}
-          onClick={(e) => {
-            e.stopPropagation()
-            onSelectClick()
-          }}
-        >
-          {isIndeterminate ? (
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                onSelectClick()
-              }}
-              className={`relative left-[-7px] h-4.5 w-4.5 flex items-center justify-center rounded-sm bg-primary border border-primary cursor-pointer ${
-                !isHovered && !isSelected && !isIndeterminate ? "opacity-0" : "opacity-100"
-              } ${showTransition ? "transition-opacity" : ""}`}
-            >
-              <Minus className="w-3 h-3 text-primary-foreground" />
-            </button>
-          ) : isSelected ? (
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                onSelectClick()
-              }}
-              className={`relative left-[-7px] h-4.5 w-4.5 flex items-center justify-center rounded-sm bg-primary border border-primary cursor-pointer hover:opacity-90 ${showTransition ? "transition-opacity" : ""}`}
-            >
-              <Check className="w-3 h-3 text-primary-foreground" />
-            </button>
-          ) : (
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                onSelectClick()
-              }}
-              className={`relative left-[-7px] h-4.5 w-4.5 transition-colors cursor-pointer flex items-center justify-center rounded-sm ml-0 border shadow-xs border-slate-300 bg-transparent border-border ${
-                !isHovered ? "opacity-0" : "opacity-100"
-              } ${showTransition ? "transition-opacity" : ""}`}
-            ></button>
-          )}
-        </div>
-
-        <div
-          className={`flex-1 border-solid mb-0 border-slate-200/65 shadow-md ${gridSize === "lg" ? "h-22" : gridSize === "md" ? "h-16" : "h-10"} ${roundedClass} grid ${
+          className={`relative border-solid mb-0 border-slate-200/65 shadow-md ${gridSize === "lg" ? "h-22" : gridSize === "md" ? "h-16" : "h-10"} ${roundedClass} grid ${
             isAuditMode
               ? `grid-cols-22 ${
                   hasAuditChange 
@@ -927,34 +883,60 @@ export function ItemCard({
               )}
             </>
           )}
-        </div>
-
-        <div
-          className={`flex items-center gap-2 px-3 ${!isHovered ? "opacity-0" : "opacity-100"} transition-opacity duration-300`}
-          onMouseEnter={handleButtonMouseEnter}
-          onMouseLeave={handleButtonMouseLeave}
-        >
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+          {/* Checkbox — absolute overlay on left edge */}
+          <div
+            className="absolute left-0 top-0 bottom-0 flex items-center pl-3 z-10"
+            onClick={(e) => { e.stopPropagation(); onSelectClick() }}
+          >
+            {isIndeterminate ? (
               <button
-                onClick={(e) => e.stopPropagation()}
-                className="p-2 -m-2 py-4 px-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer focus-visible:outline-none"
+                onClick={(e) => { e.stopPropagation(); onSelectClick() }}
+                className={`h-[18px] w-[18px] flex items-center justify-center rounded-sm bg-primary border border-primary cursor-pointer ${showTransition ? "transition-opacity" : ""}`}
               >
-                <MoreVertical className="w-4 h-4" />
+                <Minus className="w-3 h-3 text-primary-foreground" />
               </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 p-1">
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onDelete?.(item)
-                }}
+            ) : isSelected ? (
+              <button
+                onClick={(e) => { e.stopPropagation(); onSelectClick() }}
+                className={`h-[18px] w-[18px] flex items-center justify-center rounded-sm bg-primary border border-primary cursor-pointer hover:opacity-90 ${showTransition ? "transition-opacity" : ""}`}
               >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Eliminar
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <Check className="w-3 h-3 text-primary-foreground" />
+              </button>
+            ) : (
+              <button
+                onClick={(e) => { e.stopPropagation(); onSelectClick() }}
+                className={`h-[18px] w-[18px] cursor-pointer flex items-center justify-center rounded-sm border shadow-xs border-slate-300 bg-white ${
+                  !isHovered ? "opacity-0" : "opacity-100"
+                } ${showTransition ? "transition-opacity" : ""}`}
+              />
+            )}
+          </div>
+
+          {/* More-options — absolute overlay on right edge */}
+          <div
+            className={`absolute right-0 top-0 bottom-0 flex items-center pr-2 z-10 ${!isHovered ? "opacity-0" : "opacity-100"} transition-opacity duration-150`}
+            onMouseEnter={handleButtonMouseEnter}
+            onMouseLeave={handleButtonMouseLeave}
+          >
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  onClick={(e) => e.stopPropagation()}
+                  className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-slate-100 rounded transition-colors cursor-pointer focus-visible:outline-none"
+                >
+                  <MoreVertical className="w-4 h-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 p-1">
+                <DropdownMenuItem
+                  onClick={(e) => { e.stopPropagation(); onDelete?.(item) }}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Eliminar
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
 
