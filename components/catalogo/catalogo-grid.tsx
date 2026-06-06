@@ -87,7 +87,7 @@ export function CatalogoGrid({
             <div className="flex items-center bg-slate-50 border border-slate-200/80 rounded-md">
               {/* Tab header columns */}
               <div className="flex-1 grid grid-cols-44 h-9">
-                <div className="col-span-16 flex items-center px-4 border-r border-slate-200/60">
+                <div className="col-span-16 flex items-center justify-center px-4 border-r border-slate-200/60">
                   <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Item</span>
                 </div>
                 <div className="col-span-8 flex items-center justify-center border-r border-slate-200/60">
