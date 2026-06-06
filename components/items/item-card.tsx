@@ -885,7 +885,7 @@ export function ItemCard({
           )}
           {/* Checkbox — absolute overlay on left edge */}
           <div
-            className="absolute left-0 top-0 bottom-0 flex items-center pl-3 z-10"
+            className="absolute left-0 top-0 bottom-0 flex items-center pl-[18px] z-10"
             onClick={(e) => { e.stopPropagation(); onSelectClick() }}
           >
             {isIndeterminate ? (
