@@ -35,7 +35,7 @@ const COL_WIDTHS: Record<string, number> = {
   vencimiento: 150,
   proveedor: 130,
   codigoProveedor: 130,
-  stockTotal: 80,
+  enStock: 80,
   stockReservado: 90,
   stockDisponible: 90,
   descripcion: 200,
@@ -112,8 +112,8 @@ const SECTIONS: Section[] = [
     id: "stock", 
     label: "Stock", 
     defaultExpanded: false,
-    columns: ["stockTotal", "stockReservado", "stockDisponible"],
-    subHeaders: [{ label: "STOCK EN EL DEPÓSITO", cols: ["stockTotal", "stockReservado", "stockDisponible"] }],
+    columns: ["enStock", "stockReservado", "stockDisponible"],
+    subHeaders: [{ label: "STOCK EN EL DEPÓSITO", cols: ["enStock", "stockReservado", "stockDisponible"] }],
   },
   { 
     id: "media", 
@@ -149,7 +149,7 @@ const COLUMN_LABELS: Record<string, string> = {
   vencimiento: "Fecha",
   proveedor: "Proveedor",
   codigoProveedor: "Código Proveedor",
-  stockTotal: "Total",
+  enStock: "En Stock",
   stockReservado: "Reservado",
   stockDisponible: "Disponible",
   descripcion: "",
@@ -171,7 +171,7 @@ interface WorkableRow {
   vencimiento: string
   proveedor: string
   codigoProveedor: string
-  stockTotal: string
+  enStock: string
   stockReservado: string
   descripcion: string
   fotoUrl: string
@@ -193,7 +193,7 @@ const createEmptyRow = (): WorkableRow => ({
   vencimiento: "",
   proveedor: "",
   codigoProveedor: "",
-  stockTotal: "0",
+  enStock: "0",
   stockReservado: "0",
   descripcion: "",
   fotoUrl: "",
@@ -237,7 +237,7 @@ export default function CreadorMasivoPage() {
       !row.proveedor.trim() &&
       !row.codigoProveedor.trim() &&
       !row.descripcion.trim() &&
-      (row.stockTotal.trim() === "" || row.stockTotal.trim() === "0") && // Default value
+      (row.enStock.trim() === "" || row.enStock.trim() === "0") && // Default value
       (row.stockReservado.trim() === "" || row.stockReservado.trim() === "0") && // Default value
       !row.fotoUrl.trim() &&
       !row.volumenCantidad.trim() &&
@@ -337,7 +337,7 @@ export default function CreadorMasivoPage() {
           atributosPrincipales: atributosPrincipales.length > 0 ? atributosPrincipales : undefined,
           atributosInformativos: atributosInformativos.length > 0 ? atributosInformativos : undefined,
           descripcion: row.descripcion.trim() || undefined,
-          stockTotal: parseInt(row.stockTotal) || 0,
+          enStock: parseInt(row.enStock) || 0,
           stockReservado: parseInt(row.stockReservado) || 0,
           imagenUrl: row.fotoUrl.trim() || undefined,
         }
@@ -388,9 +388,9 @@ export default function CreadorMasivoPage() {
             foto: variant.fotoUrl || parentRow.fotoUrl,
             atributosPrincipales: (variant.atributosPrincipales || []).filter(a => a && a.key && a.value),
             stock: {
-              total: variant.stockTotal || "0",
+              total: variant.enStock || "0",
               reservado: variant.stockReservado || "0",
-              disponible: (parseInt(variant.stockTotal || "0") - parseInt(variant.stockReservado || "0")).toString()
+              disponible: (parseInt(variant.enStock || "0") - parseInt(variant.stockReservado || "0")).toString()
             },
             codigoProveedor: variant.codigoProveedor || undefined,
             atributosInformativos: (variant.atributosInformativos || [])
@@ -653,7 +653,7 @@ export default function CreadorMasivoPage() {
           </div>
         )
       case "stockDisponible":
-        const disponible = Math.max(0, (parseInt(row.stockTotal) || 0) - (parseInt(row.stockReservado) || 0))
+        const disponible = Math.max(0, (parseInt(row.enStock) || 0) - (parseInt(row.stockReservado) || 0))
         return (
           <div className="w-full h-full flex items-center justify-center text-xs text-gray-500 bg-gray-50">
             {disponible}
@@ -852,13 +852,13 @@ export default function CreadorMasivoPage() {
             className={`${baseInputClass} placeholder:text-gray-300`}
           />
         )
-      case "stockTotal":
+      case "enStock":
         return (
           <input
             type="number"
             min="0"
-            value={row.stockTotal}
-            onChange={(e) => updateRow(rowIndex, "stockTotal", e.target.value)}
+            value={row.enStock}
+            onChange={(e) => updateRow(rowIndex, "enStock", e.target.value)}
             className={`${baseInputClass} text-center`}
           />
         )

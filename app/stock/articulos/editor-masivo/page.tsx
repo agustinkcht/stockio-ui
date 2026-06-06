@@ -37,7 +37,7 @@ const COL_WIDTHS: Record<string, number> = {
   vencimiento: 150,
   proveedor: 130,
   codigoProveedor: 130,
-  stockTotal: 80,
+  enStock: 80,
   stockReservado: 90,
   stockDisponible: 90,
   descripcion: 200,
@@ -75,7 +75,7 @@ const SECTIONS: Section[] = [
   { id: "datos-principales", label: "Datos Principales", defaultExpanded: false, columns: ["sku", "codigoUniversal"], subHeaders: [{ label: "CODIGOS", cols: ["sku", "codigoUniversal"] }] },
   { id: "atributos-principales", label: "Atributos Principales", defaultExpanded: false, isDynamic: true, dynamicType: "atributosPrincipales" },
   { id: "info-comercial", label: "Informacion Comercial", defaultExpanded: false, columns: ["categoria", "marca", "formatoVenta", "unidadesPorPack", "volumenCantidad", "volumenUnidad", "vencimiento", "proveedor", "codigoProveedor"], subHeaders: [{ label: "INFO DEL PRODUCTO", cols: ["categoria", "marca"] }, { label: "PRESENTACION", cols: ["formatoVenta", "unidadesPorPack"] }, { label: "VOLUMEN DE LA UNIDAD", cols: ["volumenCantidad", "volumenUnidad"] }, { label: "VENCIMIENTO", cols: ["vencimiento"] }, { label: "INFO DEL PROVEEDOR", cols: ["proveedor", "codigoProveedor"] }] },
-  { id: "stock", label: "Stock", defaultExpanded: false, columns: ["stockTotal", "stockReservado", "stockDisponible"], subHeaders: [{ label: "STOCK EN EL DEPOSITO", cols: ["stockTotal", "stockReservado", "stockDisponible"] }] },
+  { id: "stock", label: "Stock", defaultExpanded: false, columns: ["enStock", "stockReservado", "stockDisponible"], subHeaders: [{ label: "STOCK EN EL DEPOSITO", cols: ["enStock", "stockReservado", "stockDisponible"] }] },
   { id: "media", label: "Media", defaultExpanded: false, columns: ["descripcion", "fotoUrl"], subHeaders: [{ label: "DESCRIPCION", cols: ["descripcion"] }, { label: "FOTO (URL)", cols: ["fotoUrl"] }] },
   { id: "atributos-informativos", label: "Atributos Informativos", defaultExpanded: false, isDynamic: true, dynamicType: "atributosInformativos" },
 ]
@@ -94,7 +94,7 @@ const COLUMN_LABELS: Record<string, string> = {
   vencimiento: "Fecha",
   proveedor: "Proveedor",
   codigoProveedor: "Codigo Proveedor",
-  stockTotal: "Total",
+  enStock: "En Stock",
   stockReservado: "Reservado",
   stockDisponible: "Disponible",
   descripcion: "",
@@ -118,7 +118,7 @@ interface WorkableRow {
   vencimiento: string
   proveedor: string
   codigoProveedor: string
-  stockTotal: string
+  enStock: string
   stockReservado: string
   descripcion: string
   fotoUrl: string
@@ -145,7 +145,7 @@ function itemToWorkableRow(item: Item): WorkableRow {
     vencimiento: item.fechaVencimiento || "",
     proveedor: item.proveedor || "",
     codigoProveedor: item.codigoProveedor || "",
-    stockTotal: item.stock?.total || "0",
+    enStock: item.stock?.enStock || "0",
     stockReservado: item.stock?.reservado || "0",
     descripcion: item.descripcion || "",
     fotoUrl: item.imagenUrl || "",
@@ -171,7 +171,7 @@ function itemConVariantesToParentRow(item: Item): ParentRow {
     parentId: "", // will be set below
     atributosPrincipales: v.atributosPrincipales?.map(a => ({ key: a.key, value: a.value })) || [],
     codigoProveedor: v.codigoProveedor || "",
-    stockTotal: v.stock?.total || "0",
+    enStock: v.stock?.enStock || "0",
     stockReservado: v.stock?.reservado || "0",
     descripcion: (v as any).descripcion || item.descripcion || "",
     fotoUrl: (v as any).foto || (v as any).fotoUrl || item.imagenUrl || "",
@@ -348,9 +348,9 @@ export default function EditorMasivoPage() {
         descripcion: row.descripcion.trim() || undefined,
         imagenUrl: row.fotoUrl.trim() || undefined,
         stock: {
-          total: row.stockTotal || "0",
+          total: row.enStock || "0",
           reservado: row.stockReservado || "0",
-          disponible: String(Math.max(0, (parseInt(row.stockTotal) || 0) - (parseInt(row.stockReservado) || 0))),
+          disponible: String(Math.max(0, (parseInt(row.enStock) || 0) - (parseInt(row.stockReservado) || 0))),
         },
         atributosPrincipales: atributosPrincipales.length > 0 ? atributosPrincipales : undefined,
         atributosInformativos: atributosInformativos.length > 0 ? atributosInformativos : undefined,
@@ -385,9 +385,9 @@ export default function EditorMasivoPage() {
           sku: `${parentRow.skuPadre}-${skuSuffix}`,
           codigoUniversal: "",
           stock: {
-            total: v.stockTotal || "0",
+            total: v.enStock || "0",
             reservado: v.stockReservado || "0",
-            disponible: String(Math.max(0, (parseInt(v.stockTotal || "0")) - (parseInt(v.stockReservado || "0")))),
+            disponible: String(Math.max(0, (parseInt(v.enStock || "0")) - (parseInt(v.stockReservado || "0")))),
           },
           atributosPrincipales: (v.atributosPrincipales || []).filter(a => a.key && a.value),
           codigoProveedor: v.codigoProveedor || undefined,
@@ -473,7 +473,7 @@ export default function EditorMasivoPage() {
       vencimiento: "",
       proveedor: "",
       codigoProveedor: "",
-      stockTotal: "0",
+      enStock: "0",
       stockReservado: "0",
       descripcion: "",
       fotoUrl: "",
@@ -637,7 +637,7 @@ export default function EditorMasivoPage() {
       case "caracteres":
         return <div className="w-full h-full flex items-center justify-center text-xs text-gray-500 bg-gray-50">{row.titulo.length}</div>
       case "stockDisponible":
-        return <div className="w-full h-full flex items-center justify-center text-xs text-gray-500 bg-gray-50">{Math.max(0, (parseInt(row.stockTotal) || 0) - (parseInt(row.stockReservado) || 0))}</div>
+        return <div className="w-full h-full flex items-center justify-center text-xs text-gray-500 bg-gray-50">{Math.max(0, (parseInt(row.enStock) || 0) - (parseInt(row.stockReservado) || 0))}</div>
       case "formatoVenta":
         return <select value={row.formatoVenta} onChange={e => updateRow(rowIndex, "formatoVenta", e.target.value)} className={`${baseInputClass} cursor-pointer`}><option value="unidad">unidad</option><option value="pack">pack</option></select>
       case "volumenUnidad":
@@ -653,8 +653,8 @@ export default function EditorMasivoPage() {
         return <input type="text" value={row.codigoUniversal} onChange={e => updateRow(rowIndex, "codigoUniversal", e.target.value)} placeholder="N.A." className={`${baseInputClass} placeholder:text-gray-300`} />
       case "vencimiento":
         return <input type="date" value={row.vencimiento} onChange={e => updateRow(rowIndex, "vencimiento", e.target.value)} className={baseInputClass} />
-      case "stockTotal":
-        return <input type="number" min="0" value={row.stockTotal} onChange={e => updateRow(rowIndex, "stockTotal", e.target.value)} className={`${baseInputClass} text-center`} />
+      case "enStock":
+        return <input type="number" min="0" value={row.enStock} onChange={e => updateRow(rowIndex, "enStock", e.target.value)} className={`${baseInputClass} text-center`} />
       case "stockReservado":
         return <input type="number" min="0" value={row.stockReservado} onChange={e => updateRow(rowIndex, "stockReservado", e.target.value)} className={`${baseInputClass} text-center`} />
       case "descripcion":

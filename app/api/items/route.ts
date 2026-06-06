@@ -68,7 +68,7 @@ export async function GET() {
               'name', iv.name,
               'sku', iv.sku,
               'stock', jsonb_build_object(
-                'total', COALESCE(vs.total::text, '0'),
+                'enStock', COALESCE(vs.total::text, '0'),
                 'reservado', COALESCE(vs.reservado::text, '0'),
                 'disponible', COALESCE(vs.disponible::text, '0')
               ),
@@ -117,7 +117,7 @@ export async function GET() {
       stock:
         item.stock_total !== null
           ? {
-              total: String(item.stock_total),
+              enStock: String(item.stock_total),
               reservado: String(item.stock_reservado),
               disponible: String(item.stock_disponible),
             }

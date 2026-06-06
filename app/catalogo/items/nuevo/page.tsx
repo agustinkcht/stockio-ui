@@ -1617,9 +1617,9 @@ export default function NuevoItemPage() {
                                     // Variant name = parent title; tag badge carries the attribute value
                                     const variantName = titulo.trim()
                                     
-                                    const stockTotal = parseInt(variantStockInicial) || 0
+                                    const enStock = parseInt(variantStockInicial) || 0
                                     const stockReservado = parseInt(variantStockReservado) || 0
-                                    const stockDisponible = stockTotal - stockReservado
+                                    const stockDisponible = enStock - stockReservado
                                     
                                     return {
                                       id: v.id,
@@ -1627,7 +1627,7 @@ export default function NuevoItemPage() {
                                       skuSuffix: v.skuSuffix || v.variant1?.toLowerCase().replace(/\s+/g, "-") || "",
                                       codigoUniversal: v.codigoUniversal || "",
                                       stock: {
-                                        total: stockTotal.toString(),
+                                        enStock: enStock.toString(),
                                         reservado: stockReservado.toString(),
                                         disponible: stockDisponible.toString(),
                                       },
@@ -1714,7 +1714,7 @@ export default function NuevoItemPage() {
                               <div className="grid grid-cols-[40px_1fr_100px_100px_100px] bg-slate-50 border-b border-border/30">
                                 <div className="px-2 py-3" />
                                 <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Variante</div>
-                                <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Stock Total</div>
+                                <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">En Stock</div>
                                 <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Stock Reservado</div>
                                 <div className="px-3 py-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Stock Disponible</div>
                               </div>
@@ -1769,7 +1769,7 @@ export default function NuevoItemPage() {
                                         )}
                                       </div>
 
-                                      {/* Stock Total */}
+                                      {/* En Stock */}
                                       <div className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
                                         <input
                                           type="number"
@@ -2705,9 +2705,9 @@ export default function NuevoItemPage() {
                                   const finalSku = generateUniqueSKU(sku, existingSkus)
 
                                   // Calculate stock values
-                                  const stockTotal = parseInt(stockInicial) || 0
+                                  const enStock = parseInt(stockInicial) || 0
                                   const stockRes = parseInt(stockReservado) || 0
-                                  const stockDisp = Math.max(0, stockTotal - stockRes)
+                                  const stockDisp = Math.max(0, enStock - stockRes)
 
                                   // Create new item object matching the useItems pattern
                                   const newItemId = generateId("STA")
@@ -2729,7 +2729,7 @@ export default function NuevoItemPage() {
                                     variantCount: 0,
                                     itemCount: 0,
                                     stock: {
-                                      total: stockTotal.toString(),
+                                      enStock: enStock.toString(),
                                       reservado: stockRes.toString(),
                                       disponible: stockDisp.toString(),
                                     },

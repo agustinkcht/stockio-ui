@@ -18,10 +18,10 @@ import { useSidebar } from "@/hooks/use-sidebar"
 import { getUniqueCategorias, getUniqueMarcas, searchItems, filterItems } from "@/lib/utils/item-utils"
 
 // ─── Sort options ─────────────────────────────────────────────────────────────
-type QuickSortField = "nombre" | "stockTotal" | "stockDisponible"
+type QuickSortField = "nombre" | "enStock" | "stockDisponible"
 const QUICK_SORT_LABELS: Record<QuickSortField, string> = {
   nombre: "Nombre",
-  stockTotal: "Stock Total",
+  enStock: "En Stock",
   stockDisponible: "Disponible",
 }
 
@@ -128,7 +128,7 @@ export default function StockPage() {
         if (variant) { isVariant = true; parentSku = item.sku; break }
       }
     }
-    const stockField = field === "total" ? "stockTotal" : "stockReservado"
+    const stockField = field === "total" ? "enStock" : "stockReservado"
     if (isVariant && parentSku) editVariantField(parentSku, itemSku, stockField, value)
     else editField(itemSku, stockField, value)
   }
@@ -136,7 +136,7 @@ export default function StockPage() {
   const getItemCurrentTotal = (it: any): number => {
     const stockField = it.stock
     const stockObj = stockField && typeof stockField === "object" ? stockField : null
-    return it.stockTotal ?? stockObj?.total ?? (typeof stockField === "number" ? stockField : 0)
+    return it.enStock ?? stockObj?.enStock ?? (typeof stockField === "number" ? stockField : 0)
   }
 
   const handleBulkStockEdit = (operation: string, value: number, targetSkus: string[]) => {
@@ -163,8 +163,8 @@ export default function StockPage() {
       if (operation === "aumentar") newTotal = currentTotal + value
       else if (operation === "reducir") newTotal = Math.max(0, currentTotal - value)
       else newTotal = value // fijar_en
-      if (isVariant && parentSku) editVariantField(parentSku, sku, "stockTotal", newTotal)
-      else editField(sku, "stockTotal", newTotal)
+      if (isVariant && parentSku) editVariantField(parentSku, sku, "enStock", newTotal)
+      else editField(sku, "enStock", newTotal)
     }
   }
 
@@ -447,7 +447,7 @@ export default function StockPage() {
                       <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Item</span>
                     </div>
                     <div className="flex items-center justify-between pl-3 pr-1 border-r border-slate-200/60">
-                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total</span>
+                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">En Stock</span>
                       {isEditMode && (
                         <button
                           onClick={() => gridBulkStockModalOpenRef.current()}

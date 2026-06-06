@@ -12,7 +12,7 @@ export interface ItemVariant {
   id?: string
   name: string
   stock: {
-    total: string
+    enStock: string
     reservado: string
     disponible: string
   }
@@ -42,7 +42,7 @@ export interface Item {
   id?: string
   name: string
   stock?: {
-    total: string
+    enStock: string
     reservado: string
     disponible: string
   }

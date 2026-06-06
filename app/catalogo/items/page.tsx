@@ -202,12 +202,12 @@ export default function CatalogoPage() {
         const variant = item.variants.find((v: any) => v.id === itemId || v.sku === itemId)
         if (variant) {
           const parentIdentifier = item.id || item.sku
-          const currentStock = variant.stock || { total: "0", reservado: "0", disponible: "0" }
-          const currentTotal = parseInt(currentStock.total) || 0
+          const currentStock = variant.stock || { enStock: "0", reservado: "0", disponible: "0" }
+          const currentTotal = parseInt(currentStock.enStock) || 0
           const currentReservado = parseInt(currentStock.reservado) || 0
           const newDisponible = field === "total" ? value - currentReservado : currentTotal - value
           const newStock = {
-            total: field === "total" ? value.toString() : currentStock.total,
+            enStock: field === "total" ? value.toString() : currentStock.enStock,
             reservado: field === "reservado" ? value.toString() : currentStock.reservado,
             disponible: newDisponible.toString(),
           }
@@ -224,12 +224,12 @@ export default function CatalogoPage() {
     }
     const item = items.find(i => i.id === itemId || i.sku === itemId)
     if (item) {
-      const currentStock = item.stock || { total: "0", reservado: "0", disponible: "0" }
-      const currentTotal = parseInt(currentStock.total) || 0
+      const currentStock = item.stock || { enStock: "0", reservado: "0", disponible: "0" }
+      const currentTotal = parseInt(currentStock.enStock) || 0
       const currentReservado = parseInt(currentStock.reservado) || 0
       const newDisponible = field === "total" ? value - currentReservado : currentTotal - value
       const newStock = {
-        total: field === "total" ? value.toString() : currentStock.total,
+        enStock: field === "total" ? value.toString() : currentStock.enStock,
         reservado: field === "reservado" ? value.toString() : currentStock.reservado,
         disponible: newDisponible.toString(),
       }
