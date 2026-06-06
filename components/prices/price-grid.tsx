@@ -41,6 +41,7 @@ interface PriceGridProps {
   precioFinalMode?: "con_iva" | "sin_iva"
   onPrecioFinalModeChange?: (mode: "con_iva" | "sin_iva") => void
   onBulkModalOpen?: (type: BulkModalType) => void
+  bulkModalOpenRef?: React.MutableRefObject<(type: BulkModalType) => void>
 }
 
 const IVA_OPTIONS = [
@@ -67,6 +68,7 @@ export function PriceGrid({
   precioFinalMode: precioFinalModeProp,
   onPrecioFinalModeChange,
   onBulkModalOpen,
+  bulkModalOpenRef,
 }: PriceGridProps) {
   const {
     selectAllActive,
@@ -99,6 +101,10 @@ export function PriceGrid({
     setBulkModalType(type)
     onBulkModalOpen?.(type)
   }
+  // Expose trigger to parent via ref (same pattern as gridHandleSelectAllRef)
+  useEffect(() => {
+    if (bulkModalOpenRef) bulkModalOpenRef.current = handleBulkModalOpen
+  })
   const [showPrecioModeDropdown, setShowPrecioModeDropdown] = useState(false)
 
   const availableCategorias = useMemo(() => getUniqueCategorias(items), [items])
