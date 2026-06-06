@@ -70,7 +70,7 @@ export function StockListGrid({
   const sortedAndFilteredItems = useMemo(() => sortItems(filteredItems, sortPriorities), [filteredItems, sortPriorities])
 
   function renderRow(item: Item | ItemVariant, index: number, isChild = false) {
-    const itemKey = (item as any).sku || (item as any).id || `item-${index}`
+    const itemKey = (item as Item).sku || (item as ItemVariant).skuSuffix || (item as any).id || `item-${index}`
     const isHovered = hoveredId === itemKey
     const { isSelected } = getSelectionState(itemKey)
     const hasVariants = !!(item as Item).variants?.length
@@ -113,14 +113,14 @@ export function StockListGrid({
             ) : (
               <div className="w-9 h-9 shrink-0 rounded-md bg-slate-100 overflow-hidden flex items-center justify-center">
                 {imgSrc
-                  ? <Image src={imgSrc} alt={(item as any).nombre || ""} width={36} height={36} className="object-cover w-full h-full" />
+                  ? <Image src={imgSrc} alt={item.name || ""} width={36} height={36} className="object-cover w-full h-full" />
                   : <span className="text-[10px] text-slate-400">—</span>}
               </div>
             )}
 
             <div className="flex flex-col min-w-0">
               <span className={`text-sm font-medium text-slate-800 truncate ${isChild ? "text-slate-600" : ""}`}>
-                {(item as any).nombre || (item as any).titulo || "—"}
+                {item.name || "—"}
               </span>
               <span className="text-[11px] text-slate-400 truncate">
                 {[(item as any).marca, (item as any).categoria].filter(Boolean).join(" · ")}
