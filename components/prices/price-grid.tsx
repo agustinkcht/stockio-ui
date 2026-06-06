@@ -333,7 +333,7 @@ export function PriceGrid({
                   <span className="text-sm font-medium text-slate-800 truncate">{item.name}</span>
                   {item.atributosPrincipales?.map((attr, idx) =>
                     attr.value ? (
-                      <span key={idx} className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground whitespace-nowrap shrink-0">
+                      <span key={idx} className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-900 border border-blue-100 whitespace-nowrap shrink-0">
                         {attr.value}
                       </span>
                     ) : null
