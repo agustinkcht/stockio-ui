@@ -23,7 +23,7 @@ const IVA_OPTIONS = [
 export function BulkPriceModal({ isOpen, onClose, onApply, itemCount, title, type }: BulkPriceModalProps) {
   const [operation, setOperation] = useState<string>(type === "margen" ? "aumentar" : "aumentar")
   const [value, setValue] = useState<string>("")
-  const [unit, setUnit] = useState<string>(type === "costo" || type === "precioFinal" ? "%" : "%")
+  const [unit, setUnit] = useState<string>(type === "costo" || type === "precioFinal" ? "$" : "%")
   const [selectedIva, setSelectedIva] = useState<number>(21)
   const [operationDropdownOpen, setOperationDropdownOpen] = useState(false)
   const [unitDropdownOpen, setUnitDropdownOpen] = useState(false)
@@ -32,7 +32,7 @@ export function BulkPriceModal({ isOpen, onClose, onApply, itemCount, title, typ
   const resetForm = () => {
     setOperation(type === "margen" ? "aumentar" : "aumentar")
     setValue("")
-    setUnit(type === "costo" || type === "precioFinal" ? "%" : "%")
+    setUnit(type === "costo" || type === "precioFinal" ? "$" : "%")
     setSelectedIva(21)
   }
 
@@ -55,10 +55,17 @@ export function BulkPriceModal({ isOpen, onClose, onApply, itemCount, title, typ
   }
 
   const getOperationOptions = () => {
-    // All types (costo, margen, precioFinal) have the same options
+    if (type === "costo" || type === "precioFinal") {
+      return [
+        { value: "aumentar", label: "Aumentar" },
+        { value: "reducir", label: "Reducir" },
+        { value: "fijar_en", label: "Fijar en" },
+      ]
+    }
+    // margen
     return [
       { value: "aumentar", label: "Aumentar" },
-      { value: "disminuir", label: "Disminuir" },
+      { value: "reducir", label: "Reducir" },
       { value: "fijar_en", label: "Fijar en" },
     ]
   }
