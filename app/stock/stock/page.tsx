@@ -442,12 +442,9 @@ export default function StockPage() {
                     </div>
                   </div>
                   {/* Tab header */}
-                  <div className="grid grid-cols-[minmax(0,4fr)_minmax(0,3fr)_minmax(0,2fr)_minmax(0,1fr)_minmax(0,2fr)] h-9 border border-slate-200/80 mt-2 bg-slate-50">
+                  <div className="grid grid-cols-[minmax(0,6fr)_minmax(0,2fr)_minmax(0,2fr)_minmax(0,2fr)] h-9 border border-slate-200/80 mt-2 bg-slate-50">
                     <div className="flex items-center justify-center px-4 border-r border-slate-200/60">
                       <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Item</span>
-                    </div>
-                    <div className="flex items-center justify-center border-r border-slate-200/60">
-                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Proveedor</span>
                     </div>
                     <div className="relative flex items-center justify-center border-r border-slate-200/60">
                       <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">En Stock</span>
@@ -461,7 +458,7 @@ export default function StockPage() {
                       )}
                     </div>
                     <div className="flex items-center justify-center border-r border-slate-200/60">
-                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Res.</span>
+                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Reservado</span>
                     </div>
                     <div className="flex items-center justify-center">
                       <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Disponible</span>
