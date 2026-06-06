@@ -411,7 +411,7 @@ export default function ListaDePreciosPage() {
                         <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                         <input
                           type="text"
-                          placeholder="Buscar artículos"
+                          placeholder="Buscar items"
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
                           className="flex-1 bg-transparent text-xs text-slate-700 placeholder:text-slate-400 outline-none"
@@ -555,7 +555,7 @@ export default function ListaDePreciosPage() {
 
                       {/* Count */}
                       <span className="text-xs text-slate-400 whitespace-nowrap tabular-nums">
-                        {filteredCount} {filteredCount === 1 ? "artículo" : "artículos"}
+                        {filteredCount} {filteredCount === 1 ? "item" : "items"}
                       </span>
                     </div>
 
@@ -580,7 +580,7 @@ export default function ListaDePreciosPage() {
                       </div>
                       <div className="w-px h-5 bg-slate-200 shrink-0" />
                       {selCount === 0 ? (
-                        <span className="text-xs text-slate-400">Seleccioná artículos para accionar masivamente</span>
+                        <span className="text-xs text-slate-400">Seleccioná items para accionar masivamente</span>
                       ) : (
                         <span className="text-xs text-slate-600">
                           {selCount} seleccionado{selCount !== 1 ? "s" : ""}

@@ -157,13 +157,13 @@ export function PriceGrid({
   const getBulkModalTitle = (type: BulkModalType): string => {
     switch (type) {
       case "costo":
-        return "Editar Costo de x artículos"
+        return "Editar Costo de x items"
       case "precioFinal":
-        return "Editar Precio de Venta de x artículos"
+        return "Editar Precio de Venta de x items"
       case "margen":
-        return "Editar Margen de x artículos"
+        return "Editar Margen de x items"
       case "iva":
-        return "Editar IVA de x artículos"
+        return "Editar IVA de x items"
       default:
         return ""
     }
@@ -467,7 +467,7 @@ export function PriceGrid({
       <div className="border border-slate-200/80 rounded-md overflow-hidden bg-white divide-y divide-slate-100">
         {sortedAndFilteredItems.length === 0 ? (
           <div className="py-16 text-center text-sm text-slate-400">
-            {searchTerm || hasActiveFilters ? "No se encontraron artículos." : "Sin artículos para mostrar."}
+            {searchTerm || hasActiveFilters ? "No se encontraron items." : "Sin items para mostrar."}
           </div>
         ) : (
           sortedAndFilteredItems.map((item, index) => renderItemRow(item, index))
