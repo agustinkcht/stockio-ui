@@ -157,13 +157,13 @@ export function PriceGrid({
   const getBulkModalTitle = (type: BulkModalType): string => {
     switch (type) {
       case "costo":
-        return "Modificar Costo de x items"
+        return "Editar Costo de x artículos"
       case "precioFinal":
-        return "Modificar Precio Final de x items"
+        return "Editar Precio de Venta de x artículos"
       case "margen":
-        return "Modificar Margen de x items"
+        return "Editar Margen de x artículos"
       case "iva":
-        return "Modificar IVA de x items"
+        return "Editar IVA de x artículos"
       default:
         return ""
     }

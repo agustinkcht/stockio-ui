@@ -149,9 +149,6 @@ export default function ListaDePreciosPage() {
     handleCloseDropdowns,
   } = useSidebar()
 
-  const [precioFinalMode, setPrecioFinalMode] = useState<"con_iva" | "sin_iva">("con_iva")
-  const [showPrecioModeDropdown, setShowPrecioModeDropdown] = useState(false)
-
   const breadcrumbs = [{ label: "Precios" }, { label: "Lista de Precios", href: "/precios/lista-de-precios" }]
 
   const canUndo = canUndoEdit || hasUnsavedDeletes
@@ -621,22 +618,12 @@ export default function ListaDePreciosPage() {
                         </button>
                       )}
                     </div>
-                    <div className="col-span-2 flex items-center justify-between pl-3 relative">
-                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                        Precio de Venta{precioFinalMode === "sin_iva" ? " (sin IVA)" : ""}
-                      </span>
+                    <div className="col-span-2 flex items-center justify-between pl-3">
+                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Precio de Venta</span>
                       {isEditMode && (
-                        <div className="relative mr-1">
-                          <button onClick={() => setShowPrecioModeDropdown(!showPrecioModeDropdown)} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer">
-                            <MoreVertical className="w-3 h-3 text-slate-500 hover:text-slate-700" />
-                          </button>
-                          {showPrecioModeDropdown && (
-                            <div className="absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-30 min-w-[130px]">
-                              <button onClick={() => { setPrecioFinalMode("con_iva"); setShowPrecioModeDropdown(false) }} className={`w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 cursor-pointer ${precioFinalMode === "con_iva" ? "font-medium text-blue-600" : "text-slate-700"}`}>Con IVA</button>
-                              <button onClick={() => { setPrecioFinalMode("sin_iva"); setShowPrecioModeDropdown(false) }} className={`w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 cursor-pointer ${precioFinalMode === "sin_iva" ? "font-medium text-blue-600" : "text-slate-700"}`}>Sin IVA</button>
-                            </div>
-                          )}
-                        </div>
+                        <button onClick={() => gridBulkModalOpenRef.current("precioFinal")} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer mr-1">
+                          <MoreVertical className="w-3 h-3 text-slate-500 hover:text-slate-700" />
+                        </button>
                       )}
                     </div>
                   </div>
@@ -664,8 +651,6 @@ export default function ListaDePreciosPage() {
                   sortPriorities={sortPriorities}
                   onSelectionChange={handleSelectionChange}
                   isEditMode={isEditMode}
-                  precioFinalMode={precioFinalMode}
-                  onPrecioFinalModeChange={setPrecioFinalMode}
                   bulkModalOpenRef={gridBulkModalOpenRef}
                 />
                 </div>
