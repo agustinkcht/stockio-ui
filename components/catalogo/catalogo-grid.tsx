@@ -80,11 +80,11 @@ export function CatalogoGrid({
 
   return (
     <>
-      {/* Tab Header — sticky, sits just below the bulk actions bar */}
-      <div className="sticky top-[77px] z-10">
+      {/* Tab Header */}
+      <div className="mt-3">
         <div className="px-8">
           <div className="max-w-6xl mx-auto">
-            <div className="flex items-center bg-slate-50 border border-t-0 border-slate-200/80">
+            <div className="flex items-center bg-slate-50 border border-slate-200/80 rounded-t-md">
               {/* Tab header columns */}
               <div className="flex-1 grid grid-cols-44 h-9">
                 <div className="col-span-16 flex items-center px-4 border-r border-slate-200/60">
@@ -106,7 +106,7 @@ export function CatalogoGrid({
       </div>
 
       {/* Items Grid */}
-      <div className="px-8 pt-2 pb-8">
+      <div className="px-8 pb-8">
         <div className="max-w-6xl mx-auto">
           {sortedAndFilteredItems.length === 0 && (searchQuery || filterConfig.categorias.length > 0 || filterConfig.marcas.length > 0) ? (
             <div className="flex flex-col items-center justify-center py-16 text-slate-400">
