@@ -443,40 +443,42 @@ export function PriceGrid({
   return (
     <>
       {/* Table header */}
-      <div className={`grid ${COLS} px-0 py-2.5 border border-slate-200/80 rounded-t-md bg-slate-50/60`}>
-        <div className="col-span-6 text-xs font-medium text-slate-400 uppercase tracking-wide pl-4">Item</div>
-        <div className="col-span-2 flex items-center justify-between pl-3 border-l border-slate-200/60">
-          <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">Costo</span>
+      <div className={`grid ${COLS} h-9 border border-slate-200/80 rounded-md bg-slate-50`}>
+        <div className="col-span-6 flex items-center justify-center px-4 border-r border-slate-200/60">
+          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Item</span>
+        </div>
+        <div className="col-span-2 flex items-center justify-between pl-3 border-r border-slate-200/60">
+          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Costo</span>
           {isEditMode && (
             <button onClick={() => setBulkModalType("costo")} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer mr-1" title="Editar en lote">
-              <MoreVertical className="w-3 h-3 text-slate-300 hover:text-slate-500" />
+              <MoreVertical className="w-3 h-3 text-slate-500 hover:text-slate-700" />
             </button>
           )}
         </div>
-        <div className="col-span-1 flex items-center justify-between pl-3 border-l border-slate-200/60">
-          <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">Margen</span>
+        <div className="col-span-1 flex items-center justify-between pl-3 border-r border-slate-200/60">
+          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Margen</span>
           {isEditMode && (
             <button onClick={() => setBulkModalType("margen")} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer mr-1" title="Editar en lote">
-              <MoreVertical className="w-3 h-3 text-slate-300 hover:text-slate-500" />
+              <MoreVertical className="w-3 h-3 text-slate-500 hover:text-slate-700" />
             </button>
           )}
         </div>
-        <div className="col-span-1 flex items-center justify-between pl-3 border-l border-slate-200/60">
-          <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">IVA</span>
+        <div className="col-span-1 flex items-center justify-between pl-3 border-r border-slate-200/60">
+          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">IVA</span>
           {isEditMode && (
             <button onClick={() => setBulkModalType("iva")} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer mr-1" title="Editar en lote">
-              <MoreVertical className="w-3 h-3 text-slate-300 hover:text-slate-500" />
+              <MoreVertical className="w-3 h-3 text-slate-500 hover:text-slate-700" />
             </button>
           )}
         </div>
-        <div className="col-span-2 flex items-center justify-between pl-3 border-l border-slate-200/60" data-precio-dropdown>
-          <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">
+        <div className="col-span-2 flex items-center justify-between pl-3" data-precio-dropdown>
+          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
             Precio de Venta{precioFinalMode === "sin_iva" ? " (sin IVA)" : ""}
           </span>
           {isEditMode && (
             <div className="relative mr-1">
               <button onClick={() => setShowPrecioModeDropdown(!showPrecioModeDropdown)} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer" title="Opciones">
-                <MoreVertical className="w-3 h-3 text-slate-300 hover:text-slate-500" />
+                <MoreVertical className="w-3 h-3 text-slate-500 hover:text-slate-700" />
               </button>
               {showPrecioModeDropdown && (
                 <div className="absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-20 min-w-[130px]">
@@ -492,7 +494,7 @@ export function PriceGrid({
       </div>
 
       {/* Rows */}
-      <div className="border border-slate-200/80 border-t-0 overflow-hidden bg-white divide-y divide-slate-100">
+      <div className="mt-2 border border-slate-200/80 rounded-md overflow-hidden bg-white divide-y divide-slate-100">
         {sortedAndFilteredItems.length === 0 ? (
           <div className="py-16 text-center text-sm text-slate-400">
             {searchTerm || hasActiveFilters ? "No se encontraron artículos." : "Sin artículos para mostrar."}
