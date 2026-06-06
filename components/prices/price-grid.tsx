@@ -38,6 +38,9 @@ interface PriceGridProps {
   // Selection callbacks to page
   onSelectionChange?: (count: number, has: boolean, selectAll: boolean, selectAllIndeterminate: boolean, handleSelectAll: () => void) => void
   isEditMode?: boolean
+  precioFinalMode?: "con_iva" | "sin_iva"
+  onPrecioFinalModeChange?: (mode: "con_iva" | "sin_iva") => void
+  onBulkModalOpen?: (type: BulkModalType) => void
 }
 
 const IVA_OPTIONS = [
@@ -61,6 +64,9 @@ export function PriceGrid({
   sortPriorities = [{ factor: "nombre" as const, direction: "asc" as const }],
   onSelectionChange,
   isEditMode = false,
+  precioFinalMode: precioFinalModeProp,
+  onPrecioFinalModeChange,
+  onBulkModalOpen,
 }: PriceGridProps) {
   const {
     selectAllActive,
@@ -83,7 +89,16 @@ export function PriceGrid({
   useEffect(() => {
     onSelectionChangeRef.current?.(selectedCount, hasSelectedItems, selectAllActive, selectAllIndeterminate, handleSelectAll)
   }, [selectedCount, hasSelectedItems, selectAllActive, selectAllIndeterminate, handleSelectAll])
-  const [precioFinalMode, setPrecioFinalMode] = useState<"con_iva" | "sin_iva">("con_iva")
+  const [precioFinalModeInternal, setPrecioFinalModeInternal] = useState<"con_iva" | "sin_iva">("con_iva")
+  const precioFinalMode = precioFinalModeProp ?? precioFinalModeInternal
+  const setPrecioFinalMode = (mode: "con_iva" | "sin_iva") => {
+    setPrecioFinalModeInternal(mode)
+    onPrecioFinalModeChange?.(mode)
+  }
+  const handleBulkModalOpen = (type: BulkModalType) => {
+    setBulkModalType(type)
+    onBulkModalOpen?.(type)
+  }
   const [showPrecioModeDropdown, setShowPrecioModeDropdown] = useState(false)
 
   const availableCategorias = useMemo(() => getUniqueCategorias(items), [items])
@@ -442,59 +457,6 @@ export function PriceGrid({
 
   return (
     <>
-      {/* Table header — sticky, sits just below the bulk actions bar */}
-      <div className="sticky top-[96px] z-10 pb-2">
-      <div className={`grid ${COLS} h-9 border border-slate-200/80 rounded-md bg-slate-50`}>
-        <div className="col-span-6 flex items-center justify-center px-4 border-r border-slate-200/60">
-          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Item</span>
-        </div>
-        <div className="col-span-2 flex items-center justify-between pl-3 border-r border-slate-200/60">
-          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Costo</span>
-          {isEditMode && (
-            <button onClick={() => setBulkModalType("costo")} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer mr-1" title="Editar en lote">
-              <MoreVertical className="w-3 h-3 text-slate-500 hover:text-slate-700" />
-            </button>
-          )}
-        </div>
-        <div className="col-span-1 flex items-center justify-between pl-3 border-r border-slate-200/60">
-          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Margen</span>
-          {isEditMode && (
-            <button onClick={() => setBulkModalType("margen")} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer mr-1" title="Editar en lote">
-              <MoreVertical className="w-3 h-3 text-slate-500 hover:text-slate-700" />
-            </button>
-          )}
-        </div>
-        <div className="col-span-1 flex items-center justify-between pl-3 border-r border-slate-200/60">
-          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">IVA</span>
-          {isEditMode && (
-            <button onClick={() => setBulkModalType("iva")} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer mr-1" title="Editar en lote">
-              <MoreVertical className="w-3 h-3 text-slate-500 hover:text-slate-700" />
-            </button>
-          )}
-        </div>
-        <div className="col-span-2 flex items-center justify-between pl-3" data-precio-dropdown>
-          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-            Precio de Venta{precioFinalMode === "sin_iva" ? " (sin IVA)" : ""}
-          </span>
-          {isEditMode && (
-            <div className="relative mr-1">
-              <button onClick={() => setShowPrecioModeDropdown(!showPrecioModeDropdown)} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer" title="Opciones">
-                <MoreVertical className="w-3 h-3 text-slate-500 hover:text-slate-700" />
-              </button>
-              {showPrecioModeDropdown && (
-                <div className="absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-20 min-w-[130px]">
-                  <button onClick={() => { setPrecioFinalMode("con_iva"); setShowPrecioModeDropdown(false) }} className={`w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 cursor-pointer ${precioFinalMode === "con_iva" ? "font-medium text-blue-600" : "text-slate-700"}`}>Con IVA</button>
-                  <button onClick={() => { setPrecioFinalMode("sin_iva"); setShowPrecioModeDropdown(false) }} className={`w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 cursor-pointer ${precioFinalMode === "sin_iva" ? "font-medium text-blue-600" : "text-slate-700"}`}>Sin IVA</button>
-                  <div className="border-t border-slate-100 my-1" />
-                  <button onClick={() => { setBulkModalType("precioFinal"); setShowPrecioModeDropdown(false) }} className="w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 cursor-pointer text-slate-700">Editar en lote</button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-      </div>{/* /sticky header wrapper */}
-
       {/* Rows */}
       <div className="border border-slate-200/80 rounded-md overflow-hidden bg-white divide-y divide-slate-100">
         {sortedAndFilteredItems.length === 0 ? (

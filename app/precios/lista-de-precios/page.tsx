@@ -1,6 +1,6 @@
 "use client"
 import { useState, useCallback, useRef, useEffect } from "react"
-import { CheckCircle2, Search, X, ListFilter, ArrowUpDown, Minus, PencilLine } from "lucide-react"
+import { CheckCircle2, Search, X, ListFilter, ArrowUpDown, Minus, PencilLine, MoreVertical } from "lucide-react"
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -147,6 +147,9 @@ export default function ListaDePreciosPage() {
     handleDropdownMouseLeave,
     handleCloseDropdowns,
   } = useSidebar()
+
+  const [precioFinalMode, setPrecioFinalMode] = useState<"con_iva" | "sin_iva">("con_iva")
+  const [showPrecioModeDropdown, setShowPrecioModeDropdown] = useState(false)
 
   const breadcrumbs = [{ label: "Precios" }, { label: "Lista de Precios", href: "/precios/lista-de-precios" }]
 
@@ -562,27 +565,79 @@ export default function ListaDePreciosPage() {
                 </div>
               </div>
 
-              {/* Row 2 — Bulk actions */}
-              <div className="px-8">
-                <div className="max-w-6xl mx-auto bg-white border border-slate-200/80 border-t-0">
-                  <div className="flex items-center gap-2 h-9">
-                    <div className="flex items-center justify-center w-[4%] min-w-[40px] shrink-0">
-                      <input
-                        ref={allCheckboxRef}
-                        type="checkbox"
-                        checked={selAll}
-                        onChange={() => gridHandleSelectAllRef.current()}
-                        className="w-3.5 h-3.5 rounded accent-slate-800 cursor-pointer"
-                      />
+              {/* Row 2 — Bulk actions + Tab header together, same bg */}
+              <div className="px-8 bg-slate-50/95 backdrop-blur-sm pb-2">
+                <div className="max-w-6xl mx-auto">
+                  {/* Bulk actions */}
+                  <div className="bg-white border border-slate-200/80 border-t-0">
+                    <div className="flex items-center gap-2 h-9">
+                      <div className="flex items-center justify-center w-[4%] min-w-[40px] shrink-0">
+                        <input
+                          ref={allCheckboxRef}
+                          type="checkbox"
+                          checked={selAll}
+                          onChange={() => gridHandleSelectAllRef.current()}
+                          className="w-3.5 h-3.5 rounded accent-slate-800 cursor-pointer"
+                        />
+                      </div>
+                      <div className="w-px h-5 bg-slate-200 shrink-0" />
+                      {selCount === 0 ? (
+                        <span className="text-xs text-slate-400">Seleccioná artículos para accionar masivamente</span>
+                      ) : (
+                        <span className="text-xs text-slate-600">
+                          {selCount} seleccionado{selCount !== 1 ? "s" : ""}
+                        </span>
+                      )}
                     </div>
-                    <div className="w-px h-5 bg-slate-200 shrink-0" />
-                    {selCount === 0 ? (
-                      <span className="text-xs text-slate-400">Seleccioná artículos para accionar masivamente</span>
-                    ) : (
-                      <span className="text-xs text-slate-600">
-                        {selCount} seleccionado{selCount !== 1 ? "s" : ""}
+                  </div>
+
+                  {/* Tab header */}
+                  <div className="grid grid-cols-12 h-9 border border-slate-200/80 mt-2">
+                    <div className="col-span-6 flex items-center justify-center px-4 border-r border-slate-200/60">
+                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Item</span>
+                    </div>
+                    <div className="col-span-2 flex items-center justify-between pl-3 border-r border-slate-200/60">
+                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Costo</span>
+                      {isEditMode && (
+                        <button onClick={() => {}} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer mr-1">
+                          <MoreVertical className="w-3 h-3 text-slate-500 hover:text-slate-700" />
+                        </button>
+                      )}
+                    </div>
+                    <div className="col-span-1 flex items-center justify-between pl-3 border-r border-slate-200/60">
+                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Margen</span>
+                      {isEditMode && (
+                        <button onClick={() => {}} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer mr-1">
+                          <MoreVertical className="w-3 h-3 text-slate-500 hover:text-slate-700" />
+                        </button>
+                      )}
+                    </div>
+                    <div className="col-span-1 flex items-center justify-between pl-3 border-r border-slate-200/60">
+                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">IVA</span>
+                      {isEditMode && (
+                        <button onClick={() => {}} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer mr-1">
+                          <MoreVertical className="w-3 h-3 text-slate-500 hover:text-slate-700" />
+                        </button>
+                      )}
+                    </div>
+                    <div className="col-span-2 flex items-center justify-between pl-3 relative">
+                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                        Precio de Venta{precioFinalMode === "sin_iva" ? " (sin IVA)" : ""}
                       </span>
-                    )}
+                      {isEditMode && (
+                        <div className="relative mr-1">
+                          <button onClick={() => setShowPrecioModeDropdown(!showPrecioModeDropdown)} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer">
+                            <MoreVertical className="w-3 h-3 text-slate-500 hover:text-slate-700" />
+                          </button>
+                          {showPrecioModeDropdown && (
+                            <div className="absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-30 min-w-[130px]">
+                              <button onClick={() => { setPrecioFinalMode("con_iva"); setShowPrecioModeDropdown(false) }} className={`w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 cursor-pointer ${precioFinalMode === "con_iva" ? "font-medium text-blue-600" : "text-slate-700"}`}>Con IVA</button>
+                              <button onClick={() => { setPrecioFinalMode("sin_iva"); setShowPrecioModeDropdown(false) }} className={`w-full px-3 py-1.5 text-left text-xs hover:bg-slate-50 cursor-pointer ${precioFinalMode === "sin_iva" ? "font-medium text-blue-600" : "text-slate-700"}`}>Sin IVA</button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -591,7 +646,7 @@ export default function ListaDePreciosPage() {
             {/* /sticky bar */}
 
             {/* ── Price grid ─────────────────────────────────────────────────── */}
-            <div className="px-8 pt-2 pb-8">
+            <div className="px-8 pb-8">
               <div className="max-w-6xl mx-auto">
                 <PriceGrid
                   items={items}
@@ -608,6 +663,8 @@ export default function ListaDePreciosPage() {
                   sortPriorities={sortPriorities}
                   onSelectionChange={handleSelectionChange}
                   isEditMode={isEditMode}
+                  precioFinalMode={precioFinalMode}
+                  onPrecioFinalModeChange={setPrecioFinalMode}
                 />
                 </div>
             </div>
