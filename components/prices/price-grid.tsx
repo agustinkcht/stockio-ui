@@ -262,15 +262,15 @@ export function PriceGrid({
       <div key={item.sku || index}>
         <div
           className={`grid ${COLS} h-[60px] items-center transition-colors ${
-            isHovered ? "bg-blue-50/50" : isChild ? "bg-slate-50/40" : ""
+            isHovered ? "bg-blue-50/50" : isChild ? "bg-slate-50/40" : "bg-white"
           }`}
           onMouseEnter={() => setHoveredId(itemId)}
           onMouseLeave={() => setHoveredId(null)}
         >
           {/* Item info — col-span-6 */}
-          <div className="col-span-6 flex items-center gap-2.5 min-w-0 px-4 h-full relative">
-            {/* Checkbox overlay */}
-            <div className={`absolute left-3 top-1/2 -translate-y-1/2 transition-opacity ${isHovered || selectionState.checked ? "opacity-100" : "opacity-0"}`}>
+          <div className="col-span-6 flex items-center gap-2.5 min-w-0 px-4 h-full border-r border-slate-100">
+            {/* Checkbox — inline, same as stock grid */}
+            <div className={`transition-opacity shrink-0 ${isHovered || selectionState.checked ? "opacity-100" : "opacity-0"}`}>
               {selectionState.indeterminate ? (
                 <button
                   onClick={() => handleItemSelection(item, isChild)}
@@ -286,26 +286,26 @@ export function PriceGrid({
                 />
               )}
             </div>
-            <div className="w-8 h-8 flex items-center justify-center shrink-0">
-              {isParent ? (
-                <button
-                  onClick={() => toggleVariantExpansion(index)}
-                  className="text-slate-400 hover:text-slate-700 cursor-pointer"
-                >
-                  {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                </button>
-              ) : (
-                <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden shrink-0">
-                  <Image
-                    src={getCategoryImage(item.categoria || "")}
-                    alt={item.name}
-                    width={32}
-                    height={32}
-                    className="object-cover"
-                  />
-                </div>
-              )}
-            </div>
+
+            {/* Thumbnail-style expand toggle (parent) or image tile (child/standalone) */}
+            {isParent ? (
+              <button
+                onClick={() => toggleVariantExpansion(index)}
+                className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-md bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer text-slate-400 hover:text-slate-600"
+              >
+                {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+            ) : (
+              <div className="w-9 h-9 shrink-0 rounded-md bg-slate-100 overflow-hidden flex items-center justify-center">
+                <Image
+                  src={getCategoryImage(item.categoria || "")}
+                  alt={item.name}
+                  width={36}
+                  height={36}
+                  className="object-cover w-full h-full"
+                />
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               {isChild ? (
                 <div className="flex items-center gap-2 min-w-0">
