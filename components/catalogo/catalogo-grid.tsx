@@ -84,21 +84,18 @@ export function CatalogoGrid({
       <div className="mt-3">
         <div className="px-8">
           <div className="max-w-6xl mx-auto">
-            <div className="flex items-center bg-slate-50 border border-slate-200/80 rounded-md">
-              {/* Tab header columns */}
-              <div className="flex-1 grid grid-cols-44 h-9">
-                <div className="col-span-16 flex items-center justify-center px-4 border-r border-slate-200/60">
-                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Item</span>
-                </div>
-                <div className="col-span-8 flex items-center justify-center border-r border-slate-200/60">
-                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Estado</span>
-                </div>
-                <div className="col-span-10 flex items-center justify-center border-r border-slate-200/60">
-                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Precio Venta</span>
-                </div>
-                <div className="col-span-10 flex items-center justify-center">
-                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Stock</span>
-                </div>
+            <div className="flex-1 grid grid-cols-44 h-9 bg-slate-900 rounded-md">
+              <div className="col-span-16 flex items-center justify-center px-4 border-r border-slate-700/50">
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Item</span>
+              </div>
+              <div className="col-span-8 flex items-center justify-center border-r border-slate-700/50">
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Estado</span>
+              </div>
+              <div className="col-span-10 flex items-center justify-center border-r border-slate-700/50">
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Precio Venta</span>
+              </div>
+              <div className="col-span-10 flex items-center justify-center">
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Stock</span>
               </div>
             </div>
           </div>

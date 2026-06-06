@@ -205,18 +205,18 @@ export function StockListGrid({
   return (
     <div>
       {/* Tab Header */}
-      <div className={`grid ${COLS} h-9 bg-slate-50 border border-slate-200/80 rounded-md`}>
-        <div className="flex items-center justify-center px-4 border-r border-slate-200/60">
-          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Item</span>
+      <div className={`grid ${COLS} h-9 bg-slate-900 rounded-md`}>
+        <div className="flex items-center justify-center px-4 border-r border-slate-700/50">
+          <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Item</span>
         </div>
-        <div className="flex items-center justify-center border-r border-slate-200/60">
-          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total</span>
+        <div className="flex items-center justify-center border-r border-slate-700/50">
+          <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total</span>
         </div>
-        <div className="flex items-center justify-center border-r border-slate-200/60">
-          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Reservado</span>
+        <div className="flex items-center justify-center border-r border-slate-700/50">
+          <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Reservado</span>
         </div>
         <div className="flex items-center justify-center">
-          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Disponible</span>
+          <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Disponible</span>
         </div>
       </div>
 

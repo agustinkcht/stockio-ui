@@ -443,34 +443,36 @@ export function PriceGrid({
   return (
     <>
       {/* Table header */}
-      <div className={`grid ${COLS} px-0 py-2.5 border border-slate-200/80 rounded-t-md bg-slate-50/60`}>
-        <div className="col-span-6 text-xs font-medium text-slate-400 uppercase tracking-wide pl-4">Item</div>
-        <div className="col-span-2 flex items-center justify-between pl-3 border-l border-slate-200/60">
-          <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">Costo</span>
+      <div className={`grid ${COLS} h-9 bg-slate-900 rounded-md`}>
+        <div className="col-span-6 flex items-center pl-4 border-r border-slate-700/50">
+          <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Item</span>
+        </div>
+        <div className="col-span-2 flex items-center justify-between pl-3 border-r border-slate-700/50">
+          <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Costo</span>
           {isEditMode && (
             <button onClick={() => setBulkModalType("costo")} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer mr-1" title="Editar en lote">
               <MoreVertical className="w-3 h-3 text-slate-300 hover:text-slate-500" />
             </button>
           )}
         </div>
-        <div className="col-span-1 flex items-center justify-between pl-3 border-l border-slate-200/60">
-          <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">Margen</span>
+        <div className="col-span-1 flex items-center justify-between pl-3 border-r border-slate-700/50">
+          <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Margen</span>
           {isEditMode && (
             <button onClick={() => setBulkModalType("margen")} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer mr-1" title="Editar en lote">
               <MoreVertical className="w-3 h-3 text-slate-300 hover:text-slate-500" />
             </button>
           )}
         </div>
-        <div className="col-span-1 flex items-center justify-between pl-3 border-l border-slate-200/60">
-          <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">IVA</span>
+        <div className="col-span-1 flex items-center justify-between pl-3 border-r border-slate-700/50">
+          <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">IVA</span>
           {isEditMode && (
             <button onClick={() => setBulkModalType("iva")} className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200/60 transition-colors cursor-pointer mr-1" title="Editar en lote">
               <MoreVertical className="w-3 h-3 text-slate-300 hover:text-slate-500" />
             </button>
           )}
         </div>
-        <div className="col-span-2 flex items-center justify-between pl-3 border-l border-slate-200/60" data-precio-dropdown>
-          <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">
+        <div className="col-span-2 flex items-center justify-between pl-3" data-precio-dropdown>
+          <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
             Precio de Venta{precioFinalMode === "sin_iva" ? " (sin IVA)" : ""}
           </span>
           {isEditMode && (
