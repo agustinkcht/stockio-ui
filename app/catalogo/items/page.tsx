@@ -174,7 +174,7 @@ export default function CatalogoPage() {
     return filterItems(searched, filterConfig).length
   }, [items, searchQuery, filterConfig])
 
-  // ── Status helpers ─────────────────────────────────────────────────────────
+  // ── Status helpers ────────────────────────────────────────────────────���────
   const showStatusMessage = (text: string, type: "success" | "info" = "success") => {
     setStatusMessage({ text, type })
     setTimeout(() => setStatusMessage(null), 3000)
@@ -573,7 +573,7 @@ export default function CatalogoPage() {
                           checked={selectAllActive}
                           onChange={handleSelectAll}
                           aria-label={selectAllActive ? "Deseleccionar todo" : "Seleccionar todo"}
-                          className="w-4 h-4 rounded-[3px] accent-slate-800 cursor-pointer"
+                          className="w-3.5 h-3.5 rounded accent-slate-800 cursor-pointer"
                         />
                       </div>
 
