@@ -1,7 +1,7 @@
 "use client"
 
 import type { Item, ItemVariant, SortFactorConfig, FilterConfig } from "@/lib/types"
-import { ChevronDown, ChevronRight, Minus } from "lucide-react"
+import { ChevronDown, ChevronRight, Minus, Plus } from "lucide-react"
 import { getCategoryImage } from "@/lib/utils/category-images"
 import Image from "next/image"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -150,39 +150,44 @@ export function StockListGrid({
           ) : (
             <>
               {/* Stock Total */}
-              <div className="flex items-center justify-center px-4 h-full border-r border-slate-100">
+              <div className="flex items-center justify-center px-2 h-full border-r border-slate-100">
                 {isEditMode ? (
-                  <input
-                    type="number"
-                    value={total || ""}
-                    onChange={(e) => onStockFieldChange?.(itemId, "total", Number.parseFloat(e.target.value) || 0)}
-                    className="w-full text-sm text-slate-700 bg-transparent border-0 focus:outline-none focus:bg-slate-50 rounded px-1 tabular-nums text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    placeholder="0"
-                    onClick={(e) => e.stopPropagation()}
-                  />
+                  <div className="flex items-center gap-1 w-full">
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); onStockFieldChange?.(itemId, "total", Math.max(0, total - 1)) }}
+                      className={`shrink-0 w-5 h-5 flex items-center justify-center rounded text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-all ${isHovered ? "opacity-100" : "opacity-0"}`}
+                    >
+                      <Minus className="w-3 h-3" />
+                    </button>
+                    <input
+                      type="number"
+                      value={total || ""}
+                      onChange={(e) => onStockFieldChange?.(itemId, "total", Number.parseFloat(e.target.value) || 0)}
+                      className="flex-1 min-w-0 text-sm text-slate-700 bg-transparent border-0 focus:outline-none focus:bg-slate-50 rounded px-1 tabular-nums text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      placeholder="0"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); onStockFieldChange?.(itemId, "total", total + 1) }}
+                      className={`shrink-0 w-5 h-5 flex items-center justify-center rounded text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-all ${isHovered ? "opacity-100" : "opacity-0"}`}
+                    >
+                      <Plus className="w-3 h-3" />
+                    </button>
+                  </div>
                 ) : (
                   <span className="text-sm text-slate-700 tabular-nums">{total ?? "—"}</span>
                 )}
               </div>
 
-              {/* Stock Reservado */}
-              <div className="flex items-center justify-center px-4 h-full border-r border-slate-100">
-                {isEditMode ? (
-                  <input
-                    type="number"
-                    value={reservado || ""}
-                    onChange={(e) => onStockFieldChange?.(itemId, "reservado", Number.parseFloat(e.target.value) || 0)}
-                    className="w-full text-sm text-slate-500 bg-transparent border-0 focus:outline-none focus:bg-slate-50 rounded px-1 tabular-nums text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    placeholder="0"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                ) : (
-                  <span className="text-sm text-slate-500 tabular-nums">{reservado ?? "—"}</span>
-                )}
+              {/* Stock Reservado — read-only, same muted bg as disponible */}
+              <div className={`flex items-center justify-center px-4 h-full border-r border-slate-100 bg-slate-100/60 ${isEditMode ? "cursor-not-allowed" : ""}`}>
+                <span className="text-sm text-slate-500 tabular-nums select-none">{reservado ?? "—"}</span>
               </div>
 
-              {/* Stock Disponible (computed, read-only) */}
-              <div className="flex items-center justify-center px-4 h-full bg-blue-50/20">
+              {/* Stock Disponible — computed, read-only */}
+              <div className={`flex items-center justify-center px-4 h-full bg-slate-100/60 ${isEditMode ? "cursor-not-allowed" : ""}`}>
                 <span className={`text-sm font-medium tabular-nums ${disponible < 0 ? "text-red-600" : disponible > 0 ? "text-emerald-600" : "text-slate-400"}`}>
                   {disponible}
                 </span>
