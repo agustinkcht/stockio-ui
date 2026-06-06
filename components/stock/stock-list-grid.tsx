@@ -204,24 +204,8 @@ export function StockListGrid({
 
   return (
     <div>
-      {/* Tab Header */}
-      <div className={`grid ${COLS} h-9 bg-slate-50 border border-slate-200/80 rounded-md`}>
-        <div className="flex items-center justify-center px-4 border-r border-slate-200/60">
-          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Item</span>
-        </div>
-        <div className="flex items-center justify-center border-r border-slate-200/60">
-          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total</span>
-        </div>
-        <div className="flex items-center justify-center border-r border-slate-200/60">
-          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Reservado</span>
-        </div>
-        <div className="flex items-center justify-center">
-          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Disponible</span>
-        </div>
-      </div>
-
       {/* Rows */}
-      <div className="mt-2 border border-slate-200/80 rounded-md overflow-hidden bg-white">
+      <div className="border border-slate-200/80 border-t-0 rounded-b-md overflow-hidden bg-white">
         {sortedAndFilteredItems.length === 0 ? (
           <div className="flex items-center justify-center h-32 text-sm text-slate-400">
             No se encontraron items
