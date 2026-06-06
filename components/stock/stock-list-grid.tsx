@@ -173,7 +173,7 @@ export function StockListGrid({
                   <span className="text-sm font-medium text-slate-800 truncate">{item.name || "—"}</span>
                   {(item as any).atributosPrincipales?.map((attr: any, idx: number) =>
                     attr.value ? (
-                      <span key={idx} className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 text-slate-600 rounded shrink-0">
+                      <span key={idx} className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground whitespace-nowrap shrink-0">
                         {attr.value}
                       </span>
                     ) : null
