@@ -417,13 +417,11 @@ function ClientesContent() {
               <div className="max-w-6xl mx-auto">
 
                 {/* Table header */}
-                <div className="grid grid-cols-[minmax(40px,4%)_1fr_200px_160px_200px_44px] h-9 border border-slate-200/80 rounded-md bg-slate-50">
-                  <div />
-                  <div className="flex items-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-l border-slate-200/60 pl-3">Cliente</div>
-                  <div className="flex items-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-l border-slate-200/60 pl-3">Email</div>
-                  <div className="flex items-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-l border-slate-200/60 pl-3">Teléfono</div>
-                  <div className="flex items-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-l border-slate-200/60 pl-3">Historial</div>
-                  <div />
+                <div className="grid grid-cols-12 h-9 border border-slate-200/80 rounded-md bg-slate-50">
+                  <div className="col-span-5 flex items-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider pl-4">Cliente</div>
+                  <div className="col-span-3 flex items-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-l border-slate-200/60 pl-3">Email</div>
+                  <div className="col-span-2 flex items-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-l border-slate-200/60 pl-3">Teléfono</div>
+                  <div className="col-span-2 flex items-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-l border-slate-200/60 pl-3">Transacciones</div>
                 </div>
 
                 {/* Rows */}

@@ -72,7 +72,7 @@ export function ClientesGrid({
             onMouseLeave={() => {
               setHoveredIndex(null)
             }}
-            className={`grid grid-cols-[minmax(40px,4%)_1fr_200px_160px_200px_44px] items-center px-4 h-[72px] transition-colors ${
+            className={`grid grid-cols-12 items-center h-[72px] transition-colors ${
               isSelected
                 ? "bg-blue-50/40 border-blue-200"
                 : isHovered
@@ -80,18 +80,14 @@ export function ClientesGrid({
                 : ""
             }`}
           >
-            {/* Checkbox */}
-            <div className="flex items-center justify-center">
-              <div className={`transition-opacity ${isHovered || isSelected ? "opacity-100" : "opacity-0"}`}>
+            {/* Cliente name + meta — col-span-5, inline checkbox */}
+            <div className="col-span-5 flex items-center gap-2.5 min-w-0 pl-4 h-full border-r border-slate-100">
+              <div className={`transition-opacity shrink-0 ${isHovered || isSelected ? "opacity-100" : "opacity-0"}`}>
                 <Checkbox
                   checked={isSelected}
                   onCheckedChange={() => onSelectCliente(index)}
                 />
               </div>
-            </div>
-
-            {/* Cliente name + meta */}
-            <div className="flex items-center gap-2.5 min-w-0">
               {cliente.tipo === "empresa" ? (
                 <Building2 className="h-4 w-4 text-slate-400 shrink-0" />
               ) : (
@@ -119,14 +115,14 @@ export function ClientesGrid({
               </div>
             </div>
 
-            {/* Email */}
-            <div className="text-sm text-slate-500 truncate pr-2">{cliente.email || "—"}</div>
+            {/* Email — col-span-3 */}
+            <div className="col-span-3 text-sm text-slate-500 truncate pl-3 pr-2 border-r border-slate-100 h-full flex items-center">{cliente.email || "—"}</div>
 
-            {/* Teléfono */}
-            <div className="text-sm text-slate-500 truncate pr-2">{cliente.telefono || "—"}</div>
+            {/* Teléfono — col-span-2 */}
+            <div className="col-span-2 text-sm text-slate-500 truncate pl-3 pr-2 border-r border-slate-100 h-full flex items-center">{cliente.telefono || "—"}</div>
 
-            {/* Transacciones — live from ventas, clickable */}
-            <div className="pr-2">
+            {/* Transacciones — col-span-2, live from ventas, clickable */}
+            <div className="col-span-2 pl-3 pr-2 h-full flex items-center justify-between">
               {(() => {
                 const count = transactionCountMap[cliente.id] ?? 0
                 const label = count === 0 ? "Sin transacciones" : count === 1 ? "1 transacción" : `${count} transacciones`
@@ -145,10 +141,8 @@ export function ClientesGrid({
                   </button>
                 )
               })()}
-            </div>
-
-            {/* More options — vertical dots */}
-            <div className="flex items-center justify-center">
+              {/* More options — vertical dots (inside transacciones col) */}
+              <div className="flex items-center justify-center">
               <div className={`relative transition-opacity ${isHovered || openMenuIndex === index ? "opacity-100" : "opacity-0"}`}>
                 <button
                   type="button"
@@ -192,6 +186,7 @@ export function ClientesGrid({
                 )}
               </div>
             </div>
+            </div>{/* /transacciones col */}
           </div>
         )
       })}
