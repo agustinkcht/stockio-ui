@@ -25,8 +25,10 @@ interface StockListGridProps {
 }
 
 function getItemStock(item: Item | ItemVariant) {
-  const total = (item as any).stockTotal ?? (item as any).stock ?? 0
-  const reservado = (item as any).stockReservado ?? (item as any).reservado ?? 0
+  const stockField = (item as any).stock
+  const stockObj = stockField && typeof stockField === "object" ? stockField : null
+  const total = (item as any).stockTotal ?? stockObj?.total ?? (typeof stockField === "number" ? stockField : 0)
+  const reservado = (item as any).stockReservado ?? stockObj?.reservado ?? (item as any).reservado ?? 0
   const disponible = Math.max(0, total - reservado)
   return { total, reservado, disponible }
 }
