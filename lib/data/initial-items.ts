@@ -696,7 +696,7 @@ export const INITIAL_ITEMS: Item[] = [
         marca: "Restinga",
         atributosPrincipales: [{ key: "Sabor", value: "Original" }],
         atributosInformativos: [],
-        stock: { enStock: "18", reservado: "0", disponible: "18" }
+        stock: { enStock: "18", reservado: "0", disponible: "18" },
         precio: { costo: 11000, margen: 50, iva: 21, precioFinal: 19965 },
       },
       {
@@ -709,7 +709,7 @@ export const INITIAL_ITEMS: Item[] = [
         marca: "Restinga",
         atributosPrincipales: [{ key: "Sabor", value: "Destilado Otoño" }],
         atributosInformativos: [],
-        stock: { enStock: "14", reservado: "0", disponible: "14" }
+        stock: { enStock: "14", reservado: "0", disponible: "14" },
         precio: { costo: 12000, margen: 50, iva: 21, precioFinal: 21720 },
       },
       {
@@ -722,7 +722,7 @@ export const INITIAL_ITEMS: Item[] = [
         marca: "Restinga",
         atributosPrincipales: [{ key: "Sabor", value: "Flavoured Edition" }],
         atributosInformativos: [],
-        stock: { enStock: "12", reservado: "0", disponible: "12" }
+        stock: { enStock: "12", reservado: "0", disponible: "12" },
         precio: { costo: 13000, margen: 50, iva: 21, precioFinal: 23595 },
       },
     ],
@@ -748,7 +748,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenCantidad: 700,
     volumenUnidad: "ml",
 
-    stock: { enStock: "16", reservado: "0", disponible: "16" }
+    stock: { enStock: "16", reservado: "0", disponible: "16" },
     atributosPrincipales: [],
     atributosInformativos: [
       { key: "Estilo", value: "London Dry" },
@@ -794,7 +794,7 @@ export const INITIAL_ITEMS: Item[] = [
         marca: "Absolut",
         atributosPrincipales: [{ key: "Sabor", value: "Original" }],
         atributosInformativos: [],
-        stock: { enStock: "48", reservado: "0", disponible: "48" }
+        stock: { enStock: "48", reservado: "0", disponible: "48" },
         precio: { costo: 12000, margen: 50, iva: 21, precioFinal: 21720 },
       },
       {
@@ -822,7 +822,7 @@ export const INITIAL_ITEMS: Item[] = [
         marca: "Absolut",
         atributosPrincipales: [{ key: "Sabor", value: "Pear" }],
         atributosInformativos: [],
-        stock: { enStock: "30", reservado: "0", disponible: "30" }
+        stock: { enStock: "30", reservado: "0", disponible: "30" },
         precio: { costo: 13000, margen: 50, iva: 21, precioFinal: 23595 },
       },
       {
@@ -836,7 +836,7 @@ export const INITIAL_ITEMS: Item[] = [
         marca: "Absolut",
         atributosPrincipales: [{ key: "Sabor", value: "Vanilla" }],
         atributosInformativos: [],
-        stock: { enStock: "28", reservado: "0", disponible: "28" }
+        stock: { enStock: "28", reservado: "0", disponible: "28" },
         precio: { costo: 13000, margen: 50, iva: 21, precioFinal: 23595 },
       },
     ],
@@ -858,7 +858,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenCantidad: 750,
     volumenUnidad: "ml",
 
-    stock: { enStock: "20", reservado: "0", disponible: "20" }
+    stock: { enStock: "20", reservado: "0", disponible: "20" },
     atributosPrincipales: [],
     atributosInformativos: [
       { key: "Origen", value: "Francia" },
@@ -917,7 +917,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenCantidad: 750,
     volumenUnidad: "ml",
 
-    stock: { enStock: "12", reservado: "0", disponible: "12" }
+    stock: { enStock: "12", reservado: "0", disponible: "12" },
     atributosPrincipales: [],
     atributosInformativos: [
       { key: "Origen", value: "México" },
@@ -972,7 +972,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "ABV", value: "40%" },
           { key: "Estuche", value: "Sin estuche" },
         ],
-        stock: { enStock: "48", reservado: "0", disponible: "48" }
+        stock: { enStock: "48", reservado: "0", disponible: "48" },
         precio: { costo: 20000, margen: 60, iva: 21, precioFinal: 37800 },
       },
       {
@@ -1008,7 +1008,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "ABV", value: "40%" },
           { key: "Estuche", value: "Caja" },
         ],
-        stock: { enStock: "24", reservado: "0", disponible: "24" }
+        stock: { enStock: "24", reservado: "0", disponible: "24" },
         precio: { costo: 32000, margen: 55, iva: 21, precioFinal: 60000 },
       },
       {
@@ -1026,7 +1026,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "ABV", value: "40%" },
           { key: "Estuche", value: "Estuche premium" },
         ],
-        stock: { enStock: "12", reservado: "0", disponible: "12" }
+        stock: { enStock: "12", reservado: "0", disponible: "12" },
         precio: { costo: 80000, margen: 40, iva: 21, precioFinal: 136500 },
       },
     ],
@@ -1112,7 +1112,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenCantidad: 750,
     volumenUnidad: "ml",
 
-    stock: { enStock: "22", reservado: "0", disponible: "22" }
+    stock: { enStock: "22", reservado: "0", disponible: "22" },
     atributosPrincipales: [],
     atributosInformativos: [
       { key: "Tipo de Whisky", value: "Irish" },
@@ -1198,7 +1198,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenCantidad: 750,
     volumenUnidad: "ml",
 
-    stock: { enStock: "24", reservado: "0", disponible: "24" }
+    stock: { enStock: "24", reservado: "0", disponible: "24" },
     atributosPrincipales: [],
 
     atributosInformativos: [
@@ -1227,7 +1227,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 700,
     volumenUnidad: "ml",
-    stock: { enStock: "18", reservado: "0", disponible: "18" }
+    stock: { enStock: "18", reservado: "0", disponible: "18" },
     atributosPrincipales: [],
     atributosInformativos: [
       { key: "Tipo de Licor", value: "Triple sec (licor de naranja)" },
