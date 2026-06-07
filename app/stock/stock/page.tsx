@@ -80,8 +80,9 @@ export default function StockPage() {
     editField,
     editVariantField,
     undoEdit,
-    saveEdit,
+    forceSaveItems,
     cancelEdit,
+    reloadItems,
     hasUnsavedEdits,
   } = useItems()
 
@@ -101,7 +102,7 @@ export default function StockPage() {
   const hasChanges = hasUnsavedEdits
 
   const handleDeshacer = () => {
-    cancelEdit()
+    reloadItems()
     setIsEditMode(false)
   }
 
@@ -110,7 +111,7 @@ export default function StockPage() {
     setShowSaveSuccess(false)
     try {
       await sleep(800)
-      saveEdit()
+      forceSaveItems()
       setShowSaveSuccess(true)
       setTimeout(() => setShowSaveSuccess(false), 3000)
     } catch (error) {

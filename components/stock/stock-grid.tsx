@@ -118,7 +118,7 @@ export function StockGrid({
     }
     if (!item) return
 
-    const currentTotal = auditStockChanges[sku]?.total ?? parseInt(item.stock?.total || "0")
+    const currentTotal = auditStockChanges[sku]?.total ?? parseInt(item.stock?.enStock || (item.stock as any)?.total || "0")
     const currentReservado = auditStockChanges[sku]?.reservado ?? parseInt(item.stock?.reservado || "0")
 
     setAuditStockChanges(prev => ({
@@ -291,7 +291,7 @@ export function StockGrid({
       }
       if (!item) continue
 
-      const currentTotal = auditStockChanges[sku]?.total ?? parseInt(item.stock?.total || "0")
+      const currentTotal = auditStockChanges[sku]?.total ?? parseInt(item.stock?.enStock || (item.stock as any)?.total || "0")
       const currentReservado = auditStockChanges[sku]?.reservado ?? parseInt(item.stock?.reservado || "0")
       const currentValue = field === "total" ? currentTotal : currentReservado
 

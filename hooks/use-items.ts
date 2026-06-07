@@ -663,11 +663,10 @@ export function useItems() {
   }
 
   // Force save current items state to localStorage (for audit mode bulk saves)
-  const forceSaveItems = () => {
-    // Filter out any invalid items before saving
-    const validItems = items.filter(isValidItem)
+  // Optionally accepts an explicit items array (e.g. when called right after setItems)
+  const forceSaveItems = (overrideItems?: Item[]) => {
+    const validItems = (overrideItems ?? items).filter(isValidItem)
     saveItems(validItems)
-    console.log("[v0] useItems - forceSaveItems to localStorage, valid items count:", validItems.length)
     setEditedItem(null)
     setLastUndoneEdit(null)
     setHasUnsavedEdits(false)
@@ -734,6 +733,15 @@ export function useItems() {
       prevItems.map((item) => (item.id === editedItem.itemSku || item.sku === editedItem.itemSku ? { ...item, ...editedItem.originalValues } : item)),
     )
 
+    setEditedItem(null)
+    setLastUndoneEdit(null)
+    setHasUnsavedEdits(false)
+  }
+
+  // Reload all items from localStorage, discarding all in-memory unsaved edits
+  const reloadItems = () => {
+    const key = getStorageKey()
+    loadFromStorage(key)
     setEditedItem(null)
     setLastUndoneEdit(null)
     setHasUnsavedEdits(false)
@@ -1268,6 +1276,7 @@ export function useItems() {
     forceSaveItems,
     bulkSaveStock,
     cancelEdit,
+    reloadItems,
     hasUnsavedEdits,
     canUndoEdit,
     canRedoEdit,

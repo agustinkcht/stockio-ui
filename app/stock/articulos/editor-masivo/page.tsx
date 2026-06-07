@@ -419,12 +419,9 @@ export default function EditorMasivoPage() {
       }
     }
 
-    // Persist
+    // Persist via the shared hook so all useItems instances sync
     setItems(updatedItems)
-    if (typeof window !== "undefined") {
-      const storageKey = `stockio-items-${currentAccount}`
-      localStorage.setItem(storageKey, JSON.stringify(updatedItems))
-    }
+    forceSaveItems(updatedItems)
 
     // Update originals so changes reset
     setOriginalRows(JSON.parse(JSON.stringify(rows)))
