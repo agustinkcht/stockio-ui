@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { Settings, DollarSign, FolderOpen, LayoutDashboard, ChevronDown, Check, AlertTriangle } from "lucide-react"
+import { Settings, DollarSign, LayoutDashboard, ChevronDown, Check, AlertTriangle } from "lucide-react"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { Sidebar } from "@/components/layout/sidebar"
@@ -75,7 +75,7 @@ function SectionFooter({ dirty, onSave, onCancel }: { dirty: boolean; onSave: ()
 export default function AjustesPage() {
   const router = useRouter()
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
-  const { precios, catalogo, dashboard, updatePreciosSettings, updateCatalogoSettings, updateDashboardSettings } = useSettings()
+  const { precios, dashboard, updatePreciosSettings, updateDashboardSettings } = useSettings()
 
   // ── Dashboard draft ────────────────────────────────────────────────────────
   const [dashDraft, setDashDraft] = useState(dashboard)
@@ -104,15 +104,10 @@ export default function AjustesPage() {
   useEffect(() => { setPreciosDraft(precios) }, [precios])
   const preciosDirty = JSON.stringify(preciosDraft) !== JSON.stringify(precios)
 
-  // ── Catálogo draft ─────────────────────────────────────────────────────────
-  const [catalogoDraft, setCatalogoDraft] = useState(catalogo)
-  useEffect(() => { setCatalogoDraft(catalogo) }, [catalogo])
-  const catalogoDirty = JSON.stringify(catalogoDraft) !== JSON.stringify(catalogo)
-
   const selectedPeriodLabel = PERIOD_OPTIONS.find(o => o.key === dashDraft.periodoDefault)?.label ?? "Ninguno"
 
   // ── Navigation guard ───────────────────────────────────────────────────────
-  const anyDirty = dashDirty || preciosDirty || catalogoDirty
+  const anyDirty = dashDirty || preciosDirty
   const [navGuardOpen, setNavGuardOpen] = useState(false)
   const pendingHrefRef = useRef<string | null>(null)
 
@@ -392,45 +387,7 @@ export default function AjustesPage() {
                   />
                 </section>
 
-                {/* ── Catálogo ───────────────────────────────────────────── */}
-                <section className="bg-white rounded-2xl border border-slate-200/60 overflow-hidden">
-                  <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center">
-                      <FolderOpen className="w-4 h-4 text-violet-600" />
-                    </div>
-                    <div>
-                      <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">Catálogo</h2>
-                      <p className="text-xs text-slate-500">Configuración de items y productos</p>
-                    </div>
-                  </div>
 
-                  <div className="px-6 py-5">
-                    <div className="space-y-4">
-                      <label
-                        className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all ${catalogoDraft.incluirVencimiento ? "border-slate-900 bg-slate-50/50" : "border-slate-200 hover:border-slate-300 hover:bg-slate-50/30"}`}
-                        onClick={() => setCatalogoDraft(d => ({ ...d, incluirVencimiento: !d.incluirVencimiento }))}
-                      >
-                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center mt-0.5 flex-shrink-0 transition-colors ${catalogoDraft.incluirVencimiento ? "border-slate-900 bg-slate-900" : "border-slate-300"}`}>
-                          {catalogoDraft.incluirVencimiento && (
-                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="text-sm font-medium text-slate-800 block">Incluir vencimiento en items</span>
-                          <span className="text-xs text-slate-500 block mt-0.5">Habilita la opción de establecer fecha de vencimiento en los productos del catálogo.</span>
-                        </div>
-                      </label>
-                    </div>
-                  </div>
-
-                  <SectionFooter
-                    dirty={catalogoDirty}
-                    onSave={() => updateCatalogoSettings(catalogoDraft)}
-                    onCancel={() => setCatalogoDraft(catalogo)}
-                  />
-                </section>
 
 
 
