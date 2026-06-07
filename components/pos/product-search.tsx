@@ -56,8 +56,8 @@ export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
     const disponible = Number.parseInt(stock?.disponible || "0")
     if (disponible === 0) return { status: "sin-stock", label: "Sin stock", color: "text-red-500 bg-red-500/10" }
     if (disponible <= 3)
-      return { status: "bajo", label: `Últimas ${disponible} u.`, color: "text-amber-500 bg-amber-500/10" }
-    return { status: "disponible", label: `${disponible} disp.`, color: "text-emerald-500 bg-emerald-500/10" }
+      return { status: "bajo", label: `Últimas ${disponible} disponibles`, color: "text-amber-500 bg-amber-500/10" }
+    return { status: "disponible", label: `${disponible} disponibles`, color: "text-emerald-500 bg-emerald-500/10" }
   }
 
   const getTags = (item: Item | ItemVariant): string[] => {
@@ -166,7 +166,7 @@ export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
                     </div>
                     {variant.sku && <p className="text-[11px] text-muted-foreground mt-0.5">{variant.sku}</p>}
                   </div>
-                  <div className="text-right flex-shrink-0">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     <p className="font-semibold text-sm">${variant.precio?.precioFinal?.toLocaleString("es-AR") || "0"}</p>
                     <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full", variantStock.color)}>{variantStock.label}</span>
                   </div>
@@ -227,7 +227,7 @@ export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
                     <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                   ) : (
                     <>
-                      <div className="text-right flex-shrink-0">
+                      <div className="flex items-center gap-2 flex-shrink-0">
                         <p className="font-semibold text-sm">${item.precio?.precioFinal?.toLocaleString("es-AR") || "0"}</p>
                         <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full", stockStatus.color)}>{stockStatus.label}</span>
                       </div>
