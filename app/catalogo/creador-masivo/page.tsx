@@ -630,7 +630,7 @@ export default function CreadorMasivoPage() {
     return width
   }
 
-  const getRowHeight = () => "h-9"
+  const getRowHeight = () => "h-12"
 
   const renderCell = (row: WorkableRow, rowIndex: number, colId: string) => {
     const baseInputClass = "w-full h-full text-xs px-2 py-2 border-0 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
@@ -977,38 +977,39 @@ export default function CreadorMasivoPage() {
           {/* Main Content */}
           <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col bg-slate-50">
 
-            {/* Top row — matches lista de precios layout */}
+            {/* Top row */}
             <div className="px-8 pt-12 pb-8">
               <div className="max-w-[1400px] mx-auto flex items-start justify-between gap-6">
-                <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
-                  Creador Masivo de Items
-                </h1>
-
-                {/* Mode switcher — floating on background */}
-                <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-1 shadow-sm mt-1">
-                  <button
-                    onClick={() => setCreatorMode("standalone")}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
-                      creatorMode === "standalone"
-                        ? "bg-slate-900 text-white shadow-sm"
-                        : "text-slate-600 hover:text-slate-900"
-                    }`}
-                  >
-                    Items Individuales
-                  </button>
-                  <button
-                    onClick={() => setCreatorMode("conVariantes")}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
-                      creatorMode === "conVariantes"
-                        ? "bg-slate-900 text-white shadow-sm"
-                        : "text-slate-600 hover:text-slate-900"
-                    }`}
-                  >
-                    Items con Variantes
-                  </button>
+                {/* Title + mode switcher stacked */}
+                <div className="flex flex-col gap-3">
+                  <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
+                    Creador Masivo de Items
+                  </h1>
+                  <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-1 shadow-sm self-start">
+                    <button
+                      onClick={() => setCreatorMode("standalone")}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                        creatorMode === "standalone"
+                          ? "bg-slate-900 text-white shadow-sm"
+                          : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      Items Individuales
+                    </button>
+                    <button
+                      onClick={() => setCreatorMode("conVariantes")}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                        creatorMode === "conVariantes"
+                          ? "bg-slate-900 text-white shadow-sm"
+                          : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      Items con Variantes
+                    </button>
+                  </div>
                 </div>
 
-                {/* Crear button — same position as Editar Lista in precios */}
+                {/* Crear button */}
                 <div className="flex items-center gap-2 mt-1 shrink-0">
                   <button
                     type="button"
@@ -1262,8 +1263,8 @@ export default function CreadorMasivoPage() {
               ) : (
                 // Items con Variantes mode
                 <CreadorMasivoConVariantes
-                  gridSize={gridSize}
-                  setGridSize={setGridSize}
+                  gridSize="md"
+                  setGridSize={() => {}}
                   parentRows={parentRows}
                   setParentRows={setParentRows}
                   visibleSections={visibleSectionsConVariantes}
