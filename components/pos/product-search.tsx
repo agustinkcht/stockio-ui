@@ -36,36 +36,49 @@ export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [activeParentSku])
 
-  const filteredItems = useMemo(() => {
-    if (!searchQuery.trim()) return items
-    const query = searchQuery.toLowerCase()
-    return items.filter((item) => {
-      return (
-        item.name?.toLowerCase().includes(query) ||
-        item.sku?.toLowerCase().includes(query) ||
-        item.marca?.toLowerCase().includes(query) ||
-        item.categoria?.toLowerCase().includes(query) ||
-        item.variants?.some(
-          (v) => v.name?.toLowerCase().includes(query) || v.sku?.toLowerCase().includes(query),
-        )
-      )
-    })
-  }, [items, searchQuery])
-
-  const getStockStatus = (stock?: { disponible: string }) => {
-    const disponible = Number.parseInt(stock?.disponible || "0")
-    if (disponible === 0) return { status: "sin-stock", label: "Sin stock", color: "text-red-500 bg-red-500/10" }
-    if (disponible <= 3)
-      return { status: "bajo", label: `Últimas ${disponible} disponibles`, color: "text-amber-500 bg-amber-500/10" }
-    return { status: "disponible", label: `${disponible} disponibles`, color: "text-emerald-500 bg-emerald-500/10" }
-  }
-
   const getTags = (item: Item | ItemVariant): string[] => {
     if (!item.atributosPrincipales || !Array.isArray(item.atributosPrincipales)) return []
     return item.atributosPrincipales
       .map((attr: any) => attr.value || attr.valor)
       .filter((v: any) => v && String(v).trim() !== "")
       .map(String)
+  }
+
+  const filteredItems = useMemo(() => {
+    if (!searchQuery.trim()) return items
+    const query = searchQuery.toLowerCase()
+    return items.filter((item) => {
+      // item-level fields
+      if (
+        item.name?.toLowerCase().includes(query) ||
+        item.sku?.toLowerCase().includes(query) ||
+        item.skuPrefix?.toLowerCase().includes(query) ||
+        item.marca?.toLowerCase().includes(query) ||
+        item.categoria?.toLowerCase().includes(query) ||
+        item.descripcion?.toLowerCase().includes(query)
+      ) return true
+      // item attribute tags
+      const itemTags = getTags(item)
+      if (itemTags.some((t) => t.toLowerCase().includes(query))) return true
+      // variant-level
+      if (item.variants?.some((v) => {
+        if (
+          v.name?.toLowerCase().includes(query) ||
+          v.sku?.toLowerCase().includes(query)
+        ) return true
+        const vTags = getTags(v)
+        return vTags.some((t) => t.toLowerCase().includes(query))
+      })) return true
+      return false
+    })
+  }, [items, searchQuery])
+
+  const getStockStatus = (stock?: { disponible?: string; enStock?: string }) => {
+    const disponible = Number.parseInt(stock?.disponible || stock?.enStock || "0")
+    if (disponible === 0) return { status: "sin-stock", label: "Sin stock", color: "text-red-500" }
+    if (disponible <= 3)
+      return { status: "bajo", label: `Últimas ${disponible} disponibles`, color: "text-amber-500" }
+    return { status: "disponible", label: `${disponible} disponibles`, color: "text-emerald-600" }
   }
 
   const handleAddItem = (item: Item, variant?: ItemVariant) => {
@@ -168,7 +181,7 @@ export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <p className="font-semibold text-sm">${variant.precio?.precioFinal?.toLocaleString("es-AR") || "0"}</p>
-                    <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full", variantStock.color)}>{variantStock.label}</span>
+                    <span className={cn("text-[11px]", variantStock.color)}>{variantStock.label}</span>
                   </div>
                   <Plus className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-1" />
                 </div>
@@ -229,7 +242,7 @@ export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
                     <>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <p className="font-semibold text-sm">${item.precio?.precioFinal?.toLocaleString("es-AR") || "0"}</p>
-                        <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full", stockStatus.color)}>{stockStatus.label}</span>
+                        <span className={cn("text-[11px]", stockStatus.color)}>{stockStatus.label}</span>
                       </div>
                       <Plus className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-1" />
                     </>

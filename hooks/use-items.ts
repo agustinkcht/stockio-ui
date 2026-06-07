@@ -171,16 +171,16 @@ export function useItems() {
 
     if (!item) return
 
-    const currentStock = item.stock || { total: "0", reservado: "0", disponible: "0" }
-    const currentTotal = Number.parseInt(currentStock.total || "0")
+    const currentStock = item.stock || { enStock: "0", reservado: "0", disponible: "0" }
+    const currentEnStock = Number.parseInt(currentStock.enStock || "0")
     const currentReservado = Number.parseInt(currentStock.reservado || "0")
 
-    const newTotal = field === "total" ? value : currentTotal
+    const newEnStock = field === "enStock" ? value : currentEnStock
     const newReservado = field === "reservado" ? value : currentReservado
-    const newDisponible = newTotal - newReservado
+    const newDisponible = Math.max(0, newEnStock - newReservado)
 
     const newStock = {
-      total: newTotal.toString(),
+      enStock: newEnStock.toString(),
       reservado: newReservado.toString(),
       disponible: newDisponible.toString(),
     }
@@ -758,18 +758,15 @@ export function useItems() {
         if (item.sku === parentSku && item.variants) {
           const updatedVariants = item.variants.map((v: any) => {
             if (v.sku === itemSku) {
-              const currentTotal = Number.parseInt(v.stock?.total || "0", 10)
+              const currentEnStock = Number.parseInt(v.stock?.enStock || v.stock?.total || "0", 10)
               const currentReservado = Number.parseInt(v.stock?.reservado || "0", 10)
-              const newTotal = Math.max(0, currentTotal - quantityToReduce)
-              const newDisponible = Math.max(0, newTotal - currentReservado)
-              console.log(
-                `[v0] useItems - reduceStock variant ${itemSku}: total ${currentTotal} -> ${newTotal}, disponible -> ${newDisponible}`,
-              )
+              const newEnStock = Math.max(0, currentEnStock - quantityToReduce)
+              const newDisponible = Math.max(0, newEnStock - currentReservado)
               updated = true
               return {
                 ...v,
                 stock: {
-                  total: newTotal.toString(),
+                  enStock: newEnStock.toString(),
                   reservado: currentReservado.toString(),
                   disponible: newDisponible.toString(),
                 },
@@ -782,18 +779,15 @@ export function useItems() {
       } else {
         // It's a standalone item
         if (item.sku === itemSku) {
-          const currentTotal = Number.parseInt(item.stock?.total || "0", 10)
+          const currentEnStock = Number.parseInt(item.stock?.enStock || (item.stock as any)?.total || "0", 10)
           const currentReservado = Number.parseInt(item.stock?.reservado || "0", 10)
-          const newTotal = Math.max(0, currentTotal - quantityToReduce)
-          const newDisponible = Math.max(0, newTotal - currentReservado)
-          console.log(
-            `[v0] useItems - reduceStock item ${itemSku}: total ${currentTotal} -> ${newTotal}, disponible -> ${newDisponible}`,
-          )
+          const newEnStock = Math.max(0, currentEnStock - quantityToReduce)
+          const newDisponible = Math.max(0, newEnStock - currentReservado)
           updated = true
           return {
             ...item,
             stock: {
-              total: newTotal.toString(),
+              enStock: newEnStock.toString(),
               reservado: currentReservado.toString(),
               disponible: newDisponible.toString(),
             },
