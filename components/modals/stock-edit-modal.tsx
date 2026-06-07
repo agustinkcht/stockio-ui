@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Minus, Plus, X } from "lucide-react"
+import { Minus, Plus, Check, X } from "lucide-react"
+import { getCategoryImage } from "@/lib/utils/category-images"
 
 interface StockEditModalProps {
   isOpen: boolean
@@ -37,24 +38,25 @@ export function StockEditModal({
       setInputValue("")
     }
     wasOpenRef.current = isOpen
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])
 
   const disponible = Math.max(0, enStock - initialReservado)
-  const delta = enStock - initialTotal
   const hasChanges = enStock !== initialTotal
 
-  const handleIncrement = (d: number) => {
-    setEnStock((v) => Math.max(initialReservado, Math.max(0, v + d)))
+  const handleIncrement = (delta: number) => {
+    setEnStock((v) => Math.max(initialReservado, Math.max(0, v + delta)))
   }
 
   const applyOperation = () => {
     const value = parseInt(inputValue) || 0
     if (value <= 0) return
+
     let newValue: number
     if (operation === "add") newValue = enStock + value
     else if (operation === "remove") newValue = enStock - value
     else newValue = value
+
     setEnStock(Math.max(initialReservado, Math.max(0, newValue)))
     setInputValue("")
   }
@@ -66,86 +68,81 @@ export function StockEditModal({
 
   if (!isOpen) return null
 
-  const opLabels = { add: "AGREGAR", remove: "REMOVER", set: "FIJAR EN" }
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-
-      <div className="relative w-full max-w-xs mx-4 bg-[#0f1117] border border-white/10 rounded-xl shadow-2xl overflow-hidden font-mono">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
 
         {/* Header */}
-        <div className="px-5 pt-4 pb-3.5 flex items-center justify-between border-b border-white/8">
-          <div className="min-w-0">
-            <p className="text-[10px] tracking-[0.15em] text-white/30 uppercase">EDITAR STOCK</p>
-            {itemName && (
-              <p className="text-sm font-semibold text-white/90 mt-0.5 truncate">{itemName}</p>
-            )}
-            {(itemMarca || itemCategoria) && (
-              <p className="text-[11px] text-white/30 truncate mt-0.5">
-                {[itemMarca, itemCategoria].filter(Boolean).join(" · ")}
-              </p>
-            )}
+        <div className="px-5 pt-4 pb-3 border-b border-slate-100">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              {(itemName || itemCategoria) && (
+                <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
+                  <img
+                    src={getCategoryImage(itemCategoria) || "/placeholder.svg"}
+                    alt={itemCategoria || ""}
+                    className="w-6 h-6 object-contain opacity-70"
+                  />
+                </div>
+              )}
+              <div className="min-w-0">
+                <h3 className="text-sm font-semibold text-slate-900">Editar Stock</h3>
+                {itemName && <p className="text-sm font-medium text-slate-700 mt-0.5 truncate">{itemName}</p>}
+                {(itemMarca || itemCategoria) && (
+                  <p className="text-xs text-slate-400 truncate">
+                    {[itemMarca, itemCategoria].filter(Boolean).join(" · ")}
+                  </p>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0"
+            >
+              <X className="w-4 h-4 text-slate-400" />
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-white/8 transition-colors shrink-0 ml-3"
-          >
-            <X className="w-3.5 h-3.5 text-white/40" />
-          </button>
         </div>
 
-        {/* EN STOCK — main editable */}
-        <div className="px-5 pt-5 pb-4 border-b border-white/8">
-          <p className="text-[10px] tracking-[0.15em] text-white/30 uppercase mb-3">EN STOCK</p>
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => handleIncrement(-1)}
-              className="w-9 h-9 rounded-lg border border-white/10 flex items-center justify-center text-white/40 hover:text-white/80 hover:border-white/25 transition-all active:scale-95"
-            >
-              <Minus className="w-3.5 h-3.5" />
-            </button>
+        {/* Content */}
+        <div className="p-5 space-y-3">
 
-            <div className="text-center">
-              <span className={`text-5xl font-bold tabular-nums tracking-tight leading-none ${
-                hasChanges ? "text-white" : "text-white/60"
+          {/* En Stock — editable */}
+          <div className="flex items-center justify-between p-3 rounded-xl bg-blue-50 border border-blue-200">
+            <span className="text-xs font-medium uppercase tracking-wider text-blue-600">En Stock</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleIncrement(-1)}
+                className="w-7 h-7 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 flex items-center justify-center transition-colors"
+              >
+                <Minus className="w-3 h-3 text-slate-600" />
+              </button>
+              <span className={`text-lg font-semibold tabular-nums min-w-[2.5rem] text-center ${
+                enStock !== initialTotal ? "text-blue-600" : "text-slate-900"
               }`}>
                 {enStock}
               </span>
-              {hasChanges && (
-                <p className={`text-[11px] mt-1 tabular-nums ${
-                  delta > 0 ? "text-emerald-400" : "text-red-400"
-                }`}>
-                  {delta > 0 ? `+${delta}` : delta} vs actual
-                </p>
-              )}
+              <button
+                onClick={() => handleIncrement(1)}
+                className="w-7 h-7 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 flex items-center justify-center transition-colors"
+              >
+                <Plus className="w-3 h-3 text-slate-600" />
+              </button>
             </div>
-
-            <button
-              onClick={() => handleIncrement(1)}
-              className="w-9 h-9 rounded-lg border border-white/10 flex items-center justify-center text-white/40 hover:text-white/80 hover:border-white/25 transition-all active:scale-95"
-            >
-              <Plus className="w-3.5 h-3.5" />
-            </button>
           </div>
 
-          {/* Operation bar */}
-          <div className="mt-4 flex items-center gap-2">
-            <div className="flex rounded-lg border border-white/10 overflow-hidden">
-              {(["add", "remove", "set"] as const).map((op) => (
-                <button
-                  key={op}
-                  onClick={() => setOperation(op)}
-                  className={`px-2.5 py-1.5 text-[10px] tracking-widest transition-all cursor-pointer ${
-                    operation === op
-                      ? "bg-white/12 text-white"
-                      : "text-white/30 hover:text-white/60 hover:bg-white/5"
-                  }`}
-                >
-                  {opLabels[op]}
-                </button>
-              ))}
-            </div>
+          {/* Agregar / Remover / Fijar en — always active */}
+          <div className="flex items-center gap-2 p-3 rounded-xl bg-blue-50/70 border border-blue-200">
+            <select
+              value={operation}
+              onChange={(e) => setOperation(e.target.value as "add" | "remove" | "set")}
+              className="w-24 flex-shrink-0 text-sm border rounded-lg px-2 py-2 bg-white border-blue-200 text-slate-700 cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500/50"
+            >
+              <option value="add">Agregar</option>
+              <option value="remove">Remover</option>
+              <option value="set">Fijar en</option>
+            </select>
             <input
               type="number"
               min="0"
@@ -153,53 +150,63 @@ export function StockEditModal({
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && applyOperation()}
-              className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white/80 text-center tabular-nums placeholder:text-white/20 focus:outline-none focus:border-white/25 transition-colors"
+              className="flex-1 min-w-0 text-sm border rounded-lg px-2 py-2 text-center tabular-nums placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500/50 bg-white border-blue-200 text-slate-900"
             />
             <button
               onClick={applyOperation}
               disabled={!inputValue || parseInt(inputValue) <= 0}
-              className={`px-3 py-1.5 rounded-lg text-[10px] tracking-widest transition-all cursor-pointer ${
+              className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all flex-shrink-0 ${
                 inputValue && parseInt(inputValue) > 0
-                  ? "bg-white text-[#0f1117] hover:bg-white/90"
-                  : "bg-white/5 text-white/20 cursor-not-allowed"
+                  ? "bg-blue-600 hover:bg-blue-500 text-white cursor-pointer"
+                  : "bg-slate-200 text-slate-400 cursor-not-allowed"
               }`}
             >
-              OK
+              <Check className="w-4 h-4" />
             </button>
           </div>
-        </div>
 
-        {/* Reservado + Disponible */}
-        <div className="px-5 py-4 grid grid-cols-2 gap-3 border-b border-white/8">
-          <div className="space-y-1">
-            <p className="text-[10px] tracking-[0.15em] text-white/25 uppercase">Reservado</p>
-            <p className="text-2xl font-bold tabular-nums text-white/40">{initialReservado}</p>
+          {/* Reservado — read-only, compact */}
+          <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-100">
+            <span className="text-xs font-medium uppercase tracking-wider text-slate-400">Reservado</span>
+            <span className="text-base font-semibold tabular-nums text-slate-500">{initialReservado}</span>
           </div>
-          <div className="space-y-1">
-            <p className="text-[10px] tracking-[0.15em] text-white/25 uppercase">Disponible</p>
-            <p className={`text-2xl font-bold tabular-nums ${
-              disponible > 0 ? "text-emerald-400" : "text-amber-400"
+
+          {/* Disponible — read-only */}
+          <div className={`flex items-center justify-between p-4 rounded-xl ${
+            disponible > 0
+              ? "bg-emerald-50 border border-emerald-200"
+              : disponible === 0
+                ? "bg-amber-50 border border-amber-200"
+                : "bg-red-50 border border-red-200"
+          }`}>
+            <span className={`text-xs font-medium uppercase tracking-wider ${
+              disponible > 0 ? "text-emerald-600" : disponible === 0 ? "text-amber-600" : "text-red-600"
+            }`}>
+              Disponible
+            </span>
+            <span className={`text-2xl font-bold tabular-nums ${
+              disponible > 0 ? "text-emerald-600" : disponible === 0 ? "text-amber-600" : "text-red-600"
             }`}>
               {disponible}
-            </p>
+            </span>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 px-5 py-3.5">
+        <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-100 bg-slate-50/50">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-[11px] tracking-widest text-white/30 hover:text-white/60 transition-colors cursor-pointer uppercase"
+            className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
           >
             Cancelar
           </button>
           <button
             onClick={handleAccept}
             disabled={!hasChanges}
-            className={`px-5 py-2 text-[11px] tracking-widest rounded-lg transition-all uppercase ${
+            className={`px-5 py-2 text-sm font-medium rounded-lg transition-all ${
               hasChanges
-                ? "bg-white text-[#0f1117] hover:bg-white/90 cursor-pointer"
-                : "bg-white/6 text-white/20 cursor-not-allowed"
+                ? "bg-slate-900 hover:bg-slate-800 text-white cursor-pointer"
+                : "bg-slate-200 text-slate-400 cursor-not-allowed"
             }`}
           >
             Guardar
