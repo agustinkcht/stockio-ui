@@ -367,91 +367,74 @@ export function ItemsGrid({
           </div>
         </div>
 
-        {/* Tab Header */}
-        <div className="px-4 bg-[#f8f9fa] border-gray-200 border-l-0 border-r-0 bg-transparent mt-1 pt-2 mb-0 pb-0 shadow-xl">
-          <div className="pl-0 pr-0 w-full">
-            <div className="flex items-center ml-0 w-full">
-              {/* All selector with same left offset as item checkboxes */}
-              <div className="flex items-center justify-center h-9 bg-slate-200 border rounded-xs shadow-none w-auto border-r px-[13px] rounded-l-sm mr-0 ml-[-17px] border-b border-l border-t border-[rgba(202,213,227,0.61)]">
+        {/* Bulk actions + Tab Header */}
+        <div className="px-4 pb-2 pt-2">
+          {/* Bulk actions bar */}
+          <div className="bg-white border border-slate-200/80">
+            <div className="flex items-center gap-2 h-9 px-3">
+              {/* Select all checkbox */}
+              <div className="flex items-center justify-center shrink-0">
                 {selectAllIndeterminate ? (
                   <button
                     onClick={handleSelectAll}
-                    className="h-4.5 w-4.5 flex items-center justify-center rounded-sm bg-primary border border-primary cursor-pointer"
+                    className="w-3.5 h-3.5 flex items-center justify-center rounded-sm bg-primary border border-primary cursor-pointer"
                   >
-                    <Minus className="w-3 h-3 text-primary-foreground" />
+                    <Minus className="w-2.5 h-2.5 text-primary-foreground" />
                   </button>
                 ) : selectAllActive ? (
                   <button
                     onClick={handleSelectAll}
-                    className="h-4.5 w-4.5 flex items-center justify-center rounded-sm bg-primary border border-primary cursor-pointer hover:bg-primary/90"
+                    className="w-3.5 h-3.5 flex items-center justify-center rounded-sm bg-primary border border-primary cursor-pointer hover:bg-primary/90"
                   >
-                    <Check className="w-3 h-3 text-primary-foreground" />
+                    <Check className="w-2.5 h-2.5 text-primary-foreground" />
                   </button>
                 ) : (
                   <button
                     onClick={handleSelectAll}
-                    className="h-4.5 w-4.5 transition-colors cursor-pointer flex items-center justify-center rounded-sm bg-white border border-slate-300 hover:border-muted-foreground"
-                  ></button>
+                    className="w-3.5 h-3.5 transition-colors cursor-pointer flex items-center justify-center rounded-sm bg-white border border-slate-300 hover:border-muted-foreground"
+                  />
                 )}
               </div>
-
-              {/* Tab header — grid-cols-12: item(5) estado(1) precio(3) stock(3) */}
-              <div className="flex-1 grid grid-cols-12 h-9 bg-slate-200 border border-gray-300 rounded-xs border-none">
-                <div className="col-span-5 flex items-center px-4 py-2 justify-center border-solid pl-4 pr-4 mr-0 border border-l-0 border-[rgba(202,213,227,0.61)]">
-                  <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Item</span>
-                </div>
-                {showPrecioColumn ? (
-                  <>
-                    <div className="col-span-1 flex items-center justify-center py-2 border-solid border-r px-1 mx-0 border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
-                      <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Estado</span>
-                    </div>
-                    <div className="col-span-3 flex items-center justify-center py-2 border-solid border-r px-4 mx-0 border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
-                      <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Precio Venta</span>
-                    </div>
-                    <div className="col-span-3 flex items-center justify-center gap-1.5 py-2 mx-0 px-0 border-b border-t border-l-0 border-r-0 border-[rgba(202,213,227,0.61)]">
-                      <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Stock</span>
-                      <StockColumnTooltip />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="col-span-4 flex items-center justify-center py-2 border-solid border-r px-4 mx-0 border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
-                      <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Atributos</span>
-                    </div>
-                    <div className="col-span-3 flex items-center justify-center gap-1.5 py-2 mx-0 px-0 border-b border-t border-l-0 border-r-0 border-[rgba(202,213,227,0.61)]">
-                      <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Stock</span>
-                      <StockColumnTooltip />
-                    </div>
-                  </>
-                )}
-              </div>
-
-              <div className="relative">
-                <div className="relative mx-0 mr-[-14px]">
-                  <button
-                    onClick={() => setGridSizeDropdownOpen(!gridSizeDropdownOpen)}
-                    className="flex flex-col items-center justify-center rounded hover:bg-gray-100 transition-colors min-w-[48px] cursor-pointer border rounded-xs h-9 shadow-none border-solid rounded-r-sm px-2.5 ml-0 border-b border-t border-r bg-slate-200 border-[rgba(202,213,227,0.61)]"
-                    title="Tamaño de grilla"
-                  >
-                    <span className="text-[9px] text-gray-500 uppercase tracking-wider leading-none">Grilla</span>
-                    <span className="text-xs text-gray-900 font-medium uppercase leading-none mt-0.5">{gridSize}</span>
-                  </button>
-                  {gridSizeDropdownOpen && (
-                    <div className="absolute right-0 top-full mt-1 w-16 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                      <button
-                        onClick={() => {
-                          setGridSize("md")
-                          setGridSizeDropdownOpen(false)
-                        }}
-                        className="w-full px-3 py-2 text-center text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
-                      >
-                        MD
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <div className="w-px h-5 bg-slate-200 shrink-0" />
+              {hasSelectedItems ? (
+                <span className="text-xs text-slate-600">
+                  {getSelectedSkus?.().length ?? 0} seleccionado{(getSelectedSkus?.().length ?? 0) !== 1 ? "s" : ""}
+                </span>
+              ) : (
+                <span className="text-xs text-slate-400">Seleccioná items para accionar masivamente</span>
+              )}
             </div>
+          </div>
+
+          {/* Tab header — flat, no rounding, grid-cols-12: item(5) estado(1) precio(3) stock(3) */}
+          <div className="grid grid-cols-12 h-9 border border-slate-200/80 border-t-0 mt-2">
+            <div className="col-span-5 flex items-center justify-center px-4 border-r border-slate-200/60">
+              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Item</span>
+            </div>
+            {showPrecioColumn ? (
+              <>
+                <div className="col-span-1 flex items-center justify-center px-1 border-r border-slate-200/60">
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Estado</span>
+                </div>
+                <div className="col-span-3 flex items-center justify-center px-4 border-r border-slate-200/60">
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Precio Venta</span>
+                </div>
+                <div className="col-span-3 flex items-center justify-center gap-1.5 px-2">
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Stock</span>
+                  <StockColumnTooltip />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="col-span-4 flex items-center justify-center px-4 border-r border-slate-200/60">
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Atributos</span>
+                </div>
+                <div className="col-span-3 flex items-center justify-center gap-1.5 px-2">
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Stock</span>
+                  <StockColumnTooltip />
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
