@@ -29,10 +29,13 @@ const COL_WIDTHS: Record<string, number> = {
   volumenUnidad: 100,
   vencimiento: 150,
   proveedor: 130,
+  codigoUniversal: 140,
   codigoProveedor: 130,
-  stockTotal: 80,
-  stockReservado: 90,
-  stockDisponible: 90,
+  costo: 110,
+  margen: 90,
+  iva: 80,
+  precioVenta: 120,
+  enStock: 170,
   descripcion: 200,
   fotoUrl: 200,
 }
@@ -79,8 +82,8 @@ const SECTIONS_CON_VARIANTES: Section[] = [
     id: "datos-principales", 
     label: "Datos Principales", 
     defaultExpanded: false,
-    columns: ["skuPadre", "codigoUniversal"],
-    subHeaders: [{ label: "CODIGOS", cols: ["skuPadre", "codigoUniversal"] }],
+    columns: ["skuPadre"],
+    subHeaders: [{ label: "CODIGOS", cols: ["skuPadre"] }],
   },
   {
     id: "atributos-principales",
@@ -93,21 +96,28 @@ const SECTIONS_CON_VARIANTES: Section[] = [
     id: "info-comercial", 
     label: "Informacion Comercial", 
     defaultExpanded: false,
-    columns: ["categoria", "marca", "formatoVenta", "unidadesPorPack", "volumenCantidad", "volumenUnidad", "vencimiento", "proveedor", "codigoProveedor"],
+    columns: ["categoria", "marca", "formatoVenta", "unidadesPorPack", "volumenCantidad", "volumenUnidad", "vencimiento", "proveedor", "codigoUniversal", "codigoProveedor"],
     subHeaders: [
       { label: "INFO DEL PRODUCTO", cols: ["categoria", "marca"] },
       { label: "PRESENTACION", cols: ["formatoVenta", "unidadesPorPack"] },
       { label: "VOLUMEN DE LA UNIDAD", cols: ["volumenCantidad", "volumenUnidad"] },
       { label: "VENCIMIENTO", cols: ["vencimiento"] },
-      { label: "INFO DEL PROVEEDOR", cols: ["proveedor", "codigoProveedor"] },
+      { label: "INFO DEL PROVEEDOR", cols: ["proveedor", "codigoUniversal", "codigoProveedor"] },
     ],
+  },
+  {
+    id: "precio",
+    label: "Precio",
+    defaultExpanded: false,
+    columns: ["costo", "margen", "iva", "precioVenta"],
+    subHeaders: [{ label: "PRECIO", cols: ["costo", "margen", "iva", "precioVenta"] }],
   },
   { 
     id: "stock", 
     label: "Stock", 
     defaultExpanded: false,
-    columns: ["stockTotal", "stockReservado", "stockDisponible"],
-    subHeaders: [{ label: "STOCK EN EL DEPOSITO", cols: ["stockTotal", "stockReservado", "stockDisponible"] }],
+    columns: ["enStock"],
+    subHeaders: [{ label: "STOCK EN EL DEPOSITO", cols: ["enStock"] }],
   },
   { 
     id: "media", 
@@ -142,10 +152,13 @@ const COLUMN_LABELS: Record<string, string> = {
   volumenUnidad: "U. de Medida",
   vencimiento: "Fecha",
   proveedor: "Proveedor",
-  codigoProveedor: "Codigo Proveedor",
-  stockTotal: "Total",
-  stockReservado: "Reservado",
-  stockDisponible: "Disponible",
+  codigoUniversal: "Cod. Universal",
+  codigoProveedor: "Cod. Proveedor",
+  costo: "Costo",
+  margen: "Margen %",
+  iva: "IVA %",
+  precioVenta: "Precio Venta",
+  enStock: "En Stock",
   descripcion: "",
   fotoUrl: "",
   generarVariantes: "Generar",
@@ -163,9 +176,13 @@ interface VariantRow {
   id: string
   parentId: string
   atributosPrincipales: Array<{ key: string; value: string }> // Filled from parent
+  codigoUniversal: string
   codigoProveedor: string
-  stockTotal: string
-  stockReservado: string
+  costo: string
+  margen: string
+  iva: string
+  precioVenta: string
+  enStock: string
   descripcion: string
   fotoUrl: string
   atributosInformativos: Array<{ key: string; value: string }> // Own attributes
@@ -450,9 +467,13 @@ export function CreadorMasivoConVariantes({
         id: crypto.randomUUID(),
         parentId: parentRow.id,
         atributosPrincipales: combo,
+        codigoUniversal: "",
         codigoProveedor: "",
-        stockTotal: "0",
-        stockReservado: "0",
+        costo: "",
+        margen: "",
+        iva: "21",
+        precioVenta: "",
+        enStock: "0",
         descripcion: parentRow.descripcion,
         fotoUrl: parentRow.fotoUrl,
         atributosInformativos: inheritedAttrs,
@@ -729,15 +750,7 @@ export function CreadorMasivoConVariantes({
         )
       
       case "codigoUniversal":
-        return (
-          <input
-            type="text"
-            value={row.codigoUniversal}
-            onChange={(e) => updateParentRow(rowIndex, "codigoUniversal", e.target.value)}
-            placeholder="N.A."
-            className={`${baseInputClass} placeholder:text-gray-300`}
-          />
-        )
+        return <div className={`w-full h-full ${inactiveClass} flex items-center justify-center text-xs`}>-</div>
       
       // Atributos principales with tags
       case "atributoPrincipal1Key":
@@ -917,10 +930,12 @@ export function CreadorMasivoConVariantes({
           />
         )
       
-      // Stock - always inactive in parent
-      case "stockTotal":
-      case "stockReservado":
-      case "stockDisponible":
+      // Precio + Stock - always inactive in parent
+      case "costo":
+      case "margen":
+      case "iva":
+      case "precioVenta":
+      case "enStock":
         return <div className={`w-full h-full ${inactiveClass} flex items-center justify-center text-xs`}>-</div>
       
       // Media
@@ -1072,9 +1087,13 @@ export function CreadorMasivoConVariantes({
       
       case "codigoUniversal":
         return (
-          <div className={`w-full h-full flex items-center px-2 text-xs ${inactiveClass}`}>
-            {parentRow.codigoUniversal}
-          </div>
+          <input
+            type="text"
+            value={variant.codigoUniversal}
+            onChange={(e) => updateVariant(parentIndex, variant.id, "codigoUniversal", e.target.value)}
+            placeholder="Cod. Universal..."
+            className={`${baseInputClass} placeholder:text-gray-300`}
+          />
         )
       
       // Atributos principales - readonly, filled from generation
@@ -1132,37 +1151,79 @@ export function CreadorMasivoConVariantes({
           />
         )
       
+      // Precio - editable in children, with auto-calc
+      case "costo":
+        return (
+          <input
+            type="number" min="0" step="0.01"
+            value={variant.costo}
+            onChange={(e) => {
+              updateVariant(parentIndex, variant.id, "costo", e.target.value)
+              const c = parseFloat(e.target.value) || 0
+              const m = parseFloat(variant.margen) || 0
+              const v = parseFloat(variant.iva) || 0
+              if (c > 0) updateVariant(parentIndex, variant.id, "precioVenta", (c * (1 + m / 100) * (1 + v / 100)).toFixed(2))
+            }}
+            placeholder="$0"
+            className={`${baseInputClass} text-right placeholder:text-gray-300`}
+          />
+        )
+      case "margen":
+        return (
+          <input
+            type="number" min="0" step="0.1"
+            value={variant.margen}
+            onChange={(e) => {
+              updateVariant(parentIndex, variant.id, "margen", e.target.value)
+              const c = parseFloat(variant.costo) || 0
+              const m = parseFloat(e.target.value) || 0
+              const v = parseFloat(variant.iva) || 0
+              if (c > 0) updateVariant(parentIndex, variant.id, "precioVenta", (c * (1 + m / 100) * (1 + v / 100)).toFixed(2))
+            }}
+            placeholder="0%"
+            className={`${baseInputClass} text-right placeholder:text-gray-300`}
+          />
+        )
+      case "iva":
+        return (
+          <select
+            value={variant.iva}
+            onChange={(e) => {
+              updateVariant(parentIndex, variant.id, "iva", e.target.value)
+              const c = parseFloat(variant.costo) || 0
+              const m = parseFloat(variant.margen) || 0
+              const v = parseFloat(e.target.value) || 0
+              if (c > 0) updateVariant(parentIndex, variant.id, "precioVenta", (c * (1 + m / 100) * (1 + v / 100)).toFixed(2))
+            }}
+            className={`${baseInputClass} cursor-pointer`}
+          >
+            <option value="0">0%</option>
+            <option value="10">10%</option>
+            <option value="21">21%</option>
+          </select>
+        )
+      case "precioVenta":
+        return (
+          <input
+            type="number" min="0" step="0.01"
+            value={variant.precioVenta}
+            onChange={(e) => updateVariant(parentIndex, variant.id, "precioVenta", e.target.value)}
+            placeholder="$0"
+            className={`${baseInputClass} text-right placeholder:text-gray-300`}
+          />
+        )
+
       // Stock - editable in children
-      case "stockTotal":
+      case "enStock":
         return (
           <input
             type="number"
-            value={variant.stockTotal}
-            onChange={(e) => updateVariant(parentIndex, variant.id, "stockTotal", e.target.value)}
+            value={variant.enStock}
+            onChange={(e) => updateVariant(parentIndex, variant.id, "enStock", e.target.value)}
             onFocus={(e) => { if (e.target.value === "0") e.target.select() }}
             className={`${baseInputClass} text-center`}
           />
         )
-      
-      case "stockReservado":
-        return (
-          <input
-            type="number"
-            value={variant.stockReservado}
-            onChange={(e) => updateVariant(parentIndex, variant.id, "stockReservado", e.target.value)}
-            onFocus={(e) => { if (e.target.value === "0") e.target.select() }}
-            className={`${baseInputClass} text-center`}
-          />
-        )
-      
-      case "stockDisponible": {
-        const disponible = Math.max(0, (parseInt(variant.stockTotal) || 0) - (parseInt(variant.stockReservado) || 0))
-        return (
-          <div className="w-full h-full flex items-center justify-center text-xs text-gray-500 bg-gray-50">
-            {disponible}
-          </div>
-        )
-      }
       
       // Media - editable in children
       case "descripcion":

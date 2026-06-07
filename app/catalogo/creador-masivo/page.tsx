@@ -185,7 +185,7 @@ const createEmptyRow = (): WorkableRow => ({
   codigoProveedor: "",
   costo: "",
   margen: "",
-  iva: "",
+  iva: "21",
   precioVenta: "",
   enStock: "0",
   descripcion: "",
@@ -373,17 +373,26 @@ export default function CreadorMasivoPage() {
             .map(a => a.value.substring(0, 3).toUpperCase())
             .join("-")
           
+          const variantEnStock = parseInt(variant.enStock || "0") || 0
+          const variantCosto = parseFloat(variant.costo || "") || 0
+          const variantMargen = parseFloat(variant.margen || "") || 0
+          const variantIva = parseFloat(variant.iva || "21") || 0
+          const variantPrecioVenta = parseFloat(variant.precioVenta || "") || 0
+          const variantPrecio = (variantCosto > 0 || variantPrecioVenta > 0)
+            ? { costo: variantCosto, margen: variantMargen, iva: variantIva, precioFinal: variantPrecioVenta || variantCosto * (1 + variantMargen / 100) * (1 + variantIva / 100) }
+            : undefined
           return {
             sku: `${skuPadre}-${skuSuffix}`,
-            codigoUniversal: "",
+            codigoUniversal: variant.codigoUniversal || "",
             descripcion: variant.descripcion || parentRow.descripcion,
             foto: variant.fotoUrl || parentRow.fotoUrl,
             atributosPrincipales: (variant.atributosPrincipales || []).filter(a => a && a.key && a.value),
             stock: {
-              total: variant.enStock || "0",
-              reservado: variant.stockReservado || "0",
-              disponible: (parseInt(variant.enStock || "0") - parseInt(variant.stockReservado || "0")).toString()
+              enStock: variantEnStock.toString(),
+              reservado: "0",
+              disponible: variantEnStock.toString(),
             },
+            precio: variantPrecio,
             codigoProveedor: variant.codigoProveedor || undefined,
             atributosInformativos: (variant.atributosInformativos || [])
               .filter(attr => attr && attr.key && attr.key.trim())
@@ -798,11 +807,8 @@ export default function CreadorMasivoPage() {
         )
       case "iva":
         return (
-          <input
-            type="number"
-            min="0"
-            step="0.5"
-            value={row.iva}
+          <select
+            value={row.iva || "21"}
             onChange={(e) => {
               updateRow(rowIndex, "iva", e.target.value)
               const costo = parseFloat(row.costo) || 0
@@ -813,9 +819,12 @@ export default function CreadorMasivoPage() {
                 updateRow(rowIndex, "precioVenta", pv.toFixed(2))
               }
             }}
-            placeholder="0%"
-            className={`${baseInputClass} text-right placeholder:text-gray-300`}
-          />
+            className={`${baseInputClass} cursor-pointer`}
+          >
+            <option value="0">0%</option>
+            <option value="10">10%</option>
+            <option value="21">21%</option>
+          </select>
         )
       case "precioVenta":
         return (
