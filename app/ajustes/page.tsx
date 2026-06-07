@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { Settings, DollarSign, ShoppingCart, Package, FolderOpen, LayoutDashboard, ChevronDown, Check, AlertTriangle } from "lucide-react"
+import { Settings, DollarSign, FolderOpen, LayoutDashboard, ChevronDown, Check, AlertTriangle } from "lucide-react"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { Sidebar } from "@/components/layout/sidebar"
@@ -75,7 +75,7 @@ function SectionFooter({ dirty, onSave, onCancel }: { dirty: boolean; onSave: ()
 export default function AjustesPage() {
   const router = useRouter()
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
-  const { precios, catalogo, stock, dashboard, updatePreciosSettings, updateCatalogoSettings, updateStockSettings, updateDashboardSettings } = useSettings()
+  const { precios, catalogo, dashboard, updatePreciosSettings, updateCatalogoSettings, updateDashboardSettings } = useSettings()
 
   // ── Dashboard draft ────────────────────────────────────────────────────────
   const [dashDraft, setDashDraft] = useState(dashboard)
@@ -109,15 +109,10 @@ export default function AjustesPage() {
   useEffect(() => { setCatalogoDraft(catalogo) }, [catalogo])
   const catalogoDirty = JSON.stringify(catalogoDraft) !== JSON.stringify(catalogo)
 
-  // ── Stock draft ────────────────────────────────────────────────────────────
-  const [stockDraft, setStockDraft] = useState(stock)
-  useEffect(() => { setStockDraft(stock) }, [stock])
-  const stockDirty = JSON.stringify(stockDraft) !== JSON.stringify(stock)
-
   const selectedPeriodLabel = PERIOD_OPTIONS.find(o => o.key === dashDraft.periodoDefault)?.label ?? "Ninguno"
 
   // ── Navigation guard ───────────────────────────────────────────────────────
-  const anyDirty = dashDirty || preciosDirty || catalogoDirty || stockDirty
+  const anyDirty = dashDirty || preciosDirty || catalogoDirty
   const [navGuardOpen, setNavGuardOpen] = useState(false)
   const pendingHrefRef = useRef<string | null>(null)
 
@@ -437,61 +432,7 @@ export default function AjustesPage() {
                   />
                 </section>
 
-                {/* ── Punto de Venta ─────────────────────────────────────── */}
-                <section className="bg-white rounded-2xl border border-slate-200/60 overflow-hidden">
-                  <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-                      <ShoppingCart className="w-4 h-4 text-blue-600" />
-                    </div>
-                    <div>
-                      <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">Punto de Venta</h2>
-                      <p className="text-xs text-slate-500">Configuración del sistema de ventas</p>
-                    </div>
-                  </div>
-                  <div className="px-6 py-8 flex items-center justify-center">
-                    <p className="text-sm text-slate-400">Próximamente</p>
-                  </div>
-                </section>
 
-                {/* ── Stock ──────────────────────────────────────────────── */}
-                <section className="bg-white rounded-2xl border border-slate-200/60 overflow-hidden">
-                  <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
-                      <Package className="w-4 h-4 text-amber-600" />
-                    </div>
-                    <div>
-                      <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">Stock</h2>
-                      <p className="text-xs text-slate-500">Configuración de gestión de inventario</p>
-                    </div>
-                  </div>
-
-                  <div className="px-6 py-5">
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1.5">Stock Mínimo por Defecto</label>
-                        <p className="text-xs text-slate-400 mb-3">
-                          Cantidad mínima de stock deseada. Al llegar a este nivel, se muestra una alerta para re-abastecer.
-                        </p>
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="number"
-                            min="0"
-                            value={stockDraft.stockMinimoPorDefecto}
-                            onChange={(e) => setStockDraft(d => ({ ...d, stockMinimoPorDefecto: Math.max(0, parseInt(e.target.value) || 0) }))}
-                            className="w-24 px-3 py-2 border border-slate-200 rounded-lg text-sm text-center font-medium focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400"
-                          />
-                          <span className="text-sm text-slate-500">unidades</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <SectionFooter
-                    dirty={stockDirty}
-                    onSave={() => updateStockSettings(stockDraft)}
-                    onCancel={() => setStockDraft(stock)}
-                  />
-                </section>
 
               </div>
             </div>
