@@ -67,6 +67,7 @@ export default function CatalogoPage() {
   // ── Dropdown visibility ────────────────────────────────────────────────────
   const [filterOpen, setFilterOpen] = useState(false)
   const [sortOpen, setSortOpen] = useState(false)
+  const [nuevoItemDropdownOpen, setNuevoItemDropdownOpen] = useState(false)
 
   // ── Items / hooks ──────────────────────────────────────────────────────────
   const {
@@ -174,7 +175,7 @@ export default function CatalogoPage() {
     return filterItems(searched, filterConfig).length
   }, [items, searchQuery, filterConfig])
 
-  // ── Status helpers ────────────────────────────────────────────────────���────
+  // ── Status helpers ────────────────────────────────────────────────────�����────
   const showStatusMessage = (text: string, type: "success" | "info" = "success") => {
     setStatusMessage({ text, type })
     setTimeout(() => setStatusMessage(null), 3000)
@@ -365,23 +366,38 @@ export default function CatalogoPage() {
                   <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
                     Catálogo
                   </h1>
-                  <div className="flex items-center gap-2 mt-1 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => router.push("/catalogo/creador-masivo")}
-                      className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 rounded-lg flex items-center bg-white text-slate-700 hover:bg-slate-50 cursor-pointer"
-                    >
-                      <Plus className="w-4 h-4 text-slate-500" strokeWidth={2.25} />
-                      Creador Masivo
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleOpenNuevoItem}
-                      className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer"
-                    >
-                      <Plus className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
-                      Nuevo Item
-                    </button>
+                  <div className="flex items-center gap-2 mt-1 shrink-0 relative">
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setNuevoItemDropdownOpen(v => !v)}
+                        className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer"
+                      >
+                        <Plus className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
+                        Nuevo Item
+                      </button>
+                      {nuevoItemDropdownOpen && (
+                        <>
+                          <div className="fixed inset-0 z-[90]" onClick={() => setNuevoItemDropdownOpen(false)} />
+                          <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-slate-200 rounded-lg shadow-lg z-[100] py-1 overflow-hidden">
+                            <button
+                              type="button"
+                              onClick={() => { setNuevoItemDropdownOpen(false); router.push("/catalogo/items/nuevo") }}
+                              className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                            >
+                              Creación Individual
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => { setNuevoItemDropdownOpen(false); router.push("/catalogo/creador-masivo") }}
+                              className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                            >
+                              Creador Masivo
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -631,8 +647,22 @@ export default function CatalogoPage() {
                     <div className="col-span-3 flex items-center justify-center px-4 border-r border-slate-200/60">
                       <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Precio Venta</span>
                     </div>
-                    <div className="col-span-3 flex items-center justify-center px-2">
+                    <div className="col-span-3 flex items-center justify-center gap-1.5 px-2">
                       <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Stock</span>
+                      <div className="group relative flex-shrink-0">
+                        <div className="w-3.5 h-3.5 rounded-full border border-gray-400 flex items-center justify-center cursor-default text-gray-400 hover:text-gray-600 hover:border-gray-600 transition-colors">
+                          <span className="text-[9px] font-bold leading-none">i</span>
+                        </div>
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 bg-slate-800 text-white text-[11px] rounded-md px-2.5 py-2 leading-relaxed opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150 z-50 shadow-lg">
+                          <p className="font-semibold">En Stock</p>
+                          <p className="text-slate-300 mb-1.5">Unidades físicas presentes en depósito.</p>
+                          <p className="font-semibold">Reservado</p>
+                          <p className="text-slate-300 mb-1.5">Unidades comprometidas a ventas en curso que aún no fueron entregadas.</p>
+                          <p className="font-semibold">Disponible</p>
+                          <p className="text-slate-300">Unidades listas para la venta.</p>
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-slate-800" />
+                        </div>
+                      </div>
                     </div>
                   </div>
                   </div>
