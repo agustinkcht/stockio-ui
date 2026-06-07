@@ -315,10 +315,20 @@ export function ItemCard({
         onMouseLeave={handleMouseLeave}
       >
         <div
-          className={`relative border-solid mb-0 border-slate-200/65 shadow-md ${gridSize === "lg" ? "h-22" : gridSize === "md" ? "h-16" : "h-10"} ${roundedClass} grid grid-cols-12 ${
+          className={`relative border-solid mb-0 border-slate-200/65 shadow-md ${gridSize === "lg" ? "h-22" : gridSize === "md" ? "h-16" : "h-10"} ${roundedClass} grid ${
             isAuditMode
-              ? `${hasAuditChange ? "bg-amber-50/50 border-amber-300/50" : isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors ${item.isAgrupador || item.hasVariants ? "cursor-pointer" : ""} overflow-hidden`
-              : `${!isItemActive ? "bg-slate-100/80 opacity-60" : isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors ${item.isAgrupador || item.hasVariants ? "cursor-pointer" : ""} overflow-hidden`
+              ? `grid-cols-22 ${
+                  hasAuditChange 
+                    ? "bg-amber-50/50 border-amber-300/50" 
+                    : isHovered 
+                      ? "bg-gray-50" 
+                      : "bg-white"
+                } border border-border transition-colors ${item.isAgrupador || item.hasVariants ? "cursor-pointer" : ""} overflow-hidden`
+              : stockViewMode
+                ? `grid-cols-22 ${!isItemActive ? "bg-slate-100/80 opacity-60" : isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors ${item.isAgrupador || item.hasVariants ? "cursor-pointer" : ""} overflow-hidden`
+                : item.isAgrupador || item.hasVariants
+                  ? `grid-cols-44 ${!isItemActive ? "bg-slate-100/80 opacity-60" : isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors cursor-pointer overflow-hidden`
+                  : `grid-cols-44 ${!isItemActive ? "bg-slate-100/80 opacity-60" : isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors overflow-hidden`
           }`}
           onClick={(e) => {
             if (item.hasVariants || item.isAgrupador) {
@@ -331,16 +341,17 @@ export function ItemCard({
             item.isAgrupador || item.hasVariants ? (
               // Parent items in audit mode - chevron on left instead of thumbnail
               <>
-                {/* Item - 4 cols */}
+                {/* Item cell - col-span-16, chevron on left */}
                 <div
-                  className="col-span-4 flex items-center gap-3 h-full pl-10 pr-4 cursor-pointer transition-colors border-r border-slate-100"
+                  className={`col-span-16 flex items-center gap-3 h-full pl-10 pr-4 cursor-pointer transition-colors border-r border-slate-100`}
                   onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
                 >
+                  {/* Chevron instead of thumbnail - match thumbnail size w-12 h-12 */}
                   <button
                     onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
-                    className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-md hover:bg-slate-100 transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+                    className="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-md hover:bg-slate-100 transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
                   >
-                    {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                   </button>
                   <div className="flex-1 min-w-0" onClick={(e) => { e.stopPropagation(); onItemClick(item) }}>
                     <div className="flex items-center gap-2">
@@ -349,21 +360,39 @@ export function ItemCard({
                         {item.hasVariants ? `${variantCount} var.` : `${itemCount} items`}
                       </span>
                     </div>
-                    {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
+                    </div>
                   </div>
                 </div>
-                {/* Estado - 2 cols empty */}
-                <div className="col-span-2 h-full border-r border-slate-100" />
-                {/* Precio - 3 cols empty */}
-                <div className="col-span-3 h-full border-r border-slate-100" />
-                {/* Stock - 3 cols empty */}
-                <div className="col-span-3 h-full" />
+
+                {/* Categoría cell */}
+                <div
+                  className="col-span-10 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+                  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+                >
+                  <span className="text-sm text-foreground">{item.categoria || "-"}</span>
+                </div>
+
+                {/* Precio Final cell - empty for parent */}
+                <div
+                  className="col-span-10 h-full flex items-center justify-center px-4 border-r border-slate-100 cursor-pointer"
+                  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+                >
+                </div>
+
+                {/* Stock Disponible cell - empty for parent */}
+                <div
+                  className="col-span-8 h-full flex items-center justify-center px-4 cursor-pointer"
+                  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+                >
+                </div>
               </>
             ) : (
               // Standalone and children items in audit mode - with stock modification controls
               <>
                 <div
-                  className="col-span-4 flex items-center gap-3 h-full border-r border-slate-100/50 px-4 cursor-pointer transition-colors"
+                  className="col-span-8 flex items-center gap-3 h-full border-r border-slate-100/50 px-4 cursor-pointer transition-colors"
                   onClick={(e) => {
                     e.stopPropagation()
                     onItemClick(item)
@@ -406,11 +435,8 @@ export function ItemCard({
                   </div>
                 </div>
 
-                {/* Estado - 2 cols empty in audit */}
-                <div className="col-span-2 h-full border-r border-slate-100/50" />
-
-                {/* Stock Total - 3 cols with modification controls */}
-                <div className="col-span-3 h-full flex items-center justify-center gap-1 px-1.5 border-r border-slate-100/50">
+                {/* Stock Total - 6 cols with modification controls */}
+                <div className="col-span-6 h-full flex items-center justify-center gap-1 px-1.5 border-r border-slate-100/50">
                   {/* Operation selector */}
                   <select
                     value={stockTotalOperation}
@@ -469,8 +495,8 @@ export function ItemCard({
                   </button>
                 </div>
 
-                {/* Stock Reservado - 3 cols with modification controls */}
-                <div className="col-span-3 h-full flex items-center justify-center gap-1 px-1.5 border-r border-slate-100/50">
+                {/* Stock Reservado - 6 cols with modification controls */}
+                <div className="col-span-6 h-full flex items-center justify-center gap-1 px-1.5 border-r border-slate-100/50">
                   {/* Operation selector */}
                   <select
                     value={stockReservadoOperation}
@@ -529,38 +555,143 @@ export function ItemCard({
                   </button>
                 </div>
 
-                {/* Disponible shown inside the reservado col as a sub-label — no extra col needed */}
+                {/* Stock Disponible - 2 cols (read-only) */}
+                <div className="col-span-2 h-full flex items-center justify-center px-2">
+                  <span className={`text-sm font-semibold font-mono ${
+                    currentStockDisponible > 0 
+                      ? "text-emerald-600" 
+                      : currentStockDisponible < 0 
+                        ? "text-red-500" 
+                        : "text-foreground"
+                  }`}>
+                    {currentStockDisponible}
+                  </span>
+                </div>
               </>
             )
           ) : item.isAgrupador || item.hasVariants ? (
             // NORMAL MODE: Parent items - Item (16) + empty span (28), no borders between columns
-            // Parent row — Item (4) + empty remaining (8)
-            <>
-              <div
-                className="col-span-4 flex items-center gap-3 h-full pl-10 pr-4 cursor-pointer transition-colors border-r border-slate-100"
-                onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
-              >
-                <button
+            stockViewMode ? (
+              // Stock View Mode: Item (8), Categoria (4), Total (4), Reservado (4), Disponible (2)
+              <>
+                <div
+                  className="col-span-8 flex items-center gap-3 h-full pl-10 pr-4 cursor-pointer transition-colors border-r border-slate-100"
                   onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
-                  className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-md hover:bg-slate-100 transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
                 >
-                  {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                </button>
-                <div className="flex-1 min-w-0" onClick={(e) => { e.stopPropagation(); onItemClick(item) }}>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-container-item-foreground font-medium truncate">{item.name}</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground whitespace-nowrap">
-                      {item.hasVariants ? `${variantCount} var.` : `${itemCount} items`}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1 mt-0.5">
-                    {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
-                    {item.marca && item.categoria && <span className="text-xs text-muted-foreground">·</span>}
-                    {item.categoria && <span className="text-xs text-muted-foreground">{item.categoria}</span>}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+                    className="flex-shrink-0 flex items-center justify-center size-6 rounded-md hover:bg-slate-100 transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+                  >
+                    {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </button>
+                  <div className="flex-1 min-w-0" onClick={(e) => { e.stopPropagation(); onItemClick(item) }}>
+                    <span className="text-sm text-container-item-foreground font-medium truncate block">{item.name}</span>
+                    <span className="text-[10px] text-muted-foreground">{item.hasVariants ? `${variantCount} var.` : `${itemCount} items`}</span>
                   </div>
                 </div>
+                <div className="col-span-4 h-full flex items-center justify-center px-2 border-r border-slate-100 cursor-pointer" onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}>
+                  <span className="text-xs text-foreground truncate">{item.categoria || "-"}</span>
+                </div>
+                <div className="col-span-4 h-full flex items-center justify-center px-2 border-r border-slate-100 cursor-pointer" onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}></div>
+                <div className="col-span-4 h-full flex items-center justify-center px-2 border-r border-slate-100 cursor-pointer" onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}></div>
+                <div className="col-span-2 h-full flex items-center justify-center px-1 cursor-pointer" onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}></div>
+              </>
+            ) : (
+              // Normal catalogo mode: Item (16) + empty remaining (28), no borders
+              <>
+                {/* Item cell - no border-r for parent */}
+                <div
+                  className="col-span-16 flex items-center gap-3 h-full pl-10 pr-4 cursor-pointer transition-colors"
+                  onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+                >
+                  {/* Chevron */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+                    className="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-md hover:bg-slate-100 transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+                  >
+                    {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                  </button>
+
+                  {/* Product Info */}
+                  <div className="flex-1 min-w-0" onClick={(e) => { e.stopPropagation(); onItemClick(item) }}>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-container-item-foreground font-medium truncate">
+                        {item.name}
+                      </span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground whitespace-nowrap">
+                        {item.hasVariants ? `${variantCount} var.` : `${itemCount} items`}
+                      </span>
+                    </div>
+                    {/* Marca · Categoria */}
+                    <div className="flex items-center gap-1 mt-0.5">
+                      {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
+                      {item.marca && item.categoria && <span className="text-xs text-muted-foreground">·</span>}
+                      {item.categoria && <span className="text-xs text-muted-foreground">{item.categoria}</span>}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Empty remaining columns - no borders */}
+                <div className="col-span-28 h-full" />
+              </>
+            )
+          ) : stockViewMode ? (
+            // STOCK VIEW MODE: Standalone/child items - Item (8), Categoria (4), Total (4), Reservado (4), Disponible (2)
+            <>
+              <div
+                className={`col-span-8 flex items-center gap-2 h-full border-r border-slate-100 ${isChild ? "pl-10 pr-2" : "pl-10 pr-3"} cursor-pointer transition-colors`}
+                onClick={(e) => { e.stopPropagation(); onItemClick(item) }}
+              >
+  <div className={`${isChild ? "w-7 h-7" : "w-9 h-9"} flex-shrink-0 rounded-md bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden`}>
+                    <img
+                      src={getCategoryImage(item.categoria || parentItem?.categoria) || "/placeholder.svg"}
+                      alt={item.categoria || parentItem?.categoria || "Product"}
+                      className={`${isChild ? "w-5 h-5" : "w-6 h-6"} object-contain opacity-60`}
+                    />
+                  </div>
+                <div className="flex-1 min-w-0">
+                  <span className={`text-sm ${isChild ? "text-muted-foreground" : "text-foreground"} font-medium truncate block`}>{item.name}</span>
+                  {isChild && item.atributosPrincipales && item.atributosPrincipales.length > 0 && (
+                    <div className="flex items-center gap-1 mt-0.5">
+                      {item.atributosPrincipales.slice(0, 2).map((attr, i) => (
+                        <span key={i} className="text-[9px] px-1 py-0.5 rounded whitespace-nowrap bg-blue-50 text-blue-800">{attr.value}</span>
+                      ))}
+                    </div>
+                  )}
+  </div>
+                </div>
+                <div className="col-span-4 h-full flex items-center justify-center px-2 border-r border-slate-100 cursor-pointer" onClick={(e) => { e.stopPropagation(); onItemClick(item) }}>
+                  <span className="text-xs text-foreground truncate">{item.categoria || parentItem?.categoria || "-"}</span>
+                </div>
+                <div
+                  className="col-span-4 h-full flex items-center justify-center px-2 border-r border-slate-100 cursor-pointer hover:bg-slate-50 group/total"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setIsStockModalOpen(true)
+                  }}
+              >
+                <span className="text-sm font-medium tabular-nums text-foreground group-hover/total:text-blue-600 transition-colors">{currentStockTotal}</span>
               </div>
-              <div className="col-span-8 h-full" />
+              <div
+                className="col-span-4 h-full flex items-center justify-center px-2 border-r border-slate-100 cursor-pointer hover:bg-slate-50 group/reservado"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setIsStockModalOpen(true)
+                }}
+              >
+                <span className="text-sm font-medium tabular-nums text-foreground group-hover/reservado:text-blue-600 transition-colors">{item.stock?.reservado ?? 0}</span>
+              </div>
+              <div className="col-span-2 h-full flex items-center justify-center px-1">
+                <span className={`text-sm font-medium tabular-nums ${
+                  (item.stock?.disponible ?? 0) > 0
+                    ? "text-foreground"
+                    : (item.stock?.disponible ?? 0) < 0
+                      ? "text-red-500"
+                      : "text-muted-foreground"
+                }`}>
+                  {item.stock?.disponible ?? 0}
+                </span>
+              </div>
             </>
           ) : (
             // NORMAL MODE: Standalone/child items
