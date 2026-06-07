@@ -360,61 +360,7 @@ export const VENTAS: Venta[] = [
     estado: "en_curso",
   },
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // VTA-006 · EN CURSO · Distribuciones Cortés · 2 productos
-  // Cobro: 0% · Entrega: 0% (pendiente de pago y despacho)
-  // ─────────────────────────────────────────────────────────────────────────
-  {
-    id: "VTA-006",
-    fecha: "2026-04-14",
-    hora: "14:00",
-    cliente: { tipo: "cuenta", id: "CLI-011", nombre: "Distribuciones Cortés" },
-    items: [
-      {
-        sku: "WHKY-JDOLD7",
-        name: "Jack Daniel's Old No.7",
-        quantity: 6,
-        unitPrice: 34020,
-        discount: 0,
-        discountType: "percent",
-        total: 204120,
-        categoria: "Whiskies",
-      },
-      {
-        sku: "WHKY-JMSOR",
-        name: "Jameson Original",
-        quantity: 6,
-        unitPrice: 35940,
-        discount: 0,
-        discountType: "percent",
-        total: 215640,
-        categoria: "Whiskies",
-      },
-    ],
-    subtotal: 419760,
-    descuento: 0,
-    descuentoTipo: "percent",
-    total: 419760,
-    entregaItems: [
-      { sku: "WHKY-JDOLD7", quantityEntregada: 6 },
-      { sku: "WHKY-JMSOR", quantityEntregada: 6 },
-    ],
-    entregaEntries: [
-      {
-        id: "VTA-006-ENT-1",
-        fecha: "2026-04-14",
-        hora: "14:10",
-        items: [
-          { sku: "WHKY-JDOLD7", quantity: 6 },
-          { sku: "WHKY-JMSOR", quantity: 6 },
-        ],
-      },
-    ],
-    cobros: [
-      { id: "COB-006-01", fecha: "2026-04-14", hora: "14:05", medioPago: "transferencia", monto: 419760 },
-    ],
-    estado: "finalizada",
-  },
+
 
   // ─────────────────────────────────────────────────────────────────────────
   // VTA-007 · CANCELADA · María González · 3 productos
@@ -468,7 +414,7 @@ export const VENTAS: Venta[] = [
     observaciones: "Cliente canceló el pedido antes del despacho.",
   },
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // ��────────────────────────────────────────────────────────────────────────
   // VTA-008 · CANCELADA · Consumidor Final · 1 producto
   // Cobro realizado → devolución registrada en observaciones
   // ─────────────────────────────────────────────────────────────────────────
@@ -502,86 +448,7 @@ export const VENTAS: Venta[] = [
     observaciones: "Producto devuelto. Reembolso procesado por posnet el 31/03/2026.",
   },
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // VTA-009 · EN CURSO · Roberto Fernández · 4 productos · descuento global
-  // Cobro: parcial · Entrega: 50%
-  // ─────────────────────────────────────────────────────────────────────────
-  {
-    id: "VTA-009",
-    fecha: "2026-04-15",
-    hora: "18:30",
-    cliente: { tipo: "cuenta", id: "CLI-005", nombre: "Roberto Fernández" },
-    items: [
-      {
-        sku: "TEQ-PATSLVR",
-        name: "Patrón Silver",
-        quantity: 2,
-        unitPrice: 47030,
-        discount: 0,
-        discountType: "percent",
-        total: 94060,
-        categoria: "Tequila",
-      },
-      {
-        sku: "VDKA-CRCOR",
-        name: "Cîroc Original",
-        quantity: 2,
-        unitPrice: 36300,
-        discount: 0,
-        discountType: "percent",
-        total: 72600,
-        categoria: "Vodka",
-      },
-      {
-        sku: "LICR-FIRB750",
-        name: "Fireball 750 ml",
-        quantity: 3,
-        unitPrice: 26400,
-        discount: 0,
-        discountType: "percent",
-        total: 79200,
-        categoria: "Licores",
-      },
-      {
-        sku: "GIN-MYRBOT",
-        name: "Myrica Botánicos",
-        quantity: 2,
-        unitPrice: 21720,
-        discount: 0,
-        discountType: "percent",
-        total: 43440,
-        categoria: "Gin",
-      },
-    ],
-    subtotal: 289300,
-    descuento: 300,
-    descuentoTipo: "fixed",
-    total: 289000,
-    entregaItems: [
-      { sku: "TEQ-PATSLVR", quantityEntregada: 2 },
-      { sku: "VDKA-CRCOR", quantityEntregada: 2 },
-      { sku: "LICR-FIRB750", quantityEntregada: 3 },
-      { sku: "GIN-MYRBOT", quantityEntregada: 2 },
-    ],
-    entregaEntries: [
-      {
-        id: "VTA-009-ENT-1",
-        fecha: "2026-04-15",
-        hora: "18:35",
-        items: [
-          { sku: "TEQ-PATSLVR", quantity: 2 },
-          { sku: "VDKA-CRCOR", quantity: 2 },
-          { sku: "LICR-FIRB750", quantity: 3 },
-          { sku: "GIN-MYRBOT", quantity: 2 },
-        ],
-      },
-    ],
-    cobros: [
-      { id: "COB-009-01", fecha: "2026-04-15", hora: "18:32", medioPago: "efectivo", monto: 150000 },
-      { id: "COB-009-02", fecha: "2026-04-16", hora: "10:00", medioPago: "transferencia", monto: 139000 },
-    ],
-    estado: "finalizada",
-  },
+
 
   // ─────────────────────────────────────────────────────────────────────────
   // VTA-010 · FINALIZADA · Consumidor Final · 6 productos · descuento global + envío
@@ -840,61 +707,7 @@ export const VENTAS: Venta[] = [
     presupuestoId: "PRE-011",
   },
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // VTA-013 · FINALIZADA · Roberto Fernández · 2 productos manual
-  // Cobro: 100% posnet · Entrega: 100%
-  // ─────────────────────────────────────────────────────────────────────────
-  {
-    id: "VTA-013",
-    fecha: "2026-04-27",
-    hora: "16:15",
-    cliente: { tipo: "cuenta", id: "CLI-005", nombre: "Roberto Fernández" },
-    items: [
-      {
-        sku: "WHKY-JW750-BLACK",
-        name: "Johnnie Walker Black Label",
-        quantity: 2,
-        unitPrice: 52500,
-        discount: 0,
-        discountType: "percent",
-        total: 105000,
-        categoria: "Whiskies",
-      },
-      {
-        sku: "WHKY-JMSOR",
-        name: "Jameson Original",
-        quantity: 2,
-        unitPrice: 35940,
-        discount: 0,
-        discountType: "percent",
-        total: 71880,
-        categoria: "Whiskies",
-      },
-    ],
-    subtotal: 176880,
-    descuento: 0,
-    descuentoTipo: "percent",
-    total: 176880,
-    entregaItems: [
-      { sku: "WHKY-JW750-BLACK", quantityEntregada: 2 },
-      { sku: "WHKY-JMSOR", quantityEntregada: 2 },
-    ],
-    entregaEntries: [
-      {
-        id: "VTA-013-ENT-1",
-        fecha: "2026-04-27",
-        hora: "16:20",
-        items: [
-          { sku: "WHKY-JW750-BLACK", quantity: 2 },
-          { sku: "WHKY-JMSOR", quantity: 2 },
-        ],
-      },
-    ],
-    cobros: [
-      { id: "COB-013-01", fecha: "2026-04-27", hora: "16:18", medioPago: "posnet", monto: 176880 },
-    ],
-    estado: "finalizada",
-  },
+
 
   // ─────────────────────────────────────────────────────────────────────────
   // VTA-014 · EN CURSO · Distribuidora Norte S.A. · 3 productos desde presupuesto
@@ -1220,73 +1033,7 @@ export const VENTAS: Venta[] = [
     presupuestoId: "PRE-009",
   },
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // VTA-019 · FINALIZADA · Juan Pérez · 3 productos manual
-  // Cobro: 100% posnet · Entrega: 100%
-  // ─────────────────────────────────────────────────────────────────────────
-  {
-    id: "VTA-019",
-    fecha: "2026-05-09",
-    hora: "17:45",
-    cliente: { tipo: "cuenta", id: "CLI-001", nombre: "Juan Pérez" },
-    items: [
-      {
-        sku: "WHKY-JW750-BLUE",
-        name: "Johnnie Walker Blue Label",
-        quantity: 1,
-        unitPrice: 136500,
-        discount: 0,
-        discountType: "percent",
-        total: 136500,
-        categoria: "Whiskies",
-      },
-      {
-        sku: "GIN-BOMSAPH",
-        name: "Bombay Sapphire",
-        quantity: 2,
-        unitPrice: 29040,
-        discount: 0,
-        discountType: "percent",
-        total: 58080,
-        categoria: "Gin",
-      },
-      {
-        sku: "VDKA-ABSO-RASP",
-        name: "Absolut Raspberry",
-        quantity: 2,
-        unitPrice: 23595,
-        discount: 0,
-        discountType: "percent",
-        total: 47190,
-        categoria: "Vodka",
-      },
-    ],
-    subtotal: 241770,
-    descuento: 0,
-    descuentoTipo: "percent",
-    total: 241770,
-    entregaItems: [
-      { sku: "WHKY-JW750-BLUE", quantityEntregada: 1 },
-      { sku: "GIN-BOMSAPH", quantityEntregada: 2 },
-      { sku: "VDKA-ABSO-RASP", quantityEntregada: 2 },
-    ],
-    entregaEntries: [
-      {
-        id: "VTA-019-ENT-1",
-        fecha: "2026-05-09",
-        hora: "17:50",
-        items: [
-          { sku: "WHKY-JW750-BLUE", quantity: 1 },
-          { sku: "GIN-BOMSAPH", quantity: 2 },
-          { sku: "VDKA-ABSO-RASP", quantity: 2 },
-        ],
-      },
-    ],
-    cobros: [
-      { id: "COB-019-01", fecha: "2026-05-09", hora: "17:48", medioPago: "posnet", monto: 241770 },
-    ],
-    estado: "finalizada",
-  },
+
 
   // ─────────────────────────────────────────────────────────────────────────
   // VTA-020 · EN CURSO · Distribuciones Cortés · 4 productos desde presupuesto
@@ -1628,63 +1375,7 @@ export const VENTAS: Venta[] = [
     estado: "finalizada",
   },
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // VTA-025 · FINALIZADA · Vinoteca El Sabor SRL · 2 productos manual
-  // Cobro: 100% transferencia · Entrega: 100% · factura emitida
-  // ─────────────────────────────────────────────────────────────────────────
-  {
-    id: "VTA-025",
-    fecha: "2026-05-21",
-    hora: "14:00",
-    cliente: { tipo: "cuenta", id: "CLI-004", nombre: "Vinoteca El Sabor SRL" },
-    items: [
-      {
-        sku: "VNO-DVCAT-CABS",
-        name: "DV Catena Cabernet Sauvignon",
-        quantity: 6,
-        unitPrice: 96090,
-        discount: 5,
-        discountType: "percent",
-        total: 547713,
-        categoria: "Vinos",
-      },
-      {
-        sku: "VNO-PROGRES-SYGA-2012",
-        name: "Proemio Grand Reserve Syrah Garnacha 2012",
-        quantity: 6,
-        unitPrice: 79860,
-        discount: 5,
-        discountType: "percent",
-        total: 455202,
-        categoria: "Vinos",
-      },
-    ],
-    subtotal: 1002915,
-    descuento: 0,
-    descuentoTipo: "percent",
-    envio: 7000,
-    total: 1009915,
-    entregaItems: [
-      { sku: "VNO-DVCAT-CABS", quantityEntregada: 6 },
-      { sku: "VNO-PROGRES-SYGA-2012", quantityEntregada: 6 },
-    ],
-    entregaEntries: [
-      {
-        id: "VTA-025-ENT-1",
-        fecha: "2026-05-21",
-        hora: "14:10",
-        items: [
-          { sku: "VNO-DVCAT-CABS", quantity: 6 },
-          { sku: "VNO-PROGRES-SYGA-2012", quantity: 6 },
-        ],
-      },
-    ],
-    cobros: [
-      { id: "COB-025-01", fecha: "2026-05-21", hora: "14:05", medioPago: "transferencia", monto: 1009915 },
-    ],
-    estado: "finalizada",
-    facturaEmitida: true,
-  },
+
 
   // ─────────────────────────────────────────────────────────────────────────
   // VTA-026 · EN CURSO · María González · 2 productos manual
