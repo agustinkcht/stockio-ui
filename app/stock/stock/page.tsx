@@ -18,10 +18,11 @@ import { useSidebar } from "@/hooks/use-sidebar"
 import { getUniqueCategorias, getUniqueMarcas, searchItems, filterItems } from "@/lib/utils/item-utils"
 
 // ─── Sort options ─────────────────────────────────────────────────────────────
-type QuickSortField = "nombre" | "enStock" | "stockDisponible"
+type QuickSortField = "nombre" | "enStock" | "stockReservado" | "stockDisponible"
 const QUICK_SORT_LABELS: Record<QuickSortField, string> = {
   nombre: "Nombre",
   enStock: "En Stock",
+  stockReservado: "Reservado",
   stockDisponible: "Disponible",
 }
 
@@ -477,12 +478,17 @@ export default function StockPage() {
                       <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Item</span>
                     </div>
                     <div className="relative flex items-center justify-center border-r border-slate-200/60">
-                      <div className="group relative flex items-center gap-1">
+                      <div className="flex items-center gap-1.5">
                         <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">En Stock</span>
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-slate-800 text-white text-[11px] rounded-md px-2.5 py-2 leading-relaxed opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150 z-50 shadow-lg">
-                          <p className="font-semibold mb-0.5">En Stock</p>
-                          <p className="text-slate-300">Unidades físicas presentes en depósito.</p>
-                          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800" />
+                        <div className="group relative">
+                          <div className="w-3.5 h-3.5 rounded-full border border-slate-400 flex items-center justify-center cursor-default text-slate-400 hover:text-slate-600 hover:border-slate-600 transition-colors">
+                            <span className="text-[9px] font-bold leading-none">i</span>
+                          </div>
+                          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 bg-slate-800 text-white text-[11px] rounded-md px-2.5 py-2 leading-relaxed opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150 z-50 shadow-lg">
+                            <p className="font-semibold mb-0.5">En Stock</p>
+                            <p className="text-slate-300">Unidades físicas presentes en depósito.</p>
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-slate-800" />
+                          </div>
                         </div>
                       </div>
                       {isEditMode && (
@@ -495,22 +501,32 @@ export default function StockPage() {
                       )}
                     </div>
                     <div className="flex items-center justify-center border-r border-slate-200/60">
-                      <div className="group relative flex items-center gap-1">
+                      <div className="flex items-center gap-1.5">
                         <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Reservado</span>
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 bg-slate-800 text-white text-[11px] rounded-md px-2.5 py-2 leading-relaxed opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150 z-50 shadow-lg">
-                          <p className="font-semibold mb-0.5">Reservado</p>
-                          <p className="text-slate-300">Unidades comprometidas a ventas en curso que aún no fueron entregadas.</p>
-                          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800" />
+                        <div className="group relative">
+                          <div className="w-3.5 h-3.5 rounded-full border border-slate-400 flex items-center justify-center cursor-default text-slate-400 hover:text-slate-600 hover:border-slate-600 transition-colors">
+                            <span className="text-[9px] font-bold leading-none">i</span>
+                          </div>
+                          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 bg-slate-800 text-white text-[11px] rounded-md px-2.5 py-2 leading-relaxed opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150 z-50 shadow-lg">
+                            <p className="font-semibold mb-0.5">Reservado</p>
+                            <p className="text-slate-300">Unidades comprometidas a ventas en curso que aún no fueron entregadas.</p>
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-slate-800" />
+                          </div>
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center justify-center">
-                      <div className="group relative flex items-center gap-1">
+                      <div className="flex items-center gap-1.5">
                         <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Disponible</span>
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-slate-800 text-white text-[11px] rounded-md px-2.5 py-2 leading-relaxed opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150 z-50 shadow-lg">
-                          <p className="font-semibold mb-0.5">Disponible</p>
-                          <p className="text-slate-300">Unidades listas para la venta.</p>
-                          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800" />
+                        <div className="group relative">
+                          <div className="w-3.5 h-3.5 rounded-full border border-slate-400 flex items-center justify-center cursor-default text-slate-400 hover:text-slate-600 hover:border-slate-600 transition-colors">
+                            <span className="text-[9px] font-bold leading-none">i</span>
+                          </div>
+                          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 bg-slate-800 text-white text-[11px] rounded-md px-2.5 py-2 leading-relaxed opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150 z-50 shadow-lg">
+                            <p className="font-semibold mb-0.5">Disponible</p>
+                            <p className="text-slate-300">Unidades listas para la venta.</p>
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-slate-800" />
+                          </div>
                         </div>
                       </div>
                     </div>
