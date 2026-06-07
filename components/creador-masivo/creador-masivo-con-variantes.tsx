@@ -1081,18 +1081,13 @@ export function CreadorMasivoConVariantes({
           </div>
         )
       
-      // Datos principales - SKU auto-generated
-      case "skuPadre": {
-        const skuSuffix = variant.atributosPrincipales
-          .map(a => a.value.substring(0, 3).toUpperCase())
-          .join("-")
-        const fullSku = parentRow.skuPadre ? `${parentRow.skuPadre}-${skuSuffix}` : skuSuffix
+      // Datos principales - SKU Prefijo (inherited from parent, read-only)
+      case "skuPadre":
         return (
           <div className={`w-full h-full flex items-center px-2 text-xs font-mono ${inactiveClass}`}>
-            {fullSku}
+            {parentRow.skuPadre || "-"}
           </div>
         )
-      }
       
       case "skuSufijo":
         return (
