@@ -94,7 +94,7 @@ export const PROVEEDORES: Proveedor[] = [
     codigoPostal: "5509",
     condicionIva: "Responsable Inscripto",
     tipo: "empresa",
-    transactionCount: 1, // COMP-005
+    transactionCount: 3, // COMP-001, COMP-002, COMP-003
   },
   {
     id: "PROV-006",
@@ -126,7 +126,7 @@ export const PROVEEDORES: Proveedor[] = [
     codigoPostal: "5509",
     condicionIva: "Responsable Inscripto",
     tipo: "empresa",
-    transactionCount: 1, // COMP-002
+    transactionCount: 2, // COMP-002, COMP-007
   },
   {
     id: "PROV-008",
@@ -206,7 +206,7 @@ export const PROVEEDORES: Proveedor[] = [
     codigoPostal: "5560",
     condicionIva: "Responsable Inscripto",
     tipo: "empresa",
-    transactionCount: 1, // COMP-001
+    transactionCount: 2, // COMP-001, COMP-008
   },
   {
     id: "PROV-013",
@@ -286,7 +286,7 @@ export const PROVEEDORES: Proveedor[] = [
     codigoPostal: "1414",
     condicionIva: "Responsable Inscripto",
     tipo: "empresa",
-    transactionCount: 0,
+    transactionCount: 1, // COMP-004
   },
   {
     id: "PROV-018",
@@ -318,7 +318,7 @@ export const PROVEEDORES: Proveedor[] = [
     codigoPostal: "1425",
     condicionIva: "Responsable Inscripto",
     tipo: "empresa",
-    transactionCount: 1, // COMP-007
+    transactionCount: 1, // COMP-006
   },
   {
     id: "PROV-020",
@@ -334,7 +334,7 @@ export const PROVEEDORES: Proveedor[] = [
     codigoPostal: "1001",
     condicionIva: "Responsable Inscripto",
     tipo: "empresa",
-    transactionCount: 1, // COMP-004
+    transactionCount: 1, // COMP-005
   },
   {
     id: "PROV-021",

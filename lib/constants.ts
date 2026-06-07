@@ -1,4 +1,4 @@
-import { Store, Box, Tag, HelpCircle, Settings, Receipt, Users, Wallet } from "lucide-react"
+import { Store, Box, Tag, Settings, Receipt, Users, Wallet, Package, LayoutList, LayoutDashboard } from "lucide-react"
 import type { SidebarItem, Template } from "./types"
 
 export const TEMPLATES: Template[] = [
@@ -151,15 +151,18 @@ export const TEMPLATES: Template[] = [
 export const SIDEBAR_ITEMS: SidebarItem[] = [
   {
     icon: Store,
-    label: "Mi Negocio",
-    hasDropdown: true,
-    dropdown: [{ label: "Punto de Venta", href: "/mi-negocio/pdv" }],
+    label: "PDV",
+    href: "/pdv",
+    dividerAfter: true,
   },
   {
     icon: Receipt,
     label: "Ventas",
     hasDropdown: true,
-    dropdown: [{ label: "Ventas", href: "/ventas/ventas" }],
+    dropdown: [
+      { label: "Ventas", href: "/ventas/ventas" },
+      { label: "Presupuestos", href: "/ventas/presupuestos" },
+    ],
   },
   {
     icon: Wallet,
@@ -167,7 +170,7 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     hasDropdown: true,
     dropdown: [
       { label: "Compras", href: "/compras/compras" },
-      { label: "Portal de Compras", href: "/compras/portal-de-compras" },
+      { label: "Ordenes de Compra", href: "/compras/ordenes-de-compra" },
     ],
   },
   {
@@ -180,21 +183,34 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     ],
   },
   {
+    icon: LayoutList,
+    label: "Catálogo",
+    hasDropdown: true,
+    dropdown: [{ label: "Items", href: "/catalogo/items" }],
+  },
+  {
     icon: Tag,
     label: "Precios",
     hasDropdown: true,
-    dropdown: [{ label: "Listas de Precios", href: "/precios/lista-de-precios" }],
+    dropdown: [{ label: "Lista de Precios", href: "/precios/lista-de-precios" }],
   },
   {
     icon: Box,
-    label: "Inventario",
+    label: "Stock",
     hasDropdown: true,
-    dropdown: [{ label: "Artículos", href: "/inventario/articulos" }],
+    dividerAfter: true,
+    dropdown: [
+      { label: "Stock", href: "/stock/stock" },
+    ],
+  },
+  {
+    icon: LayoutDashboard,
+    label: "Dashboard",
+    href: "/dashboard",
   },
 ]
 
 export const BOTTOM_SIDEBAR_ITEMS: SidebarItem[] = [
-  { icon: HelpCircle, label: "Soporte" },
   { icon: Settings, label: "Ajustes" },
 ]
 

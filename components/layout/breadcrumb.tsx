@@ -11,9 +11,11 @@ interface BreadcrumbItem {
 
 interface BreadcrumbProps {
   items?: BreadcrumbItem[]
+  // Optional intercept — if provided, breadcrumb clicks call this instead of navigating directly
+  onNavigate?: (href: string) => void
 }
 
-export function Breadcrumb({ items }: BreadcrumbProps) {
+export function Breadcrumb({ items, onNavigate }: BreadcrumbProps) {
   const pathname = usePathname()
 
   // Generate breadcrumb items based on current path if not provided
@@ -27,9 +29,18 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
         return (
           <div key={index} className="flex items-center gap-1.5">
             {item.href && !isLast ? (
-              <Link href={item.href} className="text-gray-600 hover:text-gray-900 cursor-pointer transition-colors">
-                {item.label}
-              </Link>
+              onNavigate ? (
+                <button
+                  onClick={() => onNavigate(item.href!)}
+                  className="text-gray-600 hover:text-gray-900 cursor-pointer transition-colors bg-transparent border-none p-0 text-sm"
+                >
+                  {item.label}
+                </button>
+              ) : (
+                <Link href={item.href} className="text-gray-600 hover:text-gray-900 cursor-pointer transition-colors">
+                  {item.label}
+                </Link>
+              )
             ) : (
               <span className={isLast ? "text-gray-900 font-medium" : "text-gray-600"}>{item.label}</span>
             )}
@@ -50,6 +61,11 @@ function generateBreadcrumbs(pathname: string): BreadcrumbItem[] {
   // Depositos page
   if (pathname === "/depositos") {
     return [{ label: "Inventario" }, { label: "Depósitos", href: "/depositos" }]
+  }
+
+  // Punto de Venta page
+  if (pathname === "/pdv") {
+    return [{ label: "Punto de Venta", href: "/pdv" }]
   }
 
   // Default fallback

@@ -8,6 +8,70 @@ import type {
   FilterConfig,
 } from "../types"
 
+/**
+ * Generates a cryptographically random 7-character base-36 uppercase ID
+ * prefixed by item type: STA (standalone), PAR (parent), VAR (child/variant).
+ * Format: {PREFIX}{7 chars} e.g. "STA0GB8E5Z"
+ */
+export function generateId(type: "STA" | "PAR" | "VAR"): string {
+  const bytes = new Uint32Array(1)
+  crypto.getRandomValues(bytes)
+  const code = bytes[0].toString(36).padStart(7, "0").toUpperCase()
+  return `${type}${code}`
+}
+
+/**
+ * Gets the full SKU for an item based on its type:
+ * - Standalone items: returns `item.sku`
+ * - Parent items: returns `item.skuPrefix` (not a "full" SKU, just the prefix)
+ * - Child items (variants): returns `{parentSkuPrefix}-{variant.skuSuffix}`
+ *
+ * @param item - The item or variant to get the SKU for
+ * @param parentSkuPrefix - Required for child items (variants) to compute full SKU
+ * @returns The full SKU string, or undefined if not available
+ */
+export function getFullSku(
+  item: Item | ItemVariant,
+  parentSkuPrefix?: string | null
+): string | undefined {
+  // If parentSkuPrefix is provided, this is a child/variant
+  if (parentSkuPrefix) {
+    const variant = item as ItemVariant
+    const suffix = variant.skuSuffix || variant.sku // fallback to sku for backwards compatibility
+    if (suffix) {
+      return `${parentSkuPrefix}-${suffix}`
+    }
+    return undefined
+  }
+
+  // For standalone or parent items
+  const fullItem = item as Item
+
+  // Standalone items use `sku` directly
+  if (!fullItem.hasVariants && fullItem.sku) {
+    return fullItem.sku
+  }
+
+  // Parent items use `skuPrefix` (the "sku padre")
+  if (fullItem.hasVariants && fullItem.skuPrefix) {
+    return fullItem.skuPrefix
+  }
+
+  // Fallback to sku field for backwards compatibility
+  return fullItem.sku
+}
+
+/**
+ * Gets just the SKU prefix for a parent item, or the full SKU for standalone items.
+ * Use this when you need the parent's prefix to pass to getFullSku for children.
+ */
+export function getSkuPrefix(item: Item): string | undefined {
+  if (item.hasVariants) {
+    return item.skuPrefix || item.sku
+  }
+  return item.sku
+}
+
 export function getItemDisplayName(item: Item): string {
   const attributes = []
 
@@ -77,11 +141,20 @@ export function searchItems(items: Item[], searchQuery: string): Item[] {
   }
 
   // Helper function to collect searchable fields from an item
-  const getSearchableFields = (item: Item | ItemVariant): string[] => {
+  const getSearchableFields = (item: Item | ItemVariant, parentSkuPrefix?: string): string[] => {
     const fields: string[] = []
-
+  
     if (item.name) fields.push(item.name)
+    // Include all SKU-related fields for search
     if (item.sku) fields.push(item.sku)
+    if ("skuPrefix" in item && item.skuPrefix) fields.push(item.skuPrefix)
+    if ("skuSuffix" in item && item.skuSuffix) {
+      fields.push(item.skuSuffix)
+      // Also include computed full SKU for children
+      if (parentSkuPrefix) {
+        fields.push(`${parentSkuPrefix}-${item.skuSuffix}`)
+      }
+    }
     if (item.marca) fields.push(item.marca)
     if ("categoria" in item && item.categoria) fields.push(item.categoria)
     if ("modelo" in item && item.modelo) fields.push(item.modelo)
@@ -116,10 +189,11 @@ export function searchItems(items: Item[], searchQuery: string): Item[] {
         if (subItem.hasVariants && subItem.variants) {
           const matchingVariants: ItemVariant[] = []
 
-          for (const variant of subItem.variants) {
-            const variantFields = getSearchableFields(variant)
+        for (const variant of subItem.variants) {
+            const parentPrefix = subItem.skuPrefix || subItem.sku
+            const variantFields = getSearchableFields(variant, parentPrefix)
             const combinedFields = [...subItemFields, ...variantFields]
-
+  
             if (matchesSearch(combinedFields)) {
               matchingVariants.push(variant)
             }
@@ -150,10 +224,11 @@ export function searchItems(items: Item[], searchQuery: string): Item[] {
       const baseFields = getSearchableFields(item)
       const matchingVariants: ItemVariant[] = []
 
-      for (const variant of item.variants) {
-        const variantFields = getSearchableFields(variant)
+    for (const variant of item.variants) {
+        const parentPrefix = item.skuPrefix || item.sku
+        const variantFields = getSearchableFields(variant, parentPrefix)
         const combinedFields = [...baseFields, ...variantFields]
-
+  
         if (matchesSearch(combinedFields)) {
           matchingVariants.push(variant)
         }
@@ -205,6 +280,7 @@ function compareItems(a: Item, b: Item, factor: SortFactor, direction: SortDirec
 
   switch (factor) {
     case "titulo":
+    case "nombre":
       comparison = (a.name || "").localeCompare(b.name || "")
       break
 
@@ -222,11 +298,33 @@ function compareItems(a: Item, b: Item, factor: SortFactor, direction: SortDirec
       comparison = (a.sku || "").localeCompare(b.sku || "")
       break
 
-    case "stock":
+    case "stock": {
       const stockA = Number.parseFloat(a.stock?.total || "0")
       const stockB = Number.parseFloat(b.stock?.total || "0")
       comparison = stockA - stockB
       break
+    }
+
+    case "costo": {
+      const costoA = a.precio?.costo ?? a.costo ?? 0
+      const costoB = b.precio?.costo ?? b.costo ?? 0
+      comparison = costoA - costoB
+      break
+    }
+
+    case "margen": {
+      const margenA = a.precio?.margen ?? a.margen ?? 0
+      const margenB = b.precio?.margen ?? b.margen ?? 0
+      comparison = margenA - margenB
+      break
+    }
+
+    case "precioFinal": {
+      const pfA = a.precio?.precioFinal ?? a.precioVenta ?? 0
+      const pfB = b.precio?.precioFinal ?? b.precioVenta ?? 0
+      comparison = pfA - pfB
+      break
+    }
   }
 
   return direction === "asc" ? comparison : -comparison
@@ -242,6 +340,7 @@ export function filterItems(items: Item[], filterConfig: FilterConfig): Item[] {
     (filterConfig.tipos.length === 0 &&
       filterConfig.categorias.length === 0 &&
       filterConfig.marcas.length === 0 &&
+      (filterConfig.proveedores?.length || 0) === 0 &&
       filterConfig.stock.length === 0 &&
       filterConfig.depositos.length === 0)
   ) {
@@ -278,9 +377,16 @@ export function filterItems(items: Item[], filterConfig: FilterConfig): Item[] {
       }
     }
 
+    // Filter by proveedor
+    if (filterConfig.proveedores && filterConfig.proveedores.length > 0) {
+      if (!(item as any).proveedor || !filterConfig.proveedores.includes((item as any).proveedor)) {
+        return false
+      }
+    }
+
     // Filter by stock status
     if (filterConfig.stock.length > 0) {
-      const total = Number.parseFloat(item.stock?.total || "0")
+      const total = Number.parseFloat((item.stock as any)?.enStock || item.stock?.total || "0")
       const disponible = Number.parseFloat(item.stock?.disponible || "0")
       const reservado = Number.parseFloat(item.stock?.reservado || "0")
 
@@ -293,6 +399,9 @@ export function filterItems(items: Item[], filterConfig: FilterConfig): Item[] {
         matchesStock = true
       }
       if (filterConfig.stock.includes("reservado") && reservado > 0) {
+        matchesStock = true
+      }
+      if (filterConfig.stock.includes("sin-disponible") && disponible === 0) {
         matchesStock = true
       }
 
@@ -352,4 +461,28 @@ export function getUniqueMarcas(items: Item[]): string[] {
   })
 
   return Array.from(marcas).sort()
+}
+
+/**
+* Get unique proveedores from items list
+*/
+export function getUniqueProveedores(items: Item[]): string[] {
+  const proveedores = new Set<string>()
+
+  items.forEach((item) => {
+    if ((item as any).proveedor) {
+      proveedores.add((item as any).proveedor)
+    }
+
+    // Also check sub-items in agrupadores
+    if (item.isAgrupador && item.items) {
+      item.items.forEach((subItem) => {
+        if ((subItem as any).proveedor) {
+          proveedores.add((subItem as any).proveedor)
+        }
+      })
+    }
+  })
+
+  return Array.from(proveedores).sort()
 }

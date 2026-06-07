@@ -30,7 +30,7 @@ export const CLIENTES: Cliente[] = [
     codigoPostal: "1043",
     condicionIva: "Consumidor Final",
     tipo: "particular",
-    transactionCount: 2, // VTA-002, VTA-008
+    transactionCount: 3, // VTA-002, VTA-008, VTA-019
   },
   {
     id: "CLI-002",
@@ -45,7 +45,7 @@ export const CLIENTES: Cliente[] = [
     codigoPostal: "1005",
     condicionIva: "Monotributista",
     tipo: "particular",
-    transactionCount: 2, // VTA-005, VTA-011
+    transactionCount: 4, // VTA-005, VTA-011, VTA-011, VTA-026
   },
   {
     id: "CLI-003",
@@ -61,7 +61,7 @@ export const CLIENTES: Cliente[] = [
     codigoPostal: "1638",
     condicionIva: "Responsable Inscripto",
     tipo: "empresa",
-    transactionCount: 2, // VTA-001, VTA-007
+    transactionCount: 4, // VTA-001, VTA-007, VTA-014, VTA-029
   },
   {
     id: "CLI-004",
@@ -77,7 +77,7 @@ export const CLIENTES: Cliente[] = [
     codigoPostal: "1123",
     condicionIva: "Responsable Inscripto",
     tipo: "empresa",
-    transactionCount: 2, // VTA-003, VTA-009
+    transactionCount: 4, // VTA-003, VTA-009, VTA-012, VTA-025
   },
   {
     id: "CLI-005",
@@ -92,7 +92,7 @@ export const CLIENTES: Cliente[] = [
     codigoPostal: "1049",
     condicionIva: "Consumidor Final",
     tipo: "particular",
-    transactionCount: 2, // VTA-006, VTA-012
+    transactionCount: 3, // VTA-006, VTA-009, VTA-013
   },
   {
     id: "CLI-006",
@@ -108,7 +108,7 @@ export const CLIENTES: Cliente[] = [
     codigoPostal: "1022",
     condicionIva: "Responsable Inscripto",
     tipo: "empresa",
-    transactionCount: 2, // VTA-004, VTA-010
+    transactionCount: 4, // VTA-004, VTA-010, VTA-021, VTA-028
   },
   {
     id: "CLI-007",
@@ -123,7 +123,7 @@ export const CLIENTES: Cliente[] = [
     codigoPostal: "1225",
     condicionIva: "Consumidor Final",
     tipo: "particular",
-    transactionCount: 0,
+    transactionCount: 1, // VTA-024
   },
   {
     id: "CLI-008",
@@ -138,7 +138,7 @@ export const CLIENTES: Cliente[] = [
     codigoPostal: "1093",
     condicionIva: "Monotributista",
     tipo: "particular",
-    transactionCount: 0,
+    transactionCount: 0, // VTA-022 cancelada
   },
   {
     id: "CLI-009",
@@ -153,7 +153,7 @@ export const CLIENTES: Cliente[] = [
     codigoPostal: "1405",
     condicionIva: "Consumidor Final",
     tipo: "particular",
-    transactionCount: 0,
+    transactionCount: 1, // VTA-018
   },
   {
     id: "CLI-010",
@@ -169,7 +169,7 @@ export const CLIENTES: Cliente[] = [
     codigoPostal: "1425",
     condicionIva: "Responsable Inscripto",
     tipo: "empresa",
-    transactionCount: 0,
+    transactionCount: 2, // VTA-005, VTA-016
   },
   {
     id: "CLI-011",
@@ -185,7 +185,7 @@ export const CLIENTES: Cliente[] = [
     codigoPostal: "1870",
     condicionIva: "Responsable Inscripto",
     tipo: "empresa",
-    transactionCount: 0,
+    transactionCount: 2, // VTA-006, VTA-020
   },
   {
     id: "CLI-012",
@@ -200,6 +200,6 @@ export const CLIENTES: Cliente[] = [
     codigoPostal: "1097",
     condicionIva: "Consumidor Final",
     tipo: "particular",
-    transactionCount: 0,
+    transactionCount: 2, // VTA-017, VTA-030
   },
 ]

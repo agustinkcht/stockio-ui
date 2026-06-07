@@ -1,12 +1,16 @@
 "use client"
 
 import type { Item, ItemVariant, SortFactorConfig, FilterConfig } from "@/lib/types"
-import { Plus, ArrowUpDown, ListFilterIcon, Search, X, ChevronDown, ChevronRight, Copy, Grid3x3 } from "lucide-react"
+import { Plus, ChevronDown, ChevronRight, Copy, Minus, MoreVertical } from "lucide-react"
+import { getCategoryImage } from "@/lib/utils/category-images"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { useRef, useState, useEffect, useMemo } from "react"
-import { searchItems, sortItems, filterItems, getUniqueCategorias, getUniqueMarcas } from "@/lib/utils/item-utils"
-import { OrdenModalPrecios } from "@/components/modals/orden-modal-precios"
-import { FiltrosModalPrecios } from "@/components/modals/filtros-modal-precios"
+import { Checkbox } from "@/components/ui/checkbox"
+import { useRef, useState, useEffect, useMemo, useCallback } from "react"
+import { usePriceSelection } from "@/hooks/use-price-selection"
+import { searchItems, sortItems, filterItems, getUniqueCategorias, getUniqueMarcas, getUniqueProveedores } from "@/lib/utils/item-utils"
+import { BulkPriceModal } from "@/components/modals/bulk-price-modals"
+import { useSettings } from "@/lib/contexts/settings-context"
 
 interface PricingData {
   costo: number
@@ -15,19 +19,29 @@ interface PricingData {
   precioFinal: number
 }
 
+type BulkModalType = "costo" | "precioFinal" | "margen" | "iva" | null
+
 interface PriceGridProps {
   items: Item[]
   gridSize: string
-  itemSelected: boolean[]
   expandedItems: Record<number, boolean>
-  handleItemButtonClick: (index: number) => void
   toggleVariantExpansion: (index: number) => void
-  selectAllActive: boolean
-  handleSelectAllClick: () => void
   gridSizeDropdownOpen: boolean
   setGridSizeDropdownOpen: (value: boolean) => void
   setGridSize: (size: string) => void
   onPriceFieldChange?: (itemSku: string, field: string, value: any) => void
+  onBulkEdit?: (type: BulkModalType, operation: string, value: number, unit: string, targetSkus: string[]) => void
+  // Lifted state from page
+  searchTerm: string
+  activeFilters: FilterConfig
+  sortPriorities: SortFactorConfig[]
+  // Selection callbacks to page
+  onSelectionChange?: (count: number, has: boolean, selectAll: boolean, selectAllIndeterminate: boolean, handleSelectAll: () => void) => void
+  isEditMode?: boolean
+  precioFinalMode?: "con_iva" | "sin_iva"
+  onPrecioFinalModeChange?: (mode: "con_iva" | "sin_iva") => void
+  onBulkModalOpen?: (type: BulkModalType) => void
+  bulkModalOpenRef?: React.MutableRefObject<(type: BulkModalType) => void>
 }
 
 const IVA_OPTIONS = [
@@ -39,39 +53,63 @@ const IVA_OPTIONS = [
 export function PriceGrid({
   items,
   gridSize,
-  itemSelected,
   expandedItems,
-  handleItemButtonClick,
   toggleVariantExpansion,
-  selectAllActive,
-  handleSelectAllClick,
   gridSizeDropdownOpen,
   setGridSizeDropdownOpen,
   setGridSize,
   onPriceFieldChange,
+  onBulkEdit,
+  searchTerm = "",
+  activeFilters = { tipos: [], categorias: [], marcas: [], proveedores: [], stock: [], depositos: [] },
+  sortPriorities = [{ factor: "nombre" as const, direction: "asc" as const }],
+  onSelectionChange,
+  isEditMode = false,
+  precioFinalMode: precioFinalModeProp,
+  onPrecioFinalModeChange,
+  onBulkModalOpen,
+  bulkModalOpenRef,
 }: PriceGridProps) {
-  const orderRef = useRef<HTMLDivElement>(null)
-  const filterRef = useRef<HTMLDivElement>(null)
-  const accionRef = useRef<HTMLDivElement>(null)
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
+  const {
+    selectAllActive,
+    selectAllIndeterminate,
+    handleItemSelection,
+    handleSelectAll,
+    getSelectionState,
+    isParentItem: checkIsParent,
+    selectedCount,
+    hasSelectedItems,
+    getSelectedSkus,
+  } = usePriceSelection(items)
+  const { precios: preciosSettings } = useSettings()
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
+  const [bulkModalType, setBulkModalType] = useState<BulkModalType>(null)
 
-  const [showOrderModal, setShowOrderModal] = useState(false)
-  const [showFilterModal, setShowFilterModal] = useState(false)
-  const [showAccionDropdown, setShowAccionDropdown] = useState(false)
-  const [searchTerm, setSearchTerm] = useState("")
-
-  const [activeFilters, setActiveFilters] = useState<FilterConfig>({
-    tipos: [],
-    categorias: [],
-    marcas: [],
-    stock: [],
-    depositos: [],
+  // Notify parent of selection state changes
+  const onSelectionChangeRef = useRef(onSelectionChange)
+  useEffect(() => { onSelectionChangeRef.current = onSelectionChange }, [onSelectionChange])
+  useEffect(() => {
+    onSelectionChangeRef.current?.(selectedCount, hasSelectedItems, selectAllActive, selectAllIndeterminate, handleSelectAll)
+  }, [selectedCount, hasSelectedItems, selectAllActive, selectAllIndeterminate, handleSelectAll])
+  const [precioFinalModeInternal, setPrecioFinalModeInternal] = useState<"con_iva" | "sin_iva">("con_iva")
+  const precioFinalMode = precioFinalModeProp ?? precioFinalModeInternal
+  const setPrecioFinalMode = (mode: "con_iva" | "sin_iva") => {
+    setPrecioFinalModeInternal(mode)
+    onPrecioFinalModeChange?.(mode)
+  }
+  const handleBulkModalOpen = (type: BulkModalType) => {
+    setBulkModalType(type)
+    onBulkModalOpen?.(type)
+  }
+  // Expose trigger to parent via ref (same pattern as gridHandleSelectAllRef)
+  useEffect(() => {
+    if (bulkModalOpenRef) bulkModalOpenRef.current = handleBulkModalOpen
   })
-
-  const [sortPriorities, setSortPriorities] = useState<SortFactorConfig[]>([{ factor: "categoria", direction: "asc" }])
+  const [showPrecioModeDropdown, setShowPrecioModeDropdown] = useState(false)
 
   const availableCategorias = useMemo(() => getUniqueCategorias(items), [items])
   const availableMarcas = useMemo(() => getUniqueMarcas(items), [items])
+  const availableProveedores = useMemo(() => getUniqueProveedores(items), [items])
   const availableDepositos = useMemo(() => ["Torcuato", "Trujui"], [])
 
   const searchedItems = useMemo(() => searchItems(items, searchTerm), [items, searchTerm])
@@ -81,13 +119,72 @@ export function PriceGrid({
     [filteredItems, sortPriorities],
   )
 
-  const calculatePrecioFinal = (costo: number, margen: number, iva: number): number => {
-    return Math.round(costo * (1 + margen / 100) * (1 + iva / 100))
+  // Get all visible SKUs (from sorted and filtered items)
+  const getVisibleSkus = useCallback((itemList: Item[]): string[] => {
+    const skus: string[] = []
+    for (const item of itemList) {
+      const isParent = (item.variants && item.variants.length > 0) || (item.items && item.items.length > 0)
+      if (isParent) {
+        const children = item.variants || item.items || []
+        for (const child of children) {
+          // Prefer sku over id for consistency with lookup functions
+          const sku = (child as any).sku || (child as any).id
+          if (sku) skus.push(sku)
+        }
+      } else {
+        // Prefer sku over id for consistency with lookup functions
+        const sku = item.sku || (item as any).id
+        if (sku) skus.push(sku)
+      }
+    }
+    return skus
+  }, [])
+
+  // Get target SKUs for bulk edit (selected items take priority over visible items)
+  const getTargetSkusForBulkEdit = useCallback((): string[] => {
+    if (hasSelectedItems) {
+      return getSelectedSkus()
+    }
+    return getVisibleSkus(sortedAndFilteredItems)
+  }, [hasSelectedItems, getSelectedSkus, getVisibleSkus, sortedAndFilteredItems])
+
+  // Get count of items that will be affected by bulk edit
+  const bulkEditTargetCount = useMemo(() => {
+    return getTargetSkusForBulkEdit().length
+  }, [getTargetSkusForBulkEdit])
+
+  // Get modal title based on type
+  const getBulkModalTitle = (type: BulkModalType): string => {
+    switch (type) {
+      case "costo":
+        return "Editar Costo de x items"
+      case "precioFinal":
+        return "Editar Precio de Venta de x items"
+      case "margen":
+        return "Editar Margen de x items"
+      case "iva":
+        return "Editar IVA de x items"
+      default:
+        return ""
+    }
   }
 
-  const calculateMargen = (precioFinal: number, costo: number, iva: number): number => {
+  // Handle bulk edit apply
+  const handleBulkEditApply = (operation: string, value: number, unit: string) => {
+    const targetSkus = getTargetSkusForBulkEdit()
+    if (onBulkEdit && bulkModalType) {
+      onBulkEdit(bulkModalType, operation, value, unit, targetSkus)
+    }
+    setBulkModalType(null)
+  }
+
+  const calculatePrecioFinal = (costo: number, margen: number): number => {
+    return Math.round(costo * (1 + margen / 100))
+  }
+
+  const calculateMargen = (precioFinal: number, costo: number): number => {
     if (costo === 0) return 0
-    return Math.round((precioFinal / (costo * (1 + iva / 100)) - 1) * 1000) / 10
+    return Math.round((precioFinal / costo - 1) * 1000) / 10
   }
 
   const updatePricingField = (
@@ -106,10 +203,22 @@ export function PriceGrid({
     const updated = { ...currentPricing, [field]: formattedValue }
 
     if (field === "precioFinal") {
-      updated.margen = calculateMargen(formattedValue, updated.costo, updated.iva)
-    } else {
-      updated.precioFinal = calculatePrecioFinal(updated.costo, updated.margen, updated.iva)
+      // When editing precio final, always recalculate margen
+      updated.margen = calculateMargen(formattedValue, updated.costo)
+    } else if (field === "costo") {
+      // When editing costo, behavior depends on settings
+      if (preciosSettings.costoBehavior === "preservePrecioFinal") {
+        // Preserve precio final, recalculate margen
+        updated.margen = calculateMargen(updated.precioFinal, formattedValue)
+      } else {
+        // Preserve margen, recalculate precio final
+        updated.precioFinal = calculatePrecioFinal(formattedValue, updated.margen)
+      }
+    } else if (field === "margen") {
+      // When editing margen, always recalculate precio final
+      updated.precioFinal = calculatePrecioFinal(updated.costo, formattedValue)
     }
+    // IVA changes don't affect other fields
 
     if (onPriceFieldChange) {
       onPriceFieldChange(itemSku, "precio", updated)
@@ -118,21 +227,13 @@ export function PriceGrid({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (orderRef.current && !orderRef.current.contains(event.target as Node)) {
-        setShowOrderModal(false)
-      }
-      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
-        setShowFilterModal(false)
-      }
-      if (accionRef.current && !accionRef.current.contains(event.target as Node)) {
-        setShowAccionDropdown(false)
+      const target = event.target as HTMLElement
+      if (!target.closest("[data-precio-dropdown]")) {
+        setShowPrecioModeDropdown(false)
       }
     }
-
     document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
+    return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
   const getFullTitle = (item: Item | ItemVariant, isChild = false): string => {
@@ -164,144 +265,181 @@ export function PriceGrid({
     return { costo: 0, margen: 0, iva: 21, precioFinal: 0 }
   }
 
-  const renderItemRow = (item: Item, index: number, isChild = false, isLastChild = false) => {
+  // cols: grid-cols-12 — 6 item | 2 costo | 1 margen | 1 iva | 2 precio venta
+  const COLS = "grid-cols-12"
+
+  const renderItemRow = (item: Item, index: number, isChild = false, isLastChild = false, parentProveedor?: string) => {
     const isParent = !isChild && ((item.variants && item.variants.length > 0) || (item.items && item.items.length > 0))
     const children = item.variants || item.items || []
     const isExpanded = expandedItems[index]
-    const isHovered = hoveredIndex === index
-
-    const itemKey = item.sku || `item-${index}`
+    const itemId = item.sku || (item as any).id || `item-${index}`
+    const isHovered = hoveredId === itemId
+    const itemKey = itemId
     const itemPricing = getItemPricing(item)
-
-    const heightClass = gridSize === "sm" ? "h-[44px]" : gridSize === "md" ? "h-[60px]" : "h-[76px]"
+    const selectionState = getSelectionState(item, isChild)
+    const hasCosto = itemPricing.costo > 0
 
     return (
       <div key={item.sku || index}>
         <div
-          className={`grid grid-cols-[4fr_2fr_1fr_1fr_2fr] gap-0 ${heightClass} items-center transition-colors border-b border-border/30 ${
-            isHovered ? "bg-accent/50" : ""
-          } ${isChild ? "bg-slate-50/50" : ""}`}
-          onMouseEnter={() => setHoveredIndex(index)}
-          onMouseLeave={() => setHoveredIndex(null)}
+          className={`grid ${COLS} h-[60px] items-center transition-colors ${
+            isHovered ? "bg-blue-50/50" : isChild ? "bg-slate-50/40" : "bg-white"
+          }`}
+          onMouseEnter={() => setHoveredId(itemId)}
+          onMouseLeave={() => setHoveredId(null)}
         >
-          <div className="flex items-center gap-2 px-4 min-w-0 border-r border-border/30 h-full">
-            {isParent && (
-              <>
+          {/* Item info — col-span-6 */}
+          <div className="col-span-6 flex items-center gap-2.5 min-w-0 px-4 h-full border-r border-slate-100">
+            {/* Checkbox — inline, same as stock grid */}
+            <div className={`transition-opacity shrink-0 ${isHovered || selectionState.checked ? "opacity-100" : "opacity-0"}`}>
+              {selectionState.indeterminate ? (
                 <button
-                  onClick={() => toggleVariantExpansion(index)}
-                  className="text-gray-600 hover:text-gray-900 cursor-pointer shrink-0"
+                  onClick={() => handleItemSelection(item, isChild)}
+                  className="flex items-center justify-center w-4 h-4 border border-primary bg-primary rounded-[4px] cursor-pointer"
                 >
-                  {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                  <Minus className="w-3 h-3 text-primary-foreground" />
                 </button>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-gray-900 truncate">{item.name}</div>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
-                    {item.marca && item.categoria && <span className="text-xs text-muted-foreground">·</span>}
-                    {item.categoria && <span className="text-xs text-muted-foreground">{item.categoria}</span>}
-                  </div>
-                </div>
-              </>
-            )}
-            {!isParent && (
-              <div className="flex-1 min-w-0">
-                <div className="text-sm text-gray-900 truncate">{getFullTitle(item)}</div>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  {!isChild && item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
-                  {!isChild && item.marca && item.categoria && <span className="text-xs text-muted-foreground">·</span>}
-                  {!isChild && item.categoria && (
-                    <span className="text-xs text-muted-foreground">{item.categoria}</span>
-                  )}
-                  {!isChild && (item.marca || item.categoria) && (
-                    <span className="text-xs text-muted-foreground">·</span>
-                  )}
-                  <span className="text-xs text-muted-foreground">{item.sku}</span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      navigator.clipboard.writeText(item.sku)
-                    }}
-                    className="inline-flex items-center p-0.5 text-muted-foreground hover:text-foreground transition-colors"
-                    title="Copiar SKU"
-                  >
-                    <Copy className="w-3 h-3" />
-                  </button>
-                </div>
+              ) : (
+                <Checkbox
+                  checked={selectionState.checked}
+                  onCheckedChange={() => handleItemSelection(item, isChild)}
+                  className="cursor-pointer"
+                />
+              )}
+            </div>
+
+            {/* Thumbnail-style expand toggle (parent) or image tile (child/standalone) */}
+            {isParent ? (
+              <button
+                onClick={() => toggleVariantExpansion(index)}
+                className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-md bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer text-slate-400 hover:text-slate-600"
+              >
+                {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+            ) : (
+              <div className="w-9 h-9 shrink-0 rounded-md bg-slate-100 overflow-hidden flex items-center justify-center">
+                <Image
+                  src={getCategoryImage(item.categoria || "")}
+                  alt={item.name}
+                  width={36}
+                  height={36}
+                  className="object-cover w-full h-full"
+                />
               </div>
             )}
+            <div className="flex-1 min-w-0">
+              {isChild ? (
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-sm font-medium text-slate-800 truncate">{item.name}</span>
+                  {item.atributosPrincipales?.map((attr, idx) =>
+                    attr.value ? (
+                      <span key={idx} className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-900 border border-blue-100 whitespace-nowrap shrink-0">
+                        {attr.value}
+                      </span>
+                    ) : null
+                  )}
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm font-medium text-slate-800 truncate">{getFullTitle(item)}</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    {item.marca && <span className="text-xs text-slate-400">{item.marca}</span>}
+                    {item.marca && item.categoria && <span className="text-xs text-slate-300">·</span>}
+                    {item.categoria && <span className="text-xs text-slate-400">{item.categoria}</span>}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {isParent ? (
             <>
-              <div className="border-r border-border/30 h-full" />
-              <div className="border-r border-border/30 h-full" />
-              <div className="border-r border-border/30 h-full" />
+              <div className="col-span-2 h-full" />
+              <div className="col-span-1 h-full" />
+              <div className="col-span-1 h-full" />
+              <div className="col-span-2 h-full" />
             </>
           ) : (
             <>
-              <div className="flex items-center justify-center px-2 border-r border-border/30 h-full">
-                <div className="flex items-center gap-1 w-full">
-                  <span className="text-xs text-gray-500">$</span>
+              {/* Costo — col-span-2 */}
+              <div className="col-span-2 flex items-center px-3 h-full border-l border-slate-100">
+                <span className="text-xs text-slate-400 mr-1">$</span>
+                {isEditMode ? (
                   <input
                     type="number"
                     value={itemPricing.costo || ""}
-                    onChange={(e) =>
-                      updatePricingField(itemKey, "costo", Number.parseFloat(e.target.value) || 0, itemPricing)
-                    }
-                    className="w-full text-sm text-gray-900 bg-transparent border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
+                    onChange={(e) => updatePricingField(itemKey, "costo", Number.parseFloat(e.target.value) || 0, itemPricing)}
+                    className="w-full text-sm text-slate-700 bg-transparent border-0 focus:outline-none focus:bg-slate-50 rounded px-1 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     placeholder="0"
                     step="1"
                   />
-                </div>
+                ) : (
+                  <span className="text-sm text-slate-700 tabular-nums px-1">{itemPricing.costo ? itemPricing.costo.toLocaleString("es-AR") : "—"}</span>
+                )}
               </div>
 
-              <div
-                className={`flex items-center justify-center px-2 border-r border-border/30 h-full ${itemPricing.margen < 0 ? "bg-red-50" : ""}`}
-              >
-                <div className="flex items-center gap-0.5 w-full">
+              {/* Margen — col-span-1 */}
+              <div className={`col-span-1 flex items-center px-3 h-full border-l border-slate-100 ${itemPricing.margen < 0 ? "bg-red-50/40" : ""} ${!hasCosto ? "opacity-40" : ""}`}>
+                {isEditMode ? (
                   <input
                     type="number"
                     value={itemPricing.margen || ""}
-                    onChange={(e) =>
-                      updatePricingField(itemKey, "margen", Number.parseFloat(e.target.value) || 0, itemPricing)
-                    }
-                    className={`w-full text-sm bg-transparent border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 text-center ${itemPricing.margen < 0 ? "text-red-700" : "text-gray-900"}`}
-                    placeholder="0.0"
+                    onChange={(e) => updatePricingField(itemKey, "margen", Number.parseFloat(e.target.value) || 0, itemPricing)}
+                    disabled={!hasCosto}
+                    className={`w-full text-sm bg-transparent border-0 focus:outline-none focus:bg-slate-50 rounded px-1 tabular-nums ${itemPricing.margen < 0 ? "text-red-600" : "text-slate-700"} ${!hasCosto ? "cursor-not-allowed" : ""} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
+                    placeholder="0"
                     step="0.1"
                   />
-                  <span className={`text-xs ${itemPricing.margen < 0 ? "text-red-500" : "text-gray-500"}`}>%</span>
-                </div>
+                ) : (
+                  <span className={`text-sm tabular-nums px-1 ${itemPricing.margen < 0 ? "text-red-600" : "text-slate-700"}`}>{itemPricing.margen != null ? itemPricing.margen : "—"}</span>
+                )}
+                <span className={`text-xs shrink-0 ${itemPricing.margen < 0 ? "text-red-400" : "text-slate-400"}`}>%</span>
               </div>
 
-              <div className="flex items-center justify-center px-2 border-r border-border/30 h-full">
-                <select
-                  value={itemPricing.iva}
-                  onChange={(e) => updatePricingField(itemKey, "iva", Number.parseFloat(e.target.value), itemPricing)}
-                  className="w-full text-sm text-gray-900 bg-transparent border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-0 text-center"
-                >
-                  {IVA_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+              {/* IVA — col-span-1 */}
+              <div className="col-span-1 flex items-center px-3 h-full border-l border-slate-100">
+                {isEditMode ? (
+                  <select
+                    value={itemPricing.iva}
+                    onChange={(e) => updatePricingField(itemKey, "iva", Number.parseFloat(e.target.value), itemPricing)}
+                    className="w-full text-sm text-slate-600 bg-transparent border-0 focus:outline-none cursor-pointer"
+                  >
+                    {IVA_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <span className="text-sm text-slate-600 tabular-nums px-1">{itemPricing.iva != null ? `${itemPricing.iva}%` : "—"}</span>
+                )}
               </div>
 
-              <div className="flex items-center justify-center px-2 h-full bg-blue-50/50">
-                <div className="flex items-center gap-1 w-full">
-                  <span className="text-xs text-blue-600">$</span>
-                  <input
-                    type="number"
-                    value={itemPricing.precioFinal || ""}
-                    onChange={(e) =>
-                      updatePricingField(itemKey, "precioFinal", Number.parseFloat(e.target.value) || 0, itemPricing)
-                    }
-                    className="w-full text-sm font-medium text-blue-900 bg-transparent border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
-                    placeholder="0"
-                    step="1"
-                    min="0"
-                  />
-                </div>
+              {/* Precio de Venta — col-span-2 */}
+              <div className="col-span-2 flex items-center px-3 h-full border-l border-slate-100 bg-blue-50/20">
+                <span className="text-xs text-blue-400 mr-1">$</span>
+                {isEditMode ? (
+                  precioFinalMode === "con_iva" ? (
+                    <input
+                      type="number"
+                      value={itemPricing.precioFinal || ""}
+                      onChange={(e) => updatePricingField(itemKey, "precioFinal", Number.parseFloat(e.target.value) || 0, itemPricing)}
+                      className="w-full text-sm font-medium text-blue-700 bg-transparent border-0 focus:outline-none focus:bg-blue-50/60 rounded px-1 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      placeholder="0"
+                      step="1"
+                      min="0"
+                    />
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm font-medium text-blue-700 tabular-nums">
+                        {itemPricing.precioFinal ? Math.round(itemPricing.precioFinal / 1.21).toLocaleString("es-AR") : "0"}
+                      </span>
+                      <span className="text-[10px] text-slate-400">+ iva</span>
+                    </div>
+                  )
+                ) : (
+                  <span className="text-sm font-medium text-blue-700 tabular-nums px-1">
+                    {itemPricing.precioFinal ? itemPricing.precioFinal.toLocaleString("es-AR") : "—"}
+                  </span>
+                )}
               </div>
             </>
           )}
@@ -312,7 +450,7 @@ export function PriceGrid({
             {children.map((child, childIdx) => {
               const childIndex = index + childIdx + 1
               const isLast = childIdx === children.length - 1
-              return renderItemRow(child as Item, childIndex, true, isLast)
+              return renderItemRow(child as Item, childIndex, true, isLast, (item as any).proveedor)
             })}
           </div>
         )}
@@ -321,162 +459,31 @@ export function PriceGrid({
   }
 
   const hasActiveFilters =
-    activeFilters.tipos.length > 0 || activeFilters.categorias.length > 0 || activeFilters.marcas.length > 0
+    activeFilters.tipos.length > 0 || activeFilters.categorias.length > 0 || activeFilters.marcas.length > 0 || activeFilters.proveedores.length > 0
 
   return (
-    <div className="flex-1 flex flex-col bg-slate-50 overflow-hidden">
-      <div className="px-6 pt-6 pb-4">
-        <div className="bg-white border border-border/40 rounded-lg shadow-sm">
-          <div className="px-4 py-3 flex items-center justify-between gap-4">
-            <div className="relative" ref={accionRef}>
-              <Button
-                onClick={() => setShowAccionDropdown(!showAccionDropdown)}
-                variant="ghost"
-                size="sm"
-                className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer gap-1.5 shrink-0"
-              >
-                <Plus className="w-3.5 h-3.5 text-blue-600" />
-                Acción 1
-              </Button>
-            </div>
-
-            <div className="flex-1 max-w-md relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-black opacity-100 z-10" />
-              <input
-                type="text"
-                placeholder="Buscar artículos..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-8 pl-9 pr-9 border shadow-sm rounded-md text-xs placeholder:text-gray-600 text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 bg-white backdrop-blur-sm transition-all duration-300 border-[rgba(202,213,227,0.842391304347826)]"
-              />
-              {searchTerm && (
-                <button
-                  onClick={() => setSearchTerm("")}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors z-10"
-                  title="Limpiar búsqueda"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-
-            <div className="flex items-center gap-0 flex-shrink-0">
-              <div className="relative mr-3" ref={orderRef}>
-                <button
-                  onClick={() => setShowOrderModal(true)}
-                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors group cursor-pointer border border-gray-200/40 shadow-sm mr-[-4px]"
-                  title="Ordenar"
-                >
-                  <ArrowUpDown className="w-4 h-4 text-gray-600 group-hover:text-gray-900" />
-                </button>
-              </div>
-
-              <div className="relative" ref={filterRef}>
-                <button
-                  onClick={() => setShowFilterModal(true)}
-                  className={`w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors group cursor-pointer border shadow-sm mr-2 ${
-                    hasActiveFilters ? "border-blue-500 bg-blue-50" : "border-gray-200/40"
-                  }`}
-                  title="Filtros"
-                >
-                  <ListFilterIcon
-                    className={`w-4 h-4 ${hasActiveFilters ? "text-blue-600" : "text-gray-600 group-hover:text-gray-900"}`}
-                  />
-                </button>
-              </div>
-            </div>
+    <>
+      {/* Rows */}
+      <div className="border border-slate-200/80 rounded-md overflow-hidden bg-white divide-y divide-slate-100">
+        {sortedAndFilteredItems.length === 0 ? (
+          <div className="py-16 text-center text-sm text-slate-400">
+            {searchTerm || hasActiveFilters ? "No se encontraron items." : "Sin items para mostrar."}
           </div>
-        </div>
+        ) : (
+          sortedAndFilteredItems.map((item, index) => renderItemRow(item, index))
+        )}
       </div>
 
-      <div className="px-6 pb-3">
-        <div className="bg-white border border-border/40 rounded-t-lg">
-          <div className="grid grid-cols-[4fr_2fr_1fr_1fr_2fr] gap-0 px-0 py-3 text-xs font-medium text-muted-foreground border-b border-border/30">
-            <div className="flex items-center px-4 border-r border-border/30">Item</div>
-            <div className="flex items-center justify-center border-r border-border/30">Costo</div>
-            <div className="flex items-center justify-center border-r border-border/30">Margen</div>
-            <div className="flex items-center justify-center border-r border-border/30">IVA</div>
-            <div className="flex items-center justify-between px-4">
-              <span>Precio Final</span>
-              <div className="relative">
-                <button
-                  onClick={() => setGridSizeDropdownOpen(!gridSizeDropdownOpen)}
-                  className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 transition-colors group cursor-pointer"
-                  title="Tamaño de grilla"
-                >
-                  <Grid3x3 className="w-3.5 h-3.5 text-gray-600 group-hover:text-gray-900" />
-                </button>
-                {gridSizeDropdownOpen && (
-                  <div className="absolute right-0 mt-1 bg-white border border-border/40 rounded-lg shadow-lg py-1 z-10 min-w-[80px]">
-                    <button
-                      onClick={() => {
-                        setGridSize("sm")
-                        setGridSizeDropdownOpen(false)
-                      }}
-                      className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 transition-colors ${gridSize === "sm" ? "font-medium text-blue-600" : "text-gray-700"}`}
-                    >
-                      Pequeño
-                    </button>
-                    <button
-                      onClick={() => {
-                        setGridSize("md")
-                        setGridSizeDropdownOpen(false)
-                      }}
-                      className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 transition-colors ${gridSize === "md" ? "font-medium text-blue-600" : "text-gray-700"}`}
-                    >
-                      Mediano
-                    </button>
-                    <button
-                      onClick={() => {
-                        setGridSize("lg")
-                        setGridSizeDropdownOpen(false)
-                      }}
-                      className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 transition-colors ${gridSize === "lg" ? "font-medium text-blue-600" : "text-gray-700"}`}
-                    >
-                      Grande
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-6 pb-6">
-        <div className="bg-white border border-border/40 border-t-0 rounded-b-lg">
-          {sortedAndFilteredItems.length === 0 && (searchTerm || hasActiveFilters) ? (
-            <div className="flex flex-col items-center justify-center py-16 text-gray-500">
-              <Search className="w-12 h-12 mb-4 text-gray-300" />
-              <p className="text-lg font-medium">No se encontraron artículos</p>
-              <p className="text-sm mt-1">Intenta ajustar tu búsqueda o filtros</p>
-            </div>
-          ) : (
-            <div>{sortedAndFilteredItems.map((item, index) => renderItemRow(item, index))}</div>
-          )}
-        </div>
-      </div>
-
-      {showOrderModal && (
-        <OrdenModalPrecios
-          onClose={() => setShowOrderModal(false)}
-          ref={orderRef}
-          sortPriorities={sortPriorities}
-          setSortPriorities={setSortPriorities}
+      {bulkModalType && (
+        <BulkPriceModal
+          isOpen={true}
+          onClose={() => setBulkModalType(null)}
+          onApply={handleBulkEditApply}
+          itemCount={bulkEditTargetCount}
+          title={getBulkModalTitle(bulkModalType)}
+          type={bulkModalType}
         />
       )}
-
-      {showFilterModal && (
-        <FiltrosModalPrecios
-          onClose={() => setShowFilterModal(false)}
-          ref={filterRef}
-          activeFilters={activeFilters}
-          setActiveFilters={setActiveFilters}
-          availableCategorias={availableCategorias}
-          availableMarcas={availableMarcas}
-          availableDepositos={availableDepositos}
-        />
-      )}
-    </div>
+    </>
   )
 }

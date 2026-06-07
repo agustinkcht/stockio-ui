@@ -1,207 +1,279 @@
 "use client"
 
-import { useState, useMemo, Suspense, useRef, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect, useRef, useMemo, Fragment, useCallback } from "react"
+import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { Sidebar } from "@/components/layout/sidebar"
 import { useSidebar } from "@/hooks/use-sidebar"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
-import { useCompras } from "@/hooks/use-compras"
 import { UserPanel } from "@/components/layout/user-panel"
-import {
-  Search,
-  Calendar,
-  ChevronDown,
-  ChevronRight,
-  CreditCard,
-  Banknote,
-  Building2,
-  ArrowRightLeft,
-  Copy,
-  Package,
-  Plus,
-  ArrowUpDown,
-  ListFilterIcon,
-  X,
-} from "lucide-react"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  FileDown,
+  MoreVertical,
+  ListFilter,
+  ArrowUpDown,
+  CheckCircle2,
+  Clock,
+  Search,
+  Plus,
+  XCircle,
+  X,
+  Package,
+  Copy,
+} from "lucide-react"
+import type { Compra, CompraItem, VentaItem } from "@/lib/types"
 import { getCategoryImage } from "@/lib/utils/category-images"
-import Image from "next/image"
-import type { Compra, PaymentMethod } from "@/lib/types"
-import { Button } from "@/components/ui/button"
+import { useCompras } from "@/hooks/use-compras"
+import { ProveedorModal } from "@/components/compras/proveedor-modal"
+import { VentaItemDetailModal } from "@/components/ventas/venta-item-detail-modal"
+import { PROVEEDORES } from "@/lib/data/proveedores"
+import { useSettings } from "@/lib/contexts/settings-context"
+import { downloadComprasPDF } from "@/lib/utils/generate-compra-pdf"
+import {
+  PERIOD_OPTIONS,
+  ACTIVE_PERIOD_KEYS,
+  usePeriod,
+  usePeriodRange,
+  type PeriodKey,
+} from "@/lib/contexts/period-context"
 
-const paymentMethodLabels: Record<PaymentMethod, string> = {
-  efectivo: "Efectivo",
-  tarjeta: "Tarjeta",
-  transferencia: "Transferencia",
-  cuenta_corriente: "Cuenta Cte.",
+type StatusTab = "todas" | "finalizada" | "en_curso" | "cancelada"
+
+const estadoConfig: Record<string, { bg: string; text: string; icon: typeof Clock; label: string }> = {
+  finalizada: { bg: "bg-emerald-50", text: "text-emerald-600", icon: CheckCircle2, label: "Finalizada" },
+  en_curso:   { bg: "bg-amber-50",   text: "text-amber-600",   icon: Clock,        label: "En Curso"   },
+  cancelada:  { bg: "bg-red-50",     text: "text-red-500",     icon: XCircle,      label: "Cancelada"  },
 }
 
-const paymentMethodIcons: Record<PaymentMethod, typeof Banknote> = {
-  efectivo: Banknote,
-  tarjeta: CreditCard,
-  transferencia: ArrowRightLeft,
-  cuenta_corriente: Building2,
+const tabs = [
+  { id: "finalizada" as StatusTab, label: "Finalizadas" },
+  { id: "en_curso"   as StatusTab, label: "En Curso"    },
+  { id: "cancelada"  as StatusTab, label: "Canceladas"  },
+]
+
+const monthsAbbr = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
+const CURRENT_YEAR = new Date().getFullYear()
+
+function formatCompraDateTime(dateStr: string, hora: string): string {
+  const date = new Date(dateStr + "T12:00:00")
+  if (isNaN(date.getTime())) return dateStr
+  const day = date.getDate()
+  const month = monthsAbbr[date.getMonth()]
+  const year = date.getFullYear()
+  const horaStr = `${hora}\u00A0hs`
+  return year < CURRENT_YEAR
+    ? `${day}\u00A0${month}\u00A0${year}\u00A0\u00A0${horaStr}`
+    : `${day}\u00A0${month}\u00A0\u00A0${horaStr}`
 }
 
-const FILTRO_OPTIONS = {
-  metodoPago: [
-    { value: "efectivo", label: "Efectivo" },
-    { value: "tarjeta", label: "Tarjeta" },
-    { value: "transferencia", label: "Transferencia" },
-    { value: "cuenta_corriente", label: "Cuenta Cte." },
-  ],
-  estado: [
-    { value: "completada", label: "Completada" },
-    { value: "pendiente", label: "Pendiente" },
-    { value: "cancelada", label: "Cancelada" },
-  ],
-}
-
-type SortDirection = "asc" | "desc"
-type SortFactor = "fecha" | "total" | "proveedor"
-
-interface SortConfig {
-  factor: SortFactor
-  direction: SortDirection
-}
-
-interface FilterConfig {
-  metodoPago: PaymentMethod[]
-  estado: string[]
-}
-
-function ComprasContent() {
-  const router = useRouter()
+export default function ComprasPage() {
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
-  const { compras, isLoading } = useCompras()
-  const [searchQuery, setSearchQuery] = useState("")
-  const [expandedPurchases, setExpandedPurchases] = useState<Set<string>>(new Set())
-  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const allCheckboxRef = useRef<HTMLInputElement>(null)
+  const { compras } = useCompras()
+  const { miNegocio, dashboard } = useSettings()
 
-  const [showOrderModal, setShowOrderModal] = useState(false)
-  const [showFilterModal, setShowFilterModal] = useState(false)
-  const orderRef = useRef<HTMLDivElement>(null)
-  const filterRef = useRef<HTMLDivElement>(null)
+  const handleBulkDownloadPDF = () => {
+    const selected = compras.filter(c => selectedCompras.has(c.id))
+    if (selected.length > 0) downloadComprasPDF(selected, miNegocio)
+  }
+  const handleRowDownloadPDF = (compra: Compra) => downloadComprasPDF([compra], miNegocio)
 
-  const [activeFilters, setActiveFilters] = useState<FilterConfig>({
-    metodoPago: [],
-    estado: [],
-  })
+  const { periodKey, customRange, setPeriodKey, setCustomRange } = usePeriod()
+  const [periodOpen, setPeriodOpen] = useState(false)
+  const [calendarOpen, setCalendarOpen] = useState(false)
+  const range = usePeriodRange()
 
-  const [sortConfig, setSortConfig] = useState<SortConfig>({
-    factor: "fecha",
-    direction: "desc",
-  })
+  const [selectedCompras, setSelectedCompras] = useState<Set<string>>(new Set())
+  const [openMoreMenu, setOpenMoreMenu] = useState<string | null>(null)
+  const [expandedCompras, setExpandedCompras] = useState<Set<string>>(new Set())
+  const [viewingItem, setViewingItem] = useState<VentaItem | null>(null)
+  const [viewingProveedorId, setViewingProveedorId] = useState<string | null>(null)
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [sortOpen, setSortOpen] = useState(false)
 
-  const breadcrumbs = [{ label: "Compras" }, { label: "Compras", href: "/compras/compras" }]
+  // Central URL param updater
+  const updateParam = useCallback((key: string, value: string | null) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (value === null || value === "") {
+      params.delete(key)
+    } else {
+      params.set(key, value)
+    }
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+  }, [router, pathname, searchParams])
+
+  // Period
+  const periodParam = searchParams.get("periodo")
+  const noPeriod = periodParam === "ninguno" || periodParam === null
+
+  const defaultApplied = useRef(false)
+  useEffect(() => {
+    if (!defaultApplied.current && periodParam === null) {
+      defaultApplied.current = true
+      updateParam("periodo", dashboard.periodoDefault ?? "mes_en_curso")
+    } else if (periodParam !== null) {
+      defaultApplied.current = true
+    }
+  }, [periodParam, dashboard.periodoDefault, updateParam])
+
+  const periodLabel = useMemo(() => {
+    if (noPeriod || !periodParam) return "Período"
+    return PERIOD_OPTIONS.find((o) => o.key === periodKey)?.label ?? "Período"
+  }, [periodKey, noPeriod, periodParam])
+
+  const rangeLabel = useMemo(() => {
+    const fmt = (d: Date) => d.toLocaleDateString("es-AR", { day: "numeric", month: "short" })
+    if (periodKey === "hoy") return fmt(range.start)
+    return `${fmt(range.start)} — ${fmt(range.end)}`
+  }, [range, periodKey])
+
+  const periodTagLabel = useMemo(() => {
+    if (noPeriod || !periodParam) return null
+    const cy = new Date().getFullYear()
+    const fmt = (d: Date, withYear: boolean) => {
+      const day = d.getDate()
+      const month = d.toLocaleDateString("es-AR", { month: "short" }).replace(".", "").toLowerCase()
+      return withYear ? `${day} ${month} ${d.getFullYear()}` : `${day} ${month}`
+    }
+    const bothCurrentYear = range.start.getFullYear() === cy && range.end.getFullYear() === cy
+    const withYear = !bothCurrentYear
+    if (periodKey === "hoy") return fmt(range.start, withYear)
+    return `${fmt(range.start, withYear)} - ${fmt(range.end, withYear)}`
+  }, [noPeriod, periodParam, periodKey, range])
+
+  // Search
+  const searchQuery = searchParams.get("q") ?? ""
+  const setSearchQuery = useCallback((val: string) => updateParam("q", val || null), [updateParam])
+
+  // Tab
+  const activeTab = (searchParams.get("tab") ?? "todas") as StatusTab
+  const setActiveTab = useCallback((val: StatusTab) => updateParam("tab", val === "todas" ? null : val), [updateParam])
+
+  // Filters
+  const filterProveedor = searchParams.get("proveedor") ?? ""
+  const setFilterProveedor = useCallback((val: string) => updateParam("proveedor", val || null), [updateParam])
+  const filterPendientePago = searchParams.get("pago") === "1"
+  const setFilterPendientePago = useCallback((val: boolean) => updateParam("pago", val ? "1" : null), [updateParam])
+  const filterPendienteRecepcion = searchParams.get("recepcion") === "1"
+  const setFilterPendienteRecepcion = useCallback((val: boolean) => updateParam("recepcion", val ? "1" : null), [updateParam])
+  const hasActiveFilters = !!filterProveedor || filterPendientePago || filterPendienteRecepcion
+
+  // Sort
+  const sortParam = searchParams.get("sort") ?? "fecha_desc"
+  const [sortField, sortDir] = sortParam.split("_") as ["fecha" | "total", "asc" | "desc"]
+  const setSortField = useCallback((val: "fecha" | "total") => {
+    const newParam = `${val}_${sortDir}`
+    updateParam("sort", newParam === "fecha_desc" ? null : newParam)
+  }, [updateParam, sortDir])
+  const setSortDir = useCallback((updater: ((prev: "asc" | "desc") => "asc" | "desc") | "asc" | "desc") => {
+    const newDir = typeof updater === "function" ? updater(sortDir) : updater
+    const newParam = `${sortField}_${newDir}`
+    updateParam("sort", newParam === "fecha_desc" ? null : newParam)
+  }, [updateParam, sortField, sortDir])
+
+  // Sync ?periodo= into shared period context
+  useEffect(() => {
+    if (!noPeriod && periodParam && periodParam !== "personalizado" && periodParam !== periodKey) {
+      setPeriodKey(periodParam as PeriodKey)
+    }
+  }, [periodParam, noPeriod])
+
+  const isActivePeriod = !noPeriod && periodParam !== null && ACTIVE_PERIOD_KEYS.includes(periodKey)
+
+  // Period-scoped compras by creation date
+  const periodComprasByDate = useMemo(() => {
+    if (noPeriod) return compras
+    const rangeStart = range.start.getTime()
+    const rangeEnd   = range.end.getTime()
+    return compras.filter(c => {
+      const t = new Date(c.fecha + "T12:00:00").getTime()
+      return t >= rangeStart && t <= rangeEnd
+    })
+  }, [compras, noPeriod, range])
+
+  // For en_curso widget: active period = all en_curso; fixed = date-filtered
+  const periodComprasEnCurso = useMemo(() => {
+    if (noPeriod) return compras
+    if (isActivePeriod) return compras
+    return periodComprasByDate
+  }, [compras, noPeriod, isActivePeriod, periodComprasByDate])
+
+  const periodCompras = periodComprasByDate
+
+  // Unique proveedores for filter dropdown
+  const uniqueProveedores = useMemo(() => {
+    const names = compras.map(c => c.proveedorNombre)
+    return Array.from(new Set(names)).sort()
+  }, [compras])
+
+  // Filtered + sorted list (period applied here)
+  const filteredCompras = useMemo(() => {
+    const rangeStart = range.start.getTime()
+    const rangeEnd   = range.end.getTime()
+    const filtered = compras.filter(c => {
+      const compraTime = new Date(c.fecha + "T12:00:00").getTime()
+      // en_curso items are always shown when on an active period ("sin importar su fecha de creación")
+      const isEnCurso = c.estado === "en_curso"
+      const matchesPeriod = noPeriod || (isActivePeriod && isEnCurso) || (compraTime >= rangeStart && compraTime <= rangeEnd)
+      const matchesTab =
+        activeTab === "todas"     ? true :
+        activeTab === "finalizada" ? c.estado === "finalizada" :
+        activeTab === "en_curso"   ? c.estado === "en_curso"   :
+        c.estado === "cancelada"
+      const q = searchQuery.toLowerCase().trim()
+      const matchesSearch = !q || c.id.toLowerCase().includes(q) || c.proveedorNombre.toLowerCase().includes(q)
+      const matchesProveedor = !filterProveedor || c.proveedorNombre === filterProveedor
+      const matchesPendientePago = !filterPendientePago || c.estado === "en_curso"
+      const matchesPendienteRecepcion = !filterPendienteRecepcion || (c.pendienteEntrega === true)
+      return matchesPeriod && matchesTab && matchesSearch && matchesProveedor && matchesPendientePago && matchesPendienteRecepcion
+    })
+    filtered.sort((a, b) => {
+      let diff = 0
+      if (sortField === "fecha") {
+        diff = new Date(`${a.fecha}T${a.hora}`).getTime() - new Date(`${b.fecha}T${b.hora}`).getTime()
+      } else {
+        diff = a.total - b.total
+      }
+      return sortDir === "asc" ? diff : -diff
+    })
+    return filtered
+  }, [compras, activeTab, searchQuery, filterProveedor, filterPendientePago, filterPendienteRecepcion, sortField, sortDir, noPeriod, isActivePeriod, range])
+
+  const allSelected = selectedCompras.size === filteredCompras.length && filteredCompras.length > 0
+  const someSelected = selectedCompras.size > 0 && selectedCompras.size < filteredCompras.length
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (orderRef.current && !orderRef.current.contains(event.target as Node)) {
-        setShowOrderModal(false)
-      }
-      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
-        setShowFilterModal(false)
-      }
+    if (allCheckboxRef.current) {
+      allCheckboxRef.current.indeterminate = someSelected
     }
+  }, [someSelected])
 
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [])
-
-  const filteredCompras = useMemo(() => {
-    let result = compras.filter((compra) => {
-      const matchesSearch =
-        searchQuery === "" ||
-        compra.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        compra.proveedorNombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        compra.items.some((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
-
-      return matchesSearch
-    })
-
-    if (activeFilters.metodoPago.length > 0) {
-      result = result.filter((c) => activeFilters.metodoPago.includes(c.metodoPago))
-    }
-    if (activeFilters.estado.length > 0) {
-      result = result.filter((c) => activeFilters.estado.includes(c.estado))
-    }
-
-    result.sort((a, b) => {
-      let comparison = 0
-      switch (sortConfig.factor) {
-        case "fecha":
-          comparison = a.fecha.localeCompare(b.fecha)
-          break
-        case "total":
-          comparison = a.total - b.total
-          break
-        case "proveedor":
-          comparison = a.proveedorNombre.localeCompare(b.proveedorNombre)
-          break
-      }
-      return sortConfig.direction === "asc" ? comparison : -comparison
-    })
-
-    return result
-  }, [compras, searchQuery, activeFilters, sortConfig])
-
-  const toggleExpanded = (id: string) => {
-    const newExpanded = new Set(expandedPurchases)
-    if (newExpanded.has(id)) {
-      newExpanded.delete(id)
-    } else {
-      newExpanded.add(id)
-    }
-    setExpandedPurchases(newExpanded)
+  const toggleSelectAll = () => {
+    if (allSelected) setSelectedCompras(new Set())
+    else setSelectedCompras(new Set(filteredCompras.map((c) => c.id)))
   }
 
-  const copyToClipboard = (text: string, id: string) => {
-    navigator.clipboard.writeText(text)
-    setCopiedId(id)
-    setTimeout(() => setCopiedId(null), 1500)
+  const toggleSelectCompra = (id: string) => {
+    const next = new Set(selectedCompras)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    setSelectedCompras(next)
   }
 
-  const formatDate = (fecha: string) => {
-    const date = new Date(fecha)
-    const today = new Date()
-    const yesterday = new Date(today)
-    yesterday.setDate(yesterday.getDate() - 1)
-
-    if (fecha === today.toISOString().split("T")[0]) {
-      return "Hoy"
-    } else if (fecha === yesterday.toISOString().split("T")[0]) {
-      return "Ayer"
-    } else {
-      return date.toLocaleDateString("es-AR", { day: "numeric", month: "short" })
-    }
+  const toggleExpandCompra = (id: string) => {
+    const next = new Set(expandedCompras)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    setExpandedCompras(next)
   }
 
-  const purchasesByDate = useMemo(() => {
-    const grouped: Record<string, Compra[]> = {}
-    filteredCompras.forEach((compra) => {
-      if (!grouped[compra.fecha]) {
-        grouped[compra.fecha] = []
-      }
-      grouped[compra.fecha].push(compra)
-    })
-    return Object.entries(grouped).sort(([a], [b]) => b.localeCompare(a))
-  }, [filteredCompras])
-
-  const totalCompras = filteredCompras.reduce((acc, c) => acc + c.total, 0)
-  const totalTransacciones = filteredCompras.length
-
-  const hasActiveFilters = activeFilters.metodoPago.length > 0 || activeFilters.estado.length > 0
-
-  const toggleFilter = (category: keyof FilterConfig, value: string) => {
-    setActiveFilters((prev) => {
-      const current = prev[category] as string[]
-      const newValues = current.includes(value) ? current.filter((v) => v !== value) : [...current, value]
-      return { ...prev, [category]: newValues }
-    })
-  }
+  const breadcrumbs = [{ label: "Compras" }, { label: "Compras", href: "/compras/compras" }]
 
   return (
     <div className="min-h-screen bg-[rgb(243,242,238)]">
@@ -217,367 +289,981 @@ function ComprasContent() {
         </div>
 
         <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
+          {/* Utility Bar */}
           <div className="relative border-b border-border h-[44px] bg-white">
             <div className="px-4 flex items-center justify-between h-full">
               <div className="flex items-center">
                 <Breadcrumb items={breadcrumbs} />
               </div>
-
-              <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center gap-3 mt-0">
+              <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2">
                 <UserPanel />
               </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  disabled
-                  className="px-4 py-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-foreground hover:bg-muted text-sm font-medium"
-                  title="Deshacer cambios"
-                >
-                  Deshacer
-                </button>
-
-                <button
-                  disabled
-                  className="px-4 py-1.5 bg-muted/50 rounded disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer text-primary hover:bg-muted text-sm font-medium"
-                  title="Guardar cambios"
-                >
-                  Guardar
-                </button>
-              </div>
+              <div />
             </div>
           </div>
 
-          <main className="flex-1 flex flex-col bg-[rgba(250,251,253,1)] overflow-hidden">
-            <div className="px-6 pt-6 pb-4">
-              <div className="bg-white border border-border/40 rounded-lg shadow-sm">
-                <div className="px-4 py-3 flex items-center justify-between gap-4">
-                  {/* Left: Stats and Nueva Compra Button */}
-                  <div className="flex items-center gap-4 shrink-0">
-                    <div className="flex items-center gap-6">
-                      <div>
-                        <p className="text-xs text-muted-foreground">Transacciones</p>
-                        <p className="text-lg font-semibold">{totalTransacciones}</p>
-                      </div>
-                      <div className="h-8 w-px bg-border/50" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">Total Compras</p>
-                        <p className="text-lg font-semibold text-amber-600">
-                          ${totalCompras.toLocaleString("es-AR", { minimumFractionDigits: 0 })}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="h-8 w-px bg-border/50" />
-                    <Button
-                      onClick={() => router.push("/compras/portal-de-compras")}
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer gap-1.5 shrink-0"
-                    >
-                      <Plus className="w-3.5 h-3.5 text-amber-600" />
-                      Nueva Compra
-                    </Button>
-                  </div>
+          <main className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 overflow-y-auto bg-slate-50">
 
-                  {/* Center: Search Bar */}
-                  <div className="flex-1 max-w-md relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-black opacity-100 z-10" />
-                    <input
-                      type="text"
-                      placeholder="Buscar compras..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full h-8 pl-9 pr-9 border shadow-sm rounded-md text-xs placeholder:text-gray-600 text-gray-600 focus:outline-none focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500/50 bg-white backdrop-blur-sm transition-all duration-300 border-[rgba(202,213,227,0.842391304347826)]"
+              {/* Title row — scrolls away */}
+              <div className="px-8 pt-12 pb-8">
+                <div className="max-w-6xl mx-auto flex items-start justify-between gap-6">
+                  <div className="flex items-center gap-4">
+                    <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
+                      Compras
+                    </h1>
+                    <ComprasPeriodSelector
+                      open={periodOpen}
+                      setOpen={setPeriodOpen}
+                      currentLabel={periodLabel}
+                      currentKey={periodKey}
+                      noPeriod={noPeriod}
+                      isActivePeriod={isActivePeriod}
+                      onSelect={(k) => {
+                        if (k === ("ninguno" as PeriodKey)) {
+                          updateParam("periodo", "ninguno")
+                          setPeriodOpen(false)
+                          return
+                        }
+                        if (k === "personalizado") {
+                          updateParam("periodo", "personalizado")
+                          setPeriodOpen(false)
+                          setCalendarOpen(true)
+                          return
+                        }
+                        updateParam("periodo", k)
+                        setPeriodKey(k)
+                        setCustomRange(null)
+                        setPeriodOpen(false)
+                      }}
+                      rangeLabel={rangeLabel}
+                      calendarOpen={calendarOpen}
+                      setCalendarOpen={setCalendarOpen}
+                      customRange={customRange}
+                      setCustomRange={setCustomRange}
                     />
-                    {searchQuery && (
-                      <button
-                        onClick={() => setSearchQuery("")}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors z-10"
-                        title="Limpiar búsqueda"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    )}
                   </div>
-
-                  {/* Right: Order and Filter Buttons */}
-                  <div className="flex items-center gap-0 flex-shrink-0">
-                    <div className="relative mr-3" ref={orderRef}>
-                      <button
-                        onClick={() => setShowOrderModal(!showOrderModal)}
-                        className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors group cursor-pointer border border-gray-200/40 shadow-sm mr-[-4px]"
-                        title="Ordenar"
-                      >
-                        <ArrowUpDown className="w-4 h-4 text-gray-600 group-hover:text-gray-900" />
-                      </button>
-
-                      {/* Order Modal */}
-                      {showOrderModal && (
-                        <div className="absolute right-0 top-10 bg-white border border-border/40 rounded-lg shadow-lg z-50 w-48 py-2">
-                          <p className="px-3 py-1 text-xs font-medium text-muted-foreground">Ordenar por</p>
-                          {[
-                            { value: "fecha", label: "Fecha" },
-                            { value: "total", label: "Total" },
-                            { value: "proveedor", label: "Proveedor" },
-                          ].map((option) => (
-                            <button
-                              key={option.value}
-                              onClick={() => {
-                                setSortConfig((prev) => ({
-                                  factor: option.value as SortFactor,
-                                  direction:
-                                    prev.factor === option.value ? (prev.direction === "asc" ? "desc" : "asc") : "desc",
-                                }))
-                              }}
-                              className={`w-full px-3 py-1.5 text-left text-sm hover:bg-muted/50 flex items-center justify-between ${
-                                sortConfig.factor === option.value ? "text-amber-600 font-medium" : ""
-                              }`}
-                            >
-                              {option.label}
-                              {sortConfig.factor === option.value && (
-                                <span className="text-xs">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="relative" ref={filterRef}>
-                      <button
-                        onClick={() => setShowFilterModal(!showFilterModal)}
-                        className={`w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors group cursor-pointer border shadow-sm mr-2 ${
-                          hasActiveFilters ? "border-amber-500 bg-amber-50" : "border-gray-200/40"
-                        }`}
-                        title="Filtros"
-                      >
-                        <ListFilterIcon
-                          className={`w-4 h-4 ${hasActiveFilters ? "text-amber-600" : "text-gray-600 group-hover:text-gray-900"}`}
-                        />
-                      </button>
-
-                      {/* Filter Modal */}
-                      {showFilterModal && (
-                        <div className="absolute right-0 top-10 bg-white border border-border/40 rounded-lg shadow-lg z-50 w-56 py-2">
-                          <div className="px-3 py-2 border-b border-border/30">
-                            <p className="text-xs font-medium text-muted-foreground">Método de Pago</p>
-                            <div className="mt-2 space-y-1">
-                              {FILTRO_OPTIONS.metodoPago.map((option) => (
-                                <label
-                                  key={option.value}
-                                  className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 px-1 py-0.5 rounded"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={activeFilters.metodoPago.includes(option.value as PaymentMethod)}
-                                    onChange={() => toggleFilter("metodoPago", option.value)}
-                                    className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
-                                  />
-                                  {option.label}
-                                </label>
-                              ))}
-                            </div>
-                          </div>
-                          <div className="px-3 py-2">
-                            <p className="text-xs font-medium text-muted-foreground">Estado</p>
-                            <div className="mt-2 space-y-1">
-                              {FILTRO_OPTIONS.estado.map((option) => (
-                                <label
-                                  key={option.value}
-                                  className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 px-1 py-0.5 rounded"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={activeFilters.estado.includes(option.value)}
-                                    onChange={() => toggleFilter("estado", option.value)}
-                                    className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
-                                  />
-                                  {option.label}
-                                </label>
-                              ))}
-                            </div>
-                          </div>
-                          {hasActiveFilters && (
-                            <div className="px-3 pt-2 border-t border-border/30">
-                              <button
-                                onClick={() => setActiveFilters({ metodoPago: [], estado: [] })}
-                                className="text-xs text-amber-600 hover:underline"
-                              >
-                                Limpiar filtros
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => router.push("/compras/compras/nueva")}
+                    className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 shrink-0 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer mt-1"
+                  >
+                    <Plus className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
+                    Nueva Compra
+                  </button>
                 </div>
               </div>
-            </div>
 
-            <div className="flex-1 overflow-y-auto px-6 pb-6">
-              {isLoading ? (
-                <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                  <p>Cargando compras...</p>
+              {/* Widgets — scrolls freely */}
+              <div className="px-8 pb-3">
+                <div className="max-w-6xl mx-auto">
+                  {(() => {
+                    const countFinalizadas = periodCompras.filter(c => c.estado === "finalizada").length
+                    const countEnCurso     = periodComprasEnCurso.filter(c => c.estado === "en_curso").length
+                    const countCanceladas  = periodCompras.filter(c => c.estado === "cancelada").length
+
+                    const widgetCls = (active: boolean, disabled: boolean, activeColor: string, hoverColor: string) => {
+                      if (disabled) return "border rounded-xl px-6 py-5 shadow-sm text-left border-slate-100 bg-slate-50 opacity-40 cursor-not-allowed w-full"
+                      if (active)   return `border rounded-xl px-6 py-5 shadow-sm text-left transition-all cursor-pointer w-full ${activeColor}`
+                      return `border rounded-xl px-6 py-5 shadow-sm text-left transition-all cursor-pointer w-full bg-white border-slate-200/80 ${hoverColor}`
+                    }
+
+                    const toggle = (tab: StatusTab, count: number) => {
+                      if (count === 0) return
+                      setActiveTab(activeTab === tab ? "todas" : tab)
+                    }
+
+                    const fmtDay = (d: Date) => {
+                      const day = d.getDate()
+                      const month = d.toLocaleDateString("es-AR", { month: "long" })
+                      return `${day} de ${month}`
+                    }
+                    const subtitleFinCan = !noPeriod && periodParam
+                      ? isActivePeriod
+                        ? `Creadas desde el ${fmtDay(range.start)} hasta hoy`
+                        : "Creadas en el período seleccionado"
+                      : null
+
+                    const subtitleEnCurso = !noPeriod && periodParam
+                      ? isActivePeriod
+                        ? "Pendientes al día de hoy, sin importar su fecha de creación"
+                        : "Pendientes al día de hoy, creadas en el período seleccionado"
+                      : null
+
+                    return (
+                      <div className="grid grid-cols-3 gap-3 mb-5">
+                        {/* Finalizadas */}
+                        <button
+                          key="finalizadas"
+                          type="button"
+                          onClick={() => toggle("finalizada", countFinalizadas)}
+                          className={widgetCls(activeTab === "finalizada", countFinalizadas === 0, "bg-emerald-50 border-emerald-200", "hover:border-emerald-200 hover:shadow-md")}
+                        >
+                          <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center mb-4 shadow-sm border border-slate-100">
+                            <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                          </div>
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{countFinalizadas}</span>
+                            <span className="text-base font-medium text-emerald-500">Finalizadas</span>
+                          </div>
+                          {subtitleFinCan && (
+                            <p className="mt-2 text-xs text-slate-400 leading-snug">{subtitleFinCan}</p>
+                          )}
+                        </button>
+
+                        {/* En Curso */}
+                        <button
+                          key="en_curso"
+                          type="button"
+                          onClick={() => toggle("en_curso", countEnCurso)}
+                          className={widgetCls(activeTab === "en_curso", countEnCurso === 0, "bg-orange-50 border-orange-200", "hover:border-orange-200 hover:shadow-md")}
+                        >
+                          <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center mb-4 shadow-sm border border-slate-100">
+                            <Clock className="w-5 h-5 text-orange-400" />
+                          </div>
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{countEnCurso}</span>
+                            <span className="text-base font-medium text-orange-500">En Curso</span>
+                          </div>
+                          {subtitleEnCurso && (
+                            <p className="mt-2 text-xs text-slate-400 leading-snug">{subtitleEnCurso}</p>
+                          )}
+                        </button>
+
+                        {/* Canceladas */}
+                        <button
+                          key="canceladas"
+                          type="button"
+                          onClick={() => toggle("cancelada", countCanceladas)}
+                          className={widgetCls(activeTab === "cancelada", countCanceladas === 0, "bg-red-50 border-red-200", "hover:border-red-200 hover:shadow-md")}
+                        >
+                          <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center mb-4 shadow-sm border border-slate-100">
+                            <XCircle className="w-5 h-5 text-red-400" />
+                          </div>
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-3xl font-bold text-slate-900 leading-none tabular-nums">{countCanceladas}</span>
+                            <span className="text-base font-medium text-red-400">Canceladas</span>
+                          </div>
+                          {subtitleFinCan && (
+                            <p className="mt-2 text-xs text-slate-400 leading-snug">{subtitleFinCan}</p>
+                          )}
+                        </button>
+                      </div>
+                    )
+                  })()}
                 </div>
-              ) : purchasesByDate.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                  <Package className="w-12 h-12 mb-3 opacity-30" />
-                  <p>No se encontraron compras</p>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {purchasesByDate.map(([date, purchases]) => (
-                    <div key={date}>
-                      <div className="flex items-center gap-2 mb-3">
-                        <Calendar className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm font-medium text-muted-foreground">{formatDate(date)}</span>
-                        <span className="text-xs text-muted-foreground/60">
-                          ({purchases.length} compra{purchases.length > 1 ? "s" : ""})
-                        </span>
+              </div>
+
+              {/* Search/filter bar + bulk actions — sticky */}
+              <div className="sticky top-0 z-20">
+
+                {/* Row 1: Search + tags + Filtrar/Ordenar + count */}
+                <div className="relative z-10 bg-slate-50/95 backdrop-blur-sm px-8 pt-2 pb-0">
+                  <div className="max-w-6xl mx-auto border-b border-slate-100 pb-2">
+                    <div className="flex items-center gap-2">
+                      {/* Search */}
+                      <div className="flex items-center h-9 border border-[rgba(228,230,235,0.6)] shadow-sm rounded-md min-w-0 overflow-hidden bg-white">
+                        <div className="flex items-center gap-2 px-3 h-full w-64 bg-white">
+                          <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Buscar"
+                            className="flex-1 bg-transparent text-xs text-slate-700 placeholder:text-slate-400 outline-none"
+                          />
+                          {searchQuery && (
+                            <button
+                              type="button"
+                              onClick={() => setSearchQuery("")}
+                              aria-label="Borrar búsqueda"
+                              className="flex items-center justify-center w-4 h-4 rounded-full hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
+                            >
+                              <X className="w-3 h-3 text-slate-400" />
+                            </button>
+                          )}
+                        </div>
                       </div>
 
-                      <div className="space-y-[2px]">
-                        {purchases.map((compra) => {
-                          const isExpanded = expandedPurchases.has(compra.id)
-                          const PaymentIcon = paymentMethodIcons[compra.metodoPago]
+                      {calendarOpen && (
+                        <ComprasRangeCalendarDialog
+                          initialRange={customRange}
+                          onCancel={() => setCalendarOpen(false)}
+                          onApply={(start, end) => {
+                            setCustomRange({ start, end })
+                            setPeriodKey("personalizado")
+                            setCalendarOpen(false)
+                          }}
+                        />
+                      )}
 
-                          return (
-                            <div key={compra.id} className="bg-white rounded-sm overflow-hidden">
-                              <div
-                                className="flex items-center gap-4 px-4 py-3 cursor-pointer transition-colors"
-                                onClick={() => toggleExpanded(compra.id)}
+                      {/* Active filter tags */}
+                      {(periodTagLabel || activeTab !== "todas" || filterProveedor || filterPendientePago || filterPendienteRecepcion) && (
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {periodTagLabel && (
+                            <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
+                              {periodTagLabel}
+                              <button
+                                type="button"
+                                onClick={() => updateParam("periodo", "ninguno")}
+                                aria-label="Quitar filtro de período"
+                                className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
                               >
-                                <button className="p-0.5 text-muted-foreground">
-                                  {isExpanded ? (
-                                    <ChevronDown className="w-4 h-4" />
-                                  ) : (
-                                    <ChevronRight className="w-4 h-4" />
-                                  )}
-                                </button>
+                                <X className="w-2.5 h-2.5 text-slate-400" />
+                              </button>
+                            </span>
+                          )}
+                          {activeTab !== "todas" && (
+                            <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
+                              {tabs.find(t => t.id === activeTab)?.label}
+                              <button
+                                type="button"
+                                onClick={() => setActiveTab("todas")}
+                                aria-label="Quitar filtro de estado"
+                                className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+                              >
+                                <X className="w-2.5 h-2.5 text-slate-400" />
+                              </button>
+                            </span>
+                          )}
+                          {filterProveedor && (
+                            <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
+                              {filterProveedor}
+                              <button
+                                type="button"
+                                onClick={() => setFilterProveedor("")}
+                                aria-label="Quitar filtro de proveedor"
+                                className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+                              >
+                                <X className="w-2.5 h-2.5 text-slate-400" />
+                              </button>
+                            </span>
+                          )}
+                        {filterPendientePago && (
+                          <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
+                            Pago pendiente
+                            <button type="button" onClick={() => setFilterPendientePago(false)} className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer">
+                              <X className="w-2.5 h-2.5 text-slate-400" />
+                            </button>
+                          </span>
+                        )}
+                        {filterPendienteRecepcion && (
+                          <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
+                            Recepción pendiente
+                            <button type="button" onClick={() => setFilterPendienteRecepcion(false)} className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer">
+                              <X className="w-2.5 h-2.5 text-slate-400" />
+                            </button>
+                          </span>
+                        )}
+                        </div>
+                      )}
 
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-medium text-sm">{compra.proveedorNombre}</span>
-                                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-                                      {compra.items.length} item{compra.items.length > 1 ? "s" : ""}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-2 mt-0.5">
-                                    <span className="text-xs text-muted-foreground">{compra.id}</span>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        copyToClipboard(compra.id, compra.id)
-                                      }}
-                                      className="p-0.5 hover:bg-muted rounded transition-colors"
-                                    >
-                                      <Copy
-                                        className={`w-3 h-3 ${copiedId === compra.id ? "text-amber-500" : "text-muted-foreground/50"}`}
-                                      />
-                                    </button>
-                                    <span className="text-xs text-muted-foreground/50">·</span>
-                                    <span className="text-xs text-muted-foreground/70">{compra.hora}</span>
-                                  </div>
+                      {/* Filtrar / Ordenar + count — pushed right */}
+                      <div className="ml-auto flex items-center gap-2">
+                        {/* Filtrar */}
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => { setFilterOpen(!filterOpen); setSortOpen(false) }}
+                            className={`h-9 text-xs transition-colors border shadow-sm gap-1.5 shrink-0 px-3 rounded-md flex items-center cursor-pointer ${
+                              hasActiveFilters
+                                ? "border-blue-400 text-blue-600 bg-blue-50"
+                                : "border-[rgba(228,230,235,0.6)] bg-white hover:bg-slate-50"
+                            }`}
+                          >
+                            <ListFilter className="w-3.5 h-3.5" />
+                            <span>Filtrar</span>
+                          </button>
+                          {filterOpen && (
+                            <>
+                              <div className="fixed inset-0 z-[90]" onClick={() => setFilterOpen(false)} />
+                              <div className="absolute top-full right-0 mt-1 z-[100] bg-white border border-slate-200 rounded-lg shadow-lg w-60 p-3 space-y-3">
+                                <div>
+                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Proveedor</label>
+                                  <select
+                                    value={filterProveedor}
+                                    onChange={(e) => setFilterProveedor(e.target.value)}
+                                    className="w-full mt-1 px-2 py-1.5 text-xs border border-slate-200 rounded-md focus:outline-none focus:border-slate-400 bg-white"
+                                  >
+                                    <option value="">Todos</option>
+                                    {uniqueProveedores.map(p => <option key={p} value={p}>{p}</option>)}
+                                  </select>
                                 </div>
+                                {(activeTab === "todas" || activeTab === "en_curso") && (
+                                  <div className="space-y-2">
+                                    <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Estado</label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        checked={filterPendientePago}
+                                        onChange={(e) => setFilterPendientePago(e.target.checked)}
+                                        className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                      />
+                                      <span className="text-xs text-slate-700">Pendiente de pago</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        checked={filterPendienteRecepcion}
+                                        onChange={(e) => setFilterPendienteRecepcion(e.target.checked)}
+                                        className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                      />
+                                      <span className="text-xs text-slate-700">Pendiente de recepción</span>
+                                    </label>
+                                  </div>
+                                )}
+                                {hasActiveFilters && (
+                                  <button
+                                    type="button"
+                                    onClick={() => { setFilterProveedor(""); setFilterPendientePago(false); setFilterPendienteRecepcion(false) }}
+                                    className="w-full text-xs text-slate-500 hover:text-slate-700 py-1 text-center cursor-pointer"
+                                  >
+                                    Limpiar filtros
+                                  </button>
+                                )}
+                              </div>
+                            </>
+                          )}
+                        </div>
 
-                                <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-muted/50">
-                                  <PaymentIcon className="w-3.5 h-3.5 text-muted-foreground" />
-                                  <span className="text-xs text-muted-foreground">
-                                    {paymentMethodLabels[compra.metodoPago]}
+                        {/* Ordenar */}
+                        <div className="flex items-center border border-[rgba(228,230,235,0.6)] shadow-sm rounded-md overflow-hidden bg-white h-9">
+                          <button
+                            type="button"
+                            onClick={() => setSortDir(d => d === "asc" ? "desc" : "asc")}
+                            title={sortDir === "asc" ? "Ascendente" : "Descendente"}
+                            className="px-2.5 h-full hover:bg-slate-50 transition-colors border-r border-[rgba(228,230,235,0.6)] cursor-pointer flex items-center"
+                          >
+                            <ArrowUpDown className={`w-3.5 h-3.5 text-slate-500 transition-transform ${sortDir === "desc" ? "rotate-180" : ""}`} />
+                          </button>
+                          <select
+                            value={sortField}
+                            onChange={(e) => setSortField(e.target.value as "fecha" | "total")}
+                            className="appearance-none pl-2.5 pr-6 text-xs bg-transparent focus:outline-none cursor-pointer text-slate-700 h-full"
+                          >
+                            <option value="fecha">Fecha</option>
+                            <option value="total">Total</option>
+                          </select>
+                        </div>
+
+                        {/* Divider + count */}
+                        <div className="w-px h-5 bg-slate-200 shrink-0" />
+                        <span className="text-xs text-slate-500 whitespace-nowrap tabular-nums">
+                          {filteredCompras.length} {filteredCompras.length === 1 ? "compra" : "compras"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Row 2: Bulk actions */}
+                <div className="px-8">
+                  <div className="max-w-6xl mx-auto bg-white border border-slate-200/80">
+                    <div className="flex items-center gap-2 h-9">
+                      <div className="flex items-center justify-center w-[4%] min-w-[40px] shrink-0">
+                        <input
+                          ref={allCheckboxRef}
+                          type="checkbox"
+                          checked={allSelected}
+                          onChange={toggleSelectAll}
+                          aria-label={allSelected ? "Deseleccionar todo" : "Seleccionar todo"}
+                          className="w-4 h-4 rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        />
+                      </div>
+                      <div className="w-px h-5 bg-slate-200 shrink-0" />
+                      {selectedCompras.size === 0 ? (
+                        <span className="text-xs text-slate-400 select-none">
+                          Seleccioná compras para accionar masivamente
+                        </span>
+                      ) : (
+                        <>
+                          <span className="text-xs text-slate-600 whitespace-nowrap tabular-nums">
+                            {selectedCompras.size} seleccionada{selectedCompras.size !== 1 ? "s" : ""}
+                          </span>
+                          <div className="w-px h-5 bg-slate-200 shrink-0" />
+                          <button
+                            type="button"
+                            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+                            onClick={handleBulkDownloadPDF}
+                          >
+                            <FileDown className="w-3.5 h-3.5 text-slate-400" />
+                            Descargar PDF
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+              </div>{/* /sticky */}
+
+              {/* Rows */}
+              <div className="px-8 pt-2 pb-8">
+                <div className="max-w-6xl mx-auto">
+                  <div className="flex flex-col gap-2">
+                    {filteredCompras.length === 0 && (
+                      <div className="flex flex-col items-center justify-center py-24 gap-2">
+                        <p className="text-xl font-medium text-slate-500">No hay compras para mostrar</p>
+                        <p className="text-sm text-slate-400">Probá ajustando los filtros o el período seleccionado</p>
+                      </div>
+                    )}
+                    {filteredCompras.map((compra) => {
+                      const estadoStyle = estadoConfig[compra.estado] ?? estadoConfig["en_curso"]
+                      const EstadoIcon = estadoStyle.icon
+                      const isSelected = selectedCompras.has(compra.id)
+                      const isMulti = compra.items.length > 1
+                      const firstItem: CompraItem | undefined = compra.items[0]
+                      const lastItemIdx = compra.items.length - 1
+                      const totalUnits = compra.items.reduce((sum, it) => sum + it.quantity, 0)
+
+                      const PrecioCell = ({ item, className = "" }: { item: CompraItem; className?: string }) => {
+                        const hasDiscount = item.discount > 0
+                        const adjustedUnit = hasDiscount && item.discountType === "percent"
+                          ? item.unitPrice * (1 - item.discount / 100)
+                          : hasDiscount && item.discountType === "fixed"
+                          ? Math.max(0, item.unitPrice - item.discount)
+                          : item.unitPrice
+                        return (
+                          <div className={`flex flex-col justify-center gap-0 ${className}`}>
+                            {hasDiscount ? (
+                              <>
+                                <div className="flex items-center gap-1">
+                                  <span className="text-[10px] text-slate-400 line-through tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
+                                  <span className="text-[10px] font-semibold text-red-500">
+                                    {item.discountType === "percent" ? `-${item.discount}%` : `-$${item.discount.toLocaleString("es-AR")}`}
                                   </span>
                                 </div>
+                                <div className="flex items-baseline gap-1">
+                                  <span className="text-xs font-medium text-slate-800 tabular-nums">${Math.round(adjustedUnit).toLocaleString("es-AR")}</span>
+                                  <span className="text-[10px] text-slate-400">c/u</span>
+                                </div>
+                              </>
+                            ) : (
+                              <div className="flex items-baseline gap-1">
+                                <span className="text-xs text-slate-700 tabular-nums">${item.unitPrice.toLocaleString("es-AR")}</span>
+                                <span className="text-[10px] text-slate-400">c/u</span>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      }
 
-                                <div className="text-right min-w-[100px]">
-                                  <p className="font-semibold text-sm">
-                                    ${compra.total.toLocaleString("es-AR", { minimumFractionDigits: 0 })}
-                                  </p>
-                                  {compra.descuento > 0 && (
-                                    <p className="text-[10px] text-amber-600">-{compra.descuento}% desc.</p>
+                      const QtyCell = ({ item, className = "" }: { item: CompraItem; className?: string }) => (
+                        <div className={`flex flex-col justify-center gap-0 ${className}`}>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-xs text-slate-700 tabular-nums">{item.quantity}</span>
+                            <span className="text-[10px] text-slate-400">{item.quantity === 1 ? "unidad" : "unidades"}</span>
+                          </div>
+                        </div>
+                      )
+
+                      return (
+                        <div
+                          key={compra.id}
+                          onClick={() => router.push(`/compras/compras/${compra.id}`)}
+                          className={`bg-white border rounded-md shadow-sm transition-colors cursor-pointer ${
+                            isSelected
+                              ? "border-blue-300 bg-blue-50/40"
+                              : "border-slate-200/60 hover:border-slate-300"
+                          }`}
+                        >
+                          {/* TOP ROW */}
+                          <div className="grid grid-cols-100 min-h-[44px] py-2 border-b border-slate-200/70">
+                            {/* Checkbox */}
+                            <div
+                              className="col-span-4 flex items-center justify-center border-r border-slate-200/70 cursor-pointer"
+                              onClick={(e) => { e.stopPropagation(); toggleSelectCompra(compra.id) }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => {}}
+                                className="w-4 h-4 rounded-sm border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                              />
+                            </div>
+                            {/* ID */}
+                            <div className="col-span-10 flex items-center justify-start px-3 border-r border-slate-200/70">
+                              <span className="text-sm font-semibold text-slate-900 shrink-0">{compra.id}</span>
+                            </div>
+                            {/* Fecha */}
+                            <div className="col-span-14 flex items-center justify-start px-3 border-r border-slate-200/70">
+                              <span className="text-sm text-slate-600 truncate">
+                                {formatCompraDateTime(compra.fecha, compra.hora)}
+                              </span>
+                            </div>
+                            {/* Origen */}
+                            <div className="col-span-42 flex items-center justify-start px-3 gap-2">
+                              <span className="text-sm text-slate-600 shrink-0">
+                                {compra.origen === "orden" ? "Creada desde orden" : "Creada manualmente"}
+                              </span>
+                              {compra.origen === "orden" && compra.ordenId && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); router.push(`/compras/ordenes-de-compra/${compra.ordenId}`) }}
+                                  className="text-xs font-medium text-slate-500 underline underline-offset-2 hover:text-slate-700 transition-colors shrink-0"
+                                >
+                                  Ver orden
+                                </button>
+                              )}
+                            </div>
+                            {/* Spacer */}
+                            <div className="col-span-12" />
+                            {/* Proveedor pill */}
+                            <div className="col-span-14 flex items-center justify-end pr-3 border-r border-slate-200/70" onClick={(e) => e.stopPropagation()}>
+                              {(() => {
+                                const prov = PROVEEDORES.find(p => {
+                                  const name = p.tipo === "empresa" ? p.razonSocial ?? "" : `${p.nombre} ${p.apellido}`.trim()
+                                  return name === compra.proveedorNombre
+                                })
+                                return (
+                                  <button
+                                    type="button"
+                                    onClick={() => prov && setViewingProveedorId(prov.id)}
+                                    className="inline-flex items-center gap-1.5 pl-1.5 pr-3 py-1 rounded-full border border-slate-200 bg-slate-50 shadow-sm shrink-0 hover:border-slate-300 hover:bg-slate-100 transition-colors cursor-pointer"
+                                  >
+                                    <div className="w-5 h-5 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
+                                      <span className="text-[9px] font-bold text-white uppercase">{compra.proveedorNombre.charAt(0)}</span>
+                                    </div>
+                                    <span className="text-xs text-slate-700 whitespace-nowrap">{compra.proveedorNombre}</span>
+                                  </button>
+                                )
+                              })()}
+                            </div>
+                            {/* More menu */}
+                            <div
+                              className="col-span-4 flex items-center justify-center border-l border-slate-200/70 relative"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <button
+                                className="p-1.5 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                                onClick={() => setOpenMoreMenu(openMoreMenu === compra.id ? null : compra.id)}
+                                aria-label="Más opciones"
+                              >
+                                <MoreVertical className="w-4 h-4" />
+                              </button>
+                              {openMoreMenu === compra.id && (
+                                <div
+                                  className="absolute top-full right-2 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-[180px]"
+                                  onMouseLeave={() => setOpenMoreMenu(null)}
+                                >
+                                  <button
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                                    onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); handleRowDownloadPDF(compra) }}
+                                  >
+                                    <FileDown className="w-4 h-4 text-slate-400" />
+                                    Descargar PDF
+                                  </button>
+                                  <button
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                                    onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null); router.push(`/compras/compras/nueva?duplicar=${compra.id}`) }}
+                                  >
+                                    <Copy className="w-4 h-4 text-slate-400" />
+                                    Duplicar compra
+                                  </button>
+                                  {(compra.estado === "finalizada" || compra.estado === "en_curso") && (
+                                    <button
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors text-left"
+                                      onClick={(e) => { e.stopPropagation(); setOpenMoreMenu(null) }}
+                                    >
+                                      <XCircle className="w-4 h-4 text-red-400" />
+                                      Cancelar compra
+                                    </button>
                                   )}
                                 </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* MIDDLE ROW */}
+                          <div className="flex items-center justify-between gap-3 py-1.5" style={{ paddingLeft: "calc(4% + 12px)", paddingRight: "calc(4% + 12px)" }}>
+                            <div className="flex items-center gap-3">
+                              <div className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full shrink-0 ${estadoStyle.bg}`}>
+                                <EstadoIcon className={`w-3.5 h-3.5 ${estadoStyle.text}`} />
+                                <span className={`text-sm font-medium ${estadoStyle.text}`}>{estadoStyle.label}</span>
                               </div>
+                              {compra.estado === "en_curso" && (() => {
+                                const totalQty    = compra.items.reduce((s, it) => s + it.quantity, 0)
+                                const receivedQty = (compra.recepcionItems ?? []).reduce((s, ri) => s + ri.quantityRecepcionada, 0)
+                                const totalPagado = (compra.pagos ?? []).reduce((s, p) => s + p.monto, 0)
+                                const recepcionPendiente = receivedQty < totalQty
+                                const pagoPendiente      = totalPagado < compra.total
+                                if (!recepcionPendiente && !pagoPendiente) return null
+                                return (
+                                  <div className="flex items-center gap-2 text-[11px] font-light text-slate-400">
+                                    {recepcionPendiente && (
+                                      <span className="flex items-center gap-1"><span>•</span>Recepción pendiente</span>
+                                    )}
+                                    {pagoPendiente && (
+                                      <span className="flex items-center gap-1"><span>•</span>Pago pendiente</span>
+                                    )}
+                                  </div>
+                                )
+                              })()}
+                            </div>
+                          </div>
 
-                              {isExpanded && (
-                                <div className="border-t border-border/30 bg-muted/20">
-                                  <div className="px-4 py-2 space-y-1">
-                                    {compra.items.map((item, idx) => (
-                                      <div key={idx} className="flex items-center gap-3 py-2">
-                                        <div className="w-10 h-10 rounded bg-muted/50 overflow-hidden flex-shrink-0">
-                                          <Image
-                                            src={getCategoryImage(item.categoria) || "/placeholder.svg"}
-                                            alt={item.name}
-                                            width={40}
-                                            height={40}
-                                            className="w-full h-full object-cover"
-                                          />
-                                        </div>
+                          {/* BOTTOM ROW */}
+                          {(() => {
+                            const isExpanded = expandedCompras.has(compra.id) && isMulti
+                            return (
+                              <div className="grid grid-cols-100 pt-1 pb-2" onClick={(e) => e.stopPropagation()}>
+                                <div className="col-span-4" />
+                                {/* Item cell */}
+                                <div className={`col-span-32 bg-slate-50 ${isExpanded ? "rounded-tl-md" : "rounded-l-md"} py-2.5 pl-3 pr-2 flex items-center gap-2`}>
+                                  {isMulti && (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); toggleExpandCompra(compra.id) }}
+                                      className="p-0.5 rounded hover:bg-slate-200 text-slate-500 transition-colors shrink-0"
+                                      aria-label={isExpanded ? "Colapsar productos" : "Expandir productos"}
+                                    >
+                                      {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                                    </button>
+                                  )}
+                                  {isMulti ? (
+                                    <>
+                                      <div className="flex items-center -space-x-2 shrink-0">
+                                        {compra.items.slice(0, 3).map((it, idx) => (
+                                          <div
+                                            key={`${compra.id}-thumb-${idx}`}
+                                            className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden shadow-sm"
+                                            style={{ zIndex: 10 - idx }}
+                                          >
+                                            <img src={getCategoryImage(it.categoria ?? "") || "/placeholder.svg"} alt={it.categoria || "Producto"} className="w-5 h-5 object-contain opacity-70" />
+                                          </div>
+                                        ))}
+                                      </div>
+                                      <span className="text-sm font-semibold text-slate-800 truncate">{compra.items.length} productos</span>
+                                    </>
+                                  ) : firstItem ? (
+                                    <div
+                                      className="flex items-center gap-3 min-w-0 text-left rounded hover:bg-slate-100/70 transition-colors -m-0.5 p-0.5 cursor-pointer"
+                                      onClick={(e) => { e.stopPropagation(); setViewingItem(firstItem as unknown as VentaItem) }}
+                                    >
+                                      <div className="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                                        <img src={getCategoryImage(firstItem.categoria ?? "") || "/placeholder.svg"} alt={firstItem.categoria || "Producto"} className="w-5 h-5 object-contain opacity-70" />
+                                      </div>
+                                      <div className="min-w-0 flex flex-col">
+                                        <span className="text-sm font-medium text-slate-800 truncate">{firstItem.name}</span>
+                                        {firstItem.categoria && (
+                                          <span className="text-xs text-slate-500 truncate">{firstItem.categoria}</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ) : null}
+                                </div>
+                                {/* Unidades */}
+                                <div className="col-span-20 bg-slate-50 flex items-center px-3">
+                                  {!isMulti && firstItem ? (
+                                    <QtyCell item={firstItem} />
+                                  ) : (
+                                    <div className="flex items-baseline gap-1">
+                                      <span className="text-sm text-slate-700 tabular-nums">{totalUnits}</span>
+                                      <span className="text-xs text-slate-400">{totalUnits === 1 ? "unidad" : "unidades"}</span>
+                                    </div>
+                                  )}
+                                </div>
+                                {/* Precio unitario */}
+                                <div className="col-span-16 bg-slate-50 flex items-center px-3">
+                                  {!isMulti && firstItem && <PrecioCell item={firstItem} />}
+                                </div>
+                                {/* Total */}
+                                <div className={`col-span-24 bg-slate-50 ${isExpanded ? "rounded-tr-md" : "rounded-r-md"} flex items-center px-3`}>
+                                  <span className="text-sm font-semibold text-slate-800">Total: ${compra.total.toLocaleString("es-AR")}</span>
+                                </div>
+                                <div className="col-span-4" />
 
-                                        <div className="flex-1 min-w-0">
-                                          <p className="text-sm truncate">{item.name}</p>
-                                          <div className="flex items-center gap-2">
-                                            <span className="text-xs text-muted-foreground">{item.sku}</span>
-                                            {item.discount > 0 && (
-                                              <span className="text-[10px] text-amber-600 bg-amber-50 px-1 rounded">
-                                                -{item.discount}%
-                                              </span>
+                                {/* Expanded item rows */}
+                                {isExpanded && compra.items.map((item, idx) => {
+                                  const isLast = idx === lastItemIdx
+                                  return (
+                                    <Fragment key={`${compra.id}-exp-${idx}`}>
+                                      <div className="col-span-4" />
+                                      <div className={`col-span-32 bg-slate-50 border-t border-slate-200/60`}>
+                                        <div
+                                          className="w-full px-3 py-2 flex items-start gap-3 text-left rounded hover:bg-slate-100/70 transition-colors cursor-pointer"
+                                          onClick={(e) => { e.stopPropagation(); setViewingItem(item as unknown as VentaItem) }}
+                                        >
+                                          <div className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                                            <img src={getCategoryImage(item.categoria ?? "") || "/placeholder.svg"} alt={item.categoria || "Producto"} className="w-4 h-4 object-contain opacity-70" />
+                                          </div>
+                                          <div className="min-w-0 flex flex-col">
+                                            <span className="text-sm font-medium text-slate-800 truncate">{item.name}</span>
+                                            {item.categoria && (
+                                              <span className="text-xs text-slate-500 truncate">{item.categoria}</span>
                                             )}
                                           </div>
                                         </div>
-
-                                        <div className="text-right">
-                                          <p className="text-sm font-medium">
-                                            ${item.total.toLocaleString("es-AR", { minimumFractionDigits: 0 })}
-                                          </p>
-                                          <p className="text-xs text-muted-foreground">
-                                            {item.quantity} × ${item.unitPrice.toLocaleString("es-AR")}
-                                          </p>
-                                        </div>
                                       </div>
-                                    ))}
-                                  </div>
-
-                                  <div className="px-4 py-2 border-t border-border/30 flex justify-end">
-                                    <div className="text-right text-xs space-y-0.5">
-                                      <div className="flex items-center gap-4 text-muted-foreground">
-                                        <span>Subtotal</span>
-                                        <span>${compra.subtotal.toLocaleString("es-AR")}</span>
+                                      <div className="col-span-20 bg-slate-50 px-3 py-2 border-t border-slate-200/60 flex items-center">
+                                        <QtyCell item={item} />
                                       </div>
-                                      {compra.descuento > 0 && (
-                                        <div className="flex items-center gap-4 text-amber-600">
-                                          <span>Descuento ({compra.descuento}%)</span>
-                                          <span>
-                                            -${((compra.subtotal * compra.descuento) / 100).toLocaleString("es-AR")}
-                                          </span>
-                                        </div>
-                                      )}
-                                      <div className="flex items-center gap-4 font-semibold text-sm pt-1">
-                                        <span>Total</span>
-                                        <span>${compra.total.toLocaleString("es-AR")}</span>
+                                      <div className="col-span-16 bg-slate-50 px-3 py-2 border-t border-slate-200/60 flex items-center">
+                                        <PrecioCell item={item} />
                                       </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  ))}
+                                      <div className={`col-span-24 bg-slate-50 border-t border-slate-200/60`} />
+                                      <div className="col-span-4" />
+                                    </Fragment>
+                                  )
+                                })}
+                              </div>
+                            )
+                          })()}
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
-              )}
+              </div>
+
             </div>
           </main>
         </div>
       </div>
+
+      {viewingItem && (
+        <VentaItemDetailModal ventaItem={viewingItem} onClose={() => setViewingItem(null)} />
+      )}
+      {viewingProveedorId && (
+        <ProveedorModal proveedorId={viewingProveedorId} onClose={() => setViewingProveedorId(null)} />
+      )}
     </div>
   )
 }
 
-export default function ComprasPage() {
+/* ─── Period Selector ─────────────────────────────────────────────────────── */
+
+function ComprasPeriodSelector({
+  open,
+  setOpen,
+  currentLabel,
+  currentKey,
+  noPeriod,
+  isActivePeriod,
+  onSelect,
+  rangeLabel,
+  calendarOpen,
+  setCalendarOpen,
+  customRange,
+  setCustomRange,
+}: {
+  open: boolean
+  setOpen: (v: boolean) => void
+  currentLabel: string
+  currentKey: PeriodKey
+  noPeriod: boolean
+  isActivePeriod: boolean
+  onSelect: (k: PeriodKey) => void
+  rangeLabel: string
+  calendarOpen: boolean
+  setCalendarOpen: (v: boolean) => void
+  customRange: { start: Date; end: Date } | null
+  setCustomRange: (r: { start: Date; end: Date } | null) => void
+}) {
+  const activePeriodKeys: PeriodKey[] = ["hoy", "mes_en_curso", "ano_en_curso"]
+  const periodicalKeys: PeriodKey[] = ["7d", "30d", "ultimo_ano", "personalizado"]
+  const activeOptions = PERIOD_OPTIONS.filter(o => activePeriodKeys.includes(o.key))
+  const periodicalOptions = PERIOD_OPTIONS.filter(o => periodicalKeys.includes(o.key))
+
   return (
-    <Suspense fallback={null}>
-      <ComprasContent />
-    </Suspense>
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className={`flex items-center gap-2 px-3 rounded-full border bg-white hover:border-slate-300 transition-colors cursor-pointer ${
+          noPeriod ? "border-slate-200 text-slate-400 py-1.5" : "border-slate-300 text-slate-700 py-1"
+        }`}
+      >
+        <div className="flex flex-col items-start">
+          {!noPeriod && (
+            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 leading-none mb-0.5">Período</span>
+          )}
+          <div className="flex items-center gap-1.5">
+            {isActivePeriod && (
+              <span className="relative flex h-2 w-2 flex-shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+            )}
+            <span className={noPeriod ? "text-sm font-medium" : "text-sm font-semibold text-slate-800"}>{currentLabel}</span>
+          </div>
+        </div>
+        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-[90]" onClick={() => setOpen(false)} />
+          <div className="absolute top-full left-0 mt-1 w-52 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden z-[100] animate-in fade-in-0 slide-in-from-top-1 duration-150">
+            {/* Ninguno */}
+            <button
+              type="button"
+              onClick={() => onSelect("ninguno" as PeriodKey)}
+              className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer ${
+                noPeriod ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-slate-50"
+              }`}
+            >
+              Ninguno
+            </button>
+            {/* En curso group */}
+            <div className="px-4 pt-2 pb-0.5">
+              <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">En curso</span>
+            </div>
+            {activeOptions.map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => onSelect(opt.key)}
+                className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer flex items-center justify-between ${
+                  !noPeriod && currentKey === opt.key
+                    ? "bg-slate-900 text-white"
+                    : "text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                <span>{opt.label}</span>
+                {!noPeriod && currentKey === opt.key && (
+                  <span className="relative flex h-1.5 w-1.5 flex-shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
+                  </span>
+                )}
+              </button>
+            ))}
+            {/* Período fijo group */}
+            <div className="mx-4 my-1 h-px bg-slate-100" />
+            <div className="px-4 pt-1 pb-0.5">
+              <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Período fijo</span>
+            </div>
+            {periodicalOptions.map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => onSelect(opt.key)}
+                className={`w-full text-left px-4 py-2 text-sm transition-colors cursor-pointer ${
+                  !noPeriod && currentKey === opt.key
+                    ? "bg-slate-900 text-white"
+                    : "text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+/* ─── Range Calendar Dialog ───────────────────────────────────────────────── */
+
+function startOfDayC(d: Date) {
+  const copy = new Date(d)
+  copy.setHours(0, 0, 0, 0)
+  return copy
+}
+
+function ComprasRangeCalendarDialog({
+  initialRange,
+  onApply,
+  onCancel,
+}: {
+  initialRange: { start: Date; end: Date } | null
+  onApply: (start: Date, end: Date) => void
+  onCancel: () => void
+}) {
+  const today = startOfDayC(new Date())
+  const [viewMonth, setViewMonth] = useState(() => {
+    const base = initialRange?.end ?? today
+    return new Date(base.getFullYear(), base.getMonth(), 1)
+  })
+  const [start, setStart] = useState<Date | null>(initialRange?.start ?? null)
+  const [end, setEnd]     = useState<Date | null>(initialRange?.end ?? null)
+
+  const handleDayClick = (d: Date) => {
+    if (d > today) return
+    if (!start || (start && end)) { setStart(d); setEnd(null) }
+    else if (start && !end) {
+      if (d < start) { setStart(d); setEnd(start) }
+      else setEnd(d)
+    }
+  }
+
+  const goPrev = () => setViewMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth() - 1, 1))
+  const goNext = () => {
+    const next = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 1)
+    if (next > today) return
+    setViewMonth(next)
+  }
+
+  const firstOfMonth  = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 1)
+  const lastOfMonth   = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 0)
+  const startWeekday  = (firstOfMonth.getDay() + 6) % 7
+  const totalCells    = Math.ceil((startWeekday + lastOfMonth.getDate()) / 7) * 7
+  const cells: (Date | null)[] = []
+  for (let i = 0; i < totalCells; i++) {
+    const dayNum = i - startWeekday + 1
+    cells.push(dayNum < 1 || dayNum > lastOfMonth.getDate() ? null : new Date(viewMonth.getFullYear(), viewMonth.getMonth(), dayNum))
+  }
+
+  const inRange  = (d: Date) => !!(start && end && d >= start && d <= end)
+  const canApply = !!start && !!end
+  const MONTHS   = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 p-6 w-80">
+        <div className="flex items-center justify-between mb-4">
+          <button type="button" onClick={goPrev} className="p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer">
+            <ChevronLeft className="w-4 h-4 text-slate-500" />
+          </button>
+          <span className="text-sm font-semibold text-slate-800">{MONTHS[viewMonth.getMonth()]} {viewMonth.getFullYear()}</span>
+          <button type="button" onClick={goNext} className="p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer">
+            <ChevronRight className="w-4 h-4 text-slate-500" />
+          </button>
+        </div>
+        <div className="grid grid-cols-7 gap-0.5 mb-1">
+          {["Lu","Ma","Mi","Ju","Vi","Sa","Do"].map((d) => (
+            <div key={d} className="text-center text-[10px] font-semibold text-slate-400 py-1">{d}</div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-0.5">
+          {cells.map((d, i) => {
+            if (!d) return <div key={i} />
+            const isStart   = start && d.getTime() === start.getTime()
+            const isEnd     = end   && d.getTime() === end.getTime()
+            const isInRange = inRange(d)
+            const isFuture  = d > today
+            return (
+              <button
+                key={i}
+                type="button"
+                disabled={isFuture}
+                onClick={() => handleDayClick(d)}
+                className={`text-xs h-8 rounded-lg transition-colors cursor-pointer ${
+                  isStart || isEnd ? "bg-slate-900 text-white"
+                  : isInRange      ? "bg-slate-100 text-slate-700"
+                  : isFuture       ? "text-slate-300 cursor-not-allowed"
+                  : "text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                {d.getDate()}
+              </button>
+            )
+          })}
+        </div>
+        <div className="mt-4 flex gap-2">
+          <button type="button" onClick={onCancel} className="flex-1 h-9 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 cursor-pointer transition-colors">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            disabled={!canApply}
+            onClick={() => canApply && onApply(start!, end!)}
+            className="flex-1 h-9 rounded-lg bg-slate-900 text-white text-sm font-medium hover:bg-slate-800 cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Aplicar
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }

@@ -6,7 +6,7 @@ import { ChevronRight, Package, CheckCircle2 } from "lucide-react"
 
 import { Sidebar } from "@/components/layout/sidebar"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
-import { ItemDetailPanel } from "@/components/items/item-detail-panel"
+import { CatalogoItemDetailPanel } from "@/components/items/catalogo-item-detail-panel"
 import { UserPanel } from "@/components/layout/user-panel"
 import { UnsavedChangesModal } from "@/components/modals/unsaved-changes-modal"
 import { useItems } from "@/hooks/use-items"
@@ -18,10 +18,10 @@ import type { Item } from "@/lib/types"
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-export default function ItemDetailPage() {
+export default function CatalogoItemDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const itemParam = params.item as string
+  const itemParam = params.id as string
 
   const [isSaving, setIsSaving] = useState(false)
   const [selectedDetailTab, setSelectedDetailTab] = useState<"info" | "stock" | "precios" | "canales">("info")
@@ -50,8 +50,8 @@ export default function ItemDetailPage() {
   const { hoveredDropdown, handleDropdownMouseEnter, handleDropdownMouseLeave, handleCloseDropdowns } = useSidebar()
 
   const selectedItem =
-    items.find((item) => item.sku === itemParam) ||
-    items.flatMap((item) => item.variants || []).find((variant) => variant.sku === itemParam)
+    items.find((item) => item.id === itemParam) ||
+    items.flatMap((item) => item.variants || []).find((variant) => variant.id === itemParam)
 
   const handleUndo = () => {
     if (canUndoEdit) {
@@ -101,23 +101,7 @@ export default function ItemDetailPage() {
 
   const handleDeleteWithTracking = (item: Item) => {
     deleteItem(item)
-    router.push("/inventario/articulos")
-  }
-
-  const handleNavigateBack = () => {
-    navigateBack()
-  }
-
-  const handleNavigateForward = () => {
-    navigateForward()
-  }
-
-  const handleClose = () => {
-    router.push("/inventario/articulos")
-  }
-
-  const handleFieldChange = (itemSku: string, field: string, value: any) => {
-    editField(itemSku, field, value)
+    router.push("/catalogo/items")
   }
 
   const hasUnsavedChanges = hasUnsavedEdits || hasUnsavedDeletes
@@ -128,10 +112,53 @@ export default function ItemDetailPage() {
       onDiscard: handleDeshacer,
     })
 
+  // Guarded navigation — shows modal if there are unsaved changes, otherwise navigates directly
+  const guardedNavigate = (href: string) => {
+    if (hasUnsavedChanges) {
+      router.push(href) // router.push is intercepted by useNavigationGuard when hasUnsavedChanges is true
+    } else {
+      router.push(href)
+    }
+  }
+
+  const handleNavigateBack = () => {
+    if (hasUnsavedChanges) {
+      // Use the guarded router.push which is already intercepted
+      const prev = navigationHistory[historyIndex - 1]
+      if (prev?.item) {
+        router.push(`/catalogo/items/${prev.item.id || prev.item.sku}`)
+      } else if (historyIndex > 0) {
+        router.push("/catalogo/items")
+      }
+    } else {
+      navigateBack()
+    }
+  }
+
+  const handleNavigateForward = () => {
+    if (hasUnsavedChanges) {
+      const next = navigationHistory[historyIndex + 1]
+      if (next?.item) {
+        router.push(`/catalogo/items/${next.item.id || next.item.sku}`)
+      } else {
+        router.push("/catalogo/items")
+      }
+    } else {
+      navigateForward()
+    }
+  }
+
+  const handleClose = () => {
+    router.push("/catalogo/items")
+  }
+
+  const handleFieldChange = (itemSku: string, field: string, value: any) => {
+    editField(itemSku, field, value)
+  }
+
   useEffect(() => {
     if (!selectedItem && items.length > 0) {
-      console.log("[v0] Item not found, redirecting. itemParam:", itemParam)
-      router.push("/inventario/articulos")
+      router.push("/catalogo/items")
     }
   }, [selectedItem, items, router, itemParam])
 
@@ -143,15 +170,12 @@ export default function ItemDetailPage() {
   }
 
   const breadcrumbs = selectedItem
-    ? [{ label: "Inventario" }, { label: "Artículos", href: "/inventario/articulos" }, { label: selectedItem.name }]
-    : [{ label: "Inventario" }, { label: "Artículos", href: "/inventario/articulos" }]
+    ? [{ label: "Catálogo" }, { label: "Items", href: "/catalogo/items" }, { label: selectedItem.name }]
+    : [{ label: "Catálogo" }, { label: "Items", href: "/catalogo/items" }]
 
   if (!selectedItem) {
-    return (
-      <div className="min-h-screen bg-[rgb(243,242,238)] flex items-center justify-center">
-        <p>Loading...</p>
-      </div>
-    )
+    // While redirecting to a static sub-route or waiting for items, show nothing.
+    return <div className="min-h-screen bg-[rgb(243,242,238)]" />
   }
 
   const canUndo = canUndoEdit || hasUnsavedDeletes
@@ -175,7 +199,7 @@ export default function ItemDetailPage() {
           <div className="relative border-b border-border h-[44px] bg-white">
             <div className="px-4 flex items-center justify-between h-full">
               <div className="flex items-center">
-                <Breadcrumb items={breadcrumbs} />
+                <Breadcrumb items={breadcrumbs} onNavigate={guardedNavigate} />
               </div>
 
               <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center gap-3 mt-0">
@@ -214,7 +238,7 @@ export default function ItemDetailPage() {
           </div>
 
           <main className="flex-1 bg-[rgba(250,251,253,1)] overflow-auto">
-            <ItemDetailPanel
+            <CatalogoItemDetailPanel
               selectedItem={selectedItem}
               selectedDetailTab={selectedDetailTab}
               setSelectedDetailTab={setSelectedDetailTab}
@@ -231,6 +255,7 @@ export default function ItemDetailPage() {
               onDelete={handleDeleteWithTracking}
               variantChangeHandlers={{}}
               isExpanded={false}
+              onSaveNow={saveEdit}
             />
           </main>
         </div>

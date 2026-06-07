@@ -21,6 +21,7 @@ export function NuevoClienteModal({ isOpen, onClose, onSave }: NuevoClienteModal
   const [razonSocial, setRazonSocial] = useState("")
   const [cuit, setCuit] = useState("")
   const [dni, setDni] = useState("")
+  const [idType, setIdType] = useState<"dni" | "cuit">("dni")
   const [email, setEmail] = useState("")
   const [telefono, setTelefono] = useState("")
   const [direccion, setDireccion] = useState("")
@@ -36,6 +37,7 @@ export function NuevoClienteModal({ isOpen, onClose, onSave }: NuevoClienteModal
     setRazonSocial("")
     setCuit("")
     setDni("")
+    setIdType("dni")
     setEmail("")
     setTelefono("")
     setDireccion("")
@@ -184,32 +186,61 @@ export function NuevoClienteModal({ isOpen, onClose, onSave }: NuevoClienteModal
               </div>
             )}
 
-            {/* CUIT y DNI */}
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
+            {/* Identificación */}
+            {tipo === "empresa" ? (
+              <div className="mb-4">
                 <label className="block text-sm font-medium mb-1.5">
-                  CUIT {tipo === "empresa" && <span className="text-destructive">*</span>}
+                  CUIT <span className="text-destructive">*</span>
                 </label>
                 <input
                   type="text"
                   value={cuit}
                   onChange={handleCuitChange}
-                  required={tipo === "empresa"}
+                  required
                   className="w-full px-3 py-2 border border-border rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   placeholder="XX-XXXXXXXX-X"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1.5">DNI</label>
-                <input
-                  type="text"
-                  value={dni}
-                  onChange={(e) => setDni(e.target.value.replace(/\D/g, "").slice(0, 8))}
-                  className="w-full px-3 py-2 border border-border rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                  placeholder="12345678"
-                />
+            ) : (
+              <div className="mb-4">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <label className="text-sm font-medium">Identificación</label>
+                  <div className="flex items-center border border-border rounded-md overflow-hidden text-xs h-6">
+                    <button
+                      type="button"
+                      onClick={() => { setIdType("dni"); setDni(""); setCuit("") }}
+                      className={`px-2.5 h-full transition-colors cursor-pointer ${idType === "dni" ? "bg-slate-900 text-white" : "bg-white text-slate-600 hover:bg-slate-50"}`}
+                    >
+                      DNI
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setIdType("cuit"); setDni(""); setCuit("") }}
+                      className={`px-2.5 h-full transition-colors cursor-pointer ${idType === "cuit" ? "bg-slate-900 text-white" : "bg-white text-slate-600 hover:bg-slate-50"}`}
+                    >
+                      CUIT
+                    </button>
+                  </div>
+                </div>
+                {idType === "dni" ? (
+                  <input
+                    type="text"
+                    value={dni}
+                    onChange={(e) => setDni(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                    className="w-full px-3 py-2 border border-border rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                    placeholder="12345678"
+                  />
+                ) : (
+                  <input
+                    type="text"
+                    value={cuit}
+                    onChange={handleCuitChange}
+                    className="w-full px-3 py-2 border border-border rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                    placeholder="XX-XXXXXXXX-X"
+                  />
+                )}
               </div>
-            </div>
+            )}
 
             {/* Condición IVA */}
             <div className="mb-4">

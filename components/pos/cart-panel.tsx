@@ -1,9 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Trash2, Minus, Plus, Percent, DollarSign, AlertTriangle, Edit2, Check, X } from "lucide-react"
+import { Trash2, Minus, Plus, AlertTriangle, Edit2, Check, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import type { CartItem } from "@/hooks/use-pos"
 
@@ -17,29 +16,21 @@ interface CartPanelProps {
 
 export function CartPanel({ cart, onUpdateQuantity, onRemove, onUpdatePrice, onUpdateDiscount }: CartPanelProps) {
   const [editingPrice, setEditingPrice] = useState<string | null>(null)
-  const [editingDiscount, setEditingDiscount] = useState<string | null>(null)
   const [tempPrice, setTempPrice] = useState("")
-  const [tempDiscount, setTempDiscount] = useState("")
-  const [tempDiscountType, setTempDiscountType] = useState<"percentage" | "fixed">("percentage")
 
-  const getFullTitle = (item: CartItem): string => {
+  const getTags = (item: CartItem): string[] => {
     const baseItem = item.variant || item.item
-    const isParent = item.item.tipo === "agrupador"
+    if (!baseItem.atributosPrincipales || !Array.isArray(baseItem.atributosPrincipales)) return []
+    return baseItem.atributosPrincipales
+      .map((attr: any) => attr.value || attr.valor)
+      .filter((v: any) => v && String(v).trim() !== "")
+      .map(String)
+  }
 
-    // For parent items (agrupador), just return the name
-    if (isParent && !item.variant) {
-      return item.item.name
-    }
-
-    // For standalone or child items, concatenate with attributes
-    const attributes = baseItem.atributosPrincipales
-      ? Object.values(baseItem.atributosPrincipales)
-          .filter((attr) => attr && typeof attr === "object" && "valor" in attr)
-          .map((attr) => attr.valor)
-          .filter(Boolean)
-      : []
-
-    return attributes.length > 0 ? `${baseItem.name} ${attributes.join(" ")}` : baseItem.name
+  const getDisplayName = (item: CartItem): string => {
+    // For variants, show parent name; tags shown separately
+    if (item.variant) return item.item.name
+    return item.item.name
   }
 
   const handleStartEditPrice = (item: CartItem) => {
@@ -53,20 +44,6 @@ export function CartPanel({ cart, onUpdateQuantity, onRemove, onUpdatePrice, onU
       onUpdatePrice(itemId, price)
     }
     setEditingPrice(null)
-  }
-
-  const handleStartEditDiscount = (item: CartItem) => {
-    setEditingDiscount(item.id)
-    setTempDiscount(item.discount.toString())
-    setTempDiscountType(item.discountType)
-  }
-
-  const handleSaveDiscount = (itemId: string) => {
-    const discount = Number.parseFloat(tempDiscount)
-    if (!isNaN(discount) && discount >= 0) {
-      onUpdateDiscount(itemId, discount, tempDiscountType)
-    }
-    setEditingDiscount(null)
   }
 
   const getStockWarning = (item: CartItem) => {
@@ -105,9 +82,8 @@ export function CartPanel({ cart, onUpdateQuantity, onRemove, onUpdatePrice, onU
       <div className="p-2 space-y-1">
         {cart.map((item) => {
           const stockWarning = getStockWarning(item)
-          const displayName = getFullTitle(item)
-          const displaySku = item.variant?.sku || item.item.sku
-          const hasDiscount = item.discount > 0
+          const displayName = getDisplayName(item)
+          const tags = getTags(item)
           const hasPriceOverride = item.priceOverride !== undefined
 
           return (
@@ -118,21 +94,38 @@ export function CartPanel({ cart, onUpdateQuantity, onRemove, onUpdatePrice, onU
                 stockWarning.critical && "border-red-500/30 bg-red-500/5",
               )}
             >
-              {/* Header Row */}
-              <div className="flex items-start gap-2 mb-2">
+              {/* Title + marca/categoria + trash */}
+              <div className="flex items-start gap-2 mb-2.5">
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate">{displayName}</p>
-                  <p className="text-xs text-muted-foreground">{displaySku}</p>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <p className="font-medium text-sm truncate">{displayName}</p>
+                    {tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-medium leading-none flex-shrink-0"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    {item.item.marca && <span className="text-xs text-muted-foreground">{item.item.marca}</span>}
+                    {item.item.marca && item.item.categoria && <span className="text-xs text-muted-foreground">·</span>}
+                    {item.item.categoria && <span className="text-xs text-muted-foreground">{item.item.categoria}</span>}
+                  </div>
                 </div>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 text-muted-foreground hover:text-red-500"
+                  className="h-6 w-6 text-muted-foreground hover:text-red-500 flex-shrink-0"
                   onClick={() => onRemove(item.id)}
                 >
                   <Trash2 className="h-3 w-3" />
                 </Button>
               </div>
+
+              {/* Separator */}
+              <div className="border-t border-border/30 mb-2.5" />
 
               {/* Stock Warning */}
               {stockWarning.show && (
@@ -147,121 +140,94 @@ export function CartPanel({ cart, onUpdateQuantity, onRemove, onUpdatePrice, onU
                 </div>
               )}
 
-              {/* Price Row */}
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs text-muted-foreground w-12">Precio:</span>
-                {editingPrice === item.id ? (
-                  <div className="flex items-center gap-1 flex-1">
-                    <Input
-                      type="number"
-                      value={tempPrice}
-                      onChange={(e) => setTempPrice(e.target.value)}
-                      className="h-7 text-sm"
-                      autoFocus
-                    />
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleSavePrice(item.id)}>
-                      <Check className="h-3 w-3" />
-                    </Button>
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingPrice(null)}>
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 flex-1">
-                    <span className={cn("text-sm", hasPriceOverride && "text-blue-500")}>
-                      ${(item.priceOverride ?? item.originalPrice).toLocaleString("es-AR")}
-                    </span>
-                    {hasPriceOverride && (
-                      <span className="text-xs text-muted-foreground line-through">
-                        ${item.originalPrice.toLocaleString("es-AR")}
-                      </span>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 ml-auto"
-                      onClick={() => handleStartEditPrice(item)}
-                    >
-                      <Edit2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                )}
-              </div>
-
-              {/* Discount Row */}
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-xs text-muted-foreground w-12">Desc.:</span>
-                {editingDiscount === item.id ? (
-                  <div className="flex items-center gap-1 flex-1">
-                    <Input
-                      type="number"
-                      value={tempDiscount}
-                      onChange={(e) => setTempDiscount(e.target.value)}
-                      className="h-7 text-sm w-20"
-                      autoFocus
-                    />
-                    <Button
-                      size="icon"
-                      variant={tempDiscountType === "percentage" ? "default" : "ghost"}
-                      className="h-7 w-7"
-                      onClick={() => setTempDiscountType("percentage")}
-                    >
-                      <Percent className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant={tempDiscountType === "fixed" ? "default" : "ghost"}
-                      className="h-7 w-7"
-                      onClick={() => setTempDiscountType("fixed")}
-                    >
-                      <DollarSign className="h-3 w-3" />
-                    </Button>
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleSaveDiscount(item.id)}>
-                      <Check className="h-3 w-3" />
-                    </Button>
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingDiscount(null)}>
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 flex-1">
-                    <span className={cn("text-sm", hasDiscount && "text-emerald-500")}>
-                      {hasDiscount ? `${item.discount}${item.discountType === "percentage" ? "%" : "$"}` : "—"}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 ml-auto"
-                      onClick={() => handleStartEditDiscount(item)}
-                    >
-                      <Percent className="h-3 w-3" />
-                    </Button>
-                  </div>
-                )}
-              </div>
-
-              {/* Quantity & Subtotal Row */}
-              <div className="flex items-center justify-between pt-2 border-t border-border/30">
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-7 w-7 bg-transparent"
+              {/* Cantidad (left) + Precio (right) — same row */}
+              <div className="flex items-center justify-between gap-3">
+                {/* Quantity — pill style matching nueva venta step 2 */}
+                <div className="flex items-center border border-slate-200 rounded-full px-1 py-0.5 bg-white">
+                  <button
                     onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
+                    className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-400 transition-colors"
                   >
-                    <Minus className="h-3 w-3" />
-                  </Button>
-                  <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-7 w-7 bg-transparent"
+                    <Minus className="w-3 h-3" />
+                  </button>
+                  <input
+                    type="number"
+                    value={item.quantity}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 1
+                      onUpdateQuantity(item.id, val)
+                    }}
+                    className="w-10 text-center text-sm py-1 focus:outline-none bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                  <button
                     onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+                    className="w-6 h-6 flex items-center justify-center rounded-full border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-400 transition-colors"
                   >
-                    <Plus className="h-3 w-3" />
-                  </Button>
+                    <Plus className="w-3 h-3" />
+                  </button>
                 </div>
-                <p className="font-semibold">${item.subtotal.toLocaleString("es-AR", { minimumFractionDigits: 2 })}</p>
+
+                {/* Price — label / value / pencil */}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-muted-foreground">Precio:</span>
+                  {editingPrice === item.id ? (
+                    <div className="flex items-center gap-1.5">
+                      {/* $ + input — matching nueva venta precio unit style */}
+                      <div className="flex items-center gap-1 border border-slate-200 rounded px-2 py-1">
+                        <span className="text-slate-400 text-sm">$</span>
+                        <input
+                          type="number"
+                          value={tempPrice}
+                          onChange={(e) => setTempPrice(e.target.value)}
+                          autoFocus
+                          className="w-20 text-sm focus:outline-none bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        />
+                      </div>
+                      {/* Check / X wrapped in black button-like divs */}
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleSavePrice(item.id)}
+                          className="w-6 h-6 flex items-center justify-center rounded bg-slate-900 hover:bg-slate-700 text-white transition-colors"
+                        >
+                          <Check className="h-3 w-3" />
+                        </button>
+                        <button
+                          onClick={() => setEditingPrice(null)}
+                          className="w-6 h-6 flex items-center justify-center rounded bg-slate-900 hover:bg-slate-700 text-white transition-colors"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <span className={cn("text-sm font-medium", hasPriceOverride && "text-blue-500")}>
+                        ${(item.priceOverride ?? item.originalPrice).toLocaleString("es-AR")}
+                      </span>
+                      {hasPriceOverride && (
+                        <span className="text-xs text-muted-foreground line-through">
+                          ${item.originalPrice.toLocaleString("es-AR")}
+                        </span>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => handleStartEditPrice(item)}
+                      >
+                        <Edit2 className="h-3 w-3" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Separator + Total */}
+              <div className="border-t border-border/30 mt-2.5 pt-2 flex justify-between items-center">
+                <span className="text-xs text-muted-foreground">Total</span>
+                <span className="font-semibold text-sm">
+                  ${item.subtotal.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                </span>
               </div>
             </div>
           )

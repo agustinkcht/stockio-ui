@@ -27,11 +27,11 @@ interface CheckoutPanelProps {
   total: number
   itemCount: number
   selectedClientId: string | null
-  paymentMethod: "efectivo" | "tarjeta" | "transferencia" | "cuenta_corriente"
+  paymentMethod: "efectivo" | "posnet" | "transferencia"
   onSelectClient: (clientId: string | null) => void
   onSetGlobalDiscount: (discount: number) => void
   onSetGlobalDiscountType: (type: "percentage" | "fixed") => void
-  onSetPaymentMethod: (method: "efectivo" | "tarjeta" | "transferencia" | "cuenta_corriente") => void
+  onSetPaymentMethod: (method: "efectivo" | "posnet" | "transferencia") => void
   onCheckout: () => void
   onClear: () => void
 }
@@ -81,9 +81,8 @@ export function CheckoutPanel({
 
   const paymentMethods = [
     { id: "efectivo", label: "Efectivo", icon: Banknote },
-    { id: "tarjeta", label: "Tarjeta", icon: CreditCard },
+    { id: "posnet", label: "Posnet", icon: CreditCard },
     { id: "transferencia", label: "Transfer.", icon: Building2 },
-    { id: "cuenta_corriente", label: "Cta. Cte.", icon: FileText },
   ] as const
 
   return (
@@ -182,8 +181,8 @@ export function CheckoutPanel({
 
       {/* Payment Method */}
       <div className="p-4 border-b border-border/30 py-2">
-        <p className="text-xs text-muted-foreground mb-2">Método de pago</p>
-        <div className="grid grid-cols-4 gap-2">
+        <p className="text-xs text-muted-foreground mb-2">Medio de pago</p>
+        <div className="grid grid-cols-3 gap-2">
           {paymentMethods.map((method) => (
             <button
               key={method.id}

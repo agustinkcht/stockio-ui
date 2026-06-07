@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 
-export async function GET(request: Request, { params }: { params: { sku: string } }) {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ sku: string }> }
+) {
   try {
-    const { sku } = params
+    const { sku } = await params
 
     const items = await sql`SELECT * FROM items WHERE sku = ${sku}`
     if (items.length === 0) {
@@ -17,9 +20,12 @@ export async function GET(request: Request, { params }: { params: { sku: string 
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { sku: string } }) {
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ sku: string }> }
+) {
   try {
-    const { sku } = params
+    const { sku } = await params
     const body = await request.json()
 
     await sql`
@@ -65,9 +71,12 @@ export async function PUT(request: Request, { params }: { params: { sku: string 
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { sku: string } }) {
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ sku: string }> }
+) {
   try {
-    const { sku } = params
+    const { sku } = await params
 
     // Single query - CASCADE handles all related records automatically
     await sql`DELETE FROM items WHERE sku = ${sku}`

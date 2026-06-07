@@ -1,433 +1,193 @@
 "use client"
 
-import { useState, useMemo, useRef, useEffect } from "react"
-import { Building2, User, MoreHorizontal, Search, Copy, X, Plus, ArrowUpDown, ListFilterIcon } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { NuevoProveedorModal } from "@/components/modals/nuevo-proveedor-modal"
-import { EditarProveedorModal } from "@/components/modals/editar-proveedor-modal"
-import { FiltrosModalProveedores } from "@/components/modals/filtros-modal-proveedores"
-import { OrdenModalProveedores } from "@/components/modals/orden-modal-proveedores"
 import type { Proveedor } from "@/lib/data/proveedores"
-import type { FiltrosProveedores, OrdenProveedores } from "@/lib/types"
+import type { Compra } from "@/lib/types"
+import { Building2, User, Copy, MoreVertical } from "lucide-react"
+import { useState, useMemo } from "react"
+import { Checkbox } from "@/components/ui/checkbox"
 
 interface ProveedoresGridProps {
   proveedores: Proveedor[]
-  onAddProveedor: (proveedor: Proveedor) => void
-  onUpdateProveedor: (id: string, updates: Partial<Proveedor>) => void
+  compras: Compra[]
+  proveedorSelected: boolean[]
+  onSelectProveedor: (index: number) => void
+  onEditProveedor: (proveedor: Proveedor) => void
   onDeleteProveedor: (id: string) => void
-  gridSize?: string
-  gridSizeDropdownOpen?: boolean
-  setGridSizeDropdownOpen?: (value: boolean) => void
-  setGridSize?: (size: string) => void
-  onOpenNuevoProveedor?: () => void
-  proveedorSelected?: boolean[]
-  handleProveedorButtonClick?: (index: number) => void
-  selectAllActive?: boolean
-  handleSelectAllClick?: () => void
-  hasSelectedProveedores?: boolean
-  onBatchDelete?: () => void
+  onTransaccionesClick: (nombre: string) => void
 }
 
 export function ProveedoresGrid({
   proveedores,
-  onAddProveedor,
-  onUpdateProveedor,
+  compras,
+  proveedorSelected,
+  onSelectProveedor,
+  onEditProveedor,
   onDeleteProveedor,
-  gridSize: gridSizeProp = "md",
-  gridSizeDropdownOpen: gridSizeDropdownOpenProp = false,
-  setGridSizeDropdownOpen,
-  setGridSize: setGridSizeProp,
-  onOpenNuevoProveedor,
-  proveedorSelected: proveedorSelectedProp = [],
-  handleProveedorButtonClick,
-  selectAllActive: selectAllActiveProp = false,
-  handleSelectAllClick,
-  hasSelectedProveedores = false,
-  onBatchDelete,
+  onTransaccionesClick,
 }: ProveedoresGridProps) {
-  const [searchQuery, setSearchQuery] = useState("")
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
-  const [gridSize, setGridSize] = useState<"sm" | "md" | "lg">(gridSizeProp as "sm" | "md" | "lg")
-  const [showNuevoModal, setShowNuevoModal] = useState(false)
-  const [showOrderModal, setShowOrderModal] = useState(false)
-  const [showFilterModal, setShowFilterModal] = useState(false)
-  const [filtros, setFiltros] = useState<FiltrosProveedores>({})
-  const [orden, setOrden] = useState<OrdenProveedores>({ factor: "nombre", direction: "asc" })
-  const [selectedProveedores, setSelectedProveedores] = useState<string[]>([])
-  
-  // Use parent's state if available, otherwise use internal
-  const proveedorSelected = proveedorSelectedProp.length > 0 ? proveedorSelectedProp : []
-  const selectAllActive = selectAllActiveProp
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [openMenuIndex, setOpenMenuIndex] = useState<number | null>(null)
 
-  const [showEditModal, setShowEditModal] = useState(false)
-  const [proveedorToEdit, setProveedorToEdit] = useState<Proveedor | null>(null)
-
-  const orderRef = useRef<HTMLDivElement>(null)
-  const filterRef = useRef<HTMLDivElement>(null)
-
-  const searchedProveedores = useMemo(() => {
-    if (!searchQuery) return proveedores
-
-    const query = searchQuery.toLowerCase()
-    return proveedores.filter((proveedor) => {
-      const nombre =
-        proveedor.tipo === "empresa" ? proveedor.razonSocial || "" : `${proveedor.nombre} ${proveedor.apellido}`
-      return (
-        nombre.toLowerCase().includes(query) ||
-        proveedor.email?.toLowerCase().includes(query) ||
-        proveedor.telefono?.toLowerCase().includes(query) ||
-        proveedor.cuit?.toLowerCase().includes(query) ||
-        proveedor.dni?.toLowerCase().includes(query)
-      )
-    })
-  }, [proveedores, searchQuery])
-
-  const filteredProveedores = useMemo(() => {
-    return searchedProveedores.filter((proveedor) => {
-      if (filtros.tipo && proveedor.tipo !== filtros.tipo) return false
-      if (filtros.condicionIva && proveedor.condicionIva !== filtros.condicionIva) return false
-      if (filtros.ciudad && proveedor.ciudad !== filtros.ciudad) return false
-      return true
-    })
-  }, [searchedProveedores, filtros])
-
-  const sortedAndFilteredProveedores = useMemo(() => {
-    const sorted = [...filteredProveedores]
-
-    sorted.sort((a, b) => {
-      let comparison = 0
-
-      switch (orden.factor) {
-        case "nombre":
-          const nombreA = a.tipo === "empresa" ? a.razonSocial || "" : `${a.nombre} ${a.apellido}`
-          const nombreB = b.tipo === "empresa" ? b.razonSocial || "" : `${b.nombre} ${b.apellido}`
-          comparison = nombreA.localeCompare(nombreB)
-          break
-        case "tipo":
-          comparison = a.tipo.localeCompare(b.tipo)
-          break
-        case "condicionIva":
-          comparison = a.condicionIva.localeCompare(b.condicionIva)
-          break
-        case "ciudad":
-          comparison = (a.ciudad || "").localeCompare(b.ciudad || "")
-          break
-      }
-
-      return orden.direction === "asc" ? comparison : -comparison
-    })
-
-    return sorted
-  }, [filteredProveedores, orden])
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (orderRef.current && !orderRef.current.contains(event.target as Node)) {
-        setShowOrderModal(false)
-      }
-      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
-        setShowFilterModal(false)
+  // Real transaction count per proveedor from compras (excluding canceladas)
+  const transactionCountMap = useMemo(() => {
+    const map: Record<string, number> = {}
+    for (const compra of compras) {
+      if (compra.estado === "cancelada") continue
+      if (compra.proveedorId) {
+        map[compra.proveedorId] = (map[compra.proveedorId] ?? 0) + 1
       }
     }
+    return map
+  }, [compras])
 
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [])
-
-  const handleSelectAll = () => {
-    if (handleSelectAllClick) {
-      handleSelectAllClick()
-    }
+  const handleCopy = (value: string, id: string) => {
+    navigator.clipboard.writeText(value)
+    setCopiedId(id)
+    setTimeout(() => setCopiedId(null), 1500)
   }
-
-  const handleSelectProveedor = (index: number) => {
-    if (handleProveedorButtonClick) {
-      handleProveedorButtonClick(index)
-    }
-  }
-
-  const handleCopyCuitDni = (cuitDni: string) => {
-    navigator.clipboard.writeText(cuitDni)
-  }
-
-  const handleEditProveedor = (proveedor: Proveedor) => {
-    setProveedorToEdit(proveedor)
-    setShowEditModal(true)
-  }
-
-  const handleSaveEdit = (id: string, updates: Partial<Proveedor>) => {
-    onUpdateProveedor(id, updates)
-  }
-
-  const hasActiveFilters = Object.keys(filtros).length > 0
-
-  const heightClass = gridSize === "sm" ? "h-[60px]" : gridSize === "md" ? "h-[80px]" : "h-[100px]"
-  const textSizeClass = gridSize === "sm" ? "text-xs" : gridSize === "md" ? "text-sm" : "text-base"
-  const paddingClass = gridSize === "sm" ? "px-2 py-1.5" : gridSize === "md" ? "px-3 py-2" : "px-4 py-3"
 
   return (
-    <div className="flex-1 flex flex-col bg-slate-50 overflow-hidden">
-      <div className="px-6 pt-6 pb-4">
-        <div className="bg-white border border-border/40 rounded-lg shadow-sm">
-          <div className="px-4 py-3 flex items-center justify-between gap-4">
-            {/* Left: Action buttons */}
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={onOpenNuevoProveedor || (() => setShowNuevoModal(true))}
-                variant="ghost"
-                size="sm"
-                className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer gap-1.5 shrink-0"
-              >
-                <Plus className="w-3.5 h-3.5 text-blue-600" />
-                Nuevo Proveedor
-              </Button>
+    <div className="divide-y divide-slate-100">
+      {proveedores.length === 0 && (
+        <div className="py-16 text-center text-sm text-slate-400">Sin proveedores para mostrar.</div>
+      )}
+      {proveedores.map((proveedor, index) => {
+        const isSelected = proveedorSelected[index] ?? false
+        const isHovered = hoveredIndex === index
+        const displayName =
+          proveedor.tipo === "empresa" && proveedor.razonSocial
+            ? proveedor.razonSocial
+            : `${proveedor.nombre} ${proveedor.apellido}`
+        const cuitDni = proveedor.cuit
+          ? `CUIT ${proveedor.cuit}`
+          : proveedor.dni
+          ? `DNI ${proveedor.dni}`
+          : ""
 
-              {hasSelectedProveedores && (
-                <Button
-                  onClick={onBatchDelete}
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 text-xs transition-colors border shadow-sm bg-red-50 hover:bg-red-100 border-red-200 text-red-700 cursor-pointer"
-                >
-                  Eliminar
-                </Button>
-              )}
-            </div>
-
-            {/* Center: Search Bar */}
-            <div className="flex-1 max-w-md relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-black opacity-100 z-10" />
-              <input
-                type="text"
-                placeholder="Buscar proveedores..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-8 pl-9 pr-9 border shadow-sm rounded-md text-xs placeholder:text-gray-600 text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 bg-white backdrop-blur-sm transition-all duration-300 border-[rgba(202,213,227,0.842391304347826)]"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors z-10"
-                  title="Limpiar búsqueda"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-
-            {/* Right: Orden and Filtro Buttons */}
-            <div className="flex items-center gap-0 flex-shrink-0">
-              <div className="relative mr-3" ref={orderRef}>
-                <button
-                  onClick={() => setShowOrderModal(true)}
-                  className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 transition-colors group cursor-pointer border border-gray-200/40 shadow-sm rounded-full mr-[-4px]"
-                  title="Ordenar"
-                >
-                  <ArrowUpDown className="w-4 h-4 text-gray-600 group-hover:text-gray-900" />
-                </button>
+        return (
+          <div
+            key={proveedor.id}
+            onMouseEnter={() => setHoveredIndex(index)}
+            onMouseLeave={() => setHoveredIndex(null)}
+            className={`grid grid-cols-12 items-center h-[72px] transition-colors ${
+              isSelected
+                ? "bg-blue-50/40 border-blue-200"
+                : isHovered
+                ? "bg-slate-50/60"
+                : ""
+            }`}
+          >
+            {/* Proveedor name + meta — col-span-5, inline checkbox */}
+            <div className="col-span-5 flex items-center gap-2.5 min-w-0 pl-4 h-full border-r border-slate-100">
+              <div className={`transition-opacity shrink-0 ${isHovered || isSelected ? "opacity-100" : "opacity-0"}`}>
+                <Checkbox
+                  checked={isSelected}
+                  onCheckedChange={() => onSelectProveedor(index)}
+                />
               </div>
-
-              <div className="relative" ref={filterRef}>
-                <button
-                  onClick={() => setShowFilterModal(true)}
-                  className={`w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 transition-colors group cursor-pointer border shadow-sm rounded-full mr-2 ${
-                    hasActiveFilters ? "border-blue-500 bg-blue-50" : "border-gray-200/40"
-                  }`}
-                  title="Filtros"
-                >
-                  <ListFilterIcon
-                    className={`w-4 h-4 ${hasActiveFilters ? "text-blue-600" : "text-gray-600 group-hover:text-gray-900"}`}
-                  />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="px-6 pb-3">
-        <div className="bg-white border border-border/40 rounded-t-lg">
-          <div className="grid grid-cols-[40px_1fr_180px_160px_180px_40px] gap-4 px-4 py-3 text-xs font-medium text-muted-foreground border-b border-border/30">
-            <div className="flex items-center justify-center">
-              <Checkbox checked={selectAllActive} onCheckedChange={handleSelectAll} />
-            </div>
-            <div>Proveedor</div>
-            <div>Email</div>
-            <div>Teléfono</div>
-            <div>Historial</div>
-            <div className="flex items-center justify-end gap-2">
-              <button
-                onClick={() => {
-                  setGridSize("sm")
-                  setGridSizeProp?.("sm")
-                }}
-                className={`text-xs ${gridSize === "sm" ? "font-bold" : "font-normal"}`}
-              >
-                sm
-              </button>
-              <button
-                onClick={() => {
-                  setGridSize("md")
-                  setGridSizeProp?.("md")
-                }}
-                className={`text-xs ${gridSize === "md" ? "font-bold" : "font-normal"}`}
-              >
-                md
-              </button>
-              <button
-                onClick={() => {
-                  setGridSize("lg")
-                  setGridSizeProp?.("lg")
-                }}
-                className={`text-xs ${gridSize === "lg" ? "font-bold" : "font-normal"}`}
-              >
-                lg
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-6 pb-6">
-        <div className="bg-white border border-border/40 border-t-0 rounded-b-lg">
-          <div className="divide-y divide-border/30">
-            {sortedAndFilteredProveedores.map((proveedor, index) => {
-              const isSelected = proveedorSelected[index] || false
-              const isHovered = hoveredIndex === index
-
-              const displayName =
-                proveedor.tipo === "empresa" ? proveedor.razonSocial || "" : `${proveedor.nombre} ${proveedor.apellido}`
-
-              const cuitDni = proveedor.cuit ? `CUIT ${proveedor.cuit}` : proveedor.dni ? `DNI ${proveedor.dni}` : ""
-
-              return (
-                <div
-                  key={proveedor.id}
-                  onMouseEnter={() => setHoveredIndex(index)}
-                  onMouseLeave={() => setHoveredIndex(null)}
-                  className={`grid grid-cols-[40px_1fr_180px_160px_180px_40px] gap-4 ${paddingClass} ${heightClass} items-center transition-colors ${
-                    isHovered ? "bg-accent/50" : ""
-                  }`}
-                >
-                  {/* Left selector */}
-                  <div className="flex items-center justify-center">
-                    <div className={`transition-opacity ${isHovered || isSelected ? "opacity-100" : "opacity-0"}`}>
-                      <Checkbox checked={isSelected} onCheckedChange={() => handleSelectProveedor(index)} />
-                    </div>
-                  </div>
-
-                  {/* Proveedor column with icon, name, condición IVA, and copyable CUIT/DNI */}
-                  <div className="flex items-center gap-2 min-w-0">
-                    {proveedor.tipo === "empresa" ? (
-                      <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
-                    ) : (
-                      <User className="h-4 w-4 text-muted-foreground shrink-0" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className={`${textSizeClass} font-medium truncate`}>{displayName}</div>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-xs text-muted-foreground">{proveedor.condicionIva}</span>
-                        {cuitDni && (
-                          <>
-                            <span className="text-xs text-muted-foreground">·</span>
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs text-muted-foreground">{cuitDni}</span>
-                              <button
-                                onClick={() => handleCopyCuitDni(proveedor.cuit || proveedor.dni || "")}
-                                className="p-1 text-muted-foreground hover:text-foreground transition-colors"
-                                title="Copy CUIT/DNI"
-                              >
-                                <Copy className="w-3 h-3" />
-                              </button>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Email */}
-                  <div className={`${textSizeClass} text-muted-foreground truncate`}>{proveedor.email || "-"}</div>
-
-                  {/* Teléfono */}
-                  <div className={`${textSizeClass} text-muted-foreground truncate`}>{proveedor.telefono || "-"}</div>
-
-                  {/* Historial */}
-                  <div className={`${textSizeClass} text-muted-foreground truncate`}>
-                    {proveedor.transactionCount === 0
-                      ? "Sin transacciones"
-                      : proveedor.transactionCount === 1
-                        ? "1 transacción"
-                        : `${proveedor.transactionCount} transacciones`}
-                  </div>
-
-                  {/* Right side more options */}
-                  <div className="flex items-center justify-end">
-                    <div className={`transition-opacity ${isHovered ? "opacity-100" : "opacity-0"}`}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEditProveedor(proveedor)}>Editar</DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => onDeleteProveedor(proveedor.id)}
-                            className="text-destructive"
-                          >
-                            Eliminar
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
+              {proveedor.tipo === "empresa" ? (
+                <Building2 className="h-4 w-4 text-slate-400 shrink-0" />
+              ) : (
+                <User className="h-4 w-4 text-slate-400 shrink-0" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-slate-800 truncate">{displayName}</p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="text-xs text-slate-400">{proveedor.condicionIva}</span>
+                  {cuitDni && (
+                    <>
+                      <span className="text-xs text-slate-300">·</span>
+                      <span className="text-xs text-slate-400">{cuitDni}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(proveedor.cuit ?? proveedor.dni ?? "", proveedor.id)}
+                        className="p-0.5 text-slate-300 hover:text-slate-500 transition-colors cursor-pointer"
+                        title="Copiar"
+                      >
+                        <Copy className="w-3 h-3" />
+                      </button>
+                    </>
+                  )}
                 </div>
-              )
-            })}
+              </div>
+            </div>
+
+            {/* Email — col-span-3 */}
+            <div className="col-span-3 text-sm text-slate-500 truncate pl-3 pr-2 border-r border-slate-100 h-full flex items-center">{proveedor.email || "—"}</div>
+
+            {/* Teléfono — col-span-2 */}
+            <div className="col-span-2 text-sm text-slate-500 truncate pl-3 pr-2 border-r border-slate-100 h-full flex items-center">{proveedor.telefono || "—"}</div>
+
+            {/* Transacciones — col-span-2, live from compras, clickable */}
+            <div className="col-span-2 pl-3 pr-2 h-full flex items-center justify-between">
+              {(() => {
+                const count = transactionCountMap[proveedor.id] ?? 0
+                const label = count === 0 ? "Sin transacciones" : count === 1 ? "1 transacción" : `${count} transacciones`
+                const clickable = count > 0
+                return (
+                  <button
+                    type="button"
+                    onClick={() => clickable && onTransaccionesClick(displayName)}
+                    className={`text-sm text-left transition-colors ${
+                      clickable
+                        ? "text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                        : "text-slate-400 cursor-default"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                )
+              })()}
+              {/* More options — inside transacciones col */}
+              <div className="flex items-center justify-center">
+              <div className={`relative transition-opacity ${isHovered || openMenuIndex === index ? "opacity-100" : "opacity-0"}`}>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setOpenMenuIndex(openMenuIndex === index ? null : index)
+                  }}
+                  className="flex items-center justify-center w-7 h-7 rounded-md hover:bg-slate-100 transition-colors cursor-pointer text-slate-400 hover:text-slate-700"
+                >
+                  <MoreVertical className="w-4 h-4" />
+                </button>
+                {openMenuIndex === index && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-[90]"
+                      onClick={() => setOpenMenuIndex(null)}
+                    />
+                    <div className="absolute right-0 top-full mt-1 w-36 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden z-[100] animate-in fade-in-0 slide-in-from-top-1 duration-150">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOpenMenuIndex(null)
+                          onEditProveedor(proveedor)
+                        }}
+                        className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOpenMenuIndex(null)
+                          onDeleteProveedor(proveedor.id)
+                        }}
+                        className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+            </div>{/* /transacciones col */}
           </div>
-        </div>
-      </div>
-
-      {/* Modals */}
-      <NuevoProveedorModal isOpen={showNuevoModal} onClose={() => setShowNuevoModal(false)} onSave={onAddProveedor} />
-
-      {showOrderModal && (
-        <div ref={orderRef}>
-          <OrdenModalProveedores
-            isOpen={showOrderModal}
-            onClose={() => setShowOrderModal(false)}
-            orden={orden}
-            onApply={setOrden}
-          />
-        </div>
-      )}
-
-      {showFilterModal && (
-        <div ref={filterRef}>
-          <FiltrosModalProveedores
-            isOpen={showFilterModal}
-            onClose={() => setShowFilterModal(false)}
-            filtros={filtros}
-            onApply={setFiltros}
-            proveedores={proveedores}
-          />
-        </div>
-      )}
-
-      <EditarProveedorModal
-        isOpen={showEditModal}
-        onClose={() => {
-          setShowEditModal(false)
-          setProveedorToEdit(null)
-        }}
-        proveedor={proveedorToEdit}
-        onSave={handleSaveEdit}
-      />
+        )
+      })}
     </div>
   )
 }

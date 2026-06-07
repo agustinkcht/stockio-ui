@@ -170,6 +170,7 @@
 @theme inline {
   /* ===== GRID ===== */
   --grid-cols-20: repeat(20, minmax(0, 1fr));
+  --grid-cols-32: repeat(32, minmax(0, 1fr));
   
   /* ===== FONTS ===== */
   /* Updated font variables to reference Geist properly */
@@ -328,4 +329,18 @@
 
 .animate-fade-out {
   animation: fade-out 3s ease-in-out forwards;
+}
+
+/* Live session pulse */
+@keyframes live-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.animate-live-pulse {
+  animation: live-pulse 1s ease-in-out infinite;
 }

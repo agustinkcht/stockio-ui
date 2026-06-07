@@ -2,11 +2,13 @@
 
 import { useState, useRef, useEffect } from "react"
 import { useAccount } from "@/lib/contexts/account-context"
-import { LogOut, ChevronDown } from "lucide-react"
+import { LogOut, ChevronDown, UserCog } from "lucide-react"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 
 export function UserPanel() {
   const { currentUser, logout } = useAccount()
+  const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -43,7 +45,7 @@ export function UserPanel() {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 bg-white rounded-lg shadow-lg border border-border/50 py-2 z-[9999]">
+        <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-border/50 py-2 z-[9999]">
           {/* User Info */}
           <div className="px-4 py-3 border-b border-border">
             <div className="flex items-center gap-3">
@@ -65,6 +67,14 @@ export function UserPanel() {
 
           {/* Actions */}
           <div className="py-1">
+            <button
+              onClick={() => { setIsOpen(false); router.push("/perfil") }}
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted/50 transition-colors"
+            >
+              <UserCog className="w-4 h-4 text-muted-foreground" />
+              Editar Perfil
+            </button>
+            <div className="h-px bg-border/50 mx-4 my-1" />
             <button
               onClick={logout}
               className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-destructive hover:bg-destructive/5 transition-colors"

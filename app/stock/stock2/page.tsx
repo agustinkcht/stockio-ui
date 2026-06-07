@@ -1,19 +1,14 @@
 "use client"
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { Package, Plus, Search, X, Check, CheckCircle2 } from "lucide-react"
+import { Package, Search, X, Check, CheckCircle2 } from "lucide-react"
 import { useAccount } from "@/lib/contexts/account-context"
 
 import { Sidebar } from "@/components/layout/sidebar"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
-import { ItemsGrid } from "@/components/items/items-grid"
-import { NuevoItemModal } from "@/components/modals/nuevo-item-modal"
-import { NuevoItemConVariantesModal } from "@/components/modals/nuevo-item-con-variantes-modal"
-import { TemplateModal } from "@/components/modals/template-modal"
+import { StockGrid } from "@/components/stock/stock-grid"
 import { UserPanel } from "@/components/layout/user-panel"
 import { useItems } from "@/hooks/use-items"
 import { useItemSelection } from "@/hooks/use-item-selection"
-import { useModals } from "@/hooks/use-modals"
 import { useSidebar } from "@/hooks/use-sidebar"
 import { useChangeTracker } from "@/hooks/use-change-tracker"
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
@@ -21,68 +16,45 @@ import type { Item } from "@/lib/types"
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-export default function ArticulosPage() {
-  const router = useRouter()
+export default function StockPage() {
   const [isSaving, setIsSaving] = useState(false)
-  const [itemCreated, setItemCreated] = useState(false)
   const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>({})
-  const [showSaveSuccess, setShowSaveSuccess] = useState(false) // Declare showSaveSuccess variable
+  const [showSaveSuccess, setShowSaveSuccess] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<Item | null>(null)
   const [showBatchDeleteModal, setShowBatchDeleteModal] = useState(false)
   const { currentAccount } = useAccount()
+  
+  // Audit mode state
+  const [hasAuditChanges, setHasAuditChanges] = useState(false)
+  const [auditPendingCount, setAuditPendingCount] = useState(0)
 
   const {
     items,
     depositStock,
     updateDepositStock,
-    handleCreateNuevoItem,
-    handleCreateNuevoItemConVariantes,
     updateItem,
     deleteItem,
     undoDelete,
     saveDelete: saveDeletedItems,
     hasUnsavedDeletes,
     deletedItems,
-    isCreatingItem,
+    updateStock,
+    bulkSaveStock,
   } = useItems()
 
-  const { itemSelected, selectAllActive, hasSelectedItems, handleItemButtonClick, handleSelectAllClick, setItemSelected, setSelectAllActive } =
-    useItemSelection(items.length)
-
   const {
-    showNuevoItemModal,
-    isNuevoItemMinimized,
-    showNuevoItemConVariantesModal,
-    isNuevoItemConVariantesMinimized,
-    showTemplateModal,
-    activeNavTab,
-    minimizedTabs,
-    handleOpenNuevoItem,
-    handleCloseNuevoItem,
-    handleMinimizeNuevoItem,
-    handleRestoreNuevoItem,
-    handleOpenNuevoItemConVariantes,
-    handleCloseNuevoItemConVariantes,
-    handleMinimizeNuevoItemConVariantes,
-    setShowTemplateModal,
-    setIsNuevoItemConVariantesMinimized,
-    setActiveNavTab,
-    handleCloseTabFromNavbar,
-    itemTitulo,
-    setItemTitulo,
-    itemTemplate,
-    setItemTemplate,
-    itemUbicacion,
-    setItemUbicacion,
-    handleRestoreNuevoItemConVariantes,
-  } = useModals()
+    selectAllActive,
+    selectAllIndeterminate,
+    hasSelectedItems,
+    handleSelectAll,
+    handleItemSelection,
+    getSelectionState,
+    getSelectedSkus,
+    clearSelection,
+  } = useItemSelection(items)
 
   const {
     hoveredDropdown,
-    showNuevoDropdown,
-    setShowNuevoDropdown,
-    showAccionesDropdown,
-    setShowAccionesDropdown,
     gridSize,
     gridSizeDropdownOpen,
     setGridSizeDropdownOpen,
@@ -98,7 +70,52 @@ export default function ArticulosPage() {
     setGridSize("md")
   }, [setGridSize])
 
-  const breadcrumbs = [{ label: "Inventario" }, { label: "Artículos", href: "/inventario/articulos" }]
+  // Audit mode handlers
+  const handleAuditChangesUpdate = (hasChanges: boolean, pendingCount: number) => {
+    setHasAuditChanges(hasChanges)
+    setAuditPendingCount(pendingCount)
+  }
+
+  const handleAuditSave = async (changes: Record<string, { total: number; reservado: number }>) => {
+    setIsSaving(true)
+    try {
+      await sleep(600)
+      
+      // Use bulkSaveStock - it handles both standalone and variant items atomically
+      // and persists directly to localStorage
+      bulkSaveStock(changes)
+      
+      // Clear audit changes in the grid
+      ;(window as any).__auditClearHandler?.()
+      
+      setShowSaveSuccess(true)
+      setTimeout(() => setShowSaveSuccess(false), 3000)
+    } catch (error) {
+      console.error("[v0] Error saving audit changes:", error)
+    } finally {
+      setIsSaving(false)
+      setHasAuditChanges(false)
+      setAuditPendingCount(0)
+    }
+  }
+
+  const handleAuditDiscard = () => {
+    // Audit changes are discarded internally in ItemsGrid
+    setHasAuditChanges(false)
+    setAuditPendingCount(0)
+  }
+
+  const handleAuditGuardar = () => {
+    // Trigger save from window handler
+    ;(window as any).__auditSaveHandler?.()
+  }
+
+  const handleAuditDeshacer = () => {
+    // Trigger discard from window handler
+    ;(window as any).__auditDiscardHandler?.()
+  }
+
+  const breadcrumbs = [{ label: "Stock" }, { label: "Stock2", href: "/stock/stock2" }]
 
   const handleUndo = () => {
     const change = changeTracker.undo()
@@ -186,14 +203,39 @@ export default function ArticulosPage() {
   }
 
   const handleConfirmBatchDelete = async () => {
-    const selectedItems = items.filter((_, index) => itemSelected[index])
-    const skusToDelete = selectedItems.map((item) => item.sku)
+    const skusToDelete = getSelectedSkus()
 
-    console.log("[v0] Batch delete starting, selected items:", selectedItems.length)
+    console.log("[v0] Batch delete starting, selected SKUs:", skusToDelete.length)
     console.log("[v0] SKUs to delete:", skusToDelete)
 
+    // Find items to delete (including children within parents)
+    const itemsToDelete: Item[] = []
+    for (const sku of skusToDelete) {
+      // Check standalone items
+      const standaloneItem = items.find((item) => item.sku === sku)
+      if (standaloneItem) {
+        itemsToDelete.push(standaloneItem)
+        continue
+      }
+      // Check children within parents
+      for (const item of items) {
+        if (item.variants) {
+          const variant = item.variants.find((v: any) => v.sku === sku)
+          if (variant) {
+            itemsToDelete.push(variant)
+          }
+        }
+        if (item.items) {
+          const groupItem = item.items.find((i: any) => i.sku === sku)
+          if (groupItem) {
+            itemsToDelete.push(groupItem)
+          }
+        }
+      }
+    }
+
     // Delete items from state
-    for (const item of selectedItems) {
+    for (const item of itemsToDelete) {
       deleteItem(item)
     }
 
@@ -213,9 +255,8 @@ export default function ArticulosPage() {
     // Now save deleted items state (to clear the deletedItems array)
     await saveDeletedItems()
 
-    // Reset selections completely - don't use handleSelectAllClick as it just toggles
-    setItemSelected([])
-    setSelectAllActive(false)
+    // Reset selections completely
+    clearSelection()
 
     setShowBatchDeleteModal(false)
     setShowSaveSuccess(true)
@@ -228,11 +269,8 @@ export default function ArticulosPage() {
     setShowBatchDeleteModal(false)
   }
 
-  const handleItemClick = (item: Item) => {
-    console.log("[v0] handleItemClick called with item:", item)
-    console.log("[v0] item.sku:", item.sku)
-    console.log("[v0] Navigating to:", `/inventario/articulos/${item.sku}`)
-    router.push(`/inventario/articulos/${item.sku}`)
+  const handleItemClick = (_item: Item) => {
+    // Item detail is disabled in stock view
   }
 
   const toggleVariantExpansion = (index: number) => {
@@ -240,36 +278,6 @@ export default function ArticulosPage() {
       ...prev,
       [index]: !prev[index],
     }))
-  }
-
-  const handleRestoreTab = (tabId: string) => {
-    if (tabId === "nuevo-item") {
-      handleRestoreNuevoItem()
-    } else if (tabId === "nuevo-item-variantes") {
-      handleRestoreNuevoItemConVariantes()
-    }
-  }
-
-  const handleCreateItemWithSuccess = async (itemTitulo: string, itemTemplate: string, handleClose: () => void) => {
-    const newItem = await handleCreateNuevoItem(itemTitulo, itemTemplate, handleClose)
-    if (newItem) {
-      router.push(`/inventario/articulos/${newItem.sku}`)
-    }
-    setItemCreated(true)
-    setTimeout(() => setItemCreated(false), 100)
-  }
-
-  const handleCreateItemConVariantesWithSuccess = async (
-    itemTitulo: string,
-    itemTemplate: string,
-    handleClose: () => void,
-  ) => {
-    const newItem = await handleCreateNuevoItemConVariantes(itemTitulo, itemTemplate, handleClose)
-    if (newItem) {
-      router.push(`/inventario/articulos/${newItem.sku}`)
-    }
-    setItemCreated(true)
-    setTimeout(() => setItemCreated(false), 100)
   }
 
   return (
@@ -283,9 +291,6 @@ export default function ArticulosPage() {
             onDropdownOpen={handleDropdownMouseEnter}
             onDropdownClose={handleDropdownMouseLeave}
           />
-          {(showNuevoItemModal || showNuevoItemConVariantesModal) && (
-            <div className="absolute top-0 left-0 h-full w-full bg-black/50 z-[60] pointer-events-none rounded-lg" />
-          )}
         </div>
 
         <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm h-[calc(100vh-12px)] overflow-hidden relative z-10">
@@ -300,12 +305,38 @@ export default function ArticulosPage() {
                 <UserPanel />
               </div>
 
-              {/* Right: Success Message Only */}
-              <div className="flex items-center gap-2 min-w-[200px] justify-end">
-                {showSaveSuccess && (
+              {/* Right: D-G Buttons + Success Message */}
+              <div className="flex items-center gap-2 min-w-[280px] justify-end">
+                {isSaving && (
+                  <div className="w-full max-w-[200px] h-1.5 bg-secondary/50 rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-primary via-primary/80 to-primary animate-loading-bar bg-[length:200%_100%]" />
+                  </div>
+                )}
+                
+                {showSaveSuccess && !isSaving && (
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md animate-in fade-in slide-in-from-right-2 duration-300">
                     <CheckCircle2 className="w-4 h-4 text-green-600" />
                     <span className="text-sm text-green-700 font-medium">Cambios Guardados</span>
+                  </div>
+                )}
+
+                {hasAuditChanges && !showSaveSuccess && !isSaving && (
+                  <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2 duration-200">
+                    <button
+                      onClick={handleAuditDeshacer}
+                      className="px-4 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 rounded transition-all cursor-pointer text-red-700 text-sm font-medium"
+                      title="Deshacer cambios"
+                    >
+                      Deshacer
+                    </button>
+
+                    <button
+                      onClick={handleAuditGuardar}
+                      className="px-4 py-1.5 bg-green-50 hover:bg-green-100 border border-green-200 rounded transition-all cursor-pointer text-green-700 text-sm font-medium"
+                      title="Guardar cambios"
+                    >
+                      Guardar
+                    </button>
                   </div>
                 )}
               </div>
@@ -316,28 +347,31 @@ export default function ArticulosPage() {
             <div className="flex-1 flex flex-col overflow-auto">
               <div className="px-8 pb-8 pt-4">
                 <div className="rounded-xl border border-[rgba(228,230,235,0.5)] bg-transparent shadow-none border-none">
-                  <ItemsGrid
+                  <StockGrid
                     items={items}
                     gridSize={gridSize}
                     depositStock={depositStock}
                     updateDepositStock={updateDepositStock}
                     expandedItems={expandedItems}
-                    setExpandedItems={setExpandedItems}
                     onDeleteItem={handleDeleteWithTracking}
-                    itemSelected={itemSelected}
-                    handleItemButtonClick={handleItemButtonClick}
                     handleItemClick={handleItemClick}
                     toggleVariantExpansion={toggleVariantExpansion}
                     selectAllActive={selectAllActive}
-                    handleSelectAllClick={handleSelectAllClick}
+                    selectAllIndeterminate={selectAllIndeterminate}
+                    handleSelectAll={handleSelectAll}
+                    handleItemSelection={handleItemSelection}
+                    getSelectionState={getSelectionState}
                     gridSizeDropdownOpen={gridSizeDropdownOpen}
                     setGridSizeDropdownOpen={setGridSizeDropdownOpen}
                     setGridSize={setGridSize}
                     isExpanded={false}
-                    handleOpenNuevoItem={handleOpenNuevoItem}
-                    handleOpenNuevoItemConVariantes={handleOpenNuevoItemConVariantes}
                     hasSelectedItems={hasSelectedItems}
                     onBatchDelete={handleBatchDeleteClick}
+                    onUpdateStock={updateStock}
+                    onAuditChangesUpdate={handleAuditChangesUpdate}
+                    onAuditSave={handleAuditSave}
+                    onAuditDiscard={handleAuditDiscard}
+                    getSelectedSkus={getSelectedSkus}
                   />
                 </div>
               </div>
@@ -345,42 +379,6 @@ export default function ArticulosPage() {
           </main>
         </div>
       </div>
-
-      {/* Existing modals */}
-      <TemplateModal showTemplateModal={showTemplateModal} setShowTemplateModal={setShowTemplateModal} />
-
-      <NuevoItemModal
-        showNuevoItemModal={showNuevoItemModal}
-        isNuevoItemMinimized={isNuevoItemMinimized}
-        handleMinimizeNuevoItem={handleMinimizeNuevoItem}
-        handleCloseNuevoItem={handleCloseNuevoItem}
-        itemTitulo={itemTitulo}
-        setItemTitulo={setItemTitulo}
-        itemTemplate={itemTemplate}
-        setItemTemplate={setItemTemplate}
-        itemUbicacion={itemUbicacion}
-        setItemUbicacion={setItemUbicacion}
-        handleCreateNuevoItem={handleCreateItemWithSuccess}
-        isCreatingItem={isCreatingItem}
-      />
-
-      <NuevoItemConVariantesModal
-        showNuevoItemConVariantesModal={showNuevoItemConVariantesModal}
-        isNuevoItemConVariantesMinimized={isNuevoItemConVariantesMinimized}
-        handleMinimizeNuevoItemConVariantes={handleMinimizeNuevoItemConVariantes}
-        handleCloseNuevoItemConVariantes={handleCloseNuevoItemConVariantes}
-        setIsNuevoItemConVariantesMinimized={setIsNuevoItemConVariantesMinimized}
-        setActiveNavTab={setActiveNavTab}
-        activeNavTab={activeNavTab}
-        itemTitulo={itemTitulo}
-        setItemTitulo={setItemTitulo}
-        itemTemplate={itemTemplate}
-        setItemTemplate={setItemTemplate}
-        itemUbicacion={itemUbicacion}
-        setItemUbicacion={setItemUbicacion}
-        handleCreateNuevoItemConVariantes={handleCreateItemConVariantesWithSuccess}
-        isCreatingItem={isCreatingItem}
-      />
 
       {/* Delete Confirmation Modal */}
       {itemToDelete && (

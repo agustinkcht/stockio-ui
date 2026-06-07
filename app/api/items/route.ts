@@ -68,7 +68,7 @@ export async function GET() {
               'name', iv.name,
               'sku', iv.sku,
               'stock', jsonb_build_object(
-                'total', COALESCE(vs.total::text, '0'),
+                'enStock', COALESCE(vs.total::text, '0'),
                 'reservado', COALESCE(vs.reservado::text, '0'),
                 'disponible', COALESCE(vs.disponible::text, '0')
               ),
@@ -117,7 +117,7 @@ export async function GET() {
       stock:
         item.stock_total !== null
           ? {
-              total: String(item.stock_total),
+              enStock: String(item.stock_total),
               reservado: String(item.stock_reservado),
               disponible: String(item.stock_disponible),
             }
@@ -149,17 +149,44 @@ export async function POST(request: Request) {
       INSERT INTO items (
         sku, name, codigo_universal, marca, modelo, formato_venta,
         proveedor, codigo_proveedor, descripcion, foto, has_variants,
-        is_agrupador, variant_count, item_count
+        is_agrupador, variant_count, item_count, volumen_active, 
+        volumen_cantidad, volumen_unidad, unidades_por_pack
       ) VALUES (
         ${body.sku}, ${body.name}, ${body.codigoUniversal || null},
         ${body.marca || null}, ${body.modelo || null}, ${body.formatoVenta || null},
         ${body.proveedor || null}, ${body.codigoProveedor || null},
         ${body.descripcion || null}, ${body.foto || null}, ${body.hasVariants || false},
-        ${body.isAgrupador || false}, ${body.variantCount || 0}, ${body.itemCount || 0}
+        ${body.isAgrupador || false}, ${body.variantCount || 0}, ${body.itemCount || 0},
+        ${body.volumenActive || false}, ${body.volumenCantidad || null}, 
+        ${body.volumenUnidad || null}, ${body.unidadesPorPack || null}
       )
     `
 
-    return NextResponse.json({ success: true })
+    // Insert stock if provided
+    if (body.stockInicial !== undefined || body.stockReservado !== undefined) {
+      const total = body.stockInicial || 0
+      const reservado = body.stockReservado || 0
+      const disponible = Math.max(0, total - reservado)
+      
+      await sql`
+        INSERT INTO stock (sku, deposito, deposito_id, total, reservado, disponible)
+        VALUES (${body.sku}, 'principal', 1, ${total}, ${reservado}, ${disponible})
+      `
+    }
+
+    // Insert atributos informativos if provided
+    if (body.atributosInformativos && body.atributosInformativos.length > 0) {
+      for (const attr of body.atributosInformativos) {
+        if (attr.key && attr.value) {
+          await sql`
+            INSERT INTO atributos_informativos (sku, key, value)
+            VALUES (${body.sku}, ${attr.key}, ${attr.value})
+          `
+        }
+      }
+    }
+
+    return NextResponse.json({ success: true, sku: body.sku })
   } catch (error) {
     console.error("[v0] Error creating item:", error)
     return NextResponse.json({ error: "Failed to create item" }, { status: 500 })

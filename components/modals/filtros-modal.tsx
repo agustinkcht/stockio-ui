@@ -31,6 +31,7 @@ const DEFAULT_FILTERS: FilterConfig = {
   tipos: [],
   categorias: [],
   marcas: [],
+  proveedores: [],
   stock: [],
   depositos: [],
 }

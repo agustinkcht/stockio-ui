@@ -1,8 +1,9 @@
 "use client"
 
-import { User, Undo2, Redo2, X, Check, CheckCircle2 } from "lucide-react"
+import { Undo2, Redo2, X, Check, CheckCircle2 } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
+import { UserPanel } from "@/components/layout/user-panel"
 
 interface UtilityBarProps {
   breadcrumbs: Array<{ label: string; href?: string }>
@@ -58,18 +59,8 @@ export function UtilityBarShared({
           <Breadcrumb items={breadcrumbs} />
         </div>
 
-        {/* Center: User Info Panel - Blur & Transparent */}
-        <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center gap-3 mt-[-2px]">
-          <div className="flex items-center gap-3 px-4 bg-background/60 backdrop-blur-md border border-border/50 rounded-lg py-1 shadow-md">
-            <div className="p-1.5 bg-muted/80 rounded-md">
-              <User className="w-4 h-4 text-foreground" />
-            </div>
-            <span className="text-sm font-medium text-foreground">In Vino Veritás</span>
-          </div>
-        </div>
-
-        {/* Right: Utility Buttons */}
-        <div className="flex items-center gap-2 min-w-[200px] justify-end">
+        {/* Right: Utility Buttons + UserPanel */}
+        <div className="flex items-center gap-2 justify-end">
           {showSaveSuccess && (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md animate-in fade-in slide-in-from-right-2 duration-300">
               <CheckCircle2 className="w-4 h-4 text-green-600" />
@@ -112,8 +103,11 @@ export function UtilityBarShared({
               >
                 <Check className="w-4 h-4" />
               </button>
+
+              <div className="h-5 w-px bg-border/60" />
             </>
           )}
+          <UserPanel />
         </div>
       </div>
     </div>
