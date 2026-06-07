@@ -112,6 +112,7 @@ export function resolvePeriodRange(
     const start = new Date(today)
     start.setHours(0, 0, 0, 0)
     const end = new Date(today)
+    end.setHours(23, 59, 59, 999)
     return { start, end, startStr: ymd(start), endStr: ymd(end), label: "Hoy" }
   }
 

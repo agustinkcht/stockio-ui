@@ -231,14 +231,10 @@ export default function VentasPage() {
   const isActivePeriod = !noPeriod && periodParam !== null && ACTIVE_PERIOD_KEYS.includes(periodKey)
 
   // Period-scoped ventas filtered by creation date (for finalizadas & canceladas, and periodical en_curso)
+  // Use plain YYYY-MM-DD string comparison to avoid all timezone/time-of-day issues
   const periodVentasByDate = useMemo(() => {
     if (noPeriod) return ventas
-    const rangeStart = range.start.getTime()
-    const rangeEnd = range.end.getTime()
-    return ventas.filter(v => {
-      const t = new Date(v.fecha + "T12:00:00").getTime()
-      return t >= rangeStart && t <= rangeEnd
-    })
+    return ventas.filter(v => v.fecha >= range.startStr && v.fecha <= range.endStr)
   }, [ventas, noPeriod, range])
 
   // For the "en_curso" widget: active period = all en_curso regardless of date; periodical = date-filtered
@@ -266,13 +262,11 @@ export default function VentasPage() {
 
   // Filtered + sorted list (period range applied here — widgets are unaffected)
   const filteredVentas = useMemo(() => {
-    const rangeStart = range.start.getTime()
-    const rangeEnd   = range.end.getTime()
     const filtered = ventas.filter(v => {
-      const ventaTime = new Date(v.fecha + "T12:00:00").getTime()
       // en_curso items are always shown when on an active period ("sin importar su fecha de creación")
       const isEnCurso = v.estado === "en_curso"
-      const matchesPeriod = noPeriod || (isActivePeriod && isEnCurso) || (ventaTime >= rangeStart && ventaTime <= rangeEnd)
+      // Use plain string comparison to avoid timezone/time-of-day mismatches
+      const matchesPeriod = noPeriod || (isActivePeriod && isEnCurso) || (v.fecha >= range.startStr && v.fecha <= range.endStr)
       const matchesTab =
         activeTab === "todas" ? true :
         activeTab === "en_curso" ? v.estado === "en_curso" :
@@ -1545,7 +1539,7 @@ function VentasPeriodSelector({
   )
 }
 
-/* ─── Range Calendar Dialog ─────────────���──────────────���────────────────────── */
+/* ─── Range Calendar Dialog ─────────────���──────────────���────────────────���───── */
 
 function startOfDayV(d: Date) {
   const copy = new Date(d)
