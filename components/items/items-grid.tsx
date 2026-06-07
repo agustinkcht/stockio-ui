@@ -11,6 +11,25 @@ import { OrdenModal } from "@/components/modals/orden-modal"
 import { FiltrosModal } from "@/components/modals/filtros-modal"
 import { BulkStockModal } from "@/components/modals/bulk-stock-modal"
 
+function StockColumnTooltip() {
+  return (
+    <div className="group relative flex-shrink-0">
+      <div className="w-3.5 h-3.5 rounded-full border border-gray-400 flex items-center justify-center cursor-default text-gray-400 hover:text-gray-600 hover:border-gray-600 transition-colors">
+        <span className="text-[9px] font-bold leading-none">i</span>
+      </div>
+      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 bg-slate-800 text-white text-[11px] rounded-md px-2.5 py-2 leading-relaxed opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150 z-50 shadow-lg">
+        <p className="font-semibold">En Stock</p>
+        <p className="text-slate-300 mb-1.5">Unidades físicas presentes en depósito.</p>
+        <p className="font-semibold">Reservado</p>
+        <p className="text-slate-300 mb-1.5">Unidades comprometidas a ventas en curso que aún no fueron entregadas.</p>
+        <p className="font-semibold">Disponible</p>
+        <p className="text-slate-300">Unidades listas para la venta.</p>
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-slate-800" />
+      </div>
+    </div>
+  )
+}
+
 interface AuditStockChange {
   total: number
   reservado: number
@@ -141,7 +160,7 @@ export function ItemsGrid({
     }
     if (!item) return
 
-    const currentTotal = auditStockChanges[sku]?.total ?? parseInt(item.stock?.total || "0")
+    const currentTotal = auditStockChanges[sku]?.total ?? parseInt((item.stock as any)?.enStock || item.stock?.total || "0")
     const currentReservado = auditStockChanges[sku]?.reservado ?? parseInt(item.stock?.reservado || "0")
 
     setAuditStockChanges(prev => ({
@@ -322,7 +341,7 @@ export function ItemsGrid({
       }
       if (!item) continue
 
-      const currentTotal = auditStockChanges[sku]?.total ?? parseInt(item.stock?.total || "0")
+      const currentTotal = auditStockChanges[sku]?.total ?? parseInt((item.stock as any)?.enStock || item.stock?.total || "0")
       const currentReservado = auditStockChanges[sku]?.reservado ?? parseInt(item.stock?.reservado || "0")
       const currentValue = field === "total" ? currentTotal : currentReservado
 
@@ -579,7 +598,7 @@ export function ItemsGrid({
                     <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Item</span>
                   </div>
                   <div className="col-span-6 flex items-center justify-between py-2 border-solid border-r px-3 mx-0 ml-0 mr-px border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
-                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wider flex-1 text-center">Stock Total</span>
+                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wider flex-1 text-center">En Stock</span>
                     <button
                       onClick={() => setBulkStockModalType("total")}
                       className="p-0.5 hover:bg-slate-300 rounded transition-colors cursor-pointer"
@@ -615,8 +634,9 @@ export function ItemsGrid({
                       <div className="col-span-10 flex items-center justify-center py-2 border-solid border-r px-4 mx-0 border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
                         <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Precio Final</span>
                       </div>
-                      <div className="col-span-8 flex items-center justify-center py-2 mx-0 px-0 border-b border-t border-l-0 border-r-0 border-[rgba(202,213,227,0.61)]">
+                      <div className="col-span-8 flex items-center justify-center gap-1.5 py-2 mx-0 px-0 border-b border-t border-l-0 border-r-0 border-[rgba(202,213,227,0.61)]">
                         <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Stock</span>
+                        <StockColumnTooltip />
                       </div>
                     </>
                   ) : (
@@ -624,8 +644,9 @@ export function ItemsGrid({
                       <div className="col-span-14 flex items-center justify-center py-2 border-solid border-r px-4 mx-0 border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
                         <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Atributos</span>
                       </div>
-                      <div className="col-span-14 flex items-center justify-center py-2 mx-0 px-0 border-b border-t border-l-0 border-r-0 border-[rgba(202,213,227,0.61)]">
+                      <div className="col-span-14 flex items-center justify-center gap-1.5 py-2 mx-0 px-0 border-b border-t border-l-0 border-r-0 border-[rgba(202,213,227,0.61)]">
                         <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Stock</span>
+                        <StockColumnTooltip />
                       </div>
                     </>
                   )}

@@ -670,7 +670,7 @@ export function ItemCard({
                     setIsStockModalOpen(true)
                   }}
               >
-                <span className="text-sm font-medium tabular-nums text-foreground group-hover/total:text-blue-600 transition-colors">{item.stock?.total ?? 0}</span>
+                <span className="text-sm font-medium tabular-nums text-foreground group-hover/total:text-blue-600 transition-colors">{currentStockTotal}</span>
               </div>
               <div
                 className="col-span-4 h-full flex items-center justify-center px-2 border-r border-slate-100 cursor-pointer hover:bg-slate-50 group/reservado"
@@ -867,18 +867,32 @@ export function ItemCard({
                     setIsStockModalOpen(true)
                   }}
                 >
-                  <span className={`text-sm font-medium tabular-nums group-hover/stock:text-blue-600 transition-colors ${
-                    (item.stock?.disponible ?? 0) > 0
-                      ? "text-foreground"
-                      : (item.stock?.disponible ?? 0) < 0
-                        ? "text-red-500"
-                        : "text-muted-foreground"
-                  }`}>
-                    {item.stock?.disponible ?? 0} <span className="text-xs font-normal opacity-60">disp.</span>
-                    {(item.stock?.reservado ?? 0) > 0 && (
-                      <> {item.stock?.reservado ?? 0} <span className="text-xs font-normal opacity-60">res.</span></>
+                  <div className="flex items-center gap-2 tabular-nums">
+                    {/* En Stock — always visible */}
+                    <span className="text-sm font-medium text-foreground">
+                      {currentStockTotal} <span className="text-xs font-normal text-muted-foreground">en stock</span>
+                    </span>
+                    {/* Reservado — only if > 0 */}
+                    {currentStockReservado > 0 && (
+                      <>
+                        <span className="text-slate-300 select-none">·</span>
+                        <span className="text-sm font-medium text-amber-600">
+                          {currentStockReservado} <span className="text-xs font-normal text-amber-500">res.</span>
+                        </span>
+                      </>
                     )}
-                  </span>
+                    {/* Disponible — always visible */}
+                    <span className="text-slate-300 select-none">·</span>
+                    <span className={`text-sm font-medium tabular-nums ${
+                      currentStockDisponible > 0
+                        ? "text-emerald-600"
+                        : currentStockDisponible < 0
+                          ? "text-red-500"
+                          : "text-muted-foreground"
+                    }`}>
+                      {currentStockDisponible} <span className="text-xs font-normal opacity-70">disp.</span>
+                    </span>
+                  </div>
                 </div>
               )}
             </>
