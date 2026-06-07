@@ -3560,7 +3560,6 @@ export function CatalogoItemDetailPanel({
         itemName={selectedItem?.nombre}
         itemMarca={selectedItem?.marca}
         itemCategoria={selectedItem?.categoria}
-        stockMinimo={stock?.stockMinimo}
       />
 
       {/* Expanded Matrix - Precio Modal */}
@@ -3675,7 +3674,6 @@ export function CatalogoItemDetailPanel({
         initialTotal={expandedMatrixStockValues.total}
         initialReservado={expandedMatrixStockValues.reservado}
         itemName={expandedMatrixStockModal.variant?.nombre || expandedMatrixStockModal.variant?.sku}
-        stockMinimo={stock?.stockMinimo}
       />
 
       {/* Expanded Matrix - Description Modal */}

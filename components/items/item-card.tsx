@@ -1136,7 +1136,6 @@ export function ItemCard({
         itemName={item.nombre}
         itemMarca={item.marca || parentItem?.marca}
         itemCategoria={item.categoria || parentItem?.categoria}
-        stockMinimo={stock?.stockMinimo}
       />
     </div>
   )
