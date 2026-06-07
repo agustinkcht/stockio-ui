@@ -239,7 +239,7 @@ export function ItemCard({
         onMouseLeave={handleMouseLeave}
       >
         <div
-          className={`relative border-solid mb-0 border-slate-200/65 shadow-md ${gridSize === "lg" ? "h-22" : gridSize === "md" ? "h-16" : "h-10"} ${roundedClass} grid grid-cols-44 ${!isItemActive ? "bg-slate-100/80 opacity-60" : isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors ${item.isAgrupador || item.hasVariants ? "cursor-pointer" : ""} overflow-hidden`}
+          className={`relative border-solid mb-0 border-slate-200/65 shadow-md ${gridSize === "lg" ? "h-22" : gridSize === "md" ? "h-16" : "h-10"} ${roundedClass} grid grid-cols-12 ${!isItemActive ? "bg-slate-100/80 opacity-60" : isHovered ? "bg-gray-50" : "bg-white"} border border-border transition-colors ${item.isAgrupador || item.hasVariants ? "cursor-pointer" : ""} overflow-hidden`}
           onClick={(e) => {
             if (item.hasVariants || item.isAgrupador) {
               onToggleExpansion(index)
@@ -247,33 +247,26 @@ export function ItemCard({
           }}
         >
           {item.isAgrupador || item.hasVariants ? (
-            // Parent items: Item (16) + empty span (28)
+            // Parent items: Item (4) + empty span (8)
             (
               <>
-                {/* Item cell - no border-r for parent */}
                 <div
-                  className="col-span-16 flex items-center gap-3 h-full pl-10 pr-4 cursor-pointer transition-colors"
+                  className="col-span-4 flex items-center gap-2 h-full pl-10 pr-4 cursor-pointer transition-colors"
                   onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
                 >
-                  {/* Chevron */}
                   <button
                     onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
-                    className="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-md hover:bg-slate-100 transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+                    className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-md hover:bg-slate-100 transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
                   >
-                    {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                    {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   </button>
-
-                  {/* Product Info */}
                   <div className="flex-1 min-w-0" onClick={(e) => { e.stopPropagation(); onItemClick(item) }}>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-container-item-foreground font-medium truncate">
-                        {item.name}
-                      </span>
+                      <span className="text-sm text-container-item-foreground font-medium truncate">{item.name}</span>
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground whitespace-nowrap">
                         {item.hasVariants ? `${variantCount} var.` : `${itemCount} items`}
                       </span>
                     </div>
-                    {/* Marca · Categoria */}
                     <div className="flex items-center gap-1 mt-0.5">
                       {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
                       {item.marca && item.categoria && <span className="text-xs text-muted-foreground">·</span>}
@@ -281,16 +274,14 @@ export function ItemCard({
                     </div>
                   </div>
                 </div>
-
-                {/* Empty remaining columns - no borders */}
-                <div className="col-span-28 h-full" />
+                <div className="col-span-8 h-full" />
               </>
             )
           ) : (
             // NORMAL MODE: Standalone/child items
             <>
               <div
-                className={`col-span-16 flex items-center gap-3 h-full pl-10 pr-4 cursor-pointer transition-colors ${
+                className={`col-span-4 flex items-center gap-3 h-full pl-10 pr-4 cursor-pointer transition-colors ${
                   item.hasVariants || item.isAgrupador ? "" : "border-r border-slate-100"
                 }`}
                 onClick={(e) => {
@@ -353,7 +344,7 @@ export function ItemCard({
                     const isActive = item.isActive !== false
                     return (
                       <div
-                        className="col-span-8 h-full flex items-center justify-center px-2 transition-colors border-r border-slate-100"
+                        className="col-span-1 h-full flex items-center justify-center px-1 transition-colors border-r border-slate-100"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <button
@@ -361,7 +352,7 @@ export function ItemCard({
                             e.stopPropagation()
                             onUpdateItem?.({ ...item, isActive: !isActive })
                           }}
-                          className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors cursor-pointer ${
+                          className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium transition-colors cursor-pointer whitespace-nowrap ${
                             isActive
                               ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
                               : "bg-amber-100 text-amber-700 hover:bg-amber-200"
@@ -374,7 +365,7 @@ export function ItemCard({
                   })()}
                   {/* Precio Venta cell - clickable to open precio modal */}
                   <div
-                    className="col-span-10 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100 hover:bg-slate-50 group/precio"
+                    className="col-span-3 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100 hover:bg-slate-50 group/precio"
                     onClick={(e) => {
                       e.stopPropagation()
                       setPrecioModalValues({
@@ -396,7 +387,7 @@ export function ItemCard({
               ) : !showPrecioColumn ? (
                 // Show Atributos column: original behavior
                 <div
-                  className="col-span-14 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100"
+                  className="col-span-4 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100"
                   onClick={(e) => { e.stopPropagation(); onItemClick(item) }}
                 >
                   {item.atributosPrincipales && item.atributosPrincipales.length > 0 ? (
@@ -430,12 +421,12 @@ export function ItemCard({
               ) : null}
 
               {item.hasVariants ? (
-                <div className="col-span-28 h-full" />
+                <div className="col-span-8 h-full" />
               ) : item.isAgrupador ? (
-                <div className="col-span-28 h-full" />
+                <div className="col-span-8 h-full" />
               ) : (
                 <div
-                  className="col-span-10 h-full flex items-center justify-center px-4 cursor-pointer transition-colors hover:bg-slate-50 group/stock"
+                  className="col-span-4 h-full flex items-center justify-center px-2 cursor-pointer transition-colors hover:bg-slate-50 group/stock"
                   onClick={(e) => {
                     e.stopPropagation()
                     setIsStockModalOpen(true)

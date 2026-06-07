@@ -29,17 +29,15 @@ export function StockEditModal({
   const [operation, setOperation] = useState<"add" | "remove" | "set">("add")
   const [inputValue, setInputValue] = useState("")
 
-  const wasOpenRef = useRef(false)
-
+  // Always keep enStock in sync with initialTotal when modal is closed,
+  // so the next open always reflects the latest saved value.
   useEffect(() => {
-    if (isOpen && !wasOpenRef.current) {
+    if (!isOpen) {
       setEnStock(initialTotal)
       setOperation("add")
       setInputValue("")
     }
-    wasOpenRef.current = isOpen
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen])
+  }, [isOpen, initialTotal])
 
   const disponible = Math.max(0, enStock - initialReservado)
   const hasChanges = enStock !== initialTotal
