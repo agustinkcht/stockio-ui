@@ -268,7 +268,7 @@ function VentasContent() {
                     </div>
                     <div className="h-8 w-px bg-border/50" />
                     <Button
-                      onClick={() => router.push("/mi-negocio/pdv")}
+                      onClick={() => router.push("/pdv")}
                       variant="ghost"
                       size="sm"
                       className="h-8 text-xs transition-colors border shadow-sm border-[rgba(228,230,235,0.6)] hover:bg-gray-100 cursor-pointer gap-1.5 shrink-0"

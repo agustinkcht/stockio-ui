@@ -48,7 +48,7 @@ export default function PuntoDeVentaPage() {
     setPaymentMethod,
   } = usePOS()
 
-  const breadcrumbs = [{ label: "Mi Negocio" }, { label: "Punto de Venta", href: "/mi-negocio/pdv" }]
+  const breadcrumbs = [{ label: "Punto de Venta", href: "/pdv" }]
 
   const handleCheckout = () => {
     if (cart.length === 0) return
