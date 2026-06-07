@@ -82,8 +82,8 @@ const SECTIONS_CON_VARIANTES: Section[] = [
     id: "datos-principales", 
     label: "Datos Principales", 
     defaultExpanded: false,
-    columns: ["skuPadre"],
-    subHeaders: [{ label: "CODIGOS", cols: ["skuPadre"] }],
+    columns: ["skuPadre", "codigoUniversal"],
+    subHeaders: [{ label: "CODIGOS", cols: ["skuPadre", "codigoUniversal"] }],
   },
   {
     id: "atributos-principales",
@@ -96,13 +96,13 @@ const SECTIONS_CON_VARIANTES: Section[] = [
     id: "info-comercial", 
     label: "Informacion Comercial", 
     defaultExpanded: false,
-    columns: ["categoria", "marca", "formatoVenta", "unidadesPorPack", "volumenCantidad", "volumenUnidad", "vencimiento", "proveedor", "codigoUniversal", "codigoProveedor"],
+    columns: ["categoria", "marca", "formatoVenta", "unidadesPorPack", "volumenCantidad", "volumenUnidad", "vencimiento", "proveedor", "codigoProveedor"],
     subHeaders: [
       { label: "INFO DEL PRODUCTO", cols: ["categoria", "marca"] },
       { label: "PRESENTACION", cols: ["formatoVenta", "unidadesPorPack"] },
       { label: "VOLUMEN DE LA UNIDAD", cols: ["volumenCantidad", "volumenUnidad"] },
       { label: "VENCIMIENTO", cols: ["vencimiento"] },
-      { label: "INFO DEL PROVEEDOR", cols: ["proveedor", "codigoUniversal", "codigoProveedor"] },
+      { label: "INFO DEL PROVEEDOR", cols: ["proveedor", "codigoProveedor"] },
     ],
   },
   {
