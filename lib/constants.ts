@@ -150,14 +150,8 @@ export const TEMPLATES: Template[] = [
 
 export const SIDEBAR_ITEMS: SidebarItem[] = [
   {
-    icon: LayoutDashboard,
-    label: "Dashboard",
-    href: "/dashboard",
-    dividerAfter: true,
-  },
-  {
     icon: Store,
-    label: "Punto de Venta",
+    label: "PDV",
     href: "/pdv",
     dividerAfter: true,
   },
@@ -183,7 +177,6 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     icon: Users,
     label: "Contactos",
     hasDropdown: true,
-    dividerAfter: true,
     dropdown: [
       { label: "Clientes", href: "/contactos/clientes" },
       { label: "Proveedores", href: "/contactos/proveedores" },
@@ -209,6 +202,11 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     dropdown: [
       { label: "Stock", href: "/stock/stock" },
     ],
+  },
+  {
+    icon: LayoutDashboard,
+    label: "Dashboard",
+    href: "/dashboard",
   },
 ]
 
