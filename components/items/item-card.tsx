@@ -247,11 +247,11 @@ export function ItemCard({
           }}
         >
           {item.isAgrupador || item.hasVariants ? (
-            // Parent items: Item (4) + empty span (8)
+            // Parent items: Item (5) + empty span (7)
             (
               <>
                 <div
-                  className="col-span-4 flex items-center gap-2 h-full pl-10 pr-4 cursor-pointer transition-colors"
+                  className="col-span-5 flex items-center gap-2 h-full pl-10 pr-4 cursor-pointer transition-colors"
                   onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
                 >
                   <button
@@ -274,14 +274,14 @@ export function ItemCard({
                     </div>
                   </div>
                 </div>
-                <div className="col-span-8 h-full" />
+                <div className="col-span-7 h-full" />
               </>
             )
           ) : (
             // NORMAL MODE: Standalone/child items
             <>
               <div
-                className={`col-span-4 flex items-center gap-3 h-full pl-10 pr-4 cursor-pointer transition-colors ${
+                className={`col-span-5 flex items-center gap-3 h-full pl-10 pr-4 cursor-pointer transition-colors ${
                   item.hasVariants || item.isAgrupador ? "" : "border-r border-slate-100"
                 }`}
                 onClick={(e) => {
@@ -421,12 +421,12 @@ export function ItemCard({
               ) : null}
 
               {item.hasVariants ? (
-                <div className="col-span-8 h-full" />
+                <div className="col-span-7 h-full" />
               ) : item.isAgrupador ? (
-                <div className="col-span-8 h-full" />
+                <div className="col-span-7 h-full" />
               ) : (
                 <div
-                  className="col-span-4 h-full flex items-center justify-center px-2 cursor-pointer transition-colors hover:bg-slate-50 group/stock"
+                  className="col-span-3 h-full flex items-center justify-center px-2 cursor-pointer transition-colors hover:bg-slate-50 group/stock"
                   onClick={(e) => {
                     e.stopPropagation()
                     setIsStockModalOpen(true)
