@@ -3555,7 +3555,7 @@ export function CatalogoItemDetailPanel({
             }
           }
         }}
-        initialTotal={Number.parseInt(selectedItem?.stock?.total || "0")}
+        initialTotal={Number.parseInt((selectedItem?.stock as any)?.enStock || selectedItem?.stock?.total || "0")}
         initialReservado={Number.parseInt(selectedItem?.stock?.reservado || "0")}
         itemName={selectedItem?.nombre}
         itemMarca={selectedItem?.marca}

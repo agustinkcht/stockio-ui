@@ -109,23 +109,23 @@ export function StockEditModal({
         <div className="p-5 space-y-3">
 
           {/* En Stock — editable */}
-          <div className="flex items-center justify-between p-3 rounded-xl bg-blue-50 border border-blue-200">
-            <span className="text-xs font-medium uppercase tracking-wider text-blue-600">En Stock</span>
+          <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <span className="text-xs font-medium uppercase tracking-wider text-slate-500">En Stock</span>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => handleIncrement(-1)}
-                className="w-7 h-7 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 flex items-center justify-center transition-colors"
+                className="w-7 h-7 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 flex items-center justify-center transition-colors"
               >
                 <Minus className="w-3 h-3 text-slate-600" />
               </button>
               <span className={`text-lg font-semibold tabular-nums min-w-[2.5rem] text-center ${
-                enStock !== initialTotal ? "text-blue-600" : "text-slate-900"
+                enStock !== initialTotal ? "text-slate-700" : "text-slate-900"
               }`}>
                 {enStock}
               </span>
               <button
                 onClick={() => handleIncrement(1)}
-                className="w-7 h-7 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 flex items-center justify-center transition-colors"
+                className="w-7 h-7 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 flex items-center justify-center transition-colors"
               >
                 <Plus className="w-3 h-3 text-slate-600" />
               </button>
@@ -133,11 +133,11 @@ export function StockEditModal({
           </div>
 
           {/* Agregar / Remover / Fijar en — always active */}
-          <div className="flex items-center gap-2 p-3 rounded-xl bg-blue-50/70 border border-blue-200">
+          <div className="flex items-center gap-2 p-3 rounded-xl bg-slate-50 border border-slate-200">
             <select
               value={operation}
               onChange={(e) => setOperation(e.target.value as "add" | "remove" | "set")}
-              className="w-24 flex-shrink-0 text-sm border rounded-lg px-2 py-2 bg-white border-blue-200 text-slate-700 cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500/50"
+              className="w-24 flex-shrink-0 text-sm border rounded-lg px-2 py-2 bg-white border-slate-200 text-slate-700 cursor-pointer focus:outline-none focus:ring-1 focus:ring-slate-400"
             >
               <option value="add">Agregar</option>
               <option value="remove">Remover</option>
@@ -150,14 +150,14 @@ export function StockEditModal({
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && applyOperation()}
-              className="flex-1 min-w-0 text-sm border rounded-lg px-2 py-2 text-center tabular-nums placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500/50 bg-white border-blue-200 text-slate-900"
+              className="flex-1 min-w-0 text-sm border rounded-lg px-2 py-2 text-center tabular-nums placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400 bg-white border-slate-200 text-slate-900"
             />
             <button
               onClick={applyOperation}
               disabled={!inputValue || parseInt(inputValue) <= 0}
               className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all flex-shrink-0 ${
                 inputValue && parseInt(inputValue) > 0
-                  ? "bg-blue-600 hover:bg-blue-500 text-white cursor-pointer"
+                  ? "bg-slate-800 hover:bg-slate-700 text-white cursor-pointer"
                   : "bg-slate-200 text-slate-400 cursor-not-allowed"
               }`}
             >

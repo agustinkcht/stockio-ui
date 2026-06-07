@@ -131,7 +131,7 @@ export function ItemCard({
   // Get current stock values (use audit values if available, otherwise original)
   // Check by id first (for children/variants), then by sku (for standalone items)
   const itemKey = item.id || item.sku
-  const currentStockTotal = auditStockValues?.[itemKey]?.total ?? parseInt(item.stock?.total || "0")
+  const currentStockTotal = auditStockValues?.[itemKey]?.total ?? parseInt((item.stock as any)?.enStock || item.stock?.total || "0")
   const currentStockReservado = auditStockValues?.[itemKey]?.reservado ?? parseInt(item.stock?.reservado || "0")
   const currentStockDisponible = currentStockTotal - currentStockReservado
   const hasAuditChange = auditStockValues && itemKey in auditStockValues
