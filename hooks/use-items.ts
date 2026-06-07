@@ -987,8 +987,9 @@ export function useItems() {
   descripcion?: string
   atributosPrincipales?: Array<{ key: string; value: string }>
   atributosInformativos?: Array<{ key: string; value: string }>
-  stockTotal?: number
+  enStock?: number
   stockReservado?: number
+  precioVenta?: number
   imagenUrl?: string
   }>) => {
     const existingSkus = items.map((item) => item.sku)
@@ -998,7 +999,7 @@ export function useItems() {
       // Generate unique SKU if not provided
       let sku = data.sku?.trim()
       if (!sku) {
-        const baseSku = generateStandaloneSKU({ title: data.name })
+        const baseSku = generateStandaloneSKU({ title: data.name, category: data.categoria })
         sku = generateUniqueSKU(baseSku, [...existingSkus, ...newSkus])
       } else {
         // Ensure provided SKU is unique
@@ -1010,12 +1011,18 @@ export function useItems() {
       const codigoUniversal = data.codigoUniversal?.trim() || 
         (Math.floor(Math.random() * 9000000000000) + 1000000000000).toString()
       
-      // Calculate stock disponible
-      const stockTotal = data.stockTotal ?? 0
+      // Calculate stock
+      const enStock = data.enStock ?? 0
       const stockReservado = data.stockReservado ?? 0
-      const stockDisponible = stockTotal - stockReservado
+      const stockDisponible = Math.max(0, enStock - stockReservado)
       
+      // Build precio object if precioVenta provided
+      const precio = data.precioVenta && data.precioVenta > 0
+        ? { costo: 0, margen: 0, iva: 0, precioFinal: data.precioVenta }
+        : undefined
+
   const newItem: Item = {
+  id: generateId("STA"),
   name: data.name,
   sku,
   codigoUniversal,
@@ -1032,10 +1039,11 @@ export function useItems() {
   codigoProveedor: data.codigoProveedor || "",
   descripcion: data.descripcion || "",
   stock: {
-  total: stockTotal.toString(),
-  reservado: stockReservado.toString(),
-  disponible: stockDisponible.toString(),
+    enStock: enStock.toString(),
+    reservado: stockReservado.toString(),
+    disponible: stockDisponible.toString(),
   },
+  precio,
   hasVariants: false,
   isAgrupador: false,
   atributosPrincipales: data.atributosPrincipales?.filter(a => a.key && a.value) || [],

@@ -29,7 +29,8 @@ const COL_WIDTHS: Record<string, number> = {
   volumenUnidad: 100,
   proveedor: 160,
   codigoProveedor: 130,
-  enStock: 80,
+  precioVenta: 120,
+  enStock: 120,
   descripcion: 200,
   fotoUrl: 200,
 }
@@ -87,10 +88,13 @@ const SECTIONS: Section[] = [
   },
   { 
     id: "stock", 
-    label: "Stock", 
+    label: "Stock y Precio", 
     defaultExpanded: false,
-    columns: ["enStock"],
-    subHeaders: [{ label: "STOCK EN EL DEPÓSITO", cols: ["enStock"] }],
+    columns: ["precioVenta", "enStock"],
+    subHeaders: [
+      { label: "PRECIO DE VENTA", cols: ["precioVenta"] },
+      { label: "STOCK EN EL DEPÓSITO", cols: ["enStock"] },
+    ],
   },
   { 
     id: "media", 
@@ -125,6 +129,7 @@ const COLUMN_LABELS: Record<string, string> = {
   volumenUnidad: "U. de Medida",
   proveedor: "Proveedor",
   codigoProveedor: "Código Proveedor",
+  precioVenta: "Precio de Venta",
   enStock: "En Stock",
   descripcion: "",
   fotoUrl: "",
@@ -143,6 +148,7 @@ interface WorkableRow {
   volumenUnidad: string
   proveedor: string
   codigoProveedor: string
+  precioVenta: string
   enStock: string
   descripcion: string
   fotoUrl: string
@@ -162,6 +168,7 @@ const createEmptyRow = (): WorkableRow => ({
   volumenUnidad: "",
   proveedor: "",
   codigoProveedor: "",
+  precioVenta: "",
   enStock: "0",
   descripcion: "",
   fotoUrl: "",
@@ -207,6 +214,7 @@ export default function CreadorMasivoPage() {
       !row.codigoProveedor.trim() &&
       !row.descripcion.trim() &&
       (row.enStock.trim() === "" || row.enStock.trim() === "0") &&
+      !row.precioVenta.trim() &&
       !row.fotoUrl.trim() &&
       !row.volumenCantidad.trim() &&
       !row.volumenUnidad.trim() &&
@@ -298,6 +306,7 @@ export default function CreadorMasivoPage() {
           atributosInformativos: atributosInformativos.length > 0 ? atributosInformativos : undefined,
           descripcion: row.descripcion.trim() || undefined,
           enStock: parseInt(row.enStock) || 0,
+          precioVenta: parseFloat(row.precioVenta) || undefined,
           imagenUrl: row.fotoUrl.trim() || undefined,
         }
       })
@@ -718,6 +727,18 @@ export default function CreadorMasivoPage() {
             onChange={(e) => updateRow(rowIndex, "codigoProveedor", e.target.value)}
             placeholder="Código"
             className={`${baseInputClass} placeholder:text-gray-300`}
+          />
+        )
+      case "precioVenta":
+        return (
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={row.precioVenta}
+            onChange={(e) => updateRow(rowIndex, "precioVenta", e.target.value)}
+            placeholder="$0"
+            className={`${baseInputClass} text-right placeholder:text-gray-300`}
           />
         )
       case "enStock":
