@@ -101,6 +101,8 @@ export default function ListaDePreciosPage() {
     redoEdit,
     saveEdit,
     cancelEdit,
+    forceSaveItems,
+    reloadItems,
     hasUnsavedEdits,
     canUndoEdit,
     canRedoEdit,
@@ -156,15 +158,16 @@ export default function ListaDePreciosPage() {
   const hasChanges = hasUnsavedEdits || hasUnsavedDeletes
 
   const handleDeshacer = () => {
-    if (hasUnsavedEdits) cancelEdit()
+    reloadItems()
     if (hasUnsavedDeletes) undoDelete()
+    setIsEditMode(false)
   }
 
   const handleGuardar = async () => {
     setIsSaving(true)
     setShowSaveSuccess(false)
     try {
-      if (hasUnsavedEdits) { await sleep(800); saveEdit() }
+      if (hasUnsavedEdits) { await sleep(800); forceSaveItems() }
       if (hasUnsavedDeletes) { await sleep(800); await saveDeletedItemsHook() }
       setShowSaveSuccess(true)
       setTimeout(() => setShowSaveSuccess(false), 3000)
@@ -378,7 +381,7 @@ export default function ListaDePreciosPage() {
                     <>
                       <button
                         type="button"
-                        onClick={() => { handleDeshacer(); setIsEditMode(false) }}
+                        onClick={handleDeshacer}
                         className="h-9 px-4 text-sm font-medium rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors cursor-pointer"
                       >
                         Cancelar
