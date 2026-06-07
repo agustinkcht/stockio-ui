@@ -40,10 +40,8 @@ import { downloadVentasPDF } from "@/lib/utils/generate-venta-pdf"
 import {
   PERIOD_OPTIONS,
   ACTIVE_PERIOD_KEYS,
-  PERIODICAL_PERIOD_KEYS,
   usePeriod,
   usePeriodRange,
-  resolvePeriodRange,
   type PeriodKey,
 } from "@/lib/contexts/period-context"
 
@@ -117,13 +115,7 @@ export default function VentasPage() {
   const { periodKey, customRange, setPeriodKey, setCustomRange } = usePeriod()
   const [periodOpen, setPeriodOpen] = useState(false)
   const [calendarOpen, setCalendarOpen] = useState(false)
-
-  // Derive range directly from the URL param so there's no one-render lag from context state sync
-  const effectivePeriodKey = (periodParam && periodParam !== "ninguno" ? periodParam : "ninguno") as PeriodKey
-  const range = useMemo(
-    () => resolvePeriodRange(effectivePeriodKey, dashboard.mesEnCursoStartDay, customRange),
-    [effectivePeriodKey, dashboard.mesEnCursoStartDay, customRange],
-  )
+  const range = usePeriodRange()
 
   const [selectedVentas, setSelectedVentas] = useState<Set<string>>(new Set())
   const [openMoreMenu, setOpenMoreMenu] = useState<string | null>(null)
@@ -236,7 +228,7 @@ export default function VentasPage() {
   }, [periodParam, noPeriod])
 
   // Whether the current period is "active" (en-curso = live) or "periodical" (fixed window)
-  const isActivePeriod = !noPeriod && ACTIVE_PERIOD_KEYS.includes(effectivePeriodKey)
+  const isActivePeriod = !noPeriod && periodParam !== null && ACTIVE_PERIOD_KEYS.includes(periodKey)
 
   // Period-scoped ventas filtered by creation date (for finalizadas & canceladas, and periodical en_curso)
   // Use plain YYYY-MM-DD string comparison to avoid all timezone/time-of-day issues
