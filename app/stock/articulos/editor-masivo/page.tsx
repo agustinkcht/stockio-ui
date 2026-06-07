@@ -348,7 +348,7 @@ export default function EditorMasivoPage() {
         descripcion: row.descripcion.trim() || undefined,
         imagenUrl: row.fotoUrl.trim() || undefined,
         stock: {
-          total: row.enStock || "0",
+          enStock: row.enStock || "0",
           reservado: row.stockReservado || "0",
           disponible: String(Math.max(0, (parseInt(row.enStock) || 0) - (parseInt(row.stockReservado) || 0))),
         },
@@ -385,7 +385,7 @@ export default function EditorMasivoPage() {
           sku: `${parentRow.skuPadre}-${skuSuffix}`,
           codigoUniversal: "",
           stock: {
-            total: v.enStock || "0",
+            enStock: v.enStock || "0",
             reservado: v.stockReservado || "0",
             disponible: String(Math.max(0, (parseInt(v.enStock || "0")) - (parseInt(v.stockReservado || "0")))),
           },

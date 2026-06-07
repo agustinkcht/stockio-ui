@@ -55,15 +55,32 @@ export function useItems() {
     return `stockio-items-${currentAccount}`
   }
 
+  // Migrate a stock object from the old {total, reservado, disponible} shape to the new {enStock, reservado, disponible} shape
+  const migrateStock = (stock: any): any => {
+    if (!stock) return stock
+    if (stock.total !== undefined && stock.enStock === undefined) {
+      const { total, ...rest } = stock
+      return { ...rest, enStock: total }
+    }
+    return stock
+  }
+
+  // Recursively migrate all stock fields in an item array
+  const migrateItems = (parsedItems: any[]): any[] =>
+    parsedItems.map((item) => ({
+      ...item,
+      stock: migrateStock(item.stock),
+      variants: item.variants?.map((v: any) => ({ ...v, stock: migrateStock(v.stock) })),
+    }))
+
   // Helper: read items from localStorage and set state (used on mount and on sync events)
   const loadFromStorage = async (storageKey: string) => {
     const storedItems = localStorage.getItem(storageKey)
     if (storedItems) {
-      const parsedItems = JSON.parse(storedItems)
+      const parsedItems = migrateItems(JSON.parse(storedItems))
       const validItems = parsedItems.filter(isValidItem)
-      if (validItems.length !== parsedItems.length) {
-        localStorage.setItem(storageKey, JSON.stringify(validItems))
-      }
+      // Write back migrated data so future reads are clean
+      localStorage.setItem(storageKey, JSON.stringify(validItems))
       setItems(validItems)
     } else {
       const INITIAL_ITEMS =
@@ -175,7 +192,7 @@ export function useItems() {
     const currentEnStock = Number.parseInt(currentStock.enStock || "0")
     const currentReservado = Number.parseInt(currentStock.reservado || "0")
 
-    const newEnStock = field === "enStock" ? value : currentEnStock
+    const newEnStock = field === "total" ? value : currentEnStock
     const newReservado = field === "reservado" ? value : currentReservado
     const newDisponible = Math.max(0, newEnStock - newReservado)
 
@@ -821,12 +838,12 @@ export function useItems() {
     let updated = false
 
     const applyDelta = (v: any) => {
-      const currentTotal = Number.parseInt(v.stock?.total || "0", 10)
+      const currentEnStock = Number.parseInt(v.stock?.enStock || v.stock?.total || "0", 10)
       const currentReservado = Number.parseInt(v.stock?.reservado || "0", 10)
-      const newTotal = Math.max(0, currentTotal + delta)
-      const newDisponible = Math.max(0, newTotal - currentReservado)
+      const newEnStock = Math.max(0, currentEnStock + delta)
+      const newDisponible = Math.max(0, newEnStock - currentReservado)
       updated = true
-      return { ...v, stock: { total: newTotal.toString(), reservado: currentReservado.toString(), disponible: newDisponible.toString() } }
+      return { ...v, stock: { enStock: newEnStock.toString(), reservado: currentReservado.toString(), disponible: newDisponible.toString() } }
     }
 
     const updatedItems = currentItems.map((item) => {
@@ -1183,7 +1200,7 @@ export function useItems() {
         fechaVencimiento: data.fechaVencimiento || undefined,
         proveedor: data.proveedor || "",
         codigoProveedor: "",
-        stock: { total: "0", reservado: "0", disponible: "0" },
+        stock: { enStock: "0", reservado: "0", disponible: "0" },
         isAgrupador: true,
         hasVariants: processedVariants.length > 0,
         containerAtributosPrincipales: data.containerAtributosPrincipales || [],

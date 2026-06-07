@@ -2586,9 +2586,9 @@ export function CatalogoItemDetailPanel({
                                 className="px-3 py-2 text-center cursor-pointer hover:bg-slate-100 rounded transition-colors group/stock"
                                 onClick={(e) => {
                                   e.stopPropagation()
-                                  const stock = sourceVariant?.stock || { total: "0", reservado: "0" }
+                                  const stock = sourceVariant?.stock || { enStock: "0", reservado: "0" }
                                   setExpandedMatrixStockValues({
-                                    total: parseInt(stock.total) || 0,
+                                    total: parseInt((stock as any).enStock || (stock as any).total || "0") || 0,
                                     reservado: parseInt(stock.reservado) || 0,
                                   })
                                   setExpandedMatrixActiveStockEdit("total")

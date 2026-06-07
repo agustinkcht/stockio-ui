@@ -122,17 +122,41 @@ export default function StockPage() {
   }
 
   const handleStockFieldChange = (itemSku: string, field: "total" | "reservado", value: number) => {
+    // Find the item or variant to get its current stock
+    let currentItem: any = items.find((i) => i.sku === itemSku || i.id === itemSku)
     let isVariant = false
     let parentSku: string | undefined
-    for (const item of items) {
-      if (item.variants) {
-        const variant = item.variants.find((v: any) => v.sku === itemSku)
-        if (variant) { isVariant = true; parentSku = item.sku; break }
+
+    if (!currentItem) {
+      for (const item of items) {
+        if (item.variants) {
+          const variant = item.variants.find((v: any) => v.sku === itemSku || (v as any).id === itemSku)
+          if (variant) {
+            currentItem = variant
+            isVariant = true
+            parentSku = item.sku
+            break
+          }
+        }
       }
     }
-    const stockField = field === "total" ? "enStock" : "stockReservado"
-    if (isVariant && parentSku) editVariantField(parentSku, itemSku, stockField, value)
-    else editField(itemSku, stockField, value)
+
+    const currentStock = currentItem?.stock || { enStock: "0", reservado: "0", disponible: "0" }
+    const currentEnStock = parseInt(currentStock.enStock || currentStock.total || "0")
+    const currentReservado = parseInt(currentStock.reservado || "0")
+
+    const newEnStock = field === "total" ? value : currentEnStock
+    const newReservado = field === "reservado" ? value : currentReservado
+    const newDisponible = Math.max(0, newEnStock - newReservado)
+
+    const newStock = {
+      enStock: newEnStock.toString(),
+      reservado: newReservado.toString(),
+      disponible: newDisponible.toString(),
+    }
+
+    if (isVariant && parentSku) editVariantField(parentSku, itemSku, "stock", newStock)
+    else editField(itemSku, "stock", newStock)
   }
 
   const getItemCurrentTotal = (it: any): number => {
@@ -165,8 +189,23 @@ export default function StockPage() {
       if (operation === "aumentar") newTotal = currentTotal + value
       else if (operation === "reducir") newTotal = Math.max(0, currentTotal - value)
       else newTotal = value // fijar_en
-      if (isVariant && parentSku) editVariantField(parentSku, sku, "enStock", newTotal)
-      else editField(sku, "enStock", newTotal)
+
+      // Find current item to preserve reservado
+      let currentItemForBulk: any = items.find((i) => i.sku === sku || (i as any).id === sku)
+      if (!currentItemForBulk && isVariant && parentSku) {
+        const parent = items.find((i) => i.sku === parentSku)
+        currentItemForBulk = parent?.variants?.find((v: any) => v.sku === sku || (v as any).id === sku)
+      }
+      const currentStockForBulk = currentItemForBulk?.stock || { enStock: "0", reservado: "0", disponible: "0" }
+      const currentReservadoForBulk = parseInt(currentStockForBulk.reservado || "0")
+      const newStock = {
+        enStock: newTotal.toString(),
+        reservado: currentReservadoForBulk.toString(),
+        disponible: Math.max(0, newTotal - currentReservadoForBulk).toString(),
+      }
+
+      if (isVariant && parentSku) editVariantField(parentSku, sku, "stock", newStock)
+      else editField(sku, "stock", newStock)
     }
   }
 
