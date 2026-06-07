@@ -143,7 +143,7 @@ const SECTIONS_CON_VARIANTES: Section[] = [
 const COLUMN_LABELS: Record<string, string> = {
   titulo: "Titulo",
   caracteres: "Cant. de Caracteres",
-  skuPadre: "SKU Padre",
+  skuPadre: "SKU Prefijo",
   skuSufijo: "SKU Sufijo",
   codigoUniversal: "Cod. Universal",
   categoria: "Categoria",

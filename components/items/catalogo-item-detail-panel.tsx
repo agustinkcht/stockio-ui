@@ -2394,11 +2394,11 @@ export function CatalogoItemDetailPanel({
                           </button>
                         </div>
 
-                        {/* SKU Padre */}
+                        {/* SKU Prefijo */}
                         <div className="mb-4">
                           <div className="flex items-center gap-2 group/skupadre">
                             <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">
-                              SKU Padre
+                              SKU Prefijo
                             </span>
                             {editingSkuPadre ? (
                               <input
@@ -2876,11 +2876,11 @@ export function CatalogoItemDetailPanel({
                               </button>
                             </div>
 
-                            {/* SKU Padre */}
+                            {/* SKU Prefijo */}
                             <div className="mb-4">
                               <div className="flex items-center gap-2 group/skupadre">
                                 <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">
-                                  SKU Padre
+                                  SKU Prefijo
                                 </span>
                                 {editingSkuPadre ? (
                                   <input

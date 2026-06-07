@@ -1878,10 +1878,10 @@ export function ItemDetailPanel({
                   </div>
                 </div>
                 
-                {/* SKU Padre field - below the header row */}
+                {/* SKU Prefijo field - below the header row */}
                 <div className="mt-4">
                   <label className="text-[9px] font-medium text-slate-400 uppercase tracking-wider block mb-1.5">
-                    SKU Padre
+                    SKU Prefijo
                   </label>
                   <input
                     type="text"
