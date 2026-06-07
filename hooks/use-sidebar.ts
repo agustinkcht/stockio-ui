@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef } from "react" // useRef kept for searchTimeoutRef
 import { SIDEBAR_ITEMS } from "@/lib/constants"
 
 export function useSidebar() {
@@ -14,29 +14,14 @@ export function useSidebar() {
   const [showNuevoDropdown, setShowNuevoDropdown] = useState(false)
   const [showAccionesDropdown, setShowAccionesDropdown] = useState(false)
 
-  const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const handleDropdownMouseEnter = (index: number) => {
-    if (dropdownTimeoutRef.current) {
-      clearTimeout(dropdownTimeoutRef.current)
-      dropdownTimeoutRef.current = null
-    }
-    if (hoveredDropdown !== null && hoveredDropdown !== index) {
-      setHoveredDropdown(null)
-      return
-    }
-    if (hoveredDropdown === index) {
-      setHoveredDropdown(null)
-    } else {
-      setHoveredDropdown(index)
-    }
+    setHoveredDropdown((prev) => (prev === index ? null : index))
   }
 
   const handleDropdownMouseLeave = () => {
-    dropdownTimeoutRef.current = setTimeout(() => {
-      setHoveredDropdown(null)
-    }, 250)
+    setHoveredDropdown(null)
   }
 
   const handleSearchMouseEnter = () => {
