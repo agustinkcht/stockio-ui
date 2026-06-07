@@ -2,7 +2,7 @@
 
 import type { Item, DepositStock, SortFactorConfig, FilterConfig } from "@/lib/types"
 import { ItemCard } from "./item-card"
-import { Plus, ArrowUpDown, ListFilterIcon, Search, X, Grid, Minus, ClipboardList, Check, MoreVertical, Pause, Play } from "lucide-react"
+import { Plus, ArrowUpDown, ListFilterIcon, Search, X, Grid, Minus, Check, MoreVertical, Pause, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRef, useState, useEffect, useMemo, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -30,11 +30,6 @@ function StockColumnTooltip() {
   )
 }
 
-interface AuditStockChange {
-  total: number
-  reservado: number
-}
-
 interface ItemsGridProps {
   items: Item[]
   gridSize: string
@@ -59,16 +54,11 @@ interface ItemsGridProps {
   onBatchDelete?: () => void
   onUpdateStock?: (itemSku: string, field: "total" | "reservado", value: number) => void
   onUpdatePrecio?: (itemId: string, precio: { costo: number; margen: number; iva: number; precioFinal: number }) => void
-  // Audit mode callbacks to parent for D-G buttons
-  onAuditChangesUpdate?: (hasChanges: boolean, pendingCount: number) => void
-  onAuditSave?: (changes: Record<string, { total: number; reservado: number }>) => void
-  onAuditDiscard?: () => void
   // For bulk stock edit
   getSelectedSkus?: () => string[]
   // Hide buttons
   hideNuevoButton?: boolean
   hideCreadorMasivoButton?: boolean
-  hideAuditButton?: boolean
   // Show precio column instead of atributos
   showPrecioColumn?: boolean
   // Pause/Reactivate items
@@ -100,13 +90,9 @@ export function ItemsGrid({
   onBatchDelete,
   onUpdateStock,
   onUpdatePrecio,
-  onAuditChangesUpdate,
-  onAuditSave,
-  onAuditDiscard,
   getSelectedSkus,
   hideNuevoButton = false,
   hideCreadorMasivoButton = false,
-  hideAuditButton = false,
   showPrecioColumn = false,
   onPauseItems,
   onReactivateItems,
@@ -128,81 +114,7 @@ export function ItemsGrid({
     depositos: [],
   })
   const [sortConfig, setSortConfig] = useState<SortFactorConfig[]>([{ factor: "categoria", direction: "asc" }])
-  const [isAuditMode, setIsAuditMode] = useState(false)
   const [bulkStockModalType, setBulkStockModalType] = useState<"total" | "reservado" | null>(null)
-  const [showOnlyPendingChanges, setShowOnlyPendingChanges] = useState(false)
-  
-  // Audit mode stock tracking
-  const [auditStockChanges, setAuditStockChanges] = useState<Record<string, AuditStockChange>>({})
-  const hasAuditChanges = Object.keys(auditStockChanges).length > 0
-  const pendingChangesCount = Object.keys(auditStockChanges).length
-
-  // Notify parent when audit changes update
-  useEffect(() => {
-    onAuditChangesUpdate?.(hasAuditChanges, pendingChangesCount)
-  }, [hasAuditChanges, pendingChangesCount, onAuditChangesUpdate])
-
-  // Handle stock changes in audit mode
-  const handleAuditStockChange = (sku: string, field: "total" | "reservado", value: number) => {
-    // Find the item to get current values
-    let item = items.find(i => i.sku === sku)
-    if (!item) {
-      // Search in variants
-      for (const parent of items) {
-        if (parent.variants) {
-          const variant = parent.variants.find((v: any) => v.sku === sku)
-          if (variant) {
-            item = variant as any
-            break
-          }
-        }
-      }
-    }
-    if (!item) return
-
-    const currentTotal = auditStockChanges[sku]?.total ?? parseInt((item.stock as any)?.enStock || item.stock?.total || "0")
-    const currentReservado = auditStockChanges[sku]?.reservado ?? parseInt(item.stock?.reservado || "0")
-
-    setAuditStockChanges(prev => ({
-      ...prev,
-      [sku]: {
-        total: field === "total" ? value : currentTotal,
-        reservado: field === "reservado" ? value : currentReservado,
-      }
-    }))
-  }
-
-  // Discard audit changes - exposed to parent via callback
-  const handleDiscardAuditChanges = () => {
-    setAuditStockChanges({})
-    setShowOnlyPendingChanges(false)
-    onAuditDiscard?.()
-  }
-
-  // Save audit changes to localStorage - exposed to parent via callback
-  // Note: We don't clear auditStockChanges here - the parent will call clearAuditChanges after save completes
-  const handleSaveAuditChanges = () => {
-    onAuditSave?.(auditStockChanges)
-  }
-
-  // Clear audit changes - called by parent after successful save
-  const clearAuditChanges = () => {
-    setAuditStockChanges({})
-    setShowOnlyPendingChanges(false)
-  }
-
-  // Expose handlers to parent by storing refs (parent can call via props)
-  useEffect(() => {
-    // Store current handlers so parent can call them
-    ;(window as any).__auditDiscardHandler = handleDiscardAuditChanges
-    ;(window as any).__auditSaveHandler = handleSaveAuditChanges
-    ;(window as any).__auditClearHandler = clearAuditChanges
-    return () => {
-      delete (window as any).__auditDiscardHandler
-      delete (window as any).__auditSaveHandler
-      delete (window as any).__auditClearHandler
-    }
-  }, [auditStockChanges])
 
   const availableCategorias = useMemo(() => getUniqueCategorias(items), [items])
   const availableMarcas = useMemo(() => getUniqueMarcas(items), [items])
@@ -211,84 +123,7 @@ export function ItemsGrid({
   const searchedItems = searchItems(items, searchQuery)
   const filteredItems = filterItems(searchedItems, filterConfig)
   
-  // Filter items to show only those with pending changes (similar to searchItems pattern)
-  const filterByPendingChanges = useMemo(() => {
-    if (!showOnlyPendingChanges || Object.keys(auditStockChanges).length === 0) {
-      return filteredItems
-    }
-    
-    const pendingSkus = new Set(Object.keys(auditStockChanges))
-    const results: Item[] = []
-    
-    for (const item of filteredItems) {
-      // Check for parent items with variants
-      if (item.hasVariants && item.variants) {
-        const matchingVariants = item.variants.filter((variant: any) => pendingSkus.has(variant.sku))
-        if (matchingVariants.length > 0) {
-          results.push({
-            ...item,
-            variants: matchingVariants,
-            variantCount: matchingVariants.length,
-          })
-        }
-      }
-      // Check for agrupador items
-      else if (item.isAgrupador && item.items) {
-        const matchingSubItems: any[] = []
-        for (const subItem of item.items) {
-          if (subItem.hasVariants && subItem.variants) {
-            const matchingVariants = subItem.variants.filter((variant: any) => pendingSkus.has(variant.sku))
-            if (matchingVariants.length > 0) {
-              matchingSubItems.push({
-                ...subItem,
-                variants: matchingVariants,
-                variantCount: matchingVariants.length,
-              })
-            }
-          } else if (pendingSkus.has(subItem.sku)) {
-            matchingSubItems.push(subItem)
-          }
-        }
-        if (matchingSubItems.length > 0) {
-          results.push({
-            ...item,
-            items: matchingSubItems,
-            itemCount: matchingSubItems.length,
-          })
-        }
-      }
-      // Standalone items
-      else if (pendingSkus.has(item.sku)) {
-        results.push(item)
-      }
-    }
-    
-    return results
-  }, [filteredItems, showOnlyPendingChanges, auditStockChanges])
-  
-  const sortedAndFilteredItems = sortItems(filterByPendingChanges, sortConfig)
-  
-  // Auto-expand parents when showing only pending changes
-  useEffect(() => {
-    if (showOnlyPendingChanges && Object.keys(auditStockChanges).length > 0) {
-      // Expand all items that have children with pending changes
-      const newExpandedItems: Record<number, boolean> = {}
-      sortedAndFilteredItems.forEach((item, index) => {
-        const hasChildren = (item.variants && item.variants.length > 0) || (item.items && item.items.length > 0)
-        if (hasChildren) {
-          newExpandedItems[index] = true
-        }
-      })
-      // Only update if there are items to expand
-      if (Object.keys(newExpandedItems).length > 0) {
-        Object.keys(newExpandedItems).forEach(key => {
-          if (!expandedItems[parseInt(key)]) {
-            toggleVariantExpansion(parseInt(key))
-          }
-        })
-      }
-    }
-  }, [showOnlyPendingChanges, sortedAndFilteredItems.length])
+  const sortedAndFilteredItems = sortItems(filteredItems, sortConfig)
 
   // Get all visible SKUs (standalone items and children of parents)
   const getVisibleSkus = useCallback((): string[] => {
@@ -341,8 +176,8 @@ export function ItemsGrid({
       }
       if (!item) continue
 
-      const currentTotal = auditStockChanges[sku]?.total ?? parseInt((item.stock as any)?.enStock || item.stock?.total || "0")
-      const currentReservado = auditStockChanges[sku]?.reservado ?? parseInt(item.stock?.reservado || "0")
+      const currentTotal = parseInt((item.stock as any)?.enStock || item.stock?.total || "0")
+      const currentReservado = parseInt(item.stock?.reservado || "0")
       const currentValue = field === "total" ? currentTotal : currentReservado
 
       let newValue = currentValue
@@ -354,7 +189,7 @@ export function ItemsGrid({
         newValue = value
       }
 
-      handleAuditStockChange(sku, field, newValue)
+      onUpdateStock?.(sku, field, newValue)
     }
 
     setBulkStockModalType(null)
@@ -440,37 +275,6 @@ export function ItemsGrid({
                     <Plus className="w-3.5 h-3.5 mr-1.5 text-blue-600" />
                     Editor Masivo
                   </Button>
-                )}
-
-                {!hideAuditButton && (
-                  <Button
-                    onClick={() => setIsAuditMode(!isAuditMode)}
-                    variant="ghost"
-                    size="sm"
-                    className={`h-8 text-xs transition-colors border shadow-sm cursor-pointer ${
-                      isAuditMode 
-                        ? "bg-amber-50 border-amber-300 hover:bg-amber-100 text-amber-700" 
-                        : "border-[rgba(228,230,235,0.6)] hover:bg-gray-100"
-                    }`}
-                  >
-                    <ClipboardList className={`w-3.5 h-3.5 mr-1.5 ${isAuditMode ? "text-amber-600" : "text-amber-600"}`} />
-                    Auditoría de Stock
-                  </Button>
-                )}
-
-{/* Pending changes counter - clickable to filter */}
-                {!hideAuditButton && hasAuditChanges && (
-                  <button
-                    onClick={() => setShowOnlyPendingChanges(!showOnlyPendingChanges)}
-                    className={`text-[10px] font-medium px-2 py-0.5 rounded-full ml-2 border transition-all cursor-pointer ${
-                      showOnlyPendingChanges
-                        ? "bg-amber-500 text-white border-amber-600 hover:bg-amber-600"
-                        : "bg-amber-100 text-amber-600 border-amber-200 hover:bg-amber-200"
-                    }`}
-                    title={showOnlyPendingChanges ? "Mostrar todos los items" : "Mostrar solo items con cambios pendientes"}
-                  >
-                    {pendingChangesCount} cambio{pendingChangesCount !== 1 ? 's' : ''} pendiente{pendingChangesCount !== 1 ? 's' : ''}
-                  </button>
                 )}
 
                 {hasSelectedItems && (
@@ -591,67 +395,36 @@ export function ItemsGrid({
                 )}
               </div>
 
-              {/* Tab header matching exact item card structure */}
-              {isAuditMode ? (
-                <div className="flex-1 grid grid-cols-22 h-9 bg-slate-200 border border-gray-300 rounded-xs border-none">
-                  <div className="col-span-8 flex items-center px-4 py-2 justify-center border-solid pl-4 pr-4 mr-0 border border-l-0 border-[rgba(202,213,227,0.61)]">
-                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Item</span>
-                  </div>
-                  <div className="col-span-6 flex items-center justify-between py-2 border-solid border-r px-3 mx-0 ml-0 mr-px border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
-                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wider flex-1 text-center">En Stock</span>
-                    <button
-                      onClick={() => setBulkStockModalType("total")}
-                      className="p-0.5 hover:bg-slate-300 rounded transition-colors cursor-pointer"
-                      title="Modificar stock total en masa"
-                    >
-                      <MoreVertical className="w-3.5 h-3.5 text-gray-500" />
-                    </button>
-                  </div>
-                  <div className="col-span-6 flex items-center justify-between py-2 border-solid border-r px-3 mx-0 ml-0 mr-px border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
-                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wider flex-1 text-center">Stock Reservado</span>
-                    <button
-                      onClick={() => setBulkStockModalType("reservado")}
-                      className="p-0.5 hover:bg-slate-300 rounded transition-colors cursor-pointer"
-                      title="Modificar stock reservado en masa"
-                    >
-                      <MoreVertical className="w-3.5 h-3.5 text-gray-500" />
-                    </button>
-                  </div>
-                  <div className="col-span-2 flex items-center justify-center py-2 mx-0 ml-0 px-0 mr-0 border-b border-t border-l-0 border-r-0 border-[rgba(202,213,227,0.61)]">
-                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Disponible</span>
-                  </div>
+              {/* Tab header */}
+              <div className="flex-1 grid grid-cols-44 h-9 bg-slate-200 border border-gray-300 rounded-xs border-none">
+                <div className="col-span-16 flex items-center px-4 py-2 justify-center border-solid pl-4 pr-4 mr-0 border border-l-0 border-[rgba(202,213,227,0.61)]">
+                  <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Item</span>
                 </div>
-              ) : (
-                <div className="flex-1 grid grid-cols-44 h-9 bg-slate-200 border border-gray-300 rounded-xs border-none">
-                  <div className="col-span-16 flex items-center px-4 py-2 justify-center border-solid pl-4 pr-4 mr-0 border border-l-0 border-[rgba(202,213,227,0.61)]">
-                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Item</span>
-                  </div>
-                  {showPrecioColumn ? (
-                    <>
-                      <div className="col-span-10 flex items-center justify-center py-2 border-solid border-r px-4 mx-0 border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
-                        <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Categoría</span>
-                      </div>
-                      <div className="col-span-10 flex items-center justify-center py-2 border-solid border-r px-4 mx-0 border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
-                        <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Precio Final</span>
-                      </div>
-                      <div className="col-span-8 flex items-center justify-center gap-1.5 py-2 mx-0 px-0 border-b border-t border-l-0 border-r-0 border-[rgba(202,213,227,0.61)]">
-                        <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Stock</span>
-                        <StockColumnTooltip />
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="col-span-14 flex items-center justify-center py-2 border-solid border-r px-4 mx-0 border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
-                        <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Atributos</span>
-                      </div>
-                      <div className="col-span-14 flex items-center justify-center gap-1.5 py-2 mx-0 px-0 border-b border-t border-l-0 border-r-0 border-[rgba(202,213,227,0.61)]">
-                        <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Stock</span>
-                        <StockColumnTooltip />
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
+                {showPrecioColumn ? (
+                  <>
+                    <div className="col-span-10 flex items-center justify-center py-2 border-solid border-r px-4 mx-0 border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
+                      <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Categoría</span>
+                    </div>
+                    <div className="col-span-10 flex items-center justify-center py-2 border-solid border-r px-4 mx-0 border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
+                      <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Precio Final</span>
+                    </div>
+                    <div className="col-span-8 flex items-center justify-center gap-1.5 py-2 mx-0 px-0 border-b border-t border-l-0 border-r-0 border-[rgba(202,213,227,0.61)]">
+                      <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Stock</span>
+                      <StockColumnTooltip />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="col-span-14 flex items-center justify-center py-2 border-solid border-r px-4 mx-0 border-t border-b border-l-0 border-[rgba(202,213,227,0.61)]">
+                      <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Atributos</span>
+                    </div>
+                    <div className="col-span-14 flex items-center justify-center gap-1.5 py-2 mx-0 px-0 border-b border-t border-l-0 border-r-0 border-[rgba(202,213,227,0.61)]">
+                      <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">Stock</span>
+                      <StockColumnTooltip />
+                    </div>
+                  </>
+                )}
+              </div>
 
               <div className="relative">
                 <div className="relative mx-0 mr-[-14px]">
@@ -719,9 +492,6 @@ export function ItemsGrid({
                   nextItem={nextItem}
                   handleItemSelection={handleItemSelection}
                   getSelectionState={getSelectionState}
-                  isAuditMode={isAuditMode}
-                  onStockChange={handleAuditStockChange}
-                  auditStockValues={auditStockChanges}
                   showPrecioColumn={showPrecioColumn}
                   onUpdatePrecio={onUpdatePrecio}
                   onUpdateStock={onUpdateStock}
