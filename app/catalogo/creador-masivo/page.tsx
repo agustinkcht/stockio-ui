@@ -218,8 +218,6 @@ export default function CreadorMasivoPage() {
   const [rows, setRows] = useState<WorkableRow[]>([createEmptyRow()])
   // Con Variantes rows state (lifted from component for persistence) - start with one default row
   const [parentRows, setParentRows] = useState<ParentRow[]>([createEmptyParentRow()])
-  const [gridSize, setGridSize] = useState<"sm" | "md" | "lg">("sm")
-  
   // Modal states
   const [showErrorModal, setShowErrorModal] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
@@ -632,15 +630,7 @@ export default function CreadorMasivoPage() {
     return width
   }
 
-  // Get row height based on grid size
-  const getRowHeight = () => {
-    switch (gridSize) {
-      case "sm": return "h-9"
-      case "md": return "h-12"
-      case "lg": return "h-16"
-      default: return "h-9"
-    }
-  }
+  const getRowHeight = () => "h-9"
 
   const renderCell = (row: WorkableRow, rowIndex: number, colId: string) => {
     const baseInputClass = "w-full h-full text-xs px-2 py-2 border-0 focus:outline-none focus:ring-1 focus:ring-blue-400 bg-white"
@@ -985,138 +975,101 @@ export default function CreadorMasivoPage() {
           </div>
 
           {/* Main Content */}
-          <div className="flex-1 overflow-hidden flex flex-col">
-            {/* Toolbar */}
-            <div className="sticky top-0 z-10 backdrop-blur-[2px] bg-transparent">
-              <div className="w-full h-2 bg-transparent" />
-              <div className="px-4 bg-white border rounded-lg shadow-sm border-[rgba(228,230,235,0.5)] mt-2 pt-1 pb-1 mx-4">
-                <div className="px-4 pt-3 pb-3 pl-0 pr-0">
-                  <div className="flex items-center justify-between border-b border-gray-200 border-none pl-0 pr-0 pb-0">
-                    <div className="flex items-center gap-4 border-0 border-none ml-1.5 mr-0 flex-shrink-0">
-                      <span className="text-sm text-gray-500">Creador Masivo de Items</span>
-                      
-                      {/* Mode Switcher */}
-                      <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-                        <button
-                          onClick={() => setCreatorMode("standalone")}
-                          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                            creatorMode === "standalone"
-                              ? "bg-white text-gray-900 shadow-sm"
-                              : "text-gray-600 hover:text-gray-900"
-                          }`}
-                        >
-                          Items Standalone
-                        </button>
-                        <button
-                          onClick={() => setCreatorMode("conVariantes")}
-                          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                            creatorMode === "conVariantes"
-                              ? "bg-white text-gray-900 shadow-sm"
-                              : "text-gray-600 hover:text-gray-900"
-                          }`}
-                        >
-                          Items con Variantes
-                        </button>
-                      </div>
-                      
-                      {/* Section Visibility Dropdown - Available for both modes */}
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <button type="button" className="px-3 py-1.5 text-xs font-medium rounded-md border border-gray-300 hover:bg-gray-50 transition-colors flex items-center gap-1.5">
-                            <Eye className="w-3.5 h-3.5" />
-                            <span>Secciones</span>
-                          </button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-56 p-3" align="start">
-                          <div className="space-y-2">
-                            <div className="text-xs font-semibold text-gray-700 mb-2">
-                              Mostrar/Ocultar Secciones
-                            </div>
-                            {(creatorMode === "standalone" ? SECTIONS : SECTIONS_CON_VARIANTES).map((section) => (
-                              <div key={section.id} className="flex items-center space-x-2">
-                                <Checkbox
-                                  id={`section-${section.id}`}
-                                  checked={creatorMode === "standalone" ? visibleSections[section.id] : visibleSectionsConVariantes[section.id]}
-                                  onCheckedChange={() => creatorMode === "standalone" ? toggleSectionVisibility(section.id) : toggleSectionVisibilityConVariantes(section.id)}
-                                  disabled={section.id === "obligatorio"}
-                                  className={section.id === "obligatorio" ? "opacity-50 cursor-not-allowed" : ""}
-                                />
-                                <label
-                                  htmlFor={`section-${section.id}`}
-                                  className={`text-xs ${
-                                    section.id === "obligatorio" 
-                                      ? "text-gray-500 cursor-not-allowed" 
-                                      : "text-gray-700 cursor-pointer"
-                                  }`}
-                                >
-                                  {section.label}
-                                  {section.id === "obligatorio" && (
-                                    <span className="ml-1 text-[10px] text-gray-400">(requerido)</span>
-                                  )}
-                                </label>
-                              </div>
-                            ))}
-                          </div>
-                        </PopoverContent>
-                      </Popover>
-                      
-                      {/* Grid Size Selector - Available for both modes */}
-                      <div className="flex items-center gap-1 bg-gray-100 rounded-md p-0.5">
-                        <button
-                          onClick={() => setGridSize("sm")}
-                          className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
-                            gridSize === "sm"
-                              ? "bg-white text-gray-900 shadow-sm"
-                              : "text-gray-600 hover:text-gray-900"
-                          }`}
-                        >
-                          SM
-                        </button>
-                        <button
-                          onClick={() => setGridSize("md")}
-                          className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
-                            gridSize === "md"
-                              ? "bg-white text-gray-900 shadow-sm"
-                              : "text-gray-600 hover:text-gray-900"
-                          }`}
-                        >
-                          MD
-                        </button>
-                        <button
-                          onClick={() => setGridSize("lg")}
-                          className={`px-2.5 py-1 text-xs font-medium rounded transition-colors ${
-                            gridSize === "lg"
-                              ? "bg-white text-gray-900 shadow-sm"
-                              : "text-gray-600 hover:text-gray-900"
-                          }`}
-                        >
-                          LG
-                        </button>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        onClick={handleCrearClick}
-                        disabled={!hasValidRows || isCreating}
-                        variant="ghost"
-                        size="sm"
-                        className={`h-8 text-xs transition-colors border shadow-sm cursor-pointer ${
-                          hasValidRows && !isCreating
-                            ? "border-green-300 hover:bg-green-50 text-green-700"
-                            : "border-[rgba(228,230,235,0.6)] text-gray-400 cursor-not-allowed"
-                        }`}
-                      >
-                        <Plus className={`w-3.5 h-3.5 mr-1.5 ${hasValidRows && !isCreating ? "text-green-600" : "text-gray-400"}`} />
-                        {isCreating ? "Creando..." : "Crear"}
-                      </Button>
-                    </div>
-                  </div>
+          <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col bg-slate-50">
+
+            {/* Top row — matches lista de precios layout */}
+            <div className="px-8 pt-12 pb-8">
+              <div className="max-w-[1400px] mx-auto flex items-start justify-between gap-6">
+                <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">
+                  Creador Masivo de Items
+                </h1>
+
+                {/* Mode switcher — floating on background */}
+                <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-1 shadow-sm mt-1">
+                  <button
+                    onClick={() => setCreatorMode("standalone")}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                      creatorMode === "standalone"
+                        ? "bg-slate-900 text-white shadow-sm"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    Items Individuales
+                  </button>
+                  <button
+                    onClick={() => setCreatorMode("conVariantes")}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                      creatorMode === "conVariantes"
+                        ? "bg-slate-900 text-white shadow-sm"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    Items con Variantes
+                  </button>
+                </div>
+
+                {/* Crear button — same position as Editar Lista in precios */}
+                <div className="flex items-center gap-2 mt-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleCrearClick}
+                    disabled={!hasValidRows || isCreating}
+                    className={`h-9 px-4 text-sm font-semibold transition-colors border shadow-sm gap-2 rounded-lg flex items-center cursor-pointer ${
+                      hasValidRows && !isCreating
+                        ? "border-[rgba(228,230,235,0.8)] bg-white text-slate-900 hover:bg-slate-50"
+                        : "border-slate-200 bg-white text-slate-400 cursor-not-allowed"
+                    }`}
+                  >
+                    <Plus className={`w-4 h-4 ${hasValidRows && !isCreating ? "text-slate-600" : "text-slate-300"}`} strokeWidth={2.25} />
+                    {isCreating ? "Creando..." : "Crear"}
+                  </button>
                 </div>
               </div>
             </div>
 
+            {/* Secciones selector + grid */}
+            <div className="px-8 pb-8">
+              <div className="max-w-[1400px] mx-auto">
+
+                {/* Secciones row — right above the grid */}
+                <div className="flex items-center justify-between mb-3">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button type="button" className="h-8 px-3 text-xs font-medium rounded-md border border-slate-200 bg-white hover:bg-slate-50 transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer">
+                        <Eye className="w-3.5 h-3.5 text-slate-500" />
+                        <span className="text-slate-700">Secciones</span>
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-56 p-3" align="start">
+                      <div className="space-y-2">
+                        <div className="text-xs font-semibold text-gray-700 mb-2">Mostrar/Ocultar Secciones</div>
+                        {(creatorMode === "standalone" ? SECTIONS : SECTIONS_CON_VARIANTES).map((section) => (
+                          <div key={section.id} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`section-${section.id}`}
+                              checked={creatorMode === "standalone" ? visibleSections[section.id] : visibleSectionsConVariantes[section.id]}
+                              onCheckedChange={() => creatorMode === "standalone" ? toggleSectionVisibility(section.id) : toggleSectionVisibilityConVariantes(section.id)}
+                              disabled={section.id === "obligatorio"}
+                              className={section.id === "obligatorio" ? "opacity-50 cursor-not-allowed" : ""}
+                            />
+                            <label
+                              htmlFor={`section-${section.id}`}
+                              className={`text-xs ${section.id === "obligatorio" ? "text-gray-500 cursor-not-allowed" : "text-gray-700 cursor-pointer"}`}
+                            >
+                              {section.label}
+                              {section.id === "obligatorio" && (
+                                <span className="ml-1 text-[10px] text-gray-400">(requerido)</span>
+                              )}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
             {/* Excel-like Grid with horizontal scroll */}
-            <div className="border-gray-200 bg-transparent px-5 py-0 border-b-0 border-r-0">
+            <div className="border-gray-200 bg-transparent border-b-0 border-r-0">
               {creatorMode === "standalone" ? (
                 <div className="bg-white border rounded-lg shadow-sm border-[rgba(228,230,235,0.5)] overflow-x-auto">
                   <table className="border-collapse" style={{ minWidth: getTotalWidth() }}>
@@ -1316,10 +1269,12 @@ export default function CreadorMasivoPage() {
                   visibleSections={visibleSectionsConVariantes}
                 />
               )}
-            </div>
-          </div>
-        </div>
-      </div>
+            </div>{/* /grid */}
+              </div>{/* /max-w */}
+            </div>{/* /px-8 */}
+          </div>{/* /main content */}
+        </div>{/* /panel */}
+      </div>{/* /layout */}
 
       {/* Success Message */}
       {showSuccessMessage && (
