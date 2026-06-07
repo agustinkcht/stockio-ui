@@ -162,7 +162,8 @@ export default function StockPage() {
   const getItemCurrentTotal = (it: any): number => {
     const stockField = it.stock
     const stockObj = stockField && typeof stockField === "object" ? stockField : null
-    return it.enStock ?? stockObj?.enStock ?? stockObj?.total ?? (typeof stockField === "number" ? stockField : 0)
+    const raw = it.enStock ?? stockObj?.enStock ?? stockObj?.total ?? (typeof stockField === "number" ? stockField : 0)
+    return parseInt(String(raw), 10) || 0
   }
 
   const handleBulkStockEdit = (operation: string, value: number, targetSkus: string[]) => {
