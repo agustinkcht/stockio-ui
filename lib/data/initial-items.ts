@@ -564,7 +564,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "ABV", value: "12.5%" },
           { key: "Maridaje", value: "Salmón, sushi, tapas" },
         ],
-        stock: { enStock: "16", reservado: "0", disponible: "16" }
+        stock: { enStock: "16", reservado: "0", disponible: "16" },
         precio: { costo: 23000, margen: 50, iva: 21, precioFinal: 41730 },
       },
     ],
