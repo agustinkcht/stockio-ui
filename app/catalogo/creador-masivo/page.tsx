@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useItems } from "@/hooks/use-items"
+import { useProveedores } from "@/hooks/use-proveedores"
+import { NuevoProveedorModal } from "@/components/modals/nuevo-proveedor-modal"
 import { CreadorMasivoConVariantes, SECTIONS_CON_VARIANTES, createEmptyParentRow, type ParentRow } from "@/components/creador-masivo/creador-masivo-con-variantes"
 
 // Define column widths (in pixels) for consistent alignment
@@ -19,25 +21,15 @@ const COL_WIDTHS: Record<string, number> = {
   caracteres: 100,
   sku: 140,
   codigoUniversal: 140,
-  // Atributos principales (max 2)
-  atributoPrincipal1Key: 100,
-  atributoPrincipal1Value: 100,
-  atributoPrincipal1Add: 40,
-  atributoPrincipal2Key: 100,
-  atributoPrincipal2Value: 100,
-  atributoPrincipal2Remove: 40,
   categoria: 130,
   marca: 130,
   formatoVenta: 120,
   unidadesPorPack: 90,
   volumenCantidad: 90,
   volumenUnidad: 100,
-  vencimiento: 150,
-  proveedor: 130,
+  proveedor: 160,
   codigoProveedor: 130,
   enStock: 80,
-  stockReservado: 90,
-  stockDisponible: 90,
   descripcion: 200,
   fotoUrl: 200,
 }
@@ -46,13 +38,6 @@ const COL_WIDTHS: Record<string, number> = {
 const getColWidth = (colId: string): number => {
   // Check if it's a dynamic atributo informativo column
   if (colId.startsWith("atributoInfo")) {
-    if (colId.includes("Key")) return 100
-    if (colId.includes("Value")) return 100
-    if (colId.includes("Add")) return 40
-    if (colId.includes("Remove")) return 40
-  }
-  // Check if it's a dynamic atributo principal column  
-  if (colId.startsWith("atributoPrincipal")) {
     if (colId.includes("Key")) return 100
     if (colId.includes("Value")) return 100
     if (colId.includes("Add")) return 40
@@ -69,7 +54,7 @@ interface Section {
   columns?: string[]
   subHeaders?: Array<{ label: string; cols: string[] }>
   isDynamic?: boolean
-  dynamicType?: "atributosPrincipales" | "atributosInformativos"
+  dynamicType?: "atributosInformativos"
 }
 
 // Section definitions
@@ -88,23 +73,15 @@ const SECTIONS: Section[] = [
     columns: ["sku", "codigoUniversal"],
     subHeaders: [{ label: "CÓDIGOS", cols: ["sku", "codigoUniversal"] }],
   },
-  {
-    id: "atributos-principales",
-    label: "Atributos Principales",
-    defaultExpanded: false,
-    isDynamic: true,
-    dynamicType: "atributosPrincipales",
-  },
   { 
     id: "info-comercial", 
     label: "Información Comercial", 
     defaultExpanded: false,
-    columns: ["categoria", "marca", "formatoVenta", "unidadesPorPack", "volumenCantidad", "volumenUnidad", "vencimiento", "proveedor", "codigoProveedor"],
+    columns: ["categoria", "marca", "formatoVenta", "unidadesPorPack", "volumenCantidad", "volumenUnidad", "proveedor", "codigoProveedor"],
     subHeaders: [
       { label: "INFO DEL PRODUCTO", cols: ["categoria", "marca"] },
       { label: "PRESENTACIÓN", cols: ["formatoVenta", "unidadesPorPack"] },
       { label: "VOLUMEN DE LA UNIDAD", cols: ["volumenCantidad", "volumenUnidad"] },
-      { label: "VENCIMIENTO", cols: ["vencimiento"] },
       { label: "INFO DEL PROVEEDOR", cols: ["proveedor", "codigoProveedor"] },
     ],
   },
@@ -112,8 +89,8 @@ const SECTIONS: Section[] = [
     id: "stock", 
     label: "Stock", 
     defaultExpanded: false,
-    columns: ["enStock", "stockReservado", "stockDisponible"],
-    subHeaders: [{ label: "STOCK EN EL DEPÓSITO", cols: ["enStock", "stockReservado", "stockDisponible"] }],
+    columns: ["enStock"],
+    subHeaders: [{ label: "STOCK EN EL DEPÓSITO", cols: ["enStock"] }],
   },
   { 
     id: "media", 
@@ -146,12 +123,9 @@ const COLUMN_LABELS: Record<string, string> = {
   unidadesPorPack: "U. por Pack",
   volumenCantidad: "Cantidad",
   volumenUnidad: "U. de Medida",
-  vencimiento: "Fecha",
   proveedor: "Proveedor",
   codigoProveedor: "Código Proveedor",
   enStock: "En Stock",
-  stockReservado: "Reservado",
-  stockDisponible: "Disponible",
   descripcion: "",
   fotoUrl: "",
 }
@@ -161,18 +135,15 @@ interface WorkableRow {
   titulo: string
   sku: string
   codigoUniversal: string
-  atributosPrincipales: Array<{ key: string; value: string }>
   categoria: string
   marca: string
   formatoVenta: string
   unidadesPorPack: string
   volumenCantidad: string
   volumenUnidad: string
-  vencimiento: string
   proveedor: string
   codigoProveedor: string
   enStock: string
-  stockReservado: string
   descripcion: string
   fotoUrl: string
   atributosInformativos: Array<{ key: string; value: string }>
@@ -183,18 +154,15 @@ const createEmptyRow = (): WorkableRow => ({
   titulo: "",
   sku: "",
   codigoUniversal: "",
-  atributosPrincipales: [{ key: "", value: "" }],
   categoria: "",
   marca: "",
   formatoVenta: "unidad",
   unidadesPorPack: "1",
   volumenCantidad: "",
   volumenUnidad: "",
-  vencimiento: "",
   proveedor: "",
   codigoProveedor: "",
   enStock: "0",
-  stockReservado: "0",
   descripcion: "",
   fotoUrl: "",
   atributosInformativos: [{ key: "", value: "" }],
@@ -202,6 +170,9 @@ const createEmptyRow = (): WorkableRow => ({
 
 export default function CreadorMasivoPage() {
   const { bulkCreateItems, bulkCreateItemsConVariantes } = useItems()
+  const { proveedores, addProveedor } = useProveedores()
+  const [showNuevoProveedorModal, setShowNuevoProveedorModal] = useState(false)
+  const [pendingProveedorRowIndex, setPendingProveedorRowIndex] = useState<number | null>(null)
   const [creatorMode, setCreatorMode] = useState<"standalone" | "conVariantes">("standalone")
   const [hoveredDropdown, setHoveredDropdown] = useState<number | null>(null)
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(
@@ -235,15 +206,12 @@ export default function CreadorMasivoPage() {
       !row.proveedor.trim() &&
       !row.codigoProveedor.trim() &&
       !row.descripcion.trim() &&
-      (row.enStock.trim() === "" || row.enStock.trim() === "0") && // Default value
-      (row.stockReservado.trim() === "" || row.stockReservado.trim() === "0") && // Default value
+      (row.enStock.trim() === "" || row.enStock.trim() === "0") &&
       !row.fotoUrl.trim() &&
       !row.volumenCantidad.trim() &&
       !row.volumenUnidad.trim() &&
-      !row.vencimiento.trim() &&
-      (row.formatoVenta === "unidad") && // Default value
-      (row.unidadesPorPack === "1" || row.unidadesPorPack === "") && // Default value
-      row.atributosPrincipales.every(attr => !attr.key.trim() && !attr.value.trim()) &&
+      (row.formatoVenta === "unidad") &&
+      (row.unidadesPorPack === "1" || row.unidadesPorPack === "") &&
       row.atributosInformativos.every(attr => !attr.key.trim() && !attr.value.trim())
     )
   }
@@ -310,12 +278,9 @@ export default function CreadorMasivoPage() {
     const standaloneItemsToCreate = nonEmptyStandaloneRows
       .filter(row => row.titulo.trim() !== "")
       .map(row => {
-        const atributosPrincipales = row.atributosPrincipales
-          .filter(attr => attr.key.trim() && attr.value.trim())
         const atributosInformativos = row.atributosInformativos
           .filter(attr => attr.key.trim() && attr.value.trim())
         const hasVolumenUnidad = row.volumenCantidad.trim() && row.volumenUnidad.trim()
-        const hasVencimiento = row.vencimiento.trim()
         
         return {
           name: row.titulo.trim(),
@@ -328,15 +293,11 @@ export default function CreadorMasivoPage() {
           volumenActive: !!hasVolumenUnidad,
           volumenCantidad: hasVolumenUnidad ? row.volumenCantidad : undefined,
           volumenUnidad: hasVolumenUnidad ? row.volumenUnidad : undefined,
-          vencimientoActive: !!hasVencimiento,
-          fechaVencimiento: hasVencimiento ? row.vencimiento : undefined,
           proveedor: row.proveedor.trim() || undefined,
           codigoProveedor: row.codigoProveedor.trim() || undefined,
-          atributosPrincipales: atributosPrincipales.length > 0 ? atributosPrincipales : undefined,
           atributosInformativos: atributosInformativos.length > 0 ? atributosInformativos : undefined,
           descripcion: row.descripcion.trim() || undefined,
           enStock: parseInt(row.enStock) || 0,
-          stockReservado: parseInt(row.stockReservado) || 0,
           imagenUrl: row.fotoUrl.trim() || undefined,
         }
       })
@@ -470,29 +431,6 @@ export default function CreadorMasivoPage() {
 
   const updateRow = (rowIndex: number, field: keyof WorkableRow, value: string) => {
     setRows(prev => prev.map((row, i) => i !== rowIndex ? row : { ...row, [field]: value }))
-  }
-
-  const addAtributoPrincipal = (rowIndex: number) => {
-    setRows(prev => prev.map((row, i) => {
-      if (i !== rowIndex || row.atributosPrincipales.length >= 2) return row
-      return { ...row, atributosPrincipales: [...row.atributosPrincipales, { key: "", value: "" }] }
-    }))
-  }
-
-  const removeAtributoPrincipal = (rowIndex: number, attrIndex: number) => {
-    setRows(prev => prev.map((row, i) => {
-      if (i !== rowIndex || row.atributosPrincipales.length <= 1) return row
-      return { ...row, atributosPrincipales: row.atributosPrincipales.filter((_, idx) => idx !== attrIndex) }
-    }))
-  }
-
-  const updateAtributoPrincipal = (rowIndex: number, attrIndex: number, field: "key" | "value", value: string) => {
-    setRows(prev => prev.map((row, i) => {
-      if (i !== rowIndex) return row
-      const newAttrs = [...row.atributosPrincipales]
-      newAttrs[attrIndex] = { ...newAttrs[attrIndex], [field]: value }
-      return { ...row, atributosPrincipales: newAttrs }
-    }))
   }
 
   const addAtributoInformativo = (rowIndex: number) => {
@@ -718,71 +656,6 @@ export default function CreadorMasivoPage() {
             className={`${baseInputClass} placeholder:text-gray-300`}
           />
         )
-      // Dynamic atributos principales (1 or 2)
-      case "atributoPrincipal1Key":
-        return (
-          <input
-            type="text"
-            value={row.atributosPrincipales[0]?.key || ""}
-            onChange={(e) => updateAtributoPrincipal(rowIndex, 0, "key", e.target.value)}
-            placeholder="Ej: Talle"
-            className={`${baseInputClass} placeholder:text-gray-300`}
-          />
-        )
-      case "atributoPrincipal1Value":
-        return (
-          <input
-            type="text"
-            value={row.atributosPrincipales[0]?.value || ""}
-            onChange={(e) => updateAtributoPrincipal(rowIndex, 0, "value", e.target.value)}
-            placeholder="Ej: M"
-            className={`${baseInputClass} placeholder:text-gray-300`}
-          />
-        )
-      case "atributoPrincipal1Add":
-        return (
-          <div className="w-full h-full flex items-center justify-center">
-            <button
-              onClick={() => addAtributoPrincipal(rowIndex)}
-              className="w-6 h-6 flex items-center justify-center hover:bg-gray-100 transition-colors cursor-pointer rounded"
-              title="Agregar atributo principal 2"
-            >
-              <Plus className="w-4 h-4 text-gray-400" />
-            </button>
-          </div>
-        )
-      case "atributoPrincipal2Key":
-        return (
-          <input
-            type="text"
-            value={row.atributosPrincipales[1]?.key || ""}
-            onChange={(e) => updateAtributoPrincipal(rowIndex, 1, "key", e.target.value)}
-            placeholder="Ej: Color"
-            className={`${baseInputClass} placeholder:text-gray-300`}
-          />
-        )
-      case "atributoPrincipal2Value":
-        return (
-          <input
-            type="text"
-            value={row.atributosPrincipales[1]?.value || ""}
-            onChange={(e) => updateAtributoPrincipal(rowIndex, 1, "value", e.target.value)}
-            placeholder="Ej: Rojo"
-            className={`${baseInputClass} placeholder:text-gray-300`}
-          />
-        )
-      case "atributoPrincipal2Remove":
-        return (
-          <div className="w-full h-full flex items-center justify-center">
-            <button
-              onClick={() => removeAtributoPrincipal(rowIndex, 1)}
-              className="w-6 h-6 flex items-center justify-center hover:bg-red-50 transition-colors cursor-pointer rounded"
-              title="Eliminar atributo principal 2"
-            >
-              <X className="w-4 h-4 text-red-400" />
-            </button>
-          </div>
-        )
       case "categoria":
         return (
           <input
@@ -813,25 +686,30 @@ export default function CreadorMasivoPage() {
             className={`${baseInputClass} text-center placeholder:text-gray-300`}
           />
         )
-      case "vencimiento":
+      case "proveedor": {
+        const proveedorNombre = (p: typeof proveedores[0]) =>
+          p.tipo === "empresa" ? p.razonSocial || p.nombre : `${p.nombre} ${p.apellido || ""}`.trim()
         return (
-          <input
-            type="date"
-            value={row.vencimiento}
-            onChange={(e) => updateRow(rowIndex, "vencimiento", e.target.value)}
-            className={`${baseInputClass} cursor-pointer`}
-          />
-        )
-      case "proveedor":
-        return (
-          <input
-            type="text"
+          <select
             value={row.proveedor}
-            onChange={(e) => updateRow(rowIndex, "proveedor", e.target.value)}
-            placeholder="Proveedor"
-            className={`${baseInputClass} placeholder:text-gray-300`}
-          />
+            onChange={(e) => {
+              if (e.target.value === "__nuevo__") {
+                setPendingProveedorRowIndex(rowIndex)
+                setShowNuevoProveedorModal(true)
+              } else {
+                updateRow(rowIndex, "proveedor", e.target.value)
+              }
+            }}
+            className={`${baseInputClass} cursor-pointer`}
+          >
+            <option value="">— Proveedor —</option>
+            <option value="__nuevo__">+ Nuevo Proveedor</option>
+            {proveedores.map((p) => (
+              <option key={p.id} value={proveedorNombre(p)}>{proveedorNombre(p)}</option>
+            ))}
+          </select>
         )
+      }
       case "codigoProveedor":
         return (
           <input
@@ -849,16 +727,6 @@ export default function CreadorMasivoPage() {
             min="0"
             value={row.enStock}
             onChange={(e) => updateRow(rowIndex, "enStock", e.target.value)}
-            className={`${baseInputClass} text-center`}
-          />
-        )
-      case "stockReservado":
-        return (
-          <input
-            type="number"
-            min="0"
-            value={row.stockReservado}
-            onChange={(e) => updateRow(rowIndex, "stockReservado", e.target.value)}
             className={`${baseInputClass} text-center`}
           />
         )
@@ -1276,6 +1144,27 @@ export default function CreadorMasivoPage() {
           </div>{/* /main content */}
         </div>{/* /panel */}
       </div>{/* /layout */}
+
+      {/* Nuevo Proveedor Modal */}
+      <NuevoProveedorModal
+        isOpen={showNuevoProveedorModal}
+        onClose={() => {
+          setShowNuevoProveedorModal(false)
+          setPendingProveedorRowIndex(null)
+        }}
+        onSave={(proveedorData) => {
+          const newProveedor = { ...proveedorData, id: crypto.randomUUID() }
+          addProveedor(newProveedor)
+          if (pendingProveedorRowIndex !== null) {
+            const nombre = newProveedor.tipo === "empresa"
+              ? newProveedor.razonSocial || newProveedor.nombre
+              : `${newProveedor.nombre} ${newProveedor.apellido || ""}`.trim()
+            updateRow(pendingProveedorRowIndex, "proveedor", nombre)
+          }
+          setShowNuevoProveedorModal(false)
+          setPendingProveedorRowIndex(null)
+        }}
+      />
 
       {/* Success Message */}
       {showSuccessMessage && (
