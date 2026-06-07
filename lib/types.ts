@@ -426,7 +426,7 @@ export interface SortConfig {
 
 export type ItemTipo = "individual" | "variantes" | "agrupador"
 
-export type StockFilter = "sin-stock" | "disponible" | "reservado"
+export type StockFilter = "sin-stock" | "disponible" | "reservado" | "sin-disponible"
 
 export interface FilterConfig {
   tipos: ItemTipo[]

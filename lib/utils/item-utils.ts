@@ -386,7 +386,7 @@ export function filterItems(items: Item[], filterConfig: FilterConfig): Item[] {
 
     // Filter by stock status
     if (filterConfig.stock.length > 0) {
-      const total = Number.parseFloat(item.stock?.total || "0")
+      const total = Number.parseFloat((item.stock as any)?.enStock || item.stock?.total || "0")
       const disponible = Number.parseFloat(item.stock?.disponible || "0")
       const reservado = Number.parseFloat(item.stock?.reservado || "0")
 
@@ -399,6 +399,9 @@ export function filterItems(items: Item[], filterConfig: FilterConfig): Item[] {
         matchesStock = true
       }
       if (filterConfig.stock.includes("reservado") && reservado > 0) {
+        matchesStock = true
+      }
+      if (filterConfig.stock.includes("sin-disponible") && disponible === 0) {
         matchesStock = true
       }
 
