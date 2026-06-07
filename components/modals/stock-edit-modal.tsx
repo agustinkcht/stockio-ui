@@ -49,17 +49,31 @@ export function StockEditModal({
   }
 
   const applyOperation = () => {
-    const value = parseInt(inputValue) || 0
-    if (value <= 0) return
+    const raw = inputValue.trim()
+    if (raw === "") return
+    const value = parseInt(raw)
+    if (isNaN(value)) return
+    // For add/remove, 0 is a no-op; for set, 0 is valid (subject to reservado floor)
+    if (operation !== "set" && value <= 0) return
 
     let newValue: number
     if (operation === "add") newValue = enStock + value
     else if (operation === "remove") newValue = enStock - value
-    else newValue = value
+    else newValue = value // "set" — allow 0, floor is initialReservado
 
+    // Floor: en stock can never go below reservado
     setEnStock(Math.max(initialReservado, Math.max(0, newValue)))
     setInputValue("")
   }
+
+  const isApplyEnabled = (() => {
+    const raw = inputValue.trim()
+    if (raw === "") return false
+    const value = parseInt(raw)
+    if (isNaN(value)) return false
+    if (operation === "set") return value >= 0 // 0 is valid for "fijar en"
+    return value > 0
+  })()
 
   const handleAccept = () => {
     onAccept(enStock, initialReservado)
@@ -154,9 +168,9 @@ export function StockEditModal({
             />
             <button
               onClick={applyOperation}
-              disabled={!inputValue || parseInt(inputValue) <= 0}
+              disabled={!isApplyEnabled}
               className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all flex-shrink-0 ${
-                inputValue && parseInt(inputValue) > 0
+                isApplyEnabled
                   ? "bg-slate-800 hover:bg-slate-700 text-white cursor-pointer"
                   : "bg-slate-200 text-slate-400 cursor-not-allowed"
               }`}

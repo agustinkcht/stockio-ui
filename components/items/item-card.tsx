@@ -351,43 +351,24 @@ export function ItemCard({
                   {/* Estado cell - for standalone and children */}
                   {(() => {
                     const isActive = item.isActive !== false
-                    const hasNoStock = (item.stock?.disponible ?? 0) <= 0
-                    const isAutoPaused = !isActive && hasNoStock // Auto-paused due to 0 stock disponible
-                    const canToggle = isActive || !isAutoPaused // Can only toggle if active OR manually paused (not auto-paused)
-                    const isRowInactive = !isItemActive
-                    
                     return (
                       <div
-                        className="col-span-8 h-full flex flex-col items-center justify-center px-2 transition-colors border-r border-slate-100"
+                        className="col-span-8 h-full flex items-center justify-center px-2 transition-colors border-r border-slate-100"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-                            if (canToggle) {
-                              onUpdateItem?.({ ...item, isActive: !isActive })
-                            }
+                            onUpdateItem?.({ ...item, isActive: !isActive })
                           }}
-                          disabled={!canToggle}
-                          className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${
-                            isActive 
-                              ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 cursor-pointer"
-                              : isAutoPaused
-                                ? "bg-amber-100 text-amber-700 cursor-not-allowed"
-                                : "bg-amber-100 text-amber-700 hover:bg-amber-200 cursor-pointer"
+                          className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors cursor-pointer ${
+                            isActive
+                              ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                              : "bg-amber-100 text-amber-700 hover:bg-amber-200"
                           }`}
                         >
                           {isActive ? "Activo" : "Pausado"}
                         </button>
-                        {isAutoPaused && (
-                          <span 
-                            className={`text-[10px] mt-1 text-center leading-tight ${
-                              isRowInactive ? "text-amber-800 font-medium" : "text-slate-500"
-                            }`}
-                          >
-                            Agregá stock para reactivar
-                          </span>
-                        )}
                       </div>
                     )
                   })()}
