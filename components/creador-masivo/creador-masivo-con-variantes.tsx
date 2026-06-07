@@ -9,6 +9,7 @@ const COL_WIDTHS: Record<string, number> = {
   titulo: 200,
   caracteres: 100,
   skuPadre: 140,
+  skuSufijo: 130,
   codigoUniversal: 140,
   // Atributos principales for variants (max 2)
   atributoPrincipal1Key: 100,
@@ -82,8 +83,8 @@ const SECTIONS_CON_VARIANTES: Section[] = [
     id: "datos-principales", 
     label: "Datos Principales", 
     defaultExpanded: false,
-    columns: ["skuPadre", "codigoUniversal"],
-    subHeaders: [{ label: "CODIGOS", cols: ["skuPadre", "codigoUniversal"] }],
+    columns: ["skuPadre", "skuSufijo", "codigoUniversal"],
+    subHeaders: [{ label: "CODIGOS", cols: ["skuPadre", "skuSufijo", "codigoUniversal"] }],
   },
   {
     id: "atributos-principales",
@@ -143,7 +144,8 @@ const COLUMN_LABELS: Record<string, string> = {
   titulo: "Titulo",
   caracteres: "Cant. de Caracteres",
   skuPadre: "SKU Padre",
-  codigoUniversal: "Codigo Universal",
+  skuSufijo: "SKU Sufijo",
+  codigoUniversal: "Cod. Universal",
   categoria: "Categoria",
   marca: "Marca",
   formatoVenta: "Formato de Venta",
@@ -176,6 +178,7 @@ interface VariantRow {
   id: string
   parentId: string
   atributosPrincipales: Array<{ key: string; value: string }> // Filled from parent
+  skuSufijo: string
   codigoUniversal: string
   codigoProveedor: string
   costo: string
@@ -453,7 +456,9 @@ export function CreadorMasivoConVariantes({
     
     // Create variant rows
     const newVariants: VariantRow[] = combinations.map(combo => {
-      const skuSuffix = combo.map(c => c.value.substring(0, 3).toUpperCase()).join("-")
+        const skuSuffix = combo.map(c => c.value.substring(0, 3).toUpperCase()).join("-")
+        const skuSufijoAuto = combo.map(c => c.value.toLowerCase().replace(/\s+/g, "-")).join("-")
+
       
       // Build inherited atributos informativos
       const inheritedAttrs = parentRow.atributosInformativos
@@ -467,6 +472,7 @@ export function CreadorMasivoConVariantes({
         id: crypto.randomUUID(),
         parentId: parentRow.id,
         atributosPrincipales: combo,
+        skuSufijo: skuSufijoAuto,
         codigoUniversal: "",
         codigoProveedor: "",
         costo: "",
@@ -749,6 +755,9 @@ export function CreadorMasivoConVariantes({
           />
         )
       
+      case "skuSufijo":
+        return <div className={`w-full h-full ${inactiveClass} flex items-center justify-center text-xs`}>-</div>
+
       case "codigoUniversal":
         return <div className={`w-full h-full ${inactiveClass} flex items-center justify-center text-xs`}>-</div>
       
@@ -1085,6 +1094,17 @@ export function CreadorMasivoConVariantes({
         )
       }
       
+      case "skuSufijo":
+        return (
+          <input
+            type="text"
+            value={variant.skuSufijo}
+            onChange={(e) => updateVariant(parentIndex, variant.id, "skuSufijo", e.target.value)}
+            placeholder="Auto..."
+            className={`${baseInputClass} placeholder:text-gray-300 font-mono`}
+          />
+        )
+
       case "codigoUniversal":
         return (
           <input
@@ -1154,35 +1174,41 @@ export function CreadorMasivoConVariantes({
       // Precio - editable in children, with auto-calc
       case "costo":
         return (
-          <input
-            type="number" min="0" step="0.01"
-            value={variant.costo}
-            onChange={(e) => {
-              updateVariant(parentIndex, variant.id, "costo", e.target.value)
-              const c = parseFloat(e.target.value) || 0
-              const m = parseFloat(variant.margen) || 0
-              const v = parseFloat(variant.iva) || 0
-              if (c > 0) updateVariant(parentIndex, variant.id, "precioVenta", (c * (1 + m / 100) * (1 + v / 100)).toFixed(2))
-            }}
-            placeholder="$0"
-            className={`${baseInputClass} text-right placeholder:text-gray-300`}
-          />
+          <div className="relative w-full h-full">
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-[11px] pointer-events-none">$</span>
+            <input
+              type="number" min="0" step="0.01"
+              value={variant.costo}
+              onChange={(e) => {
+                updateVariant(parentIndex, variant.id, "costo", e.target.value)
+                const c = parseFloat(e.target.value) || 0
+                const m = parseFloat(variant.margen) || 0
+                const v = parseFloat(variant.iva) || 0
+                if (c > 0) updateVariant(parentIndex, variant.id, "precioVenta", (c * (1 + m / 100) * (1 + v / 100)).toFixed(2))
+              }}
+              placeholder="0"
+              className={`${baseInputClass} pl-5 text-right placeholder:text-gray-300`}
+            />
+          </div>
         )
       case "margen":
         return (
-          <input
-            type="number" min="0" step="0.1"
-            value={variant.margen}
-            onChange={(e) => {
-              updateVariant(parentIndex, variant.id, "margen", e.target.value)
-              const c = parseFloat(variant.costo) || 0
-              const m = parseFloat(e.target.value) || 0
-              const v = parseFloat(variant.iva) || 0
-              if (c > 0) updateVariant(parentIndex, variant.id, "precioVenta", (c * (1 + m / 100) * (1 + v / 100)).toFixed(2))
-            }}
-            placeholder="0%"
-            className={`${baseInputClass} text-right placeholder:text-gray-300`}
-          />
+          <div className="relative w-full h-full">
+            <input
+              type="number" min="0" step="0.1"
+              value={variant.margen}
+              onChange={(e) => {
+                updateVariant(parentIndex, variant.id, "margen", e.target.value)
+                const c = parseFloat(variant.costo) || 0
+                const m = parseFloat(e.target.value) || 0
+                const v = parseFloat(variant.iva) || 0
+                if (c > 0) updateVariant(parentIndex, variant.id, "precioVenta", (c * (1 + m / 100) * (1 + v / 100)).toFixed(2))
+              }}
+              placeholder="0"
+              className={`${baseInputClass} pr-5 text-right placeholder:text-gray-300`}
+            />
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-[11px] pointer-events-none">%</span>
+          </div>
         )
       case "iva":
         return (
@@ -1204,13 +1230,16 @@ export function CreadorMasivoConVariantes({
         )
       case "precioVenta":
         return (
-          <input
-            type="number" min="0" step="0.01"
-            value={variant.precioVenta}
-            onChange={(e) => updateVariant(parentIndex, variant.id, "precioVenta", e.target.value)}
-            placeholder="$0"
-            className={`${baseInputClass} text-right placeholder:text-gray-300`}
-          />
+          <div className="relative w-full h-full">
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-green-600 text-[11px] font-medium pointer-events-none">$</span>
+            <input
+              type="number" min="0" step="0.01"
+              value={variant.precioVenta}
+              onChange={(e) => updateVariant(parentIndex, variant.id, "precioVenta", e.target.value)}
+              placeholder="0"
+              className={`${baseInputClass} pl-5 text-right placeholder:text-gray-300`}
+            />
+          </div>
         )
 
       // Stock - editable in children

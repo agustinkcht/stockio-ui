@@ -368,10 +368,11 @@ export default function CreadorMasivoPage() {
         
         // Build variants array
         const variants = parentRow.variants.map(variant => {
-          const skuSuffix = (variant.atributosPrincipales || [])
-            .filter(a => a && a.value)
-            .map(a => a.value.substring(0, 3).toUpperCase())
-            .join("-")
+          const skuSuffix = variant.skuSufijo?.trim()
+            || (variant.atributosPrincipales || [])
+              .filter(a => a && a.value)
+              .map(a => a.value.toLowerCase().replace(/\s+/g, "-"))
+              .join("-")
           
           const variantEnStock = parseInt(variant.enStock || "0") || 0
           const variantCosto = parseFloat(variant.costo || "") || 0
@@ -764,46 +765,51 @@ export default function CreadorMasivoPage() {
         )
       case "costo":
         return (
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={row.costo}
-            onChange={(e) => {
-              updateRow(rowIndex, "costo", e.target.value)
-              // auto-calculate precioVenta if margen and iva set
-              const costo = parseFloat(e.target.value) || 0
-              const margen = parseFloat(row.margen) || 0
-              const iva = parseFloat(row.iva) || 0
-              if (costo > 0 && (margen > 0 || iva > 0)) {
-                const pv = costo * (1 + margen / 100) * (1 + iva / 100)
-                updateRow(rowIndex, "precioVenta", pv.toFixed(2))
-              }
-            }}
-            placeholder="$0"
-            className={`${baseInputClass} text-right placeholder:text-gray-300`}
-          />
+          <div className="relative w-full h-full">
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-[11px] pointer-events-none">$</span>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={row.costo}
+              onChange={(e) => {
+                updateRow(rowIndex, "costo", e.target.value)
+                const costo = parseFloat(e.target.value) || 0
+                const margen = parseFloat(row.margen) || 0
+                const iva = parseFloat(row.iva) || 0
+                if (costo > 0) {
+                  const pv = costo * (1 + margen / 100) * (1 + iva / 100)
+                  updateRow(rowIndex, "precioVenta", pv.toFixed(2))
+                }
+              }}
+              placeholder="0"
+              className={`${baseInputClass} pl-5 text-right placeholder:text-gray-300`}
+            />
+          </div>
         )
       case "margen":
         return (
-          <input
-            type="number"
-            min="0"
-            step="0.1"
-            value={row.margen}
-            onChange={(e) => {
-              updateRow(rowIndex, "margen", e.target.value)
-              const costo = parseFloat(row.costo) || 0
-              const margen = parseFloat(e.target.value) || 0
-              const iva = parseFloat(row.iva) || 0
-              if (costo > 0) {
-                const pv = costo * (1 + margen / 100) * (1 + iva / 100)
-                updateRow(rowIndex, "precioVenta", pv.toFixed(2))
-              }
-            }}
-            placeholder="0%"
-            className={`${baseInputClass} text-right placeholder:text-gray-300`}
-          />
+          <div className="relative w-full h-full">
+            <input
+              type="number"
+              min="0"
+              step="0.1"
+              value={row.margen}
+              onChange={(e) => {
+                updateRow(rowIndex, "margen", e.target.value)
+                const costo = parseFloat(row.costo) || 0
+                const margen = parseFloat(e.target.value) || 0
+                const iva = parseFloat(row.iva) || 0
+                if (costo > 0) {
+                  const pv = costo * (1 + margen / 100) * (1 + iva / 100)
+                  updateRow(rowIndex, "precioVenta", pv.toFixed(2))
+                }
+              }}
+              placeholder="0"
+              className={`${baseInputClass} pr-5 text-right placeholder:text-gray-300`}
+            />
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-[11px] pointer-events-none">%</span>
+          </div>
         )
       case "iva":
         return (
@@ -828,15 +834,18 @@ export default function CreadorMasivoPage() {
         )
       case "precioVenta":
         return (
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={row.precioVenta}
-            onChange={(e) => updateRow(rowIndex, "precioVenta", e.target.value)}
-            placeholder="$0"
-            className={`${baseInputClass} text-right placeholder:text-gray-300`}
-          />
+          <div className="relative w-full h-full">
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-green-600 text-[11px] font-medium pointer-events-none">$</span>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={row.precioVenta}
+              onChange={(e) => updateRow(rowIndex, "precioVenta", e.target.value)}
+              placeholder="0"
+              className={`${baseInputClass} pl-5 text-right placeholder:text-gray-300`}
+            />
+          </div>
         )
       case "enStock":
         return (
