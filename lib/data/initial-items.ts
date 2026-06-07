@@ -49,7 +49,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Perfil Sensorial", value: "Fruta roja madura, especias y notas de chocolate" },
           { key: "Crianza", value: "18 meses en barrica de roble francés" },
         ],
-        stock: { enStock: "60", reservado: "12", disponible: "48" },
+        stock: { enStock: "60", reservado: "6", disponible: "54" }, // 6 reservado: VTA-005 pending (MALB-2012)
         precio: { costo: 45000, margen: 50, iva: 21, precioFinal: 81675 },
       },
       {
@@ -69,7 +69,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Perfil Sensorial", value: "Fruta roja fresca, cassis y vainilla suave" },
           { key: "Crianza", value: "18 meses en barrica de roble francés" },
         ],
-        stock: { enStock: "54", reservado: "10", disponible: "44" },
+        stock: { enStock: "54", reservado: "0", disponible: "54" },
         precio: { costo: 42000, margen: 50, iva: 21, precioFinal: 76230 },
       },
 
@@ -91,7 +91,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Perfil Sensorial", value: "Fruta negra, especias y notas ahumadas de barrica" },
           { key: "Crianza", value: "18 meses en barrica de roble francés" },
         ],
-        stock: { enStock: "48", reservado: "9", disponible: "39" },
+        stock: { enStock: "48", reservado: "0", disponible: "48" },
         precio: { costo: 48000, margen: 50, iva: 21, precioFinal: 87120 },
       },
       {
@@ -111,7 +111,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Perfil Sensorial", value: "Cassis, pimienta negra y cacao suave" },
           { key: "Crianza", value: "18 meses en barrica de roble francés" },
         ],
-        stock: { enStock: "42", reservado: "8", disponible: "34" },
+        stock: { enStock: "42", reservado: "0", disponible: "42" },
         precio: { costo: 46000, margen: 50, iva: 21, precioFinal: 83490 },
       },
 
@@ -133,7 +133,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Perfil Sensorial", value: "Fruta negra madura, pimienta y notas tostadas" },
           { key: "Crianza", value: "18 meses en barrica de roble francés" },
         ],
-        stock: { enStock: "36", reservado: "6", disponible: "30" },
+        stock: { enStock: "36", reservado: "12", disponible: "24" }, // 12 reservado: VTA-005 pending (SYGA-2012)
         precio: { costo: 44000, margen: 50, iva: 21, precioFinal: 79860 },
       },
       {
@@ -153,7 +153,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Perfil Sensorial", value: "Fruta negra, especias dulces y chocolate amargo" },
           { key: "Crianza", value: "18 meses en barrica de roble francés" },
         ],
-        stock: { enStock: "32", reservado: "5", disponible: "27" },
+        stock: { enStock: "32", reservado: "0", disponible: "32" },
         precio: { costo: 43000, margen: 50, iva: 21, precioFinal: 78045 },
       },
     ],
@@ -202,7 +202,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Perfil Sensorial", value: "Intenso rojo oscuro con notas florales y especiadas" },
           { key: "Crianza", value: "18 meses en barrica" },
         ],
-        stock: { enStock: "38", reservado: "6", disponible: "32" },
+        stock: { enStock: "38", reservado: "0", disponible: "38" },
         precio: { costo: 54000, margen: 50, iva: 21, precioFinal: 97860 },
       },
 
@@ -223,7 +223,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Perfil Sensorial", value: "Fruta madura, taninos suaves y notas de vainilla" },
           { key: "Crianza", value: "18 meses en barrica" },
         ],
-        stock: { enStock: "46", reservado: "9", disponible: "37" },
+        stock: { enStock: "46", reservado: "0", disponible: "46" },
         precio: { costo: 53000, margen: 50, iva: 21, precioFinal: 96090 },
       },
     ],
@@ -245,7 +245,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 750,
     volumenUnidad: "ml",
-    stock: { enStock: "18", reservado: "2", disponible: "16" },
+    stock: { enStock: "18", reservado: "0", disponible: "18" },
     atributosPrincipales: [],
 
     atributosInformativos: [
@@ -274,11 +274,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 750,
     volumenUnidad: "ml",
-    stock: {
-      total: "36",
-      reservado: "4",
-      disponible: "32",
-    },
+    stock: { enStock: "36", reservado: "3", disponible: "33" }, // 3 reservado: VTA-030 pending (DOMGRES-BLND)
     atributosPrincipales: [],
     atributosInformativos: [
       { key: "Varietal", value: "Blend" },
@@ -338,7 +334,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Perfil Sensorial", value: "Mora y ciruela, pimienta; cacao y ahumado sutil" },
           { key: "Maridaje", value: "Sandwich de ojo de bife y provolone" },
         ],
-        stock: { enStock: "28", reservado: "4", disponible: "24" },
+        stock: { enStock: "28", reservado: "0", disponible: "28" },
         precio: { costo: 15000, margen: 50, iva: 21, precioFinal: 27150 },
       },
 
@@ -360,7 +356,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Perfil Sensorial", value: "Fruta madura, roble sutil, vainilla y especias" },
           { key: "Maridaje", value: "Pastas rellenas con bolognesa" },
         ],
-        stock: { enStock: "34", reservado: "5", disponible: "29" },
+        stock: { enStock: "34", reservado: "0", disponible: "34" },
         precio: { costo: 14000, margen: 50, iva: 21, precioFinal: 25410 },
       },
 
@@ -382,7 +378,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Perfil Sensorial", value: "Jazmín y azahar, mango y durazno; final mielado" },
           { key: "Maridaje", value: "Cheesecake o crème brûlée" },
         ],
-        stock: { enStock: "20", reservado: "3", disponible: "17" },
+        stock: { enStock: "20", reservado: "0", disponible: "20" },
         precio: { costo: 15000, margen: 50, iva: 21, precioFinal: 27150 },
       },
 
@@ -404,7 +400,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Perfil Sensorial", value: "Tropical (piña/banana), cítricos; acidez filosa" },
           { key: "Maridaje", value: "A elección (estilo relaxed)" },
         ],
-        stock: { enStock: "26", reservado: "4", disponible: "22" },
+        stock: { enStock: "26", reservado: "0", disponible: "26" },
         precio: { costo: 16000, margen: 50, iva: 21, precioFinal: 29040 },
       },
     ],
@@ -426,11 +422,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenCantidad: 750,
     volumenUnidad: "ml",
 
-    stock: {
-      total: "18",
-      reservado: "2",
-      disponible: "16",
-    },
+    stock: { enStock: "18", reservado: "0", disponible: "18" },
     atributosPrincipales: [],
     atributosInformativos: [
       { key: "Dosaje", value: "Brut Nature" },
@@ -465,11 +457,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenCantidad: 750,
     volumenUnidad: "ml",
 
-    stock: {
-      total: "24",
-      reservado: "2",
-      disponible: "22",
-    },
+    stock: { enStock: "24", reservado: "2", disponible: "22" }, // 2 reservado: VTA-030 pending (DOMIMST)
     atributosPrincipales: [],
     atributosInformativos: [
       { key: "Tipo de Licor", value: "Espirituoso a base de mosto de uva" },
@@ -536,7 +524,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "ABV", value: "" },
           { key: "Maridaje", value: "Aperitivos, mariscos, sushi" },
         ],
-        stock: { enStock: "24", reservado: "3", disponible: "21" },
+        stock: { enStock: "24", reservado: "3", disponible: "21" }, // 3 reservado: VTA-030 pending (EXBR)
         precio: { costo: 22000, margen: 50, iva: 21, precioFinal: 39930 },
       },
       {
@@ -556,7 +544,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "ABV", value: "" },
           { key: "Maridaje", value: "Mariscos, quesos suaves, aperitivos" },
         ],
-        stock: { enStock: "18", reservado: "2", disponible: "16" },
+        stock: { enStock: "18", reservado: "6", disponible: "12" }, // 6 reservado: VTA-005 pending (BRNA)
         precio: { costo: 24000, margen: 50, iva: 21, precioFinal: 43560 },
       },
       {
@@ -576,7 +564,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "ABV", value: "12.5%" },
           { key: "Maridaje", value: "Salmón, sushi, tapas" },
         ],
-        stock: { enStock: "16", reservado: "2", disponible: "14" },
+        stock: { enStock: "16", reservado: "0", disponible: "16" }
         precio: { costo: 23000, margen: 50, iva: 21, precioFinal: 41730 },
       },
     ],
@@ -598,7 +586,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenCantidad: 750,
     volumenUnidad: "ml",
 
-    stock: { enStock: "30", reservado: "4", disponible: "26" },
+    stock: { enStock: "30", reservado: "0", disponible: "30" },
     atributosPrincipales: [],
     atributosInformativos: [
       { key: "Dosaje", value: "Extra Brut" },
@@ -632,7 +620,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenCantidad: 750,
     volumenUnidad: "ml",
 
-    stock: { enStock: "30", reservado: "4", disponible: "26" },
+    stock: { enStock: "30", reservado: "0", disponible: "30" },
     atributosPrincipales: [],
     atributosInformativos: [
       { key: "Estilo", value: "London Dry" },
@@ -659,7 +647,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenCantidad: 700,
     volumenUnidad: "ml",
 
-    stock: { enStock: "14", reservado: "1", disponible: "13" },
+    stock: { enStock: "14", reservado: "0", disponible: "14" },
     atributosPrincipales: [],
     atributosInformativos: [
       { key: "Estilo", value: "Artesanal" },
@@ -708,7 +696,7 @@ export const INITIAL_ITEMS: Item[] = [
         marca: "Restinga",
         atributosPrincipales: [{ key: "Sabor", value: "Original" }],
         atributosInformativos: [],
-        stock: { enStock: "18", reservado: "2", disponible: "16" },
+        stock: { enStock: "18", reservado: "0", disponible: "18" }
         precio: { costo: 11000, margen: 50, iva: 21, precioFinal: 19965 },
       },
       {
@@ -721,7 +709,7 @@ export const INITIAL_ITEMS: Item[] = [
         marca: "Restinga",
         atributosPrincipales: [{ key: "Sabor", value: "Destilado Otoño" }],
         atributosInformativos: [],
-        stock: { enStock: "14", reservado: "2", disponible: "12" },
+        stock: { enStock: "14", reservado: "0", disponible: "14" }
         precio: { costo: 12000, margen: 50, iva: 21, precioFinal: 21720 },
       },
       {
@@ -734,7 +722,7 @@ export const INITIAL_ITEMS: Item[] = [
         marca: "Restinga",
         atributosPrincipales: [{ key: "Sabor", value: "Flavoured Edition" }],
         atributosInformativos: [],
-        stock: { enStock: "12", reservado: "1", disponible: "11" },
+        stock: { enStock: "12", reservado: "0", disponible: "12" }
         precio: { costo: 13000, margen: 50, iva: 21, precioFinal: 23595 },
       },
     ],
@@ -760,7 +748,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenCantidad: 700,
     volumenUnidad: "ml",
 
-    stock: { enStock: "16", reservado: "2", disponible: "14" },
+    stock: { enStock: "16", reservado: "0", disponible: "16" }
     atributosPrincipales: [],
     atributosInformativos: [
       { key: "Estilo", value: "London Dry" },
@@ -806,7 +794,7 @@ export const INITIAL_ITEMS: Item[] = [
         marca: "Absolut",
         atributosPrincipales: [{ key: "Sabor", value: "Original" }],
         atributosInformativos: [],
-        stock: { enStock: "48", reservado: "6", disponible: "42" },
+        stock: { enStock: "48", reservado: "0", disponible: "48" }
         precio: { costo: 12000, margen: 50, iva: 21, precioFinal: 21720 },
       },
       {
@@ -820,7 +808,7 @@ export const INITIAL_ITEMS: Item[] = [
         marca: "Absolut",
         atributosPrincipales: [{ key: "Sabor", value: "Raspberry" }],
         atributosInformativos: [],
-        stock: { enStock: "36", reservado: "4", disponible: "32" },
+        stock: { enStock: "36", reservado: "0", disponible: "36" },
         precio: { costo: 13000, margen: 50, iva: 21, precioFinal: 23595 },
       },
       {
@@ -834,7 +822,7 @@ export const INITIAL_ITEMS: Item[] = [
         marca: "Absolut",
         atributosPrincipales: [{ key: "Sabor", value: "Pear" }],
         atributosInformativos: [],
-        stock: { enStock: "30", reservado: "3", disponible: "27" },
+        stock: { enStock: "30", reservado: "0", disponible: "30" }
         precio: { costo: 13000, margen: 50, iva: 21, precioFinal: 23595 },
       },
       {
@@ -848,7 +836,7 @@ export const INITIAL_ITEMS: Item[] = [
         marca: "Absolut",
         atributosPrincipales: [{ key: "Sabor", value: "Vanilla" }],
         atributosInformativos: [],
-        stock: { enStock: "28", reservado: "3", disponible: "25" },
+        stock: { enStock: "28", reservado: "0", disponible: "28" }
         precio: { costo: 13000, margen: 50, iva: 21, precioFinal: 23595 },
       },
     ],
@@ -870,7 +858,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenCantidad: 750,
     volumenUnidad: "ml",
 
-    stock: { enStock: "20", reservado: "2", disponible: "18" },
+    stock: { enStock: "20", reservado: "0", disponible: "20" }
     atributosPrincipales: [],
     atributosInformativos: [
       { key: "Origen", value: "Francia" },
@@ -897,7 +885,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenCantidad: 750,
     volumenUnidad: "ml",
 
-    stock: { enStock: "28", reservado: "4", disponible: "24" },
+    stock: { enStock: "28", reservado: "0", disponible: "28" },
     atributosPrincipales: [],
     atributosInformativos: [
       { key: "Origen", value: "Barbados" },
@@ -929,7 +917,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenCantidad: 750,
     volumenUnidad: "ml",
 
-    stock: { enStock: "12", reservado: "2", disponible: "10" },
+    stock: { enStock: "12", reservado: "0", disponible: "12" }
     atributosPrincipales: [],
     atributosInformativos: [
       { key: "Origen", value: "México" },
@@ -984,7 +972,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "ABV", value: "40%" },
           { key: "Estuche", value: "Sin estuche" },
         ],
-        stock: { enStock: "48", reservado: "6", disponible: "42" },
+        stock: { enStock: "48", reservado: "0", disponible: "48" }
         precio: { costo: 20000, margen: 60, iva: 21, precioFinal: 37800 },
       },
       {
@@ -1002,7 +990,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "ABV", value: "40%" },
           { key: "Estuche", value: "Caja" },
         ],
-        stock: { enStock: "36", reservado: "4", disponible: "32" },
+        stock: { enStock: "36", reservado: "0", disponible: "36" },
         precio: { costo: 28000, margen: 55, iva: 21, precioFinal: 52500 },
       },
       {
@@ -1020,7 +1008,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "ABV", value: "40%" },
           { key: "Estuche", value: "Caja" },
         ],
-        stock: { enStock: "24", reservado: "3", disponible: "21" },
+        stock: { enStock: "24", reservado: "0", disponible: "24" }
         precio: { costo: 32000, margen: 55, iva: 21, precioFinal: 60000 },
       },
       {
@@ -1038,7 +1026,7 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "ABV", value: "40%" },
           { key: "Estuche", value: "Estuche premium" },
         ],
-        stock: { enStock: "12", reservado: "2", disponible: "10" },
+        stock: { enStock: "12", reservado: "0", disponible: "12" }
         precio: { costo: 80000, margen: 40, iva: 21, precioFinal: 136500 },
       },
     ],
@@ -1061,7 +1049,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenCantidad: 750,
     volumenUnidad: "ml",
 
-    stock: { enStock: "40", reservado: "5", disponible: "35" },
+    stock: { enStock: "40", reservado: "0", disponible: "40" },
     atributosPrincipales: [],
     atributosInformativos: [
       { key: "Tipo de Whisky", value: "Tennessee" },
@@ -1092,7 +1080,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenCantidad: 750,
     volumenUnidad: "ml",
 
-    stock: { enStock: "34", reservado: "4", disponible: "30" },
+    stock: { enStock: "34", reservado: "0", disponible: "34" },
     atributosPrincipales: [],
 
     atributosInformativos: [
@@ -1124,7 +1112,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenCantidad: 750,
     volumenUnidad: "ml",
 
-    stock: { enStock: "22", reservado: "3", disponible: "19" },
+    stock: { enStock: "22", reservado: "0", disponible: "22" }
     atributosPrincipales: [],
     atributosInformativos: [
       { key: "Tipo de Whisky", value: "Irish" },
@@ -1155,11 +1143,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 700,
     volumenUnidad: "ml",
-    stock: {
-      total: "48",
-      reservado: "6",
-      disponible: "42",
-    },
+    stock: { enStock: "48", reservado: "0", disponible: "48" },
     atributosPrincipales: [],
     atributosInformativos: [
       { key: "Tipo de Licor", value: "Licor herbal amargo" },
@@ -1185,11 +1169,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 700,
     volumenUnidad: "ml",
-    stock: {
-      total: "36",
-      reservado: "5",
-      disponible: "31",
-    },
+    stock: { enStock: "36", reservado: "0", disponible: "36" },
     atributosPrincipales: [],
     atributosInformativos: [
       { key: "Tipo de Licor", value: "Licor de crema y café" },
@@ -1218,7 +1198,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenCantidad: 750,
     volumenUnidad: "ml",
 
-    stock: { enStock: "24", reservado: "3", disponible: "21" },
+    stock: { enStock: "24", reservado: "0", disponible: "24" }
     atributosPrincipales: [],
 
     atributosInformativos: [
@@ -1247,7 +1227,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 700,
     volumenUnidad: "ml",
-    stock: { enStock: "18", reservado: "2", disponible: "16" },
+    stock: { enStock: "18", reservado: "0", disponible: "18" }
     atributosPrincipales: [],
     atributosInformativos: [
       { key: "Tipo de Licor", value: "Triple sec (licor de naranja)" },
