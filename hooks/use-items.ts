@@ -989,6 +989,9 @@ export function useItems() {
   atributosInformativos?: Array<{ key: string; value: string }>
   enStock?: number
   stockReservado?: number
+  costo?: number
+  margen?: number
+  iva?: number
   precioVenta?: number
   imagenUrl?: string
   }>) => {
@@ -1016,9 +1019,16 @@ export function useItems() {
       const stockReservado = data.stockReservado ?? 0
       const stockDisponible = Math.max(0, enStock - stockReservado)
       
-      // Build precio object if precioVenta provided
-      const precio = data.precioVenta && data.precioVenta > 0
-        ? { costo: 0, margen: 0, iva: 0, precioFinal: data.precioVenta }
+      // Build precio object from fields
+      const hasPrecio = (data.costo ?? 0) > 0 || (data.precioVenta ?? 0) > 0
+      const costoVal = data.costo ?? 0
+      const margenVal = data.margen ?? 0
+      const ivaVal = data.iva ?? 0
+      const precioFinal = data.precioVenta ?? (costoVal > 0
+        ? costoVal * (1 + margenVal / 100) * (1 + ivaVal / 100)
+        : 0)
+      const precio = hasPrecio
+        ? { costo: costoVal, margen: margenVal, iva: ivaVal, precioFinal }
         : undefined
 
   const newItem: Item = {

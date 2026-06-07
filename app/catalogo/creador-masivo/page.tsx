@@ -29,8 +29,11 @@ const COL_WIDTHS: Record<string, number> = {
   volumenUnidad: 100,
   proveedor: 160,
   codigoProveedor: 130,
+  costo: 110,
+  margen: 90,
+  iva: 80,
   precioVenta: 120,
-  enStock: 120,
+  enStock: 170,
   descripcion: 200,
   fotoUrl: 200,
 }
@@ -87,14 +90,20 @@ const SECTIONS: Section[] = [
     ],
   },
   { 
-    id: "stock", 
-    label: "Stock y Precio", 
+    id: "precio", 
+    label: "Precio", 
     defaultExpanded: false,
-    columns: ["precioVenta", "enStock"],
+    columns: ["costo", "margen", "iva", "precioVenta"],
     subHeaders: [
-      { label: "PRECIO DE VENTA", cols: ["precioVenta"] },
-      { label: "STOCK EN EL DEPÓSITO", cols: ["enStock"] },
+      { label: "PRECIO", cols: ["costo", "margen", "iva", "precioVenta"] },
     ],
+  },
+  { 
+    id: "stock", 
+    label: "Stock", 
+    defaultExpanded: false,
+    columns: ["enStock"],
+    subHeaders: [{ label: "STOCK EN EL DEPÓSITO", cols: ["enStock"] }],
   },
   { 
     id: "media", 
@@ -129,7 +138,10 @@ const COLUMN_LABELS: Record<string, string> = {
   volumenUnidad: "U. de Medida",
   proveedor: "Proveedor",
   codigoProveedor: "Código Proveedor",
-  precioVenta: "Precio de Venta",
+  costo: "Costo",
+  margen: "Margen %",
+  iva: "IVA %",
+  precioVenta: "Precio Venta",
   enStock: "En Stock",
   descripcion: "",
   fotoUrl: "",
@@ -148,6 +160,9 @@ interface WorkableRow {
   volumenUnidad: string
   proveedor: string
   codigoProveedor: string
+  costo: string
+  margen: string
+  iva: string
   precioVenta: string
   enStock: string
   descripcion: string
@@ -168,6 +183,9 @@ const createEmptyRow = (): WorkableRow => ({
   volumenUnidad: "",
   proveedor: "",
   codigoProveedor: "",
+  costo: "",
+  margen: "",
+  iva: "",
   precioVenta: "",
   enStock: "0",
   descripcion: "",
@@ -214,6 +232,9 @@ export default function CreadorMasivoPage() {
       !row.codigoProveedor.trim() &&
       !row.descripcion.trim() &&
       (row.enStock.trim() === "" || row.enStock.trim() === "0") &&
+      !row.costo.trim() &&
+      !row.margen.trim() &&
+      !row.iva.trim() &&
       !row.precioVenta.trim() &&
       !row.fotoUrl.trim() &&
       !row.volumenCantidad.trim() &&
@@ -306,7 +327,10 @@ export default function CreadorMasivoPage() {
           atributosInformativos: atributosInformativos.length > 0 ? atributosInformativos : undefined,
           descripcion: row.descripcion.trim() || undefined,
           enStock: parseInt(row.enStock) || 0,
-          precioVenta: parseFloat(row.precioVenta) || undefined,
+          costo: parseFloat(row.costo) > 0 ? parseFloat(row.costo) : undefined,
+          margen: parseFloat(row.margen) > 0 ? parseFloat(row.margen) : undefined,
+          iva: parseFloat(row.iva) > 0 ? parseFloat(row.iva) : undefined,
+          precioVenta: parseFloat(row.precioVenta) > 0 ? parseFloat(row.precioVenta) : undefined,
           imagenUrl: row.fotoUrl.trim() || undefined,
         }
       })
@@ -727,6 +751,70 @@ export default function CreadorMasivoPage() {
             onChange={(e) => updateRow(rowIndex, "codigoProveedor", e.target.value)}
             placeholder="Código"
             className={`${baseInputClass} placeholder:text-gray-300`}
+          />
+        )
+      case "costo":
+        return (
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={row.costo}
+            onChange={(e) => {
+              updateRow(rowIndex, "costo", e.target.value)
+              // auto-calculate precioVenta if margen and iva set
+              const costo = parseFloat(e.target.value) || 0
+              const margen = parseFloat(row.margen) || 0
+              const iva = parseFloat(row.iva) || 0
+              if (costo > 0 && (margen > 0 || iva > 0)) {
+                const pv = costo * (1 + margen / 100) * (1 + iva / 100)
+                updateRow(rowIndex, "precioVenta", pv.toFixed(2))
+              }
+            }}
+            placeholder="$0"
+            className={`${baseInputClass} text-right placeholder:text-gray-300`}
+          />
+        )
+      case "margen":
+        return (
+          <input
+            type="number"
+            min="0"
+            step="0.1"
+            value={row.margen}
+            onChange={(e) => {
+              updateRow(rowIndex, "margen", e.target.value)
+              const costo = parseFloat(row.costo) || 0
+              const margen = parseFloat(e.target.value) || 0
+              const iva = parseFloat(row.iva) || 0
+              if (costo > 0) {
+                const pv = costo * (1 + margen / 100) * (1 + iva / 100)
+                updateRow(rowIndex, "precioVenta", pv.toFixed(2))
+              }
+            }}
+            placeholder="0%"
+            className={`${baseInputClass} text-right placeholder:text-gray-300`}
+          />
+        )
+      case "iva":
+        return (
+          <input
+            type="number"
+            min="0"
+            step="0.5"
+            value={row.iva}
+            onChange={(e) => {
+              updateRow(rowIndex, "iva", e.target.value)
+              const costo = parseFloat(row.costo) || 0
+              const margen = parseFloat(row.margen) || 0
+              const iva = parseFloat(e.target.value) || 0
+              if (costo > 0) {
+                const pv = costo * (1 + margen / 100) * (1 + iva / 100)
+                updateRow(rowIndex, "precioVenta", pv.toFixed(2))
+              }
+            }}
+            placeholder="0%"
+            className={`${baseInputClass} text-right placeholder:text-gray-300`}
           />
         )
       case "precioVenta":
