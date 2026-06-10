@@ -289,14 +289,22 @@ export function ItemCard({
                   onItemClick(item)
                 }}
               >
-                {/* Product Thumbnail with category-based image - same container size, smaller image for children */}
-                <div className="w-12 h-12 flex-shrink-0 rounded-md bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden">
-                  <img
-                    src={getCategoryImage(item.categoria || parentItem?.categoria) || "/placeholder.svg"}
-                    alt={item.categoria || parentItem?.categoria || "Product"}
-                    className={`${isChild ? "w-7 h-7" : "w-8 h-8"} object-contain opacity-60`}
-                  />
-                </div>
+                {/* Product Thumbnail — per-item media[0].foto, falls back to category image */}
+                {(() => {
+                  const itemFoto = item.media?.[0]?.foto
+                  const fallbackFoto = getCategoryImage(item.categoria || parentItem?.categoria)
+                  const foto = itemFoto || fallbackFoto
+                  const isPerItemPhoto = !!itemFoto
+                  return (
+                    <div className="w-12 h-12 flex-shrink-0 rounded-md bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden">
+                      <img
+                        src={foto || "/placeholder.svg"}
+                        alt={item.name || item.categoria || "Product"}
+                        className={`${isPerItemPhoto ? "w-full h-full object-cover" : `${isChild ? "w-7 h-7" : "w-8 h-8"} object-contain opacity-60`}`}
+                      />
+                    </div>
+                  )
+                })()}
 
                 {/* Product Info */}
                 <div className="flex-1 min-w-0">

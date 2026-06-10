@@ -1012,7 +1012,8 @@ export function useItems() {
   margen?: number
   iva?: number
   precioVenta?: number
-  imagenUrl?: string
+  imagenUrl?: string // @deprecated use media instead
+  media?: Array<{ foto: string; descripcion: string }>
   }>) => {
     const existingSkus = items.map((item) => item.sku)
     const newSkus: string[] = []
@@ -1077,7 +1078,7 @@ export function useItems() {
   isAgrupador: false,
   atributosPrincipales: data.atributosPrincipales?.filter(a => a.key && a.value) || [],
   atributosInformativos: data.atributosInformativos?.filter(a => a.key && a.value) || [],
-  imagenUrl: data.imagenUrl || "",
+  media: data.media || (data.imagenUrl ? [{ foto: data.imagenUrl, descripcion: "" }] : []),
   variantCount: 0,
   itemCount: 0,
   }
@@ -1114,14 +1115,16 @@ export function useItems() {
     fechaVencimiento?: string
     proveedor?: string
     descripcion?: string
-    imagenUrl?: string
+    imagenUrl?: string // @deprecated use media instead
+    media?: Array<{ foto: string; descripcion: string }>
     containerAtributosPrincipales?: Array<{ key: string; variantes: string[] }>
     atributosInformativos?: Array<{ key: string; value: string; inherit?: boolean }>
     variants?: Array<{
       sku: string
       codigoUniversal?: string
       descripcion?: string
-      foto?: string
+      foto?: string // @deprecated use media instead
+      media?: Array<{ foto: string; descripcion: string }>
       atributosPrincipales: Array<{ key: string; value: string }>
       stock?: { total: string; reservado: string; disponible: string }
       codigoProveedor?: string
@@ -1174,7 +1177,7 @@ export function useItems() {
           descripcion: variant.descripcion || data.descripcion || "",
           categoria: data.categoria || "", // Inherit parent's categoria
           marca: data.marca || "", // Inherit parent's marca
-          foto: variant.foto || data.imagenUrl || "",
+          media: variant.media || (variant.foto ? [{ foto: variant.foto, descripcion: "" }] : data.media || (data.imagenUrl ? [{ foto: data.imagenUrl, descripcion: "" }] : [])),
           fechaVencimiento: data.fechaVencimiento || "", // Inherit parent's vencimiento
           atributosPrincipales: variant.atributosPrincipales || [],
           stock: variant.stock || { total: "0", reservado: "0", disponible: "0" },
@@ -1206,7 +1209,6 @@ export function useItems() {
         containerAtributosPrincipales: data.containerAtributosPrincipales || [],
         atributosPrincipales: [],
         atributosInformativos: data.atributosInformativos?.map(a => ({ key: a.key, value: a.value, inheritValue: a.inherit })) || [],
-        imagenUrl: data.imagenUrl || "",
         variantCount: processedVariants.length,
         itemCount: processedVariants.length,
         variants: processedVariants,
