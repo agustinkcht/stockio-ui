@@ -14,7 +14,6 @@ import Image from "next/image"
 import { NuevaVarianteModal } from "@/components/modals/nueva-variante-modal"
 import { StockEditModal } from "@/components/modals/stock-edit-modal"
 import { useSettings } from "@/lib/contexts/settings-context"
-import { useMediaUpload } from "@/hooks/use-media-upload"
 // import { Breadcrumb } from "@/components/layout/breadcrumb"
 
 // Single deposit for simplified stock management
@@ -287,35 +286,6 @@ export function CatalogoItemDetailPanel({
     return categoryImage ? [categoryImage] : []
   })
   const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<number | null>(null)
-
-  // Upload hook for standalone item media
-  const standaloneUpload = useMediaUpload({
-    onUpload: (url) => {
-      if (!selectedItem?.id) return
-      const updated = [...mediaPhotos, url]
-      setMediaPhotos(updated)
-      onFieldChange(selectedItem.id, "media", updated.map((foto) => ({ foto, descripcion: "" })))
-    },
-  })
-
-  // Upload hook for variant matrix modal
-  const [variantUploadError, setVariantUploadError] = useState<string | null>(null)
-  const variantModalUpload = useMediaUpload({
-    onUpload: (url) => {
-      if (!selectedItem?.id) return
-      const variantId = expandedMatrixMediaModal.variant?.id
-      if (!variantId) return
-      const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
-        ov.id === variantId
-          ? { ...ov, media: [...(ov.media || []), { foto: url, descripcion: "" }] }
-          : ov
-      )
-      onFieldChange(selectedItem.id, "variants", updatedVariants)
-      setVariantUploadError(null)
-    },
-    onError: (err) => setVariantUploadError(err),
-  })
-
 
   const [containerAtributosPrincipales, setContainerAtributosPrincipales] = useState<
     Array<{ key: string; variantes: string[]; keyOpen?: boolean; variantesOpen?: boolean }>
@@ -1638,18 +1608,13 @@ export function CatalogoItemDetailPanel({
                         Media
                       </h3>
                       <div className="flex gap-3 mb-5">
-                        {/* Hidden file input */}
-                        <input {...standaloneUpload.inputProps} />
                         {/* Upload Button */}
                         <button
-                          onClick={(e) => { e.stopPropagation(); standaloneUpload.openPicker() }}
-                          disabled={standaloneUpload.uploading}
-                          className="flex-shrink-0 w-20 h-20 border-2 border-dashed border-blue-400/60 rounded-xl flex flex-col items-center justify-center gap-1.5 hover:border-blue-400 hover:bg-blue-500/10 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex-shrink-0 w-20 h-20 border-2 border-dashed border-blue-400/60 rounded-xl flex flex-col items-center justify-center gap-1.5 hover:border-blue-400 hover:bg-blue-500/10 transition-all cursor-pointer"
                         >
-                          <Upload className={`w-5 h-5 text-blue-400 ${standaloneUpload.uploading ? "animate-pulse" : ""}`} />
-                          <span className="text-[10px] text-blue-400 font-medium">
-                            {standaloneUpload.uploading ? "Subiendo..." : "Seleccionar"}
-                          </span>
+                          <Upload className="w-5 h-5 text-blue-400" />
+                          <span className="text-[10px] text-blue-400 font-medium">Seleccionar</span>
                         </button>
 
                         {/* Photo Thumbnails */}
@@ -1687,15 +1652,13 @@ export function CatalogoItemDetailPanel({
                                 className="w-full h-full object-cover"
                               />
 
-                              {/* Delete button */}
+                              {/* Delete button - currently disabled/does nothing */}
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation()
-                                  const updated = mediaPhotos.filter((_, i) => i !== index)
-                                  setMediaPhotos(updated)
-                                  onFieldChange(selectedItem.id, "media", updated.map((foto) => ({ foto, descripcion: "" })))
+                                  // TODO: Implement delete functionality
                                 }}
-                                className="absolute top-1 right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-100 cursor-pointer"
+                                className="absolute top-1 right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-100"
                               >
                                 <X className="w-3 h-3 text-slate-600" />
                               </button>
@@ -3805,18 +3768,13 @@ export function CatalogoItemDetailPanel({
 
             {/* Media section */}
             <div className="flex gap-3 mb-4">
-              {/* Hidden file input */}
-              <input {...variantModalUpload.inputProps} />
               {/* Upload Button */}
               <button
-                onClick={(e) => { e.stopPropagation(); variantModalUpload.openPicker() }}
-                disabled={variantModalUpload.uploading}
-                className="flex-shrink-0 w-20 h-20 border-2 border-dashed border-blue-400/60 rounded-xl flex flex-col items-center justify-center gap-1.5 hover:border-blue-400 hover:bg-blue-500/10 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={(e) => e.stopPropagation()}
+                className="flex-shrink-0 w-20 h-20 border-2 border-dashed border-blue-400/60 rounded-xl flex flex-col items-center justify-center gap-1.5 hover:border-blue-400 hover:bg-blue-500/10 transition-all cursor-pointer"
               >
-                <Upload className={`w-5 h-5 text-blue-400 ${variantModalUpload.uploading ? "animate-pulse" : ""}`} />
-                <span className="text-[10px] text-blue-400 font-medium">
-                  {variantModalUpload.uploading ? "Subiendo..." : "Seleccionar"}
-                </span>
+                <Upload className="w-5 h-5 text-blue-400" />
+                <span className="text-[10px] text-blue-400 font-medium">Seleccionar</span>
               </button>
 
               {/* Current photos from media array */}
@@ -3857,9 +3815,6 @@ export function CatalogoItemDetailPanel({
               })()}
             </div>
 
-            {variantUploadError && (
-              <p className="text-xs text-red-400 mb-3">{variantUploadError}</p>
-            )}
             <div className="flex justify-end">
               <button
                 onClick={() => setExpandedMatrixMediaModal({ open: false, variant: null })}

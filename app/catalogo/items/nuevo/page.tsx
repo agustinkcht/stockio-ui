@@ -11,7 +11,6 @@ import { generateId } from "@/lib/utils/item-utils"
 import { useItems } from "@/hooks/use-items"
 import { useAccount } from "@/lib/contexts/account-context"
 import { useSettings } from "@/lib/contexts/settings-context"
-import { useMediaUpload } from "@/hooks/use-media-upload"
 import type { Item, ItemVariant, Atributo } from "@/lib/types"
 
 import { Sidebar } from "@/components/layout/sidebar"
@@ -72,24 +71,6 @@ export default function NuevoItemPage() {
   const [codigoUniversal, setCodigoUniversal] = useState("")
   const [mediaPhotos, setMediaPhotos] = useState<string[]>([])
   const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<number | null>(null)
-
-  // Upload hook — standalone item
-  const standaloneUpload = useMediaUpload({
-    onUpload: (url) => setMediaPhotos((prev) => [...prev, url]),
-  })
-
-  // Upload hook — variant modal
-  const [variantUploadError, setVariantUploadError] = useState<string | null>(null)
-  const variantUpload = useMediaUpload({
-    onUpload: (url) => {
-      setVariantItems((prev) =>
-        prev.map((v) => (v.id === variantMediaModal.variantId ? { ...v, foto: url } : v))
-      )
-      setVariantUploadError(null)
-    },
-    onError: (err) => setVariantUploadError(err),
-  })
-
   const [descripcion, setDescripcion] = useState("")
   const [editingDescripcion, setEditingDescripcion] = useState(false)
 
@@ -1890,18 +1871,13 @@ export default function NuevoItemPage() {
 
             {/* Media section */}
             <div className="flex gap-3 mb-4">
-              {/* Hidden file input */}
-              <input {...variantUpload.inputProps} />
               {/* Upload Button */}
               <button
-                onClick={(e) => { e.stopPropagation(); variantUpload.openPicker() }}
-                disabled={variantUpload.uploading}
-                className="flex-shrink-0 w-20 h-20 border-2 border-dashed border-purple-400/60 rounded-xl flex flex-col items-center justify-center gap-1.5 hover:border-purple-400 hover:bg-purple-500/10 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={(e) => e.stopPropagation()}
+                className="flex-shrink-0 w-20 h-20 border-2 border-dashed border-purple-400/60 rounded-xl flex flex-col items-center justify-center gap-1.5 hover:border-purple-400 hover:bg-purple-500/10 transition-all cursor-pointer"
               >
-                <Upload className={`w-5 h-5 text-purple-400 ${variantUpload.uploading ? "animate-pulse" : ""}`} />
-                <span className="text-[10px] text-purple-400 font-medium">
-                  {variantUpload.uploading ? "Subiendo..." : "Seleccionar"}
-                </span>
+                <Upload className="w-5 h-5 text-purple-400" />
+                <span className="text-[10px] text-purple-400 font-medium">Seleccionar</span>
               </button>
 
               {/* Current photo (if any) */}
@@ -1938,9 +1914,6 @@ export default function NuevoItemPage() {
               })()}
             </div>
 
-            {variantUploadError && (
-              <p className="text-xs text-red-400 mb-3">{variantUploadError}</p>
-            )}
             <div className="flex justify-end">
               <button
                 onClick={() => setVariantMediaModal({ open: false, variantId: null })}
@@ -2611,18 +2584,13 @@ export default function NuevoItemPage() {
                                 Media
                               </h3>
                               <div className="flex gap-3">
-                                {/* Hidden file input */}
-                                <input {...standaloneUpload.inputProps} />
                                 {/* Upload Button */}
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); standaloneUpload.openPicker() }}
-                                  disabled={standaloneUpload.uploading}
-                                  className="flex-shrink-0 w-20 h-20 border-2 border-dashed border-blue-400/60 rounded-xl flex flex-col items-center justify-center gap-1.5 hover:border-blue-400 hover:bg-blue-50/50 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="flex-shrink-0 w-20 h-20 border-2 border-dashed border-blue-400/60 rounded-xl flex flex-col items-center justify-center gap-1.5 hover:border-blue-400 hover:bg-blue-50/50 transition-all cursor-pointer"
                                 >
-                                  <Upload className={`w-5 h-5 text-blue-400 ${standaloneUpload.uploading ? "animate-pulse" : ""}`} />
-                                  <span className="text-[10px] text-blue-400 font-medium">
-                                    {standaloneUpload.uploading ? "Subiendo..." : "Seleccionar"}
-                                  </span>
+                                  <Upload className="w-5 h-5 text-blue-400" />
+                                  <span className="text-[10px] text-blue-400 font-medium">Seleccionar</span>
                                 </button>
 
                                 {/* Photo Thumbnails */}
@@ -2733,7 +2701,7 @@ export default function NuevoItemPage() {
                                 setIsCreating(true)
                                 try {
                                   // Generate unique SKU
-                                  const existingSkus = items.map((item) => item.sku).filter((s): s is string => !!s)
+                                  const existingSkus = items.map((item) => item.sku)
                                   const finalSku = generateUniqueSKU(sku, existingSkus)
 
                                   // Calculate stock values
