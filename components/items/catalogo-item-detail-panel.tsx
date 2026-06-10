@@ -291,6 +291,7 @@ export function CatalogoItemDetailPanel({
   // Upload hook for standalone item media
   const standaloneUpload = useMediaUpload({
     onUpload: (url) => {
+      if (!selectedItem?.id) return
       const updated = [...mediaPhotos, url]
       setMediaPhotos(updated)
       onFieldChange(selectedItem.id, "media", updated.map((foto) => ({ foto, descripcion: "" })))
@@ -301,6 +302,7 @@ export function CatalogoItemDetailPanel({
   const [variantUploadError, setVariantUploadError] = useState<string | null>(null)
   const variantModalUpload = useMediaUpload({
     onUpload: (url) => {
+      if (!selectedItem?.id) return
       const variantId = expandedMatrixMediaModal.variant?.id
       if (!variantId) return
       const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>

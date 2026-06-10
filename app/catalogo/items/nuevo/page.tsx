@@ -2733,7 +2733,7 @@ export default function NuevoItemPage() {
                                 setIsCreating(true)
                                 try {
                                   // Generate unique SKU
-                                  const existingSkus = items.map((item) => item.sku)
+                                  const existingSkus = items.map((item) => item.sku).filter((s): s is string => !!s)
                                   const finalSku = generateUniqueSKU(sku, existingSkus)
 
                                   // Calculate stock values
