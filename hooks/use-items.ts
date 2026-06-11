@@ -488,7 +488,6 @@ export function useItems() {
   }
 
   const editField = (itemSku: string, field: string, newValue: any) => {
-    console.log("[v0] useItems - editField called:", { itemSku, field, newValue })
 
     // itemSku can be a SKU or an ID for children
     let parentItem: Item | undefined = undefined
@@ -526,7 +525,7 @@ export function useItems() {
         originalValues: { ...originalItem },
         currentValues: { ...originalItem, [field]: newValue },
       })
-      console.log("[v0] useItems - captured original state for:", itemId)
+
     } else {
       setEditedItem({
         ...editedItem,
@@ -541,7 +540,6 @@ export function useItems() {
   }
 
   const editVariantField = (parentSku: string, variantId: string, field: string, newValue: any) => {
-    console.log("[v0] useItems - editVariantField called:", { parentSku, variantId, field, newValue })
 
     // Find parent by id first, then sku
     const parentItem = items.find((item) => item.id === parentSku || item.sku === parentSku)
@@ -560,7 +558,7 @@ export function useItems() {
         originalValues: { ...originalVariant },
         currentValues: { ...originalVariant, [field]: newValue },
       })
-      console.log("[v0] useItems - captured original variant state for:", variantId)
+
     } else {
       setEditedItem({
         ...editedItem,

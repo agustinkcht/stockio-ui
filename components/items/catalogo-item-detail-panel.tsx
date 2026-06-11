@@ -3476,8 +3476,9 @@ export function CatalogoItemDetailPanel({
               </button>
               <button
                 onClick={() => {
-                  if (selectedItem?.sku) {
-                    onFieldChange(selectedItem.id, "precio", precioModalValues)
+                  const itemIdentifier = selectedItem?.id || selectedItem?.sku
+                  if (itemIdentifier) {
+                    onFieldChange(itemIdentifier, "precio", precioModalValues)
                     onSaveNow?.()
                   }
                   setIsPrecioModalOpen(false)
