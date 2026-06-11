@@ -466,9 +466,10 @@ export function CatalogoItemDetailPanel({
 
   const handleFieldChange = (field: string, value: any, setter: (val: any) => void) => {
     setter(value)
-    // For standalone/children right panel: only propagate in edit mode (saves happen on Guardar)
-    // For container (isViewingContainer): always propagate immediately
-    if (isViewingContainer || isRightEditing) {
+    // For standalone/children right panel in edit mode: buffer in local state only.
+    // Changes are saved to the store on "Guardar" via saveRightEditMode.
+    // For container items: always propagate immediately (no edit mode concept there).
+    if (isViewingContainer) {
       onFieldChange(selectedItem.id, field, value)
     }
   }
@@ -486,8 +487,8 @@ export function CatalogoItemDetailPanel({
     updated: Array<{ key: string; value: string; keyOpen?: boolean; valueOpen?: boolean }>,
   ) => {
     setAtributosInformativos(updated)
-    // Only propagate immediately for containers; standalone/children save on Guardar
-    if (onFieldChange && selectedItem?.id && (isViewingContainer || isRightEditing)) {
+    // Only propagate immediately for containers; standalone/children buffer and save on Guardar
+    if (onFieldChange && selectedItem?.id && isViewingContainer) {
       onFieldChange(selectedItem.id, "atributosInformativos", updated)
     }
   }
@@ -501,56 +502,71 @@ export function CatalogoItemDetailPanel({
     }
   }
 
+  const prevItemIdRef = useRef<string | undefined>(undefined)
+
   useEffect(() => {
-    setItemTitulo(selectedItem?.name || "")
-    setCategoria(shouldStrictlyInherit(fatherItem?.categoria) ? fatherItem!.categoria : selectedItem?.categoria || "")
-    setMarca(shouldStrictlyInherit(fatherItem?.marca) ? fatherItem!.marca : selectedItem?.marca || "")
-    setModelo(selectedItem?.modelo || "")
-    setFormatoVenta(
-      shouldStrictlyInherit(fatherItem?.formatoVenta)
-        ? fatherItem!.formatoVenta
-        : selectedItem?.formatoVenta || "unidad",
-    )
-    setProveedor(shouldInheritField(fatherItem?.proveedor) ? fatherItem!.proveedor : selectedItem?.proveedor || "")
-    setCodigoProveedor(selectedItem?.codigoProveedor || "")
-    // For parent items, use skuPrefix; for standalone items, use sku
-    setSkuValue(selectedItem.hasVariants ? (selectedItem.skuPrefix || selectedItem.sku || "") : (selectedItem.sku || ""))
-    setCodigoUniversalValue(selectedItem.codigoUniversal || "")
-    setDescripcionValue(selectedItem.descripcion || "")
-    setAtributosPrincipales(selectedItem?.atributosPrincipales || [])
-    setAtributosInformativos(getMergedAtributosInformativos(fatherItem?.atributosInformativos, selectedItem?.atributosInformativos))
-    // Reset variantItems from selectedItem.variants when selectedItem changes (covers Deshacer restoring state)
-    if (selectedItem?.variants && selectedItem.variants.length > 0) {
-      setVariantItems(convertSavedVariantsToDisplay(selectedItem.variants))
+    const currentId = selectedItem?.id
+    const idChanged = currentId !== prevItemIdRef.current
+    prevItemIdRef.current = currentId
+
+    // Only re-sync fields and reset edit mode when the item ID actually changes.
+    // This prevents the effect from firing (and exiting edit mode) on every
+    // keystroke, which causes a new object reference for selectedItem via items state.
+    if (!idChanged && !isRightEditing) {
+      // Still sync if not in edit mode (covers undo/redo restoring values)
     }
-    // Ensure unitsPorPack and volume state are also synced if they are part of selectedItem
-    setUnidadesPorPack(() => {
-      const inherited = shouldStrictlyInherit(fatherItem?.unidadesPorPack)
-        ? fatherItem!.unidadesPorPack?.toString()
-        : selectedItem?.unidadesPorPack?.toString()
-      if (!inherited || inherited === "N.E.") return "1"
-      return inherited
-    })
-    setVolumenActive(
-      shouldStrictlyInherit(fatherItem?.volumenActive)
-        ? fatherItem!.volumenActive
-        : selectedItem?.volumenActive || false,
-    )
-    setVolumenCantidad(
-      shouldStrictlyInherit(fatherItem?.volumenCantidad)
-        ? fatherItem!.volumenCantidad?.toString()
-        : selectedItem?.volumenCantidad?.toString() || "",
-    )
-    setVolumenUnidad(
-      shouldStrictlyInherit(fatherItem?.volumenUnidad) ? fatherItem!.volumenUnidad : selectedItem?.volumenUnidad || "",
-    )
-    // Reset right panel edit mode when switching items
-    setIsRightEditing(false)
+
+    if (idChanged) {
+      setIsRightEditing(false)
+    }
+
+    // Always sync fields when not in edit mode; when in edit mode only sync on item change
+    if (!isRightEditing || idChanged) {
+      setItemTitulo(selectedItem?.name || "")
+      setCategoria(shouldStrictlyInherit(fatherItem?.categoria) ? fatherItem!.categoria : selectedItem?.categoria || "")
+      setMarca(shouldStrictlyInherit(fatherItem?.marca) ? fatherItem!.marca : selectedItem?.marca || "")
+      setModelo(selectedItem?.modelo || "")
+      setFormatoVenta(
+        shouldStrictlyInherit(fatherItem?.formatoVenta)
+          ? fatherItem!.formatoVenta
+          : selectedItem?.formatoVenta || "unidad",
+      )
+      setProveedor(shouldInheritField(fatherItem?.proveedor) ? fatherItem!.proveedor : selectedItem?.proveedor || "")
+      setCodigoProveedor(selectedItem?.codigoProveedor || "")
+      setSkuValue(selectedItem.hasVariants ? (selectedItem.skuPrefix || selectedItem.sku || "") : (selectedItem.sku || ""))
+      setCodigoUniversalValue(selectedItem.codigoUniversal || "")
+      setDescripcionValue(selectedItem.descripcion || "")
+      setAtributosPrincipales(selectedItem?.atributosPrincipales || [])
+      setAtributosInformativos(getMergedAtributosInformativos(fatherItem?.atributosInformativos, selectedItem?.atributosInformativos))
+      if (selectedItem?.variants && selectedItem.variants.length > 0) {
+        setVariantItems(convertSavedVariantsToDisplay(selectedItem.variants))
+      }
+      setUnidadesPorPack(() => {
+        const inherited = shouldStrictlyInherit(fatherItem?.unidadesPorPack)
+          ? fatherItem!.unidadesPorPack?.toString()
+          : selectedItem?.unidadesPorPack?.toString()
+        if (!inherited || inherited === "N.E.") return "1"
+        return inherited
+      })
+      setVolumenActive(
+        shouldStrictlyInherit(fatherItem?.volumenActive)
+          ? fatherItem!.volumenActive
+          : selectedItem?.volumenActive || false,
+      )
+      setVolumenCantidad(
+        shouldStrictlyInherit(fatherItem?.volumenCantidad)
+          ? fatherItem!.volumenCantidad?.toString()
+          : selectedItem?.volumenCantidad?.toString() || "",
+      )
+      setVolumenUnidad(
+        shouldStrictlyInherit(fatherItem?.volumenUnidad) ? fatherItem!.volumenUnidad : selectedItem?.volumenUnidad || "",
+      )
+    }
   }, [selectedItem, fatherItem])
 
-  // Sync atributos from selectedItem when it changes (for undo)
+  // Sync atributos from selectedItem when it changes (for undo) — skip while right panel is in edit mode
   useEffect(() => {
-    if (selectedItem) {
+    if (selectedItem && !isRightEditing) {
       setAtributosPrincipales(selectedItem.atributosPrincipales || [])
       setAtributosInformativos(getMergedAtributosInformativos(fatherItem?.atributosInformativos, selectedItem?.atributosInformativos))
       setContainerAtributosPrincipales(selectedItem.containerAtributosPrincipales || [])
@@ -2138,8 +2154,8 @@ export function CatalogoItemDetailPanel({
             {!isViewingContainer && (
               <div className="z-20 mb-6 sticky top-[0px]">
                 <div className="flex items-center gap-2">
-                  {/* Tabs — 2/3 width */}
-                  <div className="flex items-center gap-1 h-9 p-1 bg-slate-100/80 rounded-xl" style={{ flex: "2" }}>
+                  {/* Tabs — 3/4 width */}
+                  <div className="flex items-center gap-1 h-9 p-1 bg-slate-100/80 rounded-xl" style={{ flex: "3" }}>
                     <button
                       onClick={() => setSelectedDetailTab("info")}
                       className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${selectedDetailTab === "info"
@@ -2160,7 +2176,7 @@ export function CatalogoItemDetailPanel({
                     </button>
                   </div>
 
-                  {/* Edit controls — 1/3 width */}
+                  {/* Edit controls — 1/4 width */}
                   <div className="flex items-center justify-end gap-1.5" style={{ flex: "1" }}>
                     {!isRightEditing ? (
                       <button
