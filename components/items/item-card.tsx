@@ -298,7 +298,7 @@ export function ItemCard({
                       <img
                         src={src}
                         alt={item.name || "Producto"}
-                        className={hasPhoto ? "w-full h-full object-cover" : `${isChild ? "w-7 h-7" : "w-8 h-8"} object-contain opacity-60`}
+                        className={hasPhoto ? "w-full h-full object-contain p-0.5" : `${isChild ? "w-7 h-7" : "w-8 h-8"} object-contain opacity-60`}
                       />
                     </div>
                   )
