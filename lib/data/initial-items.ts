@@ -14,6 +14,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 750,
     volumenUnidad: "ml",
+    media: [{ photo: "/images/categories/vinos.jpg", descripcion: "" }],
 
     // Matrix: Varietal × Año
     containerAtributosPrincipales: [
@@ -41,6 +42,7 @@ export const INITIAL_ITEMS: Item[] = [
         codigoProveedor: "PROE-GR-MALB-2012",
         categoria: "Vinos",
         marca: "Proemio",
+        media: [{ photo: "/images/categories/vinos.jpg", descripcion: "" }],
         atributosPrincipales: [
           { key: "Varietal", value: "Malbec" },
           { key: "Año", value: "2012" },
@@ -61,6 +63,7 @@ export const INITIAL_ITEMS: Item[] = [
         codigoProveedor: "PROE-GR-MALB-2019",
         categoria: "Vinos",
         marca: "Proemio",
+        media: [{ photo: "/images/categories/vinos.jpg", descripcion: "" }],
         atributosPrincipales: [
           { key: "Varietal", value: "Malbec" },
           { key: "Año", value: "2019" },
@@ -83,6 +86,7 @@ export const INITIAL_ITEMS: Item[] = [
         codigoProveedor: "PROE-GR-CABS-2012",
         categoria: "Vinos",
         marca: "Proemio",
+        media: [{ photo: "/images/categories/vinos.jpg", descripcion: "" }],
         atributosPrincipales: [
           { key: "Varietal", value: "Cabernet Sauvignon" },
           { key: "Año", value: "2012" },
@@ -103,6 +107,7 @@ export const INITIAL_ITEMS: Item[] = [
         codigoProveedor: "PROE-GR-CABS-2019",
         categoria: "Vinos",
         marca: "Proemio",
+        media: [{ photo: "/images/categories/vinos.jpg", descripcion: "" }],
         atributosPrincipales: [
           { key: "Varietal", value: "Cabernet Sauvignon" },
           { key: "Año", value: "2019" },
@@ -125,6 +130,7 @@ export const INITIAL_ITEMS: Item[] = [
         codigoProveedor: "PROE-GR-SYGA-2012",
         categoria: "Vinos",
         marca: "Proemio",
+        media: [{ photo: "/images/categories/vinos.jpg", descripcion: "" }],
         atributosPrincipales: [
           { key: "Varietal", value: "Syrah Garnacha" },
           { key: "Año", value: "2012" },
@@ -145,6 +151,7 @@ export const INITIAL_ITEMS: Item[] = [
         codigoProveedor: "PROE-GR-SYGA-2019",
         categoria: "Vinos",
         marca: "Proemio",
+        media: [{ photo: "/images/categories/vinos.jpg", descripcion: "" }],
         atributosPrincipales: [
           { key: "Varietal", value: "Syrah Garnacha" },
           { key: "Año", value: "2019" },
@@ -171,6 +178,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 750,
     volumenUnidad: "ml",
+    media: [{ photo: "/images/categories/vinos.jpg", descripcion: "" }],
 
     containerAtributosPrincipales: [
       { key: "Varietal", variantes: ["Malbec", "Cabernet Sauvignon"] },
@@ -195,6 +203,7 @@ export const INITIAL_ITEMS: Item[] = [
         codigoProveedor: "DVCAT-MALB",
         categoria: "Vinos",
         marca: "Catena Zapata",
+        media: [{ photo: "/images/categories/vinos.jpg", descripcion: "" }],
         atributosPrincipales: [
           { key: "Varietal", value: "Malbec" },
         ],
@@ -216,6 +225,7 @@ export const INITIAL_ITEMS: Item[] = [
         codigoProveedor: "DVCAT-CABS",
         categoria: "Vinos",
         marca: "Catena Zapata",
+        media: [{ photo: "/images/categories/vinos.jpg", descripcion: "" }],
         atributosPrincipales: [
           { key: "Varietal", value: "Cabernet Sauvignon" },
         ],
@@ -245,6 +255,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 750,
     volumenUnidad: "ml",
+    media: [{ photo: "/images/categories/vinos.jpg", descripcion: "" }],
     stock: { enStock: "18", reservado: "0", disponible: "18" },
     atributosPrincipales: [],
 
@@ -274,6 +285,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 750,
     volumenUnidad: "ml",
+    media: [{ photo: "/images/categories/vinos.jpg", descripcion: "" }],
     stock: { enStock: "36", reservado: "3", disponible: "33" }, // 3 reservado: VTA-030 pending (DOMGRES-BLND)
     atributosPrincipales: [],
     atributosInformativos: [
@@ -299,6 +311,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 750,
     volumenUnidad: "ml",
+    media: [{ photo: "/images/categories/vinos.jpg", descripcion: "" }],
 
     // Matrix: Varietal × Año
     containerAtributosPrincipales: [
@@ -325,6 +338,7 @@ export const INITIAL_ITEMS: Item[] = [
         codigoProveedor: "DOM-EST-BLND-MS",
         categoria: "Vinos",
         marca: "Domiciano",
+        media: [{ photo: "/images/categories/vinos.jpg", descripcion: "" }],
         atributosPrincipales: [
           { key: "Varietal", value: "Blend" },
         ],
@@ -348,6 +362,7 @@ export const INITIAL_ITEMS: Item[] = [
         codigoProveedor: "DOM-EST-MALB",
         categoria: "Vinos",
         marca: "Domiciano",
+        media: [{ photo: "/images/categories/vinos.jpg", descripcion: "" }],
         atributosPrincipales: [
           { key: "Varietal", value: "Malbec" },
         ],
@@ -370,6 +385,7 @@ export const INITIAL_ITEMS: Item[] = [
         codigoProveedor: "DOM-EST-BLDL",
         categoria: "Vinos",
         marca: "Domiciano",
+        media: [{ photo: "/images/categories/vinos.jpg", descripcion: "" }],
         atributosPrincipales: [
           { key: "Varietal", value: "Blanco Dulce" },
         ],
@@ -392,6 +408,7 @@ export const INITIAL_ITEMS: Item[] = [
         codigoProveedor: "DOM-EST-CHRD",
         categoria: "Vinos",
         marca: "Domiciano",
+        media: [{ photo: "/images/categories/vinos.jpg", descripcion: "" }],
         atributosPrincipales: [
           { key: "Varietal", value: "Chardonnay" },
         ],
@@ -421,6 +438,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 750,
     volumenUnidad: "ml",
+    media: [{ photo: "/images/categories/espumantes.jpg", descripcion: "" }],
 
     stock: { enStock: "18", reservado: "0", disponible: "18" },
     atributosPrincipales: [],
@@ -456,6 +474,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 750,
     volumenUnidad: "ml",
+    media: [{ photo: "/images/categories/licores.jpg", descripcion: "" }],
 
     stock: { enStock: "24", reservado: "2", disponible: "22" }, // 2 reservado: VTA-030 pending (DOMIMST)
     atributosPrincipales: [],
@@ -488,6 +507,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 750,
     volumenUnidad: "ml",
+    media: [{ photo: "/images/categories/espumantes.jpg", descripcion: "" }],
 
     containerAtributosPrincipales: [{ key: "Dosaje", variantes: ["Extra Brut", "Brut Nature", "Brut Rosé"] }],
 
@@ -516,6 +536,7 @@ export const INITIAL_ITEMS: Item[] = [
         codigoProveedor: "SAL-ESP-EXBR-750",
         categoria: "Espumantes",
         marca: "Salentein",
+        media: [{ photo: "/images/categories/espumantes.jpg", descripcion: "" }],
         atributosPrincipales: [{ key: "Dosaje", value: "Extra Brut" }],
         atributosInformativos: [
           { key: "Varietal", value: "Chardonnay 65% - Pinot Noir 35%" },
@@ -536,6 +557,7 @@ export const INITIAL_ITEMS: Item[] = [
         codigoProveedor: "SAL-ESP-BRNA-750",
         categoria: "Espumantes",
         marca: "Salentein",
+        media: [{ photo: "/images/categories/espumantes.jpg", descripcion: "" }],
         atributosPrincipales: [{ key: "Dosaje", value: "Brut Nature" }],
         atributosInformativos: [
           { key: "Varietal", value: "" },
@@ -556,6 +578,7 @@ export const INITIAL_ITEMS: Item[] = [
         codigoProveedor: "SAL-ESP-BRRO-750",
         categoria: "Espumantes",
         marca: "Salentein",
+        media: [{ photo: "/images/categories/espumantes.jpg", descripcion: "" }],
         atributosPrincipales: [{ key: "Dosaje", value: "Brut Rosé" }],
         atributosInformativos: [
           { key: "Varietal", value: "Pinot Noir" },
@@ -585,6 +608,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 750,
     volumenUnidad: "ml",
+    media: [{ photo: "/images/categories/espumantes.jpg", descripcion: "" }],
 
     stock: { enStock: "30", reservado: "0", disponible: "30" },
     atributosPrincipales: [],
@@ -619,6 +643,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 750,
     volumenUnidad: "ml",
+    media: [{ photo: "/images/categories/gin.jpg", descripcion: "" }],
 
     stock: { enStock: "30", reservado: "0", disponible: "30" },
     atributosPrincipales: [],
@@ -646,6 +671,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 700,
     volumenUnidad: "ml",
+    media: [{ photo: "/images/categories/gin.jpg", descripcion: "" }],
 
     stock: { enStock: "14", reservado: "0", disponible: "14" },
     atributosPrincipales: [],
@@ -674,6 +700,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 700,
     volumenUnidad: "ml",
+    media: [{ photo: "/images/categories/gin.jpg", descripcion: "" }],
 
     containerAtributosPrincipales: [{ key: "Sabor", variantes: ["Original", "Destilado Otoño", "Flavoured Edition"] }],
 
@@ -694,6 +721,7 @@ export const INITIAL_ITEMS: Item[] = [
         codigoUniversal: "7798123456789",
         categoria: "Gin",
         marca: "Restinga",
+        media: [{ photo: "/images/categories/gin.jpg", descripcion: "" }],
         atributosPrincipales: [{ key: "Sabor", value: "Original" }],
         atributosInformativos: [],
         stock: { enStock: "18", reservado: "0", disponible: "18" },
@@ -707,6 +735,7 @@ export const INITIAL_ITEMS: Item[] = [
         codigoUniversal: "7798123456796",
         categoria: "Gin",
         marca: "Restinga",
+        media: [{ photo: "/images/categories/gin.jpg", descripcion: "" }],
         atributosPrincipales: [{ key: "Sabor", value: "Destilado Otoño" }],
         atributosInformativos: [],
         stock: { enStock: "14", reservado: "0", disponible: "14" },
@@ -720,6 +749,7 @@ export const INITIAL_ITEMS: Item[] = [
         codigoUniversal: "7798123456802",
         categoria: "Gin",
         marca: "Restinga",
+        media: [{ photo: "/images/categories/gin.jpg", descripcion: "" }],
         atributosPrincipales: [{ key: "Sabor", value: "Flavoured Edition" }],
         atributosInformativos: [],
         stock: { enStock: "12", reservado: "0", disponible: "12" },
@@ -747,6 +777,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 700,
     volumenUnidad: "ml",
+    media: [{ photo: "/images/categories/gin.jpg", descripcion: "" }],
 
     stock: { enStock: "16", reservado: "0", disponible: "16" },
     atributosPrincipales: [],
@@ -771,6 +802,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 750,
     volumenUnidad: "ml",
+    media: [{ photo: "/images/categories/vodka.jpg", descripcion: "" }],
 
     containerAtributosPrincipales: [{ key: "Sabor", variantes: ["Original", "Raspberry", "Pear", "Vanilla"] }],
 
@@ -792,6 +824,7 @@ export const INITIAL_ITEMS: Item[] = [
         codigoProveedor: "ABS-ORG-750",
         categoria: "Vodka",
         marca: "Absolut",
+        media: [{ photo: "/images/categories/vodka.jpg", descripcion: "" }],
         atributosPrincipales: [{ key: "Sabor", value: "Original" }],
         atributosInformativos: [],
         stock: { enStock: "48", reservado: "0", disponible: "48" },
@@ -806,6 +839,7 @@ export const INITIAL_ITEMS: Item[] = [
         codigoProveedor: "ABS-RASP-750",
         categoria: "Vodka",
         marca: "Absolut",
+        media: [{ photo: "/images/categories/vodka.jpg", descripcion: "" }],
         atributosPrincipales: [{ key: "Sabor", value: "Raspberry" }],
         atributosInformativos: [],
         stock: { enStock: "36", reservado: "0", disponible: "36" },
@@ -820,6 +854,7 @@ export const INITIAL_ITEMS: Item[] = [
         codigoProveedor: "ABS-PEAR-750",
         categoria: "Vodka",
         marca: "Absolut",
+        media: [{ photo: "/images/categories/vodka.jpg", descripcion: "" }],
         atributosPrincipales: [{ key: "Sabor", value: "Pear" }],
         atributosInformativos: [],
         stock: { enStock: "30", reservado: "0", disponible: "30" },
@@ -834,6 +869,7 @@ export const INITIAL_ITEMS: Item[] = [
         codigoProveedor: "ABS-VANI-750",
         categoria: "Vodka",
         marca: "Absolut",
+        media: [{ photo: "/images/categories/vodka.jpg", descripcion: "" }],
         atributosPrincipales: [{ key: "Sabor", value: "Vanilla" }],
         atributosInformativos: [],
         stock: { enStock: "28", reservado: "0", disponible: "28" },
@@ -857,6 +893,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 750,
     volumenUnidad: "ml",
+    media: [{ photo: "/images/categories/vodka.jpg", descripcion: "" }],
 
     stock: { enStock: "20", reservado: "0", disponible: "20" },
     atributosPrincipales: [],
@@ -884,6 +921,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 750,
     volumenUnidad: "ml",
+    media: [{ photo: "/images/categories/ron.jpg", descripcion: "" }],
 
     stock: { enStock: "28", reservado: "0", disponible: "28" },
     atributosPrincipales: [],
@@ -916,6 +954,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 750,
     volumenUnidad: "ml",
+    media: [{ photo: "/images/categories/tequila.jpg", descripcion: "" }],
 
     stock: { enStock: "12", reservado: "0", disponible: "12" },
     atributosPrincipales: [],
@@ -940,6 +979,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 750,
     volumenUnidad: "ml",
+    media: [{ photo: "/images/categories/whisky.jpg", descripcion: "" }],
 
     containerAtributosPrincipales: [
       { key: "Línea", variantes: ["Red Label", "Black Label", "Double Black", "Blue Label"] },
@@ -966,6 +1006,7 @@ export const INITIAL_ITEMS: Item[] = [
         codigoProveedor: "JW-RED-750",
         categoria: "Whiskies",
         marca: "Johnnie Walker",
+        media: [{ photo: "/images/categories/whisky.jpg", descripcion: "" }],
         atributosPrincipales: [{ key: "Línea", value: "Red Label" }],
         atributosInformativos: [
           { key: "Añejamiento", value: "Sin declaración de edad" },
@@ -984,6 +1025,7 @@ export const INITIAL_ITEMS: Item[] = [
         codigoProveedor: "JW-BLACK-750",
         categoria: "Whiskies",
         marca: "Johnnie Walker",
+        media: [{ photo: "/images/categories/whisky.jpg", descripcion: "" }],
         atributosPrincipales: [{ key: "Línea", value: "Black Label" }],
         atributosInformativos: [
           { key: "Añejamiento", value: "12 años" },
@@ -1002,6 +1044,7 @@ export const INITIAL_ITEMS: Item[] = [
         codigoProveedor: "JW-DBLACK-750",
         categoria: "Whiskies",
         marca: "Johnnie Walker",
+        media: [{ photo: "/images/categories/whisky.jpg", descripcion: "" }],
         atributosPrincipales: [{ key: "Línea", value: "Double Black" }],
         atributosInformativos: [
           { key: "Añejamiento", value: "Sin declaración de edad" },
@@ -1020,6 +1063,7 @@ export const INITIAL_ITEMS: Item[] = [
         codigoProveedor: "JW-BLUE-750",
         categoria: "Whiskies",
         marca: "Johnnie Walker",
+        media: [{ photo: "/images/categories/whisky.jpg", descripcion: "" }],
         atributosPrincipales: [{ key: "Línea", value: "Blue Label" }],
         atributosInformativos: [
           { key: "Añejamiento", value: "Selección de whiskies añejos" },
@@ -1035,19 +1079,20 @@ export const INITIAL_ITEMS: Item[] = [
   {
     id: "STAR7N6T1L",
     isActive: true,
-    name: "Jack Daniel’s Old No.7",
+    name: "Jack Daniel's Old No.7",
     categoria: "Whiskies",
     hasVariants: false,
     isAgrupador: false,
     sku: "WHKY-JDOLD7",
     codigoUniversal: "5099873001338",
-    marca: "Jack Daniel’s",
+    marca: "Jack Daniel's",
     proveedor: "Brown-Forman",
     codigoProveedor: "JDO7",
     formatoVenta: "unidad",
     volumenActive: true,
     volumenCantidad: 750,
     volumenUnidad: "ml",
+    media: [{ photo: "/images/categories/whisky.jpg", descripcion: "" }],
 
     stock: { enStock: "40", reservado: "0", disponible: "40" },
     atributosPrincipales: [],
@@ -1079,6 +1124,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 750,
     volumenUnidad: "ml",
+    media: [{ photo: "/images/categories/whisky.jpg", descripcion: "" }],
 
     stock: { enStock: "34", reservado: "0", disponible: "34" },
     atributosPrincipales: [],
@@ -1103,7 +1149,7 @@ export const INITIAL_ITEMS: Item[] = [
     hasVariants: false,
     isAgrupador: false,
     sku: "WHKY-JMSBB",
-    codigoUniversal: "5011007024369",
+    codigoUniversal: "5024369",
     marca: "Jameson",
     proveedor: "Pernod Ricard",
     codigoProveedor: "JMSN-BB",
@@ -1111,6 +1157,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 750,
     volumenUnidad: "ml",
+    media: [{ photo: "/images/categories/whisky.jpg", descripcion: "" }],
 
     stock: { enStock: "22", reservado: "0", disponible: "22" },
     atributosPrincipales: [],
@@ -1143,6 +1190,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 700,
     volumenUnidad: "ml",
+    media: [{ photo: "/images/categories/licores.jpg", descripcion: "" }],
     stock: { enStock: "48", reservado: "0", disponible: "48" },
     atributosPrincipales: [],
     atributosInformativos: [
@@ -1169,6 +1217,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 700,
     volumenUnidad: "ml",
+    media: [{ photo: "/images/categories/licores.jpg", descripcion: "" }],
     stock: { enStock: "36", reservado: "0", disponible: "36" },
     atributosPrincipales: [],
     atributosInformativos: [
@@ -1197,6 +1246,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 750,
     volumenUnidad: "ml",
+    media: [{ photo: "/images/categories/licores.jpg", descripcion: "" }],
 
     stock: { enStock: "24", reservado: "0", disponible: "24" },
     atributosPrincipales: [],
@@ -1227,6 +1277,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 700,
     volumenUnidad: "ml",
+    media: [{ photo: "/images/categories/licores.jpg", descripcion: "" }],
     stock: { enStock: "18", reservado: "0", disponible: "18" },
     atributosPrincipales: [],
     atributosInformativos: [

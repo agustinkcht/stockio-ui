@@ -1,3 +1,8 @@
+export interface ItemMedia {
+  photo: string
+  descripcion: string
+}
+
 export interface Atributo {
   key: string
   value: string
@@ -35,6 +40,7 @@ export interface ItemVariant {
   proveedor?: string
   codigoProveedor?: string
   atributosPrincipales?: Atributo[]
+  media?: ItemMedia[]
   isActive?: boolean // Whether the item is active (Activo) or paused (Pausado)
 }
 
@@ -76,7 +82,7 @@ export interface Item {
   proveedor?: string
   codigoProveedor?: string
   descripcion?: string
-  imagenUrl?: string
+  media?: ItemMedia[]
   atributosPrincipales?: Atributo[]
   atributosInformativos?: Atributo[]
   variants?: ItemVariant[]
