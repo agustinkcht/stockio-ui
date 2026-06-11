@@ -1361,7 +1361,7 @@ export function CatalogoItemDetailPanel({
                             <span className="text-[11px] text-slate-500 uppercase tracking-[0.12em] mb-0.5">Stock</span>
                             <div className="flex items-center gap-2.5">
                               <span className="text-white font-light text-lg tracking-tight tabular-nums">
-                                {Number.parseInt(selectedItem?.stock?.total || "0") - Number.parseInt(selectedItem?.stock?.reservado || "0")} disponibles
+                                {selectedItem?.stock?.disponible ?? Number.parseInt(selectedItem?.stock?.enStock || "0") - Number.parseInt(selectedItem?.stock?.reservado || "0")} disponibles
                               </span>
                               <Pencil className="h-3 w-3 text-slate-600 opacity-0 group-hover/stock:opacity-100 transition-opacity" />
                             </div>
