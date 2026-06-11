@@ -8,7 +8,7 @@ import { ChevronDown, Plus, Copy, X, Minus, Check, ArrowDownToLine, Pencil, Uplo
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
 import { TEMPLATES } from "@/lib/constants" // DEPOSITS and SAVED_ATRIBUTOS imports removed
-import { getCategoryImage } from "@/lib/utils/category-images"
+import { getItemPhoto } from "@/lib/utils/category-images"
 import { generateId } from "@/lib/utils/item-utils"
 import Image from "next/image"
 import { NuevaVarianteModal } from "@/components/modals/nueva-variante-modal"
@@ -277,15 +277,9 @@ export function CatalogoItemDetailPanel({
   const [nameValue, setNameValue] = useState(selectedItem.name || "")
   const [proveedorDropdownOpen, setProveedorDropdownOpen] = useState(false)
 
-  // Media photos state - initialize with category image as thumbnail/portada
+  // Media photos state - initialize from item's media array
   const [mediaPhotos, setMediaPhotos] = useState<string[]>(() => {
-    const photos: string[] = []
-    // Use category image as the default thumbnail
-    const categoryImage = getCategoryImage(selectedItem?.categoria)
-    if (categoryImage) {
-      photos.push(categoryImage)
-    }
-    return photos
+    return (selectedItem?.media || []).map((m) => m.photo).filter(Boolean)
   })
   const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<number | null>(null)
 
@@ -1175,7 +1169,7 @@ export function CatalogoItemDetailPanel({
                     <div className="mt-2">
                       <div className="w-full h-64 backdrop-blur-sm rounded-lg flex items-center justify-center overflow-hidden shadow-2xl border-slate-700/30 border-none border-0 bg-transparent shadow-none">
                         <Image
-                          src={getCategoryImage(selectedItem.categoria) || "/placeholder.svg"}
+                          src={getItemPhoto(selectedItem)}
                           alt={selectedItem.name}
                           width={200}
                           height={256}
@@ -2486,7 +2480,7 @@ export function CatalogoItemDetailPanel({
                                   }}
                                 >
                                   <Image
-                                    src={sourceVariant?.imagenUrl || getCategoryImage(selectedItem?.categoria) || "/placeholder.svg"}
+                                    src={getItemPhoto((sourceVariant as any)?.media ? sourceVariant as any : selectedItem)}
                                     alt={selectedItem?.categoria || ""}
                                     width={32}
                                     height={32}
@@ -3004,7 +2998,7 @@ export function CatalogoItemDetailPanel({
                                     <div className="pl-2 py-1.5 flex items-center justify-center">
                                       <div className="w-6 h-6 rounded-md bg-gradient-to-br from-muted to-muted/50 overflow-hidden flex-shrink-0 flex items-center justify-center">
                                         <Image
-                                          src={getCategoryImage(selectedItem?.categoria) || "/placeholder.svg"}
+                                          src={getItemPhoto(selectedItem)}
                                           alt={selectedItem?.categoria || ""}
                                           width={24}
                                           height={24}
@@ -3421,7 +3415,7 @@ export function CatalogoItemDetailPanel({
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
                     <img
-                      src={getCategoryImage(selectedItem?.categoria) || "/placeholder.svg"}
+                      src={getItemPhoto(selectedItem)}
                       alt={selectedItem?.categoria || ""}
                       className="w-6 h-6 object-contain opacity-70"
                     />

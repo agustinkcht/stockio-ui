@@ -8,7 +8,7 @@ import { ChevronDown, ChevronRight, Plus, Copy, X, Minus, Check, ArrowDownToLine
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
 import { TEMPLATES } from "@/lib/constants" // DEPOSITS and SAVED_ATRIBUTOS imports removed
-import { getCategoryImage } from "@/lib/utils/category-images"
+import { getItemPhoto } from "@/lib/utils/category-images"
 import Image from "next/image"
 import { NuevaVarianteModal } from "@/components/modals/nueva-variante-modal"
 // import { Breadcrumb } from "@/components/layout/breadcrumb"
@@ -997,7 +997,7 @@ export function ItemDetailPanel({
                   <div className="mt-2">
                     <div className="w-full h-64 backdrop-blur-sm rounded-lg flex items-center justify-center overflow-hidden shadow-2xl border-slate-700/30 border-none border-0 bg-transparent shadow-none">
                       <Image
-                        src={getCategoryImage(selectedItem.categoria) || "/placeholder.svg"}
+                        src={getItemPhoto(selectedItem)}
                         alt={selectedItem.name}
                         width={200}
                         height={256}
@@ -1865,7 +1865,7 @@ export function ItemDetailPanel({
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                     <Image
-                      src={getCategoryImage(selectedItem.categoria) || "/placeholder.svg"}
+                      src={getItemPhoto(selectedItem)}
                       alt={selectedItem.name}
                       width={56}
                       height={56}
