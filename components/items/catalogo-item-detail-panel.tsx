@@ -1167,13 +1167,13 @@ export function CatalogoItemDetailPanel({
                     </button>
 
                     <div className="mt-2">
-                      <div className="w-full h-64 rounded-xl flex items-center justify-center overflow-hidden">
+                      <div className="w-full h-64 backdrop-blur-sm rounded-lg flex items-center justify-center overflow-hidden shadow-2xl border-slate-700/30 border-none border-0 bg-transparent shadow-none">
                         <Image
                           src={getItemThumbnail(selectedItem)}
                           alt={selectedItem.name}
-                          width={256}
+                          width={200}
                           height={256}
-                          className={`w-full h-full rounded-xl ${itemHasPhoto(selectedItem) ? "object-contain" : "object-contain opacity-70"}`}
+                          className={`rounded-xl shadow-xl ${itemHasPhoto(selectedItem) ? "w-full h-full object-cover" : "object-contain opacity-70"}`}
                         />
                       </div>
                     </div>
@@ -2484,7 +2484,7 @@ export function CatalogoItemDetailPanel({
                                     alt={sourceVariant?.name || ""}
                                     width={32}
                                     height={32}
-                                    className={sourceVariant && itemHasPhoto(sourceVariant) ? "w-full h-full object-contain p-0.5" : "w-5 h-5 object-contain opacity-60"}
+                                    className={sourceVariant && itemHasPhoto(sourceVariant) ? "w-full h-full object-cover" : "w-5 h-5 object-contain opacity-60"}
                                   />
                                   {/* Edit pencil overlay */}
                                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center">
@@ -3423,7 +3423,7 @@ export function CatalogoItemDetailPanel({
                     <img
                       src={selectedItem ? getItemThumbnail(selectedItem) : DEFAULT_ITEM_IMAGE}
                       alt={selectedItem?.name || ""}
-                          className={selectedItem && itemHasPhoto(selectedItem) ? "w-full h-full object-contain p-0.5" : "w-6 h-6 object-contain opacity-70"}
+                      className={selectedItem && itemHasPhoto(selectedItem) ? "w-full h-full object-cover" : "w-6 h-6 object-contain opacity-70"}
                     />
                   </div>
                   <div className="min-w-0">
