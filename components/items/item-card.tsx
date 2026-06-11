@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect, useRef, useMemo } from "react"
-import { ChevronDown, ChevronUp, MoreVertical, Layers, Trash2, Copy, Minus, Plus, Check, X } from "lucide-react"
+import { ChevronDown, ChevronRight, MoreVertical, Layers, Trash2, Copy, Minus, Plus, Check, X } from "lucide-react"
 import type { Item } from "@/lib/types"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { getCategoryImage } from "@/lib/utils/category-images"
@@ -259,7 +259,7 @@ export function ItemCard({
                     onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
                     className="w-12 h-12 flex-shrink-0 rounded-md bg-muted flex items-center justify-center hover:bg-muted/70 transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
                   >
-                    {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                   </button>
 
                   <div className="flex-1 min-w-0" onClick={(e) => { e.stopPropagation(); onItemClick(item) }}>
