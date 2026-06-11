@@ -1,3 +1,8 @@
+export interface MediaItem {
+  foto: string        // URL (local path or data URL)
+  descripcion: string // Optional caption / description
+}
+
 export interface Atributo {
   key: string
   value: string
@@ -36,6 +41,7 @@ export interface ItemVariant {
   codigoProveedor?: string
   atributosPrincipales?: Atributo[]
   isActive?: boolean // Whether the item is active (Activo) or paused (Pausado)
+  media?: MediaItem[] // Per-item photo gallery. First entry is the thumbnail/portada.
 }
 
 export interface Item {
@@ -76,7 +82,9 @@ export interface Item {
   proveedor?: string
   codigoProveedor?: string
   descripcion?: string
+  /** @deprecated Use media[0].foto instead. Kept for backwards compatibility. */
   imagenUrl?: string
+  media?: MediaItem[] // Per-item photo gallery. First entry is the thumbnail/portada.
   atributosPrincipales?: Atributo[]
   atributosInformativos?: Atributo[]
   variants?: ItemVariant[]

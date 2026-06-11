@@ -1077,7 +1077,7 @@ export function useItems() {
   isAgrupador: false,
   atributosPrincipales: data.atributosPrincipales?.filter(a => a.key && a.value) || [],
   atributosInformativos: data.atributosInformativos?.filter(a => a.key && a.value) || [],
-  imagenUrl: data.imagenUrl || "",
+  media: [],
   variantCount: 0,
   itemCount: 0,
   }
@@ -1174,7 +1174,7 @@ export function useItems() {
           descripcion: variant.descripcion || data.descripcion || "",
           categoria: data.categoria || "", // Inherit parent's categoria
           marca: data.marca || "", // Inherit parent's marca
-          foto: variant.foto || data.imagenUrl || "",
+          media: [],
           fechaVencimiento: data.fechaVencimiento || "", // Inherit parent's vencimiento
           atributosPrincipales: variant.atributosPrincipales || [],
           stock: variant.stock || { total: "0", reservado: "0", disponible: "0" },
@@ -1206,7 +1206,7 @@ export function useItems() {
         containerAtributosPrincipales: data.containerAtributosPrincipales || [],
         atributosPrincipales: [],
         atributosInformativos: data.atributosInformativos?.map(a => ({ key: a.key, value: a.value, inheritValue: a.inherit })) || [],
-        imagenUrl: data.imagenUrl || "",
+        media: [],
         variantCount: processedVariants.length,
         itemCount: processedVariants.length,
         variants: processedVariants,

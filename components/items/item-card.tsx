@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, useMemo } from "react"
 import { ChevronDown, ChevronUp, MoreVertical, Layers, Trash2, Copy, Minus, Plus, Check, X } from "lucide-react"
 import type { Item } from "@/lib/types"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { getCategoryImage } from "@/lib/utils/category-images"
+import { getItemThumbnail, itemHasPhoto } from "@/lib/utils/item-media"
 import { StockEditModal } from "@/components/modals/stock-edit-modal"
 import { useSettings } from "@/lib/contexts/settings-context"
 
@@ -289,14 +289,20 @@ export function ItemCard({
                   onItemClick(item)
                 }}
               >
-                {/* Product Thumbnail with category-based image - same container size, smaller image for children */}
-                <div className="w-12 h-12 flex-shrink-0 rounded-md bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden">
-                  <img
-                    src={getCategoryImage(item.categoria || parentItem?.categoria) || "/placeholder.svg"}
-                    alt={item.categoria || parentItem?.categoria || "Product"}
-                    className={`${isChild ? "w-7 h-7" : "w-8 h-8"} object-contain opacity-60`}
-                  />
-                </div>
+                {/* Product Thumbnail — per-item media[0].foto, falls back to category icon or default */}
+                {(() => {
+                  const hasPhoto = itemHasPhoto(item)
+                  const src = getItemThumbnail(item, parentItem)
+                  return (
+                    <div className="w-12 h-12 flex-shrink-0 rounded-md bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden">
+                      <img
+                        src={src}
+                        alt={item.name || "Producto"}
+                        className={hasPhoto ? "w-full h-full object-cover" : `${isChild ? "w-7 h-7" : "w-8 h-8"} object-contain opacity-60`}
+                      />
+                    </div>
+                  )
+                })()}
 
                 {/* Product Info */}
                 <div className="flex-1 min-w-0">
