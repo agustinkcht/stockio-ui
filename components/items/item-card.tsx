@@ -289,16 +289,16 @@ export function ItemCard({
                   onItemClick(item)
                 }}
               >
-                {/* Product Thumbnail — per-item media[0].foto, falls back to category icon or default */}
+                {/* Product Thumbnail — matches lista de precios style, slightly bigger */}
                 {(() => {
                   const hasPhoto = itemHasPhoto(item)
-                  const src = getItemThumbnail(item)
+                  const src = getItemThumbnail(item, parentItem?.categoria)
                   return (
-                    <div className="w-12 h-12 flex-shrink-0 rounded-md bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden">
+                    <div className={`flex-shrink-0 rounded-xl bg-white border border-slate-200 flex items-center justify-center overflow-hidden shadow-sm ${isChild ? "w-11 h-11" : "w-12 h-12"}`}>
                       <img
                         src={src}
                         alt={item.name || "Producto"}
-                        className={hasPhoto ? "w-full h-full object-cover" : `${isChild ? "w-7 h-7" : "w-8 h-8"} object-contain opacity-60`}
+                        className={hasPhoto ? "w-full h-full object-contain p-1" : `${isChild ? "w-6 h-6" : "w-7 h-7"} object-contain opacity-70`}
                       />
                     </div>
                   )

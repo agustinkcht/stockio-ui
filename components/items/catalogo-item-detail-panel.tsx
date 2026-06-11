@@ -1166,14 +1166,14 @@ export function CatalogoItemDetailPanel({
                       </div>
                     </button>
 
-                    <div className="mt-2">
-                      <div className="w-full h-64 backdrop-blur-sm rounded-lg flex items-center justify-center overflow-hidden shadow-2xl border-slate-700/30 border-none border-0 bg-transparent shadow-none">
+                    <div className="mt-2 flex justify-center">
+                      <div className="w-52 h-52 rounded-2xl border border-slate-700/40 bg-slate-800/60 flex items-center justify-center overflow-hidden shadow-lg">
                         <Image
                           src={getItemThumbnail(selectedItem)}
                           alt={selectedItem.name}
-                          width={200}
-                          height={256}
-                          className={`rounded-xl shadow-xl ${itemHasPhoto(selectedItem) ? "w-full h-full object-cover" : "object-contain opacity-70"}`}
+                          width={208}
+                          height={208}
+                          className={itemHasPhoto(selectedItem) ? "w-full h-full object-contain p-2" : "w-24 h-24 object-contain opacity-60"}
                         />
                       </div>
                     </div>
