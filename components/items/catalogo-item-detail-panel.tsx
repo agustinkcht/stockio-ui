@@ -375,6 +375,55 @@ export function CatalogoItemDetailPanel({
   // Right card mode toggle for parent items: 'info' or 'atributos'
   const [rightCardMode, setRightCardMode] = useState<"info" | "atributos">("info")
 
+  // Right panel edit mode (standalone/children only)
+  const [isRightEditing, setIsRightEditing] = useState(false)
+  const rightEditSnapshotRef = useRef<any>(null)
+
+  const enterRightEditMode = () => {
+    rightEditSnapshotRef.current = {
+      categoria, marca, modelo, formatoVenta, unidadesPorPack, unidadesPorPackActive,
+      volumenActive, volumenCantidad, volumenUnidad, vencimientoActive, fechaVencimiento,
+      proveedor, codigoProveedor, atributosInformativos: [...atributosInformativos],
+    }
+    setIsRightEditing(true)
+  }
+
+  const cancelRightEditMode = () => {
+    const s = rightEditSnapshotRef.current
+    if (s) {
+      setCategoria(s.categoria); setMarca(s.marca); setModelo(s.modelo)
+      setFormatoVenta(s.formatoVenta); setUnidadesPorPack(s.unidadesPorPack)
+      setUnidadesPorPackActive(s.unidadesPorPackActive); setVolumenActive(s.volumenActive)
+      setVolumenCantidad(s.volumenCantidad); setVolumenUnidad(s.volumenUnidad)
+      setVencimientoActive(s.vencimientoActive); setFechaVencimiento(s.fechaVencimiento)
+      setProveedor(s.proveedor); setCodigoProveedor(s.codigoProveedor)
+      setAtributosInformativos(s.atributosInformativos)
+    }
+    setIsRightEditing(false)
+  }
+
+  const saveRightEditMode = () => {
+    const id = selectedItem.id
+    const s = rightEditSnapshotRef.current || {}
+    if (categoria !== s.categoria) onFieldChange(id, "categoria", categoria)
+    if (marca !== s.marca) onFieldChange(id, "marca", marca)
+    if (modelo !== s.modelo) onFieldChange(id, "modelo", modelo)
+    if (formatoVenta !== s.formatoVenta) onFieldChange(id, "formatoVenta", formatoVenta)
+    if (unidadesPorPack !== s.unidadesPorPack) onFieldChange(id, "unidadesPorPack", unidadesPorPack)
+    if (volumenActive !== s.volumenActive) onFieldChange(id, "volumenActive", volumenActive)
+    if (volumenCantidad !== s.volumenCantidad) onFieldChange(id, "volumenCantidad", volumenCantidad)
+    if (volumenUnidad !== s.volumenUnidad) onFieldChange(id, "volumenUnidad", volumenUnidad)
+    if (vencimientoActive !== s.vencimientoActive) onFieldChange(id, "vencimientoActive", vencimientoActive)
+    if (fechaVencimiento !== s.fechaVencimiento) onFieldChange(id, "fechaVencimiento", fechaVencimiento)
+    if (proveedor !== s.proveedor) onFieldChange(id, "proveedor", proveedor)
+    if (codigoProveedor !== s.codigoProveedor) onFieldChange(id, "codigoProveedor", codigoProveedor)
+    if (JSON.stringify(atributosInformativos) !== JSON.stringify(s.atributosInformativos)) {
+      onFieldChange(id, "atributosInformativos", atributosInformativos)
+    }
+    onSaveNow?.()
+    setIsRightEditing(false)
+  }
+
   // Expanded variant matrix modal state
   const [isExpandedMatrixOpen, setIsExpandedMatrixOpen] = useState(false)
   const [expandedMatrixPrecioModal, setExpandedMatrixPrecioModal] = useState<{ open: boolean; variant: any | null }>({ open: false, variant: null })
@@ -417,7 +466,11 @@ export function CatalogoItemDetailPanel({
 
   const handleFieldChange = (field: string, value: any, setter: (val: any) => void) => {
     setter(value)
-    onFieldChange(selectedItem.id, field, value)
+    // For standalone/children right panel: only propagate in edit mode (saves happen on Guardar)
+    // For container (isViewingContainer): always propagate immediately
+    if (isViewingContainer || isRightEditing) {
+      onFieldChange(selectedItem.id, field, value)
+    }
   }
 
   const handleAtributosPrincipalesChange = (
@@ -433,7 +486,8 @@ export function CatalogoItemDetailPanel({
     updated: Array<{ key: string; value: string; keyOpen?: boolean; valueOpen?: boolean }>,
   ) => {
     setAtributosInformativos(updated)
-    if (onFieldChange && selectedItem?.id) {
+    // Only propagate immediately for containers; standalone/children save on Guardar
+    if (onFieldChange && selectedItem?.id && (isViewingContainer || isRightEditing)) {
       onFieldChange(selectedItem.id, "atributosInformativos", updated)
     }
   }
@@ -490,6 +544,8 @@ export function CatalogoItemDetailPanel({
     setVolumenUnidad(
       shouldStrictlyInherit(fatherItem?.volumenUnidad) ? fatherItem!.volumenUnidad : selectedItem?.volumenUnidad || "",
     )
+    // Reset right panel edit mode when switching items
+    setIsRightEditing(false)
   }, [selectedItem, fatherItem])
 
   // Sync atributos from selectedItem when it changes (for undo)
@@ -2078,28 +2134,62 @@ export function CatalogoItemDetailPanel({
               </div>
             )}
 
-            {/* Sticky Segment Buttons (only for non-container items) */}
+            {/* Sticky Segment Buttons + Edit Controls (only for non-container items) */}
             {!isViewingContainer && (
               <div className="z-20 mb-6 sticky top-[0px]">
-                <div className="flex items-center gap-1 h-11 p-1 bg-slate-100/80 rounded-xl">
-                  <button
-                    onClick={() => setSelectedDetailTab("info")}
-                    className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${selectedDetailTab === "info"
-                      ? "bg-white text-slate-900 shadow-sm font-semibold"
-                      : "text-slate-500 hover:text-slate-700"
-                      }`}
-                  >
-                    <span className="text-xs font-medium uppercase tracking-widest">Info</span>
-                  </button>
-                  <button
-                    onClick={() => setSelectedDetailTab("atributos")}
-                    className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${selectedDetailTab === "atributos"
-                      ? "bg-white text-slate-900 shadow-sm font-semibold"
-                      : "text-slate-500 hover:text-slate-700"
-                      }`}
-                  >
-                    <span className="text-xs font-medium uppercase tracking-widest">Atributos</span>
-                  </button>
+                <div className="flex items-center gap-2">
+                  {/* Tabs — 2/3 width */}
+                  <div className="flex items-center gap-1 h-9 p-1 bg-slate-100/80 rounded-xl" style={{ flex: "2" }}>
+                    <button
+                      onClick={() => setSelectedDetailTab("info")}
+                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${selectedDetailTab === "info"
+                        ? "bg-white text-slate-900 shadow-sm font-semibold"
+                        : "text-slate-500 hover:text-slate-700"
+                        }`}
+                    >
+                      <span className="text-xs font-medium uppercase tracking-widest">Info</span>
+                    </button>
+                    <button
+                      onClick={() => setSelectedDetailTab("atributos")}
+                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${selectedDetailTab === "atributos"
+                        ? "bg-white text-slate-900 shadow-sm font-semibold"
+                        : "text-slate-500 hover:text-slate-700"
+                        }`}
+                    >
+                      <span className="text-xs font-medium uppercase tracking-widest">Atributos</span>
+                    </button>
+                  </div>
+
+                  {/* Edit controls — 1/3 width */}
+                  <div className="flex items-center justify-end gap-1.5" style={{ flex: "1" }}>
+                    {!isRightEditing ? (
+                      <button
+                        type="button"
+                        onClick={enterRightEditMode}
+                        className="h-9 px-3 text-xs font-semibold transition-colors border shadow-sm border-slate-200 gap-1.5 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer whitespace-nowrap"
+                      >
+                        <Pencil className="w-3.5 h-3.5 text-slate-600" />
+                        Editar
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={cancelRightEditMode}
+                          className="h-9 px-3 text-xs font-medium rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors cursor-pointer whitespace-nowrap"
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={saveRightEditMode}
+                          className="h-9 px-3 text-xs font-medium rounded-lg bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer whitespace-nowrap"
+                        >
+                          Guardar
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -3044,32 +3134,40 @@ export function CatalogoItemDetailPanel({
                           <div className="grid grid-cols-2 gap-5">
                             <div className="flex flex-col gap-1.5">
                               <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Categoría</label>
-                              <input
-                                type="text"
-                                value={categoria}
-                                onChange={(e) => handleFieldChange("categoria", e.target.value, setCategoria)}
-                                disabled={shouldStrictlyInherit(fatherItem?.categoria)}
-                                className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${shouldStrictlyInherit(fatherItem?.categoria)
-                                  ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
-                                  : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
-                                  }`}
-                                placeholder="Ej: Vinos"
-                              />
+                              {isRightEditing ? (
+                                <input
+                                  type="text"
+                                  value={categoria}
+                                  onChange={(e) => handleFieldChange("categoria", e.target.value, setCategoria)}
+                                  disabled={shouldStrictlyInherit(fatherItem?.categoria)}
+                                  className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${shouldStrictlyInherit(fatherItem?.categoria)
+                                    ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                    : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
+                                    }`}
+                                  placeholder="Ej: Vinos"
+                                />
+                              ) : (
+                                <p className="text-sm text-slate-800 py-2.5">{categoria || <span className="text-slate-400 italic">—</span>}</p>
+                              )}
                             </div>
 
                             <div className="flex flex-col gap-1.5">
                               <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Marca</label>
-                              <input
-                                type="text"
-                                value={marca}
-                                onChange={(e) => handleFieldChange("marca", e.target.value, setMarca)}
-                                disabled={shouldStrictlyInherit(fatherItem?.marca)}
-                                className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${shouldStrictlyInherit(fatherItem?.marca)
-                                  ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
-                                  : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
-                                  }`}
-                                placeholder="Ej: YKK"
-                              />
+                              {isRightEditing ? (
+                                <input
+                                  type="text"
+                                  value={marca}
+                                  onChange={(e) => handleFieldChange("marca", e.target.value, setMarca)}
+                                  disabled={shouldStrictlyInherit(fatherItem?.marca)}
+                                  className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${shouldStrictlyInherit(fatherItem?.marca)
+                                    ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                    : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
+                                    }`}
+                                  placeholder="Ej: YKK"
+                                />
+                              ) : (
+                                <p className="text-sm text-slate-800 py-2.5">{marca || <span className="text-slate-400 italic">—</span>}</p>
+                              )}
                             </div>
                           </div>
 
@@ -3083,98 +3181,117 @@ export function CatalogoItemDetailPanel({
                           <div className="grid grid-cols-2 gap-5">
                             <div className="flex flex-col gap-1.5">
                               <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Formato de venta</label>
-                              <select
-                                value={formatoVenta}
-                                onChange={(e) => handleFieldChange("formatoVenta", e.target.value, setFormatoVenta)}
-                                disabled={shouldStrictlyInherit(fatherItem?.formatoVenta)}
-                                className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 appearance-none transition-all text-sm ${shouldStrictlyInherit(fatherItem?.formatoVenta)
-                                  ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
-                                  : "bg-white border-slate-200 text-slate-800 cursor-pointer hover:border-slate-300"
-                                  }`}
-                              >
-                                <option value="unidad">Unidad</option>
-                                <option value="pack">Pack</option>
-                              </select>
+                              {isRightEditing ? (
+                                <select
+                                  value={formatoVenta}
+                                  onChange={(e) => handleFieldChange("formatoVenta", e.target.value, setFormatoVenta)}
+                                  disabled={shouldStrictlyInherit(fatherItem?.formatoVenta)}
+                                  className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 appearance-none transition-all text-sm ${shouldStrictlyInherit(fatherItem?.formatoVenta)
+                                    ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                    : "bg-white border-slate-200 text-slate-800 cursor-pointer hover:border-slate-300"
+                                    }`}
+                                >
+                                  <option value="unidad">Unidad</option>
+                                  <option value="pack">Pack</option>
+                                </select>
+                              ) : (
+                                <p className="text-sm text-slate-800 py-2.5 capitalize">{formatoVenta || <span className="text-slate-400 italic">—</span>}</p>
+                              )}
                             </div>
 
                             <div className="flex flex-col gap-1.5">
                               <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Unidades por pack</label>
-                              <input
-                                type="text"
-                                value={unidadesPorPack === "N.E." ? "" : unidadesPorPack}
-                                onChange={(e) => {
-                                  const value = e.target.value
-                                  if (value === "") {
-                                    handleFieldChange("unidadesPorPack", "N.E.", setUnidadesPorPack)
-                                  } else if (/^\d+$/.test(value)) {
-                                    const numValue = Number.parseInt(value)
-                                    handleFieldChange("unidadesPorPack", numValue < 1 ? "1" : value, setUnidadesPorPack)
-                                  }
-                                  // Ignore non-numeric input
-                                }}
-                                disabled={formatoVenta === "unidad" || isUnidadesPorPackLocked}
-                                className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${formatoVenta === "unidad" || isUnidadesPorPackLocked
-                                  ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
-                                  : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
-                                  }`}
-                                placeholder="N.E."
-                              />
+                              {isRightEditing ? (
+                                <input
+                                  type="text"
+                                  value={unidadesPorPack === "N.E." ? "" : unidadesPorPack}
+                                  onChange={(e) => {
+                                    const value = e.target.value
+                                    if (value === "") {
+                                      handleFieldChange("unidadesPorPack", "N.E.", setUnidadesPorPack)
+                                    } else if (/^\d+$/.test(value)) {
+                                      const numValue = Number.parseInt(value)
+                                      handleFieldChange("unidadesPorPack", numValue < 1 ? "1" : value, setUnidadesPorPack)
+                                    }
+                                  }}
+                                  disabled={formatoVenta === "unidad" || isUnidadesPorPackLocked}
+                                  className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${formatoVenta === "unidad" || isUnidadesPorPackLocked
+                                    ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                    : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
+                                    }`}
+                                  placeholder="N.E."
+                                />
+                              ) : (
+                                <p className="text-sm text-slate-800 py-2.5">{formatoVenta === "unidad" ? "—" : (unidadesPorPack || <span className="text-slate-400 italic">—</span>)}</p>
+                              )}
                             </div>
                           </div>
 
                           <div className="flex flex-col gap-2 mt-3">
                             <div className="flex items-center gap-3 mt-3.5">
                               <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Volumen de la unidad</label>
-                              <button
-                                onClick={() => handleFieldChange("volumenActive", !volumenActive, setVolumenActive)}
-                                disabled={isChildItem}
-                                className={`w-9 h-5 rounded-full transition-all relative ${volumenActive ? "bg-slate-800" : "bg-slate-200"
-                                  } ${isChildItem ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                              >
-                                <div
-                                  className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${volumenActive ? "translate-x-4" : "translate-x-0"
-                                    }`}
-                                />
-                              </button>
+                              {isRightEditing ? (
+                                <button
+                                  onClick={() => handleFieldChange("volumenActive", !volumenActive, setVolumenActive)}
+                                  disabled={isChildItem}
+                                  className={`w-9 h-5 rounded-full transition-all relative ${volumenActive ? "bg-slate-800" : "bg-slate-200"
+                                    } ${isChildItem ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                                >
+                                  <div
+                                    className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${volumenActive ? "translate-x-4" : "translate-x-0"
+                                      }`}
+                                  />
+                                </button>
+                              ) : (
+                                <span className="text-xs text-slate-500">{volumenActive ? "Activo" : "Inactivo"}</span>
+                              )}
                             </div>
 
                             {volumenActive && (
                               <div className="grid grid-cols-2 gap-5 mt-2">
                                 <div className="flex flex-col gap-1.5">
                                   <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Cantidad</label>
-                                  <input
-                                    type="number"
-                                    value={volumenCantidad}
-                                    onChange={(e) =>
-                                      handleFieldChange("volumenCantidad", e.target.value, setVolumenCantidad)
-                                    }
-                                    disabled={isChildItem}
-                                    className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${isChildItem
-                                      ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
-                                      : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
-                                      }`}
-                                    placeholder="0"
-                                  />
+                                  {isRightEditing ? (
+                                    <input
+                                      type="number"
+                                      value={volumenCantidad}
+                                      onChange={(e) =>
+                                        handleFieldChange("volumenCantidad", e.target.value, setVolumenCantidad)
+                                      }
+                                      disabled={isChildItem}
+                                      className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${isChildItem
+                                        ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                        : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
+                                        }`}
+                                      placeholder="0"
+                                    />
+                                  ) : (
+                                    <p className="text-sm text-slate-800 py-2.5">{volumenCantidad || <span className="text-slate-400 italic">—</span>}</p>
+                                  )}
                                 </div>
 
                                 <div className="flex flex-col gap-1.5">
                                   <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Unidad de medida</label>
-                                  <select
-                                    value={volumenUnidad}
-                                    onChange={(e) => handleFieldChange("volumenUnidad", e.target.value, setVolumenUnidad)}
-                                    disabled={isChildItem}
-                                    className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 appearance-none transition-all text-sm ${isChildItem
-                                      ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
-                                      : "bg-white border-slate-200 text-slate-800 cursor-pointer hover:border-slate-300"
-                                      }`}
-                                  >
-                                    <option value="ml">ml</option>
-                                    <option value="l">l</option>
-                                    <option value="g">g</option>
-                                    <option value="kg">kg</option>
-                                    <option value="cm">cm</option>
-                                    <option value="m">m</option>
-                                  </select>
+                                  {isRightEditing ? (
+                                    <select
+                                      value={volumenUnidad}
+                                      onChange={(e) => handleFieldChange("volumenUnidad", e.target.value, setVolumenUnidad)}
+                                      disabled={isChildItem}
+                                      className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 appearance-none transition-all text-sm ${isChildItem
+                                        ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                        : "bg-white border-slate-200 text-slate-800 cursor-pointer hover:border-slate-300"
+                                        }`}
+                                    >
+                                      <option value="ml">ml</option>
+                                      <option value="l">l</option>
+                                      <option value="g">g</option>
+                                      <option value="kg">kg</option>
+                                      <option value="cm">cm</option>
+                                      <option value="m">m</option>
+                                    </select>
+                                  ) : (
+                                    <p className="text-sm text-slate-800 py-2.5">{volumenUnidad || <span className="text-slate-400 italic">—</span>}</p>
+                                  )}
                                 </div>
                               </div>
                             )}
@@ -3185,16 +3302,20 @@ export function CatalogoItemDetailPanel({
                             <div className="flex flex-col gap-2 mt-4">
                               <div className="flex items-center gap-3 mb-0 mt-3.5">
                                 <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Vencimiento</label>
-                                <button
-                                  onClick={() => setVencimientoActive(!vencimientoActive)}
-                                  className={`w-9 h-5 rounded-full transition-all relative cursor-pointer ${vencimientoActive ? "bg-slate-800" : "bg-slate-200"
-                                    }`}
-                                >
-                                  <div
-                                    className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${vencimientoActive ? "translate-x-4" : "translate-x-0"
+                                {isRightEditing ? (
+                                  <button
+                                    onClick={() => setVencimientoActive(!vencimientoActive)}
+                                    className={`w-9 h-5 rounded-full transition-all relative cursor-pointer ${vencimientoActive ? "bg-slate-800" : "bg-slate-200"
                                       }`}
-                                  />
-                                </button>
+                                  >
+                                    <div
+                                      className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${vencimientoActive ? "translate-x-4" : "translate-x-0"
+                                        }`}
+                                    />
+                                  </button>
+                                ) : (
+                                  <span className="text-xs text-slate-500">{vencimientoActive ? "Activo" : "Inactivo"}</span>
+                                )}
                               </div>
 
                               {vencimientoActive && (
@@ -3202,14 +3323,18 @@ export function CatalogoItemDetailPanel({
                                   <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-2 block">
                                     Fecha de Vencimiento
                                   </label>
-                                  <div className="relative">
-                                    <input
-                                      type="date"
-                                      value={fechaVencimiento}
-                                      onChange={(e) => setFechaVencimiento(e.target.value)}
-                                      className="w-full px-3 py-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-slate-300 text-slate-800 text-sm transition-all hover:border-slate-300"
-                                    />
-                                  </div>
+                                  {isRightEditing ? (
+                                    <div className="relative">
+                                      <input
+                                        type="date"
+                                        value={fechaVencimiento}
+                                        onChange={(e) => setFechaVencimiento(e.target.value)}
+                                        className="w-full px-3 py-2.5 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-slate-300 text-slate-800 text-sm transition-all hover:border-slate-300"
+                                      />
+                                    </div>
+                                  ) : (
+                                    <p className="text-sm text-slate-800">{fechaVencimiento || <span className="text-slate-400 italic">—</span>}</p>
+                                  )}
                                 </div>
                               )}
                             </div>
@@ -3223,27 +3348,35 @@ export function CatalogoItemDetailPanel({
                             <div className="grid grid-cols-2 gap-5">
                               <div className="flex flex-col gap-1.5">
                                 <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Proveedor</label>
-                                <input
-                                  type="text"
-                                  value={proveedor}
-                                  onChange={(e) => handleFieldChange("proveedor", e.target.value, setProveedor)}
-                                  disabled={shouldInheritField(fatherItem?.proveedor)}
-                                  className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${shouldInheritField(fatherItem?.proveedor)
-                                    ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
-                                    : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
-                                    }`}
-                                  placeholder="Nombre del proveedor"
-                                />
+                                {isRightEditing ? (
+                                  <input
+                                    type="text"
+                                    value={proveedor}
+                                    onChange={(e) => handleFieldChange("proveedor", e.target.value, setProveedor)}
+                                    disabled={shouldInheritField(fatherItem?.proveedor)}
+                                    className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${shouldInheritField(fatherItem?.proveedor)
+                                      ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+                                      : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
+                                      }`}
+                                    placeholder="Nombre del proveedor"
+                                  />
+                                ) : (
+                                  <p className="text-sm text-slate-800 py-2.5">{proveedor || <span className="text-slate-400 italic">—</span>}</p>
+                                )}
                               </div>
                               <div className="flex flex-col gap-1.5">
                                 <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Código Proveedor</label>
-                                <input
-                                  type="text"
-                                  value={codigoProveedor}
-                                  onChange={(e) => handleFieldChange("codigoProveedor", e.target.value, setCodigoProveedor)}
-                                  className="px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300"
-                                  placeholder="Código del proveedor"
-                                />
+                                {isRightEditing ? (
+                                  <input
+                                    type="text"
+                                    value={codigoProveedor}
+                                    onChange={(e) => handleFieldChange("codigoProveedor", e.target.value, setCodigoProveedor)}
+                                    className="px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300"
+                                    placeholder="Código del proveedor"
+                                  />
+                                ) : (
+                                  <p className="text-sm text-slate-800 py-2.5">{codigoProveedor || <span className="text-slate-400 italic">—</span>}</p>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -3256,12 +3389,14 @@ export function CatalogoItemDetailPanel({
                         {!showIndividualAtributosView ? (
                           <div className="flex flex-col items-center justify-center h-full gap-4 py-12">
                             <p className="text-slate-400 text-sm">No hay atributos configurados</p>
-                            <button
-                              onClick={() => setShowIndividualAtributosView(true)}
-                              className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-all text-sm font-medium cursor-pointer"
-                            >
-                              Agregar atributos
-                            </button>
+                            {isRightEditing && (
+                              <button
+                                onClick={() => setShowIndividualAtributosView(true)}
+                                className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-all text-sm font-medium cursor-pointer"
+                              >
+                                Agregar atributos
+                              </button>
+                            )}
                           </div>
                         ) : (
                           <div className="flex flex-col gap-6">
@@ -3280,51 +3415,57 @@ export function CatalogoItemDetailPanel({
                                   ? fatherItem?.atributosInformativos?.find((a) => a.key === attr.key)
                                   : undefined
                                 const isAttributeLocked = isChildItem && fatherAttr !== undefined
-                                // Value is locked if parent has a value AND inheritValue is NOT true (Case 1)
-                                // Value is editable if parent marked inheritValue (Case 2)
                                 const isValueLocked = isChildItem && fatherAttr && fatherAttr.value && !fatherAttr.inheritValue
 
                                 return (
                                   <div key={index} className="flex items-start gap-3">
                                     <div className="flex-1">
                                       <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
-                                      <input
-                                        type="text"
-                                        value={attr.key}
-                                        onChange={(e) => {
-                                          if (!isAttributeLocked) {
-                                            const updated = [...atributosInformativos]
-                                            updated[index].key = e.target.value
-                                            handleAtributosInformativosChange(updated)
-                                          }
-                                        }}
-                                        disabled={isAttributeLocked}
-                                        className={`w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${isAttributeLocked ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
-                                          }`}
-                                        placeholder="Ej: Material"
-                                      />
+                                      {isRightEditing ? (
+                                        <input
+                                          type="text"
+                                          value={attr.key}
+                                          onChange={(e) => {
+                                            if (!isAttributeLocked) {
+                                              const updated = [...atributosInformativos]
+                                              updated[index].key = e.target.value
+                                              handleAtributosInformativosChange(updated)
+                                            }
+                                          }}
+                                          disabled={isAttributeLocked}
+                                          className={`w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${isAttributeLocked ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
+                                            }`}
+                                          placeholder="Ej: Material"
+                                        />
+                                      ) : (
+                                        <p className="text-sm text-slate-800 py-2.5">{attr.key || <span className="text-slate-400 italic">—</span>}</p>
+                                      )}
                                     </div>
 
                                     <div className="flex-1">
                                       <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Valor</label>
-                                      <input
-                                        type="text"
-                                        value={attr.value}
-                                        onChange={(e) => {
-                                          if (!isValueLocked) {
-                                            const updated = [...atributosInformativos]
-                                            updated[index].value = e.target.value
-                                            handleAtributosInformativosChange(updated)
-                                          }
-                                        }}
-                                        disabled={isValueLocked}
-                                        className={`w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${isValueLocked ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
-                                          }`}
-                                        placeholder="Ej: Algodón"
-                                      />
+                                      {isRightEditing ? (
+                                        <input
+                                          type="text"
+                                          value={attr.value}
+                                          onChange={(e) => {
+                                            if (!isValueLocked) {
+                                              const updated = [...atributosInformativos]
+                                              updated[index].value = e.target.value
+                                              handleAtributosInformativosChange(updated)
+                                            }
+                                          }}
+                                          disabled={isValueLocked}
+                                          className={`w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${isValueLocked ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
+                                            }`}
+                                          placeholder="Ej: Algodón"
+                                        />
+                                      ) : (
+                                        <p className="text-sm text-slate-800 py-2.5">{attr.value || <span className="text-slate-400 italic">—</span>}</p>
+                                      )}
                                     </div>
 
-                                    {!isAttributeLocked && (
+                                    {isRightEditing && !isAttributeLocked && (
                                       <button
                                         onClick={() => {
                                           const updated = atributosInformativos.filter((_, i) => i !== index)
@@ -3338,20 +3479,22 @@ export function CatalogoItemDetailPanel({
                                         <X className="w-4 h-4" />
                                       </button>
                                     )}
-                                    {isAttributeLocked && <div className="mt-8 w-4"></div>}
+                                    {(!isRightEditing || isAttributeLocked) && <div className="mt-8 w-4"></div>}
                                   </div>
                                 )
                               })}
 
-                              <button
-                                onClick={() => {
-                                  handleAtributosInformativosChange([...atributosInformativos, { key: "", value: "" }])
-                                }}
-                                className="w-full px-3 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 transition-colors flex items-center justify-center gap-2 cursor-pointer"
-                              >
-                                <Plus className="w-4 h-4" />
-                                <span className="text-sm">Agregar atributo</span>
-                              </button>
+                              {isRightEditing && (
+                                <button
+                                  onClick={() => {
+                                    handleAtributosInformativosChange([...atributosInformativos, { key: "", value: "" }])
+                                  }}
+                                  className="w-full px-3 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                                >
+                                  <Plus className="w-4 h-4" />
+                                  <span className="text-sm">Agregar atributo</span>
+                                </button>
+                              )}
                             </div>
                           </div>
                         )}

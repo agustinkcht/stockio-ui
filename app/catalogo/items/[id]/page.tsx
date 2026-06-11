@@ -214,26 +214,6 @@ export default function CatalogoItemDetailPage() {
                     <span className="text-sm text-green-700 font-medium">Cambios Guardados</span>
                   </div>
                 )}
-
-                {hasChanges && !showSaveSuccess && (
-                  <>
-                    <button
-                      onClick={handleDeshacer}
-                      className="px-4 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 rounded transition-all cursor-pointer text-red-700 text-sm font-medium"
-                      title="Deshacer cambios"
-                    >
-                      Deshacer
-                    </button>
-
-                    <button
-                      onClick={handleGuardar}
-                      className="px-4 py-1.5 bg-green-50 hover:bg-green-100 border border-green-200 rounded transition-all cursor-pointer text-green-700 text-sm font-medium"
-                      title="Guardar cambios"
-                    >
-                      Guardar
-                    </button>
-                  </>
-                )}
               </div>
             </div>
           </div>
