@@ -1217,7 +1217,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 700,
     volumenUnidad: "ml",
-    media: [{ photo: "/images/categories/licores.jpg", descripcion: "" }],
+    media: [],
     stock: { enStock: "36", reservado: "0", disponible: "36" },
     atributosPrincipales: [],
     atributosInformativos: [

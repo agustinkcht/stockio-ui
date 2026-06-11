@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, useMemo } from "react"
 import { ChevronDown, ChevronRight, MoreVertical, Layers, Trash2, Copy, Minus, Plus, Check, X } from "lucide-react"
 import type { Item } from "@/lib/types"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { getCategoryImage } from "@/lib/utils/category-images"
+import { getItemPhoto } from "@/lib/utils/category-images"
 import { StockEditModal } from "@/components/modals/stock-edit-modal"
 import { useSettings } from "@/lib/contexts/settings-context"
 
@@ -294,8 +294,8 @@ export function ItemCard({
                 {/* Product Thumbnail */}
                 <div className="w-12 h-12 flex-shrink-0 rounded-md bg-muted overflow-hidden">
                   <img
-                    src={getCategoryImage(item.categoria || parentItem?.categoria) || "/placeholder.svg"}
-                    alt={item.categoria || parentItem?.categoria || "Product"}
+                    src={getItemPhoto(item)}
+                    alt={item.name || "Product"}
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -597,9 +597,9 @@ export function ItemCard({
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
                     <img
-                      src={getCategoryImage(item.categoria || parentItem?.categoria) || "/placeholder.svg"}
-                      alt={item.categoria || ""}
-                      className="w-6 h-6 object-contain opacity-70"
+                      src={getItemPhoto(item)}
+                      alt={item.name || ""}
+                      className="w-full h-full object-cover"
                     />
                   </div>
                   <div className="min-w-0">
