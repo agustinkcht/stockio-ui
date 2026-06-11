@@ -254,14 +254,13 @@ export function ItemCard({
                   className="col-span-5 flex items-center gap-3 h-full pl-10 pr-4 cursor-pointer transition-colors"
                   onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
                 >
-                  {/* Thumbnail */}
-                  <div className="w-12 h-12 flex-shrink-0 rounded-md bg-muted overflow-hidden">
-                    <img
-                      src={getCategoryImage(item.categoria) || "/placeholder.svg"}
-                      alt={item.categoria || "Product"}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+                  {/* Chevron inside thumbnail-sized container */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
+                    className="w-12 h-12 flex-shrink-0 rounded-md bg-muted flex items-center justify-center hover:bg-muted/70 transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+                  >
+                    {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </button>
 
                   <div className="flex-1 min-w-0" onClick={(e) => { e.stopPropagation(); onItemClick(item) }}>
                     <div className="flex items-center gap-2">
@@ -276,13 +275,6 @@ export function ItemCard({
                       {item.categoria && <span className="text-xs text-muted-foreground">{item.categoria}</span>}
                     </div>
                   </div>
-
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onToggleExpansion(index) }}
-                    className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-md hover:bg-slate-100 transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
-                  >
-                    {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  </button>
                 </div>
                 <div className="col-span-7 h-full" />
               </>
