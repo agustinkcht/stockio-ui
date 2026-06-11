@@ -277,13 +277,15 @@ export function CatalogoItemDetailPanel({
   const [nameValue, setNameValue] = useState(selectedItem.name || "")
   const [proveedorDropdownOpen, setProveedorDropdownOpen] = useState(false)
 
-  // Media photos state - initialize from item.media array (per-item), falls back to category image
+  // Media photos state - initialize with category image as thumbnail/portada
   const [mediaPhotos, setMediaPhotos] = useState<string[]>(() => {
-    if (selectedItem?.media && selectedItem.media.length > 0) {
-      return selectedItem.media.map((m) => m.foto).filter(Boolean)
-    }
+    const photos: string[] = []
+    // Use category image as the default thumbnail
     const categoryImage = getCategoryImage(selectedItem?.categoria)
-    return categoryImage ? [categoryImage] : []
+    if (categoryImage) {
+      photos.push(categoryImage)
+    }
+    return photos
   })
   const [draggedPhotoIndex, setDraggedPhotoIndex] = useState<number | null>(null)
 
@@ -1172,20 +1174,13 @@ export function CatalogoItemDetailPanel({
 
                     <div className="mt-2">
                       <div className="w-full h-64 backdrop-blur-sm rounded-lg flex items-center justify-center overflow-hidden shadow-2xl border-slate-700/30 border-none border-0 bg-transparent shadow-none">
-                        {(() => {
-                          const itemFoto = selectedItem.media?.[0]?.foto
-                          const foto = itemFoto || getCategoryImage(selectedItem.categoria)
-                          const isPerItem = !!itemFoto
-                          return (
-                            <Image
-                              src={foto || "/placeholder.svg"}
-                              alt={selectedItem.name}
-                              width={200}
-                              height={256}
-                              className={isPerItem ? "w-full h-full object-cover rounded-xl shadow-xl" : "object-contain rounded-xl shadow-xl opacity-70"}
-                            />
-                          )
-                        })()}
+                        <Image
+                          src={getCategoryImage(selectedItem.categoria) || "/placeholder.svg"}
+                          alt={selectedItem.name}
+                          width={200}
+                          height={256}
+                          className="object-contain rounded-xl shadow-xl"
+                        />
                       </div>
                     </div>
 
@@ -2490,19 +2485,13 @@ export function CatalogoItemDetailPanel({
                                     setExpandedMatrixMediaModal({ open: true, variant: { ...variant, sourceVariant } })
                                   }}
                                 >
-                                  {(() => {
-                                    const varFoto = sourceVariant?.media?.[0]?.foto || sourceVariant?.imagenUrl
-                                    const fallback = getCategoryImage(selectedItem?.categoria)
-                                    return (
-                                      <Image
-                                        src={varFoto || fallback || "/placeholder.svg"}
-                                        alt={selectedItem?.categoria || ""}
-                                        width={32}
-                                        height={32}
-                                        className={`w-full h-full ${varFoto ? "object-cover" : "w-5 h-5 object-contain opacity-60"}`}
-                                      />
-                                    )
-                                  })()}
+                                  <Image
+                                    src={sourceVariant?.imagenUrl || getCategoryImage(selectedItem?.categoria) || "/placeholder.svg"}
+                                    alt={selectedItem?.categoria || ""}
+                                    width={32}
+                                    height={32}
+                                    className={`w-full h-full object-cover ${!sourceVariant?.imagenUrl ? "w-5 h-5 object-contain opacity-60" : ""}`}
+                                  />
                                   {/* Edit pencil overlay */}
                                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center">
                                     <Pencil className="w-3.5 h-3.5 text-white" />
@@ -3014,20 +3003,13 @@ export function CatalogoItemDetailPanel({
                                     {/* Thumbnail */}
                                     <div className="pl-2 py-1.5 flex items-center justify-center">
                                       <div className="w-6 h-6 rounded-md bg-gradient-to-br from-muted to-muted/50 overflow-hidden flex-shrink-0 flex items-center justify-center">
-                                        {(() => {
-                                          const sv = selectedItem?.variants?.find((v: any) => v.id === (variant.id || variant.skuSuffix))
-                                          const varFoto = (sv as any)?.media?.[0]?.foto || (sv as any)?.imagenUrl
-                                          const foto = varFoto || getCategoryImage(selectedItem?.categoria)
-                                          return (
-                                            <Image
-                                              src={foto || "/placeholder.svg"}
-                                              alt={selectedItem?.categoria || ""}
-                                              width={24}
-                                              height={24}
-                                              className={varFoto ? "w-full h-full object-cover" : "w-4 h-4 object-contain opacity-60"}
-                                            />
-                                          )
-                                        })()}
+                                        <Image
+                                          src={getCategoryImage(selectedItem?.categoria) || "/placeholder.svg"}
+                                          alt={selectedItem?.categoria || ""}
+                                          width={24}
+                                          height={24}
+                                          className="w-4 h-4 object-contain opacity-60"
+                                        />
                                       </div>
                                     </div>
                                     <div className="px-3 py-2 flex items-center gap-1.5">
@@ -3438,17 +3420,11 @@ export function CatalogoItemDetailPanel({
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
-                    {(() => {
-                      const itemFoto = selectedItem?.media?.[0]?.foto
-                      const foto = itemFoto || getCategoryImage(selectedItem?.categoria)
-                      return (
-                        <img
-                          src={foto || "/placeholder.svg"}
-                          alt={selectedItem?.categoria || ""}
-                          className={itemFoto ? "w-full h-full object-cover" : "w-6 h-6 object-contain opacity-70"}
-                        />
-                      )
-                    })()}
+                    <img
+                      src={getCategoryImage(selectedItem?.categoria) || "/placeholder.svg"}
+                      alt={selectedItem?.categoria || ""}
+                      className="w-6 h-6 object-contain opacity-70"
+                    />
                   </div>
                   <div className="min-w-0">
                     <h3 className="text-sm font-semibold text-slate-900">Editar Precio</h3>
@@ -3777,42 +3753,35 @@ export function CatalogoItemDetailPanel({
                 <span className="text-[10px] text-blue-400 font-medium">Seleccionar</span>
               </button>
 
-              {/* Current photos from media array */}
-              {(() => {
-                const sourceVariant = expandedMatrixMediaModal.variant?.sourceVariant
-                const mediaItems: Array<{ foto: string; descripcion: string }> = sourceVariant?.media || []
-                return mediaItems.map((mediaItem, idx) => (
-                  <div key={idx} className="relative flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 border-slate-600 group">
-                    <img
-                      src={mediaItem.foto}
-                      alt="Variant photo"
-                      className="w-full h-full object-cover"
-                    />
-                    {/* Delete button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
-                          ov.id === expandedMatrixMediaModal.variant.id
-                            ? { ...ov, media: (ov.media || []).filter((_: any, i: number) => i !== idx) }
-                            : ov
-                        )
-                        onFieldChange(selectedItem.id, "variants", updatedVariants)
-                        if (mediaItems.length <= 1) setExpandedMatrixMediaModal({ open: false, variant: null })
-                      }}
-                      className="absolute top-1 right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-100 cursor-pointer"
-                    >
-                      <X className="w-3 h-3 text-slate-600" />
-                    </button>
-                    {/* Portada tag for first photo */}
-                    {idx === 0 && (
-                      <div className="absolute bottom-0 left-0 right-0 bg-black/70 py-0.5 px-1">
-                        <span className="text-[8px] font-bold text-white uppercase tracking-wider">Portada</span>
-                      </div>
-                    )}
+              {/* Current photo (if any) */}
+              {expandedMatrixMediaModal.variant?.sourceVariant?.imagenUrl && (
+                <div className="relative flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 border-slate-600 group">
+                  <img
+                    src={expandedMatrixMediaModal.variant.sourceVariant.imagenUrl}
+                    alt="Variant photo"
+                    className="w-full h-full object-cover"
+                  />
+                  {/* Delete button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      // Remove the image
+                      const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
+                        ov.id === expandedMatrixMediaModal.variant.id ? { ...ov, imagenUrl: null } : ov
+                      )
+                      onFieldChange(selectedItem.id, "variants", updatedVariants)
+                      setExpandedMatrixMediaModal({ open: false, variant: null })
+                    }}
+                    className="absolute top-1 right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-100 cursor-pointer"
+                  >
+                    <X className="w-3 h-3 text-slate-600" />
+                  </button>
+                  {/* Portada tag */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/70 py-0.5 px-1">
+                    <span className="text-[8px] font-bold text-white uppercase tracking-wider">Portada</span>
                   </div>
-                ))
-              })()}
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end">

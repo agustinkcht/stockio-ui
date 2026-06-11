@@ -2723,7 +2723,7 @@ export default function NuevoItemPage() {
                                     proveedor: proveedor || "",
                                     codigoProveedor: codigoProveedor || "",
                                     descripcion: descripcion || "",
-                                    media: mediaPhotos.map((foto) => ({ foto, descripcion: "" })),
+                                    foto: mediaPhotos[0] || "",
                                     hasVariants: false,
                                     isAgrupador: false,
                                     variantCount: 0,

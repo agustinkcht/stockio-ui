@@ -49,9 +49,8 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Perfil Sensorial", value: "Fruta roja madura, especias y notas de chocolate" },
           { key: "Crianza", value: "18 meses en barrica de roble francés" },
         ],
-        stock: { enStock: "60", reservado: "6", disponible: "54" },
+        stock: { enStock: "60", reservado: "6", disponible: "54" }, // 6 reservado: VTA-005 pending (MALB-2012)
         precio: { costo: 45000, margen: 50, iva: 21, precioFinal: 81675 },
-        media: [{ foto: "/images/categories/vinos.jpg", descripcion: "" }],
       },
       {
         id: "VARM6R1T9W",
@@ -72,7 +71,6 @@ export const INITIAL_ITEMS: Item[] = [
         ],
         stock: { enStock: "54", reservado: "0", disponible: "54" },
         precio: { costo: 42000, margen: 50, iva: 21, precioFinal: 76230 },
-        media: [{ foto: "/images/categories/vinos.jpg", descripcion: "" }],
       },
 
       // --- CABERNET SAUVIGNON ---
@@ -95,7 +93,6 @@ export const INITIAL_ITEMS: Item[] = [
         ],
         stock: { enStock: "48", reservado: "0", disponible: "48" },
         precio: { costo: 48000, margen: 50, iva: 21, precioFinal: 87120 },
-        media: [{ foto: "/images/categories/vinos.jpg", descripcion: "" }],
       },
       {
         id: "VAR9VY4C3N",
@@ -116,7 +113,6 @@ export const INITIAL_ITEMS: Item[] = [
         ],
         stock: { enStock: "42", reservado: "0", disponible: "42" },
         precio: { costo: 46000, margen: 50, iva: 21, precioFinal: 83490 },
-        media: [{ foto: "/images/categories/vinos.jpg", descripcion: "" }],
       },
 
       // --- SYRAH GARNACHA ---
@@ -137,9 +133,8 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "Perfil Sensorial", value: "Fruta negra madura, pimienta y notas tostadas" },
           { key: "Crianza", value: "18 meses en barrica de roble francés" },
         ],
-        stock: { enStock: "36", reservado: "12", disponible: "24" },
+        stock: { enStock: "36", reservado: "12", disponible: "24" }, // 12 reservado: VTA-005 pending (SYGA-2012)
         precio: { costo: 44000, margen: 50, iva: 21, precioFinal: 79860 },
-        media: [{ foto: "/images/categories/vinos.jpg", descripcion: "" }],
       },
       {
         id: "VARK5T9M2Z",
@@ -160,7 +155,6 @@ export const INITIAL_ITEMS: Item[] = [
         ],
         stock: { enStock: "32", reservado: "0", disponible: "32" },
         precio: { costo: 43000, margen: 50, iva: 21, precioFinal: 78045 },
-        media: [{ foto: "/images/categories/vinos.jpg", descripcion: "" }],
       },
     ],
   },
@@ -184,13 +178,14 @@ export const INITIAL_ITEMS: Item[] = [
 
     atributosInformativos: [
       { key: "Tipo de Vino", value: "Tinto" },
-      { key: "Perfil Sensorial", value: "" },
+      { key: "Perfil Sensorial", value: "" }, // filled per variant
       { key: "Origen", value: "Mendoza, Argentina" },
-      { key: "Crianza", value: "" },
+      { key: "Crianza", value: "" }, // per variant (e.g., oak aging)
     ],
 
     variantCount: 2,
     variants: [
+      // --- malbec ---
       {
         id: "VARF2W9C6Y",
         isActive: true,
@@ -209,8 +204,9 @@ export const INITIAL_ITEMS: Item[] = [
         ],
         stock: { enStock: "38", reservado: "0", disponible: "38" },
         precio: { costo: 54000, margen: 50, iva: 21, precioFinal: 97860 },
-        media: [{ foto: "/images/categories/vinos.jpg", descripcion: "" }],
       },
+
+      // --- 2022 ---
       {
         id: "VART8R3J4L",
         isActive: true,
@@ -229,7 +225,6 @@ export const INITIAL_ITEMS: Item[] = [
         ],
         stock: { enStock: "46", reservado: "0", disponible: "46" },
         precio: { costo: 53000, margen: 50, iva: 21, precioFinal: 96090 },
-        media: [{ foto: "/images/categories/vinos.jpg", descripcion: "" }],
       },
     ],
   },
@@ -242,7 +237,7 @@ export const INITIAL_ITEMS: Item[] = [
     hasVariants: false,
     isAgrupador: false,
     sku: "VNO-CHM5HIL-BLND",
-    codigoUniversal: "7799002000001",
+    codigoUniversal: "7799002000001", // generated
     marca: "Chañarmuyo",
     proveedor: "Chañarmuyo Bodega",
     codigoProveedor: "CHM-5HIL-BLND",
@@ -252,6 +247,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenUnidad: "ml",
     stock: { enStock: "18", reservado: "0", disponible: "18" },
     atributosPrincipales: [],
+
     atributosInformativos: [
       { key: "Varietal", value: "Blend" },
       { key: "Tipo de Vino", value: "Tinto" },
@@ -261,7 +257,6 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Maridaje", value: "Asados y guisos intensos" },
     ],
     precio: { costo: 18000, margen: 50, iva: 21, precioFinal: 32580 },
-    media: [{ foto: "/images/categories/vinos.jpg", descripcion: "" }],
   },
   {
     id: "STA6B2XQ4V",
@@ -279,7 +274,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenActive: true,
     volumenCantidad: 750,
     volumenUnidad: "ml",
-    stock: { enStock: "36", reservado: "3", disponible: "33" },
+    stock: { enStock: "36", reservado: "3", disponible: "33" }, // 3 reservado: VTA-030 pending (DOMGRES-BLND)
     atributosPrincipales: [],
     atributosInformativos: [
       { key: "Varietal", value: "Blend" },
@@ -290,7 +285,6 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Maridaje", value: "Carnes rojas, parrilla, pastas con salsas intensas" },
     ],
     precio: { costo: 18000, margen: 50, iva: 21, precioFinal: 32580 },
-    media: [{ foto: "/images/categories/vinos.jpg", descripcion: "" }],
   },
   {
     id: "PARR9F3L8T",
@@ -306,20 +300,22 @@ export const INITIAL_ITEMS: Item[] = [
     volumenCantidad: 750,
     volumenUnidad: "ml",
 
+    // Matrix: Varietal × Año
     containerAtributosPrincipales: [
       { key: "Varietal", variantes: ["Blend", "Malbec", "Blanco Dulce", "Chardonnay"] },
     ],
 
     atributosInformativos: [
-      { key: "Tipo de Vino", value: "" },
-      { key: "Perfil Sensorial", value: "" },
+      { key: "Tipo de Vino", value: "" }, // per variant
+      { key: "Perfil Sensorial", value: "" }, // per variant
       { key: "Origen", value: "Maipú, Mendoza, Argentina" },
-      { key: "Crianza", value: "" },
-      { key: "Maridaje", value: "" },
+      { key: "Crianza", value: "" }, // per variant / no especificado
+      { key: "Maridaje", value: "" }, // per variant
     ],
 
     variantCount: 4,
     variants: [
+      // Blend (Malbec - Syrah)
       {
         id: "VARW4M7C2K",
         isActive: true,
@@ -340,9 +336,9 @@ export const INITIAL_ITEMS: Item[] = [
         ],
         stock: { enStock: "28", reservado: "0", disponible: "28" },
         precio: { costo: 15000, margen: 50, iva: 21, precioFinal: 27150 },
-        media: [{ foto: "/images/categories/vinos.jpg", descripcion: "" }],
       },
 
+      // Malbec
       {
         id: "VARY8Q1N5X",
         isActive: true,
@@ -362,9 +358,9 @@ export const INITIAL_ITEMS: Item[] = [
         ],
         stock: { enStock: "34", reservado: "0", disponible: "34" },
         precio: { costo: 14000, margen: 50, iva: 21, precioFinal: 25410 },
-        media: [{ foto: "/images/categories/vinos.jpg", descripcion: "" }],
       },
 
+      // Blanco Dulce
       {
         id: "VAR2T6P9R3",
         isActive: true,
@@ -384,9 +380,9 @@ export const INITIAL_ITEMS: Item[] = [
         ],
         stock: { enStock: "20", reservado: "0", disponible: "20" },
         precio: { costo: 15000, margen: 50, iva: 21, precioFinal: 27150 },
-        media: [{ foto: "/images/categories/vinos.jpg", descripcion: "" }],
       },
 
+      // Chardonnay
       {
         id: "VARC7V4M8L",
         isActive: true,
@@ -406,7 +402,6 @@ export const INITIAL_ITEMS: Item[] = [
         ],
         stock: { enStock: "26", reservado: "0", disponible: "26" },
         precio: { costo: 16000, margen: 50, iva: 21, precioFinal: 29040 },
-        media: [{ foto: "/images/categories/vinos.jpg", descripcion: "" }],
       },
     ],
   },
@@ -444,7 +439,6 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Estuche", value: "Sin estuche" },
     ],
     precio: { costo: 15000, margen: 50, iva: 21, precioFinal: 27150 },
-    media: [{ foto: "/images/categories/espumantes.jpg", descripcion: "" }],
   },
   {
     id: "STA8K5W1T7",
@@ -463,7 +457,7 @@ export const INITIAL_ITEMS: Item[] = [
     volumenCantidad: 750,
     volumenUnidad: "ml",
 
-    stock: { enStock: "24", reservado: "2", disponible: "22" },
+    stock: { enStock: "24", reservado: "2", disponible: "22" }, // 2 reservado: VTA-030 pending (DOMIMST)
     atributosPrincipales: [],
     atributosInformativos: [
       { key: "Tipo de Licor", value: "Espirituoso a base de mosto de uva" },
@@ -478,7 +472,6 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Estuche", value: "Sin estuche" },
     ],
     precio: { costo: 12000, margen: 50, iva: 21, precioFinal: 21720 },
-    media: [{ foto: "/images/categories/licores.jpg", descripcion: "" }],
   },
 
   // --- SALENTEIN (agrupador por dosaje) ---
@@ -499,16 +492,16 @@ export const INITIAL_ITEMS: Item[] = [
     containerAtributosPrincipales: [{ key: "Dosaje", variantes: ["Extra Brut", "Brut Nature", "Brut Rosé"] }],
 
     atributosInformativos: [
-      { key: "Varietal", value: "" },
+      { key: "Varietal", value: "" }, // varía por hijo cuando aplica
       { key: "Línea", value: "Espumantes" },
-      { key: "Perfil Sensorial", value: "" },
+      { key: "Perfil Sensorial", value: "" }, // por hijo
       { key: "Bodega", value: "Bodega Salentein" },
       { key: "Origen", value: "Valle de Uco, Mendoza, Argentina" },
-      { key: "Crianza", value: "" },
+      { key: "Crianza", value: "" }, // por hijo cuando aplica
       { key: "Enólogo", value: "" },
-      { key: "ABV", value: "" },
+      { key: "ABV", value: "" }, // por hijo cuando aplica
       { key: "Temperatura de Servicio", value: "6–8°C" },
-      { key: "Maridaje", value: "" },
+      { key: "Maridaje", value: "" }, // por hijo
       { key: "Estuche", value: "Sin estuche" },
     ],
 
@@ -531,9 +524,8 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "ABV", value: "" },
           { key: "Maridaje", value: "Aperitivos, mariscos, sushi" },
         ],
-        stock: { enStock: "24", reservado: "3", disponible: "21" },
+        stock: { enStock: "24", reservado: "3", disponible: "21" }, // 3 reservado: VTA-030 pending (EXBR)
         precio: { costo: 22000, margen: 50, iva: 21, precioFinal: 39930 },
-        media: [{ foto: "/images/categories/espumantes.jpg", descripcion: "" }],
       },
       {
         id: "VAR5Y3T7X2",
@@ -552,9 +544,8 @@ export const INITIAL_ITEMS: Item[] = [
           { key: "ABV", value: "" },
           { key: "Maridaje", value: "Mariscos, quesos suaves, aperitivos" },
         ],
-        stock: { enStock: "18", reservado: "6", disponible: "12" },
+        stock: { enStock: "18", reservado: "6", disponible: "12" }, // 6 reservado: VTA-005 pending (BRNA)
         precio: { costo: 24000, margen: 50, iva: 21, precioFinal: 43560 },
-        media: [{ foto: "/images/categories/espumantes.jpg", descripcion: "" }],
       },
       {
         id: "VARV9K6P4W",
@@ -575,7 +566,6 @@ export const INITIAL_ITEMS: Item[] = [
         ],
         stock: { enStock: "16", reservado: "0", disponible: "16" },
         precio: { costo: 23000, margen: 50, iva: 21, precioFinal: 41730 },
-        media: [{ foto: "/images/categories/espumantes.jpg", descripcion: "" }],
       },
     ],
   },
@@ -613,7 +603,6 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Estuche", value: "Sin estuche" },
     ],
     precio: { costo: 15000, margen: 50, iva: 21, precioFinal: 27150 },
-    media: [{ foto: "/images/categories/espumantes.jpg", descripcion: "" }],
   },
   {
     id: "STA7Q3Z5N9",
@@ -640,7 +629,6 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Estuche", value: "Sin estuche" },
     ],
     precio: { costo: 16000, margen: 50, iva: 21, precioFinal: 29040 },
-    media: [{ foto: "/images/categories/gin.jpg", descripcion: "" }],
   },
 
   {
@@ -668,7 +656,6 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Estuche", value: "Sin estuche" },
     ],
     precio: { costo: 12000, margen: 50, iva: 21, precioFinal: 21720 },
-    media: [{ foto: "/images/categories/gin.jpg", descripcion: "" }],
   },
 
   // =====================
@@ -711,7 +698,6 @@ export const INITIAL_ITEMS: Item[] = [
         atributosInformativos: [],
         stock: { enStock: "18", reservado: "0", disponible: "18" },
         precio: { costo: 11000, margen: 50, iva: 21, precioFinal: 19965 },
-        media: [{ foto: "/images/categories/gin.jpg", descripcion: "" }],
       },
       {
         id: "VART1Z9Q5C",
@@ -725,7 +711,6 @@ export const INITIAL_ITEMS: Item[] = [
         atributosInformativos: [],
         stock: { enStock: "14", reservado: "0", disponible: "14" },
         precio: { costo: 12000, margen: 50, iva: 21, precioFinal: 21720 },
-        media: [{ foto: "/images/categories/gin.jpg", descripcion: "" }],
       },
       {
         id: "VARP8N3L7M",
@@ -739,7 +724,6 @@ export const INITIAL_ITEMS: Item[] = [
         atributosInformativos: [],
         stock: { enStock: "12", reservado: "0", disponible: "12" },
         precio: { costo: 13000, margen: 50, iva: 21, precioFinal: 23595 },
-        media: [{ foto: "/images/categories/gin.jpg", descripcion: "" }],
       },
     ],
   },
@@ -773,7 +757,6 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Estuche", value: "Sin estuche" },
     ],
     precio: { costo: 10000, margen: 50, iva: 21, precioFinal: 18150 },
-    media: [{ foto: "/images/categories/gin.jpg", descripcion: "" }],
   },
   {
     id: "PAR3F4T8Q1",
@@ -813,7 +796,6 @@ export const INITIAL_ITEMS: Item[] = [
         atributosInformativos: [],
         stock: { enStock: "48", reservado: "0", disponible: "48" },
         precio: { costo: 12000, margen: 50, iva: 21, precioFinal: 21720 },
-        media: [{ foto: "/images/categories/vodka.jpg", descripcion: "" }],
       },
       {
         id: "VAR9L1P6R3",
@@ -828,7 +810,6 @@ export const INITIAL_ITEMS: Item[] = [
         atributosInformativos: [],
         stock: { enStock: "36", reservado: "0", disponible: "36" },
         precio: { costo: 13000, margen: 50, iva: 21, precioFinal: 23595 },
-        media: [{ foto: "/images/categories/vodka.jpg", descripcion: "" }],
       },
       {
         id: "VARK8Q2X4N",
@@ -843,7 +824,6 @@ export const INITIAL_ITEMS: Item[] = [
         atributosInformativos: [],
         stock: { enStock: "30", reservado: "0", disponible: "30" },
         precio: { costo: 13000, margen: 50, iva: 21, precioFinal: 23595 },
-        media: [{ foto: "/images/categories/vodka.jpg", descripcion: "" }],
       },
       {
         id: "VAR2Y7M9T5",
@@ -858,7 +838,6 @@ export const INITIAL_ITEMS: Item[] = [
         atributosInformativos: [],
         stock: { enStock: "28", reservado: "0", disponible: "28" },
         precio: { costo: 13000, margen: 50, iva: 21, precioFinal: 23595 },
-        media: [{ foto: "/images/categories/vodka.jpg", descripcion: "" }],
       },
     ],
   },
@@ -887,7 +866,6 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Estuche", value: "Sin estuche" },
     ],
     precio: { costo: 20000, margen: 50, iva: 21, precioFinal: 36300 },
-    media: [{ foto: "/images/categories/vodka.jpg", descripcion: "" }],
   },
   // --- RON: MALIBU (STANDALONE) ---
   {
@@ -914,10 +892,11 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Añejamiento", value: "No aplica" },
       { key: "ABV", value: "21%" },
       { key: "Estuche", value: "Sin estuche" },
+
+      // Extra (pedido específico)
       { key: "Sabor", value: "Coco" },
     ],
     precio: { costo: 14000, margen: 50, iva: 21, precioFinal: 25550 },
-    media: [{ foto: "/images/categories/ron.jpg", descripcion: "" }],
   },
 
   // --- TEQUILA: PATRÓN SILVER (STANDALONE) ---
@@ -947,7 +926,6 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Estuche", value: "Sin estuche" },
     ],
     precio: { costo: 26000, margen: 50, iva: 21, precioFinal: 47030 },
-    media: [{ foto: "/images/categories/tequila.jpg", descripcion: "" }],
   },
   {
     id: "PARN5Q1C4Z",
@@ -996,7 +974,6 @@ export const INITIAL_ITEMS: Item[] = [
         ],
         stock: { enStock: "48", reservado: "0", disponible: "48" },
         precio: { costo: 20000, margen: 60, iva: 21, precioFinal: 37800 },
-        media: [{ foto: "/images/categories/whisky.jpg", descripcion: "" }],
       },
       {
         id: "VARZ8T2K5M",
@@ -1015,7 +992,6 @@ export const INITIAL_ITEMS: Item[] = [
         ],
         stock: { enStock: "36", reservado: "0", disponible: "36" },
         precio: { costo: 28000, margen: 55, iva: 21, precioFinal: 52500 },
-        media: [{ foto: "/images/categories/whisky.jpg", descripcion: "" }],
       },
       {
         id: "VAR1W4F7Q9",
@@ -1034,7 +1010,6 @@ export const INITIAL_ITEMS: Item[] = [
         ],
         stock: { enStock: "24", reservado: "0", disponible: "24" },
         precio: { costo: 32000, margen: 55, iva: 21, precioFinal: 60000 },
-        media: [{ foto: "/images/categories/whisky.jpg", descripcion: "" }],
       },
       {
         id: "VARP3M8X2C",
@@ -1053,7 +1028,6 @@ export const INITIAL_ITEMS: Item[] = [
         ],
         stock: { enStock: "12", reservado: "0", disponible: "12" },
         precio: { costo: 80000, margen: 40, iva: 21, precioFinal: 136500 },
-        media: [{ foto: "/images/categories/whisky.jpg", descripcion: "" }],
       },
     ],
   },
@@ -1061,13 +1035,13 @@ export const INITIAL_ITEMS: Item[] = [
   {
     id: "STAR7N6T1L",
     isActive: true,
-    name: "Jack Daniel's Old No.7",
+    name: "Jack Daniel’s Old No.7",
     categoria: "Whiskies",
     hasVariants: false,
     isAgrupador: false,
     sku: "WHKY-JDOLD7",
     codigoUniversal: "5099873001338",
-    marca: "Jack Daniel's",
+    marca: "Jack Daniel’s",
     proveedor: "Brown-Forman",
     codigoProveedor: "JDO7",
     formatoVenta: "unidad",
@@ -1087,7 +1061,6 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Estuche", value: "Sin estuche" },
     ],
     precio: { costo: 18000, margen: 60, iva: 21, precioFinal: 34020 },
-    media: [{ foto: "/images/categories/whisky.jpg", descripcion: "" }],
   },
 
   {
@@ -1109,6 +1082,7 @@ export const INITIAL_ITEMS: Item[] = [
 
     stock: { enStock: "34", reservado: "0", disponible: "34" },
     atributosPrincipales: [],
+
     atributosInformativos: [
       { key: "Tipo de Whisky", value: "Irish" },
       { key: "Método de Elaboración", value: "Triple destilado" },
@@ -1119,7 +1093,6 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Estuche", value: "Sin estuche" },
     ],
     precio: { costo: 19000, margen: 60, iva: 21, precioFinal: 35940 },
-    media: [{ foto: "/images/categories/whisky.jpg", descripcion: "" }],
   },
 
   {
@@ -1151,9 +1124,9 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Estuche", value: "Caja" },
     ],
     precio: { costo: 22000, margen: 55, iva: 21, precioFinal: 41250 },
-    media: [{ foto: "/images/categories/whisky.jpg", descripcion: "" }],
   },
   // --- LICORES ---
+  //LICORES
   {
     id: "STA8C1P4T6",
     isActive: true,
@@ -1179,7 +1152,6 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Estuche", value: "Sin estuche" },
     ],
     precio: { costo: 14000, margen: 65, iva: 21, precioFinal: 27615 },
-    media: [{ foto: "/images/categories/licores.jpg", descripcion: "" }],
   },
   {
     id: "STAX5Z9Q3N",
@@ -1206,7 +1178,6 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Estuche", value: "Sin estuche" },
     ],
     precio: { costo: 16000, margen: 60, iva: 21, precioFinal: 30240 },
-    media: [{ foto: "/images/categories/licores.jpg", descripcion: "" }],
   },
 
   // FIREBALL
@@ -1229,6 +1200,7 @@ export const INITIAL_ITEMS: Item[] = [
 
     stock: { enStock: "24", reservado: "0", disponible: "24" },
     atributosPrincipales: [],
+
     atributosInformativos: [
       { key: "Tipo de Licor", value: "Licor de whisky y canela" },
       { key: "Origen", value: "Canadá" },
@@ -1236,7 +1208,6 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Estuche", value: "Sin estuche" },
     ],
     precio: { costo: 13000, margen: 65, iva: 21, precioFinal: 25650 },
-    media: [{ foto: "/images/categories/licores.jpg", descripcion: "" }],
   },
 
   // COINTREAU
@@ -1265,6 +1236,5 @@ export const INITIAL_ITEMS: Item[] = [
       { key: "Estuche", value: "Sin estuche" },
     ],
     precio: { costo: 20000, margen: 55, iva: 21, precioFinal: 37500 },
-    media: [{ foto: "/images/categories/licores.jpg", descripcion: "" }],
   },
 ]

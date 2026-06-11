@@ -76,8 +76,8 @@ function buildItemMetaMap(items: Item[]): Map<string, ItemMeta> {
         map.set(sku, {
           marca: v.marca ?? item.marca,
           categoria: item.categoria,
-          // Variant-level media[0].foto first, then legacy foto/imagenUrl
-          thumbnail: v.media?.[0]?.foto || (v as any).foto || item.media?.[0]?.foto || item.imagenUrl,
+          // Variant-level foto first, then parent imagenUrl
+          thumbnail: v.foto || item.imagenUrl,
           tags: v.atributosPrincipales?.map((a) => String(a.value)).filter(Boolean),
         })
       }
@@ -85,7 +85,7 @@ function buildItemMetaMap(items: Item[]): Map<string, ItemMeta> {
       map.set(item.sku, {
         marca: item.marca,
         categoria: item.categoria,
-        thumbnail: item.media?.[0]?.foto || item.imagenUrl,
+        thumbnail: item.imagenUrl,
         tags: item.atributosPrincipales?.map((a) => String(a.value)).filter(Boolean),
       })
     }
