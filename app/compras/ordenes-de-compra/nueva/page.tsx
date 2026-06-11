@@ -30,7 +30,7 @@ import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 import { PROVEEDORES } from "@/lib/data/proveedores"
 import { useOrdenesDeCompra } from "@/hooks/use-ordenes-de-compra"
 import { useItems } from "@/hooks/use-items"
-import { getCategoryImage } from "@/lib/utils/category-images"
+import { getItemPhoto } from "@/lib/utils/category-images"
 import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import type { ItemVariant, VentaItem, VentaCustomCharge } from "@/lib/types"
 
@@ -706,7 +706,7 @@ export default function NuevaOrdenDeCompraPage() {
                             <div className="flex items-center gap-3 px-4 py-3">
                               <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                                 <Image
-                                  src={getCategoryImage(display.categoria || "") || "/placeholder.svg"}
+                                  src={getItemPhoto(display.resolved as any)}
                                   alt={display.name}
                                   width={32}
                                   height={32}
@@ -1160,7 +1160,7 @@ export default function NuevaOrdenDeCompraPage() {
               <div className="flex items-center gap-3 px-6 pt-6 pb-4 border-b border-slate-100">
                 <div className="w-10 h-10 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0 relative">
                   <Image
-                    src={getCategoryImage(display.categoria || "") || "/placeholder.svg"}
+                    src={getItemPhoto(display.resolved as any)}
                     alt={display.name}
                     width={40}
                     height={40}
@@ -1438,7 +1438,7 @@ export default function NuevaOrdenDeCompraPage() {
                             {selState.indeterminate && <Minus className="w-3 h-3 text-slate-800" />}
                           </button>
                           <div className="w-9 h-9 rounded bg-slate-100 overflow-hidden flex-shrink-0">
-                            <Image src={getCategoryImage(item.categoria || "") || "/placeholder.svg"} alt={item.name} width={36} height={36} className="w-full h-full object-cover" />
+                            <Image src={getItemPhoto(item)} alt={item.name} width={36} height={36} className="w-full h-full object-cover" />
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
@@ -1479,7 +1479,7 @@ export default function NuevaOrdenDeCompraPage() {
                                 {vState.checked && <Check className="w-3 h-3 text-slate-800" />}
                               </button>
                               <div className="w-8 h-8 rounded bg-slate-100 overflow-hidden flex-shrink-0">
-                                <Image src={getCategoryImage(variant.categoria || item.categoria || "") || "/placeholder.svg"} alt={variant.name || item.name} width={32} height={32} className="w-full h-full object-cover" />
+                                <Image src={getItemPhoto((variant as any).media ? variant as any : item)} alt={variant.name || item.name} width={32} height={32} className="w-full h-full object-cover" />
                               </div>
                               <div className="min-w-0">
                                 <div className="flex items-center gap-1.5">

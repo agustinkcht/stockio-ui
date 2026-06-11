@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { Minus, Plus, Check, X } from "lucide-react"
-import { getCategoryImage } from "@/lib/utils/category-images"
+import { getItemPhoto } from "@/lib/utils/category-images"
 
 interface StockEditModalProps {
   isOpen: boolean
@@ -13,6 +13,7 @@ interface StockEditModalProps {
   itemName?: string
   itemMarca?: string
   itemCategoria?: string
+  itemMedia?: { photo: string; descripcion: string }[]
 }
 
 export function StockEditModal({
@@ -24,6 +25,7 @@ export function StockEditModal({
   itemName,
   itemMarca,
   itemCategoria,
+  itemMedia,
 }: StockEditModalProps) {
   const [enStock, setEnStock] = useState(initialTotal)
   const [operation, setOperation] = useState<"add" | "remove" | "set">("add")
@@ -90,11 +92,11 @@ export function StockEditModal({
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               {(itemName || itemCategoria) && (
-                <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
+                <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 shrink-0 overflow-hidden">
                   <img
-                    src={getCategoryImage(itemCategoria) || "/placeholder.svg"}
-                    alt={itemCategoria || ""}
-                    className="w-6 h-6 object-contain opacity-70"
+                    src={getItemPhoto({ media: itemMedia })}
+                    alt={itemName || ""}
+                    className="w-full h-full object-cover"
                   />
                 </div>
               )}

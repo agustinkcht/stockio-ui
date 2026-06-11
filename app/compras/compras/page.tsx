@@ -25,7 +25,7 @@ import {
   Copy,
 } from "lucide-react"
 import type { Compra, CompraItem, VentaItem } from "@/lib/types"
-import { getCategoryImage } from "@/lib/utils/category-images"
+import { getItemPhoto } from "@/lib/utils/category-images"
 import { useCompras } from "@/hooks/use-compras"
 import { ProveedorModal } from "@/components/compras/proveedor-modal"
 import { VentaItemDetailModal } from "@/components/ventas/venta-item-detail-modal"
@@ -928,7 +928,7 @@ export default function ComprasPage() {
                                             className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden shadow-sm"
                                             style={{ zIndex: 10 - idx }}
                                           >
-                                            <img src={getCategoryImage(it.categoria ?? "") || "/placeholder.svg"} alt={it.categoria || "Producto"} className="w-5 h-5 object-contain opacity-70" />
+                                            <img src={getItemPhoto(it as any)} alt={it.name || "Producto"} className="w-full h-full object-cover" />
                                           </div>
                                         ))}
                                       </div>
@@ -940,7 +940,7 @@ export default function ComprasPage() {
                                       onClick={(e) => { e.stopPropagation(); setViewingItem(firstItem as unknown as VentaItem) }}
                                     >
                                       <div className="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
-                                        <img src={getCategoryImage(firstItem.categoria ?? "") || "/placeholder.svg"} alt={firstItem.categoria || "Producto"} className="w-5 h-5 object-contain opacity-70" />
+                                        <img src={getItemPhoto(firstItem as any)} alt={firstItem.name || "Producto"} className="w-full h-full object-cover" />
                                       </div>
                                       <div className="min-w-0 flex flex-col">
                                         <span className="text-sm font-medium text-slate-800 truncate">{firstItem.name}</span>
@@ -984,7 +984,7 @@ export default function ComprasPage() {
                                           onClick={(e) => { e.stopPropagation(); setViewingItem(item as unknown as VentaItem) }}
                                         >
                                           <div className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
-                                            <img src={getCategoryImage(item.categoria ?? "") || "/placeholder.svg"} alt={item.categoria || "Producto"} className="w-4 h-4 object-contain opacity-70" />
+                                            <img src={getItemPhoto(item as any)} alt={item.name || "Producto"} className="w-full h-full object-cover" />
                                           </div>
                                           <div className="min-w-0 flex flex-col">
                                             <span className="text-sm font-medium text-slate-800 truncate">{item.name}</span>

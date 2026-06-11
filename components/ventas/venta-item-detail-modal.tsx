@@ -5,7 +5,7 @@ import Image from "next/image"
 import { X, Copy, Check } from "lucide-react"
 import type { VentaItem } from "@/lib/types"
 import { useItems } from "@/hooks/use-items"
-import { getCategoryImage } from "@/lib/utils/category-images"
+import { getItemPhoto } from "@/lib/utils/category-images"
 import { getVentaItemDisplay, lookupLiveItemBySku } from "@/lib/utils/venta-item-lookup"
 
 interface VentaItemDetailModalProps {
@@ -53,8 +53,8 @@ export function VentaItemDetailModal({ ventaItem, onClose }: VentaItemDetailModa
   const codigoProveedor = r?.codigoProveedor || p?.codigoProveedor || ""
   const descripcion = r?.descripcion || p?.descripcion || ""
 
-  // Back side media: use category image as thumbnail
-  const imageSrc = getCategoryImage(categoria) || "/placeholder.svg"
+  // Back side media: use item's own photo or fall back to default
+  const imageSrc = getItemPhoto((r?.media ? r : p) as any)
 
   // Atributos informativos — merge parent + variant overrides
   const atributosInformativos = (() => {

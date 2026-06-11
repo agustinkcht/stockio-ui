@@ -2,7 +2,7 @@
 
 import type { Item, ItemVariant, SortFactorConfig, FilterConfig } from "@/lib/types"
 import { Plus, ChevronDown, ChevronRight, Copy, Minus, MoreVertical } from "lucide-react"
-import { getCategoryImage } from "@/lib/utils/category-images"
+import { getItemPhoto } from "@/lib/utils/category-images"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -319,7 +319,7 @@ export function PriceGrid({
             ) : (
               <div className="w-9 h-9 shrink-0 rounded-md bg-slate-100 overflow-hidden flex items-center justify-center">
                 <Image
-                  src={getCategoryImage(item.categoria || "")}
+                  src={getItemPhoto(item)}
                   alt={item.name}
                   width={36}
                   height={36}

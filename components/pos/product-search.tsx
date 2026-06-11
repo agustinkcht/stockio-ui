@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from "react"
 import { Search, Package, Plus, ChevronRight, ChevronLeft } from "lucide-react"
 import Image from "next/image"
-import { getCategoryImage } from "@/lib/utils/category-images"
+import { getItemPhoto } from "@/lib/utils/category-images"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import type { Item, ItemVariant } from "@/lib/types"
@@ -127,11 +127,11 @@ export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-muted/30 to-muted/60 flex items-center justify-center overflow-hidden flex-shrink-0 relative">
                 <Image
-                  src={getCategoryImage(parentItem.categoria) || "/placeholder.svg"}
-                  alt={parentItem.name}
-                  fill
-                  className="object-cover"
-                  sizes="44px"
+                  src={getItemPhoto(parentItem)}
+                    alt={parentItem.name}
+                    fill
+                    className="object-cover"
+                    sizes="44px"
                 />
               </div>
               <div>
@@ -161,7 +161,7 @@ export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
                 >
                   <div className="w-10 h-10 rounded-md bg-gradient-to-br from-muted/30 to-muted/60 flex items-center justify-center overflow-hidden flex-shrink-0 relative">
                     <Image
-                      src={getCategoryImage(parentItem.categoria) || "/placeholder.svg"}
+                      src={getItemPhoto((variant as any).media ? variant as any : parentItem)}
                       alt={variant.name}
                       fill
                       className="object-cover"
@@ -219,7 +219,7 @@ export function ProductSearch({ items, onAddToCart }: ProductSearchProps) {
                   }}
                 >
                   <div className="w-11 h-11 rounded-md bg-gradient-to-br from-muted/30 to-muted/60 flex items-center justify-center overflow-hidden flex-shrink-0 relative">
-                    <Image src={getCategoryImage(item.categoria) || "/placeholder.svg"} alt={item.name} fill className="object-cover" sizes="44px" />
+                    <Image src={getItemPhoto(item)} alt={item.name} fill className="object-cover" sizes="44px" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">

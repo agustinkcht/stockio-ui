@@ -709,6 +709,7 @@ export function ItemCard({
         itemName={item.nombre}
         itemMarca={item.marca || parentItem?.marca}
         itemCategoria={item.categoria || parentItem?.categoria}
+        itemMedia={item.media || parentItem?.media}
       />
     </div>
   )

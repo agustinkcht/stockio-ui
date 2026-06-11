@@ -3,7 +3,7 @@
 import type { Item, ItemVariant, SortFactorConfig, FilterConfig } from "@/lib/types"
 import { ChevronDown, ChevronRight, Minus, Plus } from "lucide-react"
 import { BulkStockModal } from "@/components/modals/bulk-stock-modal"
-import { getCategoryImage } from "@/lib/utils/category-images"
+import { getItemPhoto } from "@/lib/utils/category-images"
 import Image from "next/image"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useRef, useState, useEffect, useMemo } from "react"
@@ -118,7 +118,7 @@ export function StockListGrid({
     // Use the same getSelectionState signature as price-grid
     const selectionState = getSelectionState(item, isChild)
     const { total, reservado, disponible } = getItemStock(item)
-    const imgSrc = getCategoryImage((item as any).categoria || "")
+    const imgSrc = getItemPhoto(item as any)
 
     return (
       <div key={itemId}>

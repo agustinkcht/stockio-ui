@@ -29,7 +29,7 @@ import {
   Copy,
 } from "lucide-react"
 import type { Venta, VentaItem, PaymentMethod } from "@/lib/types"
-import { getCategoryImage } from "@/lib/utils/category-images"
+import { getItemPhoto } from "@/lib/utils/category-images"
 import { getVentaItemDisplay } from "@/lib/utils/venta-item-lookup"
 import { VentaItemDetailModal } from "@/components/ventas/venta-item-detail-modal"
 import { ClienteModal } from "@/components/ventas/cliente-modal"
@@ -1062,7 +1062,7 @@ export default function VentasPage() {
                                         className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden shadow-sm"
                                         style={{ zIndex: 10 - idx }}
                                       >
-                                        <img src={getCategoryImage(it.categoria) || "/placeholder.svg"} alt={it.categoria || "Producto"} className="w-5 h-5 object-contain opacity-70" />
+                                        <img src={getItemPhoto(it as any)} alt={it.name || "Producto"} className="w-full h-full object-cover" />
                                       </div>
                                     ))}
                                   </div>
@@ -1075,7 +1075,7 @@ export default function VentasPage() {
                                   className="flex items-center gap-3 min-w-0 text-left rounded hover:bg-slate-100/70 transition-colors -m-0.5 p-0.5 cursor-pointer"
                                 >
                                   <div className="w-9 h-9 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
-                                    <img src={getCategoryImage(firstItemDisplay.categoria) || "/placeholder.svg"} alt={firstItemDisplay.categoria || "Producto"} className="w-5 h-5 object-contain opacity-70" />
+                                    <img src={getItemPhoto(firstItemDisplay.resolved as any)} alt={firstItemDisplay.name || "Producto"} className="w-full h-full object-cover" />
                                   </div>
                                   <div className="min-w-0 flex flex-col">
                                     <div className="flex items-center gap-1.5 min-w-0">
@@ -1138,7 +1138,7 @@ export default function VentasPage() {
                                       className="w-full px-3 py-2 flex items-start gap-3 text-left rounded hover:bg-slate-100/70 transition-colors cursor-pointer"
                                     >
                                       <div className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
-                                        <img src={getCategoryImage(itemDisplay.categoria) || "/placeholder.svg"} alt={itemDisplay.categoria || "Producto"} className="w-4 h-4 object-contain opacity-70" />
+                                        <img src={getItemPhoto(itemDisplay.resolved as any)} alt={itemDisplay.name || "Producto"} className="w-full h-full object-cover" />
                                       </div>
                                       <div className="min-w-0 flex flex-col">
                                         <div className="flex items-center gap-1.5 min-w-0">

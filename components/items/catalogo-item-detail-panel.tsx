@@ -3560,6 +3560,7 @@ export function CatalogoItemDetailPanel({
         itemName={selectedItem?.nombre}
         itemMarca={selectedItem?.marca}
         itemCategoria={selectedItem?.categoria}
+        itemMedia={selectedItem?.media}
       />
 
       {/* Expanded Matrix - Precio Modal */}

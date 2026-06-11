@@ -18,7 +18,7 @@ import { useSidebar } from "@/hooks/use-sidebar"
 
 import { SIDEBAR_ITEMS, BOTTOM_SIDEBAR_ITEMS } from "@/lib/constants"
 import type { Item, FilterConfig, SortFactorConfig } from "@/lib/types"
-import { getCategoryImage } from "@/lib/utils/category-images"
+import { getItemPhoto } from "@/lib/utils/category-images"
 import { searchItems, filterItems, getUniqueCategorias, getUniqueMarcas } from "@/lib/utils/item-utils"
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -752,7 +752,7 @@ export default function CatalogoPage() {
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
-                <img src={getCategoryImage(itemToDelete?.categoria) || "/placeholder.svg"} alt={itemToDelete?.categoria || ""} className="w-6 h-6 object-contain opacity-70" />
+                <img src={getItemPhoto(itemToDelete as any)} alt={itemToDelete?.nombre || ""} className="w-full h-full object-cover" />
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-slate-900 truncate">{itemToDelete?.nombre}</p>
