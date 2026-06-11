@@ -692,14 +692,26 @@ export function useItems() {
     setHasUnsavedEdits(false)
   }
 
-  // Force save current items state to localStorage (for audit mode bulk saves)
-  // Optionally accepts an explicit items array (e.g. when called right after setItems)
+  // Force save current items state to localStorage.
+  // Uses the setItems functional updater to guarantee we read the latest state,
+  // bypassing the stale-closure problem when called synchronously after editField.
   const forceSaveItems = (overrideItems?: Item[]) => {
-    const validItems = (overrideItems ?? items).filter(isValidItem)
-    saveItems(validItems)
-    setEditedItem(null)
-    setLastUndoneEdit(null)
-    setHasUnsavedEdits(false)
+    if (overrideItems) {
+      const validItems = overrideItems.filter(isValidItem)
+      saveItems(validItems)
+      setEditedItem(null)
+      setLastUndoneEdit(null)
+      setHasUnsavedEdits(false)
+    } else {
+      setItems((latest) => {
+        const validItems = latest.filter(isValidItem)
+        saveItems(validItems)
+        return latest // no change to state, just a read
+      })
+      setEditedItem(null)
+      setLastUndoneEdit(null)
+      setHasUnsavedEdits(false)
+    }
   }
 
   // Bulk save stock changes (for audit mode)
