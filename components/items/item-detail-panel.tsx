@@ -240,7 +240,8 @@ export function ItemDetailPanel({
 
     if (isNaN(inputValue) || inputValue < 0) return
 
-    const currentValue = Number.parseInt(selectedItem?.stock?.[stockType] || "0")
+    const stockField = stockType === "total" ? "enStock" : stockType
+    const currentValue = Number.parseInt(selectedItem?.stock?.[stockField] || "0")
     let newValue = currentValue
 
     if (modification.operation === "agregar") {
@@ -2461,7 +2462,7 @@ export function ItemDetailPanel({
                       </span>
                       <div className="flex flex-col items-center gap-0.5 mt-2">
                         <span className="text-lg font-bold text-slate-600 tabular-nums">
-                          {Number.parseInt(selectedItem?.stock?.total || "0")}
+                          {Number.parseInt(selectedItem?.stock?.enStock || "0")}
                         </span>
                         <span className="text-[8px] text-slate-400 uppercase tracking-wider">Total</span>
                       </div>
@@ -2499,7 +2500,7 @@ export function ItemDetailPanel({
                               onClick={(e) => {
                                 e.stopPropagation()
                                 if (selectedItem?.sku) {
-                                  const current = Number.parseInt(selectedItem?.stock?.total || "0")
+                                  const current = Number.parseInt(selectedItem?.stock?.enStock || "0")
                                   updateStock(selectedItem.sku, "total", Math.max(0, current - 1))
                                 }
                               }}
@@ -2510,14 +2511,14 @@ export function ItemDetailPanel({
                           </>
                         )}
                         <span className="text-base font-semibold text-foreground tabular-nums min-w-[2rem] text-center">
-                          {Number.parseInt(selectedItem?.stock?.total || "0")}
+                          {Number.parseInt(selectedItem?.stock?.enStock || "0")}
                         </span>
                         {activeStockEdit === "total" && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
                               if (selectedItem?.sku) {
-                                const current = Number.parseInt(selectedItem?.stock?.total || "0")
+                                const current = Number.parseInt(selectedItem?.stock?.enStock || "0")
                                 updateStock(selectedItem.sku, "total", current + 1)
                               }
                             }}
@@ -2559,7 +2560,7 @@ export function ItemDetailPanel({
                           <span className="text-sm font-medium text-muted-foreground/60 tabular-nums min-w-[2.5rem] text-right">
                             {stockModification.total.value
                               ? (() => {
-                                  const current = Number.parseInt(selectedItem?.stock?.total || "0")
+                                  const current = Number.parseInt(selectedItem?.stock?.enStock || "0")
                                   const value = Number.parseInt(stockModification.total.value || "0")
                                   switch (stockModification.total.operation) {
                                     case "agregar": return Math.max(0, current + value)
@@ -2568,7 +2569,7 @@ export function ItemDetailPanel({
                                     default: return current
                                   }
                                 })()
-                              : Number.parseInt(selectedItem?.stock?.total || "0")
+                              : Number.parseInt(selectedItem?.stock?.enStock || "0")
                             }
                           </span>
                           <button
@@ -2712,7 +2713,7 @@ export function ItemDetailPanel({
                     <div className="flex items-center justify-between px-4 py-3">
                       <div className="text-xs font-medium text-emerald-700 uppercase tracking-wide">Disponible</div>
                       <span className="text-xl font-bold text-emerald-600 tabular-nums">
-                        {Number.parseInt(selectedItem?.stock?.total || "0") -
+                        {Number.parseInt(selectedItem?.stock?.enStock || "0") -
                           Number.parseInt(selectedItem?.stock?.reservado || "0")}
                       </span>
                     </div>
