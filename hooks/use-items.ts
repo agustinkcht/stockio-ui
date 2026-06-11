@@ -6,6 +6,7 @@ import type { Item } from "@/lib/types"
 import { TEMPLATES } from "@/lib/constants"
 import { generateStandaloneSKU, generateParentSKU, generateUniqueSKU } from "@/lib/utils/sku-generator"
 import { generateId } from "@/lib/utils/item-utils"
+import { getCategoryImage } from "@/lib/utils/category-images"
 
 interface DeletedItemWithPosition {
   item: Item
@@ -65,12 +66,24 @@ export function useItems() {
     return stock
   }
 
-  // Recursively migrate all stock fields in an item array
+  // Backfill media from category image for items/variants that pre-date the media field
+  const migrateMedia = (item: any, categoria?: string): any[] => {
+    if (Array.isArray(item.media)) return item.media
+    const photo = getCategoryImage(categoria || item.categoria)
+    return [{ photo, descripcion: "" }]
+  }
+
+  // Recursively migrate all stock fields and media in an item array
   const migrateItems = (parsedItems: any[]): any[] =>
     parsedItems.map((item) => ({
       ...item,
       stock: migrateStock(item.stock),
-      variants: item.variants?.map((v: any) => ({ ...v, stock: migrateStock(v.stock) })),
+      media: migrateMedia(item),
+      variants: item.variants?.map((v: any) => ({
+        ...v,
+        stock: migrateStock(v.stock),
+        media: migrateMedia(v, item.categoria),
+      })),
     }))
 
   // Helper: read items from localStorage and set state (used on mount and on sync events)
