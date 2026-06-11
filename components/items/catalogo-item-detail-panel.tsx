@@ -275,6 +275,16 @@ export function CatalogoItemDetailPanel({
   const [descripcionValue, setDescripcionValue] = useState(selectedItem.descripcion || "")
   const [editingName, setEditingName] = useState(false)
   const [nameValue, setNameValue] = useState(selectedItem.name || "")
+
+  // Card edit modals
+  const [isEditNombreModalOpen, setIsEditNombreModalOpen] = useState(false)
+  const [modalNombreValue, setModalNombreValue] = useState("")
+  const [isEditSkuModalOpen, setIsEditSkuModalOpen] = useState(false)
+  const [modalSkuValue, setModalSkuValue] = useState("")
+  const [isEditCodigoUniversalModalOpen, setIsEditCodigoUniversalModalOpen] = useState(false)
+  const [modalCodigoUniversalValue, setModalCodigoUniversalValue] = useState("")
+  const [isEditDescripcionModalOpen, setIsEditDescripcionModalOpen] = useState(false)
+  const [modalDescripcionValue, setModalDescripcionValue] = useState("")
   const [proveedorDropdownOpen, setProveedorDropdownOpen] = useState(false)
 
   // Media photos state - initialize from item's media array
@@ -1036,6 +1046,49 @@ export function CatalogoItemDetailPanel({
     }
   }
 
+  const handleSaveNombreModal = () => {
+    const trimmed = modalNombreValue.trim()
+    if (trimmed && trimmed !== (nameValue || selectedItem.name)) {
+      setNameValue(trimmed)
+      onFieldChange(selectedItem.id, "name", trimmed)
+      onSaveNow?.()
+    }
+    setIsEditNombreModalOpen(false)
+  }
+
+  const handleSaveSkuModal = () => {
+    const trimmed = modalSkuValue.trim()
+    if (!trimmed) { setIsEditSkuModalOpen(false); return }
+    setSkuValue(trimmed)
+    if (isChildItem && fatherItem) {
+      const updatedVariants = fatherItem.variants?.map((v: any) =>
+        v.id === selectedItem.id ? { ...v, skuSuffix: trimmed } : v
+      )
+      if (updatedVariants) {
+        onFieldChange(fatherItem.id, "variants", updatedVariants)
+        onSaveNow?.()
+      }
+    } else {
+      onFieldChange(selectedItem.id, "sku", trimmed)
+      onSaveNow?.()
+    }
+    setIsEditSkuModalOpen(false)
+  }
+
+  const handleSaveCodigoUniversalModal = () => {
+    setCodigoUniversalValue(modalCodigoUniversalValue)
+    onFieldChange(selectedItem.id, "codigoUniversal", modalCodigoUniversalValue)
+    onSaveNow?.()
+    setIsEditCodigoUniversalModalOpen(false)
+  }
+
+  const handleSaveDescripcionModal = () => {
+    setDescripcionValue(modalDescripcionValue)
+    onFieldChange(selectedItem.id, "descripcion", modalDescripcionValue)
+    onSaveNow?.()
+    setIsEditDescripcionModalOpen(false)
+  }
+
   // Removed handleUndo, handleRedo, handleSave, handleDiscard, saveToHistory, applyState as they are replaced by onFieldChange
   // const handleUndo = () => { ... }
   // const handleRedo = () => { ... }
@@ -1180,38 +1233,17 @@ export function CatalogoItemDetailPanel({
 
                     <div className="mb-0 mt-6">
                       <div className="flex items-center justify-center gap-2 mt-[-20px] mb-0 flex-wrap group/title">
-                        {!isChildItem && editingName ? (<input
-                          type="text"
-                          value={nameValue}
-                          onChange={(e) => setNameValue(e.target.value)}
-                          onBlur={handleNameBlur}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") (e.target as HTMLInputElement).blur()
-                            if (e.key === "Escape") {
-                              setNameValue(selectedItem.name || "")
-                              setEditingName(false)
-                            }
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                          className="font-semibold text-white text-xl bg-transparent border-b border-white/40 focus:border-white outline-none text-center w-full max-w-[250px]"
-                          autoFocus
-                        />
-                        ) : (
                           <div
-                            className={`flex items-center gap-1.5 ${!isChildItem ? "cursor-pointer" : ""}`}
+                            className="flex items-center gap-1.5 cursor-pointer"
                             onClick={(e) => {
-                              if (!isChildItem) {
-                                e.stopPropagation()
-                                setEditingName(true)
-                              }
+                              e.stopPropagation()
+                              setModalNombreValue(nameValue || selectedItem.name || "")
+                              setIsEditNombreModalOpen(true)
                             }}
                           >
                             <h2 className="font-semibold text-white text-2xl text-center">{nameValue || selectedItem.name}</h2>
-                            {!isChildItem && (
-                              <Pencil className="w-3.5 h-3.5 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity" />
-                            )}
+                            <Pencil className="w-3.5 h-3.5 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity" />
                           </div>
-                        )}
                         {isChildItem && selectedItem.atributosPrincipales && selectedItem.atributosPrincipales.length > 0 && (
                           <div className="flex items-center gap-1.5 mt-0.5">
                             {selectedItem.atributosPrincipales.map((attr, i) => (
@@ -1231,77 +1263,32 @@ export function CatalogoItemDetailPanel({
                         <div className="flex items-center justify-center gap-1.5 mt-1.5 group/sku">
                           <span className="text-[10px] text-slate-500 uppercase tracking-wider">SKU</span>
                           {isChildItem && fatherItem ? (
-                            <div className="flex items-center gap-0">
+                            <div
+                              className="flex items-center gap-0 cursor-pointer group/skuval"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setModalSkuValue(selectedItem.skuSuffix || selectedItem.sku || "")
+                                setIsEditSkuModalOpen(true)
+                              }}
+                            >
                               <span className="text-xs font-light text-slate-500 tracking-wide">
                                 {fatherItem.skuPrefix || fatherItem.sku || ""}-
                               </span>
-                              {editingSku ? (
-                                <input
-                                  type="text"
-                                  value={skuValue}
-                                  onChange={(e) => setSkuValue(e.target.value)}
-                                  onBlur={() => {
-                                    setEditingSku(false)
-                                    const newSuffix = skuValue
-                                    const updatedVariants = fatherItem.variants?.map((v: any) =>
-                                      v.id === selectedItem.id ? { ...v, skuSuffix: newSuffix } : v
-                                    )
-                                    if (updatedVariants && onFieldChange) {
-                                      onFieldChange(fatherItem.id, "variants", updatedVariants)
-                                    }
-                                  }}
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter") (e.target as HTMLInputElement).blur()
-                                    if (e.key === "Escape") {
-                                      setSkuValue(selectedItem.skuSuffix || selectedItem.sku || "")
-                                      setEditingSku(false)
-                                    }
-                                  }}
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="text-xs font-light text-slate-300 tracking-wide bg-transparent border-b border-slate-600 focus:border-slate-400 outline-none w-auto max-w-[80px]"
-                                  autoFocus
-                                />
-                              ) : (
-                                <span
-                                  className="text-xs font-light text-slate-400 tracking-wide cursor-pointer hover:text-slate-300 transition-colors"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    setSkuValue(selectedItem.skuSuffix || selectedItem.sku || "")
-                                    setEditingSku(true)
-                                  }}
-                                >
-                                  {selectedItem.skuSuffix || selectedItem.sku || ""}
-                                </span>
-                              )}
+                              <span className="text-xs font-light text-slate-400 tracking-wide hover:text-slate-300 transition-colors">
+                                {selectedItem.skuSuffix || selectedItem.sku || ""}
+                              </span>
                             </div>
                           ) : (
-                            <>
-                              {editingSku ? (
-                                <input
-                                  type="text"
-                                  value={skuValue}
-                                  onChange={(e) => setSkuValue(e.target.value)}
-                                  onBlur={handleSkuBlur}
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter") (e.target as HTMLInputElement).blur()
-                                    if (e.key === "Escape") {
-                                      setSkuValue(selectedItem.sku || "")
-                                      setEditingSku(false)
-                                    }
-                                  }}
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="text-xs font-light text-slate-300 tracking-wide bg-transparent border-b border-slate-600 focus:border-slate-400 outline-none text-center w-auto max-w-[120px]"
-                                  autoFocus
-                                />
-                              ) : (
-                                <span
-                                  className="text-xs font-light text-slate-400 tracking-wide cursor-pointer hover:text-slate-300 transition-colors"
-                                  onClick={(e) => { e.stopPropagation(); setEditingSku(true) }}
-                                >
-                                  {skuValue || selectedItem.sku}
-                                </span>
-                              )}
-                            </>
+                            <span
+                              className="text-xs font-light text-slate-400 tracking-wide cursor-pointer hover:text-slate-300 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setModalSkuValue(skuValue || selectedItem.sku || "")
+                                setIsEditSkuModalOpen(true)
+                              }}
+                            >
+                              {skuValue || selectedItem.sku}
+                            </span>
                           )}
                           <button
                             onClick={(e) => { e.stopPropagation(); handleCopySku() }}
@@ -1549,31 +1536,18 @@ export function CatalogoItemDetailPanel({
                           </div>
                         </div>
                         <div className="flex items-center gap-1.5 group/codigoVal">
-                          {editingCodigoUniversal ? (
-                            <input
-                              type="text"
-                              value={codigoUniversalValue}
-                              onChange={(e) => setCodigoUniversalValue(e.target.value)}
-                              onBlur={handleCodigoUniversalBlur}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") (e.target as HTMLInputElement).blur()
-                                if (e.key === "Escape") {
-                                  setCodigoUniversalValue(selectedItem.codigoUniversal || "")
-                                  setEditingCodigoUniversal(false)
-                                }
-                              }}
-                              onClick={(e) => e.stopPropagation()}
-                              className="text-sm font-light text-slate-300 tracking-wide bg-transparent border-b border-slate-600 focus:border-slate-400 outline-none w-auto max-w-[180px]"
-                              autoFocus
-                            />
-                          ) : (
-                            <span
-                              className="text-sm font-light text-slate-300 tracking-wide cursor-pointer hover:text-slate-100 transition-colors"
-                              onClick={(e) => { e.stopPropagation(); setEditingCodigoUniversal(true) }}
-                            >
-                              {codigoUniversalValue || selectedItem.codigoUniversal || "N/A"}
-                            </span>
-                          )}
+                          <span
+                            className="text-sm font-light text-slate-300 tracking-wide cursor-pointer hover:text-slate-100 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setModalCodigoUniversalValue(codigoUniversalValue || selectedItem.codigoUniversal || "")
+                              setIsEditCodigoUniversalModalOpen(true)
+                            }}
+                          >
+                            {codigoUniversalValue || selectedItem.codigoUniversal || (
+                              <span className="text-slate-500 italic">Agregar código...</span>
+                            )}
+                          </span>
                           <button
                             onClick={(e) => { e.stopPropagation(); handleCopyCodigoUniversal() }}
                             className="text-slate-500 hover:text-slate-300 transition-colors p-0.5"
@@ -1671,32 +1645,18 @@ export function CatalogoItemDetailPanel({
                         Descripción
                       </h3>
                       <div className="flex-1">
-                        {editingDescripcion ? (
-                          <textarea
-                            value={descripcionValue}
-                            onChange={(e) => setDescripcionValue(e.target.value)}
-                            onBlur={handleDescripcionBlur}
-                            onClick={(e) => e.stopPropagation()}
-                            className="w-full min-h-[100px] max-h-[200px] px-3 py-2 bg-slate-800/30 rounded-lg text-slate-200 focus:outline-none resize-none text-sm placeholder:text-slate-500 overflow-hidden"
-                            placeholder="Agregar descripción del producto..."
-                            autoFocus
-                            style={{ overflow: 'hidden' }}
-                            onInput={(e) => {
-                              const target = e.target as HTMLTextAreaElement;
-                              target.style.height = 'auto';
-                              target.style.height = Math.min(target.scrollHeight, 200) + 'px';
-                            }}
-                          />
-                        ) : (
-                          <div
-                            onClick={(e) => { e.stopPropagation(); setEditingDescripcion(true) }}
-                            className="w-full min-h-[100px] px-3 py-2 bg-slate-800/30 rounded-lg text-slate-200 cursor-text hover:bg-slate-800/40 transition-colors text-sm"
-                          >
-                            {descripcionValue || (
-                              <span className="text-slate-500">Click para agregar descripción...</span>
-                            )}
-                          </div>
-                        )}
+                        <div
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setModalDescripcionValue(descripcionValue)
+                            setIsEditDescripcionModalOpen(true)
+                          }}
+                          className="w-full min-h-[100px] px-3 py-2 bg-slate-800/30 rounded-lg text-slate-200 cursor-pointer hover:bg-slate-800/40 transition-colors text-sm"
+                        >
+                          {descripcionValue || (
+                            <span className="text-slate-500 hover:text-slate-400 transition-colors">Agregar descripción...</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -3799,6 +3759,226 @@ export function CatalogoItemDetailPanel({
         containerAtributosPrincipales={containerAtributosPrincipales}
         existingVariants={selectedItem?.variants || []}
       />
+
+      {/* Editar Nombre Modal */}
+      {isEditNombreModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsEditNombreModalOpen(false)} />
+          <div className="relative bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
+            <div className="px-5 pt-4 pb-3 border-b border-slate-100">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 shrink-0 overflow-hidden flex items-center justify-center">
+                    <img src={getItemPhoto(selectedItem)} alt={selectedItem?.name || ""} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-semibold text-slate-900">Editar Nombre</h3>
+                    {(selectedItem?.marca || selectedItem?.categoria) && (
+                      <p className="text-xs text-slate-400 truncate">{[selectedItem?.marca, selectedItem?.categoria].filter(Boolean).join(" · ")}</p>
+                    )}
+                  </div>
+                </div>
+                <button onClick={() => setIsEditNombreModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0">
+                  <X className="w-4 h-4 text-slate-400" />
+                </button>
+              </div>
+            </div>
+            <div className="p-5">
+              <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block">Nombre</label>
+              <input
+                type="text"
+                value={modalNombreValue}
+                onChange={(e) => setModalNombreValue(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") handleSaveNombreModal(); if (e.key === "Escape") setIsEditNombreModalOpen(false) }}
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                placeholder="Nombre del producto"
+                autoFocus
+              />
+            </div>
+            <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-100 bg-slate-50/50">
+              <button onClick={() => setIsEditNombreModalOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer">
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveNombreModal}
+                disabled={!modalNombreValue.trim()}
+                className={`px-5 py-2 text-sm font-medium rounded-lg transition-all ${modalNombreValue.trim() ? "bg-slate-900 hover:bg-slate-800 text-white cursor-pointer" : "bg-slate-200 text-slate-400 cursor-not-allowed"}`}
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Editar SKU Modal */}
+      {isEditSkuModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsEditSkuModalOpen(false)} />
+          <div className="relative bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
+            <div className="px-5 pt-4 pb-3 border-b border-slate-100">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 shrink-0 overflow-hidden flex items-center justify-center">
+                    <img src={getItemPhoto(selectedItem)} alt={selectedItem?.name || ""} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-semibold text-slate-900">Editar SKU</h3>
+                    {selectedItem?.name && <p className="text-sm font-medium text-slate-700 mt-0.5 truncate">{selectedItem.name}</p>}
+                  </div>
+                </div>
+                <button onClick={() => setIsEditSkuModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0">
+                  <X className="w-4 h-4 text-slate-400" />
+                </button>
+              </div>
+            </div>
+            <div className="p-5">
+              {isChildItem && fatherItem ? (
+                <>
+                  <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block">Sufijo</label>
+                  <div className="flex items-center gap-0 border border-slate-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-slate-400">
+                    <span className="px-3 py-2.5 text-sm font-mono text-slate-400 bg-slate-50 border-r border-slate-200 select-none whitespace-nowrap">
+                      {fatherItem.skuPrefix || fatherItem.sku || ""}-
+                    </span>
+                    <input
+                      type="text"
+                      value={modalSkuValue}
+                      onChange={(e) => setModalSkuValue(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") handleSaveSkuModal(); if (e.key === "Escape") setIsEditSkuModalOpen(false) }}
+                      className="flex-1 min-w-0 px-3 py-2.5 text-sm font-mono focus:outline-none bg-white"
+                      placeholder="sufijo"
+                      autoFocus
+                    />
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1.5">SKU completo: <span className="font-mono">{fatherItem.skuPrefix || fatherItem.sku || ""}-{modalSkuValue}</span></p>
+                </>
+              ) : (
+                <>
+                  <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block">SKU</label>
+                  <input
+                    type="text"
+                    value={modalSkuValue}
+                    onChange={(e) => setModalSkuValue(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleSaveSkuModal(); if (e.key === "Escape") setIsEditSkuModalOpen(false) }}
+                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-slate-400"
+                    placeholder="SKU del producto"
+                    autoFocus
+                  />
+                </>
+              )}
+            </div>
+            <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-100 bg-slate-50/50">
+              <button onClick={() => setIsEditSkuModalOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer">
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveSkuModal}
+                disabled={!modalSkuValue.trim()}
+                className={`px-5 py-2 text-sm font-medium rounded-lg transition-all ${modalSkuValue.trim() ? "bg-slate-900 hover:bg-slate-800 text-white cursor-pointer" : "bg-slate-200 text-slate-400 cursor-not-allowed"}`}
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Editar Código Universal Modal */}
+      {isEditCodigoUniversalModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsEditCodigoUniversalModalOpen(false)} />
+          <div className="relative bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
+            <div className="px-5 pt-4 pb-3 border-b border-slate-100">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 shrink-0 overflow-hidden flex items-center justify-center">
+                    <img src={getItemPhoto(selectedItem)} alt={selectedItem?.name || ""} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-semibold text-slate-900">Editar Código Universal</h3>
+                    {selectedItem?.name && <p className="text-sm font-medium text-slate-700 mt-0.5 truncate">{selectedItem.name}</p>}
+                  </div>
+                </div>
+                <button onClick={() => setIsEditCodigoUniversalModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0">
+                  <X className="w-4 h-4 text-slate-400" />
+                </button>
+              </div>
+            </div>
+            <div className="p-5">
+              <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block">Código Universal (EAN / UPC / GTIN)</label>
+              <input
+                type="text"
+                value={modalCodigoUniversalValue}
+                onChange={(e) => setModalCodigoUniversalValue(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") handleSaveCodigoUniversalModal(); if (e.key === "Escape") setIsEditCodigoUniversalModalOpen(false) }}
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-slate-400"
+                placeholder="7790001234567"
+                autoFocus
+              />
+              <p className="text-xs text-slate-400 mt-1.5">Número de 8 a 14 dígitos impreso bajo el código de barras.</p>
+            </div>
+            <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-100 bg-slate-50/50">
+              <button onClick={() => setIsEditCodigoUniversalModalOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer">
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveCodigoUniversalModal}
+                className="px-5 py-2 text-sm font-medium rounded-lg bg-slate-900 hover:bg-slate-800 text-white cursor-pointer transition-all"
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Editar Descripción Modal */}
+      {isEditDescripcionModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsEditDescripcionModalOpen(false)} />
+          <div className="relative bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            <div className="px-5 pt-4 pb-3 border-b border-slate-100">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 shrink-0 overflow-hidden flex items-center justify-center">
+                    <img src={getItemPhoto(selectedItem)} alt={selectedItem?.name || ""} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-semibold text-slate-900">Editar Descripción</h3>
+                    {selectedItem?.name && <p className="text-sm font-medium text-slate-700 mt-0.5 truncate">{selectedItem.name}</p>}
+                  </div>
+                </div>
+                <button onClick={() => setIsEditDescripcionModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0">
+                  <X className="w-4 h-4 text-slate-400" />
+                </button>
+              </div>
+            </div>
+            <div className="p-5">
+              <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block">Descripción</label>
+              <textarea
+                value={modalDescripcionValue}
+                onChange={(e) => setModalDescripcionValue(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Escape") setIsEditDescripcionModalOpen(false) }}
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 resize-none"
+                placeholder="Descripción del producto..."
+                rows={5}
+                autoFocus
+              />
+            </div>
+            <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-100 bg-slate-50/50">
+              <button onClick={() => setIsEditDescripcionModalOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer">
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveDescripcionModal}
+                className="px-5 py-2 text-sm font-medium rounded-lg bg-slate-900 hover:bg-slate-800 text-white cursor-pointer transition-all"
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
