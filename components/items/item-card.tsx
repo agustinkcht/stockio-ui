@@ -292,7 +292,7 @@ export function ItemCard({
                 {/* Product Thumbnail — per-item media[0].foto, falls back to category icon or default */}
                 {(() => {
                   const hasPhoto = itemHasPhoto(item)
-                  const src = getItemThumbnail(item, parentItem)
+                  const src = getItemThumbnail(item)
                   return (
                     <div className="w-12 h-12 flex-shrink-0 rounded-md bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center overflow-hidden">
                       <img
