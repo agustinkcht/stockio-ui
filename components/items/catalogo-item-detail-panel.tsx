@@ -1233,6 +1233,9 @@ export function CatalogoItemDetailPanel({
 
                     <div className="mb-0 mt-6">
                       <div className="flex items-center justify-center gap-2 mt-[-20px] mb-0 flex-wrap group/title">
+                          {isChildItem ? (
+                          <h2 className="font-semibold text-white text-2xl text-center">{nameValue || selectedItem.name}</h2>
+                        ) : (
                           <div
                             className="flex items-center gap-1.5 cursor-pointer"
                             onClick={(e) => {
@@ -1244,6 +1247,7 @@ export function CatalogoItemDetailPanel({
                             <h2 className="font-semibold text-white text-2xl text-center">{nameValue || selectedItem.name}</h2>
                             <Pencil className="w-3.5 h-3.5 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity" />
                           </div>
+                        )}
                         {isChildItem && selectedItem.atributosPrincipales && selectedItem.atributosPrincipales.length > 0 && (
                           <div className="flex items-center gap-1.5 mt-0.5">
                             {selectedItem.atributosPrincipales.map((attr, i) => (
@@ -3591,11 +3595,12 @@ export function CatalogoItemDetailPanel({
               </button>
               <button
                 onClick={() => {
-                  if (expandedMatrixPrecioModal.variant?.id) {
-                    const updatedVariants = (selectedItem?.variants || []).map((ov: any) =>
+                  if (expandedMatrixPrecioModal.variant?.id && fatherItem) {
+                    const updatedVariants = (fatherItem.variants || []).map((ov: any) =>
                       ov.id === expandedMatrixPrecioModal.variant.id ? { ...ov, precio: expandedMatrixPrecioValues } : ov
                     )
-                    onFieldChange(selectedItem.id, "variants", updatedVariants)
+                    onFieldChange(fatherItem.id, "variants", updatedVariants)
+                    onSaveNow?.()
                   }
                   setExpandedMatrixPrecioModal({ open: false, variant: null })
                 }}
