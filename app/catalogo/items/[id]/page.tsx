@@ -44,6 +44,7 @@ export default function CatalogoItemDetailPage() {
     hasUnsavedEdits,
     canUndoEdit,
     canRedoEdit,
+    forceSaveItems,
   } = useItems()
 
   const { currentView, historyIndex, navigationHistory, navigateBack, navigateForward } = useNavigation()
@@ -255,7 +256,7 @@ export default function CatalogoItemDetailPage() {
               onDelete={handleDeleteWithTracking}
               variantChangeHandlers={{}}
               isExpanded={false}
-              onSaveNow={saveEdit}
+              onSaveNow={forceSaveItems}
             />
           </main>
         </div>
