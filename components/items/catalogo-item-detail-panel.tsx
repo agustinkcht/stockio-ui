@@ -1592,70 +1592,6 @@ export function CatalogoItemDetailPanel({
                     </button>
 
                     <div className="flex flex-col h-full pt-2 overflow-y-auto">
-                      {/* Código Universal Section */}
-                      <div className="mb-5 group/codigoBack">
-                        <div className="flex items-center gap-1.5 mb-3">
-                          <h3 className="text-sm font-medium uppercase tracking-wider text-slate-50">
-                            Código Universal
-                          </h3>
-                          <div className="relative">
-                            <div className="peer">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 text-slate-500 cursor-help" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <circle cx="12" cy="12" r="10" />
-                                <path d="M12 16v-4" />
-                                <path d="M12 8h.01" />
-                              </svg>
-                            </div>
-                            <div className="absolute left-0 top-full mt-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-[11px] text-slate-300 w-48 leading-relaxed opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-200 z-50 pointer-events-none shadow-xl">
-                              Número único de 8 a 14 dígitos, generalmente impreso bajo el código de barras, que identifica un producto a nivel global.
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1.5 group/codigoVal">
-                          <span
-                            className="text-sm font-light text-slate-300 tracking-wide cursor-pointer hover:text-slate-100 transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setModalCodigoUniversalValue(codigoUniversalValue || selectedItem.codigoUniversal || "")
-                              setIsEditCodigoUniversalModalOpen(true)
-                            }}
-                          >
-                            {codigoUniversalValue || selectedItem.codigoUniversal || (
-                              <span className="text-slate-500 italic">Agregar código...</span>
-                            )}
-                          </span>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleCopyCodigoUniversal() }}
-                            className="text-slate-500 hover:text-slate-300 transition-colors p-0.5"
-                            title="Copiar Código Universal"
-                          >
-                            {codigoUniversalCopied ? (
-                              <span className="text-green-400 text-xs">✓</span>
-                            ) : (
-                              <Copy className="h-3 w-3" />
-                            )}
-                          </button>
-                          <Pencil className="h-3 w-3 text-slate-500 opacity-0 group-hover/codigoVal:opacity-100 transition-opacity" />
-                        </div>
-                      </div>
-
-                      {/* Código Proveedor Section */}
-                      <div className="mb-5">
-                        <div className="flex items-center gap-1.5 mb-3">
-                          <h3 className="text-sm font-medium uppercase tracking-wider text-slate-50">
-                            Código Proveedor
-                          </h3>
-                        </div>
-                        <span className="text-sm font-light text-slate-300 tracking-wide">
-                          {codigoProveedor || (
-                            <span className="text-slate-500 italic">Sin código...</span>
-                          )}
-                        </span>
-                      </div>
-
-                      {/* Divider */}
-                      <div className="border-t border-slate-700 mb-4"></div>
-
                       {/* Media Section */}
                       <h3 className="text-sm font-medium uppercase tracking-wider mb-3 text-slate-50">
                         Media
@@ -1725,6 +1661,73 @@ export function CatalogoItemDetailPanel({
                             </div>
                           ))}
                         </div>
+                      </div>
+
+                      {/* Divider */}
+                      <div className="border-t border-slate-700 mb-4"></div>
+
+                      {/* Código Universal Section */}
+                      <div className="mb-4 group/codigoBack">
+                        <div className="flex items-center gap-1.5 mb-3">
+                          <h3 className="text-sm font-medium uppercase tracking-wider text-slate-50">
+                            Código Universal
+                          </h3>
+                          <div className="relative">
+                            <div className="peer">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 text-slate-500 cursor-help" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="10" />
+                                <path d="M12 16v-4" />
+                                <path d="M12 8h.01" />
+                              </svg>
+                            </div>
+                            <div className="absolute left-0 top-full mt-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-[11px] text-slate-300 w-48 leading-relaxed opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-200 z-50 pointer-events-none shadow-xl">
+                              Número único de 8 a 14 dígitos, generalmente impreso bajo el código de barras, que identifica un producto a nivel global.
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 group/codigoVal">
+                          <span
+                            className="text-sm font-light text-slate-300 tracking-wide cursor-pointer hover:text-slate-100 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setModalCodigoUniversalValue(codigoUniversalValue || selectedItem.codigoUniversal || "")
+                              setIsEditCodigoUniversalModalOpen(true)
+                            }}
+                          >
+                            {codigoUniversalValue || selectedItem.codigoUniversal || (
+                              <span className="text-slate-500 italic">Agregar código...</span>
+                            )}
+                          </span>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleCopyCodigoUniversal() }}
+                            className="text-slate-500 hover:text-slate-300 transition-colors p-0.5"
+                            title="Copiar Código Universal"
+                          >
+                            {codigoUniversalCopied ? (
+                              <span className="text-green-400 text-xs">✓</span>
+                            ) : (
+                              <Copy className="h-3 w-3" />
+                            )}
+                          </button>
+                          <Pencil className="h-3 w-3 text-slate-500 opacity-0 group-hover/codigoVal:opacity-100 transition-opacity" />
+                        </div>
+                      </div>
+
+                      {/* Divider between codigos */}
+                      <div className="border-t border-slate-700/50 mb-4"></div>
+
+                      {/* Código Proveedor Section */}
+                      <div className="mb-5">
+                        <div className="flex items-center gap-1.5 mb-3">
+                          <h3 className="text-sm font-medium uppercase tracking-wider text-slate-50">
+                            Código Proveedor
+                          </h3>
+                        </div>
+                        <span className="text-sm font-light text-slate-300 tracking-wide">
+                          {codigoProveedor || (
+                            <span className="text-slate-500 italic">Sin código...</span>
+                          )}
+                        </span>
                       </div>
 
                       {/* Divider */}
