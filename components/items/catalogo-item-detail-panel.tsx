@@ -2184,29 +2184,29 @@ export function CatalogoItemDetailPanel({
                 </div>
 
                 {/* Row 2: edit controls right-aligned */}
-                <div className="flex justify-end px-8 pt-4">
+                <div className="flex justify-end px-8 pt-2 pb-1">
                   {!isRightEditing ? (
                     <button
                       type="button"
                       onClick={enterRightEditMode}
-                      className="h-8 px-3 text-xs font-semibold transition-colors border shadow-sm border-slate-200 gap-1.5 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer"
+                      className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-slate-200 gap-1.5 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer"
                     >
                       <Pencil className="w-3.5 h-3.5 text-slate-600" />
                       Editar
                     </button>
                   ) : (
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-2">
                       <button
                         type="button"
                         onClick={cancelRightEditMode}
-                        className="h-8 px-3 text-xs font-medium rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors cursor-pointer"
+                        className="h-9 px-4 text-sm font-medium rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors cursor-pointer"
                       >
                         Cancelar
                       </button>
                       <button
                         type="button"
                         onClick={saveRightEditMode}
-                        className="h-8 px-3 text-xs font-medium rounded-lg bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer"
+                        className="h-9 px-4 text-sm font-medium rounded-lg bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer"
                       >
                         Guardar
                       </button>
@@ -3146,7 +3146,7 @@ export function CatalogoItemDetailPanel({
                   // Individual item tab content
                   <>
                     {selectedDetailTab === "info" && (
-                      <div className="h-full flex flex-col mt-5">
+                      <div className="h-full flex flex-col mt-3">
 
                         {/* ── INFORMACIÓN DEL PRODUCTO ── */}
                         <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-3">
@@ -3179,21 +3179,19 @@ export function CatalogoItemDetailPanel({
                             </div>
                           </div>
                         ) : (
-                          <div className="border border-slate-200 rounded-xl overflow-hidden mb-6">
-                            <div className="grid grid-cols-2 divide-x divide-slate-200">
-                              <div className="px-4 py-3 flex flex-col gap-1">
-                                <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Categoría</span>
-                                <span className="text-[15px] font-medium text-slate-800 leading-snug">{categoria || <span className="text-slate-300 font-normal">No aplica</span>}</span>
-                              </div>
-                              <div className="px-4 py-3 flex flex-col gap-1">
-                                <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Marca</span>
-                                <span className="text-[15px] font-medium text-slate-800 leading-snug">{marca || <span className="text-slate-300 font-normal">No aplica</span>}</span>
-                              </div>
+                          <div className="grid grid-cols-2 gap-x-4 mb-4">
+                            <div className="flex flex-col gap-0.5 py-2">
+                              <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Categoría</span>
+                              <span className="text-[15px] font-medium text-slate-800 leading-snug">{categoria || <span className="text-slate-300 font-normal">No aplica</span>}</span>
+                            </div>
+                            <div className="flex flex-col gap-0.5 py-2">
+                              <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Marca</span>
+                              <span className="text-[15px] font-medium text-slate-800 leading-snug">{marca || <span className="text-slate-300 font-normal">No aplica</span>}</span>
                             </div>
                           </div>
                         )}
 
-                        {isRightEditing && <div className="border-t border-slate-100" />}
+                        <div className="border-t border-slate-100" />
 
                         {/* ── PRESENTACIÓN ── */}
                         <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-3 mt-5">
@@ -3282,34 +3280,30 @@ export function CatalogoItemDetailPanel({
                             </div>
                           </div>
                         ) : (
-                          <div className="border border-slate-200 rounded-xl overflow-hidden mb-6">
-                            {/* Formato de venta + Unidades por pack */}
-                            <div className="grid grid-cols-2 divide-x divide-slate-200">
-                              <div className="px-4 py-3 flex flex-col gap-1">
-                                <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Formato de venta</span>
-                                <span className="text-[15px] font-medium text-slate-800 leading-snug capitalize">{formatoVenta || <span className="text-slate-300 font-normal">No aplica</span>}</span>
-                              </div>
-                              <div className="px-4 py-3 flex flex-col gap-1">
-                                <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Unidades por pack</span>
-                                <span className="text-[15px] font-medium text-slate-800 leading-snug">
-                                  {formatoVenta === "unidad"
-                                    ? <span className="text-slate-300 font-normal">No aplica</span>
-                                    : (unidadesPorPack || <span className="text-slate-300 font-normal">No aplica</span>)}
-                                </span>
-                              </div>
+                          <div className="grid grid-cols-2 gap-x-4 mb-4">
+                            <div className="flex flex-col gap-0.5 py-2">
+                              <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Formato de venta</span>
+                              <span className="text-[15px] font-medium text-slate-800 leading-snug capitalize">{formatoVenta || <span className="text-slate-300 font-normal">No aplica</span>}</span>
                             </div>
-                            {/* Volumen — only shown when active */}
+                            <div className="flex flex-col gap-0.5 py-2">
+                              <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Unidades por pack</span>
+                              <span className="text-[15px] font-medium text-slate-800 leading-snug">
+                                {formatoVenta === "unidad"
+                                  ? <span className="text-slate-300 font-normal">No aplica</span>
+                                  : (unidadesPorPack || <span className="text-slate-300 font-normal">No aplica</span>)}
+                              </span>
+                            </div>
                             {volumenActive && (
-                              <div className="grid grid-cols-2 divide-x divide-slate-200 border-t border-slate-200">
-                                <div className="px-4 py-3 flex flex-col gap-1">
+                              <>
+                                <div className="flex flex-col gap-0.5 py-2">
                                   <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Cantidad</span>
                                   <span className="text-[15px] font-medium text-slate-800 leading-snug">{volumenCantidad || <span className="text-slate-300 font-normal">No especificado</span>}</span>
                                 </div>
-                                <div className="px-4 py-3 flex flex-col gap-1">
+                                <div className="flex flex-col gap-0.5 py-2">
                                   <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Unidad de medida</span>
                                   <span className="text-[15px] font-medium text-slate-800 leading-snug">{volumenUnidad || <span className="text-slate-300 font-normal">No especificado</span>}</span>
                                 </div>
-                              </div>
+                              </>
                             )}
                           </div>
                         )}
@@ -3344,18 +3338,16 @@ export function CatalogoItemDetailPanel({
                                   />
                                 </div>
                               ) : (
-                                <div className="border border-slate-200 rounded-xl overflow-hidden">
-                                  <div className="px-4 py-3 flex flex-col gap-1">
-                                    <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Fecha de vencimiento</span>
-                                    <span className="text-[15px] font-medium text-slate-800 leading-snug">{fechaVencimiento || <span className="text-slate-300 font-normal">No especificado</span>}</span>
-                                  </div>
+                                <div className="flex flex-col gap-0.5 py-2">
+                                  <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Fecha de vencimiento</span>
+                                  <span className="text-[15px] font-medium text-slate-800 leading-snug">{fechaVencimiento || <span className="text-slate-300 font-normal">No especificado</span>}</span>
                                 </div>
                               )
                             )}
                           </div>
                         )}
 
-                        {isRightEditing && <div className="border-t border-slate-100" />}
+                        <div className="border-t border-slate-100" />
 
                         {/* ── INFORMACIÓN DEL PROVEEDOR ── */}
                         <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-3 mt-5">
@@ -3387,16 +3379,14 @@ export function CatalogoItemDetailPanel({
                             </div>
                           </div>
                         ) : (
-                          <div className="border border-slate-200 rounded-xl overflow-hidden">
-                            <div className="grid grid-cols-2 divide-x divide-slate-200">
-                              <div className="px-4 py-3 flex flex-col gap-1">
-                                <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Proveedor</span>
-                                <span className="text-[15px] font-medium text-slate-800 leading-snug">{proveedor || <span className="text-slate-300 font-normal">No aplica</span>}</span>
-                              </div>
-                              <div className="px-4 py-3 flex flex-col gap-1">
-                                <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Código proveedor</span>
-                                <span className="text-[15px] font-medium text-slate-800 leading-snug font-mono">{codigoProveedor || <span className="text-slate-300 font-normal not-italic" style={{ fontFamily: "inherit" }}>No aplica</span>}</span>
-                              </div>
+                          <div className="grid grid-cols-2 gap-x-4">
+                            <div className="flex flex-col gap-0.5 py-2">
+                              <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Proveedor</span>
+                              <span className="text-[15px] font-medium text-slate-800 leading-snug">{proveedor || <span className="text-slate-300 font-normal">No aplica</span>}</span>
+                            </div>
+                            <div className="flex flex-col gap-0.5 py-2">
+                              <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Código proveedor</span>
+                              <span className="text-[15px] font-medium text-slate-800 leading-snug font-mono">{codigoProveedor || <span className="text-slate-300 font-normal not-italic" style={{ fontFamily: "inherit" }}>No aplica</span>}</span>
                             </div>
                           </div>
                         )}
