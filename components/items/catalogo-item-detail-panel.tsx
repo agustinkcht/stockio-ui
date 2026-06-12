@@ -3214,7 +3214,6 @@ export function CatalogoItemDetailPanel({
                                 />
                               </div>
                             </div>
-                            </div>
                             {/* Proveedor — half-width dropdown, same row as Categoría/Marca grid */}
                             <div className="grid grid-cols-2 gap-4">
                               <div className="flex flex-col gap-1 relative" ref={proveedorDropdownRef}>
