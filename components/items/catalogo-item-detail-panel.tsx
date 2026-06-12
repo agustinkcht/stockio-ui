@@ -1688,68 +1688,68 @@ export function CatalogoItemDetailPanel({
                       {/* Divider */}
                       <div className="border-t border-slate-700 mb-4"></div>
 
-                      {/* Código Universal Section */}
-                      <div className="mb-4 group/codigoBack">
-                        <div className="flex items-center gap-1.5 mb-3">
-                          <h3 className="text-sm font-medium uppercase tracking-wider text-slate-50">
-                            Código Universal
-                          </h3>
-                          <div className="relative">
-                            <div className="peer">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 text-slate-500 cursor-help" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <circle cx="12" cy="12" r="10" />
-                                <path d="M12 16v-4" />
-                                <path d="M12 8h.01" />
-                              </svg>
-                            </div>
-                            <div className="absolute left-0 top-full mt-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-[11px] text-slate-300 w-48 leading-relaxed opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-200 z-50 pointer-events-none shadow-xl">
-                              Número único de 8 a 14 dígitos, generalmente impreso bajo el código de barras, que identifica un producto a nivel global.
+                      {/* Códigos Section */}
+                      <div className="mb-5">
+                        <h3 className="text-sm font-medium uppercase tracking-wider mb-4 text-slate-50">
+                          Códigos
+                        </h3>
+
+                        {/* Universal */}
+                        <div className="mb-3 group/codigoBack">
+                          <div className="flex items-center gap-1.5 mb-1.5">
+                            <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Universal</span>
+                            <div className="relative">
+                              <div className="peer">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 text-slate-600 cursor-help" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <circle cx="12" cy="12" r="10" />
+                                  <path d="M12 16v-4" />
+                                  <path d="M12 8h.01" />
+                                </svg>
+                              </div>
+                              <div className="absolute left-0 top-full mt-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-[11px] text-slate-300 w-48 leading-relaxed opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-200 z-50 pointer-events-none shadow-xl">
+                                Número único de 8 a 14 dígitos, generalmente impreso bajo el código de barras, que identifica un producto a nivel global.
+                              </div>
                             </div>
                           </div>
+                          <div className="flex items-center gap-1.5 group/codigoVal">
+                            <span
+                              className="text-sm font-semibold text-slate-200 tracking-wide cursor-pointer hover:text-slate-100 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setModalCodigoUniversalValue(codigoUniversalValue || selectedItem.codigoUniversal || "")
+                                setIsEditCodigoUniversalModalOpen(true)
+                              }}
+                            >
+                              {codigoUniversalValue || selectedItem.codigoUniversal || (
+                                <span className="text-slate-500 italic font-normal">Agregar código...</span>
+                              )}
+                            </span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleCopyCodigoUniversal() }}
+                              className="text-slate-500 hover:text-slate-300 transition-colors p-0.5"
+                              title="Copiar Código Universal"
+                            >
+                              {codigoUniversalCopied ? (
+                                <span className="text-green-400 text-xs">✓</span>
+                              ) : (
+                                <Copy className="h-3 w-3" />
+                              )}
+                            </button>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1.5 group/codigoVal">
-                          <span
-                            className="text-sm font-light text-slate-300 tracking-wide cursor-pointer hover:text-slate-100 transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setModalCodigoUniversalValue(codigoUniversalValue || selectedItem.codigoUniversal || "")
-                              setIsEditCodigoUniversalModalOpen(true)
-                            }}
-                          >
-                            {codigoUniversalValue || selectedItem.codigoUniversal || (
-                              <span className="text-slate-500 italic">Agregar código...</span>
+
+                        {/* Divider */}
+                        <div className="border-t border-slate-700/50 my-3"></div>
+
+                        {/* Proveedor */}
+                        <div>
+                          <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500 block mb-1.5">Proveedor</span>
+                          <span className="text-sm font-semibold text-slate-200 tracking-wide">
+                            {codigoProveedor || (
+                              <span className="text-slate-500 italic font-normal">Sin código...</span>
                             )}
                           </span>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleCopyCodigoUniversal() }}
-                            className="text-slate-500 hover:text-slate-300 transition-colors p-0.5"
-                            title="Copiar Código Universal"
-                          >
-                            {codigoUniversalCopied ? (
-                              <span className="text-green-400 text-xs">✓</span>
-                            ) : (
-                              <Copy className="h-3 w-3" />
-                            )}
-                          </button>
-                          <Pencil className="h-3 w-3 text-slate-500 opacity-0 group-hover/codigoVal:opacity-100 transition-opacity" />
                         </div>
-                      </div>
-
-                      {/* Divider between codigos */}
-                      <div className="border-t border-slate-700/50 mb-4"></div>
-
-                      {/* Código Proveedor Section */}
-                      <div className="mb-5">
-                        <div className="flex items-center gap-1.5 mb-3">
-                          <h3 className="text-sm font-medium uppercase tracking-wider text-slate-50">
-                            Código Proveedor
-                          </h3>
-                        </div>
-                        <span className="text-sm font-light text-slate-300 tracking-wide">
-                          {codigoProveedor || (
-                            <span className="text-slate-500 italic">Sin código...</span>
-                          )}
-                        </span>
                       </div>
                     </div>
                   </div>
@@ -3171,27 +3171,40 @@ export function CatalogoItemDetailPanel({
                         </h3>
 
                         {isRightEditing ? (
-                          <div className="grid grid-cols-2 gap-4 mb-6">
-                            <div className="flex flex-col gap-1">
-                              <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Categoría</label>
-                              <input
-                                type="text"
-                                value={categoria}
-                                onChange={(e) => handleFieldChange("categoria", e.target.value, setCategoria)}
-                                disabled={shouldStrictlyInherit(fatherItem?.categoria)}
-                                className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${shouldStrictlyInherit(fatherItem?.categoria) ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed" : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"}`}
-                                placeholder="Ej: Vinos"
-                              />
+                          <div className="flex flex-col gap-4 mb-6">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Categoría</label>
+                                <input
+                                  type="text"
+                                  value={categoria}
+                                  onChange={(e) => handleFieldChange("categoria", e.target.value, setCategoria)}
+                                  disabled={shouldStrictlyInherit(fatherItem?.categoria)}
+                                  className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${shouldStrictlyInherit(fatherItem?.categoria) ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed" : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"}`}
+                                  placeholder="Ej: Vinos"
+                                />
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Marca</label>
+                                <input
+                                  type="text"
+                                  value={marca}
+                                  onChange={(e) => handleFieldChange("marca", e.target.value, setMarca)}
+                                  disabled={shouldStrictlyInherit(fatherItem?.marca)}
+                                  className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${shouldStrictlyInherit(fatherItem?.marca) ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed" : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"}`}
+                                  placeholder="Ej: YKK"
+                                />
+                              </div>
                             </div>
                             <div className="flex flex-col gap-1">
-                              <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Marca</label>
+                              <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Proveedor</label>
                               <input
                                 type="text"
-                                value={marca}
-                                onChange={(e) => handleFieldChange("marca", e.target.value, setMarca)}
-                                disabled={shouldStrictlyInherit(fatherItem?.marca)}
-                                className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${shouldStrictlyInherit(fatherItem?.marca) ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed" : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"}`}
-                                placeholder="Ej: YKK"
+                                value={proveedor}
+                                onChange={(e) => handleFieldChange("proveedor", e.target.value, setProveedor)}
+                                disabled={shouldInheritField(fatherItem?.proveedor)}
+                                className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${shouldInheritField(fatherItem?.proveedor) ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed" : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"}`}
+                                placeholder="Nombre del proveedor"
                               />
                             </div>
                           </div>
@@ -3206,6 +3219,10 @@ export function CatalogoItemDetailPanel({
                                 <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Marca</span>
                                 <span className="text-[15px] font-medium text-slate-800 leading-snug">{marca || <span className="text-slate-300 font-normal">No aplica</span>}</span>
                               </div>
+                            </div>
+                            <div className="border-t border-slate-200 px-4 py-3 flex flex-col gap-1">
+                              <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Proveedor</span>
+                              <span className="text-[15px] font-medium text-slate-800 leading-snug">{proveedor || <span className="text-slate-300 font-normal">No aplica</span>}</span>
                             </div>
                           </div>
                         )}
@@ -3369,34 +3386,6 @@ export function CatalogoItemDetailPanel({
                                 </div>
                               )
                             )}
-                          </div>
-                        )}
-
-                        {isRightEditing && <div className="border-t border-slate-100" />}
-
-                        {/* ── INFORMACIÓN DEL PROVEEDOR ── */}
-                        <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-3 mt-5">
-                          Información del Proveedor
-                        </h3>
-
-                        {isRightEditing ? (
-                          <div className="flex flex-col gap-1">
-                            <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Proveedor</label>
-                            <input
-                              type="text"
-                              value={proveedor}
-                              onChange={(e) => handleFieldChange("proveedor", e.target.value, setProveedor)}
-                              disabled={shouldInheritField(fatherItem?.proveedor)}
-                              className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${shouldInheritField(fatherItem?.proveedor) ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed" : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"}`}
-                              placeholder="Nombre del proveedor"
-                            />
-                          </div>
-                        ) : (
-                          <div className="border border-slate-200 rounded-xl overflow-hidden">
-                            <div className="px-4 py-3 flex flex-col gap-1">
-                              <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Proveedor</span>
-                              <span className="text-[15px] font-medium text-slate-800 leading-snug">{proveedor || <span className="text-slate-300 font-normal">No aplica</span>}</span>
-                            </div>
                           </div>
                         )}
 
