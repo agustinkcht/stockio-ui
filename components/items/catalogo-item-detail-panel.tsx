@@ -2153,7 +2153,31 @@ export function CatalogoItemDetailPanel({
             {/* Edit controls row + full-width toggle (only for non-container items) */}
             {!isViewingContainer && (
               <div className="z-20 mb-6 sticky top-[0px] flex flex-col gap-3">
-                {/* Row 1: edit button right-aligned */}
+                {/* Row 1: full-width tall toggle */}
+                <div className="flex items-center gap-1 h-12 p-1 bg-slate-100/80 rounded-2xl w-full">
+                  <button
+                    onClick={() => setSelectedDetailTab("info")}
+                    className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-xl ${
+                      selectedDetailTab === "info"
+                        ? "bg-white text-slate-900 shadow-sm font-semibold"
+                        : "text-slate-500 hover:text-slate-700"
+                    }`}
+                  >
+                    <span className="text-xs font-semibold uppercase tracking-widest">Info</span>
+                  </button>
+                  <button
+                    onClick={() => setSelectedDetailTab("atributos")}
+                    className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-xl ${
+                      selectedDetailTab === "atributos"
+                        ? "bg-white text-slate-900 shadow-sm font-semibold"
+                        : "text-slate-500 hover:text-slate-700"
+                    }`}
+                  >
+                    <span className="text-xs font-semibold uppercase tracking-widest">Atributos</span>
+                  </button>
+                </div>
+
+                {/* Row 2: edit button right-aligned */}
                 <div className="flex justify-end">
                   {!isRightEditing ? (
                     <button
@@ -2182,30 +2206,6 @@ export function CatalogoItemDetailPanel({
                       </button>
                     </div>
                   )}
-                </div>
-
-                {/* Row 2: full-width tall toggle */}
-                <div className="flex items-center gap-1 h-12 p-1 bg-slate-100/80 rounded-2xl w-full">
-                  <button
-                    onClick={() => setSelectedDetailTab("info")}
-                    className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-xl ${
-                      selectedDetailTab === "info"
-                        ? "bg-white text-slate-900 shadow-sm font-semibold"
-                        : "text-slate-500 hover:text-slate-700"
-                    }`}
-                  >
-                    <span className="text-sm font-semibold uppercase tracking-widest">Info</span>
-                  </button>
-                  <button
-                    onClick={() => setSelectedDetailTab("atributos")}
-                    className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-xl ${
-                      selectedDetailTab === "atributos"
-                        ? "bg-white text-slate-900 shadow-sm font-semibold"
-                        : "text-slate-500 hover:text-slate-700"
-                    }`}
-                  >
-                    <span className="text-sm font-semibold uppercase tracking-widest">Atributos</span>
-                  </button>
                 </div>
               </div>
             )}
