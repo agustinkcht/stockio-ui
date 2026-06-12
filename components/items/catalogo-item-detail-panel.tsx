@@ -2150,35 +2150,41 @@ export function CatalogoItemDetailPanel({
               </div>
             )}
 
-            {/* Edit controls row + full-width toggle (only for non-container items) */}
+            {/* Flush top toggle + edit controls (only for non-container items) */}
             {!isViewingContainer && (
-              <div className="z-20 mb-6 sticky top-[0px] flex flex-col gap-3">
-                {/* Row 1: full-width tall toggle */}
-                <div className="flex items-center gap-1 h-12 p-1 bg-slate-100/80 rounded-2xl w-full">
+              <div className="z-20 mb-6 sticky top-[0px] -mt-6 -mx-8 flex flex-col">
+                {/* Row 1: full-width flush tab bar */}
+                <div className="flex border-b border-slate-200">
                   <button
                     onClick={() => setSelectedDetailTab("info")}
-                    className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-xl ${
+                    className={`flex-1 flex items-center justify-center py-3.5 transition-all duration-200 cursor-pointer relative ${
                       selectedDetailTab === "info"
-                        ? "bg-white text-slate-900 shadow-sm font-semibold"
-                        : "text-slate-500 hover:text-slate-700"
+                        ? "text-slate-900"
+                        : "text-slate-400 hover:text-slate-600"
                     }`}
                   >
-                    <span className="text-xs font-semibold uppercase tracking-widest">Info</span>
+                    <span className={`text-xs font-semibold uppercase tracking-widest ${selectedDetailTab === "info" ? "" : ""}`}>Info</span>
+                    {selectedDetailTab === "info" && (
+                      <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-slate-900 rounded-full" />
+                    )}
                   </button>
                   <button
                     onClick={() => setSelectedDetailTab("atributos")}
-                    className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-xl ${
+                    className={`flex-1 flex items-center justify-center py-3.5 transition-all duration-200 cursor-pointer relative ${
                       selectedDetailTab === "atributos"
-                        ? "bg-white text-slate-900 shadow-sm font-semibold"
-                        : "text-slate-500 hover:text-slate-700"
+                        ? "text-slate-900"
+                        : "text-slate-400 hover:text-slate-600"
                     }`}
                   >
                     <span className="text-xs font-semibold uppercase tracking-widest">Atributos</span>
+                    {selectedDetailTab === "atributos" && (
+                      <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-slate-900 rounded-full" />
+                    )}
                   </button>
                 </div>
 
-                {/* Row 2: edit button right-aligned */}
-                <div className="flex justify-end">
+                {/* Row 2: edit controls right-aligned */}
+                <div className="flex justify-end px-8 pt-4">
                   {!isRightEditing ? (
                     <button
                       type="button"
@@ -3187,6 +3193,8 @@ export function CatalogoItemDetailPanel({
                           </div>
                         )}
 
+                        {isRightEditing && <div className="border-t border-slate-100" />}
+
                         {/* ── PRESENTACIÓN ── */}
                         <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-3 mt-5">
                           Presentación
@@ -3347,6 +3355,8 @@ export function CatalogoItemDetailPanel({
                           </div>
                         )}
 
+                        {isRightEditing && <div className="border-t border-slate-100" />}
+
                         {/* ── INFORMACIÓN DEL PROVEEDOR ── */}
                         <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-3 mt-5">
                           Información del Proveedor
@@ -3395,7 +3405,7 @@ export function CatalogoItemDetailPanel({
                     )}
 
                     {selectedDetailTab === "atributos" && (
-                      <div className="h-full flex flex-col">
+                      <div className="h-full flex flex-col mt-2">
                         {!showIndividualAtributosView ? (
                           <div className="flex flex-col items-center justify-center h-full gap-4 py-12">
                             <p className="text-slate-400 text-sm">No hay atributos configurados</p>
@@ -3409,103 +3419,107 @@ export function CatalogoItemDetailPanel({
                             )}
                           </div>
                         ) : (
-                          <div className="flex flex-col gap-6">
-                            <div className="flex flex-col gap-3">
-                              <div>
-                                <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
-                                  Atributos Informativos
-                                </h3>
-                                <p className="text-xs text-gray-500 italic mt-1">
-                                  Atributos que describen propiedades adicionales del producto
-                                </p>
-                              </div>
+                          <div className="flex flex-col gap-4">
+                            {/* Section header */}
+                            <div>
+                              <h3 className="text-sm font-semibold text-slate-800">Atributos informativos</h3>
+                              <p className="text-xs text-slate-400 mt-0.5">Atributos que describen propiedades adicionales del producto</p>
+                            </div>
 
-                              {atributosInformativos.map((attr, index) => {
-                                const fatherAttr = isChildItem
-                                  ? fatherItem?.atributosInformativos?.find((a) => a.key === attr.key)
-                                  : undefined
-                                const isAttributeLocked = isChildItem && fatherAttr !== undefined
-                                const isValueLocked = isChildItem && fatherAttr && fatherAttr.value && !fatherAttr.inheritValue
+                            {isRightEditing ? (
+                              /* ── EDIT MODE ── */
+                              <div className="flex flex-col gap-2">
+                                {/* Column headers */}
+                                <div className="grid gap-2" style={{ gridTemplateColumns: "1fr 2fr auto" }}>
+                                  <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider px-1">Atributo</span>
+                                  <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider px-1">Valor</span>
+                                  <span className="w-8" />
+                                </div>
 
-                                return (
-                                  <div key={index} className="flex items-start gap-3">
-                                    <div className="flex-1">
-                                      <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Atributo</label>
-                                      {isRightEditing ? (
-                                        <input
-                                          type="text"
-                                          value={attr.key}
-                                          onChange={(e) => {
-                                            if (!isAttributeLocked) {
-                                              const updated = [...atributosInformativos]
-                                              updated[index].key = e.target.value
-                                              handleAtributosInformativosChange(updated)
-                                            }
-                                          }}
-                                          disabled={isAttributeLocked}
-                                          className={`w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${isAttributeLocked ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
-                                            }`}
-                                          placeholder="Ej: Material"
-                                        />
-                                      ) : (
-                                        <p className="text-base text-slate-800 py-2">{attr.key || <span className="text-slate-400 italic">—</span>}</p>
-                                      )}
-                                    </div>
+                                {atributosInformativos.map((attr, index) => {
+                                  const fatherAttr = isChildItem
+                                    ? fatherItem?.atributosInformativos?.find((a) => a.key === attr.key)
+                                    : undefined
+                                  const isAttributeLocked = isChildItem && fatherAttr !== undefined
+                                  const isValueLocked = isChildItem && fatherAttr && fatherAttr.value && !fatherAttr.inheritValue
 
-                                    <div className="flex-1">
-                                      <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider mb-1.5 block">Valor</label>
-                                      {isRightEditing ? (
-                                        <input
-                                          type="text"
-                                          value={attr.value}
-                                          onChange={(e) => {
-                                            if (!isValueLocked) {
-                                              const updated = [...atributosInformativos]
-                                              updated[index].value = e.target.value
-                                              handleAtributosInformativosChange(updated)
-                                            }
-                                          }}
-                                          disabled={isValueLocked}
-                                          className={`w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${isValueLocked ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
-                                            }`}
-                                          placeholder="Ej: Algodón"
-                                        />
-                                      ) : (
-                                        <p className="text-base text-slate-800 py-2">{attr.value || <span className="text-slate-400 italic">—</span>}</p>
-                                      )}
-                                    </div>
-
-                                    {isRightEditing && !isAttributeLocked && (
-                                      <button
-                                        onClick={() => {
-                                          const updated = atributosInformativos.filter((_, i) => i !== index)
-                                          handleAtributosInformativosChange(updated)
-                                          if (atributosPrincipales.length === 0 && updated.length === 0) {
-                                            setShowIndividualAtributosView(false)
+                                  return (
+                                    <div key={index} className="grid gap-2 items-center" style={{ gridTemplateColumns: "1fr 2fr auto" }}>
+                                      <input
+                                        type="text"
+                                        value={attr.key}
+                                        onChange={(e) => {
+                                          if (!isAttributeLocked) {
+                                            const updated = [...atributosInformativos]
+                                            updated[index].key = e.target.value
+                                            handleAtributosInformativosChange(updated)
                                           }
                                         }}
-                                        className="mt-8 text-gray-400 hover:text-red-400 transition-colors cursor-pointer"
-                                      >
-                                        <X className="w-4 h-4" />
-                                      </button>
-                                    )}
-                                    {(!isRightEditing || isAttributeLocked) && <div className="mt-8 w-4"></div>}
-                                  </div>
-                                )
-                              })}
+                                        disabled={isAttributeLocked}
+                                        className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${isAttributeLocked ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed" : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"}`}
+                                        placeholder="Ej: Varietal"
+                                      />
+                                      <input
+                                        type="text"
+                                        value={attr.value}
+                                        onChange={(e) => {
+                                          if (!isValueLocked) {
+                                            const updated = [...atributosInformativos]
+                                            updated[index].value = e.target.value
+                                            handleAtributosInformativosChange(updated)
+                                          }
+                                        }}
+                                        disabled={!!isValueLocked}
+                                        className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${isValueLocked ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed" : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"}`}
+                                        placeholder="Ej: Blend"
+                                      />
+                                      {!isAttributeLocked ? (
+                                        <button
+                                          onClick={() => {
+                                            const updated = atributosInformativos.filter((_, i) => i !== index)
+                                            handleAtributosInformativosChange(updated)
+                                            if (atributosPrincipales.length === 0 && updated.length === 0) {
+                                              setShowIndividualAtributosView(false)
+                                            }
+                                          }}
+                                          className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:text-red-400 hover:border-red-200 transition-colors cursor-pointer"
+                                        >
+                                          <X className="w-3.5 h-3.5" />
+                                        </button>
+                                      ) : (
+                                        <div className="w-8" />
+                                      )}
+                                    </div>
+                                  )
+                                })}
 
-                              {isRightEditing && (
                                 <button
                                   onClick={() => {
                                     handleAtributosInformativosChange([...atributosInformativos, { key: "", value: "" }])
                                   }}
-                                  className="w-full px-3 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:text-gray-700 hover:border-gray-400 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                                  className="w-full mt-1 px-3 py-2.5 border border-slate-200 rounded-lg text-slate-500 hover:text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 cursor-pointer text-sm"
                                 >
                                   <Plus className="w-4 h-4" />
-                                  <span className="text-sm">Agregar atributo</span>
+                                  Agregar atributo
                                 </button>
-                              )}
-                            </div>
+                              </div>
+                            ) : (
+                              /* ── READ MODE ── */
+                              <div>
+                                {/* Column headers + divider */}
+                                <div className="grid gap-4 pb-2 border-b border-slate-200" style={{ gridTemplateColumns: "1fr 2fr" }}>
+                                  <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Atributo</span>
+                                  <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Valor</span>
+                                </div>
+
+                                {atributosInformativos.map((attr, index) => (
+                                  <div key={index} className="grid gap-4 py-3 border-b border-slate-100 last:border-b-0" style={{ gridTemplateColumns: "1fr 2fr" }}>
+                                    <span className="text-[13px] text-slate-500">{attr.key || <span className="text-slate-300">—</span>}</span>
+                                    <span className="text-[15px] font-semibold text-slate-800">{attr.value || <span className="text-slate-300 font-normal">No aplica</span>}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
