@@ -3148,30 +3148,28 @@ export function CatalogoItemDetailPanel({
                         </h3>
 
                         {isRightEditing ? (
-                          <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-5">
-                              <div className="flex flex-col gap-1.5">
-                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Categoría</label>
-                                <input
-                                  type="text"
-                                  value={categoria}
-                                  onChange={(e) => handleFieldChange("categoria", e.target.value, setCategoria)}
-                                  disabled={shouldStrictlyInherit(fatherItem?.categoria)}
-                                  className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${shouldStrictlyInherit(fatherItem?.categoria) ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed" : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"}`}
-                                  placeholder="Ej: Vinos"
-                                />
-                              </div>
-                              <div className="flex flex-col gap-1.5">
-                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Marca</label>
-                                <input
-                                  type="text"
-                                  value={marca}
-                                  onChange={(e) => handleFieldChange("marca", e.target.value, setMarca)}
-                                  disabled={shouldStrictlyInherit(fatherItem?.marca)}
-                                  className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${shouldStrictlyInherit(fatherItem?.marca) ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed" : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"}`}
-                                  placeholder="Ej: YKK"
-                                />
-                              </div>
+                          <div className="grid grid-cols-2 gap-4 mb-6">
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Categoría</label>
+                              <input
+                                type="text"
+                                value={categoria}
+                                onChange={(e) => handleFieldChange("categoria", e.target.value, setCategoria)}
+                                disabled={shouldStrictlyInherit(fatherItem?.categoria)}
+                                className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${shouldStrictlyInherit(fatherItem?.categoria) ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed" : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"}`}
+                                placeholder="Ej: Vinos"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Marca</label>
+                              <input
+                                type="text"
+                                value={marca}
+                                onChange={(e) => handleFieldChange("marca", e.target.value, setMarca)}
+                                disabled={shouldStrictlyInherit(fatherItem?.marca)}
+                                className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${shouldStrictlyInherit(fatherItem?.marca) ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed" : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"}`}
+                                placeholder="Ej: YKK"
+                              />
                             </div>
                           </div>
                         ) : (
@@ -3190,15 +3188,15 @@ export function CatalogoItemDetailPanel({
                         )}
 
                         {/* ── PRESENTACIÓN ── */}
-                        <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-3 mt-2">
+                        <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-3 mt-5">
                           Presentación
                         </h3>
 
                         {isRightEditing ? (
-                          <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-5">
-                              <div className="flex flex-col gap-1.5">
-                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Formato de venta</label>
+                          <div className="flex flex-col gap-4 mb-6">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Formato de venta</label>
                                 <select
                                   value={formatoVenta}
                                   onChange={(e) => handleFieldChange("formatoVenta", e.target.value, setFormatoVenta)}
@@ -3209,8 +3207,8 @@ export function CatalogoItemDetailPanel({
                                   <option value="pack">Pack</option>
                                 </select>
                               </div>
-                              <div className="flex flex-col gap-1.5">
-                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Unidades por pack</label>
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Unidades por pack</label>
                                 <input
                                   type="text"
                                   value={unidadesPorPack === "N.E." ? "" : unidadesPorPack}
@@ -3231,9 +3229,9 @@ export function CatalogoItemDetailPanel({
                             </div>
 
                             {/* Volumen edit controls */}
-                            <div className="flex flex-col gap-2 mt-1">
-                              <div className="flex items-center gap-3">
-                                <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Volumen de la unidad</label>
+                            <div className="flex flex-col gap-3">
+                              <div className="flex items-center gap-2.5">
+                                <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Volumen de la unidad</label>
                                 <button
                                   onClick={() => handleFieldChange("volumenActive", !volumenActive, setVolumenActive)}
                                   disabled={isChildItem}
@@ -3243,9 +3241,9 @@ export function CatalogoItemDetailPanel({
                                 </button>
                               </div>
                               {volumenActive && (
-                                <div className="grid grid-cols-2 gap-5">
-                                  <div className="flex flex-col gap-1.5">
-                                    <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Cantidad</label>
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div className="flex flex-col gap-1">
+                                    <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Cantidad</label>
                                     <input
                                       type="number"
                                       value={volumenCantidad}
@@ -3255,8 +3253,8 @@ export function CatalogoItemDetailPanel({
                                       placeholder="0"
                                     />
                                   </div>
-                                  <div className="flex flex-col gap-1.5">
-                                    <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Unidad de medida</label>
+                                  <div className="flex flex-col gap-1">
+                                    <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Unidad de medida</label>
                                     <select
                                       value={volumenUnidad}
                                       onChange={(e) => handleFieldChange("volumenUnidad", e.target.value, setVolumenUnidad)}
@@ -3350,14 +3348,14 @@ export function CatalogoItemDetailPanel({
                         )}
 
                         {/* ── INFORMACIÓN DEL PROVEEDOR ── */}
-                        <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-3 mt-2">
+                        <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-3 mt-5">
                           Información del Proveedor
                         </h3>
 
                         {isRightEditing ? (
-                          <div className="grid grid-cols-2 gap-5">
-                            <div className="flex flex-col gap-1.5">
-                              <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Proveedor</label>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Proveedor</label>
                               <input
                                 type="text"
                                 value={proveedor}
@@ -3367,8 +3365,8 @@ export function CatalogoItemDetailPanel({
                                 placeholder="Nombre del proveedor"
                               />
                             </div>
-                            <div className="flex flex-col gap-1.5">
-                              <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Código Proveedor</label>
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Código Proveedor</label>
                               <input
                                 type="text"
                                 value={codigoProveedor}
