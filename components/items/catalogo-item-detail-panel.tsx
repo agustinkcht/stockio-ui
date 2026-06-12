@@ -1639,6 +1639,20 @@ export function CatalogoItemDetailPanel({
                         </div>
                       </div>
 
+                      {/* Código Proveedor Section */}
+                      <div className="mb-5">
+                        <div className="flex items-center gap-1.5 mb-3">
+                          <h3 className="text-sm font-medium uppercase tracking-wider text-slate-50">
+                            Código Proveedor
+                          </h3>
+                        </div>
+                        <span className="text-sm font-light text-slate-300 tracking-wide">
+                          {codigoProveedor || (
+                            <span className="text-slate-500 italic">Sin código...</span>
+                          )}
+                        </span>
+                      </div>
+
                       {/* Divider */}
                       <div className="border-t border-slate-700 mb-4"></div>
 
@@ -3363,40 +3377,22 @@ export function CatalogoItemDetailPanel({
                         </h3>
 
                         {isRightEditing ? (
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="flex flex-col gap-1">
-                              <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Proveedor</label>
-                              <input
-                                type="text"
-                                value={proveedor}
-                                onChange={(e) => handleFieldChange("proveedor", e.target.value, setProveedor)}
-                                disabled={shouldInheritField(fatherItem?.proveedor)}
-                                className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${shouldInheritField(fatherItem?.proveedor) ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed" : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"}`}
-                                placeholder="Nombre del proveedor"
-                              />
-                            </div>
-                            <div className="flex flex-col gap-1">
-                              <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Código Proveedor</label>
-                              <input
-                                type="text"
-                                value={codigoProveedor}
-                                onChange={(e) => handleFieldChange("codigoProveedor", e.target.value, setCodigoProveedor)}
-                                className="px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all hover:border-slate-300 font-mono"
-                                placeholder="Código del proveedor"
-                              />
-                            </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Proveedor</label>
+                            <input
+                              type="text"
+                              value={proveedor}
+                              onChange={(e) => handleFieldChange("proveedor", e.target.value, setProveedor)}
+                              disabled={shouldInheritField(fatherItem?.proveedor)}
+                              className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${shouldInheritField(fatherItem?.proveedor) ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed" : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"}`}
+                              placeholder="Nombre del proveedor"
+                            />
                           </div>
                         ) : (
                           <div className="border border-slate-200 rounded-xl overflow-hidden">
-                            <div className="grid grid-cols-2 divide-x divide-slate-200">
-                              <div className="px-4 py-3 flex flex-col gap-1">
-                                <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Proveedor</span>
-                                <span className="text-[15px] font-medium text-slate-800 leading-snug">{proveedor || <span className="text-slate-300 font-normal">No aplica</span>}</span>
-                              </div>
-                              <div className="px-4 py-3 flex flex-col gap-1">
-                                <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Código proveedor</span>
-                                <span className="text-[15px] font-medium text-slate-800 leading-snug font-mono">{codigoProveedor || <span className="text-slate-300 font-normal not-italic" style={{ fontFamily: "inherit" }}>No aplica</span>}</span>
-                              </div>
+                            <div className="px-4 py-3 flex flex-col gap-1">
+                              <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Proveedor</span>
+                              <span className="text-[15px] font-medium text-slate-800 leading-snug">{proveedor || <span className="text-slate-300 font-normal">No aplica</span>}</span>
                             </div>
                           </div>
                         )}
@@ -3422,7 +3418,7 @@ export function CatalogoItemDetailPanel({
                           <div className="flex flex-col gap-4">
                             {/* Section header */}
                             <div>
-                              <h3 className="text-sm font-semibold text-slate-800">Atributos informativos</h3>
+                              <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em]">Atributos Informativos</h3>
                               <p className="text-xs text-slate-400 mt-0.5">Atributos que describen propiedades adicionales del producto</p>
                             </div>
 
