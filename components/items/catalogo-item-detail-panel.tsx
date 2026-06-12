@@ -14,6 +14,9 @@ import Image from "next/image"
 import { NuevaVarianteModal } from "@/components/modals/nueva-variante-modal"
 import { StockEditModal } from "@/components/modals/stock-edit-modal"
 import { useSettings } from "@/lib/contexts/settings-context"
+import { NuevoProveedorModal } from "@/components/modals/nuevo-proveedor-modal"
+import { useProveedores } from "@/hooks/use-proveedores"
+import type { Proveedor } from "@/lib/data/proveedores"
 // import { Breadcrumb } from "@/components/layout/breadcrumb"
 
 // Single deposit for simplified stock management
@@ -286,6 +289,9 @@ export function CatalogoItemDetailPanel({
   const [isEditDescripcionModalOpen, setIsEditDescripcionModalOpen] = useState(false)
   const [modalDescripcionValue, setModalDescripcionValue] = useState("")
   const [proveedorDropdownOpen, setProveedorDropdownOpen] = useState(false)
+  const [isNuevoProveedorModalOpen, setIsNuevoProveedorModalOpen] = useState(false)
+  const { proveedores, addProveedor } = useProveedores()
+  const proveedorDropdownRef = useRef<HTMLDivElement>(null)
 
   // Media photos state - initialize from item's media array
   const [mediaPhotos, setMediaPhotos] = useState<string[]>(() => {
@@ -809,6 +815,18 @@ export function CatalogoItemDetailPanel({
   // }, [containerAtributosPrincipales, selectedItem, isViewingContainer])
 
   // Display existing variants on load (no generation, just display)
+  // Close proveedor dropdown on outside click
+  useEffect(() => {
+    if (!proveedorDropdownOpen) return
+    const handler = (e: MouseEvent) => {
+      if (proveedorDropdownRef.current && !proveedorDropdownRef.current.contains(e.target as Node)) {
+        setProveedorDropdownOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [proveedorDropdownOpen])
+
   useEffect(() => {
     if (selectedItem && selectedItem.hasVariants && isViewingContainer) {
       const existingVariants = selectedItem.variants || []
@@ -3196,16 +3214,73 @@ export function CatalogoItemDetailPanel({
                                 />
                               </div>
                             </div>
-                            <div className="flex flex-col gap-1">
-                              <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Proveedor</label>
-                              <input
-                                type="text"
-                                value={proveedor}
-                                onChange={(e) => handleFieldChange("proveedor", e.target.value, setProveedor)}
-                                disabled={shouldInheritField(fatherItem?.proveedor)}
-                                className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${shouldInheritField(fatherItem?.proveedor) ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed" : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"}`}
-                                placeholder="Nombre del proveedor"
-                              />
+                            </div>
+                            {/* Proveedor — half-width dropdown, same row as Categoría/Marca grid */}
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="flex flex-col gap-1 relative" ref={proveedorDropdownRef}>
+                                <label className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Proveedor</label>
+                                {shouldInheritField(fatherItem?.proveedor) ? (
+                                  <div className="px-3 py-2.5 border border-slate-200 rounded-lg bg-slate-50 text-slate-400 text-sm cursor-not-allowed">
+                                    {proveedor || "—"}
+                                  </div>
+                                ) : (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => setProveedorDropdownOpen((o) => !o)}
+                                      className="w-full px-3 py-2.5 border border-slate-200 rounded-lg bg-white text-slate-800 text-sm text-left flex items-center justify-between hover:border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all"
+                                    >
+                                      <span className={proveedor ? "text-slate-800" : "text-slate-400"}>
+                                        {proveedor || "Seleccionar..."}
+                                      </span>
+                                      <ChevronDown className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                                    </button>
+                                    {proveedorDropdownOpen && (
+                                      <div
+                                        className="absolute top-full left-0 mt-1 w-64 bg-white border border-slate-200 rounded-xl shadow-lg z-50 overflow-hidden"
+                                        onMouseDown={(e) => e.preventDefault()}
+                                      >
+                                        {/* Nuevo proveedor */}
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setProveedorDropdownOpen(false)
+                                            setIsNuevoProveedorModalOpen(true)
+                                          }}
+                                          className="w-full px-3 py-2.5 flex items-center gap-2 text-sm font-medium text-slate-700 hover:bg-slate-50 border-b border-slate-100 transition-colors"
+                                        >
+                                          <Plus className="w-3.5 h-3.5 text-slate-500" />
+                                          Nuevo proveedor
+                                        </button>
+                                        {/* Existing proveedores */}
+                                        <div className="max-h-48 overflow-y-auto">
+                                          {proveedores.length === 0 ? (
+                                            <p className="px-3 py-3 text-sm text-slate-400 text-center">Sin proveedores</p>
+                                          ) : (
+                                            proveedores.map((p) => {
+                                              const displayName = p.tipo === "empresa" ? (p.razonSocial || p.nombre) : `${p.nombre}${p.apellido ? " " + p.apellido : ""}`
+                                              return (
+                                                <button
+                                                  key={p.id}
+                                                  type="button"
+                                                  onClick={() => {
+                                                    handleFieldChange("proveedor", displayName, setProveedor)
+                                                    setProveedorDropdownOpen(false)
+                                                  }}
+                                                  className="w-full px-3 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between"
+                                                >
+                                                  <span>{displayName}</span>
+                                                  {proveedor === displayName && <Check className="w-3.5 h-3.5 text-slate-500" />}
+                                                </button>
+                                              )
+                                            })
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </>
+                                )}
+                              </div>
                             </div>
                           </div>
                         ) : (
@@ -3919,6 +3994,20 @@ export function CatalogoItemDetailPanel({
         onSubmit={handleNuevaVariante}
         containerAtributosPrincipales={containerAtributosPrincipales}
         existingVariants={selectedItem?.variants || []}
+      />
+
+      <NuevoProveedorModal
+        isOpen={isNuevoProveedorModalOpen}
+        onClose={() => setIsNuevoProveedorModalOpen(false)}
+        onSave={(data) => {
+          const newProveedor: Proveedor = { ...data, id: `PROV-${Date.now()}` }
+          addProveedor(newProveedor)
+          const displayName = newProveedor.tipo === "empresa"
+            ? (newProveedor.razonSocial || newProveedor.nombre)
+            : `${newProveedor.nombre}${newProveedor.apellido ? " " + newProveedor.apellido : ""}`
+          handleFieldChange("proveedor", displayName, setProveedor)
+          setIsNuevoProveedorModalOpen(false)
+        }}
       />
 
       {/* Editar Nombre Modal */}
