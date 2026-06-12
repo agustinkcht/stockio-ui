@@ -2189,24 +2189,24 @@ export function CatalogoItemDetailPanel({
                     <button
                       type="button"
                       onClick={enterRightEditMode}
-                      className="h-8 px-3 text-xs font-semibold transition-colors border shadow-sm border-slate-200 gap-1.5 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer"
+                      className="h-10 px-5 text-sm font-semibold transition-colors border shadow-sm border-slate-200 gap-2 rounded-xl flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer"
                     >
-                      <Pencil className="w-3.5 h-3.5 text-slate-600" />
+                      <Pencil className="w-4 h-4 text-slate-600" />
                       Editar
                     </button>
                   ) : (
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-2">
                       <button
                         type="button"
                         onClick={cancelRightEditMode}
-                        className="h-8 px-3 text-xs font-medium rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors cursor-pointer"
+                        className="h-10 px-5 text-sm font-medium rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors cursor-pointer"
                       >
                         Cancelar
                       </button>
                       <button
                         type="button"
                         onClick={saveRightEditMode}
-                        className="h-8 px-3 text-xs font-medium rounded-lg bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer"
+                        className="h-10 px-5 text-sm font-medium rounded-xl bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer"
                       >
                         Guardar
                       </button>
