@@ -2184,7 +2184,7 @@ export function CatalogoItemDetailPanel({
                 </div>
 
                 {/* Row 2: edit controls right-aligned */}
-                <div className="flex justify-end px-8 pt-4">
+                <div className="flex justify-end px-8 pt-2">
                   {!isRightEditing ? (
                     <button
                       type="button"
