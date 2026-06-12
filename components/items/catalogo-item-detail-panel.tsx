@@ -2150,62 +2150,61 @@ export function CatalogoItemDetailPanel({
               </div>
             )}
 
-            {/* Sticky Segment Buttons + Edit Controls (only for non-container items) */}
+            {/* Edit controls — absolute top-right of card (only for non-container items) */}
+            {!isViewingContainer && (
+              <div className="absolute top-6 right-8 flex items-center gap-1.5 z-30">
+                {!isRightEditing ? (
+                  <button
+                    type="button"
+                    onClick={enterRightEditMode}
+                    className="h-8 px-3 text-xs font-semibold transition-colors border shadow-sm border-slate-200 gap-1.5 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer whitespace-nowrap"
+                  >
+                    <Pencil className="w-3.5 h-3.5 text-slate-600" />
+                    Editar
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={cancelRightEditMode}
+                      className="h-8 px-3 text-xs font-medium rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors cursor-pointer whitespace-nowrap"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={saveRightEditMode}
+                      className="h-8 px-3 text-xs font-medium rounded-lg bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer whitespace-nowrap"
+                    >
+                      Guardar
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Sticky Segment Buttons — full width (only for non-container items) */}
             {!isViewingContainer && (
               <div className="z-20 mb-6 sticky top-[0px]">
-                <div className="flex items-center gap-2">
-                  {/* Tabs — 3/4 width */}
-                  <div className="flex items-center gap-1 h-9 p-1 bg-slate-100/80 rounded-xl" style={{ flex: "3" }}>
-                    <button
-                      onClick={() => setSelectedDetailTab("info")}
-                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${selectedDetailTab === "info"
-                        ? "bg-white text-slate-900 shadow-sm font-semibold"
-                        : "text-slate-500 hover:text-slate-700"
-                        }`}
-                    >
-                      <span className="text-xs font-medium uppercase tracking-widest">Info</span>
-                    </button>
-                    <button
-                      onClick={() => setSelectedDetailTab("atributos")}
-                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${selectedDetailTab === "atributos"
-                        ? "bg-white text-slate-900 shadow-sm font-semibold"
-                        : "text-slate-500 hover:text-slate-700"
-                        }`}
-                    >
-                      <span className="text-xs font-medium uppercase tracking-widest">Atributos</span>
-                    </button>
-                  </div>
-
-                  {/* Edit controls — 1/4 width */}
-                  <div className="flex items-center justify-end gap-1.5" style={{ flex: "1" }}>
-                    {!isRightEditing ? (
-                      <button
-                        type="button"
-                        onClick={enterRightEditMode}
-                        className="h-9 px-3 text-xs font-semibold transition-colors border shadow-sm border-slate-200 gap-1.5 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer whitespace-nowrap"
-                      >
-                        <Pencil className="w-3.5 h-3.5 text-slate-600" />
-                        Editar
-                      </button>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          onClick={cancelRightEditMode}
-                          className="h-9 px-3 text-xs font-medium rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors cursor-pointer whitespace-nowrap"
-                        >
-                          Cancelar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={saveRightEditMode}
-                          className="h-9 px-3 text-xs font-medium rounded-lg bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer whitespace-nowrap"
-                        >
-                          Guardar
-                        </button>
-                      </>
-                    )}
-                  </div>
+                <div className="flex items-center gap-1 h-9 p-1 bg-slate-100/80 rounded-xl">
+                  <button
+                    onClick={() => setSelectedDetailTab("info")}
+                    className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${selectedDetailTab === "info"
+                      ? "bg-white text-slate-900 shadow-sm font-semibold"
+                      : "text-slate-500 hover:text-slate-700"
+                      }`}
+                  >
+                    <span className="text-xs font-medium uppercase tracking-widest">Info</span>
+                  </button>
+                  <button
+                    onClick={() => setSelectedDetailTab("atributos")}
+                    className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${selectedDetailTab === "atributos"
+                      ? "bg-white text-slate-900 shadow-sm font-semibold"
+                      : "text-slate-500 hover:text-slate-700"
+                      }`}
+                  >
+                    <span className="text-xs font-medium uppercase tracking-widest">Atributos</span>
+                  </button>
                 </div>
               </div>
             )}
@@ -3163,7 +3162,7 @@ export function CatalogoItemDetailPanel({
                                   placeholder="Ej: Vinos"
                                 />
                               ) : (
-                                <p className="text-sm text-slate-800 py-2.5">{categoria || <span className="text-slate-400 italic">—</span>}</p>
+                                <p className="text-base text-slate-800 py-2">{categoria || <span className="text-slate-400 italic">—</span>}</p>
                               )}
                             </div>
 
@@ -3182,7 +3181,7 @@ export function CatalogoItemDetailPanel({
                                   placeholder="Ej: YKK"
                                 />
                               ) : (
-                                <p className="text-sm text-slate-800 py-2.5">{marca || <span className="text-slate-400 italic">—</span>}</p>
+                                <p className="text-base text-slate-800 py-2">{marca || <span className="text-slate-400 italic">—</span>}</p>
                               )}
                             </div>
                           </div>
@@ -3211,7 +3210,7 @@ export function CatalogoItemDetailPanel({
                                   <option value="pack">Pack</option>
                                 </select>
                               ) : (
-                                <p className="text-sm text-slate-800 py-2.5 capitalize">{formatoVenta || <span className="text-slate-400 italic">—</span>}</p>
+                                <p className="text-base text-slate-800 py-2 capitalize">{formatoVenta || <span className="text-slate-400 italic">—</span>}</p>
                               )}
                             </div>
 
@@ -3238,7 +3237,7 @@ export function CatalogoItemDetailPanel({
                                   placeholder="N.E."
                                 />
                               ) : (
-                                <p className="text-sm text-slate-800 py-2.5">{formatoVenta === "unidad" ? "—" : (unidadesPorPack || <span className="text-slate-400 italic">—</span>)}</p>
+                                <p className="text-base text-slate-800 py-2">{formatoVenta === "unidad" ? "—" : (unidadesPorPack || <span className="text-slate-400 italic">—</span>)}</p>
                               )}
                             </div>
                           </div>
@@ -3282,7 +3281,7 @@ export function CatalogoItemDetailPanel({
                                       placeholder="0"
                                     />
                                   ) : (
-                                    <p className="text-sm text-slate-800 py-2.5">{volumenCantidad || <span className="text-slate-400 italic">—</span>}</p>
+                                    <p className="text-base text-slate-800 py-2">{volumenCantidad || <span className="text-slate-400 italic">—</span>}</p>
                                   )}
                                 </div>
 
@@ -3306,7 +3305,7 @@ export function CatalogoItemDetailPanel({
                                       <option value="m">m</option>
                                     </select>
                                   ) : (
-                                    <p className="text-sm text-slate-800 py-2.5">{volumenUnidad || <span className="text-slate-400 italic">—</span>}</p>
+                                    <p className="text-base text-slate-800 py-2">{volumenUnidad || <span className="text-slate-400 italic">—</span>}</p>
                                   )}
                                 </div>
                               </div>
@@ -3349,7 +3348,7 @@ export function CatalogoItemDetailPanel({
                                       />
                                     </div>
                                   ) : (
-                                    <p className="text-sm text-slate-800">{fechaVencimiento || <span className="text-slate-400 italic">—</span>}</p>
+                                    <p className="text-base text-slate-800">{fechaVencimiento || <span className="text-slate-400 italic">—</span>}</p>
                                   )}
                                 </div>
                               )}
@@ -3377,7 +3376,7 @@ export function CatalogoItemDetailPanel({
                                     placeholder="Nombre del proveedor"
                                   />
                                 ) : (
-                                  <p className="text-sm text-slate-800 py-2.5">{proveedor || <span className="text-slate-400 italic">—</span>}</p>
+                                  <p className="text-base text-slate-800 py-2">{proveedor || <span className="text-slate-400 italic">—</span>}</p>
                                 )}
                               </div>
                               <div className="flex flex-col gap-1.5">
@@ -3391,7 +3390,7 @@ export function CatalogoItemDetailPanel({
                                     placeholder="Código del proveedor"
                                   />
                                 ) : (
-                                  <p className="text-sm text-slate-800 py-2.5">{codigoProveedor || <span className="text-slate-400 italic">—</span>}</p>
+                                  <p className="text-base text-slate-800 py-2">{codigoProveedor || <span className="text-slate-400 italic">—</span>}</p>
                                 )}
                               </div>
                             </div>
@@ -3454,7 +3453,7 @@ export function CatalogoItemDetailPanel({
                                           placeholder="Ej: Material"
                                         />
                                       ) : (
-                                        <p className="text-sm text-slate-800 py-2.5">{attr.key || <span className="text-slate-400 italic">—</span>}</p>
+                                        <p className="text-base text-slate-800 py-2">{attr.key || <span className="text-slate-400 italic">—</span>}</p>
                                       )}
                                     </div>
 
@@ -3477,7 +3476,7 @@ export function CatalogoItemDetailPanel({
                                           placeholder="Ej: Algodón"
                                         />
                                       ) : (
-                                        <p className="text-sm text-slate-800 py-2.5">{attr.value || <span className="text-slate-400 italic">—</span>}</p>
+                                        <p className="text-base text-slate-800 py-2">{attr.value || <span className="text-slate-400 italic">—</span>}</p>
                                       )}
                                     </div>
 
