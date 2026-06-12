@@ -2150,62 +2150,62 @@ export function CatalogoItemDetailPanel({
               </div>
             )}
 
-            {/* Sticky Segment Buttons + Edit Controls — 3/4 + 1/4 (only for non-container items) */}
+            {/* Edit controls row + full-width toggle (only for non-container items) */}
             {!isViewingContainer && (
-              <div className="z-20 mb-6 sticky top-[0px]">
-                <div className="flex items-center gap-2">
-                  {/* Tabs — 3/4 width */}
-                  <div className="flex items-center gap-1 h-9 p-1 bg-slate-100/80 rounded-xl" style={{ flex: "3" }}>
+              <div className="z-20 mb-6 sticky top-[0px] flex flex-col gap-3">
+                {/* Row 1: edit button right-aligned */}
+                <div className="flex justify-end">
+                  {!isRightEditing ? (
                     <button
-                      onClick={() => setSelectedDetailTab("info")}
-                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${selectedDetailTab === "info"
-                        ? "bg-white text-slate-900 shadow-sm font-semibold"
-                        : "text-slate-500 hover:text-slate-700"
-                        }`}
+                      type="button"
+                      onClick={enterRightEditMode}
+                      className="h-8 px-3 text-xs font-semibold transition-colors border shadow-sm border-slate-200 gap-1.5 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer"
                     >
-                      <span className="text-xs font-medium uppercase tracking-widest">Info</span>
+                      <Pencil className="w-3.5 h-3.5 text-slate-600" />
+                      Editar
                     </button>
-                    <button
-                      onClick={() => setSelectedDetailTab("atributos")}
-                      className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-lg ${selectedDetailTab === "atributos"
-                        ? "bg-white text-slate-900 shadow-sm font-semibold"
-                        : "text-slate-500 hover:text-slate-700"
-                        }`}
-                    >
-                      <span className="text-xs font-medium uppercase tracking-widest">Atributos</span>
-                    </button>
-                  </div>
-
-                  {/* Edit controls — 1/4 width */}
-                  <div className="flex items-center justify-end gap-1.5" style={{ flex: "1" }}>
-                    {!isRightEditing ? (
+                  ) : (
+                    <div className="flex items-center gap-1.5">
                       <button
                         type="button"
-                        onClick={enterRightEditMode}
-                        className="h-9 px-3 text-xs font-semibold transition-colors border shadow-sm border-slate-200 gap-1.5 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer whitespace-nowrap"
+                        onClick={cancelRightEditMode}
+                        className="h-8 px-3 text-xs font-medium rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors cursor-pointer"
                       >
-                        <Pencil className="w-3.5 h-3.5 text-slate-600" />
-                        Editar
+                        Cancelar
                       </button>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          onClick={cancelRightEditMode}
-                          className="h-9 px-3 text-xs font-medium rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors cursor-pointer whitespace-nowrap"
-                        >
-                          Cancelar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={saveRightEditMode}
-                          className="h-9 px-3 text-xs font-medium rounded-lg bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer whitespace-nowrap"
-                        >
-                          Guardar
-                        </button>
-                      </>
-                    )}
-                  </div>
+                      <button
+                        type="button"
+                        onClick={saveRightEditMode}
+                        className="h-8 px-3 text-xs font-medium rounded-lg bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer"
+                      >
+                        Guardar
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Row 2: full-width tall toggle */}
+                <div className="flex items-center gap-1 h-12 p-1 bg-slate-100/80 rounded-2xl w-full">
+                  <button
+                    onClick={() => setSelectedDetailTab("info")}
+                    className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-xl ${
+                      selectedDetailTab === "info"
+                        ? "bg-white text-slate-900 shadow-sm font-semibold"
+                        : "text-slate-500 hover:text-slate-700"
+                    }`}
+                  >
+                    <span className="text-sm font-semibold uppercase tracking-widest">Info</span>
+                  </button>
+                  <button
+                    onClick={() => setSelectedDetailTab("atributos")}
+                    className={`flex-1 h-full flex items-center justify-center transition-all duration-200 cursor-pointer rounded-xl ${
+                      selectedDetailTab === "atributos"
+                        ? "bg-white text-slate-900 shadow-sm font-semibold"
+                        : "text-slate-500 hover:text-slate-700"
+                    }`}
+                  >
+                    <span className="text-sm font-semibold uppercase tracking-widest">Atributos</span>
+                  </button>
                 </div>
               </div>
             )}
