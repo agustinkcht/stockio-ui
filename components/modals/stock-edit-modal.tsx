@@ -147,7 +147,7 @@ export function StockEditModal({
           </div>
 
           {/* Agregar / Remover / Fijar en — always active */}
-          <div className="flex items-center gap-2 p-3 rounded-xl bg-slate-50 border border-slate-200">
+          <div className="flex items-center gap-2">
             <select
               value={operation}
               onChange={(e) => setOperation(e.target.value as "add" | "remove" | "set")}
@@ -180,9 +180,17 @@ export function StockEditModal({
           </div>
 
           {/* Reservado — read-only, compact */}
-          <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-100">
-            <span className="text-xs font-medium uppercase tracking-wider text-slate-400">Reservado</span>
-            <span className="text-base font-semibold tabular-nums text-slate-500">{initialReservado}</span>
+          <div className={`flex items-center justify-between px-4 py-2.5 rounded-xl ${
+            initialReservado > 0
+              ? "bg-amber-50 border border-amber-100"
+              : "bg-slate-50 border border-slate-100"
+          }`}>
+            <span className={`text-xs font-medium uppercase tracking-wider ${
+              initialReservado > 0 ? "text-amber-600" : "text-slate-400"
+            }`}>Reservado</span>
+            <span className={`text-base font-semibold tabular-nums ${
+              initialReservado > 0 ? "text-amber-600" : "text-slate-500"
+            }`}>{initialReservado}</span>
           </div>
 
           {/* Disponible — read-only */}
