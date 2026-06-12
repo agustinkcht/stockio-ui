@@ -1666,6 +1666,28 @@ export function CatalogoItemDetailPanel({
                       {/* Divider */}
                       <div className="border-t border-slate-700 mb-4"></div>
 
+                      {/* Descripción Section */}
+                      <h3 className="text-sm font-medium uppercase tracking-wider mb-3 text-slate-50">
+                        Descripción
+                      </h3>
+                      <div className="mb-5">
+                        <div
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setModalDescripcionValue(descripcionValue)
+                            setIsEditDescripcionModalOpen(true)
+                          }}
+                          className="w-full min-h-[100px] px-3 py-2 bg-slate-800/30 rounded-lg text-slate-200 cursor-pointer hover:bg-slate-800/40 transition-colors text-sm"
+                        >
+                          {descripcionValue || (
+                            <span className="text-slate-500 hover:text-slate-400 transition-colors">Agregar descripción...</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Divider */}
+                      <div className="border-t border-slate-700 mb-4"></div>
+
                       {/* Código Universal Section */}
                       <div className="mb-4 group/codigoBack">
                         <div className="flex items-center gap-1.5 mb-3">
@@ -1728,28 +1750,6 @@ export function CatalogoItemDetailPanel({
                             <span className="text-slate-500 italic">Sin código...</span>
                           )}
                         </span>
-                      </div>
-
-                      {/* Divider */}
-                      <div className="border-t border-slate-700 mb-4"></div>
-
-                      {/* Descripción Section */}
-                      <h3 className="text-sm font-medium uppercase tracking-wider mb-3 text-slate-50">
-                        Descripción
-                      </h3>
-                      <div className="flex-1">
-                        <div
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setModalDescripcionValue(descripcionValue)
-                            setIsEditDescripcionModalOpen(true)
-                          }}
-                          className="w-full min-h-[100px] px-3 py-2 bg-slate-800/30 rounded-lg text-slate-200 cursor-pointer hover:bg-slate-800/40 transition-colors text-sm"
-                        >
-                          {descripcionValue || (
-                            <span className="text-slate-500 hover:text-slate-400 transition-colors">Agregar descripción...</span>
-                          )}
-                        </div>
                       </div>
                     </div>
                   </div>
