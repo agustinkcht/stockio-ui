@@ -367,7 +367,7 @@ export function ItemCard({
                   })()}
                   {/* Precio Venta cell - clickable to open precio modal */}
                   <div
-                    className="col-span-3 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100 hover:bg-slate-50 group/precio"
+                    className="col-span-2 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100 hover:bg-slate-50 group/precio"
                     onClick={(e) => {
                       e.stopPropagation()
                       setPrecioModalValues({
@@ -428,7 +428,7 @@ export function ItemCard({
                 <div className="col-span-7 h-full" />
               ) : (
                 <div
-                  className="col-span-3 h-full flex items-center justify-center px-2 cursor-pointer transition-colors hover:bg-slate-50 group/stock"
+                  className="col-span-4 h-full flex items-center justify-center px-2 cursor-pointer transition-colors hover:bg-slate-50 group/stock"
                   onClick={(e) => {
                     e.stopPropagation()
                     setIsStockModalOpen(true)
@@ -457,7 +457,7 @@ export function ItemCard({
                           ? "text-red-500"
                           : "text-muted-foreground"
                     }`}>
-                      {currentStockDisponible} <span className="text-xs font-normal opacity-70">disp.</span>
+                      {currentStockDisponible} <span className="text-xs font-normal opacity-70">disponibles</span>
                     </span>
                   </div>
                 </div>

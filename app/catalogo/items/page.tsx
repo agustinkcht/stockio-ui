@@ -636,7 +636,7 @@ export default function CatalogoPage() {
                     </div>
                   </div>
 
-                  {/* Tab header — grid-cols-12: item(5) estado(1) precio(3) stock(3) */}
+                  {/* Tab header — grid-cols-12: item(5) estado(1) precio(2) stock(4) */}
                   <div className="grid grid-cols-12 h-9 border border-slate-200/80 mt-2 rounded-lg overflow-hidden">
                     <div className="col-span-5 flex items-center justify-center px-4 border-r border-slate-200/60">
                       <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Item</span>
@@ -644,10 +644,10 @@ export default function CatalogoPage() {
                     <div className="col-span-1 flex items-center justify-center px-1 border-r border-slate-200/60">
                       <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Estado</span>
                     </div>
-                    <div className="col-span-3 flex items-center justify-center px-4 border-r border-slate-200/60">
+                    <div className="col-span-2 flex items-center justify-center px-4 border-r border-slate-200/60">
                       <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Precio Venta</span>
                     </div>
-                    <div className="col-span-3 flex items-center justify-center gap-1.5 px-2">
+                    <div className="col-span-4 flex items-center justify-center gap-1.5 px-2">
                       <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Stock</span>
                       <div className="group relative flex-shrink-0">
                         <div className="w-3.5 h-3.5 rounded-full border border-gray-400 flex items-center justify-center cursor-default text-gray-400 hover:text-gray-600 hover:border-gray-600 transition-colors">
