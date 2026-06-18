@@ -368,6 +368,8 @@ export function CatalogoItemDetailPanel({
 
   // Precio and Stock modal states
   const [isPrecioModalOpen, setIsPrecioModalOpen] = useState(false)
+  const [isPrecioCostoExpanded, setIsPrecioCostoExpanded] = useState(false)
+  const [isExpandedMatrixPrecioCostoExpanded, setIsExpandedMatrixPrecioCostoExpanded] = useState(false)
   const [isStockModalOpen, setIsStockModalOpen] = useState(false)
 
   // Precio modal editing values
@@ -3632,91 +3634,103 @@ export function CatalogoItemDetailPanel({
               </div>
             </div>
 
-            <div className="p-6">
-            <div className="grid grid-cols-4 gap-3 mb-6">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Costo</label>
-                <input
-                  type="number"
-                  value={precioModalValues.costo}
-                  onChange={(e) => {
-                    const costo = Number.parseFloat(e.target.value) || 0
-                    const precioFinal = costo * (1 + precioModalValues.margen / 100) * (1 + precioModalValues.iva / 100)
-                    setPrecioModalValues((prev) => ({ ...prev, costo, precioFinal }))
-                  }}
-                  className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="0"
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Margen %</label>
-                <input
-                  type="number"
-                  value={precioModalValues.margen}
-                  onChange={(e) => {
-                    const margen = Number.parseFloat(e.target.value) || 0
-                    const precioFinal = precioModalValues.costo * (1 + margen / 100) * (1 + precioModalValues.iva / 100)
-                    setPrecioModalValues((prev) => ({ ...prev, margen, precioFinal }))
-                  }}
-                  className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="0"
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">IVA %</label>
-                <input
-                  type="number"
-                  value={precioModalValues.iva}
-                  onChange={(e) => {
-                    const iva = Number.parseFloat(e.target.value) || 0
-                    const precioFinal = precioModalValues.costo * (1 + precioModalValues.margen / 100) * (1 + iva / 100)
-                    setPrecioModalValues((prev) => ({ ...prev, iva, precioFinal }))
-                  }}
-                  className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="0"
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-emerald-600 uppercase tracking-wide">Precio Final</label>
+            <div className="p-6 flex flex-col gap-4">
+              {/* Precio Venta — big field */}
+              <div className="border border-slate-200 rounded-xl px-4 pt-3 pb-4">
+                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Precio Venta</label>
                 <input
                   type="number"
                   value={precioModalValues.precioFinal}
                   onChange={(e) => {
                     const precioFinal = Number.parseFloat(e.target.value) || 0
-                    // Back-calculate margen from precio final, costo and iva
                     const base = precioFinal / (1 + precioModalValues.iva / 100)
-                    const margen = precioModalValues.costo > 0
-                      ? ((base / precioModalValues.costo) - 1) * 100
-                      : 0
+                    const margen = precioModalValues.costo > 0 ? ((base / precioModalValues.costo) - 1) * 100 : 0
                     setPrecioModalValues((prev) => ({ ...prev, precioFinal, margen: Math.round(margen * 100) / 100 }))
                   }}
-                  className="px-3 py-2 border border-emerald-300 bg-emerald-50 rounded-lg text-sm font-semibold text-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  className="w-full mt-1 text-base font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300"
                   placeholder="0"
                 />
               </div>
-            </div>
 
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setIsPrecioModalOpen(false)}
-                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => {
-                  const itemIdentifier = selectedItem?.id || selectedItem?.sku
-                  if (itemIdentifier) {
-                    onFieldChange(itemIdentifier, "precio", precioModalValues)
-                    onSaveNow?.()
-                  }
-                  setIsPrecioModalOpen(false)
-                }}
-                className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
-              >
-                Guardar
-              </button>
-            </div>
+              {/* Collapsible costo / margen / IVA */}
+              <div className="border border-slate-200 rounded-xl overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setIsPrecioCostoExpanded((v) => !v)}
+                  className="w-full flex items-center gap-2 px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                >
+                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isPrecioCostoExpanded ? "rotate-180" : ""}`} />
+                  Costo, margen e IVA
+                </button>
+                {isPrecioCostoExpanded && (
+                  <div className="grid grid-cols-3 gap-px bg-slate-200 border-t border-slate-200">
+                    <div className="bg-white px-4 pt-3 pb-4 flex flex-col gap-1.5">
+                      <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Costo</label>
+                      <input
+                        type="number"
+                        value={precioModalValues.costo}
+                        onChange={(e) => {
+                          const costo = Number.parseFloat(e.target.value) || 0
+                          const precioFinal = costo * (1 + precioModalValues.margen / 100) * (1 + precioModalValues.iva / 100)
+                          setPrecioModalValues((prev) => ({ ...prev, costo, precioFinal }))
+                        }}
+                        className="text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300"
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="bg-white px-4 pt-3 pb-4 flex flex-col gap-1.5">
+                      <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Margen %</label>
+                      <input
+                        type="number"
+                        value={precioModalValues.margen}
+                        onChange={(e) => {
+                          const margen = Number.parseFloat(e.target.value) || 0
+                          const precioFinal = precioModalValues.costo * (1 + margen / 100) * (1 + precioModalValues.iva / 100)
+                          setPrecioModalValues((prev) => ({ ...prev, margen, precioFinal }))
+                        }}
+                        className="text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300"
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="bg-white px-4 pt-3 pb-4 flex flex-col gap-1.5">
+                      <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">IVA %</label>
+                      <input
+                        type="number"
+                        value={precioModalValues.iva}
+                        onChange={(e) => {
+                          const iva = Number.parseFloat(e.target.value) || 0
+                          const precioFinal = precioModalValues.costo * (1 + precioModalValues.margen / 100) * (1 + iva / 100)
+                          setPrecioModalValues((prev) => ({ ...prev, iva, precioFinal }))
+                        }}
+                        className="text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2 pt-1">
+                <button
+                  onClick={() => setIsPrecioModalOpen(false)}
+                  className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    const itemIdentifier = selectedItem?.id || selectedItem?.sku
+                    if (itemIdentifier) {
+                      onFieldChange(itemIdentifier, "precio", precioModalValues)
+                      onSaveNow?.()
+                    }
+                    setIsPrecioModalOpen(false)
+                  }}
+                  className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  Guardar
+                </button>
+              </div>
             </div>{/* end p-6 inner */}
           </div>
         </div>
@@ -3755,53 +3769,14 @@ export function CatalogoItemDetailPanel({
       {expandedMatrixPrecioModal.open && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center">
           <div className="absolute inset-0 bg-black/50" onClick={() => setExpandedMatrixPrecioModal({ open: false, variant: null })} />
-          <div className="relative bg-white rounded-xl shadow-xl p-6 w-full max-w-lg mx-4">
-            <h3 className="text-lg font-semibold text-slate-900 mb-4">Editar Precio</h3>
-            <div className="grid grid-cols-4 gap-3 mb-6">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Costo</label>
-                <input
-                  type="number"
-                  value={expandedMatrixPrecioValues.costo}
-                  onChange={(e) => {
-                    const costo = Number.parseFloat(e.target.value) || 0
-                    const precioFinal = costo * (1 + expandedMatrixPrecioValues.margen / 100) * (1 + expandedMatrixPrecioValues.iva / 100)
-                    setExpandedMatrixPrecioValues((prev) => ({ ...prev, costo, precioFinal }))
-                  }}
-                  className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="0"
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Margen %</label>
-                <input
-                  type="number"
-                  value={expandedMatrixPrecioValues.margen}
-                  onChange={(e) => {
-                    const margen = Number.parseFloat(e.target.value) || 0
-                    const precioFinal = expandedMatrixPrecioValues.costo * (1 + margen / 100) * (1 + expandedMatrixPrecioValues.iva / 100)
-                    setExpandedMatrixPrecioValues((prev) => ({ ...prev, margen, precioFinal }))
-                  }}
-                  className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="0"
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">IVA %</label>
-                <input
-                  type="number"
-                  value={expandedMatrixPrecioValues.iva}
-                  onChange={(e) => {
-                    const iva = Number.parseFloat(e.target.value) || 0
-                    const precioFinal = expandedMatrixPrecioValues.costo * (1 + expandedMatrixPrecioValues.margen / 100) * (1 + iva / 100)
-                    setExpandedMatrixPrecioValues((prev) => ({ ...prev, iva, precioFinal }))
-                  }}
-                  className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="0"
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-emerald-600 uppercase tracking-wide">Precio Final</label>
+          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 overflow-hidden">
+            <div className="px-6 pt-5 pb-4 border-b border-slate-100">
+              <h3 className="text-sm font-semibold text-slate-900">Editar Precio</h3>
+            </div>
+            <div className="p-6 flex flex-col gap-4">
+              {/* Precio Venta — big field */}
+              <div className="border border-slate-200 rounded-xl px-4 pt-3 pb-4">
+                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Precio Venta</label>
                 <input
                   type="number"
                   value={expandedMatrixPrecioValues.precioFinal}
@@ -3811,33 +3786,92 @@ export function CatalogoItemDetailPanel({
                     const margen = expandedMatrixPrecioValues.costo > 0 ? ((base / expandedMatrixPrecioValues.costo) - 1) * 100 : 0
                     setExpandedMatrixPrecioValues((prev) => ({ ...prev, precioFinal, margen: Math.round(margen * 100) / 100 }))
                   }}
-                  className="px-3 py-2 border border-emerald-300 bg-emerald-50 rounded-lg text-sm font-semibold text-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  className="w-full mt-1 text-base font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300"
                   placeholder="0"
                 />
               </div>
-            </div>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setExpandedMatrixPrecioModal({ open: false, variant: null })}
-                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => {
-                  if (expandedMatrixPrecioModal.variant?.id && fatherItem) {
-                    const updatedVariants = (fatherItem.variants || []).map((ov: any) =>
-                      ov.id === expandedMatrixPrecioModal.variant.id ? { ...ov, precio: expandedMatrixPrecioValues } : ov
-                    )
-                    onFieldChange(fatherItem.id, "variants", updatedVariants)
-                    onSaveNow?.()
-                  }
-                  setExpandedMatrixPrecioModal({ open: false, variant: null })
-                }}
-                className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
-              >
-                Aceptar
-              </button>
+
+              {/* Collapsible costo / margen / IVA */}
+              <div className="border border-slate-200 rounded-xl overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setIsExpandedMatrixPrecioCostoExpanded((v) => !v)}
+                  className="w-full flex items-center gap-2 px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                >
+                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isExpandedMatrixPrecioCostoExpanded ? "rotate-180" : ""}`} />
+                  Costo, margen e IVA
+                </button>
+                {isExpandedMatrixPrecioCostoExpanded && (
+                  <div className="grid grid-cols-3 gap-px bg-slate-200 border-t border-slate-200">
+                    <div className="bg-white px-4 pt-3 pb-4 flex flex-col gap-1.5">
+                      <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Costo</label>
+                      <input
+                        type="number"
+                        value={expandedMatrixPrecioValues.costo}
+                        onChange={(e) => {
+                          const costo = Number.parseFloat(e.target.value) || 0
+                          const precioFinal = costo * (1 + expandedMatrixPrecioValues.margen / 100) * (1 + expandedMatrixPrecioValues.iva / 100)
+                          setExpandedMatrixPrecioValues((prev) => ({ ...prev, costo, precioFinal }))
+                        }}
+                        className="text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300"
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="bg-white px-4 pt-3 pb-4 flex flex-col gap-1.5">
+                      <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Margen %</label>
+                      <input
+                        type="number"
+                        value={expandedMatrixPrecioValues.margen}
+                        onChange={(e) => {
+                          const margen = Number.parseFloat(e.target.value) || 0
+                          const precioFinal = expandedMatrixPrecioValues.costo * (1 + margen / 100) * (1 + expandedMatrixPrecioValues.iva / 100)
+                          setExpandedMatrixPrecioValues((prev) => ({ ...prev, margen, precioFinal }))
+                        }}
+                        className="text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300"
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="bg-white px-4 pt-3 pb-4 flex flex-col gap-1.5">
+                      <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">IVA %</label>
+                      <input
+                        type="number"
+                        value={expandedMatrixPrecioValues.iva}
+                        onChange={(e) => {
+                          const iva = Number.parseFloat(e.target.value) || 0
+                          const precioFinal = expandedMatrixPrecioValues.costo * (1 + expandedMatrixPrecioValues.margen / 100) * (1 + iva / 100)
+                          setExpandedMatrixPrecioValues((prev) => ({ ...prev, iva, precioFinal }))
+                        }}
+                        className="text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2 pt-1">
+                <button
+                  onClick={() => setExpandedMatrixPrecioModal({ open: false, variant: null })}
+                  className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    if (expandedMatrixPrecioModal.variant?.id && fatherItem) {
+                      const updatedVariants = (fatherItem.variants || []).map((ov: any) =>
+                        ov.id === expandedMatrixPrecioModal.variant.id ? { ...ov, precio: expandedMatrixPrecioValues } : ov
+                      )
+                      onFieldChange(fatherItem.id, "variants", updatedVariants)
+                      onSaveNow?.()
+                    }
+                    setExpandedMatrixPrecioModal({ open: false, variant: null })
+                  }}
+                  className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  Aceptar
+                </button>
+              </div>
             </div>
           </div>
         </div>
