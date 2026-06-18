@@ -542,11 +542,11 @@ export function useItems() {
     setHasUnsavedEdits(true)
     setLastUndoneEdit(null)
 
-    setItems((prevItems) => {
-      const next = prevItems.map((item) => (item.id === itemSku || item.sku === itemSku ? { ...item, [field]: newValue } : item))
-      itemsRef.current = next
-      return next
-    })
+    // Update ref synchronously BEFORE setItems so forceSaveItems always reads the latest
+    itemsRef.current = itemsRef.current.map((item) =>
+      item.id === itemSku || item.sku === itemSku ? { ...item, [field]: newValue } : item
+    )
+    setItems(itemsRef.current)
   }
 
   const editVariantField = (parentSku: string, variantId: string, field: string, newValue: any) => {
@@ -579,24 +579,21 @@ export function useItems() {
     setHasUnsavedEdits(true)
     setLastUndoneEdit(null)
 
-    // Update the variant within the parent's variants array by id
-    setItems((prevItems) => {
-      const next = prevItems.map((item) => {
-        if ((item.id === parentSku || item.sku === parentSku) && item.variants) {
-          const updatedVariants = item.variants.map((v: any) =>
-            v.id === variantId || v.sku === variantId ? { ...v, [field]: newValue } : v,
-          )
-          return { ...item, variants: updatedVariants }
-        }
-        return item
-      })
-      itemsRef.current = next
-      return next
+    // Update ref synchronously BEFORE setItems so forceSaveItems always reads the latest
+    itemsRef.current = itemsRef.current.map((item) => {
+      if ((item.id === parentSku || item.sku === parentSku) && item.variants) {
+        const updatedVariants = item.variants.map((v: any) =>
+          v.id === variantId || v.sku === variantId ? { ...v, [field]: newValue } : v,
+        )
+        return { ...item, variants: updatedVariants }
+      }
+      return item
     })
+    setItems(itemsRef.current)
   }
 
   const updateParentWithVariants = (parentSku: string, updates: Partial<Item>) => {
-    console.log("[v0] useItems - updateParentWithVariants called:", { parentSku, updates })
+
 
     const parentItem = items.find((item) => item.id === parentSku || item.sku === parentSku)
     if (!parentItem) return
@@ -692,10 +689,9 @@ export function useItems() {
 
     console.log("[v0] useItems - saveEdit called for:", editedItem.itemSku)
 
-    // Filter out any invalid items before saving
-    const validItems = items.filter(isValidItem)
+    // Use itemsRef.current — always has the latest state even when called right after editField
+    const validItems = itemsRef.current.filter(isValidItem)
     saveItems(validItems)
-    console.log("[v0] useItems - saved edits to localStorage, valid items:", validItems.length)
 
     setEditedItem(null)
     setLastUndoneEdit(null)
