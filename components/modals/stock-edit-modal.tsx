@@ -97,9 +97,10 @@ export function StockEditModal({
                 </div>
               )}
               <div className="min-w-0">
-                <h3 className="text-sm font-semibold text-slate-900 truncate">{itemName || "Editar Stock"}</h3>
+                <h3 className="text-sm font-semibold text-slate-900">Editar Stock</h3>
+                {itemName && <p className="text-sm font-medium text-slate-700 mt-0.5 truncate">{itemName}</p>}
                 {(itemMarca || itemCategoria) && (
-                  <p className="text-xs text-slate-400 truncate mt-0.5">
+                  <p className="text-xs text-slate-400 truncate">
                     {[itemMarca, itemCategoria].filter(Boolean).join(" · ")}
                   </p>
                 )}
