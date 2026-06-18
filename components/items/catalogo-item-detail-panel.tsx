@@ -3635,21 +3635,23 @@ export function CatalogoItemDetailPanel({
             </div>
 
             <div className="p-6 flex flex-col gap-4">
-              {/* Precio Venta — label inline left */}
-              <div className="border border-slate-200 rounded-xl px-4 py-3 flex items-center gap-3">
-                <span className="text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">Precio Venta</span>
-                <div className="flex items-center gap-1 flex-1">
+              {/* Precio Venta — label above, $ prefix, formatted thousands */}
+              <div className="border border-slate-200 rounded-xl px-4 pt-3 pb-4">
+                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Precio Venta</label>
+                <div className="flex items-center gap-1 mt-1">
                   <span className="text-sm text-slate-400">$</span>
                   <input
-                    type="number"
-                    value={precioModalValues.precioFinal}
+                    type="text"
+                    inputMode="numeric"
+                    value={precioModalValues.precioFinal > 0 ? precioModalValues.precioFinal.toLocaleString("es-AR") : ""}
                     onChange={(e) => {
-                      const precioFinal = Number.parseFloat(e.target.value) || 0
+                      const raw = e.target.value.replace(/\./g, "").replace(/,/g, ".")
+                      const precioFinal = Number.parseFloat(raw) || 0
                       const base = precioFinal / (1 + precioModalValues.iva / 100)
                       const margen = precioModalValues.costo > 0 ? ((base / precioModalValues.costo) - 1) * 100 : 0
                       setPrecioModalValues((prev) => ({ ...prev, precioFinal, margen: Math.round(margen * 10) / 10 }))
                     }}
-                    className="flex-1 text-base font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    className="flex-1 text-base font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300"
                     placeholder="0"
                   />
                 </div>
@@ -3673,14 +3675,16 @@ export function CatalogoItemDetailPanel({
                       <div className="flex items-center gap-1">
                         <span className="text-xs text-slate-400">$</span>
                         <input
-                          type="number"
-                          value={precioModalValues.costo}
+                          type="text"
+                          inputMode="numeric"
+                          value={precioModalValues.costo > 0 ? precioModalValues.costo.toLocaleString("es-AR") : ""}
                           onChange={(e) => {
-                            const costo = Number.parseFloat(e.target.value) || 0
+                            const raw = e.target.value.replace(/\./g, "").replace(/,/g, ".")
+                            const costo = Number.parseFloat(raw) || 0
                             const precioFinal = costo * (1 + precioModalValues.margen / 100) * (1 + precioModalValues.iva / 100)
                             setPrecioModalValues((prev) => ({ ...prev, costo, precioFinal }))
                           }}
-                          className="flex-1 text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          className="flex-1 text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300"
                           placeholder="0"
                         />
                       </div>
@@ -3790,21 +3794,23 @@ export function CatalogoItemDetailPanel({
               <h3 className="text-sm font-semibold text-slate-900">Editar Precio</h3>
             </div>
             <div className="p-6 flex flex-col gap-4">
-              {/* Precio Venta — label inline left */}
-              <div className="border border-slate-200 rounded-xl px-4 py-3 flex items-center gap-3">
-                <span className="text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">Precio Venta</span>
-                <div className="flex items-center gap-1 flex-1">
+              {/* Precio Venta — label above, $ prefix, formatted thousands */}
+              <div className="border border-slate-200 rounded-xl px-4 pt-3 pb-4">
+                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Precio Venta</label>
+                <div className="flex items-center gap-1 mt-1">
                   <span className="text-sm text-slate-400">$</span>
                   <input
-                    type="number"
-                    value={expandedMatrixPrecioValues.precioFinal}
+                    type="text"
+                    inputMode="numeric"
+                    value={expandedMatrixPrecioValues.precioFinal > 0 ? expandedMatrixPrecioValues.precioFinal.toLocaleString("es-AR") : ""}
                     onChange={(e) => {
-                      const precioFinal = Number.parseFloat(e.target.value) || 0
+                      const raw = e.target.value.replace(/\./g, "").replace(/,/g, ".")
+                      const precioFinal = Number.parseFloat(raw) || 0
                       const base = precioFinal / (1 + expandedMatrixPrecioValues.iva / 100)
                       const margen = expandedMatrixPrecioValues.costo > 0 ? ((base / expandedMatrixPrecioValues.costo) - 1) * 100 : 0
                       setExpandedMatrixPrecioValues((prev) => ({ ...prev, precioFinal, margen: Math.round(margen * 10) / 10 }))
                     }}
-                    className="flex-1 text-base font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    className="flex-1 text-base font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300"
                     placeholder="0"
                   />
                 </div>
@@ -3828,14 +3834,16 @@ export function CatalogoItemDetailPanel({
                       <div className="flex items-center gap-1">
                         <span className="text-xs text-slate-400">$</span>
                         <input
-                          type="number"
-                          value={expandedMatrixPrecioValues.costo}
+                          type="text"
+                          inputMode="numeric"
+                          value={expandedMatrixPrecioValues.costo > 0 ? expandedMatrixPrecioValues.costo.toLocaleString("es-AR") : ""}
                           onChange={(e) => {
-                            const costo = Number.parseFloat(e.target.value) || 0
+                            const raw = e.target.value.replace(/\./g, "").replace(/,/g, ".")
+                            const costo = Number.parseFloat(raw) || 0
                             const precioFinal = costo * (1 + expandedMatrixPrecioValues.margen / 100) * (1 + expandedMatrixPrecioValues.iva / 100)
                             setExpandedMatrixPrecioValues((prev) => ({ ...prev, costo, precioFinal }))
                           }}
-                          className="flex-1 text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          className="flex-1 text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300"
                           placeholder="0"
                         />
                       </div>
