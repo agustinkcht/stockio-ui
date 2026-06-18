@@ -3617,7 +3617,7 @@ export function CatalogoItemDetailPanel({
                   </div>
                   <div className="min-w-0">
                     <h3 className="text-sm font-semibold text-slate-900">Editar Precio</h3>
-                    {selectedItem?.nombre && <p className="text-xs text-slate-400 truncate mt-0.5">{selectedItem.nombre}</p>}
+                    {selectedItem?.name && <p className="text-xs text-slate-400 truncate mt-0.5">{selectedItem.name}</p>}
                   </div>
                 </div>
                 <button
@@ -3774,7 +3774,7 @@ export function CatalogoItemDetailPanel({
         }}
         initialTotal={Number.parseInt((selectedItem?.stock as any)?.enStock || selectedItem?.stock?.total || "0")}
         initialReservado={Number.parseInt(selectedItem?.stock?.reservado || "0")}
-        itemName={selectedItem?.nombre}
+            itemName={selectedItem?.name}
         itemMarca={selectedItem?.marca}
         itemCategoria={selectedItem?.categoria}
         itemMedia={selectedItem?.media}
@@ -3789,12 +3789,12 @@ export function CatalogoItemDetailPanel({
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 shrink-0 overflow-hidden flex items-center justify-center">
-                    <img src={getItemPhoto(expandedMatrixPrecioModal.variant)} alt={expandedMatrixPrecioModal.variant?.nombre || ""} className="w-full h-full object-cover" />
+                    <img src={getItemPhoto(expandedMatrixPrecioModal.variant)} alt={expandedMatrixPrecioModal.variant?.name || ""} className="w-full h-full object-cover" />
                   </div>
                   <div className="min-w-0">
                     <h3 className="text-sm font-semibold text-slate-900">Editar Precio</h3>
-                    {expandedMatrixPrecioModal.variant?.nombre && (
-                      <p className="text-xs text-slate-400 truncate mt-0.5">{expandedMatrixPrecioModal.variant.nombre}</p>
+                    {expandedMatrixPrecioModal.variant?.name && (
+                      <p className="text-xs text-slate-400 truncate mt-0.5">{expandedMatrixPrecioModal.variant.name}</p>
                     )}
                   </div>
                 </div>
@@ -3959,12 +3959,12 @@ export function CatalogoItemDetailPanel({
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 shrink-0 overflow-hidden flex items-center justify-center">
-                    <img src={getItemPhoto(expandedMatrixDescModal.variant)} alt={expandedMatrixDescModal.variant?.nombre || ""} className="w-full h-full object-cover" />
+                    <img src={getItemPhoto(expandedMatrixDescModal.variant)} alt={expandedMatrixDescModal.variant?.name || ""} className="w-full h-full object-cover" />
                   </div>
                   <div className="min-w-0">
                     <h3 className="text-sm font-semibold text-slate-900">Editar Descripción</h3>
-                    {expandedMatrixDescModal.variant?.nombre && (
-                      <p className="text-xs text-slate-400 truncate mt-0.5">{expandedMatrixDescModal.variant.nombre}</p>
+                    {expandedMatrixDescModal.variant?.name && (
+                      <p className="text-xs text-slate-400 truncate mt-0.5">{expandedMatrixDescModal.variant.name}</p>
                     )}
                   </div>
                 </div>
@@ -4125,7 +4125,7 @@ export function CatalogoItemDetailPanel({
                   </div>
                   <div className="min-w-0">
                     <h3 className="text-sm font-semibold text-slate-900">Editar Nombre</h3>
-                    {selectedItem?.nombre && <p className="text-xs text-slate-400 truncate mt-0.5">{selectedItem.nombre}</p>}
+                    {selectedItem?.name && <p className="text-xs text-slate-400 truncate mt-0.5">{selectedItem.name}</p>}
                   </div>
                 </div>
                 <button onClick={() => setIsEditNombreModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0">
@@ -4174,7 +4174,7 @@ export function CatalogoItemDetailPanel({
                   </div>
                   <div className="min-w-0">
                     <h3 className="text-sm font-semibold text-slate-900">Editar SKU</h3>
-                    {selectedItem?.nombre && <p className="text-xs text-slate-400 truncate mt-0.5">{selectedItem.nombre}</p>}
+                    {selectedItem?.name && <p className="text-xs text-slate-400 truncate mt-0.5">{selectedItem.name}</p>}
                   </div>
                 </div>
                 <button onClick={() => setIsEditSkuModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0">
@@ -4246,7 +4246,7 @@ export function CatalogoItemDetailPanel({
                   </div>
                   <div className="min-w-0">
                     <h3 className="text-sm font-semibold text-slate-900">Editar Código Universal</h3>
-                    {selectedItem?.nombre && <p className="text-xs text-slate-400 truncate mt-0.5">{selectedItem.nombre}</p>}
+                    {selectedItem?.name && <p className="text-xs text-slate-400 truncate mt-0.5">{selectedItem.name}</p>}
                   </div>
                 </div>
                 <button onClick={() => setIsEditCodigoUniversalModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0">
@@ -4295,7 +4295,7 @@ export function CatalogoItemDetailPanel({
                   </div>
                   <div className="min-w-0">
                     <h3 className="text-sm font-semibold text-slate-900">Editar Descripción</h3>
-                    {selectedItem?.nombre && <p className="text-xs text-slate-400 truncate mt-0.5">{selectedItem.nombre}</p>}
+                    {selectedItem?.name && <p className="text-xs text-slate-400 truncate mt-0.5">{selectedItem.name}</p>}
                   </div>
                 </div>
                 <button onClick={() => setIsEditDescripcionModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0">

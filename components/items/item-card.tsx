@@ -605,7 +605,7 @@ export function ItemCard({
                   </div>
                   <div className="min-w-0">
                     <h3 className="text-sm font-semibold text-slate-900">Editar Precio</h3>
-                    {item.nombre && <p className="text-xs text-slate-400 truncate mt-0.5">{item.nombre}</p>}
+                    {item.name && <p className="text-xs text-slate-400 truncate mt-0.5">{item.name}</p>}
                   </div>
                 </div>
                 <button
@@ -738,7 +738,7 @@ export function ItemCard({
         onAccept={handleStockModalAccept}
         initialTotal={currentStockTotal}
         initialReservado={currentStockReservado}
-        itemName={item.nombre}
+            itemName={item.name}
         itemMarca={item.marca || parentItem?.marca}
         itemCategoria={item.categoria || parentItem?.categoria}
         itemMedia={item.media || parentItem?.media}
