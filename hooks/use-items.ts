@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useAccount } from "@/lib/contexts/account-context"
 import type { Item } from "@/lib/types"
 import { TEMPLATES } from "@/lib/constants"
@@ -41,6 +41,7 @@ async function loadInitialItems(dataSet: string): Promise<Item[]> {
 export function useItems() {
   const { currentAccount, currentUser } = useAccount()
   const [items, setItems] = useState<Item[]>([])
+  const itemsRef = useRef<Item[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [deletedItems, setDeletedItems] = useState<DeletedItemWithPosition[]>([])
   const [hasUnsavedDeletes, setHasUnsavedDeletes] = useState(false)
@@ -170,6 +171,11 @@ export function useItems() {
     window.addEventListener("stockio:items-updated", handleItemsUpdated)
     return () => window.removeEventListener("stockio:items-updated", handleItemsUpdated)
   }, [currentUser, currentAccount])
+
+  // Keep ref always up-to-date so forceSaveItems can read latest without stale closure
+  useEffect(() => {
+    itemsRef.current = items
+  }, [items])
 
   // Save items to localStorage and notify all other useItems instances on this page
   const saveItems = (updatedItems: Item[]) => {
@@ -536,7 +542,11 @@ export function useItems() {
     setHasUnsavedEdits(true)
     setLastUndoneEdit(null)
 
-    setItems((prevItems) => prevItems.map((item) => (item.id === itemSku || item.sku === itemSku ? { ...item, [field]: newValue } : item)))
+    setItems((prevItems) => {
+      const next = prevItems.map((item) => (item.id === itemSku || item.sku === itemSku ? { ...item, [field]: newValue } : item))
+      itemsRef.current = next
+      return next
+    })
   }
 
   const editVariantField = (parentSku: string, variantId: string, field: string, newValue: any) => {
@@ -570,8 +580,8 @@ export function useItems() {
     setLastUndoneEdit(null)
 
     // Update the variant within the parent's variants array by id
-    setItems((prevItems) =>
-      prevItems.map((item) => {
+    setItems((prevItems) => {
+      const next = prevItems.map((item) => {
         if ((item.id === parentSku || item.sku === parentSku) && item.variants) {
           const updatedVariants = item.variants.map((v: any) =>
             v.id === variantId || v.sku === variantId ? { ...v, [field]: newValue } : v,
@@ -579,8 +589,10 @@ export function useItems() {
           return { ...item, variants: updatedVariants }
         }
         return item
-      }),
-    )
+      })
+      itemsRef.current = next
+      return next
+    })
   }
 
   const updateParentWithVariants = (parentSku: string, updates: Partial<Item>) => {
@@ -691,25 +703,15 @@ export function useItems() {
   }
 
   // Force save current items state to localStorage.
-  // Uses the setItems functional updater to guarantee we read the latest state,
+  // Uses itemsRef to guarantee we always read the latest items,
   // bypassing the stale-closure problem when called synchronously after editField.
   const forceSaveItems = (overrideItems?: Item[]) => {
-    if (overrideItems) {
-      const validItems = overrideItems.filter(isValidItem)
-      saveItems(validItems)
-      setEditedItem(null)
-      setLastUndoneEdit(null)
-      setHasUnsavedEdits(false)
-    } else {
-      setItems((latest) => {
-        const validItems = latest.filter(isValidItem)
-        saveItems(validItems)
-        return latest // no change to state, just a read
-      })
-      setEditedItem(null)
-      setLastUndoneEdit(null)
-      setHasUnsavedEdits(false)
-    }
+    const toSave = overrideItems ?? itemsRef.current
+    const validItems = toSave.filter(isValidItem)
+    saveItems(validItems)
+    setEditedItem(null)
+    setLastUndoneEdit(null)
+    setHasUnsavedEdits(false)
   }
 
   // Bulk save stock changes (for audit mode)

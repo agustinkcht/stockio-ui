@@ -3732,9 +3732,9 @@ export function CatalogoItemDetailPanel({
             const currentTotal = Number.parseInt((selectedItem?.stock as any)?.enStock || selectedItem?.stock?.total || "0")
             const currentReservado = Number.parseInt(selectedItem?.stock?.reservado || "0")
             if (newTotal !== currentTotal || newReservado !== currentReservado) {
-              // Build the full stock object directly so a single editField call covers both fields
+              // Use enStock (the canonical shape post-migration)
               const newStock = {
-                total: newTotal.toString(),
+                enStock: newTotal.toString(),
                 reservado: newReservado.toString(),
                 disponible: (newTotal - newReservado).toString(),
               }
@@ -3850,7 +3850,7 @@ export function CatalogoItemDetailPanel({
         onAccept={(newTotal, newReservado) => {
           if (expandedMatrixStockModal.variant?.id) {
             const newStock = {
-              total: newTotal.toString(),
+              enStock: newTotal.toString(),
               reservado: newReservado.toString(),
               disponible: (newTotal - newReservado).toString(),
             }
