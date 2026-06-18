@@ -622,21 +622,24 @@ export function ItemCard({
               </div>
             </div>
             <div className="p-6 flex flex-col gap-4">
-              {/* Precio Venta — big field */}
-              <div className="border border-slate-200 rounded-xl px-4 pt-3 pb-4">
-                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Precio Venta</label>
-                <input
-                  type="number"
-                  value={precioModalValues.precioFinal}
-                  onChange={(e) => {
-                    const precioFinal = Number.parseFloat(e.target.value) || 0
-                    const base = precioFinal / (1 + precioModalValues.iva / 100)
-                    const margen = precioModalValues.costo > 0 ? ((base / precioModalValues.costo) - 1) * 100 : 0
-                    setPrecioModalValues((prev) => ({ ...prev, precioFinal, margen: Math.round(margen * 100) / 100 }))
-                  }}
-                  className="w-full mt-1 text-base font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300"
-                  placeholder="0"
-                />
+              {/* Precio Venta — big field, label inline left */}
+              <div className="border border-slate-200 rounded-xl px-4 py-3 flex items-center gap-3">
+                <span className="text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">Precio Venta</span>
+                <div className="flex items-center gap-1 flex-1">
+                  <span className="text-sm text-slate-400">$</span>
+                  <input
+                    type="number"
+                    value={precioModalValues.precioFinal}
+                    onChange={(e) => {
+                      const precioFinal = Number.parseFloat(e.target.value) || 0
+                      const base = precioFinal / (1 + precioModalValues.iva / 100)
+                      const margen = precioModalValues.costo > 0 ? ((base / precioModalValues.costo) - 1) * 100 : 0
+                      setPrecioModalValues((prev) => ({ ...prev, precioFinal, margen: Math.round(margen * 10) / 10 }))
+                    }}
+                    className="flex-1 text-base font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    placeholder="0"
+                  />
+                </div>
               </div>
 
               {/* Collapsible costo / margen / IVA */}
@@ -647,51 +650,64 @@ export function ItemCard({
                   className="w-full flex items-center gap-2 px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
                 >
                   <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isCostoExpanded ? "rotate-180" : ""}`} />
-                  Costo, margen e IVA
+                  Costo y márgenes
                 </button>
                 {isCostoExpanded && (
                   <div className="grid grid-cols-3 gap-px bg-slate-200 border-t border-slate-200">
+                    {/* Costo */}
                     <div className="bg-white px-4 pt-3 pb-4 flex flex-col gap-1.5">
                       <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Costo</label>
-                      <input
-                        type="number"
-                        value={precioModalValues.costo}
-                        onChange={(e) => {
-                          const costo = Number.parseFloat(e.target.value) || 0
-                          const precioFinal = costo * (1 + precioModalValues.margen / 100) * (1 + precioModalValues.iva / 100)
-                          setPrecioModalValues((prev) => ({ ...prev, costo, precioFinal }))
-                        }}
-                        className="text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300"
-                        placeholder="0"
-                      />
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-slate-400">$</span>
+                        <input
+                          type="number"
+                          value={precioModalValues.costo}
+                          onChange={(e) => {
+                            const costo = Number.parseFloat(e.target.value) || 0
+                            const precioFinal = costo * (1 + precioModalValues.margen / 100) * (1 + precioModalValues.iva / 100)
+                            setPrecioModalValues((prev) => ({ ...prev, costo, precioFinal }))
+                          }}
+                          className="flex-1 text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          placeholder="0"
+                        />
+                      </div>
                     </div>
+                    {/* Margen */}
                     <div className="bg-white px-4 pt-3 pb-4 flex flex-col gap-1.5">
-                      <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Margen %</label>
-                      <input
-                        type="number"
-                        value={precioModalValues.margen}
-                        onChange={(e) => {
-                          const margen = Number.parseFloat(e.target.value) || 0
-                          const precioFinal = precioModalValues.costo * (1 + margen / 100) * (1 + precioModalValues.iva / 100)
-                          setPrecioModalValues((prev) => ({ ...prev, margen, precioFinal }))
-                        }}
-                        className="text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300"
-                        placeholder="0"
-                      />
+                      <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Margen</label>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          value={precioModalValues.margen}
+                          step="0.1"
+                          onChange={(e) => {
+                            const margen = Math.round((Number.parseFloat(e.target.value) || 0) * 10) / 10
+                            const precioFinal = precioModalValues.costo * (1 + margen / 100) * (1 + precioModalValues.iva / 100)
+                            setPrecioModalValues((prev) => ({ ...prev, margen, precioFinal }))
+                          }}
+                          className="flex-1 text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          placeholder="0"
+                        />
+                        <span className="text-xs text-slate-400">%</span>
+                      </div>
                     </div>
+                    {/* IVA */}
                     <div className="bg-white px-4 pt-3 pb-4 flex flex-col gap-1.5">
-                      <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">IVA %</label>
-                      <input
-                        type="number"
+                      <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">IVA</label>
+                      <select
                         value={precioModalValues.iva}
                         onChange={(e) => {
-                          const iva = Number.parseFloat(e.target.value) || 0
+                          const iva = Number.parseFloat(e.target.value)
                           const precioFinal = precioModalValues.costo * (1 + precioModalValues.margen / 100) * (1 + iva / 100)
                           setPrecioModalValues((prev) => ({ ...prev, iva, precioFinal }))
                         }}
-                        className="text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300"
-                        placeholder="0"
-                      />
+                        className="text-sm text-slate-600 bg-transparent border-0 focus:outline-none cursor-pointer"
+                      >
+                        <option value={0}>0%</option>
+                        <option value={10.5}>10.5%</option>
+                        <option value={21}>21%</option>
+                        <option value={27}>27%</option>
+                      </select>
                     </div>
                   </div>
                 )}
