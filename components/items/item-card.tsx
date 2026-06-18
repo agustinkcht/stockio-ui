@@ -382,7 +382,7 @@ export function ItemCard({
                   >
                     <div className="w-full flex flex-col items-center gap-0.5">
                       <span className="text-sm text-foreground font-medium w-full text-center group-hover/precio:text-blue-600 transition-colors">
-                        ${(item.precio?.precioFinal || 0).toLocaleString("es-AR", { minimumFractionDigits: 2 })}
+                        ${Math.round(item.precio?.precioFinal || 0).toLocaleString("es-AR")}
                       </span>
                     </div>
                   </div>
@@ -638,7 +638,7 @@ export function ItemCard({
                       const margen = precioModalValues.costo > 0 ? ((base / precioModalValues.costo) - 1) * 100 : 0
                       setPrecioModalValues((prev) => ({ ...prev, precioFinal, margen: Math.round(margen * 10) / 10 }))
                     }}
-                    className="flex-1 text-base font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300"
+                    className="flex-1 text-base font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     placeholder="0"
                   />
                 </div>
@@ -655,10 +655,10 @@ export function ItemCard({
                   Costo y márgenes
                 </button>
                 {isCostoExpanded && (
-                  <div className="grid grid-cols-3 gap-px bg-slate-200 border-t border-slate-200">
+                  <div className="flex flex-col divide-y divide-slate-200 border-t border-slate-200">
                     {/* Costo */}
-                    <div className="bg-white px-4 pt-3 pb-4 flex flex-col gap-1.5">
-                      <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Costo</label>
+                    <div className="bg-white px-4 py-3 flex items-center justify-between">
+                      <label className="text-xs font-medium text-slate-400 uppercase tracking-wider w-20 shrink-0">Costo</label>
                       <div className="flex items-center gap-1">
                         <span className="text-xs text-slate-400">$</span>
                         <input
@@ -669,16 +669,16 @@ export function ItemCard({
                             const raw = e.target.value.replace(/\./g, "").replace(/,/g, ".")
                             const costo = Number.parseFloat(raw) || 0
                             const precioFinal = costo * (1 + precioModalValues.margen / 100) * (1 + precioModalValues.iva / 100)
-                            setPrecioModalValues((prev) => ({ ...prev, costo, precioFinal }))
+                            setPrecioModalValues((prev) => ({ ...prev, costo, precioFinal: Math.round(precioFinal) }))
                           }}
-                          className="flex-1 text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300"
+                          className="w-28 text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300 text-right"
                           placeholder="0"
                         />
                       </div>
                     </div>
                     {/* Margen */}
-                    <div className="bg-white px-4 pt-3 pb-4 flex flex-col gap-1.5">
-                      <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Margen</label>
+                    <div className="bg-white px-4 py-3 flex items-center justify-between">
+                      <label className="text-xs font-medium text-slate-400 uppercase tracking-wider w-20 shrink-0">Margen</label>
                       <div className="flex items-center gap-1">
                         <input
                           type="number"
@@ -687,23 +687,23 @@ export function ItemCard({
                           onChange={(e) => {
                             const margen = Math.round((Number.parseFloat(e.target.value) || 0) * 10) / 10
                             const precioFinal = precioModalValues.costo * (1 + margen / 100) * (1 + precioModalValues.iva / 100)
-                            setPrecioModalValues((prev) => ({ ...prev, margen, precioFinal }))
+                            setPrecioModalValues((prev) => ({ ...prev, margen, precioFinal: Math.round(precioFinal) }))
                           }}
-                          className="flex-1 text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          className="w-28 text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           placeholder="0"
                         />
                         <span className="text-xs text-slate-400">%</span>
                       </div>
                     </div>
                     {/* IVA */}
-                    <div className="bg-white px-4 pt-3 pb-4 flex flex-col gap-1.5">
-                      <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">IVA</label>
+                    <div className="bg-white px-4 py-3 flex items-center justify-between">
+                      <label className="text-xs font-medium text-slate-400 uppercase tracking-wider w-20 shrink-0">IVA</label>
                       <select
                         value={precioModalValues.iva}
                         onChange={(e) => {
                           const iva = Number.parseFloat(e.target.value)
                           const precioFinal = precioModalValues.costo * (1 + precioModalValues.margen / 100) * (1 + iva / 100)
-                          setPrecioModalValues((prev) => ({ ...prev, iva, precioFinal }))
+                          setPrecioModalValues((prev) => ({ ...prev, iva, precioFinal: Math.round(precioFinal) }))
                         }}
                         className="text-sm text-slate-600 bg-transparent border-0 focus:outline-none cursor-pointer"
                       >

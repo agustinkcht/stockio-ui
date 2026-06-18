@@ -366,15 +366,18 @@ export function PriceGrid({
                 <span className="text-xs text-slate-400 mr-1">$</span>
                 {isEditMode ? (
                   <input
-                    type="number"
-                    value={itemPricing.costo || ""}
-                    onChange={(e) => updatePricingField(itemKey, "costo", Number.parseFloat(e.target.value) || 0, itemPricing)}
-                    className="w-full text-sm text-slate-700 bg-transparent border-0 focus:outline-none focus:bg-slate-50 rounded px-1 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    type="text"
+                    inputMode="numeric"
+                    value={itemPricing.costo > 0 ? itemPricing.costo.toLocaleString("es-AR") : ""}
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/\./g, "").replace(/,/g, ".")
+                      updatePricingField(itemKey, "costo", Number.parseFloat(raw) || 0, itemPricing)
+                    }}
+                    className="w-full text-sm text-slate-700 bg-transparent border-0 focus:outline-none focus:bg-slate-50 rounded px-1 tabular-nums"
                     placeholder="0"
-                    step="1"
                   />
                 ) : (
-                  <span className="text-sm text-slate-700 tabular-nums px-1">{itemPricing.costo ? itemPricing.costo.toLocaleString("es-AR") : "—"}</span>
+                  <span className="text-sm text-slate-700 tabular-nums px-1">{itemPricing.costo ? Math.round(itemPricing.costo).toLocaleString("es-AR") : "—"}</span>
                 )}
               </div>
 
@@ -391,7 +394,7 @@ export function PriceGrid({
                     step="0.1"
                   />
                 ) : (
-                  <span className={`text-sm tabular-nums px-1 ${itemPricing.margen < 0 ? "text-red-600" : "text-slate-700"}`}>{itemPricing.margen != null ? itemPricing.margen : "—"}</span>
+                  <span className={`text-sm tabular-nums px-1 ${itemPricing.margen < 0 ? "text-red-600" : "text-slate-700"}`}>{itemPricing.margen != null ? (Math.round(itemPricing.margen * 10) / 10) : "—"}</span>
                 )}
                 <span className={`text-xs shrink-0 ${itemPricing.margen < 0 ? "text-red-400" : "text-slate-400"}`}>%</span>
               </div>
@@ -419,13 +422,15 @@ export function PriceGrid({
                 {isEditMode ? (
                   precioFinalMode === "con_iva" ? (
                     <input
-                      type="number"
-                      value={itemPricing.precioFinal || ""}
-                      onChange={(e) => updatePricingField(itemKey, "precioFinal", Number.parseFloat(e.target.value) || 0, itemPricing)}
-                      className="w-full text-sm font-medium text-blue-700 bg-transparent border-0 focus:outline-none focus:bg-blue-50/60 rounded px-1 tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      type="text"
+                      inputMode="numeric"
+                      value={itemPricing.precioFinal > 0 ? Math.round(itemPricing.precioFinal).toLocaleString("es-AR") : ""}
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/\./g, "").replace(/,/g, ".")
+                        updatePricingField(itemKey, "precioFinal", Number.parseFloat(raw) || 0, itemPricing)
+                      }}
+                      className="w-full text-sm font-medium text-blue-700 bg-transparent border-0 focus:outline-none focus:bg-blue-50/60 rounded px-1 tabular-nums"
                       placeholder="0"
-                      step="1"
-                      min="0"
                     />
                   ) : (
                     <div className="flex items-center gap-1">
@@ -437,7 +442,7 @@ export function PriceGrid({
                   )
                 ) : (
                   <span className="text-sm font-medium text-blue-700 tabular-nums px-1">
-                    {itemPricing.precioFinal ? itemPricing.precioFinal.toLocaleString("es-AR") : "—"}
+                    {itemPricing.precioFinal ? Math.round(itemPricing.precioFinal).toLocaleString("es-AR") : "—"}
                   </span>
                 )}
               </div>
