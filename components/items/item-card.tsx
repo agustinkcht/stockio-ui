@@ -655,10 +655,10 @@ export function ItemCard({
                   Costo y márgenes
                 </button>
                 {isCostoExpanded && (
-                  <div className="flex flex-col divide-y divide-slate-200 border-t border-slate-200">
+                  <div className="grid grid-cols-3 divide-x divide-slate-200 border-t border-slate-200">
                     {/* Costo */}
-                    <div className="bg-white px-4 py-3 flex items-center justify-between">
-                      <label className="text-xs font-medium text-slate-400 uppercase tracking-wider w-20 shrink-0">Costo</label>
+                    <div className="bg-white px-4 pt-3 pb-4 flex flex-col gap-1.5">
+                      <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Costo</label>
                       <div className="flex items-center gap-1">
                         <span className="text-xs text-slate-400">$</span>
                         <input
@@ -671,14 +671,14 @@ export function ItemCard({
                             const precioFinal = costo * (1 + precioModalValues.margen / 100) * (1 + precioModalValues.iva / 100)
                             setPrecioModalValues((prev) => ({ ...prev, costo, precioFinal: Math.round(precioFinal) }))
                           }}
-                          className="w-28 text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300 text-right"
+                          className="w-full text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300"
                           placeholder="0"
                         />
                       </div>
                     </div>
                     {/* Margen */}
-                    <div className="bg-white px-4 py-3 flex items-center justify-between">
-                      <label className="text-xs font-medium text-slate-400 uppercase tracking-wider w-20 shrink-0">Margen</label>
+                    <div className="bg-white px-4 pt-3 pb-4 flex flex-col gap-1.5">
+                      <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Margen</label>
                       <div className="flex items-center gap-1">
                         <input
                           type="number"
@@ -689,15 +689,15 @@ export function ItemCard({
                             const precioFinal = precioModalValues.costo * (1 + margen / 100) * (1 + precioModalValues.iva / 100)
                             setPrecioModalValues((prev) => ({ ...prev, margen, precioFinal: Math.round(precioFinal) }))
                           }}
-                          className="w-28 text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300 text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          className="w-full text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           placeholder="0"
                         />
                         <span className="text-xs text-slate-400">%</span>
                       </div>
                     </div>
                     {/* IVA */}
-                    <div className="bg-white px-4 py-3 flex items-center justify-between">
-                      <label className="text-xs font-medium text-slate-400 uppercase tracking-wider w-20 shrink-0">IVA</label>
+                    <div className="bg-white px-4 pt-3 pb-4 flex flex-col gap-1.5">
+                      <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">IVA</label>
                       <select
                         value={precioModalValues.iva}
                         onChange={(e) => {
