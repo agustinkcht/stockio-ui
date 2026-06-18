@@ -83,6 +83,7 @@ export default function CatalogoPage() {
     editField,
     editVariantField,
     saveEdit,
+    forceSaveItems,
     hasUnsavedEdits,
     updateItemsActiveStatus,
   } = useItems()
@@ -188,14 +189,14 @@ export default function CatalogoPage() {
         const variant = item.variants.find((v: any) => v.id === itemId || v.sku === itemId)
         if (variant) {
           editVariantField(item.sku, variant.sku, "precio", precio)
-          setTimeout(() => saveEdit(), 0)
+          forceSaveItems()
           return
         }
       }
     }
     editField(itemId, "precio", precio)
-    setTimeout(() => saveEdit(), 0)
-  }, [items, editField, editVariantField, saveEdit])
+    forceSaveItems()
+  }, [items, editField, editVariantField, forceSaveItems])
 
   const handleUpdateStockWithTracking = useCallback((itemId: string, field: "total" | "reservado", value: number) => {
     for (const item of items) {
@@ -213,7 +214,7 @@ export default function CatalogoPage() {
             disponible: newDisponible.toString(),
           }
           editVariantField(parentIdentifier!, itemId, "stock", newStock)
-          setTimeout(() => saveEdit(), 0)
+          forceSaveItems()
           const wasInactive = (variant as any).isActive === false
           const hadNoStock = (parseInt(currentStock.disponible) || 0) <= 0
           if (wasInactive && hadNoStock && newDisponible > 0 && variant.id) updateItemsActiveStatus([variant.id], true)
@@ -235,14 +236,14 @@ export default function CatalogoPage() {
         disponible: newDisponible.toString(),
       }
       editField(itemId, "stock", newStock)
-      setTimeout(() => saveEdit(), 0)
+      forceSaveItems()
       const wasInactive = item.isActive === false
       const hadNoStock = (parseInt(currentStock.disponible) || 0) <= 0
       if (wasInactive && hadNoStock && newDisponible > 0 && item.id) updateItemsActiveStatus([item.id], true)
       const isActive = item.isActive !== false
       if (isActive && newDisponible <= 0 && item.id) updateItemsActiveStatus([item.id], false)
     }
-  }, [items, editField, editVariantField, saveEdit, updateItemsActiveStatus])
+  }, [items, editField, editVariantField, forceSaveItems, updateItemsActiveStatus])
 
   // ── Delete handlers ────────────────────────────────────────────────────────
   const handleDeleteWithTracking = (item: Item) => setItemToDelete(item)
