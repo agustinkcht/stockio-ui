@@ -210,14 +210,17 @@ export default function CatalogoPage() {
   }, [filterCategorias, filterMarcas, filterEstados, filterPrecioDesde, filterPrecioHasta, filterStockFlags])
 
   const applyFilters = useCallback(() => {
-    updateParam("categorias", draftCategorias.join(","))
-    updateParam("marcas", draftMarcas.join(","))
-    updateParam("estados", draftEstados.join(","))
-    updateParam("precioDesde", draftPrecioDesde.trim() || "")
-    updateParam("precioHasta", draftPrecioHasta.trim() || "")
-    updateParam("stockFlags", draftStockFlags.join(","))
+    const params = new URLSearchParams(searchParams.toString())
+    const setOrDelete = (key: string, value: string) => value ? params.set(key, value) : params.delete(key)
+    setOrDelete("categorias", draftCategorias.join(","))
+    setOrDelete("marcas", draftMarcas.join(","))
+    setOrDelete("estados", draftEstados.join(","))
+    setOrDelete("precioDesde", draftPrecioDesde.trim())
+    setOrDelete("precioHasta", draftPrecioHasta.trim())
+    setOrDelete("stockFlags", draftStockFlags.join(","))
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false })
     setFilterOpen(false)
-  }, [draftCategorias, draftMarcas, draftEstados, draftPrecioDesde, draftPrecioHasta, draftStockFlags, updateParam])
+  }, [draftCategorias, draftMarcas, draftEstados, draftPrecioDesde, draftPrecioHasta, draftStockFlags, searchParams, pathname, router])
 
   const clearFilters = useCallback(() => {
     setDraftCategorias([])
