@@ -298,9 +298,10 @@ function compareItems(a: Item, b: Item, factor: SortFactor, direction: SortDirec
       comparison = (a.sku || "").localeCompare(b.sku || "")
       break
 
-    case "stock": {
-      const stockA = Number.parseFloat(a.stock?.total || "0")
-      const stockB = Number.parseFloat(b.stock?.total || "0")
+    case "stock":
+    case "stockDisponible": {
+      const stockA = Number.parseFloat(a.stock?.disponible || a.stock?.total || "0")
+      const stockB = Number.parseFloat(b.stock?.disponible || b.stock?.total || "0")
       comparison = stockA - stockB
       break
     }
@@ -319,7 +320,8 @@ function compareItems(a: Item, b: Item, factor: SortFactor, direction: SortDirec
       break
     }
 
-    case "precioFinal": {
+    case "precioFinal":
+    case "precioVenta": {
       const pfA = a.precio?.precioFinal ?? a.precioVenta ?? 0
       const pfB = b.precio?.precioFinal ?? b.precioVenta ?? 0
       comparison = pfA - pfB

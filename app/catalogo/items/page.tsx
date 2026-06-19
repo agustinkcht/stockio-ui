@@ -28,7 +28,7 @@ const breadcrumbs = [
   { label: "Items", href: "/catalogo/items" },
 ]
 
-type QuickSortField = "nombre" | "categoria" | "marca" | "precioVenta" | "stock"
+type QuickSortField = "nombre" | "categoria" | "marca" | "precioVenta" | "stockDisponible"
 
 export default function CatalogoPage() {
   const router = useRouter()
@@ -592,7 +592,7 @@ export default function CatalogoPage() {
                             <option value="categoria">Categoría</option>
                             <option value="marca">Marca</option>
                             <option value="precioVenta">Precio Venta</option>
-                            <option value="stock">Stock</option>
+                            <option value="stockDisponible">Stock Disponible</option>
                           </select>
                         </div>
 
