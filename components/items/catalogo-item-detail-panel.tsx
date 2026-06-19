@@ -115,7 +115,7 @@ export function CatalogoItemDetailPanel({
   onSaveNow,
 }: ItemDetailPanelProps) {
   const router = useRouter()
-  const { catalogo, stock } = useSettings()
+  const { catalogo, stock, precios } = useSettings()
 
   // Safety check: ensure selectedItem is a valid object, not a string or null
   if (!selectedItem || typeof selectedItem === 'string') {
@@ -3676,8 +3676,14 @@ export function CatalogoItemDetailPanel({
                           onChange={(e) => {
                             const raw = e.target.value.replace(/\./g, "").replace(/,/g, ".")
                             const costo = Number.parseFloat(raw) || 0
-                            const precioFinal = costo * (1 + precioModalValues.margen / 100) * (1 + precioModalValues.iva / 100)
-                            setPrecioModalValues((prev) => ({ ...prev, costo, precioFinal: Math.round(precioFinal) }))
+                            if (precios.costoBehavior === "preservePrecioFinal") {
+                              const keptPF = precioModalValues.precioFinal
+                              const newMargen = costo > 0 ? Math.round(((keptPF / (costo * (1 + precioModalValues.iva / 100))) - 1) * 1000) / 10 : precioModalValues.margen
+                              setPrecioModalValues((prev) => ({ ...prev, costo, margen: newMargen }))
+                            } else {
+                              const precioFinal = costo * (1 + precioModalValues.margen / 100) * (1 + precioModalValues.iva / 100)
+                              setPrecioModalValues((prev) => ({ ...prev, costo, precioFinal: Math.round(precioFinal) }))
+                            }
                           }}
                           className="w-full text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300"
                           placeholder="0"
@@ -3736,7 +3742,12 @@ export function CatalogoItemDetailPanel({
                   onClick={() => {
                     const itemIdentifier = selectedItem?.id || selectedItem?.sku
                     if (itemIdentifier) {
-                      onFieldChange(itemIdentifier, "precio", precioModalValues)
+                      onFieldChange(itemIdentifier, "precio", {
+                        ...precioModalValues,
+                        costo: Math.round(precioModalValues.costo * 100) / 100,
+                        margen: Math.round(precioModalValues.margen * 10) / 10,
+                        precioFinal: Math.round(precioModalValues.precioFinal),
+                      })
                       onSaveNow?.()
                     }
                     setIsPrecioModalOpen(false)
@@ -3847,11 +3858,17 @@ export function CatalogoItemDetailPanel({
                           type="text"
                           inputMode="numeric"
                           value={expandedMatrixPrecioValues.costo > 0 ? expandedMatrixPrecioValues.costo.toLocaleString("es-AR") : ""}
-                          onChange={(e) => {
+                            onChange={(e) => {
                             const raw = e.target.value.replace(/\./g, "").replace(/,/g, ".")
                             const costo = Number.parseFloat(raw) || 0
-                            const precioFinal = costo * (1 + expandedMatrixPrecioValues.margen / 100) * (1 + expandedMatrixPrecioValues.iva / 100)
-                            setExpandedMatrixPrecioValues((prev) => ({ ...prev, costo, precioFinal: Math.round(precioFinal) }))
+                            if (precios.costoBehavior === "preservePrecioFinal") {
+                              const keptPF = expandedMatrixPrecioValues.precioFinal
+                              const newMargen = costo > 0 ? Math.round(((keptPF / (costo * (1 + expandedMatrixPrecioValues.iva / 100))) - 1) * 1000) / 10 : expandedMatrixPrecioValues.margen
+                              setExpandedMatrixPrecioValues((prev) => ({ ...prev, costo, margen: newMargen }))
+                            } else {
+                              const precioFinal = costo * (1 + expandedMatrixPrecioValues.margen / 100) * (1 + expandedMatrixPrecioValues.iva / 100)
+                              setExpandedMatrixPrecioValues((prev) => ({ ...prev, costo, precioFinal: Math.round(precioFinal) }))
+                            }
                           }}
                           className="w-full text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300"
                           placeholder="0"
@@ -3909,8 +3926,14 @@ export function CatalogoItemDetailPanel({
                 <button
                   onClick={() => {
                     if (expandedMatrixPrecioModal.variant?.id && fatherItem) {
+                      const cleanedPrecio = {
+                        ...expandedMatrixPrecioValues,
+                        costo: Math.round(expandedMatrixPrecioValues.costo * 100) / 100,
+                        margen: Math.round(expandedMatrixPrecioValues.margen * 10) / 10,
+                        precioFinal: Math.round(expandedMatrixPrecioValues.precioFinal),
+                      }
                       const updatedVariants = (fatherItem.variants || []).map((ov: any) =>
-                        ov.id === expandedMatrixPrecioModal.variant.id ? { ...ov, precio: expandedMatrixPrecioValues } : ov
+                        ov.id === expandedMatrixPrecioModal.variant.id ? { ...ov, precio: cleanedPrecio } : ov
                       )
                       onFieldChange(fatherItem.id, "variants", updatedVariants)
                       onSaveNow?.()

@@ -82,7 +82,7 @@ export function ItemCard({
   onUpdateStock,
   onUpdateItem,
 }: ItemCardProps) {
-  const { stock } = useSettings()
+  const { stock, precios } = useSettings()
   
   // Compute full SKU for children: {parentSkuPrefix}-{skuSuffix}
   // For standalone items, use sku directly
@@ -663,8 +663,16 @@ export function ItemCard({
                           onChange={(e) => {
                             const raw = e.target.value.replace(/\./g, "").replace(/,/g, ".")
                             const costo = Number.parseFloat(raw) || 0
-                            const precioFinal = costo * (1 + precioModalValues.margen / 100) * (1 + precioModalValues.iva / 100)
-                            setPrecioModalValues((prev) => ({ ...prev, costo, precioFinal: Math.round(precioFinal) }))
+                            if (precios.costoBehavior === "preservePrecioFinal") {
+                              // Keep precioFinal, recalculate margen
+                              const keptPF = precioModalValues.precioFinal
+                              const newMargen = costo > 0 ? Math.round(((keptPF / (costo * (1 + precioModalValues.iva / 100))) - 1) * 1000) / 10 : precioModalValues.margen
+                              setPrecioModalValues((prev) => ({ ...prev, costo, margen: newMargen }))
+                            } else {
+                              // preserveMargen: keep margen, recalculate precioFinal
+                              const precioFinal = costo * (1 + precioModalValues.margen / 100) * (1 + precioModalValues.iva / 100)
+                              setPrecioModalValues((prev) => ({ ...prev, costo, precioFinal: Math.round(precioFinal) }))
+                            }
                           }}
                           className="w-full text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300"
                           placeholder="0"
@@ -718,7 +726,12 @@ export function ItemCard({
                 </button>
                 <button
                   onClick={() => {
-                    onUpdatePrecio?.(item.id, precioModalValues)
+                    onUpdatePrecio?.(item.id, {
+                      ...precioModalValues,
+                      costo: Math.round(precioModalValues.costo * 100) / 100,
+                      margen: Math.round(precioModalValues.margen * 10) / 10,
+                      precioFinal: Math.round(precioModalValues.precioFinal),
+                    })
                     setIsPrecioModalOpen(false)
                   }}
                   className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
