@@ -423,10 +423,24 @@ export function filterItems(items: Item[], filterConfig: FilterConfig): Item[] {
       if (!matchesActivo && !matchesPausado) return false
     }
 
-    // Filter by precio range
-    const precioFinal = item.precio?.precioFinal ?? 0
-    if (filterConfig.precioDesde != null && precioFinal < filterConfig.precioDesde) return false
-    if (filterConfig.precioHasta != null && precioFinal > filterConfig.precioHasta) return false
+    // Filter by precio range (inclusive on both ends)
+    if (filterConfig.precioDesde != null || filterConfig.precioHasta != null) {
+      const desde = filterConfig.precioDesde ?? -Infinity
+      const hasta = filterConfig.precioHasta ?? Infinity
+      const inRange = (price: number) => price >= desde && price <= hasta
+
+      if (item.variants && item.variants.length > 0) {
+        // For items with variants, pass if at least one variant price is in range
+        const anyVariantMatches = item.variants.some((v: any) => {
+          const vPrice = v.precio?.precioFinal ?? v.precioFinal ?? 0
+          return inRange(vPrice)
+        })
+        if (!anyVariantMatches) return false
+      } else {
+        const precioFinal = item.precio?.precioFinal ?? 0
+        if (!inRange(precioFinal)) return false
+      }
+    }
 
     // Filter by stock flags
     if (filterConfig.stockFlags && filterConfig.stockFlags.length > 0) {

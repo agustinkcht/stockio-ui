@@ -229,7 +229,17 @@ export default function CatalogoPage() {
     setDraftPrecioDesde("")
     setDraftPrecioHasta("")
     setDraftStockFlags([])
-  }, [])
+    // Also clear committed filters from URL and close
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete("categorias")
+    params.delete("marcas")
+    params.delete("estados")
+    params.delete("precioDesde")
+    params.delete("precioHasta")
+    params.delete("stockFlags")
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+    setFilterOpen(false)
+  }, [searchParams, pathname, router])
 
   // ── Status helpers ────────────────────────────────────────────────────�����────
   const showStatusMessage = (text: string, type: "success" | "info" = "success") => {
@@ -551,7 +561,7 @@ export default function CatalogoPage() {
                           className={`h-9 text-xs transition-colors border shadow-sm gap-1.5 shrink-0 px-3 rounded-md flex items-center cursor-pointer ${hasActiveFilters ? "border-blue-400 text-blue-600 bg-blue-50" : "border-[rgba(228,230,235,0.6)] bg-white hover:bg-slate-50"}`}
                         >
                           <ListFilter className="w-3.5 h-3.5" />
-                          <span>Filtrar</span>
+                          <span>Filtros</span>
                         </button>
 
                         {/* Ordenar */}
@@ -763,7 +773,7 @@ export default function CatalogoPage() {
 
             {/* Header */}
             <div className="px-5 pt-5 pb-4 border-b border-slate-100 flex items-center justify-between shrink-0">
-              <h3 className="text-sm font-semibold text-slate-900">Filtrar</h3>
+              <h3 className="text-sm font-semibold text-slate-900">Filtros</h3>
               <button type="button" onClick={() => setFilterOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors cursor-pointer">
                 <X className="w-4 h-4 text-slate-400" />
               </button>
@@ -912,7 +922,7 @@ export default function CatalogoPage() {
                 Limpiar filtros
               </button>
               <button type="button" onClick={applyFilters} className="flex-1 h-9 text-xs font-semibold rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition-colors cursor-pointer">
-                Filtrar
+                Filtros
               </button>
             </div>
 
