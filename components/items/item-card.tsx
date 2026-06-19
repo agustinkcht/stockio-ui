@@ -342,33 +342,9 @@ export function ItemCard({
 
               {showPrecioColumn && !item.hasVariants && !item.isAgrupador ? (
                 <>
-                  {/* Estado cell - for standalone and children */}
-                  {(() => {
-                    const isActive = item.isActive !== false
-                    return (
-                      <div
-                        className="col-span-1 h-full flex items-center justify-center px-1 transition-colors border-r border-slate-100"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            onUpdateItem?.({ ...item, isActive: !isActive })
-                          }}
-                          className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium transition-colors cursor-pointer whitespace-nowrap ${
-                            isActive
-                              ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-                              : "bg-amber-100 text-amber-700 hover:bg-amber-200"
-                          }`}
-                        >
-                          {isActive ? "Activo" : "Pausado"}
-                        </button>
-                      </div>
-                    )
-                  })()}
                   {/* Precio Venta cell - clickable to open precio modal */}
                   <div
-                    className="col-span-2 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100 hover:bg-slate-50 group/precio"
+                    className="col-span-3 h-full flex items-center px-4 cursor-pointer transition-colors border-r border-slate-100 hover:bg-slate-50 group/precio"
                     onClick={(e) => {
                       e.stopPropagation()
                       setPrecioModalValues({
