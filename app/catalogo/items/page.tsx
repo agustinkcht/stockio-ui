@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
-import { Plus, Search, X, ListFilter, ArrowUpDown, CheckCircle2, Pause, Play } from "lucide-react"
+import { Plus, Search, X, ListFilter, ArrowUpDown, CheckCircle2, Pause, Play, ChevronDown } from "lucide-react"
 import { useAccount } from "@/lib/contexts/account-context"
 
 import { Sidebar } from "@/components/layout/sidebar"
@@ -68,6 +68,8 @@ export default function CatalogoPage() {
 
   // ── Dropdown visibility ────────────────────────────────────────────────────
   const [filterOpen, setFilterOpen] = useState(false)
+  const [categoriasExpanded, setCategoriasExpanded] = useState(false)
+  const [marcasExpanded, setMarcasExpanded] = useState(false)
   const [sortOpen, setSortOpen] = useState(false)
   const [nuevoItemDropdownOpen, setNuevoItemDropdownOpen] = useState(false)
 
@@ -491,44 +493,62 @@ export default function CatalogoPage() {
                               <div className="absolute top-full right-0 mt-1 z-[100] bg-white border border-slate-200 rounded-lg shadow-lg w-60 p-3 space-y-3">
                                 {/* Categoría */}
                                 <div>
-                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Categoría</label>
-                                  <select
-                                    value=""
-                                    onChange={(e) => { if (e.target.value && !filterCategorias.includes(e.target.value)) setFilterCategorias([...filterCategorias, e.target.value]) }}
-                                    className="w-full mt-1 px-2 py-1.5 text-xs border border-slate-200 rounded-md focus:outline-none focus:border-slate-400 bg-white"
+                                  <button
+                                    type="button"
+                                    onClick={() => setCategoriasExpanded(v => !v)}
+                                    className="flex items-center justify-between w-full cursor-pointer group"
                                   >
-                                    <option value="">Todas</option>
-                                    {availableCategorias.filter(c => !filterCategorias.includes(c)).map(c => <option key={c} value={c}>{c}</option>)}
-                                  </select>
-                                  {filterCategorias.length > 0 && (
-                                    <div className="flex flex-wrap gap-1 mt-1.5">
-                                      {filterCategorias.map(c => (
-                                        <span key={c} className="inline-flex items-center gap-1 h-5 pl-2 pr-1 text-[10px] rounded-full bg-slate-100 text-slate-600">
-                                          {c}
-                                          <button type="button" onClick={() => setFilterCategorias(filterCategorias.filter(x => x !== c))} className="cursor-pointer"><X className="w-2.5 h-2.5" /></button>
-                                        </span>
+                                    <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">
+                                      Categoría
+                                      {filterCategorias.length > 0 && (
+                                        <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-800 text-white text-[9px] font-semibold">{filterCategorias.length}</span>
+                                      )}
+                                    </span>
+                                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-150 ${categoriasExpanded ? "rotate-180" : ""}`} />
+                                  </button>
+                                  {categoriasExpanded && (
+                                    <div className="mt-2 space-y-2">
+                                      {availableCategorias.map(c => (
+                                        <label key={c} className="flex items-center gap-2 cursor-pointer">
+                                          <input
+                                            type="checkbox"
+                                            checked={filterCategorias.includes(c)}
+                                            onChange={(ev) => setFilterCategorias(ev.target.checked ? [...filterCategorias, c] : filterCategorias.filter(x => x !== c))}
+                                            className="w-3.5 h-3.5 rounded accent-slate-800"
+                                          />
+                                          <span className="text-xs text-slate-700">{c}</span>
+                                        </label>
                                       ))}
                                     </div>
                                   )}
                                 </div>
                                 {/* Marca */}
                                 <div>
-                                  <label className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Marca</label>
-                                  <select
-                                    value=""
-                                    onChange={(e) => { if (e.target.value && !filterMarcas.includes(e.target.value)) setFilterMarcas([...filterMarcas, e.target.value]) }}
-                                    className="w-full mt-1 px-2 py-1.5 text-xs border border-slate-200 rounded-md focus:outline-none focus:border-slate-400 bg-white"
+                                  <button
+                                    type="button"
+                                    onClick={() => setMarcasExpanded(v => !v)}
+                                    className="flex items-center justify-between w-full cursor-pointer group"
                                   >
-                                    <option value="">Todas</option>
-                                    {availableMarcas.filter(m => !filterMarcas.includes(m)).map(m => <option key={m} value={m}>{m}</option>)}
-                                  </select>
-                                  {filterMarcas.length > 0 && (
-                                    <div className="flex flex-wrap gap-1 mt-1.5">
-                                      {filterMarcas.map(m => (
-                                        <span key={m} className="inline-flex items-center gap-1 h-5 pl-2 pr-1 text-[10px] rounded-full bg-slate-100 text-slate-600">
-                                          {m}
-                                          <button type="button" onClick={() => setFilterMarcas(filterMarcas.filter(x => x !== m))} className="cursor-pointer"><X className="w-2.5 h-2.5" /></button>
-                                        </span>
+                                    <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">
+                                      Marca
+                                      {filterMarcas.length > 0 && (
+                                        <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-800 text-white text-[9px] font-semibold">{filterMarcas.length}</span>
+                                      )}
+                                    </span>
+                                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-150 ${marcasExpanded ? "rotate-180" : ""}`} />
+                                  </button>
+                                  {marcasExpanded && (
+                                    <div className="mt-2 space-y-2">
+                                      {availableMarcas.map(m => (
+                                        <label key={m} className="flex items-center gap-2 cursor-pointer">
+                                          <input
+                                            type="checkbox"
+                                            checked={filterMarcas.includes(m)}
+                                            onChange={(ev) => setFilterMarcas(ev.target.checked ? [...filterMarcas, m] : filterMarcas.filter(x => x !== m))}
+                                            className="w-3.5 h-3.5 rounded accent-slate-800"
+                                          />
+                                          <span className="text-xs text-slate-700">{m}</span>
+                                        </label>
                                       ))}
                                     </div>
                                   )}
