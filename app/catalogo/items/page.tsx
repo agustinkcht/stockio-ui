@@ -478,143 +478,14 @@ export default function CatalogoPage() {
                       <div className="ml-auto flex items-center gap-2">
 
                         {/* Filtrar */}
-                        <div className="relative">
-                          <button
-                            type="button"
-                            onClick={() => { setFilterOpen(!filterOpen); setSortOpen(false) }}
-                            className={`h-9 text-xs transition-colors border shadow-sm gap-1.5 shrink-0 px-3 rounded-md flex items-center cursor-pointer ${hasActiveFilters ? "border-blue-400 text-blue-600 bg-blue-50" : "border-[rgba(228,230,235,0.6)] bg-white hover:bg-slate-50"}`}
-                          >
-                            <ListFilter className="w-3.5 h-3.5" />
-                            <span>Filtrar</span>
-                          </button>
-                          {filterOpen && (
-                            <div className="fixed inset-0 z-[200] flex items-center justify-center">
-                              <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setFilterOpen(false)} />
-                              <div className="relative bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-sm mx-4 flex flex-col overflow-hidden">
-
-                                {/* Header */}
-                                <div className="px-5 pt-4 pb-3 border-b border-slate-100 flex items-center justify-between shrink-0">
-                                  <h3 className="text-sm font-semibold text-slate-900">Filtrar</h3>
-                                  <button
-                                    type="button"
-                                    onClick={() => setFilterOpen(false)}
-                                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
-                                  >
-                                    <X className="w-4 h-4 text-slate-400" />
-                                  </button>
-                                </div>
-
-                                {/* Scrollable body */}
-                                <div className="overflow-y-auto overscroll-contain p-5 space-y-4" style={{ maxHeight: "calc(100vh - 220px)" }}>
-
-                                  {/* Categoría */}
-                                  <div>
-                                    <button
-                                      type="button"
-                                      onClick={() => setCategoriasExpanded(v => !v)}
-                                      className="flex items-center justify-between w-full cursor-pointer"
-                                    >
-                                      <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                                        Categoría
-                                        {filterCategorias.length > 0 && (
-                                          <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-800 text-white text-[9px] font-semibold">{filterCategorias.length}</span>
-                                        )}
-                                      </span>
-                                      <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-150 ${categoriasExpanded ? "rotate-180" : ""}`} />
-                                    </button>
-                                    {categoriasExpanded && (
-                                      <div className="mt-3 space-y-2.5">
-                                        {availableCategorias.map(c => (
-                                          <label key={c} className="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                              type="checkbox"
-                                              checked={filterCategorias.includes(c)}
-                                              onChange={(ev) => setFilterCategorias(ev.target.checked ? [...filterCategorias, c] : filterCategorias.filter(x => x !== c))}
-                                              className="w-3.5 h-3.5 rounded accent-slate-800"
-                                            />
-                                            <span className="text-xs text-slate-700">{c}</span>
-                                          </label>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
-
-                                  <div className="border-t border-slate-100" />
-
-                                  {/* Marca */}
-                                  <div>
-                                    <button
-                                      type="button"
-                                      onClick={() => setMarcasExpanded(v => !v)}
-                                      className="flex items-center justify-between w-full cursor-pointer"
-                                    >
-                                      <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                                        Marca
-                                        {filterMarcas.length > 0 && (
-                                          <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-800 text-white text-[9px] font-semibold">{filterMarcas.length}</span>
-                                        )}
-                                      </span>
-                                      <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-150 ${marcasExpanded ? "rotate-180" : ""}`} />
-                                    </button>
-                                    {marcasExpanded && (
-                                      <div className="mt-3 space-y-2.5">
-                                        {availableMarcas.map(m => (
-                                          <label key={m} className="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                              type="checkbox"
-                                              checked={filterMarcas.includes(m)}
-                                              onChange={(ev) => setFilterMarcas(ev.target.checked ? [...filterMarcas, m] : filterMarcas.filter(x => x !== m))}
-                                              className="w-3.5 h-3.5 rounded accent-slate-800"
-                                            />
-                                            <span className="text-xs text-slate-700">{m}</span>
-                                          </label>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
-
-                                  <div className="border-t border-slate-100" />
-
-                                  {/* Estado */}
-                                  <div className="space-y-2.5">
-                                    <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Estado</p>
-                                    {(["sin_stock", "pausado"] as const).map(e => (
-                                      <label key={e} className="flex items-center gap-2 cursor-pointer">
-                                        <input
-                                          type="checkbox"
-                                          checked={filterEstados.includes(e)}
-                                          onChange={(ev) => setFilterEstados(ev.target.checked ? [...filterEstados, e] : filterEstados.filter(x => x !== e))}
-                                          className="w-3.5 h-3.5 rounded accent-slate-800"
-                                        />
-                                        <span className="text-xs text-slate-700">{e === "sin_stock" ? "Sin stock" : "Pausado"}</span>
-                                      </label>
-                                    ))}
-                                  </div>
-
-                                </div>
-
-                                {/* Footer */}
-                                <div className="px-5 py-4 border-t border-slate-100 flex items-center gap-2 shrink-0">
-                                  <button
-                                    type="button"
-                                    onClick={() => { setFilterCategorias([]); setFilterMarcas([]); setFilterEstados([]) }}
-                                    className="flex-1 h-9 text-xs font-medium rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors cursor-pointer"
-                                  >
-                                    Limpiar filtros
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setFilterOpen(false)}
-                                    className="flex-1 h-9 text-xs font-semibold rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition-colors cursor-pointer"
-                                  >
-                                    Filtrar
-                                  </button>
-                                </div>
-
-                              </div>
-                            </div>
-                          )}
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => { setFilterOpen(!filterOpen); setSortOpen(false) }}
+                          className={`h-9 text-xs transition-colors border shadow-sm gap-1.5 shrink-0 px-3 rounded-md flex items-center cursor-pointer ${hasActiveFilters ? "border-blue-400 text-blue-600 bg-blue-50" : "border-[rgba(228,230,235,0.6)] bg-white hover:bg-slate-50"}`}
+                        >
+                          <ListFilter className="w-3.5 h-3.5" />
+                          <span>Filtrar</span>
+                        </button>
 
                         {/* Ordenar */}
                         <div className="flex items-center border border-[rgba(228,230,235,0.6)] shadow-sm rounded-md overflow-hidden bg-white h-9">
@@ -816,6 +687,135 @@ export default function CatalogoPage() {
         handleCreateNuevoItemConVariantes={handleCreateItemConVariantesWithSuccess}
         isCreatingItem={isCreatingItem}
       />
+
+      {/* Filter modal */}
+      {filterOpen && (
+        <div className="fixed inset-0 z-[100000] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setFilterOpen(false)} />
+          <div className="relative bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-sm mx-4 flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
+
+            {/* Header */}
+            <div className="px-5 pt-5 pb-4 border-b border-slate-100 flex items-center justify-between shrink-0">
+              <h3 className="text-sm font-semibold text-slate-900">Filtrar</h3>
+              <button
+                type="button"
+                onClick={() => setFilterOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4 text-slate-400" />
+              </button>
+            </div>
+
+            {/* Scrollable body */}
+            <div className="overflow-y-auto overscroll-contain px-5 py-4 space-y-4" style={{ maxHeight: "60vh" }}>
+
+              {/* Categoría */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setCategoriasExpanded(v => !v)}
+                  className="flex items-center justify-between w-full cursor-pointer py-0.5"
+                >
+                  <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                    Categoría
+                    {filterCategorias.length > 0 && (
+                      <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-800 text-white text-[9px] font-semibold">{filterCategorias.length}</span>
+                    )}
+                  </span>
+                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-150 ${categoriasExpanded ? "rotate-180" : ""}`} />
+                </button>
+                {categoriasExpanded && (
+                  <div className="mt-3 space-y-2.5">
+                    {availableCategorias.map(c => (
+                      <label key={c} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={filterCategorias.includes(c)}
+                          onChange={(ev) => setFilterCategorias(ev.target.checked ? [...filterCategorias, c] : filterCategorias.filter(x => x !== c))}
+                          className="w-3.5 h-3.5 rounded accent-slate-800"
+                        />
+                        <span className="text-xs text-slate-700">{c}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t border-slate-100" />
+
+              {/* Marca */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setMarcasExpanded(v => !v)}
+                  className="flex items-center justify-between w-full cursor-pointer py-0.5"
+                >
+                  <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                    Marca
+                    {filterMarcas.length > 0 && (
+                      <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-800 text-white text-[9px] font-semibold">{filterMarcas.length}</span>
+                    )}
+                  </span>
+                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-150 ${marcasExpanded ? "rotate-180" : ""}`} />
+                </button>
+                {marcasExpanded && (
+                  <div className="mt-3 space-y-2.5">
+                    {availableMarcas.map(m => (
+                      <label key={m} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={filterMarcas.includes(m)}
+                          onChange={(ev) => setFilterMarcas(ev.target.checked ? [...filterMarcas, m] : filterMarcas.filter(x => x !== m))}
+                          className="w-3.5 h-3.5 rounded accent-slate-800"
+                        />
+                        <span className="text-xs text-slate-700">{m}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t border-slate-100" />
+
+              {/* Estado */}
+              <div className="space-y-2.5">
+                <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Estado</p>
+                {(["sin_stock", "pausado"] as const).map(e => (
+                  <label key={e} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={filterEstados.includes(e)}
+                      onChange={(ev) => setFilterEstados(ev.target.checked ? [...filterEstados, e] : filterEstados.filter(x => x !== e))}
+                      className="w-3.5 h-3.5 rounded accent-slate-800"
+                    />
+                    <span className="text-xs text-slate-700">{e === "sin_stock" ? "Sin stock" : "Pausado"}</span>
+                  </label>
+                ))}
+              </div>
+
+            </div>
+
+            {/* Footer */}
+            <div className="px-5 py-4 border-t border-slate-100 flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => { setFilterCategorias([]); setFilterMarcas([]); setFilterEstados([]) }}
+                className="flex-1 h-9 text-xs font-medium rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors cursor-pointer"
+              >
+                Limpiar filtros
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterOpen(false)}
+                className="flex-1 h-9 text-xs font-semibold rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                Filtrar
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
       {/* Delete modal */}
       {itemToDelete && (
