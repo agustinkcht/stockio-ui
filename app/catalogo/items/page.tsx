@@ -38,6 +38,8 @@ export default function CatalogoPage() {
 
   const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>({})
   const [showSaveSuccess, setShowSaveSuccess] = useState(false)
+  const [toastLabel, setToastLabel] = useState<string | null>(null)
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [statusMessage, setStatusMessage] = useState<{ text: string; type: "success" | "info" } | null>(null)
   const [itemToDelete, setItemToDelete] = useState<Item | null>(null)
   const [showBatchDeleteModal, setShowBatchDeleteModal] = useState(false)
@@ -183,6 +185,12 @@ export default function CatalogoPage() {
   }
 
   // ── Precio / Stock handlers ────────────────────────────────────────────────
+  const showToast = useCallback((label: string) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+    setToastLabel(label)
+    toastTimerRef.current = setTimeout(() => setToastLabel(null), 3000)
+  }, [])
+
   const handleUpdatePrecio = useCallback((itemId: string, precio: { costo: number; margen: number; iva: number; precioFinal: number }) => {
     for (const item of items) {
       if (item.variants) {
@@ -190,13 +198,15 @@ export default function CatalogoPage() {
         if (variant) {
           editVariantField(item.sku, variant.sku, "precio", precio)
           forceSaveItems()
+          showToast("Precio actualizado")
           return
         }
       }
     }
     editField(itemId, "precio", precio)
     forceSaveItems()
-  }, [items, editField, editVariantField, forceSaveItems])
+    showToast("Precio actualizado")
+  }, [items, editField, editVariantField, forceSaveItems, showToast])
 
   const handleUpdateStockWithTracking = useCallback((itemId: string, field: "total" | "reservado", value: number) => {
     for (const item of items) {
@@ -215,6 +225,7 @@ export default function CatalogoPage() {
           }
           editVariantField(parentIdentifier!, itemId, "stock", newStock)
           forceSaveItems()
+          showToast("Stock actualizado")
           const wasInactive = (variant as any).isActive === false
           const hadNoStock = (parseInt(currentStock.disponible) || 0) <= 0
           if (wasInactive && hadNoStock && newDisponible > 0 && variant.id) updateItemsActiveStatus([variant.id], true)
@@ -237,13 +248,14 @@ export default function CatalogoPage() {
       }
       editField(itemId, "stock", newStock)
       forceSaveItems()
+      showToast("Stock actualizado")
       const wasInactive = item.isActive === false
       const hadNoStock = (parseInt(currentStock.disponible) || 0) <= 0
       if (wasInactive && hadNoStock && newDisponible > 0 && item.id) updateItemsActiveStatus([item.id], true)
       const isActive = item.isActive !== false
       if (isActive && newDisponible <= 0 && item.id) updateItemsActiveStatus([item.id], false)
     }
-  }, [items, editField, editVariantField, forceSaveItems, updateItemsActiveStatus])
+  }, [items, editField, editVariantField, forceSaveItems, updateItemsActiveStatus, showToast])
 
   // ── Delete handlers ────────────────────────────────────────────────────────
   const handleDeleteWithTracking = (item: Item) => setItemToDelete(item)
@@ -781,6 +793,30 @@ export default function CatalogoPage() {
             <div className="flex items-center gap-3 justify-end mt-6">
               <button onClick={handleCancelBatchDelete} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-md transition-colors cursor-pointer">Cancelar</button>
               <button onClick={handleConfirmBatchDelete} className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors cursor-pointer">Eliminar items</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cambios guardados floating toast */}
+      {toastLabel && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[200000] pointer-events-none animate-in fade-in slide-in-from-top-4 duration-300">
+          <div
+            className="relative flex items-stretch rounded-2xl overflow-hidden"
+            style={{ background: "#0d0f12", boxShadow: "0 20px 60px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.07)", minWidth: "280px" }}
+          >
+            <div className="w-[3px] shrink-0" style={{ background: "linear-gradient(to bottom, #34d399, #059669)" }} />
+            <div className="flex items-center gap-3.5 px-5 py-4">
+              <div
+                className="flex items-center justify-center w-9 h-9 rounded-xl shrink-0"
+                style={{ background: "rgba(52,211,153,0.12)", border: "1px solid rgba(52,211,153,0.2)" }}
+              >
+                <CheckCircle2 className="w-4 h-4" style={{ color: "#34d399" }} strokeWidth={2.25} />
+              </div>
+              <div>
+                <p className="text-[13px] font-semibold leading-tight" style={{ color: "#f1f5f9", letterSpacing: "-0.01em" }}>Cambios guardados</p>
+                <p className="text-[11px] mt-0.5 leading-tight" style={{ color: "rgba(148,163,184,0.7)" }}>{toastLabel}</p>
+              </div>
             </div>
           </div>
         </div>

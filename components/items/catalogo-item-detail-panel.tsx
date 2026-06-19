@@ -92,6 +92,7 @@ interface ItemDetailPanelProps {
   variantChangeHandlers: any
   isExpanded?: boolean
   onSaveNow?: () => void
+  onShowToast?: (label: string) => void
 }
 
 export function CatalogoItemDetailPanel({
@@ -113,6 +114,7 @@ export function CatalogoItemDetailPanel({
   variantChangeHandlers,
   isExpanded = true,
   onSaveNow,
+  onShowToast,
 }: ItemDetailPanelProps) {
   const router = useRouter()
   const { catalogo, stock, precios } = useSettings()
@@ -3749,6 +3751,7 @@ export function CatalogoItemDetailPanel({
                         precioFinal: Math.round(precioModalValues.precioFinal),
                       })
                       onSaveNow?.()
+                      onShowToast?.("Precio actualizado")
                     }
                     setIsPrecioModalOpen(false)
                   }}
@@ -3780,6 +3783,7 @@ export function CatalogoItemDetailPanel({
               }
               onFieldChange(id, "stock", newStock)
               onSaveNow?.()
+              onShowToast?.("Stock actualizado")
             }
           }
         }}
@@ -3937,6 +3941,7 @@ export function CatalogoItemDetailPanel({
                       )
                       onFieldChange(fatherItem.id, "variants", updatedVariants)
                       onSaveNow?.()
+                      onShowToast?.("Precio actualizado")
                     }
                     setExpandedMatrixPrecioModal({ open: false, variant: null })
                   }}
@@ -3966,6 +3971,7 @@ export function CatalogoItemDetailPanel({
             )
             onFieldChange(selectedItem.id, "variants", updatedVariants)
             onSaveNow?.()
+            onShowToast?.("Stock actualizado")
           }
         }}
         initialTotal={expandedMatrixStockValues.total}
