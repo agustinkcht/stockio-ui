@@ -54,8 +54,6 @@ interface ItemsGridProps {
   onBatchDelete?: () => void
   onUpdateStock?: (itemSku: string, field: "total" | "reservado", value: number) => void
   onUpdatePrecio?: (itemId: string, precio: { costo: number; margen: number; iva: number; precioFinal: number }) => void
-  onUpdateItem?: (item: Item) => void
-  onShowToast?: (type: "precio" | "stock" | "estado") => void
   // For bulk stock edit
   getSelectedSkus?: () => string[]
   // Hide buttons
@@ -92,8 +90,6 @@ export function ItemsGrid({
   onBatchDelete,
   onUpdateStock,
   onUpdatePrecio,
-  onUpdateItem,
-  onShowToast,
   getSelectedSkus,
   hideNuevoButton = false,
   hideCreadorMasivoButton = false,
@@ -482,8 +478,6 @@ export function ItemsGrid({
                   showPrecioColumn={showPrecioColumn}
                   onUpdatePrecio={onUpdatePrecio}
                   onUpdateStock={onUpdateStock}
-                  onUpdateItem={onUpdateItem}
-                  onShowToast={onShowToast}
                 />
               )
             })}

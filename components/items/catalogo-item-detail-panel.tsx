@@ -92,7 +92,6 @@ interface ItemDetailPanelProps {
   variantChangeHandlers: any
   isExpanded?: boolean
   onSaveNow?: () => void
-  onShowToast?: (type: "precio" | "stock" | "estado") => void
 }
 
 export function CatalogoItemDetailPanel({
@@ -114,7 +113,6 @@ export function CatalogoItemDetailPanel({
   variantChangeHandlers,
   isExpanded = true,
   onSaveNow,
-  onShowToast,
 }: ItemDetailPanelProps) {
   const router = useRouter()
   const { catalogo, stock, precios } = useSettings()
@@ -1280,7 +1278,6 @@ export function CatalogoItemDetailPanel({
                                       } else {
                                         onFieldChange(selectedItem.id, "isActive", value)
                                       }
-                                      onShowToast?.("estado")
                                     }
                                     setTimeout(() => {
                                       ;(e.currentTarget.parentElement as HTMLElement).style.display = "none"
@@ -3752,7 +3749,6 @@ export function CatalogoItemDetailPanel({
                         precioFinal: Math.round(precioModalValues.precioFinal),
                       })
                       onSaveNow?.()
-                      onShowToast?.("precio")
                     }
                     setIsPrecioModalOpen(false)
                   }}
@@ -3784,7 +3780,6 @@ export function CatalogoItemDetailPanel({
               }
               onFieldChange(id, "stock", newStock)
               onSaveNow?.()
-              onShowToast?.("stock")
             }
           }
         }}
@@ -3942,7 +3937,6 @@ export function CatalogoItemDetailPanel({
                       )
                       onFieldChange(fatherItem.id, "variants", updatedVariants)
                       onSaveNow?.()
-                      onShowToast?.("precio")
                     }
                     setExpandedMatrixPrecioModal({ open: false, variant: null })
                   }}
@@ -3972,7 +3966,6 @@ export function CatalogoItemDetailPanel({
             )
             onFieldChange(selectedItem.id, "variants", updatedVariants)
             onSaveNow?.()
-            onShowToast?.("stock")
           }
         }}
         initialTotal={expandedMatrixStockValues.total}
