@@ -342,7 +342,11 @@ export function filterItems(items: Item[], filterConfig: FilterConfig): Item[] {
       filterConfig.marcas.length === 0 &&
       (filterConfig.proveedores?.length || 0) === 0 &&
       filterConfig.stock.length === 0 &&
-      filterConfig.depositos.length === 0)
+      filterConfig.depositos.length === 0 &&
+      (filterConfig.estados?.length || 0) === 0 &&
+      !filterConfig.precioDesde &&
+      !filterConfig.precioHasta &&
+      (filterConfig.stockFlags?.length || 0) === 0)
   ) {
     return items
   }
@@ -410,6 +414,29 @@ export function filterItems(items: Item[], filterConfig: FilterConfig): Item[] {
 
     // Filter by deposito - for now we skip this as we don't have deposito info on items
     // In the future, you would query the stock table to check if item has stock in specific depositos
+
+    // Filter by estado (activo/pausado)
+    if (filterConfig.estados && filterConfig.estados.length > 0) {
+      const isActive = item.isActive !== false
+      const matchesActivo = filterConfig.estados.includes("activo") && isActive
+      const matchesPausado = filterConfig.estados.includes("pausado") && !isActive
+      if (!matchesActivo && !matchesPausado) return false
+    }
+
+    // Filter by precio range
+    const precioFinal = item.precio?.precioFinal ?? 0
+    if (filterConfig.precioDesde != null && precioFinal < filterConfig.precioDesde) return false
+    if (filterConfig.precioHasta != null && precioFinal > filterConfig.precioHasta) return false
+
+    // Filter by stock flags
+    if (filterConfig.stockFlags && filterConfig.stockFlags.length > 0) {
+      const disponible = Number.parseFloat(item.stock?.disponible || "0")
+      const reservado = Number.parseFloat(item.stock?.reservado || "0")
+      let matchesFlag = false
+      if (filterConfig.stockFlags.includes("sin_stock_disponible") && disponible <= 0) matchesFlag = true
+      if (filterConfig.stockFlags.includes("con_stock_reservado") && reservado > 0) matchesFlag = true
+      if (!matchesFlag) return false
+    }
 
     return true
   })

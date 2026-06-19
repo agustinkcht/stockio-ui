@@ -55,21 +55,34 @@ export default function CatalogoPage() {
   const searchQuery = searchParams.get("q") ?? ""
   const sortField = (searchParams.get("sort") ?? "nombre") as QuickSortField
   const sortDir = (searchParams.get("dir") ?? "asc") as "asc" | "desc"
-  const filterCategorias = searchParams.get("categorias")?.split(",").filter(Boolean) ?? []
-  const filterMarcas = searchParams.get("marcas")?.split(",").filter(Boolean) ?? []
-  const filterEstados = searchParams.get("estados")?.split(",").filter(Boolean) ?? []
-
   const setSearchQuery = (v: string) => updateParam("q", v)
   const setSortField = (v: QuickSortField) => updateParam("sort", v)
   const setSortDir = (v: "asc" | "desc") => updateParam("dir", v)
-  const setFilterCategorias = (v: string[]) => updateParam("categorias", v.join(","))
-  const setFilterMarcas = (v: string[]) => updateParam("marcas", v.join(","))
-  const setFilterEstados = (v: string[]) => updateParam("estados", v.join(","))
+
+
+  // ── Committed filters (from URL) ──────────────────────────────────────────
+  const filterCategorias = searchParams.get("categorias")?.split(",").filter(Boolean) ?? []
+  const filterMarcas = searchParams.get("marcas")?.split(",").filter(Boolean) ?? []
+  const filterEstados = searchParams.get("estados")?.split(",").filter(Boolean) ?? []
+  const filterPrecioDesde = searchParams.get("precioDesde") ? Number(searchParams.get("precioDesde")) : null
+  const filterPrecioHasta = searchParams.get("precioHasta") ? Number(searchParams.get("precioHasta")) : null
+  const filterStockFlags = searchParams.get("stockFlags")?.split(",").filter(Boolean) ?? []
+
+  // ── Draft filter state (inside the modal, not yet applied) ────────────────
+  const [draftCategorias, setDraftCategorias] = useState<string[]>(filterCategorias)
+  const [draftMarcas, setDraftMarcas] = useState<string[]>(filterMarcas)
+  const [draftEstados, setDraftEstados] = useState<string[]>(filterEstados)
+  const [draftPrecioDesde, setDraftPrecioDesde] = useState<string>(filterPrecioDesde != null ? String(filterPrecioDesde) : "")
+  const [draftPrecioHasta, setDraftPrecioHasta] = useState<string>(filterPrecioHasta != null ? String(filterPrecioHasta) : "")
+  const [draftStockFlags, setDraftStockFlags] = useState<string[]>(filterStockFlags)
 
   // ── Dropdown visibility ────────────────────────────────────────────────────
   const [filterOpen, setFilterOpen] = useState(false)
+  const [estadoExpanded, setEstadoExpanded] = useState(false)
   const [categoriasExpanded, setCategoriasExpanded] = useState(false)
   const [marcasExpanded, setMarcasExpanded] = useState(false)
+  const [precioExpanded, setPrecioExpanded] = useState(false)
+  const [stockExpanded, setStockExpanded] = useState(false)
   const [sortOpen, setSortOpen] = useState(false)
   const [nuevoItemDropdownOpen, setNuevoItemDropdownOpen] = useState(false)
 
@@ -154,31 +167,66 @@ export default function CatalogoPage() {
     handleCloseDropdowns,
   } = useSidebar()
 
-  // ── Derived filter/sort config for grid ───────────────────────────────────
+  // ── Derived filter/sort config for grid (committed from URL) ─────────────
   const filterConfig: FilterConfig = useMemo(() => ({
     tipos: [],
     categorias: filterCategorias,
     marcas: filterMarcas,
     proveedores: [],
-    stock: filterEstados.includes("sin_stock") ? ["sin_stock"] : [],
+    stock: [],
     depositos: [],
-  }), [filterCategorias, filterMarcas, filterEstados])
+    estados: filterEstados as ("activo" | "pausado")[],
+    precioDesde: filterPrecioDesde,
+    precioHasta: filterPrecioHasta,
+    stockFlags: filterStockFlags as ("sin_stock_disponible" | "con_stock_reservado")[],
+  }), [filterCategorias, filterMarcas, filterEstados, filterPrecioDesde, filterPrecioHasta, filterStockFlags])
 
   const sortConfig: SortFactorConfig[] = useMemo(() => ([
     { factor: sortField as any, direction: sortDir },
   ]), [sortField, sortDir])
 
-  // ── Available options for filter dropdown ─────────────────────────────────
+  // ── Available options for filter dropdowns ────────────────────────────────
   const availableCategorias = useMemo(() => getUniqueCategorias(items), [items])
   const availableMarcas = useMemo(() => getUniqueMarcas(items), [items])
 
-  const hasActiveFilters = filterCategorias.length > 0 || filterMarcas.length > 0 || filterEstados.length > 0
+  const hasActiveFilters = filterCategorias.length > 0 || filterMarcas.length > 0 || filterEstados.length > 0 || filterPrecioDesde != null || filterPrecioHasta != null || filterStockFlags.length > 0
 
   // ── Filtered count for badge ───────────────────────────────────────────────
   const filteredCount = useMemo(() => {
     const searched = searchItems(items, searchQuery)
     return filterItems(searched, filterConfig).length
   }, [items, searchQuery, filterConfig])
+
+  // ── Filter modal open/apply/clear ─────────────────────────────────────────
+  const openFilterModal = useCallback(() => {
+    // Sync draft from currently committed URL params
+    setDraftCategorias(filterCategorias)
+    setDraftMarcas(filterMarcas)
+    setDraftEstados(filterEstados)
+    setDraftPrecioDesde(filterPrecioDesde != null ? String(filterPrecioDesde) : "")
+    setDraftPrecioHasta(filterPrecioHasta != null ? String(filterPrecioHasta) : "")
+    setDraftStockFlags(filterStockFlags)
+    setFilterOpen(true)
+  }, [filterCategorias, filterMarcas, filterEstados, filterPrecioDesde, filterPrecioHasta, filterStockFlags])
+
+  const applyFilters = useCallback(() => {
+    updateParam("categorias", draftCategorias.join(","))
+    updateParam("marcas", draftMarcas.join(","))
+    updateParam("estados", draftEstados.join(","))
+    updateParam("precioDesde", draftPrecioDesde.trim() || "")
+    updateParam("precioHasta", draftPrecioHasta.trim() || "")
+    updateParam("stockFlags", draftStockFlags.join(","))
+    setFilterOpen(false)
+  }, [draftCategorias, draftMarcas, draftEstados, draftPrecioDesde, draftPrecioHasta, draftStockFlags, updateParam])
+
+  const clearFilters = useCallback(() => {
+    setDraftCategorias([])
+    setDraftMarcas([])
+    setDraftEstados([])
+    setDraftPrecioDesde("")
+    setDraftPrecioHasta("")
+    setDraftStockFlags([])
+  }, [])
 
   // ── Status helpers ────────────────────────────────────────────────────�����────
   const showStatusMessage = (text: string, type: "success" | "info" = "success") => {
@@ -447,10 +495,18 @@ export default function CatalogoPage() {
                       {/* Active filter tags */}
                       {hasActiveFilters && (
                         <div className="flex items-center gap-1.5 flex-wrap">
+                          {filterEstados.map(e => (
+                            <span key={e} className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
+                              {e === "activo" ? "Activo" : e === "pausado" ? "Pausado" : e}
+                              <button type="button" onClick={() => updateParam("estados", filterEstados.filter(x => x !== e).join(","))} className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer">
+                                <X className="w-2.5 h-2.5 text-slate-400" />
+                              </button>
+                            </span>
+                          ))}
                           {filterCategorias.map(c => (
                             <span key={c} className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
                               {c}
-                              <button type="button" onClick={() => setFilterCategorias(filterCategorias.filter(x => x !== c))} className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer">
+                              <button type="button" onClick={() => updateParam("categorias", filterCategorias.filter(x => x !== c).join(","))} className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer">
                                 <X className="w-2.5 h-2.5 text-slate-400" />
                               </button>
                             </span>
@@ -458,15 +514,23 @@ export default function CatalogoPage() {
                           {filterMarcas.map(m => (
                             <span key={m} className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
                               {m}
-                              <button type="button" onClick={() => setFilterMarcas(filterMarcas.filter(x => x !== m))} className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer">
+                              <button type="button" onClick={() => updateParam("marcas", filterMarcas.filter(x => x !== m).join(","))} className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer">
                                 <X className="w-2.5 h-2.5 text-slate-400" />
                               </button>
                             </span>
                           ))}
-                          {filterEstados.map(e => (
-                            <span key={e} className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
-                              {e === "sin_stock" ? "Sin stock" : e === "pausado" ? "Pausado" : e}
-                              <button type="button" onClick={() => setFilterEstados(filterEstados.filter(x => x !== e))} className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer">
+                          {(filterPrecioDesde != null || filterPrecioHasta != null) && (
+                            <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
+                              {filterPrecioDesde != null && filterPrecioHasta != null ? `$${filterPrecioDesde} – $${filterPrecioHasta}` : filterPrecioDesde != null ? `Desde $${filterPrecioDesde}` : `Hasta $${filterPrecioHasta}`}
+                              <button type="button" onClick={() => { updateParam("precioDesde", ""); updateParam("precioHasta", "") }} className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer">
+                                <X className="w-2.5 h-2.5 text-slate-400" />
+                              </button>
+                            </span>
+                          )}
+                          {filterStockFlags.map(f => (
+                            <span key={f} className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
+                              {f === "sin_stock_disponible" ? "Sin stock disponible" : "Con stock reservado"}
+                              <button type="button" onClick={() => updateParam("stockFlags", filterStockFlags.filter(x => x !== f).join(","))} className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer">
                                 <X className="w-2.5 h-2.5 text-slate-400" />
                               </button>
                             </span>
@@ -480,7 +544,7 @@ export default function CatalogoPage() {
                         {/* Filtrar */}
                         <button
                           type="button"
-                          onClick={() => { setFilterOpen(!filterOpen); setSortOpen(false) }}
+                          onClick={() => { openFilterModal(); setSortOpen(false) }}
                           className={`h-9 text-xs transition-colors border shadow-sm gap-1.5 shrink-0 px-3 rounded-md flex items-center cursor-pointer ${hasActiveFilters ? "border-blue-400 text-blue-600 bg-blue-50" : "border-[rgba(228,230,235,0.6)] bg-white hover:bg-slate-50"}`}
                         >
                           <ListFilter className="w-3.5 h-3.5" />
@@ -697,30 +761,43 @@ export default function CatalogoPage() {
             {/* Header */}
             <div className="px-5 pt-5 pb-4 border-b border-slate-100 flex items-center justify-between shrink-0">
               <h3 className="text-sm font-semibold text-slate-900">Filtrar</h3>
-              <button
-                type="button"
-                onClick={() => setFilterOpen(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
-              >
+              <button type="button" onClick={() => setFilterOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors cursor-pointer">
                 <X className="w-4 h-4 text-slate-400" />
               </button>
             </div>
 
             {/* Scrollable body */}
-            <div className="overflow-y-auto overscroll-contain px-5 py-4 space-y-4" style={{ maxHeight: "60vh" }}>
+            <div className="overflow-y-auto overscroll-contain px-5 py-4 space-y-1" style={{ maxHeight: "60vh" }}>
 
-              {/* Categoría */}
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setCategoriasExpanded(v => !v)}
-                  className="flex items-center justify-between w-full cursor-pointer py-0.5"
-                >
+              {/* ── Estado ── */}
+              <div className="py-2">
+                <button type="button" onClick={() => setEstadoExpanded(v => !v)} className="flex items-center justify-between w-full cursor-pointer py-0.5">
+                  <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                    Estado
+                    {draftEstados.length > 0 && <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-800 text-white text-[9px] font-semibold">{draftEstados.length}</span>}
+                  </span>
+                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-150 ${estadoExpanded ? "rotate-180" : ""}`} />
+                </button>
+                {estadoExpanded && (
+                  <div className="mt-3 space-y-2.5">
+                    {(["activo", "pausado"] as const).map(e => (
+                      <label key={e} className="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" checked={draftEstados.includes(e)} onChange={(ev) => setDraftEstados(ev.target.checked ? [...draftEstados, e] : draftEstados.filter(x => x !== e))} className="w-3.5 h-3.5 rounded accent-slate-800" />
+                        <span className="text-xs text-slate-700">{e === "activo" ? "Activo" : "Pausado"}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t border-slate-100" />
+
+              {/* ── Categoría ── */}
+              <div className="py-2">
+                <button type="button" onClick={() => setCategoriasExpanded(v => !v)} className="flex items-center justify-between w-full cursor-pointer py-0.5">
                   <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                     Categoría
-                    {filterCategorias.length > 0 && (
-                      <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-800 text-white text-[9px] font-semibold">{filterCategorias.length}</span>
-                    )}
+                    {draftCategorias.length > 0 && <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-800 text-white text-[9px] font-semibold">{draftCategorias.length}</span>}
                   </span>
                   <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-150 ${categoriasExpanded ? "rotate-180" : ""}`} />
                 </button>
@@ -728,12 +805,7 @@ export default function CatalogoPage() {
                   <div className="mt-3 space-y-2.5">
                     {availableCategorias.map(c => (
                       <label key={c} className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={filterCategorias.includes(c)}
-                          onChange={(ev) => setFilterCategorias(ev.target.checked ? [...filterCategorias, c] : filterCategorias.filter(x => x !== c))}
-                          className="w-3.5 h-3.5 rounded accent-slate-800"
-                        />
+                        <input type="checkbox" checked={draftCategorias.includes(c)} onChange={(ev) => setDraftCategorias(ev.target.checked ? [...draftCategorias, c] : draftCategorias.filter(x => x !== c))} className="w-3.5 h-3.5 rounded accent-slate-800" />
                         <span className="text-xs text-slate-700">{c}</span>
                       </label>
                     ))}
@@ -743,18 +815,12 @@ export default function CatalogoPage() {
 
               <div className="border-t border-slate-100" />
 
-              {/* Marca */}
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setMarcasExpanded(v => !v)}
-                  className="flex items-center justify-between w-full cursor-pointer py-0.5"
-                >
+              {/* ── Marca ── */}
+              <div className="py-2">
+                <button type="button" onClick={() => setMarcasExpanded(v => !v)} className="flex items-center justify-between w-full cursor-pointer py-0.5">
                   <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                     Marca
-                    {filterMarcas.length > 0 && (
-                      <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-800 text-white text-[9px] font-semibold">{filterMarcas.length}</span>
-                    )}
+                    {draftMarcas.length > 0 && <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-800 text-white text-[9px] font-semibold">{draftMarcas.length}</span>}
                   </span>
                   <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-150 ${marcasExpanded ? "rotate-180" : ""}`} />
                 </button>
@@ -762,12 +828,7 @@ export default function CatalogoPage() {
                   <div className="mt-3 space-y-2.5">
                     {availableMarcas.map(m => (
                       <label key={m} className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={filterMarcas.includes(m)}
-                          onChange={(ev) => setFilterMarcas(ev.target.checked ? [...filterMarcas, m] : filterMarcas.filter(x => x !== m))}
-                          className="w-3.5 h-3.5 rounded accent-slate-800"
-                        />
+                        <input type="checkbox" checked={draftMarcas.includes(m)} onChange={(ev) => setDraftMarcas(ev.target.checked ? [...draftMarcas, m] : draftMarcas.filter(x => x !== m))} className="w-3.5 h-3.5 rounded accent-slate-800" />
                         <span className="text-xs text-slate-700">{m}</span>
                       </label>
                     ))}
@@ -777,38 +838,77 @@ export default function CatalogoPage() {
 
               <div className="border-t border-slate-100" />
 
-              {/* Estado */}
-              <div className="space-y-2.5">
-                <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Estado</p>
-                {(["sin_stock", "pausado"] as const).map(e => (
-                  <label key={e} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={filterEstados.includes(e)}
-                      onChange={(ev) => setFilterEstados(ev.target.checked ? [...filterEstados, e] : filterEstados.filter(x => x !== e))}
-                      className="w-3.5 h-3.5 rounded accent-slate-800"
-                    />
-                    <span className="text-xs text-slate-700">{e === "sin_stock" ? "Sin stock" : "Pausado"}</span>
-                  </label>
-                ))}
+              {/* ── Precio ── */}
+              <div className="py-2">
+                <button type="button" onClick={() => setPrecioExpanded(v => !v)} className="flex items-center justify-between w-full cursor-pointer py-0.5">
+                  <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                    Precio
+                    {(draftPrecioDesde.trim() || draftPrecioHasta.trim()) && <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-800 text-white text-[9px] font-semibold">1</span>}
+                  </span>
+                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-150 ${precioExpanded ? "rotate-180" : ""}`} />
+                </button>
+                {precioExpanded && (
+                  <div className="mt-3 flex gap-2">
+                    <div className="flex-1">
+                      <label className="block text-[10px] text-slate-400 mb-1">Desde</label>
+                      <input
+                        type="number"
+                        min={0}
+                        placeholder="0"
+                        value={draftPrecioDesde}
+                        onChange={(ev) => setDraftPrecioDesde(ev.target.value)}
+                        className="w-full h-8 px-2.5 text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-slate-400"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-[10px] text-slate-400 mb-1">Hasta</label>
+                      <input
+                        type="number"
+                        min={0}
+                        placeholder="∞"
+                        value={draftPrecioHasta}
+                        onChange={(ev) => setDraftPrecioHasta(ev.target.value)}
+                        className="w-full h-8 px-2.5 text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-slate-400"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t border-slate-100" />
+
+              {/* ── Stock ── */}
+              <div className="py-2">
+                <button type="button" onClick={() => setStockExpanded(v => !v)} className="flex items-center justify-between w-full cursor-pointer py-0.5">
+                  <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                    Stock
+                    {draftStockFlags.length > 0 && <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-800 text-white text-[9px] font-semibold">{draftStockFlags.length}</span>}
+                  </span>
+                  <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-150 ${stockExpanded ? "rotate-180" : ""}`} />
+                </button>
+                {stockExpanded && (
+                  <div className="mt-3 space-y-2.5">
+                    {([
+                      { value: "sin_stock_disponible", label: "Sin stock disponible" },
+                      { value: "con_stock_reservado", label: "Con stock reservado" },
+                    ] as const).map(({ value, label }) => (
+                      <label key={value} className="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" checked={draftStockFlags.includes(value)} onChange={(ev) => setDraftStockFlags(ev.target.checked ? [...draftStockFlags, value] : draftStockFlags.filter(x => x !== value))} className="w-3.5 h-3.5 rounded accent-slate-800" />
+                        <span className="text-xs text-slate-700">{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
               </div>
 
             </div>
 
             {/* Footer */}
             <div className="px-5 py-4 border-t border-slate-100 flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={() => { setFilterCategorias([]); setFilterMarcas([]); setFilterEstados([]) }}
-                className="flex-1 h-9 text-xs font-medium rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors cursor-pointer"
-              >
+              <button type="button" onClick={clearFilters} className="flex-1 h-9 text-xs font-medium rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors cursor-pointer">
                 Limpiar filtros
               </button>
-              <button
-                type="button"
-                onClick={() => setFilterOpen(false)}
-                className="flex-1 h-9 text-xs font-semibold rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition-colors cursor-pointer"
-              >
+              <button type="button" onClick={applyFilters} className="flex-1 h-9 text-xs font-semibold rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition-colors cursor-pointer">
                 Filtrar
               </button>
             </div>

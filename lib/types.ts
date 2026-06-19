@@ -441,6 +441,10 @@ export interface FilterConfig {
   proveedores: string[]
   stock: StockFilter[]
   depositos: string[]
+  estados?: ("activo" | "pausado")[]
+  precioDesde?: number | null
+  precioHasta?: number | null
+  stockFlags?: ("sin_stock_disponible" | "con_stock_reservado")[]
 }
 
 export type ClienteSortFactor = "nombre" | "tipo" | "condicionIva" | "ciudad"
