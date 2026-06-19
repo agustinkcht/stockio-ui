@@ -30,6 +30,7 @@ interface ItemCardProps {
   onUpdatePrecio?: (itemId: string, precio: { costo: number; margen: number; iva: number; precioFinal: number }) => void
   onUpdateStock?: (itemSku: string, field: "total" | "reservado", value: number) => void
   onUpdateItem?: (item: Item) => void
+  onShowToast?: (type: "precio" | "stock" | "estado") => void
 }
 
 function calculateMarginBottom(currentItem: Item, nextItem: Item | undefined, isChild: boolean): string {
@@ -81,6 +82,7 @@ export function ItemCard({
   onUpdatePrecio,
   onUpdateStock,
   onUpdateItem,
+  onShowToast,
 }: ItemCardProps) {
   const { stock, precios } = useSettings()
   
@@ -141,12 +143,14 @@ export function ItemCard({
   // Handle stock modal accept - updates both total and reservado at once
   const handleStockModalAccept = (newTotal: number, newReservado: number) => {
     const itemIdentifier = item.id || item.sku
+    const changed = newTotal !== currentStockTotal || newReservado !== currentStockReservado
     if (newTotal !== currentStockTotal) {
       onUpdateStock?.(itemIdentifier, "total", newTotal)
     }
     if (newReservado !== currentStockReservado) {
       onUpdateStock?.(itemIdentifier, "reservado", newReservado)
     }
+    if (changed) onShowToast?.("stock")
   }
 
   // Calculate preview value based on operation and input
@@ -342,27 +346,63 @@ export function ItemCard({
 
               {showPrecioColumn && !item.hasVariants && !item.isAgrupador ? (
                 <>
-                  {/* Estado cell - for standalone and children */}
+                  {/* Estado cell - dropdown */}
                   {(() => {
                     const isActive = item.isActive !== false
                     return (
                       <div
-                        className="col-span-1 h-full flex items-center justify-center px-1 transition-colors border-r border-slate-100"
+                        className="col-span-1 h-full flex items-center justify-center px-1 border-r border-slate-100"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            onUpdateItem?.({ ...item, isActive: !isActive })
-                          }}
-                          className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium transition-colors cursor-pointer whitespace-nowrap ${
-                            isActive
-                              ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-                              : "bg-amber-100 text-amber-700 hover:bg-amber-200"
-                          }`}
-                        >
-                          {isActive ? "Activo" : "Pausado"}
-                        </button>
+                        <div className="relative group/estadoCell">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              const el = e.currentTarget.nextElementSibling as HTMLElement
+                              if (el) el.style.display = el.style.display === "none" || !el.style.display ? "flex" : "none"
+                            }}
+                            className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium transition-colors cursor-pointer whitespace-nowrap flex items-center gap-0.5 ${
+                              isActive
+                                ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                                : "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                            }`}
+                          >
+                            {isActive ? "Activo" : "Pausado"}
+                          </button>
+                          <div
+                            style={{ display: "none" }}
+                            className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-50 flex flex-col min-w-[100px] bg-slate-900/95 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-2xl overflow-hidden"
+                          >
+                            {[
+                              { label: "Activo", value: true },
+                              { label: "Pausado", value: false },
+                            ].map(({ label, value }) => {
+                              const isCurrent = isActive === value
+                              return (
+                                <button
+                                  key={label}
+                                  className={`flex items-center gap-2 px-3 py-2 text-xs text-left w-full transition-colors ${
+                                    isCurrent
+                                      ? "bg-slate-800/80 text-white font-medium cursor-default"
+                                      : "text-slate-400 hover:bg-slate-800/50 hover:text-white cursor-pointer"
+                                  }`}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    if (!isCurrent) {
+                                      onUpdateItem?.({ ...item, isActive: value })
+                                      onShowToast?.("estado")
+                                    }
+                                    ;(e.currentTarget.parentElement as HTMLElement).style.display = "none"
+                                  }}
+                                >
+                                  <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${value ? "bg-emerald-400" : "bg-amber-400"}`} />
+                                  {label}
+                                  {isCurrent && <Check className="w-3 h-3 ml-auto text-slate-400" />}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
                       </div>
                     )
                   })()}
@@ -549,6 +589,7 @@ export function ItemCard({
                   onUpdatePrecio={onUpdatePrecio}
                   onUpdateStock={onUpdateStock}
                   onUpdateItem={onUpdateItem}
+                  onShowToast={onShowToast}
               />
             )
           })}
@@ -581,6 +622,7 @@ export function ItemCard({
                 onUpdatePrecio={onUpdatePrecio}
                 onUpdateStock={onUpdateStock}
                 onUpdateItem={onUpdateItem}
+                onShowToast={onShowToast}
               />
             )
           })}
@@ -732,6 +774,7 @@ export function ItemCard({
                       margen: Math.round(precioModalValues.margen * 10) / 10,
                       precioFinal: Math.round(precioModalValues.precioFinal),
                     })
+                    onShowToast?.("precio")
                     setIsPrecioModalOpen(false)
                   }}
                   className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
