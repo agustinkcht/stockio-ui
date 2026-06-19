@@ -535,7 +535,16 @@ export default function CatalogoPage() {
                           {(filterPrecioDesde != null || filterPrecioHasta != null) && (
                             <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 text-[11px] font-medium rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm whitespace-nowrap">
                               {filterPrecioDesde != null && filterPrecioHasta != null ? `$${filterPrecioDesde} – $${filterPrecioHasta}` : filterPrecioDesde != null ? `Desde $${filterPrecioDesde}` : `Hasta $${filterPrecioHasta}`}
-                              <button type="button" onClick={() => { updateParam("precioDesde", ""); updateParam("precioHasta", "") }} className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const params = new URLSearchParams(searchParams.toString())
+                                  params.delete("precioDesde")
+                                  params.delete("precioHasta")
+                                  router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+                                }}
+                                className="flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+                              >
                                 <X className="w-2.5 h-2.5 text-slate-400" />
                               </button>
                             </span>
