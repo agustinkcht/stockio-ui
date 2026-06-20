@@ -130,6 +130,7 @@ export function ItemCard({
   // Modal state for inline grid editing (precio and stock)
   const [isPrecioModalOpen, setIsPrecioModalOpen] = useState(false)
   const [isCostoExpanded, setIsCostoExpanded] = useState(false)
+  const [isIvaExpanded, setIsIvaExpanded] = useState(false)
   const [isStockModalOpen, setIsStockModalOpen] = useState(false)
   const [precioModalValues, setPrecioModalValues] = useState({
     costo: item.precio?.costo || 0,
@@ -591,7 +592,7 @@ export function ItemCard({
       {isPrecioModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/50" onClick={() => setIsPrecioModalOpen(false)} />
-          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 overflow-hidden">
+          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 overflow-hidden">
             {/* Item info header */}
             <div className="px-6 pt-5 pb-4 border-b border-slate-100">
               <div className="flex items-start justify-between gap-3">
@@ -639,18 +640,18 @@ export function ItemCard({
                 </div>
               </div>
 
-              {/* Collapsible costo / margen / IVA */}
-              <div className="border border-slate-200 rounded-xl overflow-hidden">
+              {/* Collapsible: Costo y márgenes */}
+              <div className="rounded-xl overflow-hidden">
                 <button
                   type="button"
                   onClick={() => setIsCostoExpanded((v) => !v)}
-                  className="w-full flex items-center gap-2 px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                  className="w-full flex items-center gap-2 px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors rounded-xl"
                 >
                   <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isCostoExpanded ? "rotate-180" : ""}`} />
                   Costo y márgenes
                 </button>
                 {isCostoExpanded && (
-                  <div className="grid grid-cols-3 divide-x divide-slate-200 border-t border-slate-200">
+                  <div className="grid grid-cols-2 divide-x divide-slate-200 border border-slate-200 rounded-xl overflow-hidden">
                     {/* Costo */}
                     <div className="bg-white px-4 pt-3 pb-4 flex flex-col gap-1.5">
                       <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Costo</label>
@@ -664,12 +665,10 @@ export function ItemCard({
                             const raw = e.target.value.replace(/\./g, "").replace(/,/g, ".")
                             const costo = Number.parseFloat(raw) || 0
                             if (precios.costoBehavior === "preservePrecioFinal") {
-                              // Keep precioFinal, recalculate margen
                               const keptPF = precioModalValues.precioFinal
                               const newMargen = costo > 0 ? Math.round(((keptPF / (costo * (1 + precioModalValues.iva / 100))) - 1) * 1000) / 10 : precioModalValues.margen
                               setPrecioModalValues((prev) => ({ ...prev, costo, margen: newMargen }))
                             } else {
-                              // preserveMargen: keep margen, recalculate precioFinal
                               const precioFinal = costo * (1 + precioModalValues.margen / 100) * (1 + precioModalValues.iva / 100)
                               setPrecioModalValues((prev) => ({ ...prev, costo, precioFinal: Math.round(precioFinal) }))
                             }
@@ -698,7 +697,22 @@ export function ItemCard({
                         <span className="text-xs text-slate-400">%</span>
                       </div>
                     </div>
-                    {/* IVA */}
+                  </div>
+                )}
+              </div>
+
+              {/* Collapsible: IVA */}
+              <div className="rounded-xl overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setIsIvaExpanded((v) => !v)}
+                  className="w-full flex items-center gap-2 px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors rounded-xl"
+                >
+                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isIvaExpanded ? "rotate-180" : ""}`} />
+                  IVA
+                </button>
+                {isIvaExpanded && (
+                  <div className="border border-slate-200 rounded-xl overflow-hidden">
                     <div className="bg-white px-4 pt-3 pb-4 flex flex-col gap-1.5">
                       <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">IVA</label>
                       <select
