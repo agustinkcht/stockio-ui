@@ -3618,8 +3618,12 @@ export function CatalogoItemDetailPanel({
                     />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-sm font-semibold text-slate-900">Editar Precio</h3>
-                    {selectedItem?.name && <p className="text-xs text-slate-400 truncate mt-0.5">{selectedItem.name}</p>}
+                    {selectedItem?.name && <p className="text-sm font-semibold text-slate-900 truncate leading-tight">{selectedItem.name}</p>}
+                    {(selectedItem?.marca || selectedItem?.categoria) && (
+                      <p className="text-xs text-slate-400 truncate mt-0.5">
+                        {[selectedItem.marca, selectedItem.categoria].filter(Boolean).join(" · ")}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <button
@@ -3807,9 +3811,13 @@ export function CatalogoItemDetailPanel({
                     <img src={getItemPhoto(expandedMatrixPrecioModal.variant)} alt={expandedMatrixPrecioModal.variant?.name || ""} className="w-full h-full object-cover" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-sm font-semibold text-slate-900">Editar Precio</h3>
                     {expandedMatrixPrecioModal.variant?.name && (
-                      <p className="text-xs text-slate-400 truncate mt-0.5">{expandedMatrixPrecioModal.variant.name}</p>
+                      <p className="text-sm font-semibold text-slate-900 truncate leading-tight">{expandedMatrixPrecioModal.variant.name}</p>
+                    )}
+                    {(selectedItem?.marca || selectedItem?.categoria) && (
+                      <p className="text-xs text-slate-400 truncate mt-0.5">
+                        {[selectedItem.marca, selectedItem.categoria].filter(Boolean).join(" · ")}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -3991,9 +3999,13 @@ export function CatalogoItemDetailPanel({
                     <img src={getItemPhoto(expandedMatrixDescModal.variant)} alt={expandedMatrixDescModal.variant?.name || ""} className="w-full h-full object-cover" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-sm font-semibold text-slate-900">Editar Descripción</h3>
                     {expandedMatrixDescModal.variant?.name && (
-                      <p className="text-xs text-slate-400 truncate mt-0.5">{expandedMatrixDescModal.variant.name}</p>
+                      <p className="text-sm font-semibold text-slate-900 truncate leading-tight">{expandedMatrixDescModal.variant.name}</p>
+                    )}
+                    {(selectedItem?.marca || selectedItem?.categoria) && (
+                      <p className="text-xs text-slate-400 truncate mt-0.5">
+                        {[selectedItem.marca, selectedItem.categoria].filter(Boolean).join(" · ")}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -4153,8 +4165,12 @@ export function CatalogoItemDetailPanel({
                     <img src={getItemPhoto(selectedItem)} alt={selectedItem?.name || ""} className="w-full h-full object-cover" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-sm font-semibold text-slate-900">Editar Nombre</h3>
-                    {selectedItem?.name && <p className="text-xs text-slate-400 truncate mt-0.5">{selectedItem.name}</p>}
+                    {selectedItem?.name && <p className="text-sm font-semibold text-slate-900 truncate leading-tight">{selectedItem.name}</p>}
+                    {(selectedItem?.marca || selectedItem?.categoria) && (
+                      <p className="text-xs text-slate-400 truncate mt-0.5">
+                        {[selectedItem.marca, selectedItem.categoria].filter(Boolean).join(" · ")}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <button onClick={() => setIsEditNombreModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0">
@@ -4274,8 +4290,12 @@ export function CatalogoItemDetailPanel({
                     <img src={getItemPhoto(selectedItem)} alt={selectedItem?.name || ""} className="w-full h-full object-cover" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-sm font-semibold text-slate-900">Editar Código Universal</h3>
-                    {selectedItem?.name && <p className="text-xs text-slate-400 truncate mt-0.5">{selectedItem.name}</p>}
+                    {selectedItem?.name && <p className="text-sm font-semibold text-slate-900 truncate leading-tight">{selectedItem.name}</p>}
+                    {(selectedItem?.marca || selectedItem?.categoria) && (
+                      <p className="text-xs text-slate-400 truncate mt-0.5">
+                        {[selectedItem.marca, selectedItem.categoria].filter(Boolean).join(" · ")}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <button onClick={() => setIsEditCodigoUniversalModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0">
@@ -4323,8 +4343,12 @@ export function CatalogoItemDetailPanel({
                     <img src={getItemPhoto(selectedItem)} alt={selectedItem?.name || ""} className="w-full h-full object-cover" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-sm font-semibold text-slate-900">Editar Descripción</h3>
-                    {selectedItem?.name && <p className="text-xs text-slate-400 truncate mt-0.5">{selectedItem.name}</p>}
+                    {selectedItem?.name && <p className="text-sm font-semibold text-slate-900 truncate leading-tight">{selectedItem.name}</p>}
+                    {(selectedItem?.marca || selectedItem?.categoria) && (
+                      <p className="text-xs text-slate-400 truncate mt-0.5">
+                        {[selectedItem.marca, selectedItem.categoria].filter(Boolean).join(" · ")}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <button onClick={() => setIsEditDescripcionModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0">

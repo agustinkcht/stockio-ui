@@ -605,8 +605,12 @@ export function ItemCard({
                     />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-sm font-semibold text-slate-900">Editar Precio</h3>
-                    {item.name && <p className="text-xs text-slate-400 truncate mt-0.5">{item.name}</p>}
+                    {item.name && <p className="text-sm font-semibold text-slate-900 truncate leading-tight">{item.name}</p>}
+                    {(item.marca || item.categoria) && (
+                      <p className="text-xs text-slate-400 truncate mt-0.5">
+                        {[item.marca, item.categoria].filter(Boolean).join(" · ")}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <button
