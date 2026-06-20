@@ -1595,7 +1595,7 @@ export function CatalogoItemDetailPanel({
 
                   {/* BACK SIDE */}
                   <div
-                    className={`absolute inset-0 p-6 px-8 pr-11 border-solid border border-black rounded-xl bg-black shadow-md pl-11 ml-0 overflow-hidden ${!isCardFlipped ? "pointer-events-none" : ""}`}
+                    className={`absolute inset-0 p-6 px-8 pr-11 border-solid border border-black rounded-xl bg-black shadow-md pl-11 ml-0 ${!isCardFlipped ? "pointer-events-none" : ""}`}
                     style={{
                       backfaceVisibility: "hidden",
                       WebkitBackfaceVisibility: "hidden",
@@ -1621,7 +1621,7 @@ export function CatalogoItemDetailPanel({
                         </h3>
 
                         {/* Cod. Universal + Cod. Proveedor side by side */}
-                        <div className="flex gap-3">
+                        <div className="flex gap-3 w-full min-w-0">
                           {/* Cod. Universal — left half */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5 mb-1.5">
