@@ -1681,7 +1681,7 @@ export function CatalogoItemDetailPanel({
                                     <path d="M12 8h.01" />
                                   </svg>
                                 </div>
-                                <div className="absolute left-0 top-full mt-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-[11px] text-slate-300 w-48 leading-relaxed opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-200 z-50 pointer-events-none shadow-xl">
+                                <div className="absolute right-0 top-full mt-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-[11px] text-slate-300 w-48 leading-relaxed opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-200 z-[100] pointer-events-none shadow-xl">
                                   Identificador único que el proveedor le asigna a un producto.
                                 </div>
                               </div>
