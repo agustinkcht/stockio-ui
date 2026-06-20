@@ -406,17 +406,20 @@ export function ItemsGrid({
             </div>
           </div>
 
-          {/* Tab header — flat, no rounding, grid-cols-12: item(5) precio(3) stock(4) */}
+          {/* Tab header — flat, no rounding, grid-cols-12: item(5) estado(1) precio(3) stock(3) */}
           <div className="grid grid-cols-12 h-9 border border-slate-200/80 border-t-0 mt-2">
             <div className="col-span-5 flex items-center justify-center px-4 border-r border-slate-200/60">
               <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Item</span>
             </div>
             {showPrecioColumn ? (
               <>
+                <div className="col-span-1 flex items-center justify-center px-1 border-r border-slate-200/60">
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Estado</span>
+                </div>
                 <div className="col-span-3 flex items-center justify-center px-4 border-r border-slate-200/60">
                   <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Precio Venta</span>
                 </div>
-                <div className="col-span-4 flex items-center justify-center gap-1.5 px-2">
+                <div className="col-span-3 flex items-center justify-center gap-1.5 px-2">
                   <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Stock</span>
                   <StockColumnTooltip />
                 </div>
