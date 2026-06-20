@@ -330,14 +330,19 @@ export function ItemCard({
                       </div>
                     )}
                   </div>
-                  {/* Subtitle: standalone/parent shows marca and categoria (if exists), children show nothing */}
-                  {!isChild && (
-                    <div className="flex items-center gap-1 mt-0.5">
-                      {item.marca && <span className="text-xs text-muted-foreground">{item.marca}</span>}
-                      {item.marca && item.categoria && <span className="text-xs text-muted-foreground">·</span>}
-                      {item.categoria && <span className="text-xs text-muted-foreground">{item.categoria}</span>}
-                    </div>
-                  )}
+                  {/* Subtitle: shows marca and categoria for all item types */}
+                  {(() => {
+                    const marca = item.marca || parentItem?.marca
+                    const categoria = item.categoria || parentItem?.categoria
+                    if (!marca && !categoria) return null
+                    return (
+                      <div className="flex items-center gap-1 mt-0.5">
+                        {marca && <span className="text-xs text-muted-foreground">{marca}</span>}
+                        {marca && categoria && <span className="text-xs text-muted-foreground">·</span>}
+                        {categoria && <span className="text-xs text-muted-foreground">{categoria}</span>}
+                      </div>
+                    )
+                  })()}
                 </div>
               </div>
 
