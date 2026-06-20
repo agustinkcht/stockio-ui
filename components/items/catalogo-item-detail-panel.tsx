@@ -1595,7 +1595,7 @@ export function CatalogoItemDetailPanel({
 
                   {/* BACK SIDE */}
                   <div
-                    className={`absolute inset-0 p-6 px-8 pr-11 border-solid border border-black rounded-xl bg-black shadow-md pl-11 ml-0 ${!isCardFlipped ? "pointer-events-none" : ""}`}
+                    className={`absolute inset-0 p-6 px-8 pr-11 border-solid border border-black rounded-xl bg-black shadow-md pl-11 ml-0 overflow-hidden ${!isCardFlipped ? "pointer-events-none" : ""}`}
                     style={{
                       backfaceVisibility: "hidden",
                       WebkitBackfaceVisibility: "hidden",
@@ -1613,7 +1613,7 @@ export function CatalogoItemDetailPanel({
                       <span className="text-[11px] uppercase tracking-wider">Volver</span>
                     </button>
 
-                    <div className="flex flex-col h-full pt-2 overflow-y-auto">
+                    <div className="flex flex-col h-full pt-2 overflow-y-auto overflow-x-hidden">
                       {/* Códigos Section */}
                       <div className="mb-5">
                         <h3 className="text-sm font-medium uppercase tracking-wider mb-4 text-slate-50">
