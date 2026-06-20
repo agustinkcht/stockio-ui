@@ -7,6 +7,7 @@ import type { Item } from "@/lib/types"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { getItemPhoto } from "@/lib/utils/category-images"
 import { StockEditModal } from "@/components/modals/stock-edit-modal"
+import { PrecioEditModal } from "@/components/modals/precio-edit-modal"
 import { useSettings } from "@/lib/contexts/settings-context"
 
 interface ItemCardProps {
@@ -129,8 +130,7 @@ export function ItemCard({
 
   // Modal state for inline grid editing (precio and stock)
   const [isPrecioModalOpen, setIsPrecioModalOpen] = useState(false)
-  const [isCostoExpanded, setIsCostoExpanded] = useState(false)
-  const [isIvaExpanded, setIsIvaExpanded] = useState(false)
+
   const [isStockModalOpen, setIsStockModalOpen] = useState(false)
   const [precioModalValues, setPrecioModalValues] = useState({
     costo: item.precio?.costo || 0,
@@ -589,178 +589,19 @@ export function ItemCard({
       )}
 
       {/* Precio Modal */}
-      {isPrecioModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setIsPrecioModalOpen(false)} />
-          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 overflow-hidden">
-            {/* Item info header */}
-            <div className="px-6 pt-5 pb-4 border-b border-slate-100">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
-                    <img
-                      src={getItemPhoto(item)}
-                      alt={item.name || ""}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="min-w-0">
-                    {item.name && <p className="text-sm font-semibold text-slate-900 truncate leading-tight">{item.name}</p>}
-                    {(item.marca || item.categoria) && (
-                      <p className="text-xs text-slate-400 truncate mt-0.5">
-                        {[item.marca, item.categoria].filter(Boolean).join(" · ")}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <button
-                  onClick={() => setIsPrecioModalOpen(false)}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0"
-                >
-                  <X className="w-4 h-4 text-slate-400" />
-                </button>
-              </div>
-            </div>
-            <div className="p-6 flex flex-col gap-4">
-              {/* Precio Venta — label above, $ prefix, formatted thousands */}
-              <div className="border border-slate-200 rounded-xl px-4 pt-3 pb-4">
-                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Precio Venta</label>
-                <div className="flex items-center gap-1 mt-1">
-                  <span className="text-sm text-slate-400">$</span>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={precioModalValues.precioFinal > 0 ? precioModalValues.precioFinal.toLocaleString("es-AR") : ""}
-                    onChange={(e) => {
-                      const raw = e.target.value.replace(/\./g, "").replace(/,/g, ".")
-                      const precioFinal = Number.parseFloat(raw) || 0
-                      const base = precioFinal / (1 + precioModalValues.iva / 100)
-                      const margen = precioModalValues.costo > 0 ? ((base / precioModalValues.costo) - 1) * 100 : 0
-                      setPrecioModalValues((prev) => ({ ...prev, precioFinal, margen: Math.round(margen * 10) / 10 }))
-                    }}
-                    className="flex-1 text-base font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    placeholder="0"
-                  />
-                </div>
-              </div>
-
-              {/* Collapsible: Costo y márgenes */}
-              <div className="rounded-xl overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => setIsCostoExpanded((v) => !v)}
-                  className="w-full flex items-center gap-2 px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors rounded-xl"
-                >
-                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isCostoExpanded ? "rotate-180" : ""}`} />
-                  Costo y márgenes
-                </button>
-                {isCostoExpanded && (
-                  <div className="grid grid-cols-2 divide-x divide-slate-200 border border-slate-200 rounded-xl overflow-hidden">
-                    {/* Costo */}
-                    <div className="bg-white px-4 pt-3 pb-4 flex flex-col gap-1.5">
-                      <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Costo</label>
-                      <div className="flex items-center gap-1">
-                        <span className="text-xs text-slate-400">$</span>
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          value={precioModalValues.costo > 0 ? precioModalValues.costo.toLocaleString("es-AR") : ""}
-                          onChange={(e) => {
-                            const raw = e.target.value.replace(/\./g, "").replace(/,/g, ".")
-                            const costo = Number.parseFloat(raw) || 0
-                            if (precios.costoBehavior === "preservePrecioFinal") {
-                              const keptPF = precioModalValues.precioFinal
-                              const newMargen = costo > 0 ? Math.round(((keptPF / (costo * (1 + precioModalValues.iva / 100))) - 1) * 1000) / 10 : precioModalValues.margen
-                              setPrecioModalValues((prev) => ({ ...prev, costo, margen: newMargen }))
-                            } else {
-                              const precioFinal = costo * (1 + precioModalValues.margen / 100) * (1 + precioModalValues.iva / 100)
-                              setPrecioModalValues((prev) => ({ ...prev, costo, precioFinal: Math.round(precioFinal) }))
-                            }
-                          }}
-                          className="w-full text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300"
-                          placeholder="0"
-                        />
-                      </div>
-                    </div>
-                    {/* Margen */}
-                    <div className="bg-white px-4 pt-3 pb-4 flex flex-col gap-1.5">
-                      <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Margen</label>
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="number"
-                          value={precioModalValues.margen}
-                          step="0.1"
-                          onChange={(e) => {
-                            const margen = Math.round((Number.parseFloat(e.target.value) || 0) * 10) / 10
-                            const precioFinal = precioModalValues.costo * (1 + margen / 100) * (1 + precioModalValues.iva / 100)
-                            setPrecioModalValues((prev) => ({ ...prev, margen, precioFinal: Math.round(precioFinal) }))
-                          }}
-                          className="w-full text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                          placeholder="0"
-                        />
-                        <span className="text-xs text-slate-400">%</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Collapsible: IVA */}
-              <div className="rounded-xl overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => setIsIvaExpanded((v) => !v)}
-                  className="w-full flex items-center gap-2 px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors rounded-xl"
-                >
-                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isIvaExpanded ? "rotate-180" : ""}`} />
-                  IVA
-                </button>
-                {isIvaExpanded && (
-                  <div className="border border-slate-200 rounded-xl overflow-hidden">
-                    <div className="bg-white px-4 pt-3 pb-4 flex flex-col gap-1.5">
-                      <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">IVA</label>
-                      <select
-                        value={precioModalValues.iva}
-                        onChange={(e) => {
-                          const iva = Number.parseFloat(e.target.value)
-                          const precioFinal = precioModalValues.costo * (1 + precioModalValues.margen / 100) * (1 + iva / 100)
-                          setPrecioModalValues((prev) => ({ ...prev, iva, precioFinal: Math.round(precioFinal) }))
-                        }}
-                        className="text-sm text-slate-600 bg-transparent border-0 focus:outline-none cursor-pointer"
-                      >
-                        <option value={0}>0%</option>
-                        <option value={10.5}>10.5%</option>
-                        <option value={21}>21%</option>
-                        <option value={27}>27%</option>
-                      </select>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-end gap-2 pt-1">
-                <button onClick={() => setIsPrecioModalOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors cursor-pointer">
-                  Cancelar
-                </button>
-                <button
-                  onClick={() => {
-                    onUpdatePrecio?.(item.id, {
-                      ...precioModalValues,
-                      costo: Math.round(precioModalValues.costo * 100) / 100,
-                      margen: Math.round(precioModalValues.margen * 10) / 10,
-                      precioFinal: Math.round(precioModalValues.precioFinal),
-                    })
-                    setIsPrecioModalOpen(false)
-                  }}
-                  className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
-                >
-                  Guardar
-                </button>
-              </div>
-            </div>{/* end p-6 */}
-          </div>
-        </div>
-      )}
+      <PrecioEditModal
+        isOpen={isPrecioModalOpen}
+        onClose={() => setIsPrecioModalOpen(false)}
+        onSave={(values) => {
+          onUpdatePrecio?.(item.id, values)
+        }}
+        itemName={item.name}
+        itemMarca={item.marca || parentItem?.marca}
+        itemCategoria={item.categoria || parentItem?.categoria}
+        itemMedia={item.media || parentItem?.media}
+        initialValues={precioModalValues}
+        costoBehavior={precios.costoBehavior}
+      />
 
 {/* Stock Modal */}
       <StockEditModal

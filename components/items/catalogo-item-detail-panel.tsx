@@ -13,6 +13,7 @@ import { generateId } from "@/lib/utils/item-utils"
 import Image from "next/image"
 import { NuevaVarianteModal } from "@/components/modals/nueva-variante-modal"
 import { StockEditModal } from "@/components/modals/stock-edit-modal"
+import { PrecioEditModal } from "@/components/modals/precio-edit-modal"
 import { useSettings } from "@/lib/contexts/settings-context"
 import { NuevoProveedorModal } from "@/components/modals/nuevo-proveedor-modal"
 import { useProveedores } from "@/hooks/use-proveedores"
@@ -370,8 +371,7 @@ export function CatalogoItemDetailPanel({
 
   // Precio and Stock modal states
   const [isPrecioModalOpen, setIsPrecioModalOpen] = useState(false)
-  const [isPrecioCostoExpanded, setIsPrecioCostoExpanded] = useState(false)
-  const [isExpandedMatrixPrecioCostoExpanded, setIsExpandedMatrixPrecioCostoExpanded] = useState(false)
+
   const [isStockModalOpen, setIsStockModalOpen] = useState(false)
 
   // Precio modal editing values
@@ -3602,173 +3602,25 @@ export function CatalogoItemDetailPanel({
       </div>
 
       {/* Precio Modal */}
-      {isPrecioModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setIsPrecioModalOpen(false)} />
-          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 overflow-hidden">
-            {/* Item info header */}
-            <div className="px-6 pt-5 pb-4 border-b border-slate-100">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
-                    <img
-                      src={getItemPhoto(selectedItem)}
-                      alt={selectedItem?.categoria || ""}
-                      className="w-6 h-6 object-contain opacity-70"
-                    />
-                  </div>
-                  <div className="min-w-0">
-                    {selectedItem?.name && <p className="text-sm font-semibold text-slate-900 truncate leading-tight">{selectedItem.name}</p>}
-                    {(selectedItem?.marca || selectedItem?.categoria) && (
-                      <p className="text-xs text-slate-400 truncate mt-0.5">
-                        {[selectedItem.marca, selectedItem.categoria].filter(Boolean).join(" · ")}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <button
-                  onClick={() => setIsPrecioModalOpen(false)}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0"
-                >
-                  <X className="w-4 h-4 text-slate-400" />
-                </button>
-              </div>
-            </div>
-
-            <div className="p-6 flex flex-col gap-4">
-              {/* Precio Venta — label above, $ prefix, formatted thousands */}
-              <div className="border border-slate-200 rounded-xl px-4 pt-3 pb-4">
-                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Precio Venta</label>
-                <div className="flex items-center gap-1 mt-1">
-                  <span className="text-sm text-slate-400">$</span>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={precioModalValues.precioFinal > 0 ? precioModalValues.precioFinal.toLocaleString("es-AR") : ""}
-                    onChange={(e) => {
-                      const raw = e.target.value.replace(/\./g, "").replace(/,/g, ".")
-                      const precioFinal = Number.parseFloat(raw) || 0
-                      const base = precioFinal / (1 + precioModalValues.iva / 100)
-                      const margen = precioModalValues.costo > 0 ? ((base / precioModalValues.costo) - 1) * 100 : 0
-                      setPrecioModalValues((prev) => ({ ...prev, precioFinal, margen: Math.round(margen * 10) / 10 }))
-                    }}
-                    className="flex-1 text-base font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300"
-                    placeholder="0"
-                  />
-                </div>
-              </div>
-
-              {/* Collapsible costo / margen / IVA */}
-              <div className="border border-slate-200 rounded-xl overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => setIsPrecioCostoExpanded((v) => !v)}
-                  className="w-full flex items-center gap-2 px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-                >
-                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isPrecioCostoExpanded ? "rotate-180" : ""}`} />
-                  Costo y márgenes
-                </button>
-                {isPrecioCostoExpanded && (
-                  <div className="grid grid-cols-3 divide-x divide-slate-200 border-t border-slate-200">
-                    {/* Costo */}
-                    <div className="bg-white px-4 pt-3 pb-4 flex flex-col gap-1.5">
-                      <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Costo</label>
-                      <div className="flex items-center gap-1">
-                        <span className="text-xs text-slate-400">$</span>
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          value={precioModalValues.costo > 0 ? precioModalValues.costo.toLocaleString("es-AR") : ""}
-                          onChange={(e) => {
-                            const raw = e.target.value.replace(/\./g, "").replace(/,/g, ".")
-                            const costo = Number.parseFloat(raw) || 0
-                            if (precios.costoBehavior === "preservePrecioFinal") {
-                              const keptPF = precioModalValues.precioFinal
-                              const newMargen = costo > 0 ? Math.round(((keptPF / (costo * (1 + precioModalValues.iva / 100))) - 1) * 1000) / 10 : precioModalValues.margen
-                              setPrecioModalValues((prev) => ({ ...prev, costo, margen: newMargen }))
-                            } else {
-                              const precioFinal = costo * (1 + precioModalValues.margen / 100) * (1 + precioModalValues.iva / 100)
-                              setPrecioModalValues((prev) => ({ ...prev, costo, precioFinal: Math.round(precioFinal) }))
-                            }
-                          }}
-                          className="w-full text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300"
-                          placeholder="0"
-                        />
-                      </div>
-                    </div>
-                    {/* Margen */}
-                    <div className="bg-white px-4 pt-3 pb-4 flex flex-col gap-1.5">
-                      <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Margen</label>
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="number"
-                          value={precioModalValues.margen}
-                          step="0.1"
-                          onChange={(e) => {
-                            const margen = Math.round((Number.parseFloat(e.target.value) || 0) * 10) / 10
-                            const precioFinal = precioModalValues.costo * (1 + margen / 100) * (1 + precioModalValues.iva / 100)
-                            setPrecioModalValues((prev) => ({ ...prev, margen, precioFinal: Math.round(precioFinal) }))
-                          }}
-                          className="w-full text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                          placeholder="0"
-                        />
-                        <span className="text-xs text-slate-400">%</span>
-                      </div>
-                    </div>
-                    {/* IVA */}
-                    <div className="bg-white px-4 pt-3 pb-4 flex flex-col gap-1.5">
-                      <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">IVA</label>
-                      <select
-                        value={precioModalValues.iva}
-                        onChange={(e) => {
-                          const iva = Number.parseFloat(e.target.value)
-                          const precioFinal = precioModalValues.costo * (1 + precioModalValues.margen / 100) * (1 + iva / 100)
-                          setPrecioModalValues((prev) => ({ ...prev, iva, precioFinal: Math.round(precioFinal) }))
-                        }}
-                        className="text-sm text-slate-600 bg-transparent border-0 focus:outline-none cursor-pointer"
-                      >
-                        <option value={0}>0%</option>
-                        <option value={10.5}>10.5%</option>
-                        <option value={21}>21%</option>
-                        <option value={27}>27%</option>
-                      </select>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-end gap-2 pt-1">
-                <button
-                  onClick={() => setIsPrecioModalOpen(false)}
-                  className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={() => {
-                    const itemIdentifier = selectedItem?.id || selectedItem?.sku
-                    if (itemIdentifier) {
-                      onFieldChange(itemIdentifier, "precio", {
-                        ...precioModalValues,
-                        costo: Math.round(precioModalValues.costo * 100) / 100,
-                        margen: Math.round(precioModalValues.margen * 10) / 10,
-                        precioFinal: Math.round(precioModalValues.precioFinal),
-                      })
-                      onSaveNow?.()
-                      onShowToast?.("Precio actualizado")
-                    }
-                    setIsPrecioModalOpen(false)
-                  }}
-                  className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
-                >
-                  Guardar
-                </button>
-              </div>
-            </div>{/* end p-6 inner */}
-          </div>
-        </div>
-      )}
-
+      <PrecioEditModal
+        isOpen={isPrecioModalOpen}
+        onClose={() => setIsPrecioModalOpen(false)}
+        onSave={(values) => {
+          const itemIdentifier = selectedItem?.id || selectedItem?.sku
+          if (itemIdentifier) {
+            onFieldChange(itemIdentifier, "precio", values)
+            onSaveNow?.()
+            onShowToast?.("Precio actualizado")
+          }
+        }}
+        itemName={selectedItem?.name}
+        itemMarca={selectedItem?.marca}
+        itemCategoria={selectedItem?.categoria}
+        itemMedia={selectedItem?.media}
+        initialValues={precioModalValues}
+        costoBehavior={precios.costoBehavior}
+        zIndex={50}
+      />
       {/* Stock Modal */}
       <StockEditModal
         isOpen={isStockModalOpen}
@@ -3800,168 +3652,27 @@ export function CatalogoItemDetailPanel({
       />
 
       {/* Expanded Matrix - Precio Modal */}
-      {expandedMatrixPrecioModal.open && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setExpandedMatrixPrecioModal({ open: false, variant: null })} />
-          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 overflow-hidden">
-            <div className="px-6 pt-5 pb-4 border-b border-slate-100">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 shrink-0 overflow-hidden flex items-center justify-center">
-                    <img src={getItemPhoto(expandedMatrixPrecioModal.variant)} alt={expandedMatrixPrecioModal.variant?.name || ""} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="min-w-0">
-                    {expandedMatrixPrecioModal.variant?.name && (
-                      <p className="text-sm font-semibold text-slate-900 truncate leading-tight">{expandedMatrixPrecioModal.variant.name}</p>
-                    )}
-                    {(selectedItem?.marca || selectedItem?.categoria) && (
-                      <p className="text-xs text-slate-400 truncate mt-0.5">
-                        {[selectedItem.marca, selectedItem.categoria].filter(Boolean).join(" · ")}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <button onClick={() => setExpandedMatrixPrecioModal({ open: false, variant: null })} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0">
-                  <X className="w-4 h-4 text-slate-400" />
-                </button>
-              </div>
-            </div>
-            <div className="p-6 flex flex-col gap-4">
-              {/* Precio Venta — label above, $ prefix, formatted thousands */}
-              <div className="border border-slate-200 rounded-xl px-4 pt-3 pb-4">
-                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Precio Venta</label>
-                <div className="flex items-center gap-1 mt-1">
-                  <span className="text-sm text-slate-400">$</span>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={expandedMatrixPrecioValues.precioFinal > 0 ? expandedMatrixPrecioValues.precioFinal.toLocaleString("es-AR") : ""}
-                    onChange={(e) => {
-                      const raw = e.target.value.replace(/\./g, "").replace(/,/g, ".")
-                      const precioFinal = Number.parseFloat(raw) || 0
-                      const base = precioFinal / (1 + expandedMatrixPrecioValues.iva / 100)
-                      const margen = expandedMatrixPrecioValues.costo > 0 ? ((base / expandedMatrixPrecioValues.costo) - 1) * 100 : 0
-                      setExpandedMatrixPrecioValues((prev) => ({ ...prev, precioFinal, margen: Math.round(margen * 10) / 10 }))
-                    }}
-                    className="flex-1 text-base font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300"
-                    placeholder="0"
-                  />
-                </div>
-              </div>
-
-              {/* Collapsible costo / margen / IVA */}
-              <div className="border border-slate-200 rounded-xl overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => setIsExpandedMatrixPrecioCostoExpanded((v) => !v)}
-                  className="w-full flex items-center gap-2 px-4 py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-                >
-                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isExpandedMatrixPrecioCostoExpanded ? "rotate-180" : ""}`} />
-                  Costo y márgenes
-                </button>
-                {isExpandedMatrixPrecioCostoExpanded && (
-                  <div className="grid grid-cols-3 divide-x divide-slate-200 border-t border-slate-200">
-                    {/* Costo */}
-                    <div className="bg-white px-4 pt-3 pb-4 flex flex-col gap-1.5">
-                      <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Costo</label>
-                      <div className="flex items-center gap-1">
-                        <span className="text-xs text-slate-400">$</span>
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          value={expandedMatrixPrecioValues.costo > 0 ? expandedMatrixPrecioValues.costo.toLocaleString("es-AR") : ""}
-                            onChange={(e) => {
-                            const raw = e.target.value.replace(/\./g, "").replace(/,/g, ".")
-                            const costo = Number.parseFloat(raw) || 0
-                            if (precios.costoBehavior === "preservePrecioFinal") {
-                              const keptPF = expandedMatrixPrecioValues.precioFinal
-                              const newMargen = costo > 0 ? Math.round(((keptPF / (costo * (1 + expandedMatrixPrecioValues.iva / 100))) - 1) * 1000) / 10 : expandedMatrixPrecioValues.margen
-                              setExpandedMatrixPrecioValues((prev) => ({ ...prev, costo, margen: newMargen }))
-                            } else {
-                              const precioFinal = costo * (1 + expandedMatrixPrecioValues.margen / 100) * (1 + expandedMatrixPrecioValues.iva / 100)
-                              setExpandedMatrixPrecioValues((prev) => ({ ...prev, costo, precioFinal: Math.round(precioFinal) }))
-                            }
-                          }}
-                          className="w-full text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300"
-                          placeholder="0"
-                        />
-                      </div>
-                    </div>
-                    {/* Margen */}
-                    <div className="bg-white px-4 pt-3 pb-4 flex flex-col gap-1.5">
-                      <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Margen</label>
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="number"
-                          value={expandedMatrixPrecioValues.margen}
-                          step="0.1"
-                          onChange={(e) => {
-                            const margen = Math.round((Number.parseFloat(e.target.value) || 0) * 10) / 10
-                            const precioFinal = expandedMatrixPrecioValues.costo * (1 + margen / 100) * (1 + expandedMatrixPrecioValues.iva / 100)
-                            setExpandedMatrixPrecioValues((prev) => ({ ...prev, margen, precioFinal: Math.round(precioFinal) }))
-                          }}
-                          className="w-full text-sm font-semibold text-slate-800 bg-transparent focus:outline-none placeholder:text-slate-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                          placeholder="0"
-                        />
-                        <span className="text-xs text-slate-400">%</span>
-                      </div>
-                    </div>
-                    {/* IVA */}
-                    <div className="bg-white px-4 pt-3 pb-4 flex flex-col gap-1.5">
-                      <label className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">IVA</label>
-                      <select
-                        value={expandedMatrixPrecioValues.iva}
-                        onChange={(e) => {
-                          const iva = Number.parseFloat(e.target.value)
-                          const precioFinal = expandedMatrixPrecioValues.costo * (1 + expandedMatrixPrecioValues.margen / 100) * (1 + iva / 100)
-                          setExpandedMatrixPrecioValues((prev) => ({ ...prev, iva, precioFinal: Math.round(precioFinal) }))
-                        }}
-                        className="text-sm text-slate-600 bg-transparent border-0 focus:outline-none cursor-pointer"
-                      >
-                        <option value={0}>0%</option>
-                        <option value={10.5}>10.5%</option>
-                        <option value={21}>21%</option>
-                        <option value={27}>27%</option>
-                      </select>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-end gap-2 pt-1">
-                <button
-                  onClick={() => setExpandedMatrixPrecioModal({ open: false, variant: null })}
-                  className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={() => {
-                    if (expandedMatrixPrecioModal.variant?.id && fatherItem) {
-                      const cleanedPrecio = {
-                        ...expandedMatrixPrecioValues,
-                        costo: Math.round(expandedMatrixPrecioValues.costo * 100) / 100,
-                        margen: Math.round(expandedMatrixPrecioValues.margen * 10) / 10,
-                        precioFinal: Math.round(expandedMatrixPrecioValues.precioFinal),
-                      }
-                      const updatedVariants = (fatherItem.variants || []).map((ov: any) =>
-                        ov.id === expandedMatrixPrecioModal.variant.id ? { ...ov, precio: cleanedPrecio } : ov
-                      )
-                      onFieldChange(fatherItem.id, "variants", updatedVariants)
-                      onSaveNow?.()
-                      onShowToast?.("Precio actualizado")
-                    }
-                    setExpandedMatrixPrecioModal({ open: false, variant: null })
-                  }}
-                  className="px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
-                >
-                  Aceptar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <PrecioEditModal
+        isOpen={expandedMatrixPrecioModal.open}
+        onClose={() => setExpandedMatrixPrecioModal({ open: false, variant: null })}
+        onSave={(values) => {
+          if (expandedMatrixPrecioModal.variant?.id && fatherItem) {
+            const updatedVariants = (fatherItem.variants || []).map((ov: any) =>
+              ov.id === expandedMatrixPrecioModal.variant.id ? { ...ov, precio: values } : ov
+            )
+            onFieldChange(fatherItem.id, "variants", updatedVariants)
+            onSaveNow?.()
+            onShowToast?.("Precio actualizado")
+          }
+        }}
+        itemName={expandedMatrixPrecioModal.variant?.name}
+        itemMarca={selectedItem?.marca}
+        itemCategoria={selectedItem?.categoria}
+        itemMedia={expandedMatrixPrecioModal.variant?.media || selectedItem?.media}
+        initialValues={expandedMatrixPrecioValues}
+        costoBehavior={precios.costoBehavior}
+        zIndex={60}
+      />
 
       {/* Expanded Matrix - Stock Modal */}
       <StockEditModal
