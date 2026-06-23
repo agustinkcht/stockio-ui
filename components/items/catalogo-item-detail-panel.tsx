@@ -1882,7 +1882,7 @@ export function CatalogoItemDetailPanel({
                               ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
                               : "bg-white border-gray-300 text-gray-900"
                               }`}
-                            placeholder="Ej: Vinos"
+                            placeholder="Escribir categoría..."
                           />
                         </div>
 
@@ -1897,7 +1897,7 @@ export function CatalogoItemDetailPanel({
                               ? "bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
                               : "bg-white border-gray-300 text-gray-900"
                               }`}
-                            placeholder="Ej: YKK"
+                            placeholder="Escribir marca..."
                           />
                         </div>
                       </div>
@@ -1995,12 +1995,14 @@ export function CatalogoItemDetailPanel({
                                   : "bg-white border-gray-300 text-gray-900 cursor-pointer"
                                   }`}
                               >
-                                <option value="ml">ml</option>
-                                <option value="l">l</option>
+                                <option value="ml">mL</option>
+                                <option value="l">L</option>
+                                <option value="mg">mg</option>
                                 <option value="g">g</option>
                                 <option value="kg">kg</option>
                                 <option value="cm">cm</option>
-                                <option value="m">m</option>
+                                <option value="mm">mm</option>
+                                <option value="m">M</option>
                               </select>
                             </div>
                           </div>
@@ -3260,6 +3262,18 @@ export function CatalogoItemDetailPanel({
                                         className="absolute top-full left-0 mt-1 w-64 bg-white border border-slate-200 rounded-xl shadow-lg z-50 overflow-hidden"
                                         onMouseDown={(e) => e.preventDefault()}
                                       >
+                                        {/* Sin proveedor */}
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            handleFieldChange("proveedor", "", setProveedor)
+                                            setProveedorDropdownOpen(false)
+                                          }}
+                                          className="w-full px-3 py-2.5 flex items-center justify-between gap-2 text-sm text-slate-500 hover:bg-slate-50 border-b border-slate-100 transition-colors"
+                                        >
+                                          <span>Sin proveedor</span>
+                                          {!proveedor && <Check className="w-3.5 h-3.5 text-slate-400" />}
+                                        </button>
                                         {/* Nuevo proveedor */}
                                         <button
                                           type="button"
@@ -3272,14 +3286,15 @@ export function CatalogoItemDetailPanel({
                                           <Plus className="w-3.5 h-3.5 text-slate-500" />
                                           Nuevo proveedor
                                         </button>
-                                        {/* Existing proveedores */}
+                                        {/* Existing proveedores — alphabetical */}
                                         <div className="max-h-48 overflow-y-auto">
                                           {proveedores.length === 0 ? (
                                             <p className="px-3 py-3 text-sm text-slate-400 text-center">Sin proveedores</p>
                                           ) : (
-                                            proveedores.map((p) => {
-                                              const displayName = p.tipo === "empresa" ? (p.razonSocial || p.nombre) : `${p.nombre}${p.apellido ? " " + p.apellido : ""}`
-                                              return (
+                                            [...proveedores]
+                                              .map((p) => ({ p, displayName: p.tipo === "empresa" ? (p.razonSocial || p.nombre) : `${p.nombre}${p.apellido ? " " + p.apellido : ""}` }))
+                                              .sort((a, b) => a.displayName.localeCompare(b.displayName, "es"))
+                                              .map(({ p, displayName }) => (
                                                 <button
                                                   key={p.id}
                                                   type="button"
@@ -3292,8 +3307,7 @@ export function CatalogoItemDetailPanel({
                                                   <span>{displayName}</span>
                                                   {proveedor === displayName && <Check className="w-3.5 h-3.5 text-slate-500" />}
                                                 </button>
-                                              )
-                                            })
+                                              ))
                                           )}
                                         </div>
                                       </div>
@@ -3398,12 +3412,14 @@ export function CatalogoItemDetailPanel({
                                       disabled={isChildItem}
                                       className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 appearance-none transition-all text-sm ${isChildItem ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed" : "bg-white border-slate-200 text-slate-800 cursor-pointer hover:border-slate-300"}`}
                                     >
-                                      <option value="ml">ml</option>
-                                      <option value="l">l</option>
+                                      <option value="ml">mL</option>
+                                      <option value="l">L</option>
+                                      <option value="mg">mg</option>
                                       <option value="g">g</option>
                                       <option value="kg">kg</option>
                                       <option value="cm">cm</option>
-                                      <option value="m">m</option>
+                                      <option value="mm">mm</option>
+                                      <option value="m">M</option>
                                     </select>
                                   </div>
                                 </div>
