@@ -2118,7 +2118,7 @@ export function CatalogoItemDetailPanel({
                                     disabled={isAttributeLocked}
                                     className={`w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${isAttributeLocked ? "bg-slate-50 text-slate-400 cursor-not-allowed" : "text-slate-800 hover:border-slate-300"
                                       }`}
-                                    placeholder="Ej: Material"
+                                    placeholder="Ej: Color"
                                   />
                                 </div>
 
@@ -2141,7 +2141,7 @@ export function CatalogoItemDetailPanel({
                                         ? "bg-slate-50 border-2 border-dashed border-slate-300 text-slate-400 cursor-not-allowed italic"
                                         : "bg-white border border-slate-200 text-slate-800 hover:border-slate-300"
                                       }`}
-                                    placeholder={(!isChildItem && attr.inheritValue) ? "Variantes completarán..." : "Ej: Algodón"}
+                                    placeholder={(!isChildItem && attr.inheritValue) ? "Variantes completarán..." : "Ej: Negro"}
                                   />
                                 </div>
 
@@ -3556,7 +3556,7 @@ export function CatalogoItemDetailPanel({
                                         }}
                                         disabled={isAttributeLocked}
                                         className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${isAttributeLocked ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed" : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"}`}
-                                        placeholder="Ej: Varietal"
+                                        placeholder="Ej: Color"
                                       />
                                       <input
                                         type="text"
@@ -3570,7 +3570,7 @@ export function CatalogoItemDetailPanel({
                                         }}
                                         disabled={!!isValueLocked}
                                         className={`w-full px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 text-sm transition-all ${isValueLocked ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed" : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"}`}
-                                        placeholder="Ej: Blend"
+                                        placeholder="Ej: Negro"
                                       />
                                       {!isAttributeLocked ? (
                                         <button
