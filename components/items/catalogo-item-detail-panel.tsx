@@ -1199,7 +1199,7 @@ export function CatalogoItemDetailPanel({
         <div className="max-w-6xl mx-auto">
         {/* Section header — only for standalone / children */}
         {!isViewingContainer && (
-          <div className="flex items-start justify-between pt-12">
+          <div className="flex items-start justify-between pt-12 pb-8">
             <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">Detalle del Item</h1>
             <div className="flex items-center gap-2 mt-1 shrink-0">
               {!isRightEditing ? (
