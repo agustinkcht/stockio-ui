@@ -2506,7 +2506,7 @@ export function CatalogoItemDetailPanel({
 
                     {/* Variantes header with Nueva Variante button */}
                     {variantItems.length > 0 && (
-                      <div className="mt-8 pt-6 border-t border-gray-200">
+                      <div className="mt-6">
                         <div className="flex items-center justify-between mb-4">
                           <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">
                             {variantItems.length} {variantItems.length === 1 ? "Variante" : "Variantes"}
@@ -2956,7 +2956,7 @@ export function CatalogoItemDetailPanel({
 
                         {/* Variant matrix */}
                         {variantItems.length > 0 && (
-                          <div className="mt-8 pt-6 border-t border-gray-200">
+                          <div className="mt-6">
                             <div className="flex items-center justify-between mb-4">
                               <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">
                                 {variantItems.length} {variantItems.length === 1 ? "Variante" : "Variantes"}
