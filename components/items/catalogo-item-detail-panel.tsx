@@ -2278,11 +2278,6 @@ export function CatalogoItemDetailPanel({
                 {isViewingContainer && isExpandedMatrixOpen ? (
                   // Expanded Variant Matrix View (single card mode)
                   <div className="h-full flex flex-col py-2">
-                    {/* Variant count */}
-                    <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-5">
-                      {variantItems.length} {variantItems.length === 1 ? "variante" : "variantes"}
-                    </h3>
-
                     {/* Atributos de Variantes section - 50% width - ABOVE matrix */}
                     <div className="mb-6 pb-6 border-b border-gray-200 w-1/2">
                       {!showAtributosView ? (
@@ -2762,10 +2757,6 @@ export function CatalogoItemDetailPanel({
                   <>
                     {selectedDetailTab === "info" && (
                       <div className="h-full flex flex-col py-2">
-                        <h3 className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-5">
-                          {variantItems.length} {variantItems.length === 1 ? "variante" : "variantes"}
-                        </h3>
-
                         {showAtributosView && (
                           <div className="mb-6">
                             {/* Collapsible content always shown */}
