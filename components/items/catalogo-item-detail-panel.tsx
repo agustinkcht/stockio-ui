@@ -1236,7 +1236,7 @@ export function CatalogoItemDetailPanel({
         <div className={`grid gap-2 ${isViewingContainer ? (isExpandedMatrixOpen ? "grid-cols-1 gap-6" : "grid-cols-2 gap-6") : "grid-cols-10 gap-16"}`}>
           {/* Left Column - Image Card (only for standalone/children) - col-span-4 */}
           {!isViewingContainer && (
-            <div className="col-span-4 order-1 z-20 rounded-xl flex flex-col transition-all duration-300 mt-4 border-none shadow-none pl-0 pr-0">
+            <div className="col-span-4 order-1 z-20 rounded-xl flex flex-col transition-all duration-300 border-none shadow-none">
               {/* Flip card container */}
               <div className="sticky top-4 mt-7" style={{ perspective: "1200px" }}>
                 <div
@@ -1249,7 +1249,7 @@ export function CatalogoItemDetailPanel({
                 >
                   {/* FRONT SIDE */}
                   <div
-                    className={`absolute inset-0 p-6 px-8 pr-11 border-solid border border-black rounded-xl bg-black shadow-md pl-11 ml-6 ${isCardFlipped ? "pointer-events-none" : ""}`}
+                    className={`absolute inset-0 p-6 px-8 pr-11 border-solid border border-black rounded-xl bg-black shadow-md pl-11 ${isCardFlipped ? "pointer-events-none" : ""}`}
                     style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
                   >
                     {/* Estado indicator - top-left */}
@@ -2207,7 +2207,7 @@ export function CatalogoItemDetailPanel({
           )}
 
           {/* Info/Atributos Column - col-span-6 for standalone/children, col-span-1 for container */}
-          <div className={`flex flex-col transition-all duration-500 overflow-hidden mr-3.5 pb-0 ${isViewingContainer ? "order-1 col-span-1 mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : "order-2 col-span-6 relative mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10"}`}>
+          <div className={`flex flex-col transition-all duration-500 overflow-hidden pb-0 ${isViewingContainer ? "order-1 col-span-1 mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : "order-2 col-span-6 relative mt-[44px] pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10"}`}>
 
             {/* Thumbnail + Title Header for Parent Items */}
             {isViewingContainer && (
