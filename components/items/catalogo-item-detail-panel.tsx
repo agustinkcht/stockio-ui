@@ -1233,7 +1233,7 @@ export function CatalogoItemDetailPanel({
           </div>
         )}
 
-        <div className={`grid gap-2 ${isViewingContainer ? (isExpandedMatrixOpen ? "grid-cols-1 gap-6" : "grid-cols-2 gap-6") : "grid-cols-10 gap-16"}`}>
+        <div className={`grid gap-2 py-2 ${isViewingContainer ? (isExpandedMatrixOpen ? "grid-cols-1 gap-6" : "grid-cols-2 gap-6") : "grid-cols-10 gap-16"}`}>
           {/* Left Column - Image Card (only for standalone/children) - col-span-4 */}
           {!isViewingContainer && (
             <div className="col-span-4 order-1 z-20 rounded-xl flex flex-col transition-all duration-300 border-none shadow-none">
