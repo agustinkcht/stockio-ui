@@ -1206,41 +1206,39 @@ export function CatalogoItemDetailPanel({
 
       <div className="px-8 pb-8 bg-slate-50 min-h-screen">
         <div className="max-w-6xl mx-auto">
-        {/* Section header — only for standalone / children */}
-        {!isViewingContainer && (
-          <div className="flex items-start justify-between pt-12 pb-8">
-            <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">Detalle del Item</h1>
-            <div className="flex items-center gap-2 mt-1 shrink-0">
-              {!isRightEditing ? (
+        {/* Section header — shared for all item types */}
+        <div className="flex items-start justify-between pt-12 pb-8">
+          <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">Detalle del Item</h1>
+          <div className="flex items-center gap-2 mt-1 shrink-0">
+            {!isRightEditing ? (
+              <button
+                type="button"
+                onClick={enterRightEditMode}
+                className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer"
+              >
+                <Pencil className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
+                Editar
+              </button>
+            ) : (
+              <>
                 <button
                   type="button"
-                  onClick={enterRightEditMode}
-                  className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer"
+                  onClick={cancelRightEditMode}
+                  className="h-9 px-4 text-sm font-medium rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors cursor-pointer"
                 >
-                  <Pencil className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
-                  Editar
+                  Cancelar
                 </button>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    onClick={cancelRightEditMode}
-                    className="h-9 px-4 text-sm font-medium rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors cursor-pointer"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={saveRightEditMode}
-                    className="h-9 px-4 text-sm font-medium rounded-lg bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer"
-                  >
-                    Guardar
-                  </button>
-                </>
-              )}
-            </div>
+                <button
+                  type="button"
+                  onClick={saveRightEditMode}
+                  className="h-9 px-4 text-sm font-medium rounded-lg bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer"
+                >
+                  Guardar
+                </button>
+              </>
+            )}
           </div>
-        )}
+        </div>
 
         <div className={`grid gap-2 py-2 ${isViewingContainer ? (isExpandedMatrixOpen ? "grid-cols-1 gap-6" : "grid-cols-2 gap-6") : "grid-cols-10 gap-16"}`}>
           {/* Left Column - Image Card (only for standalone/children) - col-span-4 */}
@@ -1833,7 +1831,7 @@ export function CatalogoItemDetailPanel({
 
           {/* Right Column - Variantes Card (only for parent items, hidden when matrix is expanded) */}
           {isViewingContainer && !isExpandedMatrixOpen && (
-            <div className="col-span-1 order-2 flex flex-col mt-[44px]">
+            <div className="col-span-1 order-2 flex flex-col">
               <div className="sticky top-4 p-6 bg-white border border-slate-200/60 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)]">
                 {/* Toggle button for right card mode */}
                 <div className="mb-6">
