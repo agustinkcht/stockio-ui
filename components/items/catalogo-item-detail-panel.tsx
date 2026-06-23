@@ -1196,6 +1196,7 @@ export function CatalogoItemDetailPanel({
       {/* <Breadcrumb dynamicContent={null} /> */}
 
       <div className="px-8 pb-8 bg-slate-50 min-h-screen">
+        <div className="max-w-6xl mx-auto">
         {/* Section header — only for standalone / children */}
         {!isViewingContainer && (
           <div className="flex items-start justify-between pt-12">
@@ -4114,6 +4115,7 @@ export function CatalogoItemDetailPanel({
           </div>
         </div>
       )}
+        </div>{/* end max-w-6xl */}
     </>
   )
 }
