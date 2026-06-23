@@ -289,6 +289,8 @@ export function CatalogoItemDetailPanel({
   const [modalSkuValue, setModalSkuValue] = useState("")
   const [isEditCodigoUniversalModalOpen, setIsEditCodigoUniversalModalOpen] = useState(false)
   const [modalCodigoUniversalValue, setModalCodigoUniversalValue] = useState("")
+  const [isEditCodigoProveedorModalOpen, setIsEditCodigoProveedorModalOpen] = useState(false)
+  const [modalCodigoProveedorValue, setModalCodigoProveedorValue] = useState("")
   const [isEditDescripcionModalOpen, setIsEditDescripcionModalOpen] = useState(false)
   const [modalDescripcionValue, setModalDescripcionValue] = useState("")
   const [proveedorDropdownOpen, setProveedorDropdownOpen] = useState(false)
@@ -1176,6 +1178,13 @@ export function CatalogoItemDetailPanel({
     setIsEditCodigoUniversalModalOpen(false)
   }
 
+  const handleSaveCodigoProveedorModal = () => {
+    setCodigoProveedor(modalCodigoProveedorValue)
+    onFieldChange(selectedItem.id, "codigoProveedor", modalCodigoProveedorValue)
+    onSaveNow?.()
+    setIsEditCodigoProveedorModalOpen(false)
+  }
+
   const handleSaveDescripcionModal = () => {
     setDescripcionValue(modalDescripcionValue)
     onFieldChange(selectedItem.id, "descripcion", modalDescripcionValue)
@@ -1425,17 +1434,6 @@ export function CatalogoItemDetailPanel({
                               {skuValue || selectedItem.sku}
                             </span>
                           )}
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleCopySku() }}
-                            className="text-slate-600 hover:text-slate-400 transition-colors p-0.5"
-                            title="Copiar SKU"
-                          >
-                            {skuCopied ? (
-                              <span className="text-green-400 text-[10px]">✓</span>
-                            ) : (
-                              <Copy className="h-2.5 w-2.5" />
-                            )}
-                          </button>
                           <Pencil className="h-2.5 w-2.5 text-slate-500 opacity-0 group-hover/sku:opacity-100 transition-opacity" />
                         </div>
                       )}
@@ -1657,20 +1655,76 @@ export function CatalogoItemDetailPanel({
                           Códigos
                         </h3>
 
-                        {/* Cod. Universal + Cod. Proveedor side by side */}
-                        <div className="flex gap-3 w-full min-w-0">
-                          {/* Cod. Universal — left half */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5 mb-1.5">
-                              <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Cod. Universal</span>
-                              <div className="relative">
-                                <div className="peer">
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 text-slate-600 cursor-help" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <circle cx="12" cy="12" r="10" />
-                                    <path d="M12 16v-4" />
-                                    <path d="M12 8h.01" />
-                                  </svg>
-                                </div>
+                        {/* Cod. Universal */}
+                        <div className="mb-4 group/codUniversal">
+                          <div className="flex items-center gap-1.5 mb-1.5">
+                            <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Cod. Universal</span>
+                            <div className="relative">
+                              <div className="peer">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 text-slate-600 cursor-help" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <circle cx="12" cy="12" r="10" />
+                                  <path d="M12 16v-4" />
+                                  <path d="M12 8h.01" />
+                                </svg>
+                              </div>
+                              <div className="absolute left-0 top-full mt-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-[11px] text-slate-300 w-48 leading-relaxed opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-200 z-50 pointer-events-none shadow-xl">
+                                Número único de 8 a 14 dígitos, generalmente impreso bajo el código de barras, que identifica un producto a nivel global.
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span
+                              className="text-sm font-semibold text-slate-200 tracking-wide cursor-pointer hover:text-slate-100 transition-colors truncate"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setModalCodigoUniversalValue(codigoUniversalValue || selectedItem.codigoUniversal || "")
+                                setIsEditCodigoUniversalModalOpen(true)
+                              }}
+                            >
+                              {codigoUniversalValue || selectedItem.codigoUniversal || (
+                                <span className="text-slate-500 italic font-normal">Agregar...</span>
+                              )}
+                            </span>
+                            <Pencil className="h-3 w-3 text-slate-500 opacity-0 group-hover/codUniversal:opacity-100 transition-opacity shrink-0" />
+                          </div>
+                        </div>
+
+                        {/* Horizontal divider */}
+                        <div className="border-t border-slate-700/50 mb-4" />
+
+                        {/* Cod. Proveedor */}
+                        <div className="group/codProveedor">
+                          <div className="flex items-center gap-1.5 mb-1.5">
+                            <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Cod. Proveedor</span>
+                            <div className="relative">
+                              <div className="peer">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 text-slate-600 cursor-help" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <circle cx="12" cy="12" r="10" />
+                                  <path d="M12 16v-4" />
+                                  <path d="M12 8h.01" />
+                                </svg>
+                              </div>
+                              <div className="absolute left-0 top-full mt-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-[11px] text-slate-300 w-48 leading-relaxed opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-200 z-[100] pointer-events-none shadow-xl">
+                                Identificador único que el proveedor le asigna a un producto.
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span
+                              className="text-sm font-semibold text-slate-200 tracking-wide cursor-pointer hover:text-slate-100 transition-colors truncate"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setModalCodigoProveedorValue(codigoProveedor || "")
+                                setIsEditCodigoProveedorModalOpen(true)
+                              }}
+                            >
+                              {codigoProveedor || (
+                                <span className="text-slate-500 italic font-normal">Agregar...</span>
+                              )}
+                            </span>
+                            <Pencil className="h-3 w-3 text-slate-500 opacity-0 group-hover/codProveedor:opacity-100 transition-opacity shrink-0" />
+                          </div>
+                        </div>
                                 <div className="absolute left-0 top-full mt-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-[11px] text-slate-300 w-48 leading-relaxed opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-200 z-50 pointer-events-none shadow-xl">
                                   Número único de 8 a 14 dígitos, generalmente impreso bajo el código de barras, que identifica un producto a nivel global.
                                 </div>
@@ -1692,7 +1746,7 @@ export function CatalogoItemDetailPanel({
                               <button
                                 onClick={(e) => { e.stopPropagation(); handleCopyCodigoUniversal() }}
                                 className="text-slate-500 hover:text-slate-300 transition-colors p-0.5 shrink-0"
-                                title="Copiar Código Universal"
+                                title="Copiar C��digo Universal"
                               >
                                 {codigoUniversalCopied ? (
                                   <span className="text-green-400 text-xs">✓</span>
@@ -4055,6 +4109,59 @@ export function CatalogoItemDetailPanel({
               </button>
               <button
                 onClick={handleSaveCodigoUniversalModal}
+                className="px-5 py-2 text-sm font-medium rounded-lg bg-slate-900 hover:bg-slate-800 text-white cursor-pointer transition-all"
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Editar Código Proveedor Modal */}
+      {isEditCodigoProveedorModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsEditCodigoProveedorModalOpen(false)} />
+          <div className="relative bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
+            <div className="px-5 pt-4 pb-3 border-b border-slate-100">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 shrink-0 overflow-hidden flex items-center justify-center">
+                    <img src={getItemPhoto(selectedItem)} alt={selectedItem?.name || ""} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="min-w-0">
+                    {selectedItem?.name && <p className="text-sm font-semibold text-slate-900 truncate leading-tight">{selectedItem.name}</p>}
+                    {(selectedItem?.marca || selectedItem?.categoria) && (
+                      <p className="text-xs text-slate-400 truncate mt-0.5">
+                        {[selectedItem.marca, selectedItem.categoria].filter(Boolean).join(" · ")}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <button onClick={() => setIsEditCodigoProveedorModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors shrink-0">
+                  <X className="w-4 h-4 text-slate-400" />
+                </button>
+              </div>
+            </div>
+            <div className="p-5">
+              <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block">Código Proveedor</label>
+              <input
+                type="text"
+                value={modalCodigoProveedorValue}
+                onChange={(e) => setModalCodigoProveedorValue(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") handleSaveCodigoProveedorModal(); if (e.key === "Escape") setIsEditCodigoProveedorModalOpen(false) }}
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-slate-400"
+                placeholder="Ej: JW-DBLACK-750"
+                autoFocus
+              />
+              <p className="text-xs text-slate-400 mt-1.5">Identificador único que el proveedor le asigna a este producto.</p>
+            </div>
+            <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-100 bg-slate-50/50">
+              <button onClick={() => setIsEditCodigoProveedorModalOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer">
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveCodigoProveedorModal}
                 className="px-5 py-2 text-sm font-medium rounded-lg bg-slate-900 hover:bg-slate-800 text-white cursor-pointer transition-all"
               >
                 Guardar
