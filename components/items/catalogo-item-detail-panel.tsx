@@ -2509,7 +2509,7 @@ export function CatalogoItemDetailPanel({
                       <div className="mt-8 pt-6 border-t border-gray-200">
                         <div className="flex items-center justify-between mb-4">
                           <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">
-                            Variantes
+                            {variantItems.length} {variantItems.length === 1 ? "Variante" : "Variantes"}
                           </h3>
                           <button
                             onClick={() => setIsNuevaVarianteModalOpen(true)}
@@ -2766,41 +2766,9 @@ export function CatalogoItemDetailPanel({
                           {variantItems.length} {variantItems.length === 1 ? "variante" : "variantes"}
                         </h3>
 
-                        {/* Atributos Principales Section */}
-                        {!showAtributosView ? (
-                          <div className="flex flex-col items-center justify-center gap-4 py-8 mb-6">
-                            <p className="text-gray-500 text-sm">No hay atributos configurados</p>
-                            <button
-                              onClick={() => setShowAtributosView(true)}
-                              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg transition-colors cursor-pointer"
-                            >
-                              Agregar atributo
-                            </button>
-                          </div>
-                        ) : (
+                        {showAtributosView && (
                           <div className="mb-6">
-                            {/* Collapsible header — only show toggle when there are variants */}
-                            <button
-                              onClick={() => setIsAtributosCollapsed((prev) => !prev)}
-                              className="w-full flex items-center justify-between mb-3 group/atributos-header cursor-pointer"
-                            >
-                              <div className="text-left">
-                                <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider mb-1">
-                                  Atributos de Variantes
-                                </h3>
-                                {!isAtributosCollapsed && (
-                                  <p className="text-xs text-gray-500 italic">
-                                    Atributos que definen las variantes del producto (máximo 2)
-                                  </p>
-                                )}
-                              </div>
-                              <ChevronDown
-                                className={`w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0 ${isAtributosCollapsed ? "" : "rotate-180"
-                                  }`}
-                              />
-                            </button>
-
-                            {/* Collapsible content */}
+                            {/* Collapsible content always shown */}
                             {!isAtributosCollapsed && (
                               <div className="flex flex-col gap-3">
                                 {containerAtributosPrincipales.map((attr, index) => (
@@ -2991,7 +2959,7 @@ export function CatalogoItemDetailPanel({
                           <div className="mt-8 pt-6 border-t border-gray-200">
                             <div className="flex items-center justify-between mb-4">
                               <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wider">
-                                Variantes
+                                {variantItems.length} {variantItems.length === 1 ? "Variante" : "Variantes"}
                               </h3>
                               <button
                                 onClick={() => setIsNuevaVarianteModalOpen(true)}

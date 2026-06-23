@@ -142,7 +142,6 @@ export function NuevaVarianteModal({
                   {/* Existing Tags as Quick-Select Options */}
                   {attr.variantes.length > 0 && (
                     <div className="mt-3">
-                      <p className="text-xs text-muted-foreground mb-2">Opciones disponibles:</p>
                       <div className="flex flex-wrap gap-2">
                         {attr.variantes.map((value) => (
                           <button
