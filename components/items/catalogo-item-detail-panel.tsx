@@ -1196,6 +1196,42 @@ export function CatalogoItemDetailPanel({
       {/* <Breadcrumb dynamicContent={null} /> */}
 
       <div className="px-8 pb-6 bg-slate-50 min-h-screen pl-8 pt-0">
+        {/* Section header — only for standalone / children */}
+        {!isViewingContainer && (
+          <div className="flex items-start justify-between pt-12 pb-8">
+            <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 tracking-tight">Detalle del Item</h1>
+            <div className="flex items-center gap-2 mt-1 shrink-0">
+              {!isRightEditing ? (
+                <button
+                  type="button"
+                  onClick={enterRightEditMode}
+                  className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer"
+                >
+                  <Pencil className="w-4 h-4 text-slate-600" strokeWidth={2.25} />
+                  Editar
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={cancelRightEditMode}
+                    className="h-9 px-4 text-sm font-medium rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={saveRightEditMode}
+                    className="h-9 px-4 text-sm font-medium rounded-lg bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer"
+                  >
+                    Guardar
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className={`grid gap-2 ${isViewingContainer ? (isExpandedMatrixOpen ? "grid-cols-1 gap-6" : "grid-cols-2 gap-6") : "grid-cols-10 gap-16"}`}>
           {/* Left Column - Image Card (only for standalone/children) - col-span-4 */}
           {!isViewingContainer && (
@@ -2206,75 +2242,38 @@ export function CatalogoItemDetailPanel({
               </div>
             )}
 
-            {/* Section header + Flush tab bar (only for non-container items) */}
+            {/* Flush tab bar (only for non-container items) */}
             {!isViewingContainer && (
-              <>
-                {/* Section title row */}
-                <div className="flex items-center justify-between mb-5 -mt-1">
-                  <h2 className="text-xl font-semibold text-slate-900 tracking-tight">Detalle del Item</h2>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {!isRightEditing ? (
-                      <button
-                        type="button"
-                        onClick={enterRightEditMode}
-                        className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer"
-                      >
-                        <Pencil className="w-3.5 h-3.5 text-slate-600" />
-                        Editar
-                      </button>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          onClick={cancelRightEditMode}
-                          className="h-9 px-4 text-sm font-medium rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors cursor-pointer"
-                        >
-                          Cancelar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={saveRightEditMode}
-                          className="h-9 px-4 text-sm font-medium rounded-lg bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer"
-                        >
-                          Guardar
-                        </button>
-                      </>
+              <div className="z-20 mb-6 sticky top-[0px] -mx-8 flex flex-col">
+                <div className="flex border-b border-slate-200">
+                  <button
+                    onClick={() => setSelectedDetailTab("info")}
+                    className={`flex-1 flex items-center justify-center py-3.5 transition-all duration-200 cursor-pointer relative ${
+                      selectedDetailTab === "info"
+                        ? "text-slate-900"
+                        : "text-slate-400 hover:text-slate-600"
+                    }`}
+                  >
+                    <span className="text-xs font-semibold uppercase tracking-widest">Info</span>
+                    {selectedDetailTab === "info" && (
+                      <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-slate-900 rounded-full" />
                     )}
-                  </div>
+                  </button>
+                  <button
+                    onClick={() => setSelectedDetailTab("atributos")}
+                    className={`flex-1 flex items-center justify-center py-3.5 transition-all duration-200 cursor-pointer relative ${
+                      selectedDetailTab === "atributos"
+                        ? "text-slate-900"
+                        : "text-slate-400 hover:text-slate-600"
+                    }`}
+                  >
+                    <span className="text-xs font-semibold uppercase tracking-widest">Atributos</span>
+                    {selectedDetailTab === "atributos" && (
+                      <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-slate-900 rounded-full" />
+                    )}
+                  </button>
                 </div>
-
-                {/* Flush tab bar */}
-                <div className="z-20 mb-6 sticky top-[0px] -mx-8 flex flex-col">
-                  <div className="flex border-b border-slate-200">
-                    <button
-                      onClick={() => setSelectedDetailTab("info")}
-                      className={`flex-1 flex items-center justify-center py-3.5 transition-all duration-200 cursor-pointer relative ${
-                        selectedDetailTab === "info"
-                          ? "text-slate-900"
-                          : "text-slate-400 hover:text-slate-600"
-                      }`}
-                    >
-                      <span className="text-xs font-semibold uppercase tracking-widest">Info</span>
-                      {selectedDetailTab === "info" && (
-                        <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-slate-900 rounded-full" />
-                      )}
-                    </button>
-                    <button
-                      onClick={() => setSelectedDetailTab("atributos")}
-                      className={`flex-1 flex items-center justify-center py-3.5 transition-all duration-200 cursor-pointer relative ${
-                        selectedDetailTab === "atributos"
-                          ? "text-slate-900"
-                          : "text-slate-400 hover:text-slate-600"
-                      }`}
-                    >
-                      <span className="text-xs font-semibold uppercase tracking-widest">Atributos</span>
-                      {selectedDetailTab === "atributos" && (
-                        <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-slate-900 rounded-full" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </>
+              </div>
             )}
 
             {/* Tab Content */}
