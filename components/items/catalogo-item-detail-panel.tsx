@@ -1195,7 +1195,7 @@ export function CatalogoItemDetailPanel({
     <>
       {/* <Breadcrumb dynamicContent={null} /> */}
 
-      <div className="px-8 pb-6 bg-slate-50 min-h-screen pl-8 pt-0">
+      <div className="px-8 pb-8 bg-slate-50 min-h-screen">
         {/* Section header — only for standalone / children */}
         {!isViewingContainer && (
           <div className="flex items-start justify-between pt-12">
