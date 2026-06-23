@@ -3222,7 +3222,7 @@ export function CatalogoItemDetailPanel({
                                   onChange={(e) => handleFieldChange("categoria", e.target.value, setCategoria)}
                                   disabled={shouldStrictlyInherit(fatherItem?.categoria)}
                                   className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${shouldStrictlyInherit(fatherItem?.categoria) ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed" : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"}`}
-                                  placeholder="Ej: Vinos"
+                                  placeholder="Escribir categoría..."
                                 />
                               </div>
                               <div className="flex flex-col gap-1">
@@ -3233,7 +3233,7 @@ export function CatalogoItemDetailPanel({
                                   onChange={(e) => handleFieldChange("marca", e.target.value, setMarca)}
                                   disabled={shouldStrictlyInherit(fatherItem?.marca)}
                                   className={`px-3 py-2.5 border rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-300 transition-all text-sm ${shouldStrictlyInherit(fatherItem?.marca) ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed" : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"}`}
-                                  placeholder="Ej: YKK"
+                                  placeholder="Escribir marca..."
                                 />
                               </div>
                             </div>
@@ -3613,7 +3613,7 @@ export function CatalogoItemDetailPanel({
 
                                 {atributosInformativos.map((attr, index) => (
                                   <div key={index} className="grid gap-4 py-3 border-b border-slate-100 last:border-b-0" style={{ gridTemplateColumns: "1fr 2fr" }}>
-                                    <span className="text-[13px] text-slate-500">{attr.key || <span className="text-slate-300">—</span>}</span>
+                                    <span className="text-[13px] font-medium text-slate-600">{attr.key || <span className="text-slate-300 font-normal">—</span>}</span>
                                     <span className="text-[15px] font-semibold text-slate-800">{attr.value || <span className="text-slate-300 font-normal">No aplica</span>}</span>
                                   </div>
                                 ))}
