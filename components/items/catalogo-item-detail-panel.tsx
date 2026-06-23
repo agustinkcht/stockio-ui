@@ -2206,70 +2206,75 @@ export function CatalogoItemDetailPanel({
               </div>
             )}
 
-            {/* Flush top toggle + edit controls (only for non-container items) */}
+            {/* Section header + Flush tab bar (only for non-container items) */}
             {!isViewingContainer && (
-              <div className="z-20 mb-6 sticky top-[0px] -mt-6 -mx-8 flex flex-col">
-                {/* Row 1: full-width flush tab bar */}
-                <div className="flex border-b border-slate-200">
-                  <button
-                    onClick={() => setSelectedDetailTab("info")}
-                    className={`flex-1 flex items-center justify-center py-3.5 transition-all duration-200 cursor-pointer relative ${
-                      selectedDetailTab === "info"
-                        ? "text-slate-900"
-                        : "text-slate-400 hover:text-slate-600"
-                    }`}
-                  >
-                    <span className={`text-xs font-semibold uppercase tracking-widest ${selectedDetailTab === "info" ? "" : ""}`}>Info</span>
-                    {selectedDetailTab === "info" && (
-                      <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-slate-900 rounded-full" />
+              <>
+                {/* Section title row */}
+                <div className="flex items-center justify-between mb-5 -mt-1">
+                  <h2 className="text-xl font-semibold text-slate-900 tracking-tight">Detalle del Item</h2>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {!isRightEditing ? (
+                      <button
+                        type="button"
+                        onClick={enterRightEditMode}
+                        className="h-9 px-4 text-sm font-semibold transition-colors border shadow-sm border-[rgba(228,230,235,0.8)] gap-2 rounded-lg flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer"
+                      >
+                        <Pencil className="w-3.5 h-3.5 text-slate-600" />
+                        Editar
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={cancelRightEditMode}
+                          className="h-9 px-4 text-sm font-medium rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors cursor-pointer"
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={saveRightEditMode}
+                          className="h-9 px-4 text-sm font-medium rounded-lg bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer"
+                        >
+                          Guardar
+                        </button>
+                      </>
                     )}
-                  </button>
-                  <button
-                    onClick={() => setSelectedDetailTab("atributos")}
-                    className={`flex-1 flex items-center justify-center py-3.5 transition-all duration-200 cursor-pointer relative ${
-                      selectedDetailTab === "atributos"
-                        ? "text-slate-900"
-                        : "text-slate-400 hover:text-slate-600"
-                    }`}
-                  >
-                    <span className="text-xs font-semibold uppercase tracking-widest">Atributos</span>
-                    {selectedDetailTab === "atributos" && (
-                      <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-slate-900 rounded-full" />
-                    )}
-                  </button>
+                  </div>
                 </div>
 
-                {/* Row 2: edit controls right-aligned */}
-                <div className="flex justify-end px-8 pt-4">
-                  {!isRightEditing ? (
+                {/* Flush tab bar */}
+                <div className="z-20 mb-6 sticky top-[0px] -mx-8 flex flex-col">
+                  <div className="flex border-b border-slate-200">
                     <button
-                      type="button"
-                      onClick={enterRightEditMode}
-                      className="h-10 px-5 text-sm font-semibold transition-colors border shadow-sm border-slate-200 gap-2 rounded-xl flex items-center bg-white text-slate-900 hover:bg-slate-50 cursor-pointer"
+                      onClick={() => setSelectedDetailTab("info")}
+                      className={`flex-1 flex items-center justify-center py-3.5 transition-all duration-200 cursor-pointer relative ${
+                        selectedDetailTab === "info"
+                          ? "text-slate-900"
+                          : "text-slate-400 hover:text-slate-600"
+                      }`}
                     >
-                      <Pencil className="w-4 h-4 text-slate-600" />
-                      Editar
+                      <span className="text-xs font-semibold uppercase tracking-widest">Info</span>
+                      {selectedDetailTab === "info" && (
+                        <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-slate-900 rounded-full" />
+                      )}
                     </button>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={cancelRightEditMode}
-                        className="h-10 px-5 text-sm font-medium rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors cursor-pointer"
-                      >
-                        Cancelar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={saveRightEditMode}
-                        className="h-10 px-5 text-sm font-medium rounded-xl bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer"
-                      >
-                        Guardar
-                      </button>
-                    </div>
-                  )}
+                    <button
+                      onClick={() => setSelectedDetailTab("atributos")}
+                      className={`flex-1 flex items-center justify-center py-3.5 transition-all duration-200 cursor-pointer relative ${
+                        selectedDetailTab === "atributos"
+                          ? "text-slate-900"
+                          : "text-slate-400 hover:text-slate-600"
+                      }`}
+                    >
+                      <span className="text-xs font-semibold uppercase tracking-widest">Atributos</span>
+                      {selectedDetailTab === "atributos" && (
+                        <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-slate-900 rounded-full" />
+                      )}
+                    </button>
+                  </div>
                 </div>
-              </div>
+              </>
             )}
 
             {/* Tab Content */}
