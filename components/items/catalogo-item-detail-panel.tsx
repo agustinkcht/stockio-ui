@@ -1238,7 +1238,7 @@ export function CatalogoItemDetailPanel({
           {!isViewingContainer && (
             <div className="col-span-4 order-1 z-20 rounded-xl flex flex-col transition-all duration-300 border-none shadow-none">
               {/* Flip card container */}
-              <div className="sticky top-4 mt-7" style={{ perspective: "1200px" }}>
+              <div className="sticky top-4" style={{ perspective: "1200px" }}>
                 <div
                   className="relative transition-transform duration-500"
                   style={{
