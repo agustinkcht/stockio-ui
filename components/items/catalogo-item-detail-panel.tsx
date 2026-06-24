@@ -374,8 +374,13 @@ export function CatalogoItemDetailPanel({
 
   // Precio and Stock modal states
   const [isPrecioModalOpen, setIsPrecioModalOpen] = useState(false)
-
   const [isStockModalOpen, setIsStockModalOpen] = useState(false)
+
+  // Matrix variant modal states (for editing variant precio/stock from the parent card matrix)
+  const [matrixVariantItem, setMatrixVariantItem] = useState<any>(null)
+  const [isMatrixPrecioModalOpen, setIsMatrixPrecioModalOpen] = useState(false)
+  const [isMatrixStockModalOpen, setIsMatrixStockModalOpen] = useState(false)
+  const [matrixPrecioModalValues, setMatrixPrecioModalValues] = useState({ costo: 0, margen: 0, iva: 0, precioFinal: 0 })
 
   // Precio modal editing values
   const [precioModalValues, setPrecioModalValues] = useState({
@@ -2154,18 +2159,25 @@ export function CatalogoItemDetailPanel({
           )}
 
           {/* Info/Atributos Column - col-span-6 for standalone/children, col-span-1 for container */}
-          <div className={`flex flex-col transition-all duration-500 overflow-hidden pb-0 ${isViewingContainer ? "order-1 col-span-5 pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : "order-2 col-span-6 relative pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10"}`}>
+          <div className={`flex flex-col transition-all duration-500 overflow-hidden pb-0 ${isViewingContainer ? "order-1 col-span-5 pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : "order-2 col-span-6 relative pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10"}`}>
 
             {/* Thumbnail + Title Header for Parent Items */}
             {isViewingContainer && (
-              <div className="mb-3 pb-5 border-b border-slate-200/60 -mt-6 -mx-8 px-8 pt-6 rounded-t-2xl bg-slate-900">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
-                    <Layers className="w-6 h-6 text-white" />
+              <div className="mb-3 pb-6 border-b border-slate-200/60 -mt-6 -mx-8 px-8 pt-6 rounded-t-2xl bg-slate-900">
+                <div className="flex items-center gap-5">
+                  <div className="w-16 h-16 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
+                    <Layers className="w-7 h-7 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h2 className="font-semibold text-white text-base truncate">{selectedItem.name}</h2>
-                    <p className="text-[10px] uppercase tracking-wider mt-0.5 text-slate-300">Agrupador de variantes</p>
+                    <button
+                      className="group/title flex items-center gap-2 min-w-0 max-w-full text-left cursor-pointer"
+                      onClick={() => { setModalNombreValue(selectedItem.name || ""); setIsEditNombreModalOpen(true) }}
+                      title="Editar nombre"
+                    >
+                      <h2 className="font-bold text-white text-xl truncate leading-tight group-hover/title:text-white/80 transition-colors">{selectedItem.name}</h2>
+                      <Pencil className="w-3.5 h-3.5 text-white/30 opacity-0 group-hover/title:opacity-100 transition-opacity flex-shrink-0" />
+                    </button>
+                    <p className="text-xs uppercase tracking-widest mt-1 text-slate-400 font-medium">Agrupador de variantes</p>
                   </div>
                 </div>
               </div>
@@ -2173,7 +2185,7 @@ export function CatalogoItemDetailPanel({
 
             {/* Flush tab bar (only for non-container items) */}
             {!isViewingContainer && (
-              <div className="z-20 mb-6 sticky top-[0px] -mx-8 flex flex-col">
+              <div className="z-20 mb-6 sticky top-[0px] -mx-8 flex flex-col rounded-t-2xl overflow-hidden">
                 <div className="flex border-b border-slate-200">
                   <button
                     onClick={() => setSelectedDetailTab("info")}
@@ -2904,15 +2916,15 @@ export function CatalogoItemDetailPanel({
                         )}
 
                         {variantItems.length > 0 ? (
-                          <div className="bg-slate-900 rounded-xl overflow-hidden">
+                          <div className="bg-white border border-border/40 rounded-lg overflow-hidden">
                             {/* Header */}
-                            <div className="grid grid-cols-12 border-b border-white/10">
+                            <div className="grid grid-cols-12 border-b border-border/30">
                               <div className="col-span-1 px-1 py-2.5" />
-                              <div className="col-span-5 px-3 py-2.5 text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Variante</div>
-                              <div className="col-span-4 px-3 py-2.5 text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Precio venta</div>
-                              <div className="col-span-2 px-3 py-2.5 text-[10px] font-semibold text-slate-400 uppercase tracking-widest">Stock</div>
+                              <div className="col-span-5 px-3 py-2.5 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Variante</div>
+                              <div className="col-span-4 px-3 py-2.5 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Precio venta</div>
+                              <div className="col-span-2 px-3 py-2.5 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Stock</div>
                             </div>
-                            <div className="divide-y divide-white/[0.06]">
+                            <div className="divide-y divide-border/30">
                               {variantItems.map((variant) => {
                                 const sourceVariant = selectedItem.variants?.find((v: any) => {
                                   if (!v.atributosPrincipales) return false
@@ -2927,6 +2939,7 @@ export function CatalogoItemDetailPanel({
                                 const variantId = variant.id || sourceVariant?.id
                                 const fullSku = `${skuValue}-${variant.skuSuffix || ""}`.replace(/-$/, "")
                                 const stockDisp = sourceVariant?.stock?.disponible ?? 0
+                                const variantItem = variantId ? allItems?.find((i: any) => i.id === variantId) : null
 
                                 const handleDeleteVariant = () => {
                                   const attr1Value = variant.variant1
@@ -2976,63 +2989,94 @@ export function CatalogoItemDetailPanel({
                                   <div
                                     key={variant.id || variant.skuSuffix || variant.sku}
                                     onClick={() => { if (variantId) router.push(`/catalogo/items/${variantId}`) }}
-                                    className="group grid grid-cols-12 items-center hover:bg-white/[0.04] transition-colors cursor-pointer"
+                                    className="group grid grid-cols-12 items-center hover:bg-accent/50 transition-colors cursor-pointer"
                                   >
-                                    {/* Thumbnail */}
-                                    <div className="col-span-1 pl-2 py-3 flex items-center justify-center">
-                                      <div className="w-7 h-7 rounded-lg bg-white/10 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                                    {/* Thumbnail — price-grid style */}
+                                    <div className="col-span-1 pl-2 py-2.5 flex items-center justify-center">
+                                      <div className="w-9 h-9 shrink-0 rounded-md bg-slate-100 overflow-hidden flex items-center justify-center relative">
                                         <Image
-                                          src={getItemPhoto(selectedItem)}
+                                          src={getItemPhoto(variantItem || selectedItem)}
                                           alt={selectedItem?.categoria || ""}
-                                          width={28}
-                                          height={28}
-                                          className="w-4 h-4 object-contain opacity-50"
+                                          width={36}
+                                          height={36}
+                                          className="object-cover w-full h-full"
                                         />
+                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                          <Pencil className="w-3 h-3 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        </div>
                                       </div>
                                     </div>
 
                                     {/* Variante tags + SKU below */}
-                                    <div className="col-span-5 px-3 py-3 flex flex-col gap-1">
-                                      <div className="flex items-center gap-1.5">
+                                    <div className="col-span-5 px-3 py-2.5 flex flex-col gap-1">
+                                      <div className="flex items-center gap-1.5 flex-wrap">
                                         {variant.variant1 && (
-                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/10 text-white/80 border border-white/15 truncate max-w-[70px]">
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[70px]">
                                             {variant.variant1}
                                           </span>
                                         )}
                                         {variant.variant1 && variant.variant2 && (
-                                          <span className="text-[9px] text-white/30 font-medium">×</span>
+                                          <span className="text-[9px] text-muted-foreground/50 font-medium">×</span>
                                         )}
                                         {variant.variant2 && (
-                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/10 text-white/80 border border-white/15 truncate max-w-[70px]">
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60 truncate max-w-[70px]">
                                             {variant.variant2}
                                           </span>
                                         )}
                                       </div>
-                                      <span className="text-[10px] font-mono text-white/25 leading-none">
+                                      <span className="text-[10px] font-mono text-muted-foreground/50 leading-none">
                                         {fullSku}
                                       </span>
                                     </div>
 
-                                    {/* Precio venta */}
-                                    <div className="col-span-4 px-3 py-3">
-                                      <span className="text-sm font-semibold text-white tabular-nums">
-                                        {sourceVariant?.precio?.precioFinal
-                                          ? `$${Math.round(sourceVariant.precio.precioFinal).toLocaleString("es-AR")}`
-                                          : <span className="text-white/25 text-xs font-normal">—</span>}
-                                      </span>
+                                    {/* Precio venta — pencil on hover triggers modal */}
+                                    <div
+                                      className="col-span-4 px-3 py-2.5"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        const itemForModal = variantItem || allItems?.find((i: any) => i.id === variantId)
+                                        if (itemForModal) {
+                                          setMatrixVariantItem(itemForModal)
+                                          const p = itemForModal.precio || {}
+                                          setMatrixPrecioModalValues({ costo: p.costo ?? 0, margen: p.margen ?? 0, iva: p.iva ?? 0, precioFinal: p.precioFinal ?? 0 })
+                                          setIsMatrixPrecioModalOpen(true)
+                                        }
+                                      }}
+                                    >
+                                      <div className="flex items-center gap-1.5 group/precio">
+                                        <span className="text-sm font-medium text-foreground tabular-nums">
+                                          {sourceVariant?.precio?.precioFinal
+                                            ? `$${Math.round(sourceVariant.precio.precioFinal).toLocaleString("es-AR")}`
+                                            : <span className="text-muted-foreground/40 text-xs">—</span>}
+                                        </span>
+                                        <Pencil className="w-3 h-3 text-muted-foreground/40 opacity-0 group-hover/precio:opacity-100 transition-opacity" />
+                                      </div>
                                     </div>
 
-                                    {/* Stock disponible */}
-                                    <div className="col-span-2 px-3 py-3">
-                                      {stockDisp > 0 ? (
-                                        <span className="text-xs font-semibold text-emerald-400 tabular-nums">
-                                          {stockDisp} disp.
-                                        </span>
-                                      ) : (
-                                        <span className="text-[10px] font-medium text-white/25">
-                                          sin stock disp.
-                                        </span>
-                                      )}
+                                    {/* Stock disponible — pencil on hover triggers modal */}
+                                    <div
+                                      className="col-span-2 px-3 py-2.5"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        const itemForModal = variantItem || allItems?.find((i: any) => i.id === variantId)
+                                        if (itemForModal) {
+                                          setMatrixVariantItem(itemForModal)
+                                          setIsMatrixStockModalOpen(true)
+                                        }
+                                      }}
+                                    >
+                                      <div className="flex items-center gap-1 group/stock">
+                                        {stockDisp > 0 ? (
+                                          <span className="text-xs font-semibold text-emerald-600 tabular-nums">
+                                            {stockDisp} disp.
+                                          </span>
+                                        ) : (
+                                          <span className="text-[10px] font-medium text-muted-foreground/40">
+                                            sin stock disp.
+                                          </span>
+                                        )}
+                                        <Pencil className="w-3 h-3 text-muted-foreground/40 opacity-0 group-hover/stock:opacity-100 transition-opacity" />
+                                      </div>
                                     </div>
                                   </div>
                                 )
@@ -3040,7 +3084,7 @@ export function CatalogoItemDetailPanel({
                             </div>
                           </div>
                         ) : (
-                          <div className="text-center text-xs text-white/30 py-8 border border-dashed border-white/10 rounded-xl">
+                          <div className="text-center text-xs text-muted-foreground py-8 border border-dashed border-border/60 rounded-lg">
                             No hay variantes configuradas
                           </div>
                         )}
@@ -3556,6 +3600,55 @@ export function CatalogoItemDetailPanel({
         itemMarca={selectedItem?.marca}
         itemCategoria={selectedItem?.categoria}
         itemMedia={selectedItem?.media}
+      />
+
+      {/* Matrix Variant - Precio Modal */}
+      <PrecioEditModal
+        isOpen={isMatrixPrecioModalOpen}
+        onClose={() => { setIsMatrixPrecioModalOpen(false); setMatrixVariantItem(null) }}
+        onSave={(values) => {
+          if (matrixVariantItem?.id) {
+            const updatedVariants = (selectedItem.variants || []).map((ov: any) =>
+              ov.id === matrixVariantItem.id ? { ...ov, precio: values } : ov
+            )
+            onFieldChange(selectedItem.id, "variants", updatedVariants)
+            onSaveNow?.()
+            onShowToast?.("Precio actualizado")
+          }
+        }}
+        itemName={matrixVariantItem?.name}
+        itemMarca={selectedItem?.marca}
+        itemCategoria={selectedItem?.categoria}
+        itemMedia={matrixVariantItem?.media || selectedItem?.media}
+        initialValues={matrixPrecioModalValues}
+        costoBehavior={precios.costoBehavior}
+        zIndex={50}
+      />
+      {/* Matrix Variant - Stock Modal */}
+      <StockEditModal
+        isOpen={isMatrixStockModalOpen}
+        onClose={() => { setIsMatrixStockModalOpen(false); setMatrixVariantItem(null) }}
+        onAccept={(newTotal, newReservado) => {
+          if (matrixVariantItem?.id) {
+            const currentTotal = Number.parseInt((matrixVariantItem?.stock as any)?.enStock || matrixVariantItem?.stock?.total || "0")
+            const currentReservado = Number.parseInt(matrixVariantItem?.stock?.reservado || "0")
+            if (newTotal !== currentTotal || newReservado !== currentReservado) {
+              const newStock = { enStock: newTotal.toString(), reservado: newReservado.toString(), disponible: (newTotal - newReservado).toString() }
+              const updatedVariants = (selectedItem.variants || []).map((ov: any) =>
+                ov.id === matrixVariantItem.id ? { ...ov, stock: newStock } : ov
+              )
+              onFieldChange(selectedItem.id, "variants", updatedVariants)
+              onSaveNow?.()
+              onShowToast?.("Stock actualizado")
+            }
+          }
+        }}
+        initialTotal={Number.parseInt((matrixVariantItem?.stock as any)?.enStock || matrixVariantItem?.stock?.total || "0")}
+        initialReservado={Number.parseInt(matrixVariantItem?.stock?.reservado || "0")}
+        itemName={matrixVariantItem?.name}
+        itemMarca={selectedItem?.marca}
+        itemCategoria={selectedItem?.categoria}
+        itemMedia={matrixVariantItem?.media || selectedItem?.media}
       />
 
       {/* Expanded Matrix - Precio Modal */}
