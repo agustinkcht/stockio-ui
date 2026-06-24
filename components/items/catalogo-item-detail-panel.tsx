@@ -3290,6 +3290,7 @@ export function CatalogoItemDetailPanel({
                                 )}
                               </div>
                             </div>
+                          </div>
                         ) : (
                           <div className="border border-slate-200 rounded-xl overflow-hidden mb-6">
                             <div className="grid grid-cols-2 divide-x divide-slate-200">
