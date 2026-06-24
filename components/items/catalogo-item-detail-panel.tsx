@@ -2161,25 +2161,18 @@ export function CatalogoItemDetailPanel({
           {/* Info/Atributos Column - col-span-6 for standalone/children, col-span-1 for container */}
           <div className={`flex flex-col transition-all duration-500 overflow-hidden pb-0 ${isViewingContainer ? "order-1 col-span-5 pt-6 pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.1)] border border-slate-200/60" : "order-2 col-span-6 relative pb-8 px-8 bg-gradient-to-b from-white to-slate-50/30 rounded-2xl shadow-[0_4px_60px_-12px_rgba(0,0,0,0.15)] border border-slate-200/60 z-10"}`}>
 
-            {/* Thumbnail + Title Header for Parent Items */}
+            {/* Title Header for Parent Items */}
             {isViewingContainer && (
-              <div className="mb-3 pb-6 border-b border-slate-200/60 -mt-6 -mx-8 px-8 pt-6 rounded-t-2xl bg-slate-900">
-                <div className="flex items-center gap-5">
-                  <div className="w-16 h-16 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
-                    <Layers className="w-7 h-7 text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <button
-                      className="group/title flex items-center gap-2 min-w-0 max-w-full text-left cursor-pointer"
-                      onClick={() => { setModalNombreValue(selectedItem.name || ""); setIsEditNombreModalOpen(true) }}
-                      title="Editar nombre"
-                    >
-                      <h2 className="font-bold text-white text-xl truncate leading-tight group-hover/title:text-white/80 transition-colors">{selectedItem.name}</h2>
-                      <Pencil className="w-3.5 h-3.5 text-white/30 opacity-0 group-hover/title:opacity-100 transition-opacity flex-shrink-0" />
-                    </button>
-                    <p className="text-xs uppercase tracking-widest mt-1 text-slate-400 font-medium">Agrupador de variantes</p>
-                  </div>
-                </div>
+              <div className="mb-3 pb-5 border-b border-white/10 -mt-6 -mx-8 px-8 pt-6 rounded-t-2xl bg-slate-900">
+                <button
+                  className="group/title flex items-center gap-2 min-w-0 max-w-full text-left cursor-pointer"
+                  onClick={() => { setModalNombreValue(selectedItem.name || ""); setIsEditNombreModalOpen(true) }}
+                  title="Editar nombre"
+                >
+                  <h2 className="font-bold text-white text-xl truncate leading-tight group-hover/title:text-white/80 transition-colors">{selectedItem.name}</h2>
+                  <Pencil className="w-3.5 h-3.5 text-white/30 opacity-0 group-hover/title:opacity-100 transition-opacity flex-shrink-0" />
+                </button>
+                <p className="text-[10px] uppercase tracking-widest mt-1.5 text-slate-500 font-medium">Agrupador de variantes</p>
               </div>
             )}
 
@@ -2939,7 +2932,9 @@ export function CatalogoItemDetailPanel({
                                 const variantId = variant.id || sourceVariant?.id
                                 const fullSku = `${skuValue}-${variant.skuSuffix || ""}`.replace(/-$/, "")
                                 const stockDisp = sourceVariant?.stock?.disponible ?? 0
+                                // Look up in allItems; fall back to sourceVariant data for modal purposes
                                 const variantItem = variantId ? allItems?.find((i: any) => i.id === variantId) : null
+                                const itemForModal = variantItem || (sourceVariant ? { ...sourceVariant, id: variantId } : null)
 
                                 const handleDeleteVariant = () => {
                                   const attr1Value = variant.variant1
@@ -2991,9 +2986,9 @@ export function CatalogoItemDetailPanel({
                                     onClick={() => { if (variantId) router.push(`/catalogo/items/${variantId}`) }}
                                     className="group grid grid-cols-12 items-center hover:bg-accent/50 transition-colors cursor-pointer"
                                   >
-                                    {/* Thumbnail — price-grid style */}
+                                    {/* Thumbnail — price-grid style, pencil only on thumbnail hover */}
                                     <div className="col-span-1 pl-2 py-2.5 flex items-center justify-center">
-                                      <div className="w-9 h-9 shrink-0 rounded-md bg-slate-100 overflow-hidden flex items-center justify-center relative">
+                                      <div className="group/thumb w-9 h-9 shrink-0 rounded-md bg-slate-100 overflow-hidden flex items-center justify-center relative cursor-pointer">
                                         <Image
                                           src={getItemPhoto(variantItem || selectedItem)}
                                           alt={selectedItem?.categoria || ""}
@@ -3001,8 +2996,8 @@ export function CatalogoItemDetailPanel({
                                           height={36}
                                           className="object-cover w-full h-full"
                                         />
-                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                                          <Pencil className="w-3 h-3 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        <div className="absolute inset-0 bg-black/0 group-hover/thumb:bg-black/25 transition-colors flex items-center justify-center">
+                                          <Pencil className="w-3 h-3 text-white opacity-0 group-hover/thumb:opacity-100 transition-opacity" />
                                         </div>
                                       </div>
                                     </div>
@@ -3031,19 +3026,18 @@ export function CatalogoItemDetailPanel({
 
                                     {/* Precio venta — pencil on hover triggers modal */}
                                     <div
-                                      className="col-span-4 px-3 py-2.5"
+                                      className="col-span-4 px-3 py-2.5 group/precio"
                                       onClick={(e) => {
                                         e.stopPropagation()
-                                        const itemForModal = variantItem || allItems?.find((i: any) => i.id === variantId)
                                         if (itemForModal) {
                                           setMatrixVariantItem(itemForModal)
-                                          const p = itemForModal.precio || {}
+                                          const p = sourceVariant?.precio || itemForModal.precio || {}
                                           setMatrixPrecioModalValues({ costo: p.costo ?? 0, margen: p.margen ?? 0, iva: p.iva ?? 0, precioFinal: p.precioFinal ?? 0 })
                                           setIsMatrixPrecioModalOpen(true)
                                         }
                                       }}
                                     >
-                                      <div className="flex items-center gap-1.5 group/precio">
+                                      <div className="flex items-center gap-1.5">
                                         <span className="text-sm font-medium text-foreground tabular-nums">
                                           {sourceVariant?.precio?.precioFinal
                                             ? `$${Math.round(sourceVariant.precio.precioFinal).toLocaleString("es-AR")}`
@@ -3055,23 +3049,22 @@ export function CatalogoItemDetailPanel({
 
                                     {/* Stock disponible — pencil on hover triggers modal */}
                                     <div
-                                      className="col-span-2 px-3 py-2.5"
+                                      className="col-span-2 px-3 py-2.5 group/stock"
                                       onClick={(e) => {
                                         e.stopPropagation()
-                                        const itemForModal = variantItem || allItems?.find((i: any) => i.id === variantId)
                                         if (itemForModal) {
                                           setMatrixVariantItem(itemForModal)
                                           setIsMatrixStockModalOpen(true)
                                         }
                                       }}
                                     >
-                                      <div className="flex items-center gap-1 group/stock">
+                                      <div className="flex items-center gap-1.5">
                                         {stockDisp > 0 ? (
-                                          <span className="text-xs font-semibold text-emerald-600 tabular-nums">
+                                          <span className="text-xs font-semibold text-emerald-600 tabular-nums whitespace-nowrap">
                                             {stockDisp} disp.
                                           </span>
                                         ) : (
-                                          <span className="text-[10px] font-medium text-muted-foreground/40">
+                                          <span className="text-[10px] font-medium text-muted-foreground/40 whitespace-nowrap">
                                             sin stock disp.
                                           </span>
                                         )}
@@ -3890,7 +3883,7 @@ export function CatalogoItemDetailPanel({
               </div>
             </div>
             <div className="p-5">
-              <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block">Nombre</label>
+              <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block">{isViewingContainer ? "Nombre del Agrupador" : "Nombre del Item"}</label>
               <input
                 type="text"
                 value={modalNombreValue}
